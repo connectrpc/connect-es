@@ -1,0 +1,5 @@
+packages/*/src/gen/**
+packages/*/dist/**
+node_modules/**
+packages/protobuf/src/google/**
+packages/requestbuilder-poc/www/**

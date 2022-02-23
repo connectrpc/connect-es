@@ -1,0 +1,9 @@
+node_modules
+/testdata/gen/**/*.js
+/testdata/gen/**/*.ts
+/testdata/gen/**/**.d.ts
+/packages/protoc-gen-es*/bin/protoc-gen-es*
+/packages/protoc-gen-connect*/bin/protoc-gen-connect*
+/packages/*/dist
+/packages/test/descriptorset.bin
+/.cache

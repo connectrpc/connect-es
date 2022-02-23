@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    // TODO we only set es2020 for bigint - check if viable
+    // "target": "es2016",
+    "target": "es2020",
+
+    "lib": [
+      "ES2016",
+      // ES2020.BigInt for the bigint representation of 64-bit integers
+      "ES2020.BigInt"
+    ],
+    "esModuleInterop": false,
+    "importsNotUsedAsValues": "error",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+
+    // We need node's module resolution, so we do not have to skip lib checks
+    "moduleResolution": "Node",
+    "skipLibCheck": false
+  }
+}
