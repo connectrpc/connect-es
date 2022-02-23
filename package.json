@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "./packages/protobuf",
+    "./packages/web",
+    "./packages/test",
+    "./packages/bench-codesize",
+    "./packages/web-example",
+    "./packages/web-experimental",
+    "./packages/requestbuilder-poc",
+    "./packages/protoc-gen-es"
+  ],
+  "type": "module",
+  "engineStrict": true,
+  "engines": {
+    "node": ">=16",
+    "npm": ">=8"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-plugin-node": "^11.1.0",
+    "prettier": "^2.5.1"
+  }
+}

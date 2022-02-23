@@ -1,0 +1,25 @@
+{
+  "name": "@bufbuild/protobuf",
+  "version": "0.0.1",
+  "license": "TODO",
+  "scripts": {
+    "clean": "rm -rf ./dist/cjs ./dist/esm ./dist/types",
+    "build": "npm run build:cjs && npm run build:esm+types",
+    "build:cjs": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
+    "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types"
+  },
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/index.js",
+    "default": "./dist/esm/index.js"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.4"
+  },
+  "files": [
+    "dist/**/"
+  ]
+}
