@@ -1,0 +1,9 @@
+import * as jspb from 'google-protobuf'
+
+
+
+export enum BufAlphaRegistryV1Alpha1UserState { 
+  BUF_ALPHA_REGISTRY_V1_ALPHA1_USER_STATE_UNSPECIFIED = 0,
+  BUF_ALPHA_REGISTRY_V1_ALPHA1_USER_STATE_ACTIVE = 1,
+  BUF_ALPHA_REGISTRY_V1_ALPHA1_USER_STATE_DEACTIVATED = 2,
+}
