@@ -2,8 +2,11 @@
   "name": "@bufbuild/protoc-gen-es-windows-32",
   "version": "0.0.1",
   "description": "protoc-gen-es (win32 / ia32)",
-  "license": "TODO",
-  "repository": "TODO",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufconnect/connect-web.git"
+  },
   "os": [
     "win32"
   ],

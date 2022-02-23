@@ -2,8 +2,11 @@
   "name": "@bufconnect/protoc-gen-connectweb-linux-32",
   "version": "0.0.1",
   "description": "protoc-gen-connectweb (linux / ia32)",
-  "license": "TODO",
-  "repository": "TODO",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufconnect/connect-web.git"
+  },
   "os": [
     "linux"
   ],

@@ -1,7 +1,12 @@
 {
   "name": "@bufconnect/web",
   "version": "0.0.1",
-  "license": "TODO",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufconnect/connect-web.git",
+    "directory": "packages/web"
+  },
   "scripts": {
     "clean": "rm -rf ./dist/cjs ./dist/esm ./dist/types",
     "build": "npm run build:cjs && npm run build:esm+types",
