@@ -1,0 +1,15 @@
+{
+  "files": ["src/index.ts"],
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2016",
+      // ES2017.Object for Object.entries
+      "ES2017.Object",
+      // ES2020.BigInt for the bigint representation of 64-bit integers
+      "ES2020.BigInt",
+      // DOM for the fetch API
+      "DOM"
+    ]
+  }
+}
