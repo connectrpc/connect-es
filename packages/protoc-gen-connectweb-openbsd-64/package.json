@@ -1,0 +1,13 @@
+{
+  "name": "@bufconnect/protoc-gen-connectweb-openbsd-64",
+  "version": "0.0.1",
+  "description": "protoc-gen-connectweb (openbsd / x64)",
+  "license": "TODO",
+  "repository": "TODO",
+  "os": [
+    "openbsd"
+  ],
+  "cpu": [
+    "x64"
+  ]
+}

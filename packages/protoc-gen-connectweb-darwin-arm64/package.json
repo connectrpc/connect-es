@@ -1,0 +1,13 @@
+{
+  "name": "@bufconnect/protoc-gen-connectweb-darwin-arm64",
+  "version": "0.0.1",
+  "description": "protoc-gen-connectweb (darwin / arm64)",
+  "license": "TODO",
+  "repository": "TODO",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ]
+}

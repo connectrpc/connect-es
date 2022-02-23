@@ -1,0 +1,13 @@
+{
+  "name": "@bufconnect/protoc-gen-connectweb-windows-32",
+  "version": "0.0.1",
+  "description": "protoc-gen-connectweb (win32 / ia32)",
+  "license": "TODO",
+  "repository": "TODO",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "ia32"
+  ]
+}

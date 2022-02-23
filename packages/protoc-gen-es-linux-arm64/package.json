@@ -1,0 +1,13 @@
+{
+  "name": "@bufbuild/protoc-gen-es-linux-arm64",
+  "version": "0.0.1",
+  "description": "protoc-gen-es (linux / arm64)",
+  "license": "TODO",
+  "repository": "TODO",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@bufbuild/protoc-gen-es-windows-arm64",
+  "version": "0.0.1",
+  "description": "protoc-gen-es (win32 / arm64)",
+  "license": "TODO",
+  "repository": "TODO",
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "arm64"
+  ]
+}

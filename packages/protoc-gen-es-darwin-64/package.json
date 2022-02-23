@@ -1,0 +1,13 @@
+{
+  "name": "@bufbuild/protoc-gen-es-darwin-64",
+  "version": "0.0.1",
+  "description": "protoc-gen-es (darwin / x64)",
+  "license": "TODO",
+  "repository": "TODO",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ]
+}

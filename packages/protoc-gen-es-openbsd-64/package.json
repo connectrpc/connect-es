@@ -1,0 +1,13 @@
+{
+  "name": "@bufbuild/protoc-gen-es-openbsd-64",
+  "version": "0.0.1",
+  "description": "protoc-gen-es (openbsd / x64)",
+  "license": "TODO",
+  "repository": "TODO",
+  "os": [
+    "openbsd"
+  ],
+  "cpu": [
+    "x64"
+  ]
+}

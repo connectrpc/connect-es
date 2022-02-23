@@ -1,0 +1,25 @@
+{
+  "name": "@bufbuild/protoc-gen-es",
+  "version": "0.0.1",
+  "description": "protoc-gen-es",
+  "license": "TODO",
+  "repository": "TODO",
+  "bin": {
+    "protoc-gen-es": "bin/protoc-gen-es"
+  },
+  "optionalDependencies": {
+    "@bufbuild/protoc-gen-es-darwin-64": "0.0.1",
+    "@bufbuild/protoc-gen-es-darwin-arm64": "0.0.1",
+    "@bufbuild/protoc-gen-es-windows-64": "0.0.1",
+    "@bufbuild/protoc-gen-es-windows-arm64": "0.0.1",
+    "@bufbuild/protoc-gen-es-windows-32": "0.0.1",
+    "@bufbuild/protoc-gen-es-linux-64": "0.0.1",
+    "@bufbuild/protoc-gen-es-linux-32": "0.0.1",
+    "@bufbuild/protoc-gen-es-linux-arm": "0.0.1",
+    "@bufbuild/protoc-gen-es-linux-arm64": "0.0.1",
+    "@bufbuild/protoc-gen-es-freebsd-64": "0.0.1",
+    "@bufbuild/protoc-gen-es-freebsd-arm64": "0.0.1",
+    "@bufbuild/protoc-gen-es-netbsd-64": "0.0.1",
+    "@bufbuild/protoc-gen-es-openbsd-64": "0.0.1"
+  }
+}
