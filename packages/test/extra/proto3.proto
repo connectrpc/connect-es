@@ -1,0 +1,35 @@
+syntax = "proto3";
+package spec;
+
+option go_package = "github.com/bufconnect/connect-web";
+
+message Proto3PackedMessage {
+  repeated double packed_double_field = 101 [packed = true];
+  repeated uint32 packed_uint32_field = 102 [packed = true];
+  repeated uint64 packed_uint64_field = 103 [packed = true];
+}
+
+message Proto3UnpackedMessage {
+  repeated double unpacked_double_field = 201 [packed = false];
+  repeated uint32 unpacked_uint32_field = 202 [packed = false];
+  repeated uint64 unpacked_uint64_field = 203 [packed = false];
+}
+
+message Proto3UnlabelledMessage {
+  repeated double double_field = 1;
+  repeated uint32 uint32_field = 2;
+  repeated uint64 uint64_field = 3;
+}
+
+message Proto3OptionalMessage {
+  optional string string_field = 1;
+  optional bytes bytes_field = 2;
+  optional Proto3Enum enum_field = 3;
+  optional Proto3OptionalMessage message_field = 4;
+}
+
+enum Proto3Enum {
+  PROTO3_ENUM_UNSPECIFIED = 0;
+  PROTO3_ENUM_YES = 1;
+  PROTO3_ENUM_NO = 2;
+}

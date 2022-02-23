@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package spec;
+
+import "google/protobuf/wrappers.proto";
+
+
+service ServiceAll {
+
+    rpc Unary (google.protobuf.StringValue) returns (google.protobuf.Int32Value) {
+        option idempotency_level = IDEMPOTENT;
+    };
+
+    rpc ServerStream (google.protobuf.StringValue) returns (stream google.protobuf.Int32Value) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+    };
+
+    rpc ClientStream (stream google.protobuf.StringValue) returns (google.protobuf.Int32Value);
+
+    rpc Bidi (stream google.protobuf.StringValue) returns (stream google.protobuf.Int32Value) {
+        option deprecated = true;
+    };
+
+}

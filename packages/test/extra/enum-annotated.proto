@@ -1,0 +1,22 @@
+syntax = "proto3";
+package spec;
+
+import "google/protobuf/descriptor.proto";
+
+
+extend google.protobuf.EnumOptions {
+    bool enum_opt_bool = 2001;
+}
+
+extend google.protobuf.EnumValueOptions {
+    bool enum_value_opt_bool = 3001;
+}
+
+
+enum AnnotatedEnum {
+
+    option (spec.enum_opt_bool) = true;
+
+    UNSPECIFIED = 0;
+    FOO = 1 [(spec.enum_value_opt_bool) = true];
+}

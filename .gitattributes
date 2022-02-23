@@ -2,3 +2,9 @@
 # users of the repository and therefore doesn't depend on a developers
 # local configuration.
 * text=auto
+
+# Ignore generated files in GitHub diffs by default
+**/*_pb.ts linguist-generated=true
+**/*_connectweb.ts linguist-generated=true
+**/*_pb.js linguist-generated=true
+**/*_pb.d.ts linguist-generated=true

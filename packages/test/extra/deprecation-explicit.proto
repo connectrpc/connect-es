@@ -1,0 +1,32 @@
+syntax = "proto3";
+package spec;
+
+// The entire message is deprecated
+message DeprecatedMessage {
+    option deprecated = true;
+    string field = 1;
+}
+
+// A single field of this message is deprecated
+message DeprecatedFieldMessage {
+
+    // This field is deprecated
+    string deprecated_field = 1 [deprecated = true];
+
+    // This field is not deprecated
+    string current_field = 2;
+
+}
+
+// The entire enum is deprecated
+enum DeprecatedEnum {
+    option deprecated = true;
+    DEPRECATED_ENUM_A = 0;
+    DEPRECATED_ENUM_B = 1;
+}
+
+// Only a single enum value is deprecated
+enum DeprecatedValueEnum {
+    DEPRECATED_VALUE_ENUM_UNSPECIFIED = 0;
+    DEPRECATED_VALUE_ENUM_DEPRECATED_VALUE = 1 [deprecated = true];
+}

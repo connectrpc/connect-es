@@ -1,0 +1,120 @@
+// @formatter:off
+
+// Comment before syntax.
+syntax = "proto3"; // Comment next to syntax.
+// Comment after syntax.
+
+
+// Comment before package.
+package spec; // Comment next to package.
+// Comment after package.
+
+// Comment between package and message.
+
+// Comment before message.
+message MessageWithComments {
+
+    //
+    // Comment after start of message,
+        // with funny indentation,
+    // and empty lines on start and end.
+    //
+
+    // Comment before field with 5 lines:
+    // line 2, next is empty
+    //
+    // line 4, next is empty
+    //
+    string foo = 1; // Comment next to field.
+    // Comment after field.
+
+    // Comment before oneof.
+    oneof result {
+        // Comment after start of oneof.
+
+        int32 value = 2;
+        string error = 3;
+
+        // Comment before end of oneof.
+    }
+    // Comment after oneof.
+
+    //
+    string this_field_has_an_empty_comment = 4;
+
+    string this_field_is_deprecated = 5 [deprecated = true, json_name = "sdf"];
+
+    // Comment before end of message.
+}
+// Comment after message.
+
+// Comment between message and enum.
+
+// Leading comment for enum.
+enum EnumWithComments {
+    // Comment between start of enum and first value.
+
+    // Comment before enum value.
+    VALUE = 0; // Comment next to enum value.
+    // Comment after enum value.
+
+}
+// Comment after enum.
+
+
+// Leading comment for deprecated enum
+enum DeprecatedEnumWithComment {
+    option deprecated = true;
+    DEPRECATED_ENUM_WITH_COMMENT_A = 0;
+    DEPRECATED_ENUM_WITH_COMMENT_B = 1;
+}
+
+
+enum DeprecatedEnumNoComment {
+    option deprecated = true;
+    DEPRECATED_ENUM_NO_COMMENT_A = 0;
+    DEPRECATED_ENUM_NO_COMMENT_B = 1;
+}
+
+
+
+message EmptyMessageWithComment {
+    // Comment within empty message.
+}
+
+
+// see https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/descriptor.proto
+message GoogleCommentExample {
+
+    int32 foo = 1; // Comment attached to foo.
+    // Comment attached to bar.
+    int32 bar = 2;
+
+    string baz = 3;
+    // Comment attached to baz.
+    // Another line attached to baz.
+
+    // Comment attached to qux.
+    //
+    // Another line attached to qux.
+    double qux = 4;
+
+    // Detached comment for corge. This is not leading or trailing comments
+    // to qux or corge because there are blank lines separating it from
+    // both.
+
+    // Detached comment for corge paragraph 2.
+
+    string corge = 5;
+    /* Block comment attached
+     * to corge.  Leading asterisks
+     * will be removed. */
+    /* Block comment attached to
+     * grault. */
+    int32 grault = 6;
+
+    // ignored detached comments.
+
+}
+
+// @formatter:on
