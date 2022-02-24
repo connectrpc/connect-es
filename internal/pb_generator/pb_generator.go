@@ -2,8 +2,8 @@ package pb_generator
 
 import (
 	"fmt"
-	protoplugin2 "github.com/bufconnect/connect-web/internal/protoplugin"
-	"github.com/bufconnect/connect-web/internal/ts"
+	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
+	"github.com/bufbuild/connect-web/internal/ts"
 	"strings"
 
 	"google.golang.org/protobuf/types/descriptorpb"

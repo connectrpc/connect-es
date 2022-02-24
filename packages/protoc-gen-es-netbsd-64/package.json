@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bufconnect/connect-web.git"
+    "url": "https://github.com/bufbuild/connect-web.git"
   },
   "os": [
     "netbsd"

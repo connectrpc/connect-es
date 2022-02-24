@@ -1,7 +1,7 @@
 package connectweb_generator
 
 import (
-	protoplugin2 "github.com/bufconnect/connect-web/internal/protoplugin"
+	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 

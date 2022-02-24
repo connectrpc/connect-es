@@ -48,7 +48,7 @@ node_modules: package-lock.json
 
 # The NPM package "@bufbuild/protobuf" is the runtime library required by the code our plugin generates
 RUNTIME_DIR = packages/protobuf
-RUNTIME_GEN = $(CACHE_DIR)/gen/bufconnect-protobuf-wkt-$(GOOGPROTOBUF_VERSION)
+RUNTIME_GEN = $(CACHE_DIR)/gen/bufbuild-protobuf-wkt-$(GOOGPROTOBUF_VERSION)
 RUNTIME_BUILD = $(CACHE_DIR)/build/packages-protobuf
 RUNTIME_SOURCES = $(RUNTIME_DIR)/*.json $(RUNTIME_DIR)/src/*.ts $(RUNTIME_DIR)/src/*/*.ts
 $(RUNTIME_BUILD): node_modules $(RUNTIME_GEN) $(RUNTIME_SOURCES)
@@ -59,23 +59,23 @@ $(RUNTIME_GEN): $(GOOGPROTOBUF_PROTOC_BIN) $(PROTOC_GEN_ES_BIN)
 	mkdir -p $(dir $(RUNTIME_GEN)) && touch $(RUNTIME_GEN)
 
 
-# The NPM package "@bufconnect/web"
-WEB_DIR = packages/web
-WEB_BUILD = $(CACHE_DIR)/build/packages-web
+# The NPM package "@bufbuild/connect-web"
+WEB_DIR = packages/connect-web
+WEB_BUILD = $(CACHE_DIR)/build/packages-connect-web
 WEB_SOURCES = $(WEB_DIR)/*.json $(shell find $(WEB_DIR)/src -name '*.ts')
 $(WEB_BUILD): node_modules $(WEB_SOURCES)
 	cd $(WEB_DIR) && npm run clean && npm run build
 	mkdir -p $(CACHE_DIR)/build && touch $(WEB_BUILD)
 
 
-# The private NPM package "@bufconnect/test" is used to test:
+# The private NPM package "@bufbuild/protobuf-test" is used to test:
 # 1. compilation of a large number of .proto files
 # 2. conformance
 # 3. unit test generated code
 # 4. test interoperability with protoc (JSON names)
 # Code is run by node.js, both the ESM variant (through the conformance tests),
 # as well es the CJS variant (through Jest).
-TEST_DIR = packages/test
+TEST_DIR = packages/protobuf-test
 TEST_GEN = $(CACHE_DIR)/gen/packages-test-$(GOOGPROTOBUF_VERSION)
 TEST_BUILD = $(CACHE_DIR)/build/packages-test
 TEST_SOURCES = $(shell find $(TEST_DIR)/src -name '*.ts') $(TEST_DIR)/*.json
@@ -91,7 +91,7 @@ $(TEST_BUILD): $(PROTOC_GEN_ES_BIN) $(TEST_GEN) $(RUNTIME_BUILD) $(TEST_SOURCES)
 	mkdir -p $(dir $(TEST_BUILD)) && touch $(TEST_BUILD)
 
 
-# The private NPM package "@bufconnect/bench-codesize" benchmarks code size
+# The private NPM package "@bufbuild/bench-codesize" benchmarks code size
 BENCHCODESIZE_DIR = packages/bench-codesize
 BENCHCODESIZE_BUF_COMMIT=4505cba5e5a94a42af02ebc7ac3a0a04
 BENCHCODESIZE_GEN = $(CACHE_DIR)/gen/bench-codesize-$(BENCHCODESIZE_BUF_COMMIT)
@@ -122,7 +122,7 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
-# The private NPM package "@bufconnect/requestbuilder-poc" is only here temporarily
+# The private NPM package "@bufbuild/requestbuilder-poc" is only here temporarily
 REQUESTBUILDERPOC_DIR = packages/requestbuilder-poc
 REQUESTBUILDERPOC_SOURCES = $(REQUESTBUILDERPOC_DIR)/*.json $(shell find $(REQUESTBUILDERPOC_DIR)/src -name '*.ts')
 serve-requestbuilder-poc: node_modules $(RUNTIME_BUILD) $(WEB_BUILD) $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN)
@@ -130,8 +130,8 @@ serve-requestbuilder-poc: node_modules $(RUNTIME_BUILD) $(WEB_BUILD) $(PROTOC_GE
 	cd $(REQUESTBUILDERPOC_DIR) && npm run serve
 
 
-# The private NPM package "@bufconnect/web-example" is only here temporarily
-WEBEXAMPLE_DIR = packages/web-example
+# The private NPM package "@bufbuild/connect-web-example" is only here temporarily
+WEBEXAMPLE_DIR = packages/connect-web-example
 WEBEXAMPLE_SOURCES = $(WEBEXAMPLE_DIR)/*.json $(shell find $(WEBEXAMPLE_DIR)/src -name '*.ts')
 WEBEXAMPLE_GEN = $(CACHE_DIR)/gen/web-example
 $(WEBEXAMPLE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN) $(shell find $(WEBEXAMPLE_DIR)/protos -name '*.proto')

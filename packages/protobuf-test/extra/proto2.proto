@@ -1,7 +1,7 @@
 syntax = "proto2";
 package spec;
 
-option go_package = "github.com/bufconnect/connect-web";
+option go_package = "github.com/bufbuild/connect-web";
 
 message Proto2PackedMessage {
   repeated double packed_double_field = 101 [packed = true];

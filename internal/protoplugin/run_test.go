@@ -12,7 +12,7 @@ import (
 
 func TestRun(t *testing.T) {
 	t.Run("basic run", func(t *testing.T) {
-		req := makeCodeGeneratorRequest(t, "../../packages/test/descriptorset.bin", "")
+		req := makeCodeGeneratorRequest(t, "../../packages/protobuf-test/descriptorset.bin", "")
 		res, err := Options{
 			Version:   "0.0.1",
 			ParamFunc: nil,

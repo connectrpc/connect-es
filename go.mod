@@ -1,4 +1,4 @@
-module github.com/bufconnect/connect-web
+module github.com/bufbuild/connect-web
 
 go 1.16
 

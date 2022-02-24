@@ -1,11 +1,11 @@
 {
-  "name": "@bufconnect/protoc-gen-connectweb-freebsd-64",
+  "name": "@bufbuild/protoc-gen-connectweb-freebsd-64",
   "version": "0.0.1",
   "description": "protoc-gen-connectweb (freebsd / x64)",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bufconnect/connect-web.git"
+    "url": "https://github.com/bufbuild/connect-web.git"
   },
   "os": [
     "freebsd"

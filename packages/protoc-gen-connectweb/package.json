@@ -1,28 +1,28 @@
 {
-  "name": "@bufconnect/protoc-gen-connectweb",
+  "name": "@bufbuild/protoc-gen-connectweb",
   "version": "0.0.1",
   "description": "protoc-gen-connectweb",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bufconnect/connect-web.git"
+    "url": "https://github.com/bufbuild/connect-web.git"
   },
   "bin": {
     "protoc-gen-connectweb": "bin/protoc-gen-connectweb"
   },
   "optionalDependencies": {
-    "@bufconnect/protoc-gen-connectweb-darwin-64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-darwin-arm64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-windows-64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-windows-arm64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-windows-32": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-linux-64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-linux-32": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-linux-arm": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-linux-arm64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-freebsd-64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-freebsd-arm64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-netbsd-64": "0.0.1",
-    "@bufconnect/protoc-gen-connectweb-openbsd-64": "0.0.1"
+    "@bufbuild/protoc-gen-connectweb-darwin-64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-darwin-arm64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-windows-64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-windows-arm64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-windows-32": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-linux-64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-linux-32": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-linux-arm": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-linux-arm64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-freebsd-64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-freebsd-arm64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-netbsd-64": "0.0.1",
+    "@bufbuild/protoc-gen-connectweb-openbsd-64": "0.0.1"
   }
 }

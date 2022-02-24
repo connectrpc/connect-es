@@ -5,5 +5,5 @@ node_modules
 /packages/protoc-gen-es*/bin/protoc-gen-es*
 /packages/protoc-gen-connect*/bin/protoc-gen-connect*
 /packages/*/dist
-/packages/test/descriptorset.bin
+/packages/protobuf-test/descriptorset.bin
 /.cache

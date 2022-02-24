@@ -1,5 +1,5 @@
 {
-  "name": "@bufconnect/test",
+  "name": "@bufbuild/protobuf-test",
   "version": "0.0.1",
   "private": true,
   "scripts": {

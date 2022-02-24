@@ -1,4 +1,4 @@
-import { makePromiseClient } from "@bufconnect/web";
+import { makePromiseClient } from "@bufbuild/connect-web";
 import { PluginService } from "./gen/connectweb/buf/alpha/registry/v1alpha1/plugin_connectweb.js";
 
 const pluginClient = makePromiseClient(PluginService, {

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/bufconnect/connect-web/internal/pb_generator"
-	"github.com/bufconnect/connect-web/internal/protoplugin"
+	"github.com/bufbuild/connect-web/internal/pb_generator"
+	"github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/pluginpb"
 )
 

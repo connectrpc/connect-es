@@ -3,11 +3,11 @@
   "private": true,
   "workspaces": [
     "./packages/protobuf",
-    "./packages/web",
-    "./packages/test",
+    "./packages/connect-web",
+    "./packages/protobuf-test",
     "./packages/bench-codesize",
-    "./packages/web-example",
-    "./packages/web-experimental",
+    "./packages/connect-web-example",
+    "./packages/connect-web-experimental",
     "./packages/requestbuilder-poc",
     "./packages/protoc-gen-es"
   ],
