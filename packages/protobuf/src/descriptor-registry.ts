@@ -164,7 +164,6 @@ export class DescriptorRegistry
     if (!raw) {
       return undefined;
     }
-    const runtime = raw.file.syntax == "proto3" ? proto3 : proto2;
     const methods: Record<string, MethodInfo> = {};
     for (const u of raw.methods) {
       const it = this.findMessage(u.inputTypeName);
@@ -185,12 +184,10 @@ export class DescriptorRegistry
       };
       methods[m.localName] = m;
     }
-    const type = runtime.makeServiceType({
+    return (this.services[protoTypeName] = {
       typeName: raw.typeName,
       methods,
     });
-    this.services[protoTypeName] = type;
-    return type;
   }
 }
 

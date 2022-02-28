@@ -20,11 +20,6 @@ export interface ServiceType {
   readonly methods: {
     [localName: string]: MethodInfo;
   };
-
-  /**
-   * List methods in order of their appearance in the protobuf sources.
-   */
-  listMethods(): MethodInfo[];
 }
 
 /**
@@ -86,10 +81,9 @@ interface miShared<
   O extends Message = DynamicMessage
 > {
   readonly name: string;
-  readonly localName: string;
   readonly I: MessageType<I>;
   readonly O: MessageType<O>;
-  readonly idempotency: MethodIdempotency;
+  readonly idempotency?: MethodIdempotency;
   // We do not surface options at this time
   // options: OptionsMap;
 }
@@ -117,14 +111,10 @@ export enum MethodKind {
  * default POST.
  *
  * This enum matches the protobuf enum google.protobuf.MethodOptions.IdempotencyLevel,
- * defined in the well-known type google/protobuf/descriptor.proto.
+ * defined in the well-known type google/protobuf/descriptor.proto, but
+ * drops UNKNOWN.
  */
 export enum MethodIdempotency {
-  /**
-   * No information is available.
-   */
-  Unknown = 0,
-
   /**
    * Idempotent, no side effects.
    */

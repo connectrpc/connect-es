@@ -643,7 +643,7 @@ interface UnresolvedMethod {
   readonly kind: MethodKind;
   readonly inputTypeName: string;
   readonly outputTypeName: string;
-  readonly idempotency: MethodIdempotency;
+  readonly idempotency?: MethodIdempotency;
   toString(): string;
 }
 
@@ -664,7 +664,7 @@ function newMethod(
   } else {
     kind = MethodKind.Unary;
   }
-  let idempotency: MethodIdempotency;
+  let idempotency: MethodIdempotency | undefined;
   switch (proto.options?.idempotencyLevel) {
     case MethodOptions_IdempotencyLevel.IDEMPOTENT:
       idempotency = MethodIdempotency.Idempotent;
@@ -672,8 +672,10 @@ function newMethod(
     case MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS:
       idempotency = MethodIdempotency.NoSideEffects;
       break;
-    default:
-      idempotency = MethodIdempotency.Unknown;
+    case MethodOptions_IdempotencyLevel.IDEMPOTENCY_UNKNOWN:
+    case undefined:
+      idempotency = undefined;
+      break;
   }
   const inputTypeName = proto.inputType.startsWith(".")
     ? proto.inputType.substring(1)

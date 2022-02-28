@@ -35,7 +35,7 @@ func generateService(f *protoplugin2.GeneratedFile, service *protoplugin2.Servic
 		f.P("/** @deprecated */")
 	}
 
-	f.P("export const ", service.LocalName, " = ", rt.ProtoN, ".makeServiceType({")
+	f.P("export const ", service.LocalName, " = {")
 	f.P(`    typeName: "`, service.TypeName, `",`)
 	f.P("    methods: {")
 	for _, method := range service.Methods {
@@ -66,5 +66,5 @@ func generateService(f *protoplugin2.GeneratedFile, service *protoplugin2.Servic
 		f.P("        },")
 	}
 	f.P("    }")
-	f.P("});")
+	f.P("} as const;")
 }

@@ -9,7 +9,6 @@ import type { EnumObject } from "./enum.js";
 import { getEnumType, makeEnumType } from "./enum.js";
 import type { Util } from "./util.js";
 import { makeMessageType } from "./message-type.js";
-import { makeServiceType } from "./service-type.js";
 
 /**
  * A facade that provides serialization and other internal functionality.
@@ -49,11 +48,6 @@ export interface ProtoRuntime {
    * enum, it raises an error.
    */
   getEnumType(enumObject: EnumObject): EnumType;
-
-  /**
-   * Create a service type ad runtime.
-   */
-  makeServiceType: typeof makeServiceType;
 }
 
 export function makeProtoRuntime(
@@ -79,6 +73,5 @@ export function makeProtoRuntime(
     },
     makeEnumType,
     getEnumType,
-    makeServiceType,
   };
 }
