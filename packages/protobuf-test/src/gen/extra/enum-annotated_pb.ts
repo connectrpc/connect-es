@@ -27,5 +27,3 @@ proto3.util.setEnumType(AnnotatedEnum, "spec.AnnotatedEnum", [
     {no: 1, name: "FOO"},
 ]);
 
-
-

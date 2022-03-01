@@ -56,62 +56,62 @@ export class WrappersMessage extends Message<WrappersMessage> {
     bytesValueField?: Uint8Array;
 
     /**
-     * @generated from protobuf oneof oneof_fields
+     * @generated from oneof spec.WrappersMessage.oneof_fields
      */
     oneofFields: {
-        case: "oneofDoubleValueField";
         /**
          * @generated from field: google.protobuf.DoubleValue oneof_double_value_field = 11;
          */
         value: number;
+        case: "oneofDoubleValueField";
     } | {
-        case: "oneofBoolValueField";
         /**
          * @generated from field: google.protobuf.BoolValue oneof_bool_value_field = 12;
          */
         value: boolean;
+        case: "oneofBoolValueField";
     } | {
-        case: "oneofFloatValueField";
         /**
          * @generated from field: google.protobuf.FloatValue oneof_float_value_field = 13;
          */
         value: number;
+        case: "oneofFloatValueField";
     } | {
-        case: "oneofInt64ValueField";
         /**
          * @generated from field: google.protobuf.Int64Value oneof_int64_value_field = 14;
          */
         value: bigint;
+        case: "oneofInt64ValueField";
     } | {
-        case: "oneofUint64ValueField";
         /**
          * @generated from field: google.protobuf.UInt64Value oneof_uint64_value_field = 15;
          */
         value: bigint;
+        case: "oneofUint64ValueField";
     } | {
-        case: "oneofInt32ValueField";
         /**
          * @generated from field: google.protobuf.Int32Value oneof_int32_value_field = 16;
          */
         value: number;
+        case: "oneofInt32ValueField";
     } | {
-        case: "oneofUint32ValueField";
         /**
          * @generated from field: google.protobuf.UInt32Value oneof_uint32_value_field = 17;
          */
         value: number;
+        case: "oneofUint32ValueField";
     } | {
-        case: "oneofStringValueField";
         /**
          * @generated from field: google.protobuf.StringValue oneof_string_value_field = 18;
          */
         value: string;
+        case: "oneofStringValueField";
     } | {
-        case: "oneofBytesValueField";
         /**
          * @generated from field: google.protobuf.BytesValue oneof_bytes_value_field = 19;
          */
         value: Uint8Array;
+        case: "oneofBytesValueField";
     } | { case: undefined; value?: undefined } = { case: undefined };
 
     /**

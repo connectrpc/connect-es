@@ -7,6 +7,10 @@ import {Any, Api, BoolValue, BytesValue, DoubleValue, Duration, Empty, FieldMask
 import {Type} from "./type_pb.js";
 
 /**
+ * Test that we can include all well-known types.
+ * Each wrapper type is included separately, as languages
+ * map handle different wrappers in different ways.
+ *
  * @generated from message protobuf_unittest.TestWellKnownTypes
  */
 export class TestWellKnownTypes extends Message<TestWellKnownTypes> {
@@ -102,6 +106,8 @@ export class TestWellKnownTypes extends Message<TestWellKnownTypes> {
     bytesField?: Uint8Array;
 
     /**
+     * Part of struct, but useful to be able to test separately
+     *
      * @generated from field: google.protobuf.Value value_field = 19;
      */
     valueField?: Value;
@@ -155,6 +161,8 @@ export class TestWellKnownTypes extends Message<TestWellKnownTypes> {
 
 
 /**
+ * A repeated field for each well-known type.
+ *
  * @generated from message protobuf_unittest.RepeatedWellKnownTypes
  */
 export class RepeatedWellKnownTypes extends Message<RepeatedWellKnownTypes> {
@@ -205,6 +213,8 @@ export class RepeatedWellKnownTypes extends Message<RepeatedWellKnownTypes> {
     typeField: Type[] = [];
 
     /**
+     * These don't actually make a lot of sense, but they're not prohibited...
+     *
      * @generated from field: repeated google.protobuf.DoubleValue double_field = 10;
      */
     doubleField: DoubleValue[] = [];
@@ -302,116 +312,116 @@ export class RepeatedWellKnownTypes extends Message<RepeatedWellKnownTypes> {
 export class OneofWellKnownTypes extends Message<OneofWellKnownTypes> {
 
     /**
-     * @generated from protobuf oneof oneof_field
+     * @generated from oneof protobuf_unittest.OneofWellKnownTypes.oneof_field
      */
     oneofField: {
-        case: "anyField";
         /**
          * @generated from field: google.protobuf.Any any_field = 1;
          */
         value: Any;
+        case: "anyField";
     } | {
-        case: "apiField";
         /**
          * @generated from field: google.protobuf.Api api_field = 2;
          */
         value: Api;
+        case: "apiField";
     } | {
-        case: "durationField";
         /**
          * @generated from field: google.protobuf.Duration duration_field = 3;
          */
         value: Duration;
+        case: "durationField";
     } | {
-        case: "emptyField";
         /**
          * @generated from field: google.protobuf.Empty empty_field = 4;
          */
         value: Empty;
+        case: "emptyField";
     } | {
-        case: "fieldMaskField";
         /**
          * @generated from field: google.protobuf.FieldMask field_mask_field = 5;
          */
         value: FieldMask;
+        case: "fieldMaskField";
     } | {
-        case: "sourceContextField";
         /**
          * @generated from field: google.protobuf.SourceContext source_context_field = 6;
          */
         value: SourceContext;
+        case: "sourceContextField";
     } | {
-        case: "structField";
         /**
          * @generated from field: google.protobuf.Struct struct_field = 7;
          */
         value: Struct;
+        case: "structField";
     } | {
-        case: "timestampField";
         /**
          * @generated from field: google.protobuf.Timestamp timestamp_field = 8;
          */
         value: Timestamp;
+        case: "timestampField";
     } | {
-        case: "typeField";
         /**
          * @generated from field: google.protobuf.Type type_field = 9;
          */
         value: Type;
+        case: "typeField";
     } | {
-        case: "doubleField";
         /**
          * @generated from field: google.protobuf.DoubleValue double_field = 10;
          */
         value: number;
+        case: "doubleField";
     } | {
-        case: "floatField";
         /**
          * @generated from field: google.protobuf.FloatValue float_field = 11;
          */
         value: number;
+        case: "floatField";
     } | {
-        case: "int64Field";
         /**
          * @generated from field: google.protobuf.Int64Value int64_field = 12;
          */
         value: bigint;
+        case: "int64Field";
     } | {
-        case: "uint64Field";
         /**
          * @generated from field: google.protobuf.UInt64Value uint64_field = 13;
          */
         value: bigint;
+        case: "uint64Field";
     } | {
-        case: "int32Field";
         /**
          * @generated from field: google.protobuf.Int32Value int32_field = 14;
          */
         value: number;
+        case: "int32Field";
     } | {
-        case: "uint32Field";
         /**
          * @generated from field: google.protobuf.UInt32Value uint32_field = 15;
          */
         value: number;
+        case: "uint32Field";
     } | {
-        case: "boolField";
         /**
          * @generated from field: google.protobuf.BoolValue bool_field = 16;
          */
         value: boolean;
+        case: "boolField";
     } | {
-        case: "stringField";
         /**
          * @generated from field: google.protobuf.StringValue string_field = 17;
          */
         value: string;
+        case: "stringField";
     } | {
-        case: "bytesField";
         /**
          * @generated from field: google.protobuf.BytesValue bytes_field = 18;
          */
         value: Uint8Array;
+        case: "bytesField";
     } | { case: undefined; value?: undefined } = { case: undefined };
 
     constructor(data?: PartialMessage<OneofWellKnownTypes>) {
@@ -462,6 +472,10 @@ export class OneofWellKnownTypes extends Message<OneofWellKnownTypes> {
 
 
 /**
+ * A map field for each well-known type. We only
+ * need to worry about the value part of the map being the
+ * well-known types, as messages can't be map keys.
+ *
  * @generated from message protobuf_unittest.MapWellKnownTypes
  */
 export class MapWellKnownTypes extends Message<MapWellKnownTypes> {

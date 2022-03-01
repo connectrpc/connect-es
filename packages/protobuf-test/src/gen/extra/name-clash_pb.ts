@@ -144,21 +144,29 @@ proto3.util.setEnumType(ReservedPropertyNames_EnumRuntime, "spec.ReservedPropert
 export class ReservedPropertyNames_BuiltIn extends Message$1<ReservedPropertyNames_BuiltIn> {
 
     /**
+     * built-in constructor()
+     *
      * @generated from field: string constructor = 2;
      */
     constructor$ = "";
 
     /**
+     * built-in toString()
+     *
      * @generated from field: string to_string = 3;
      */
     toString$ = "";
 
     /**
+     * built-in toJSON()
+     *
      * @generated from field: string to_JSON = 4;
      */
     toJSON$ = "";
 
     /**
+     * built-in valueOf()
+     *
      * @generated from field: string value_of = 5;
      */
     valueOf$ = "";
@@ -202,46 +210,64 @@ export class ReservedPropertyNames_BuiltIn extends Message$1<ReservedPropertyNam
 export class ReservedPropertyNames_Runtime extends Message$1<ReservedPropertyNames_Runtime> {
 
     /**
+     * runtime toJson()
+     *
      * @generated from field: string to_json = 4;
      */
     toJson$ = "";
 
     /**
+     * runtime type()
+     *
      * @generated from field: string type = 6;
      */
     type = "";
 
     /**
+     * runtime clone()
+     *
      * @generated from field: string clone = 7;
      */
     clone$ = "";
 
     /**
+     * runtime equals()
+     *
      * @generated from field: string equals = 8;
      */
     equals$ = "";
 
     /**
+     * runtime fromBinary()
+     *
      * @generated from field: string from_binary = 9;
      */
     fromBinary$ = "";
 
     /**
+     * runtime fromJson()
+     *
      * @generated from field: string from_json = 10;
      */
     fromJson$ = "";
 
     /**
+     * runtime fromJsonString()
+     *
      * @generated from field: string from_json_string = 11;
      */
     fromJsonString$ = "";
 
     /**
+     * runtime toBinary()
+     *
      * @generated from field: string to_binary = 12;
      */
     toBinary$ = "";
 
     /**
+     * runtime toJsonString()
+     *
      * @generated from field: string to_json_string = 14;
      */
     toJsonString$ = "";
@@ -290,32 +316,32 @@ export class ReservedPropertyNames_Runtime extends Message$1<ReservedPropertyNam
 export class ReservedPropertyNames_OneofBultIn extends Message$1<ReservedPropertyNames_OneofBultIn> {
 
     /**
-     * @generated from protobuf oneof built_in
+     * @generated from oneof spec.ReservedPropertyNames.OneofBultIn.built_in
      */
     builtIn: {
-        case: "constructor";
         /**
          * @generated from field: string constructor = 1;
          */
         value: string;
+        case: "constructor";
     } | {
-        case: "toString";
         /**
          * @generated from field: string to_string = 2;
          */
         value: string;
+        case: "toString";
     } | {
-        case: "toJSON";
         /**
          * @generated from field: string to_JSON = 3;
          */
         value: string;
+        case: "toJSON";
     } | {
-        case: "valueOf";
         /**
          * @generated from field: string value_of = 4;
          */
         value: string;
+        case: "valueOf";
     } | { case: undefined; value?: undefined } = { case: undefined };
 
     constructor(data?: PartialMessage$1<ReservedPropertyNames_OneofBultIn>) {
@@ -357,62 +383,62 @@ export class ReservedPropertyNames_OneofBultIn extends Message$1<ReservedPropert
 export class ReservedPropertyNames_OneofRuntime extends Message$1<ReservedPropertyNames_OneofRuntime> {
 
     /**
-     * @generated from protobuf oneof runtime
+     * @generated from oneof spec.ReservedPropertyNames.OneofRuntime.runtime
      */
     runtime: {
-        case: "toJson";
         /**
          * @generated from field: string to_json = 5;
          */
         value: string;
+        case: "toJson";
     } | {
-        case: "type";
         /**
          * @generated from field: string type = 6;
          */
         value: string;
+        case: "type";
     } | {
-        case: "clone";
         /**
          * @generated from field: string clone = 7;
          */
         value: string;
+        case: "clone";
     } | {
-        case: "equals";
         /**
          * @generated from field: string equals = 8;
          */
         value: string;
+        case: "equals";
     } | {
-        case: "fromBinary";
         /**
          * @generated from field: string from_binary = 9;
          */
         value: string;
+        case: "fromBinary";
     } | {
-        case: "fromJson";
         /**
          * @generated from field: string from_json = 10;
          */
         value: string;
+        case: "fromJson";
     } | {
-        case: "fromJsonString";
         /**
          * @generated from field: string from_json_string = 11;
          */
         value: string;
+        case: "fromJsonString";
     } | {
-        case: "toBinary";
         /**
          * @generated from field: string to_binary = 12;
          */
         value: string;
+        case: "toBinary";
     } | {
-        case: "toJsonString";
         /**
          * @generated from field: string to_json_string = 14;
          */
         value: string;
+        case: "toJsonString";
     } | { case: undefined; value?: undefined } = { case: undefined };
 
     constructor(data?: PartialMessage$1<ReservedPropertyNames_OneofRuntime>) {
@@ -455,6 +481,8 @@ export class ReservedPropertyNames_OneofRuntime extends Message$1<ReservedProper
 
 
 /**
+ * reserved identifier
+ *
  * @generated from message spec.interface
  */
 export class interface$ extends Message$1<interface$> {
@@ -489,6 +517,8 @@ export class interface$ extends Message$1<interface$> {
 
 
 /**
+ * reserved identifier
+ *
  * @generated from message spec.function
  */
 export class function$ extends Message$1<function$> {
@@ -523,6 +553,8 @@ export class function$ extends Message$1<function$> {
 
 
 /**
+ * reserved identifier
+ *
  * @generated from message spec.instanceof
  */
 export class instanceof$ extends Message$1<instanceof$> {
@@ -557,6 +589,8 @@ export class instanceof$ extends Message$1<instanceof$> {
 
 
 /**
+ * reserved identifier
+ *
  * @generated from message spec.switch
  */
 export class switch$ extends Message$1<switch$> {
@@ -591,6 +625,8 @@ export class switch$ extends Message$1<switch$> {
 
 
 /**
+ * reserved identifier
+ *
  * @generated from message spec.case
  */
 export class case$ extends Message$1<case$> {
@@ -625,6 +661,8 @@ export class case$ extends Message$1<case$> {
 
 
 /**
+ * reserved identifier
+ *
  * @generated from message spec.return
  */
 export class return$ extends Message$1<return$> {
@@ -659,6 +697,8 @@ export class return$ extends Message$1<return$> {
 
 
 /**
+ * used by runtime
+ *
  * @generated from message spec.Message
  */
 export class Message extends Message$1<Message> {
@@ -693,6 +733,8 @@ export class Message extends Message$1<Message> {
 
 
 /**
+ * used by runtime
+ *
  * @generated from message spec.PartialMessage
  */
 export class PartialMessage extends Message$1<PartialMessage> {
@@ -727,6 +769,8 @@ export class PartialMessage extends Message$1<PartialMessage> {
 
 
 /**
+ * used by runtime
+ *
  * @generated from message spec.PlainMessage
  */
 export class PlainMessage extends Message$1<PlainMessage> {
@@ -761,6 +805,10 @@ export class PlainMessage extends Message$1<PlainMessage> {
 
 
 /**
+ * clash with global type "Error"
+ * either this message name is escaped in generated code, or the generated
+ * code must escape it's calls to the global error object (i.e. `new Error`)
+ *
  * @generated from message spec.Error
  */
 export class Error extends Message$1<Error> {
@@ -807,6 +855,8 @@ export class Error extends Message$1<Error> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.Object
  */
 export class Object$ extends Message$1<Object$> {
@@ -875,6 +925,8 @@ export class object$ extends Message$1<object$> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.array
  */
 export class array extends Message$1<array> {
@@ -909,6 +961,8 @@ export class array extends Message$1<array> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.string
  */
 export class string$ extends Message$1<string$> {
@@ -943,6 +997,8 @@ export class string$ extends Message$1<string$> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.number
  */
 export class number$ extends Message$1<number$> {
@@ -977,6 +1033,8 @@ export class number$ extends Message$1<number$> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.boolean
  */
 export class boolean$ extends Message$1<boolean$> {
@@ -1011,6 +1069,8 @@ export class boolean$ extends Message$1<boolean$> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.bigint
  */
 export class bigint$ extends Message$1<bigint$> {
@@ -1045,6 +1105,8 @@ export class bigint$ extends Message$1<bigint$> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.Uint8Array
  */
 export class Uint8Array$ extends Message$1<Uint8Array$> {
@@ -1079,6 +1141,8 @@ export class Uint8Array$ extends Message$1<Uint8Array$> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.Array
  */
 export class Array extends Message$1<Array> {
@@ -1113,6 +1177,8 @@ export class Array extends Message$1<Array> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.String
  */
 export class String extends Message$1<String> {
@@ -1147,6 +1213,8 @@ export class String extends Message$1<String> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.Number
  */
 export class Number extends Message$1<Number> {
@@ -1181,6 +1249,8 @@ export class Number extends Message$1<Number> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.Boolean
  */
 export class Boolean extends Message$1<Boolean> {
@@ -1215,6 +1285,8 @@ export class Boolean extends Message$1<Boolean> {
 
 
 /**
+ * clash with global type
+ *
  * @generated from message spec.BigInt
  */
 export class BigInt extends Message$1<BigInt> {
@@ -1282,6 +1354,8 @@ export class ClashParent extends Message$1<ClashParent> {
 }
 
 /**
+ * should clash with message ClashParent_ClashChild
+ *
  * @generated from message spec.ClashParent.ClashChild
  */
 export class ClashParent_ClashChild extends Message$1<ClashParent_ClashChild> {
@@ -1322,31 +1396,43 @@ export class ClashParent_ClashChild extends Message$1<ClashParent_ClashChild> {
 export class NoClashFields extends Message$1<NoClashFields> {
 
     /**
+     * ok as object property
+     *
      * @generated from field: string const = 1;
      */
     const = "";
 
     /**
+     * ok as object property
+     *
      * @generated from field: string switch = 2;
      */
     switch = "";
 
     /**
+     * ok as object property
+     *
      * @generated from field: string case = 3;
      */
     case = "";
 
     /**
+     * ok as object property
+     *
      * @generated from field: string function = 4;
      */
     function = "";
 
     /**
+     * ok as object property
+     *
      * @generated from field: string interface = 5;
      */
     interface = "";
 
     /**
+     * ok as object property
+     *
      * @generated from field: string return = 6;
      */
     return = "";
@@ -1392,44 +1478,56 @@ export class NoClashFields extends Message$1<NoClashFields> {
 export class NoClashOneof extends Message$1<NoClashOneof> {
 
     /**
-     * @generated from protobuf oneof kind
+     * @generated from oneof spec.NoClashOneof.kind
      */
     kind: {
-        case: "const";
         /**
+         * ok as object property
+         *
          * @generated from field: string const = 1;
          */
         value: string;
+        case: "const";
     } | {
-        case: "switch";
         /**
+         * ok as object property
+         *
          * @generated from field: string switch = 2;
          */
         value: string;
+        case: "switch";
     } | {
-        case: "case";
         /**
+         * ok as object property
+         *
          * @generated from field: string case = 3;
          */
         value: string;
+        case: "case";
     } | {
-        case: "function";
         /**
+         * ok as object property
+         *
          * @generated from field: string function = 4;
          */
         value: string;
+        case: "function";
     } | {
-        case: "interface";
         /**
+         * ok as object property
+         *
          * @generated from field: string interface = 5;
          */
         value: string;
+        case: "interface";
     } | {
-        case: "return";
         /**
+         * ok as object property
+         *
          * @generated from field: string return = 6;
          */
         value: string;
+        case: "return";
     } | { case: undefined; value?: undefined } = { case: undefined };
 
     constructor(data?: PartialMessage$1<NoClashOneof>) {
@@ -1514,6 +1612,8 @@ export class NoClashOneofADT extends Message$1<NoClashOneofADT> {
 
 
 /**
+ * just here as a "namespace" for the enum
+ *
  * @generated from message spec.NoClashEnumWrap
  */
 export class NoClashEnumWrap extends Message$1<NoClashEnumWrap> {
@@ -1552,31 +1652,43 @@ export class NoClashEnumWrap extends Message$1<NoClashEnumWrap> {
 export enum NoClashEnumWrap_X {
 
     /**
+     * ok as object property
+     *
      * @generated from enum value: instanceof = 0;
      */
     instanceof = 0,
 
     /**
+     * ok as object property
+     *
      * @generated from enum value: switch = 1;
      */
     switch = 1,
 
     /**
+     * ok as object property
+     *
      * @generated from enum value: case = 3;
      */
     case = 3,
 
     /**
+     * ok as object property
+     *
      * @generated from enum value: function = 4;
      */
     function = 4,
 
     /**
+     * ok as object property
+     *
      * @generated from enum value: interface = 5;
      */
     interface = 5,
 
     /**
+     * ok as object property
+     *
      * @generated from enum value: return = 6;
      */
     return = 6,
@@ -1592,6 +1704,5 @@ proto3.util.setEnumType(NoClashEnumWrap_X, "spec.NoClashEnumWrap.X", [
     {no: 5, name: "interface"},
     {no: 6, name: "return"},
 ]);
-
 
 

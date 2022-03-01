@@ -5,29 +5,42 @@
 import {Error} from "./name-clash_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
-// ## Service ReservedPropertyNamesService
-// Generated from service spec.ReservedPropertyNamesService
+/**
+ * @generated from service spec.ReservedPropertyNamesService
+ */
 export const ReservedPropertyNamesService = {
     typeName: "spec.ReservedPropertyNamesService",
     methods: {
+        /**
+         * @generated from rpc spec.ReservedPropertyNamesService.constructor
+         */
         constructor: {
             name: "constructor",
             I: Error,
             O: Error,
             kind: MethodKind.Unary,
         },
+        /**
+         * @generated from rpc spec.ReservedPropertyNamesService.toString
+         */
         toString: {
             name: "toString",
             I: Error,
             O: Error,
             kind: MethodKind.Unary,
         },
+        /**
+         * @generated from rpc spec.ReservedPropertyNamesService.to_JSON
+         */
         to_JSON: {
             name: "to_JSON",
             I: Error,
             O: Error,
             kind: MethodKind.Unary,
         },
+        /**
+         * @generated from rpc spec.ReservedPropertyNamesService.value_of
+         */
         value_of: {
             name: "value_of",
             I: Error,

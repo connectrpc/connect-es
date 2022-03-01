@@ -40,54 +40,54 @@ proto3.util.setEnumType(OneofEnum, "spec.OneofEnum", [
 export class OneofMessage extends Message<OneofMessage> {
 
     /**
-     * @generated from protobuf oneof scalar
+     * @generated from oneof spec.OneofMessage.scalar
      */
     scalar: {
-        case: "value";
         /**
          * @generated from field: int32 value = 1;
          */
         value: number;
+        case: "value";
     } | {
-        case: "error";
         /**
          * @generated from field: string error = 2;
          */
         value: string;
+        case: "error";
     } | { case: undefined; value?: undefined } = { case: undefined };
 
     /**
-     * @generated from protobuf oneof message
+     * @generated from oneof spec.OneofMessage.message
      */
     message: {
-        case: "foo";
         /**
          * @generated from field: spec.OneofMessageFoo foo = 11;
          */
         value: OneofMessageFoo;
+        case: "foo";
     } | {
-        case: "bar";
         /**
          * @generated from field: spec.OneofMessageBar bar = 12;
          */
         value: OneofMessageBar;
+        case: "bar";
     } | {
-        case: "baz";
         /**
          * @generated from field: spec.OneofMessageBar baz = 13;
          */
         value: OneofMessageBar;
+        case: "baz";
     } | { case: undefined; value?: undefined } = { case: undefined };
 
     /**
-     * @generated from protobuf oneof enum
+     * @generated from oneof spec.OneofMessage.enum
      */
     enum: {
-        case: "e";
         /**
          * @generated from field: spec.OneofEnum e = 21;
          */
         value: OneofEnum;
+        case: "e";
     } | { case: undefined; value?: undefined } = { case: undefined };
 
     constructor(data?: PartialMessage<OneofMessage>) {

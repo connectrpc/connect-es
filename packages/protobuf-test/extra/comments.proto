@@ -32,7 +32,8 @@ message MessageWithComments {
     oneof result {
         // Comment after start of oneof.
 
-        int32 value = 2;
+        // Comment before oneof member.
+        int32 value = 2; // Comment next to oneof member.
         string error = 3;
 
         // Comment before end of oneof.

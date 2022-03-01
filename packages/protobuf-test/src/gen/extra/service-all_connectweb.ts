@@ -4,11 +4,15 @@
 
 import {Int32Value, MethodIdempotency, MethodKind, StringValue} from "@bufbuild/protobuf";
 
-// ## Service ServiceAll
-// Generated from service spec.ServiceAll
+/**
+ * @generated from service spec.ServiceAll
+ */
 export const ServiceAll = {
     typeName: "spec.ServiceAll",
     methods: {
+        /**
+         * @generated from rpc spec.ServiceAll.Unary
+         */
         unary: {
             name: "Unary",
             I: StringValue,
@@ -16,6 +20,9 @@ export const ServiceAll = {
             kind: MethodKind.Unary,
             idempotency: MethodIdempotency.Idempotent,
         },
+        /**
+         * @generated from rpc spec.ServiceAll.ServerStream
+         */
         serverStream: {
             name: "ServerStream",
             I: StringValue,
@@ -23,13 +30,19 @@ export const ServiceAll = {
             kind: MethodKind.ServerStreaming,
             idempotency: MethodIdempotency.NoSideEffects,
         },
+        /**
+         * @generated from rpc spec.ServiceAll.ClientStream
+         */
         clientStream: {
             name: "ClientStream",
             I: StringValue,
             O: Int32Value,
             kind: MethodKind.ClientStreaming,
         },
-        /** @deprecated */
+        /**
+         * @generated from rpc spec.ServiceAll.Bidi
+         * @deprecated
+         */
         bidi: {
             name: "Bidi",
             I: StringValue,

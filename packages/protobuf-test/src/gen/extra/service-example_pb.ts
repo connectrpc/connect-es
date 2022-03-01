@@ -11,16 +11,22 @@ import {Message, proto3} from "@bufbuild/protobuf";
 export enum FailRequest {
 
     /**
+     * don't fail
+     *
      * @generated from enum value: FAIL_REQUEST_NONE = 0;
      */
     FAIL_REQUEST_NONE = 0,
 
     /**
+     * send an error status trailer after sending a message
+     *
      * @generated from enum value: MESSAGE_THEN_ERROR_STATUS = 1;
      */
     MESSAGE_THEN_ERROR_STATUS = 1,
 
     /**
+     * send an error status, don't send any message
+     *
      * @generated from enum value: ERROR_STATUS_ONLY = 2;
      */
     ERROR_STATUS_ONLY = 2,
@@ -40,21 +46,29 @@ proto3.util.setEnumType(FailRequest, "spec.FailRequest", [
 export class ExampleRequest extends Message<ExampleRequest> {
 
     /**
+     * any text
+     *
      * @generated from field: string question = 1;
      */
     question = "";
 
     /**
+     * the server should simulate an error in the requested way 
+     *
      * @generated from field: spec.FailRequest please_fail = 2;
      */
     pleaseFail = FailRequest.FAIL_REQUEST_NONE;
 
     /**
+     * the server should delay it's response for this amount of milliseconds
+     *
      * @generated from field: int32 please_delay_response_ms = 3;
      */
     pleaseDelayResponseMs = 0;
 
     /**
+     * by default, the server always writes some custom response headers
+     *
      * @generated from field: bool disable_sending_example_response_headers = 4;
      */
     disableSendingExampleResponseHeaders = false;
@@ -98,21 +112,29 @@ export class ExampleRequest extends Message<ExampleRequest> {
 export class ExampleResponse extends Message<ExampleResponse> {
 
     /**
+     * any text
+     *
      * @generated from field: string answer = 1;
      */
     answer = "";
 
     /**
+     * contains the request headers that the server received
+     *
      * @generated from field: map<string, string> your_request_headers = 2;
      */
     yourRequestHeaders: { [key: string]: string } = {};
 
     /**
+     * contains the deadline that the server received 
+     *
      * @generated from field: string your_deadline = 3;
      */
     yourDeadline = "";
 
     /**
+     * the failure requested 
+     *
      * @generated from field: spec.FailRequest your_fail_request = 4;
      */
     yourFailRequest = FailRequest.FAIL_REQUEST_NONE;
@@ -148,6 +170,5 @@ export class ExampleResponse extends Message<ExampleResponse> {
     }
 
 }
-
 
 

@@ -6,6 +6,8 @@ import type {BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMe
 import {Message, proto3} from "@bufbuild/protobuf";
 
 /**
+ * The entire enum is deprecated
+ *
  * @generated from enum spec.DeprecatedEnum
  * @deprecated
  */
@@ -30,6 +32,8 @@ proto3.util.setEnumType(DeprecatedEnum, "spec.DeprecatedEnum", [
 ]);
 
 /**
+ * Only a single enum value is deprecated
+ *
  * @generated from enum spec.DeprecatedValueEnum
  */
 export enum DeprecatedValueEnum {
@@ -54,6 +58,8 @@ proto3.util.setEnumType(DeprecatedValueEnum, "spec.DeprecatedValueEnum", [
 ]);
 
 /**
+ * The entire message is deprecated
+ *
  * @generated from message spec.DeprecatedMessage
  * @deprecated
  */
@@ -95,17 +101,23 @@ export class DeprecatedMessage extends Message<DeprecatedMessage> {
 
 
 /**
+ * A single field of this message is deprecated
+ *
  * @generated from message spec.DeprecatedFieldMessage
  */
 export class DeprecatedFieldMessage extends Message<DeprecatedFieldMessage> {
 
     /**
+     * This field is deprecated
+     *
      * @generated from field: string deprecated_field = 1 [deprecated = true];
      * @deprecated
      */
     deprecatedField = "";
 
     /**
+     * This field is not deprecated
+     *
      * @generated from field: string current_field = 2;
      */
     currentField = "";
