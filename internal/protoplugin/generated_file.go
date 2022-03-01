@@ -118,12 +118,10 @@ func (f *GeneratedFile) GetContent() string {
 		}
 		sort.Strings(x)
 		y := strings.Join(x, ", ")
-		// TODO support require()
-		// TODO .js extension optional?
 		if typeOnly {
-			fmt.Fprintf(&imports, "import type {%s} from %q;\n", y, from)
+			_, _ = fmt.Fprintf(&imports, "import type {%s} from %q;\n", y, from)
 		} else {
-			fmt.Fprintf(&imports, "import {%s} from %q;\n", y, from)
+			_, _ = fmt.Fprintf(&imports, "import {%s} from %q;\n", y, from)
 		}
 	})
 	buf.Write(imports.Bytes())
@@ -141,7 +139,7 @@ func (f *GeneratedFile) GetContent() string {
 	return buf.String()
 }
 
-func (f *GeneratedFile) processSymbols(makeImportStatement func(typeOnly bool, from string, names map[string]string)) map[symbolID]string {
+func (f *GeneratedFile) processSymbols(makeImportStatement func(typeOnly bool, from string, nameToAlias map[string]string)) map[symbolID]string {
 
 	var symbolToIdentifier = make(map[symbolID]string) // identifiers to use in the output
 	var symbolToIsValue = make(map[symbolID]bool)      // symbols that need a value import (as opposed to a type-only import)

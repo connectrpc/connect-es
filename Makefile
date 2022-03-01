@@ -84,7 +84,7 @@ $(TEST_GEN): $(GOOGPROTOBUF_SOURCE) $(GOOGPROTOBUF_PROTOC_BIN) $(PROTOC_GEN_ES_B
 	rm -rf $(TEST_DIR)/src/gen/* $(TEST_DIR)/descriptorset.bin
 	$(protoc) --plugin $(PROTOC_GEN_ES_BIN) --es_out $(TEST_DIR)/src/gen --es_opt ts_nocheck=false
 	$(protoc) --plugin $(PROTOC_GEN_CONNECTWEB_BIN) --connectweb_out $(TEST_DIR)/src/gen --connectweb_opt ts_nocheck=false
-	$(protoc) --descriptor_set_out $(TEST_DIR)/descriptorset.bin --include_imports
+	$(protoc) --descriptor_set_out $(TEST_DIR)/descriptorset.bin --include_imports --include_source_info
 	mkdir -p $(dir $(TEST_GEN)) && touch $(TEST_GEN)
 $(TEST_BUILD): $(PROTOC_GEN_ES_BIN) $(TEST_GEN) $(RUNTIME_BUILD) $(TEST_SOURCES)
 	cd $(TEST_DIR) && npm run clean && npm run build

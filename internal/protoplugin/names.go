@@ -243,8 +243,8 @@ func makeEnumName(enum *Enum) (string, string) {
 	return name, sharedPrefix
 }
 
-func makeEnumValueName(enumValue *EnumValue) string {
-	return strings.TrimPrefix(enumValue.Proto.GetName(), enumValue.Parent.sharedPrefix)
+func makeEnumValueName(protoName string, sharedPrefix string) string {
+	return strings.TrimPrefix(protoName, sharedPrefix)
 }
 
 func makeFieldName(protoName string, inOneof bool) string {

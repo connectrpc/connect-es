@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"google.golang.org/protobuf/proto"
@@ -41,16 +40,17 @@ func (o Options) Run(request *pluginpb.CodeGeneratorRequest, gen func(gen *Gener
 
 func (o Options) Pipe(gen func(gen *Generator) error) {
 	exit := func(err error) {
-		fmt.Fprintf(os.Stderr, "X%s: %v\n", filepath.Base(os.Args[0]), err)
+		_, _ = fmt.Fprintf(os.Stderr, "%s: %v\n", o.Name, err)
 		os.Exit(1)
 	}
 	if len(os.Args) > 1 {
-		if os.Args[1] == "--version" {
-			fmt.Fprintf(os.Stderr, "%s\n", o.Version)
-			os.Exit(1)
-			return
+		switch os.Args[1] {
+		case "-v", "--version":
+			_, _ = fmt.Fprintf(os.Stderr, "%s %s\n", o.Name, o.Version)
+			os.Exit(0)
+		default:
+			exit(errors.New("this command accepts a google.protobuf.compiler.CodeGeneratorRequest on stdin and writes a CodeGeneratorResponse to stdout"))
 		}
-		exit(errors.New("this command accepts a google.protobuf.compiler.CodeGeneratorRequest on stdin and writes a CodeGeneratorResponse to stdout"))
 		return
 	}
 	in, err := ioutil.ReadAll(os.Stdin)
@@ -246,12 +246,15 @@ type File struct {
 	Syntax             ProtoSyntax
 	Name               string // name of the file, excluding the .proto suffix
 	StandardImportPath string // the standard import path for the type generator (suffix _pb.js)
+	Preamble           string // standard preamble, containing code generator information and leading detached syntax comments (usually a license header)
 	RuntimeSymbols     *Runtime
 	Enums              []*Enum
 	Messages           []*Message // excluding synthetic messages like map entries
 	Extensions         []*Extension
 	Services           []*Service
-	Deprecated         bool       // deprecated with the file level option "deprecated = true"
+	Deprecated         bool // deprecated with the file level option "deprecated = true"
+	SyntaxComments     CommentSet
+	PackageComments    CommentSet
 	Generate           bool       // whether this file was requested to be generated
 	allMessages        []*Message // including synthetic messages like map entries
 	// TODO expose comments
@@ -259,11 +262,14 @@ type File struct {
 
 func (g *Generator) newFile(proto *descriptorpb.FileDescriptorProto, generate bool) (*File, error) {
 	f := &File{
-		Proto:      proto,
-		Name:       strings.TrimSuffix(proto.GetName(), ".proto"),
-		Deprecated: proto.GetOptions().GetDeprecated(),
-		Generate:   generate,
+		Proto:           proto,
+		Name:            strings.TrimSuffix(proto.GetName(), ".proto"),
+		Deprecated:      proto.GetOptions().GetDeprecated(),
+		Generate:        generate,
+		SyntaxComments:  newCommentSet(proto.SourceCodeInfo, []int32{fieldNumber_FileDescriptorProto_Syntax}),
+		PackageComments: newCommentSet(proto.SourceCodeInfo, []int32{fieldNumber_FileDescriptorProto_Package}),
 	}
+	proto.SourceCodeInfo.GetLocation()
 	f.StandardImportPath = makePBImportPath(f, g.BootstrapWKT)
 	switch proto.GetSyntax() {
 	case "proto3":
@@ -273,12 +279,19 @@ func (g *Generator) newFile(proto *descriptorpb.FileDescriptorProto, generate bo
 	default:
 		return nil, fmt.Errorf("unsupported syntax: %s", proto.GetSyntax())
 	}
+	f.Preamble = makeFilePreamble(
+		g,
+		proto.GetName(),
+		proto.GetPackage(),
+		f.Syntax,
+		newCommentSet(proto.SourceCodeInfo, []int32{fieldNumber_FileDescriptorProto_Syntax}),
+	)
 	f.RuntimeSymbols = newRuntime(g.symbolPool, g.runtimeImportPath, f.Syntax)
-	for _, x := range proto.GetEnumType() {
-		f.Enums = append(f.Enums, g.newEnum(x, f))
+	for index, x := range proto.GetEnumType() {
+		f.Enums = append(f.Enums, g.newEnum(x, f, index))
 	}
-	for _, x := range proto.GetMessageType() {
-		newMessage, err := g.newMessage(x, f)
+	for index, messageProto := range proto.GetMessageType() {
+		newMessage, err := g.newMessage(messageProto, f, index)
 		if err != nil {
 			return nil, err
 		}
@@ -287,15 +300,15 @@ func (g *Generator) newFile(proto *descriptorpb.FileDescriptorProto, generate bo
 			f.Messages = append(f.Messages, newMessage)
 		}
 	}
-	for _, x := range proto.GetExtension() {
-		newExtension, err := g.newExtension(x, f, nil)
+	for index, extensionProto := range proto.GetExtension() {
+		newExtension, err := g.newExtension(extensionProto, f, nil, index)
 		if err != nil {
 			return nil, err
 		}
 		f.Extensions = append(f.Extensions, newExtension)
 	}
-	for _, x := range proto.GetService() {
-		f.Services = append(f.Services, g.newService(x, f))
+	for index, serviceProto := range proto.GetService() {
+		f.Services = append(f.Services, g.newService(serviceProto, f, index))
 	}
 	return f, nil
 }
@@ -331,13 +344,14 @@ type Enum struct {
 	TypeName      string // fully qualified name
 	Symbol        *Symbol
 	Values        []*EnumValue
-	Deprecated    bool   // deprecated with the enum option "deprecated = true", or implicitly with the file level option
+	Deprecated    bool // deprecated with the enum option "deprecated = true", or implicitly with the file level option
+	Comments      CommentSet
 	sharedPrefix  string // MY_ENUM_ for `enum MyEnum {MY_ENUM_A=0; MY_ENUM_B=1;}`, or blank string
 	protoTypeName string // fully qualified name with a leading dot
-	// TODO expose comments
+	sourcePath    []int32
 }
 
-func (g *Generator) newEnum(proto *descriptorpb.EnumDescriptorProto, parentMessageOrFile interface{}) *Enum {
+func (g *Generator) newEnum(proto *descriptorpb.EnumDescriptorProto, parentMessageOrFile interface{}, indexOnParent int) *Enum {
 	e := &Enum{
 		Proto: proto,
 	}
@@ -345,6 +359,7 @@ func (g *Generator) newEnum(proto *descriptorpb.EnumDescriptorProto, parentMessa
 	case *Message:
 		e.protoTypeName = fmt.Sprintf("%s.%s", p.protoTypeName, proto.GetName())
 		e.File = p.File
+		e.sourcePath = append(p.sourcePath, fieldNumber_DescriptorProto_EnumType, int32(indexOnParent))
 	case *File:
 		if p.Proto.GetPackage() != "" {
 			e.protoTypeName = fmt.Sprintf(".%s.%s", p.Proto.GetPackage(), proto.GetName())
@@ -352,15 +367,17 @@ func (g *Generator) newEnum(proto *descriptorpb.EnumDescriptorProto, parentMessa
 			e.protoTypeName = fmt.Sprintf(".%s", proto.GetName())
 		}
 		e.File = p
+		e.sourcePath = append(e.sourcePath, fieldNumber_FileDescriptorProto_EnumType, int32(indexOnParent))
 	}
 	e.TypeName = strings.TrimPrefix(e.protoTypeName, ".")
 	e.Deprecated = proto.GetOptions().GetDeprecated() || e.File.Deprecated
+	e.Comments = newCommentSet(e.File.Proto.SourceCodeInfo, e.sourcePath)
 	localName, sharedPrefix := makeEnumName(e)
 	e.sharedPrefix = sharedPrefix
 	e.Symbol = g.symbolPool.new(localName, e.File.StandardImportPath)
 	g.enumsByName[e.protoTypeName] = e
-	for _, v := range proto.Value {
-		e.Values = append(e.Values, g.newEnumValue(v, e))
+	for index, valueProto := range proto.Value {
+		e.Values = append(e.Values, g.newEnumValue(valueProto, e, index))
 	}
 	return e
 }
@@ -383,6 +400,27 @@ func (e *Enum) FindValueByName(name string) *EnumValue {
 	return nil
 }
 
+func (e *Enum) JSDoc(indent string) string {
+	doc := newJsDocBlock()
+	if e.Comments.Leading != "" {
+		doc.add(e.Comments.Leading)
+	}
+	if e.Comments.Trailing != "" {
+		if !doc.empty() {
+			doc.add("")
+		}
+		doc.add(e.Comments.Trailing)
+	}
+	if !doc.empty() {
+		doc.add("")
+	}
+	doc.add(fmt.Sprintf(" @generated from %s", e))
+	if e.Deprecated {
+		doc.add(" @deprecated")
+	}
+	return doc.indentedString(indent)
+}
+
 func (e *Enum) String() string {
 	return fmt.Sprintf("enum %s", e.TypeName)
 }
@@ -392,17 +430,42 @@ type EnumValue struct {
 	Parent     *Enum
 	LocalName  string
 	Deprecated bool // deprecated with the enum value option "deprecated = true"
-	// TODO expose comments
+	Comments   CommentSet
 }
 
-func (g *Generator) newEnumValue(proto *descriptorpb.EnumValueDescriptorProto, parent *Enum) *EnumValue {
+func (g *Generator) newEnumValue(proto *descriptorpb.EnumValueDescriptorProto, parent *Enum, indexOnParent int) *EnumValue {
 	v := &EnumValue{
 		Proto:      proto,
 		Parent:     parent,
+		LocalName:  makeEnumValueName(proto.GetName(), parent.sharedPrefix),
 		Deprecated: proto.GetOptions().GetDeprecated(),
+		Comments: newCommentSet(
+			parent.File.Proto.SourceCodeInfo,
+			append(parent.sourcePath, fieldNumber_EnumDescriptorProto_Value, int32(indexOnParent)),
+		),
 	}
-	v.LocalName = makeEnumValueName(v)
 	return v
+}
+
+func (v *EnumValue) JSDoc(indent string) string {
+	doc := newJsDocBlock()
+	if v.Comments.Leading != "" {
+		doc.add(v.Comments.Leading)
+	}
+	if v.Comments.Trailing != "" {
+		if !doc.empty() {
+			doc.add("")
+		}
+		doc.add(v.Comments.Trailing)
+	}
+	if !doc.empty() {
+		doc.add("")
+	}
+	doc.add(fmt.Sprintf(" @generated from enum value: %s;", v.GetDeclarationString()))
+	if v.Deprecated {
+		doc.add(" @deprecated")
+	}
+	return doc.indentedString(indent)
 }
 
 func (v *EnumValue) String() string {
@@ -428,14 +491,15 @@ type Message struct {
 	NestedEnums       []*Enum
 	NestedMessages    []*Message // excluding synthetic messages like map entries
 	NestedExtensions  []*Extension
-	Deprecated        bool       // deprecated with the message option "deprecated = true", or implicitly with the file level option
+	Deprecated        bool // deprecated with the message option "deprecated = true", or implicitly with the file level option
+	Comments          CommentSet
 	allNestedMessages []*Message // including synthetic messages like map entries
 	allOneofs         []*Oneof   // including synthetic oneofs for proto3 optional
 	protoTypeName     string     // fully qualified name with a leading dot
-	// TODO expose comments
+	sourcePath        []int32
 }
 
-func (g *Generator) newMessage(proto *descriptorpb.DescriptorProto, parentMessageOrFile interface{}) (*Message, error) {
+func (g *Generator) newMessage(proto *descriptorpb.DescriptorProto, parentMessageOrFile interface{}, indexOnParent int) (*Message, error) {
 	message := &Message{
 		Proto: proto,
 	}
@@ -443,6 +507,7 @@ func (g *Generator) newMessage(proto *descriptorpb.DescriptorProto, parentMessag
 	case *Message:
 		message.protoTypeName = fmt.Sprintf("%s.%s", p.protoTypeName, proto.GetName())
 		message.File = p.File
+		message.sourcePath = append(p.sourcePath, fieldNumber_DescriptorProto_NestedType, int32(indexOnParent))
 	case *File:
 		if p.Proto.GetPackage() != "" {
 			message.protoTypeName = fmt.Sprintf(".%s.%s", p.Proto.GetPackage(), proto.GetName())
@@ -450,16 +515,18 @@ func (g *Generator) newMessage(proto *descriptorpb.DescriptorProto, parentMessag
 			message.protoTypeName = fmt.Sprintf(".%s", proto.GetName())
 		}
 		message.File = p
+		message.sourcePath = append(message.sourcePath, fieldNumber_FileDescriptorProto_MessageType, int32(indexOnParent))
 	}
 	message.TypeName = strings.TrimPrefix(message.protoTypeName, ".")
 	message.Symbol = g.symbolPool.new(makeMessageName(message), message.File.StandardImportPath)
 	message.Deprecated = proto.GetOptions().GetDeprecated() || message.File.Deprecated
+	message.Comments = newCommentSet(message.File.Proto.SourceCodeInfo, message.sourcePath)
 	g.messagesByName[message.protoTypeName] = message
-	for _, d := range proto.GetEnumType() {
-		message.NestedEnums = append(message.NestedEnums, g.newEnum(d, message))
+	for index, d := range proto.GetEnumType() {
+		message.NestedEnums = append(message.NestedEnums, g.newEnum(d, message, index))
 	}
-	for _, d := range proto.GetNestedType() {
-		newMessage, err := g.newMessage(d, message)
+	for index, messageProto := range proto.GetNestedType() {
+		newMessage, err := g.newMessage(messageProto, message, index)
 		if err != nil {
 			return nil, err
 		}
@@ -468,18 +535,18 @@ func (g *Generator) newMessage(proto *descriptorpb.DescriptorProto, parentMessag
 			message.NestedMessages = append(message.NestedMessages, newMessage)
 		}
 	}
-	for _, d := range proto.GetOneofDecl() {
-		message.allOneofs = append(message.allOneofs, g.newOneof(d, message))
+	for index, oneofProto := range proto.GetOneofDecl() {
+		message.allOneofs = append(message.allOneofs, g.newOneof(oneofProto, message, index))
 	}
-	for _, d := range proto.GetField() {
-		newField, err := g.newField(d, message)
+	for index, fieldProto := range proto.GetField() {
+		newField, err := g.newField(fieldProto, message, index)
 		if err != nil {
 			return nil, err
 		}
 		message.Fields = append(message.Fields, newField)
 	}
-	for _, d := range proto.GetExtension() {
-		newExtension, err := g.newExtension(d, message.File, message)
+	for index, extensionProto := range proto.GetExtension() {
+		newExtension, err := g.newExtension(extensionProto, message.File, message, index)
 		if err != nil {
 			return nil, err
 		}
@@ -508,6 +575,27 @@ func (g *Generator) newMessage(proto *descriptorpb.DescriptorProto, parentMessag
 		message.Oneofs = append(message.Oneofs, oneof)
 	}
 	return message, nil
+}
+
+func (m *Message) JSDoc(indent string) string {
+	doc := newJsDocBlock()
+	if m.Comments.Leading != "" {
+		doc.add(m.Comments.Leading)
+	}
+	if m.Comments.Trailing != "" {
+		if !doc.empty() {
+			doc.add("")
+		}
+		doc.add(m.Comments.Trailing)
+	}
+	if !doc.empty() {
+		doc.add("")
+	}
+	doc.add(fmt.Sprintf(" @generated from %s", m))
+	if m.Deprecated {
+		doc.add(" @deprecated")
+	}
+	return doc.indentedString(indent)
 }
 
 func (m *Message) String() string {
@@ -587,20 +675,22 @@ type Field struct {
 	Enum            *Enum    // type for enum fields; nil otherwise
 	Message         *Message // type for message or group fields; nil otherwise
 	Map             *Map     // type for map fields; nil otherwise
-
-	// TODO expose comments
+	Comments        CommentSet
+	sourcePath      []int32
 }
 
-func (g *Generator) newField(desc *descriptorpb.FieldDescriptorProto, parent *Message) (*Field, error) {
+func (g *Generator) newField(desc *descriptorpb.FieldDescriptorProto, parent *Message, indexOnParent int) (*Field, error) {
 	if desc.Extendee != nil {
 		return nil, fmt.Errorf("invalid request: regular field must not have a extendee")
 	}
 	f := &Field{
 		Proto:      desc,
+		LocalName:  makeFieldName(desc.GetName(), desc.OneofIndex != nil),
 		Parent:     parent,
 		Deprecated: desc.GetOptions().GetDeprecated(),
+		sourcePath: append(parent.sourcePath, fieldNumber_DescriptorProto_Field, int32(indexOnParent)),
 	}
-	f.LocalName = makeFieldName(desc.GetName(), f.Proto.OneofIndex != nil)
+	f.Comments = newCommentSet(parent.File.Proto.SourceCodeInfo, f.sourcePath)
 	if protoCamelCase(f.Proto.GetName()) != desc.GetJsonName() {
 		f.JsonName = desc.GetJsonName()
 	}
@@ -611,6 +701,27 @@ func (g *Generator) newField(desc *descriptorpb.FieldDescriptorProto, parent *Me
 		f.Optional = f.Proto.OneofIndex == nil && f.Proto.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL
 	}
 	return f, nil
+}
+
+func (f *Field) JSDoc(indent string) string {
+	doc := newJsDocBlock()
+	if f.Comments.Leading != "" {
+		doc.add(f.Comments.Leading)
+	}
+	if f.Comments.Trailing != "" {
+		if !doc.empty() {
+			doc.add("")
+		}
+		doc.add(f.Comments.Trailing)
+	}
+	if !doc.empty() {
+		doc.add("")
+	}
+	doc.add(fmt.Sprintf(" @generated from field: %s;", f.GetDeclarationString()))
+	if f.Deprecated {
+		doc.add(" @deprecated")
+	}
+	return doc.indentedString(indent)
 }
 
 func (f *Field) String() string {
@@ -821,20 +932,41 @@ func (g *Generator) newMap(parent *Field) (*Map, error) {
 }
 
 type Oneof struct {
-	Proto     *descriptorpb.OneofDescriptorProto
-	LocalName string
-	Parent    *Message // message in which this oneof is declared
-	Fields    []*Field // fields that are part of this oneof
-	// TODO expose comments
+	Proto      *descriptorpb.OneofDescriptorProto
+	LocalName  string
+	Parent     *Message // message in which this oneof is declared
+	Fields     []*Field // fields that are part of this oneof
+	Comments   CommentSet
+	sourcePath []int32
 }
 
-func (g *Generator) newOneof(desc *descriptorpb.OneofDescriptorProto, parent *Message) *Oneof {
+func (g *Generator) newOneof(desc *descriptorpb.OneofDescriptorProto, parent *Message, indexOnParent int) *Oneof {
 	o := &Oneof{
-		Proto:  desc,
-		Parent: parent,
+		Proto:      desc,
+		Parent:     parent,
+		LocalName:  makeOneofName(desc.GetName()),
+		sourcePath: append(parent.sourcePath, fieldNumber_DescriptorProto_OneofDecl, int32(indexOnParent)),
 	}
-	o.LocalName = makeOneofName(desc.GetName())
+	o.Comments = newCommentSet(parent.File.Proto.SourceCodeInfo, o.sourcePath)
 	return o
+}
+
+func (o *Oneof) JSDoc(indent string) string {
+	doc := newJsDocBlock()
+	if o.Comments.Leading != "" {
+		doc.add(o.Comments.Leading)
+	}
+	if o.Comments.Trailing != "" {
+		if !doc.empty() {
+			doc.add("")
+		}
+		doc.add(o.Comments.Trailing)
+	}
+	if !doc.empty() {
+		doc.add("")
+	}
+	doc.add(fmt.Sprintf(" @generated from %s", o))
+	return doc.indentedString(indent)
 }
 
 func (o *Oneof) String() string {
@@ -850,10 +982,11 @@ type Extension struct {
 	Enum       *Enum    // type for enum fields; nil otherwise
 	Message    *Message // type for message or group fields; nil otherwise
 	Deprecated bool     // deprecated with the field option "deprecated = true", or implicitly with the file level option
-	// TODO expose comments
+	Comments   CommentSet
+	sourcePath []int32
 }
 
-func (g *Generator) newExtension(desc *descriptorpb.FieldDescriptorProto, file *File, parentMessageOrNil *Message) (*Extension, error) {
+func (g *Generator) newExtension(desc *descriptorpb.FieldDescriptorProto, file *File, parentMessageOrNil *Message, indexOnParent int) (*Extension, error) {
 	if desc.Extendee == nil {
 		return nil, fmt.Errorf("invalid request: extension is missing extendee")
 	}
@@ -861,6 +994,11 @@ func (g *Generator) newExtension(desc *descriptorpb.FieldDescriptorProto, file *
 		Proto:      desc,
 		Parent:     parentMessageOrNil,
 		Deprecated: desc.GetOptions().GetDeprecated() || file.Deprecated,
+	}
+	if parentMessageOrNil == nil {
+		f.sourcePath = append(f.sourcePath, fieldNumber_FileDescriptorProto_Extension, int32(indexOnParent))
+	} else {
+		f.sourcePath = append(parentMessageOrNil.sourcePath, fieldNumber_DescriptorProto_Field, int32(indexOnParent))
 	}
 	return f, nil
 }
@@ -892,24 +1030,46 @@ type Service struct {
 	Methods       []*Method
 	Deprecated    bool   // deprecated with the service option "deprecated = true", or implicitly with the file level option
 	protoTypeName string // fully qualified name with a leading dot
-
-	// TODO expose comments
+	Comments      CommentSet
+	sourcePath    []int32
 }
 
-func (g *Generator) newService(proto *descriptorpb.ServiceDescriptorProto, parent *File) *Service {
+func (g *Generator) newService(proto *descriptorpb.ServiceDescriptorProto, parent *File, indexOnParent int) *Service {
 	s := &Service{
 		File:          parent,
 		Proto:         proto,
 		protoTypeName: fmt.Sprintf("%s.%s", parent.Proto.GetPackage(), proto.GetName()),
-		Methods:       nil,
 	}
+	s.sourcePath = append(s.sourcePath, fieldNumber_FileDescriptorProto_Service, int32(indexOnParent))
+	s.Comments = newCommentSet(parent.Proto.SourceCodeInfo, s.sourcePath)
 	s.TypeName = strings.TrimPrefix(s.protoTypeName, ".")
 	s.Deprecated = proto.GetOptions().GetDeprecated() || s.File.Deprecated
 	s.LocalName = makeServiceName(proto.GetName())
-	for _, x := range proto.GetMethod() {
-		s.Methods = append(s.Methods, g.newMethod(x, s))
+	for index, methodProto := range proto.GetMethod() {
+		s.Methods = append(s.Methods, g.newMethod(methodProto, s, index))
 	}
 	return s
+}
+
+func (s *Service) JSDoc(indent string) string {
+	doc := newJsDocBlock()
+	if s.Comments.Leading != "" {
+		doc.add(s.Comments.Leading)
+	}
+	if s.Comments.Trailing != "" {
+		if !doc.empty() {
+			doc.add("")
+		}
+		doc.add(s.Comments.Trailing)
+	}
+	if !doc.empty() {
+		doc.add("")
+	}
+	doc.add(fmt.Sprintf(" @generated from %s", s))
+	if s.Deprecated {
+		doc.add(" @deprecated")
+	}
+	return doc.indentedString(indent)
 }
 
 func (s *Service) String() string {
@@ -923,15 +1083,20 @@ type Method struct {
 	Parent     *Service
 	Input      *Message
 	Output     *Message
-	// TODO expose comments
+	Comments   CommentSet
+	sourcePath []int32
 }
 
-func (g *Generator) newMethod(proto *descriptorpb.MethodDescriptorProto, parent *Service) *Method {
+func (g *Generator) newMethod(proto *descriptorpb.MethodDescriptorProto, parent *Service, indexOnParent int) *Method {
 	m := &Method{
 		Proto:      proto,
 		Parent:     parent,
 		LocalName:  makeMethodName(proto.GetName()),
 		Deprecated: proto.GetOptions().GetDeprecated() || parent.File.Deprecated,
+		Comments: newCommentSet(
+			parent.File.Proto.SourceCodeInfo,
+			append(parent.sourcePath, fieldNumber_ServiceDescriptorProto_Method, int32(indexOnParent)),
+		),
 	}
 	return m
 }
@@ -950,6 +1115,27 @@ func (m *Method) resolveReferences(gen *Generator) error {
 	}
 	m.Output = ref
 	return nil
+}
+
+func (m *Method) JSDoc(indent string) string {
+	doc := newJsDocBlock()
+	if m.Comments.Leading != "" {
+		doc.add(m.Comments.Leading)
+	}
+	if m.Comments.Trailing != "" {
+		if !doc.empty() {
+			doc.add("")
+		}
+		doc.add(m.Comments.Trailing)
+	}
+	if !doc.empty() {
+		doc.add("")
+	}
+	doc.add(fmt.Sprintf(" @generated from %s", m))
+	if m.Deprecated {
+		doc.add(" @deprecated")
+	}
+	return doc.indentedString(indent)
 }
 
 func (m *Method) String() string {
