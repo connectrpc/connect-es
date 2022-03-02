@@ -34,11 +34,11 @@ $(PROTOC_GEN_ES_BIN): $(PROTOC_GEN_ES_SOURCES)
 	go build -o $(PROTOC_GEN_ES_BIN) ./cmd/protoc-gen-es
 
 
-# Our code generator protoc-gen-connectweb generates service types
-PROTOC_GEN_CONNECTWEB_BIN := $(CACHE_DIR)/protoc-gen-connectweb
-PROTOC_GEN_CONNECTWEB_SOURCES = go.mod $(shell find . -name '*.go')
-$(PROTOC_GEN_CONNECTWEB_BIN): $(PROTOC_GEN_CONNECTWEB_SOURCES)
-	go build -o $(PROTOC_GEN_CONNECTWEB_BIN) ./cmd/protoc-gen-connectweb
+# Our code generator protoc-gen-connect-web generates service types
+PROTOC_GEN_CONNECT_WEB_BIN := $(CACHE_DIR)/protoc-gen-connect-web
+PROTOC_GEN_CONNECT_WEB_SOURCES = go.mod $(shell find . -name '*.go')
+$(PROTOC_GEN_CONNECT_WEB_BIN): $(PROTOC_GEN_CONNECT_WEB_SOURCES)
+	go build -o $(PROTOC_GEN_CONNECT_WEB_BIN) ./cmd/protoc-gen-connect-web
 
 
 # Install NPM dependencies
@@ -80,10 +80,10 @@ TEST_GEN = $(CACHE_DIR)/gen/packages-test-$(GOOGPROTOBUF_VERSION)
 TEST_BUILD = $(CACHE_DIR)/build/packages-test
 TEST_SOURCES = $(shell find $(TEST_DIR)/src -name '*.ts') $(TEST_DIR)/*.json
 $(TEST_GEN) : protoc = $(GOOGPROTOBUF_PROTOC_BIN) -I $(GOOGPROTOBUF_SOURCE) -I $(GOOGPROTOBUF_SOURCE)/src -I $(TEST_DIR) $(shell cd $(TEST_DIR) && find . -name '*.proto' | cut -sd / -f 2-) google/protobuf/type.proto $(shell cd $(GOOGPROTOBUF_SOURCE)/src && find . -name 'unittest*.proto' | cut -sd / -f 2-) conformance/conformance.proto google/protobuf/test_messages_proto2.proto google/protobuf/test_messages_proto3.proto
-$(TEST_GEN): $(GOOGPROTOBUF_SOURCE) $(GOOGPROTOBUF_PROTOC_BIN) $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN) $(shell find $(TEST_DIR) -name '*.proto')
+$(TEST_GEN): $(GOOGPROTOBUF_SOURCE) $(GOOGPROTOBUF_PROTOC_BIN) $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN) $(shell find $(TEST_DIR) -name '*.proto')
 	rm -rf $(TEST_DIR)/src/gen/* $(TEST_DIR)/descriptorset.bin
 	$(protoc) --plugin $(PROTOC_GEN_ES_BIN) --es_out $(TEST_DIR)/src/gen --es_opt ts_nocheck=false
-	$(protoc) --plugin $(PROTOC_GEN_CONNECTWEB_BIN) --connectweb_out $(TEST_DIR)/src/gen --connectweb_opt ts_nocheck=false
+	$(protoc) --plugin $(PROTOC_GEN_CONNECT_WEB_BIN) --connect-web_out $(TEST_DIR)/src/gen --connect-web_opt ts_nocheck=false
 	$(protoc) --descriptor_set_out $(TEST_DIR)/descriptorset.bin --include_imports --include_source_info
 	mkdir -p $(dir $(TEST_GEN)) && touch $(TEST_GEN)
 $(TEST_BUILD): $(PROTOC_GEN_ES_BIN) $(TEST_GEN) $(RUNTIME_BUILD) $(TEST_SOURCES)
@@ -95,7 +95,7 @@ $(TEST_BUILD): $(PROTOC_GEN_ES_BIN) $(TEST_GEN) $(RUNTIME_BUILD) $(TEST_SOURCES)
 BENCHCODESIZE_DIR = packages/bench-codesize
 BENCHCODESIZE_BUF_COMMIT=4505cba5e5a94a42af02ebc7ac3a0a04
 BENCHCODESIZE_GEN = $(CACHE_DIR)/gen/bench-codesize-$(BENCHCODESIZE_BUF_COMMIT)
-$(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN)
+$(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	rm -rf $(BENCHCODESIZE_DIR)/src/gen/*
 	buf generate buf.build/bufbuild/buf:$(BENCHCODESIZE_BUF_COMMIT) --template \
 		'{"version": "v1", "plugins": [\
@@ -105,8 +105,8 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN)
 				"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
 				"opt": "ts_nocheck=false"\
 			},{\
-				"name":"connectweb", \
-				"path": "$(PROTOC_GEN_CONNECTWEB_BIN)",\
+				"name":"connect-web", \
+				"path": "$(PROTOC_GEN_CONNECT_WEB_BIN)",\
 				"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
 				"opt": "ts_nocheck=false"\
 			},{\
@@ -125,8 +125,8 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN)
 # The private NPM package "@bufbuild/requestbuilder-poc" is only here temporarily
 REQUESTBUILDERPOC_DIR = packages/requestbuilder-poc
 REQUESTBUILDERPOC_SOURCES = $(REQUESTBUILDERPOC_DIR)/*.json $(shell find $(REQUESTBUILDERPOC_DIR)/src -name '*.ts')
-serve-requestbuilder-poc: node_modules $(RUNTIME_BUILD) $(WEB_BUILD) $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN)
-	buf generate buf.build/bufbuild/buf --template '{"version": "v1", "plugins": [{"name":"es", "out": "$(REQUESTBUILDERPOC_DIR)/src/gen", "path": "$(PROTOC_GEN_ES_BIN)"},{"name":"connectweb", "out": "$(REQUESTBUILDERPOC_DIR)/src/gen", "path": "$(PROTOC_GEN_CONNECTWEB_BIN)"}]}'
+serve-requestbuilder-poc: node_modules $(RUNTIME_BUILD) $(WEB_BUILD) $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
+	buf generate buf.build/bufbuild/buf --template '{"version": "v1", "plugins": [{"name":"es", "out": "$(REQUESTBUILDERPOC_DIR)/src/gen", "path": "$(PROTOC_GEN_ES_BIN)"},{"name":"connect-web", "out": "$(REQUESTBUILDERPOC_DIR)/src/gen", "path": "$(PROTOC_GEN_CONNECT_WEB_BIN)"}]}'
 	cd $(REQUESTBUILDERPOC_DIR) && npm run serve
 
 
@@ -134,7 +134,7 @@ serve-requestbuilder-poc: node_modules $(RUNTIME_BUILD) $(WEB_BUILD) $(PROTOC_GE
 WEBEXAMPLE_DIR = packages/connect-web-example
 WEBEXAMPLE_SOURCES = $(WEBEXAMPLE_DIR)/*.json $(shell find $(WEBEXAMPLE_DIR)/src -name '*.ts')
 WEBEXAMPLE_GEN = $(CACHE_DIR)/gen/web-example
-$(WEBEXAMPLE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN) $(shell find $(WEBEXAMPLE_DIR)/protos -name '*.proto')
+$(WEBEXAMPLE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN) $(shell find $(WEBEXAMPLE_DIR)/protos -name '*.proto')
 	rm -rf $(WEBEXAMPLE_DIR)/src/gen/*
 	buf generate $(WEBEXAMPLE_DIR)/protos --template \
 		'{"version": "v1", "plugins": [\
@@ -143,9 +143,9 @@ $(WEBEXAMPLE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECTWEB_BIN) $(shell fin
 				"out": "$(WEBEXAMPLE_DIR)/src/gen", \
 				"path": "$(PROTOC_GEN_ES_BIN)",\
 			},{\
-				"name":"connectweb", \
+				"name":"connect-web", \
 				"out": "$(WEBEXAMPLE_DIR)/src/gen", \
-				"path": "$(PROTOC_GEN_CONNECTWEB_BIN)"\
+				"path": "$(PROTOC_GEN_CONNECT_WEB_BIN)"\
 			}\
 		]}'
 	mkdir -p $(dir $(WEBEXAMPLE_GEN)) && touch $(WEBEXAMPLE_GEN)
@@ -196,11 +196,11 @@ bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(RUNTIME_BUILD) $(WEB_BUILD)
 
 go-build-npm:
 	node make/scripts/go-build-npm.js packages/protoc-gen-es ./cmd/protoc-gen-es
-	node make/scripts/go-build-npm.js packages/protoc-gen-connectweb ./cmd/protoc-gen-connectweb
+	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 
 set-version:
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-es/version.go $(SET_VERSION)
-	node make/scripts/update-go-version-file.js cmd/protoc-gen-connectweb/version.go $(SET_VERSION)
+	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
 
 

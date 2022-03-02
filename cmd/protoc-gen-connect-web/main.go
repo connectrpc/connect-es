@@ -8,7 +8,7 @@ import (
 
 func main() {
 	protoplugin.Options{
-		Name:    "protoc-gen-connectweb",
+		Name:    "protoc-gen-connect-web",
 		Version: version,
 	}.Pipe(func(gen *protoplugin.Generator) error {
 		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)

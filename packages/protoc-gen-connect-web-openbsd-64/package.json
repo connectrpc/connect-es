@@ -1,14 +1,14 @@
 {
-  "name": "@bufbuild/protoc-gen-connectweb-linux-64",
+  "name": "@bufbuild/protoc-gen-connect-web-openbsd-64",
   "version": "0.0.1",
-  "description": "protoc-gen-connectweb (linux / x64)",
+  "description": "protoc-gen-connect-web (openbsd / x64)",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/bufbuild/connect-web.git"
   },
   "os": [
-    "linux"
+    "openbsd"
   ],
   "cpu": [
     "x64"

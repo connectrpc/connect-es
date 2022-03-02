@@ -1,7 +1,7 @@
 {
-  "name": "@bufbuild/protoc-gen-connectweb-windows-64",
+  "name": "@bufbuild/protoc-gen-connect-web-windows-arm64",
   "version": "0.0.1",
-  "description": "protoc-gen-connectweb (win32 / x64)",
+  "description": "protoc-gen-connect-web (win32 / arm64)",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -11,6 +11,6 @@
     "win32"
   ],
   "cpu": [
-    "x64"
+    "arm64"
   ]
 }

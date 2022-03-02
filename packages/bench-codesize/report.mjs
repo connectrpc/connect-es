@@ -10,7 +10,7 @@ process.stdout.write(`# Code size comparison
 This is a simple code size comparison between Connect-Web and gRPC-web.
 
 We are generating code for the module [buf.build/bufbuild/buf](https://buf.build/bufbuild/buf)
-once with \`protoc-gen-grpc-web\`, once with \`protoc-gen-connectweb\`. Then we bundle a client 
+once with \`protoc-gen-grpc-web\`, once with \`protoc-gen-connect-web\`. Then we bundle a client 
 for the service \`buf.alpha.registry.v1alpha1.PluginService\` with [esbuild](https://esbuild.github.io/),
 minify the bundle, and compress it like a web server would usually do.
 

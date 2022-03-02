@@ -1,14 +1,14 @@
 {
-  "name": "@bufbuild/protoc-gen-connectweb-darwin-64",
+  "name": "@bufbuild/protoc-gen-connect-web-freebsd-64",
   "version": "0.0.1",
-  "description": "protoc-gen-connectweb (darwin / x64)",
+  "description": "protoc-gen-connect-web (freebsd / x64)",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/bufbuild/connect-web.git"
   },
   "os": [
-    "darwin"
+    "freebsd"
   ],
   "cpu": [
     "x64"

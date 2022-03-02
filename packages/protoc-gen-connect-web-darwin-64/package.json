@@ -1,16 +1,16 @@
 {
-  "name": "@bufbuild/protoc-gen-connectweb-linux-32",
+  "name": "@bufbuild/protoc-gen-connect-web-darwin-64",
   "version": "0.0.1",
-  "description": "protoc-gen-connectweb (linux / ia32)",
+  "description": "protoc-gen-connect-web (darwin / x64)",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/bufbuild/connect-web.git"
   },
   "os": [
-    "linux"
+    "darwin"
   ],
   "cpu": [
-    "ia32"
+    "x64"
   ]
 }
