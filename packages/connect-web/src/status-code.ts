@@ -4,9 +4,8 @@
  *
  * See the specification at
  * https://github.com/grpc/grpc/blob/master/doc/statuscodes.md for detailed
- * descriptions of each code and example usage.
+ * descriptions of each code.
  */
-
 export enum StatusCode {
   /**
    * Success
