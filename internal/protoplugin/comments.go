@@ -2,8 +2,9 @@ package protoplugin
 
 import (
 	"fmt"
-	"google.golang.org/protobuf/types/descriptorpb"
 	"strings"
+
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 // The following field numbers are used to find comments in

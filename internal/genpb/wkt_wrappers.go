@@ -1,11 +1,12 @@
-package pb_generator
+package genpb
 
 import (
 	"errors"
 	"fmt"
-	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
-	"github.com/bufbuild/connect-web/internal/ts"
 	"strings"
+
+	"github.com/bufbuild/connect-web/internal/protoplugin"
+	"github.com/bufbuild/connect-web/internal/ts"
 )
 
 type wktWrappers struct {
@@ -14,12 +15,12 @@ type wktWrappers struct {
 	typeNames    []string
 }
 
-func (g wktWrappers) matches(message *protoplugin2.Message) bool {
+func (g wktWrappers) matches(message *protoplugin.Message) bool {
 	_, err := g.getFields(message)
 	return err == nil
 }
 
-func (g wktWrappers) getFields(message *protoplugin2.Message) (value *protoplugin2.Field, err error) {
+func (g wktWrappers) getFields(message *protoplugin.Message) (value *protoplugin.Field, err error) {
 	var ok = false
 	for _, tn := range g.typeNames {
 		if tn == message.TypeName {
@@ -30,7 +31,7 @@ func (g wktWrappers) getFields(message *protoplugin2.Message) (value *protoplugi
 	if !ok {
 		return nil, errors.New("type name")
 	}
-	if message.File.Syntax != protoplugin2.ProtoSyntax3 {
+	if message.File.Syntax != protoplugin.ProtoSyntax3 {
 		return nil, errors.New("syntax")
 	}
 	if len(message.Fields) != g.fieldCount {
@@ -48,7 +49,7 @@ func (g wktWrappers) getFields(message *protoplugin2.Message) (value *protoplugi
 	return value, nil
 }
 
-func (g wktWrappers) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktWrappers) genWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	rt := message.File.RuntimeSymbols
 	valueField, _ := g.getFields(message)
 	t := strings.TrimPrefix(valueField.Scalar.String(), "TYPE_")
@@ -71,7 +72,7 @@ func (g wktWrappers) genWktMethods(f *protoplugin2.GeneratedFile, message *proto
 	f.P()
 }
 
-func (g wktWrappers) genWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktWrappers) genWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	valueField, _ := g.getFields(message)
 	t := ts.ScalarTypeScriptType(message.Fields[0].Scalar)
 	f.P("    static readonly fieldWrapper = {")

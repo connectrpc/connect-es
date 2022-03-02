@@ -1,11 +1,11 @@
-package connectweb_generator
+package genconnectweb
 
 import (
-	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
+	"github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func GenerateFile(gen *protoplugin2.Generator, file *protoplugin2.File) {
+func GenerateFile(gen *protoplugin.Generator, file *protoplugin.File) {
 	if len(file.Services) == 0 {
 		return
 	}
@@ -18,7 +18,7 @@ func GenerateFile(gen *protoplugin2.Generator, file *protoplugin2.File) {
 	}
 }
 
-func generateService(f *protoplugin2.GeneratedFile, service *protoplugin2.Service) {
+func generateService(f *protoplugin.GeneratedFile, service *protoplugin.Service) {
 	rt := service.File.RuntimeSymbols
 	f.P(service.JSDoc(""))
 	f.P("export const ", service.LocalName, " = {")

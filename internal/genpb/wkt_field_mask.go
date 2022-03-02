@@ -1,8 +1,9 @@
-package pb_generator
+package genpb
 
 import (
 	"errors"
-	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
+
+	"github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -10,19 +11,19 @@ type wktFieldMask struct {
 	typeName string
 }
 
-func (g wktFieldMask) matches(message *protoplugin2.Message) bool {
+func (g wktFieldMask) matches(message *protoplugin.Message) bool {
 	_, err := g.getFields(message)
 	return err == nil
 }
 
-func (g wktFieldMask) getFields(message *protoplugin2.Message) (*protoplugin2.Field, error) {
+func (g wktFieldMask) getFields(message *protoplugin.Message) (*protoplugin.Field, error) {
 	if message.TypeName != g.typeName {
 		return nil, errors.New("type name")
 	}
-	if message.File.Syntax != protoplugin2.ProtoSyntax3 {
+	if message.File.Syntax != protoplugin.ProtoSyntax3 {
 		return nil, errors.New("syntax")
 	}
-	var fieldPaths *protoplugin2.Field
+	var fieldPaths *protoplugin.Field
 	for _, f := range message.Fields {
 		switch f.Proto.GetNumber() {
 		case 1:
@@ -41,7 +42,7 @@ func (g wktFieldMask) getFields(message *protoplugin2.Message) (*protoplugin2.Fi
 	return fieldPaths, nil
 }
 
-func (g wktFieldMask) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktFieldMask) genWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	rt := message.File.RuntimeSymbols
 	fieldPaths, err := g.getFields(message)
 	if err != nil {
@@ -111,5 +112,5 @@ func (g wktFieldMask) genWktMethods(f *protoplugin2.GeneratedFile, message *prot
 	f.P()
 }
 
-func (g wktFieldMask) genWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktFieldMask) genWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 }

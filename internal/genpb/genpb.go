@@ -1,15 +1,15 @@
-package pb_generator
+package genpb
 
 import (
 	"fmt"
-	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
-	"github.com/bufbuild/connect-web/internal/ts"
 	"strings"
 
+	"github.com/bufbuild/connect-web/internal/protoplugin"
+	"github.com/bufbuild/connect-web/internal/ts"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func GenerateFile(gen *protoplugin2.Generator, file *protoplugin2.File) {
+func GenerateFile(gen *protoplugin.Generator, file *protoplugin.File) {
 	f := gen.NewGeneratedFile(file.Name + "_pb.ts")
 	f.ImportPath = file.StandardImportPath
 	f.H(file.Preamble)
@@ -24,7 +24,7 @@ func GenerateFile(gen *protoplugin2.Generator, file *protoplugin2.File) {
 	// We do not generate anything for services, and we do not support extensions at this time
 }
 
-func generateEnum(f *protoplugin2.GeneratedFile, enum *protoplugin2.Enum) {
+func generateEnum(f *protoplugin.GeneratedFile, enum *protoplugin.Enum) {
 	rt := enum.File.RuntimeSymbols
 	f.P(enum.JSDoc(""))
 	f.P("export enum ", enum.Symbol, " {")
@@ -37,9 +37,9 @@ func generateEnum(f *protoplugin2.GeneratedFile, enum *protoplugin2.Enum) {
 	f.P("}")
 	f.P()
 	switch enum.File.Syntax {
-	case protoplugin2.ProtoSyntax2:
+	case protoplugin.ProtoSyntax2:
 		f.P("// Retrieve enum metadata with: proto2.getEnumType(", enum.Symbol, ")")
-	case protoplugin2.ProtoSyntax3:
+	case protoplugin.ProtoSyntax3:
 		f.P("// Retrieve enum metadata with: proto3.getEnumType(", enum.Symbol, ")")
 	}
 	f.P(rt.ProtoN, `.util.setEnumType(`, enum.Symbol, `, "`, enum.TypeName, `", [`)
@@ -49,16 +49,16 @@ func generateEnum(f *protoplugin2.GeneratedFile, enum *protoplugin2.Enum) {
 	f.P("]);")
 }
 
-func generateMessage(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func generateMessage(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	rt := message.File.RuntimeSymbols
 	f.P(message.JSDoc(""))
 	f.P("export class ", message.Symbol, " extends ", rt.Message, "<", message.Symbol, "> {")
 	f.P()
 	for _, member := range message.Members {
 		switch member.Kind {
-		case protoplugin2.MemberKindOneof:
+		case protoplugin.MemberKindOneof:
 			generateOneof(f, member.Oneof)
-		case protoplugin2.MemberKindField:
+		case protoplugin.MemberKindField:
 			generateField(f, member.Field)
 		}
 		f.P()
@@ -109,38 +109,38 @@ func generateMessage(f *protoplugin2.GeneratedFile, message *protoplugin2.Messag
 	// We do not support extensions at this time
 }
 
-func generateFieldInfo(f *protoplugin2.GeneratedFile, field *protoplugin2.Field) {
+func generateFieldInfo(f *protoplugin.GeneratedFile, field *protoplugin.Field) {
 	rt := field.Parent.File.RuntimeSymbols
 
 	e := make([]interface{}, 0)
 	e = append(e, "        {no: ", field.Proto.GetNumber(), `, name: "`, field.Proto.GetName(), `", `)
 
-	if field.JsonName != "" {
-		e = append(e, `jsonName: "`, field.JsonName, `", `)
+	if field.JSONName != "" {
+		e = append(e, `jsonName: "`, field.JSONName, `", `)
 	}
 
 	switch field.Kind {
-	case protoplugin2.FieldKindScalar:
+	case protoplugin.FieldKindScalar:
 		t := strings.TrimPrefix(field.Scalar.String(), "TYPE_")
 		e = append(e, `kind: "scalar", T: `, int32(field.Scalar), ` /* ScalarType.`, t, ` */, `)
 
-	case protoplugin2.FieldKindMap:
+	case protoplugin.FieldKindMap:
 		t := strings.TrimPrefix(field.Map.Key.String(), "TYPE_")
 		e = append(e, `kind: "map", K: `, int32(field.Map.Key), ` /* ScalarType.`, t, ` */, `)
 		switch field.Map.ValueKind {
-		case protoplugin2.FieldKindScalar:
+		case protoplugin.FieldKindScalar:
 			t := strings.TrimPrefix(field.Scalar.String(), "TYPE_")
 			e = append(e, `V: {kind: "scalar", T: `, int32(field.Map.ValueScalar), ` /* ScalarType.`, t, ` */}, `)
-		case protoplugin2.FieldKindMessage:
+		case protoplugin.FieldKindMessage:
 			e = append(e, `V: {kind: "message", T: `, field.Map.ValueMessage.Symbol, `}, `)
-		case protoplugin2.FieldKindEnum:
+		case protoplugin.FieldKindEnum:
 			e = append(e, `V: {kind: "enum", T: `, rt.ProtoN, `.getEnumType(`, field.Map.ValueEnum.Symbol, `)}, `)
 		}
 
-	case protoplugin2.FieldKindMessage:
+	case protoplugin.FieldKindMessage:
 		e = append(e, `kind: "message", T: `, field.Message.Symbol, `, `)
 
-	case protoplugin2.FieldKindEnum:
+	case protoplugin.FieldKindEnum:
 		e = append(e, `kind: "enum", T: `, rt.ProtoN, `.getEnumType(`, field.Enum.Symbol, `), `)
 	}
 
@@ -170,7 +170,7 @@ func generateFieldInfo(f *protoplugin2.GeneratedFile, field *protoplugin2.Field)
 	f.P(e...)
 }
 
-func generateOneof(f *protoplugin2.GeneratedFile, oneof *protoplugin2.Oneof) {
+func generateOneof(f *protoplugin.GeneratedFile, oneof *protoplugin.Oneof) {
 	f.P(oneof.JSDoc("    "))
 	f.P("    ", oneof.LocalName, ": {")
 	for i, field := range oneof.Fields {
@@ -185,7 +185,7 @@ func generateOneof(f *protoplugin2.GeneratedFile, oneof *protoplugin2.Oneof) {
 	f.P(`    } | { case: undefined; value?: undefined } = { case: undefined };`)
 }
 
-func generateField(f *protoplugin2.GeneratedFile, field *protoplugin2.Field) {
+func generateField(f *protoplugin.GeneratedFile, field *protoplugin.Field) {
 	f.P(field.JSDoc("    "))
 	var expr []interface{}
 	expr = append(expr, "    ", field.LocalName)
@@ -203,13 +203,13 @@ func generateField(f *protoplugin2.GeneratedFile, field *protoplugin2.Field) {
 	f.P(expr...)
 }
 
-func getFieldTyping(field *protoplugin2.Field) (expr []interface{}, optional bool) {
+func getFieldTyping(field *protoplugin.Field) (expr []interface{}, optional bool) {
 	switch field.Kind {
-	case protoplugin2.FieldKindScalar:
+	case protoplugin.FieldKindScalar:
 		expr = append(expr, ts.ScalarTypeScriptType(field.Scalar))
 		optional = field.Optional
 
-	case protoplugin2.FieldKindMessage:
+	case protoplugin.FieldKindMessage:
 		if unwrapped, ok := GetUnwrappedFieldType(field); ok {
 			expr = append(expr, ts.ScalarTypeScriptType(unwrapped))
 		} else {
@@ -217,11 +217,11 @@ func getFieldTyping(field *protoplugin2.Field) (expr []interface{}, optional boo
 		}
 		optional = true
 
-	case protoplugin2.FieldKindEnum:
+	case protoplugin.FieldKindEnum:
 		expr = append(expr, field.Enum.Symbol.ToTypeOnly())
 		optional = field.Optional
 
-	case protoplugin2.FieldKindMap:
+	case protoplugin.FieldKindMap:
 		var keyType string
 		switch field.Map.Key {
 		case
@@ -236,11 +236,11 @@ func getFieldTyping(field *protoplugin2.Field) (expr []interface{}, optional boo
 		}
 		var valueType interface{}
 		switch field.Map.ValueKind {
-		case protoplugin2.FieldKindScalar:
+		case protoplugin.FieldKindScalar:
 			valueType = ts.ScalarTypeScriptType(field.Map.ValueScalar)
-		case protoplugin2.FieldKindMessage:
+		case protoplugin.FieldKindMessage:
 			valueType = field.Map.ValueMessage.Symbol.ToTypeOnly()
-		case protoplugin2.FieldKindEnum:
+		case protoplugin.FieldKindEnum:
 			valueType = field.Map.ValueEnum.Symbol.ToTypeOnly()
 		}
 		expr = append(expr, "{ [key: ", keyType, "]: ", valueType, " }")
@@ -259,9 +259,9 @@ func getFieldTyping(field *protoplugin2.Field) (expr []interface{}, optional boo
 // specified via `[ default = 123 ]`, and a bool that indicates whether the
 // TypeScript type of the value can be trivially inferred from the value.
 // If the field has no explicit default value, the expression is nil.
-func getFieldExplicitDefaultValue(field *protoplugin2.Field) (expr []interface{}, typingInferrable bool) {
+func getFieldExplicitDefaultValue(field *protoplugin.Field) (expr []interface{}, typingInferrable bool) {
 	rt := field.Parent.File.RuntimeSymbols
-	if field.Parent.File.Syntax != protoplugin2.ProtoSyntax2 {
+	if field.Parent.File.Syntax != protoplugin.ProtoSyntax2 {
 		return nil, false
 	}
 	value := field.Proto.GetDefaultValue()
@@ -269,11 +269,11 @@ func getFieldExplicitDefaultValue(field *protoplugin2.Field) (expr []interface{}
 		return nil, true
 	}
 	switch field.Kind {
-	case protoplugin2.FieldKindEnum:
+	case protoplugin.FieldKindEnum:
 		enumValue := field.Enum.FindValueByName(field.Proto.GetDefaultValue())
 		expr = append(expr, field.Enum.Symbol, ".", enumValue.LocalName)
 		return expr, true
-	case protoplugin2.FieldKindScalar:
+	case protoplugin.FieldKindScalar:
 		switch field.Scalar {
 		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
 			expr = append(expr, `"`+strings.ReplaceAll(value, `"`, `\"`)+`"`)
@@ -330,27 +330,27 @@ func getFieldExplicitDefaultValue(field *protoplugin2.Field) (expr []interface{}
 // default value for a field, and a bool that indicates whether the
 // TypeScript type of the value can be trivially inferred from the value.
 // If the field has no intrinsic default value, the expression is nil.
-func getFieldIntrinsicDefaultValue(field *protoplugin2.Field) (expr []interface{}, typingInferrable bool) {
+func getFieldIntrinsicDefaultValue(field *protoplugin.Field) (expr []interface{}, typingInferrable bool) {
 	rt := field.Parent.File.RuntimeSymbols
 	if field.Repeated {
 		expr = append(expr, "[]")
 		return expr, false
 	}
-	if field.Kind == protoplugin2.FieldKindMap {
+	if field.Kind == protoplugin.FieldKindMap {
 		expr = append(expr, "{}")
 		return expr, false
 	}
-	if field.Parent.File.Syntax != protoplugin2.ProtoSyntax3 {
+	if field.Parent.File.Syntax != protoplugin.ProtoSyntax3 {
 		return nil, false
 	}
 	switch field.Kind {
-	case protoplugin2.FieldKindEnum:
+	case protoplugin.FieldKindEnum:
 		if !field.Optional {
 			enumValue := field.Enum.FindValueByNumber(0)
 			expr = append(expr, field.Enum.Symbol, ".", enumValue.LocalName)
 			return expr, true
 		}
-	case protoplugin2.FieldKindScalar:
+	case protoplugin.FieldKindScalar:
 		if !field.Optional {
 			switch field.Scalar {
 			case descriptorpb.FieldDescriptorProto_TYPE_STRING:

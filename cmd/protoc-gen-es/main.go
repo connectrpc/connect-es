@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/bufbuild/connect-web/internal/pb_generator"
+	"github.com/bufbuild/connect-web/internal/genpb"
 	"github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -16,7 +16,7 @@ func main() {
 			if !file.Generate {
 				continue
 			}
-			pb_generator.GenerateFile(gen, file)
+			genpb.GenerateFile(gen, file)
 		}
 		return nil
 	})

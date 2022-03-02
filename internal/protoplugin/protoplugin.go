@@ -32,9 +32,10 @@ func (o Options) Run(request *pluginpb.CodeGeneratorRequest, gen func(gen *Gener
 	if err != nil {
 		errString := err.Error()
 		resPb.Error = &errString
-		return resPb, nil
 	}
-	g.toResponse(resPb)
+	if resPb.Error == nil {
+		g.toResponse(resPb)
+	}
 	return resPb, nil
 }
 
@@ -77,7 +78,6 @@ func (o Options) Pipe(gen func(gen *Generator) error) {
 		exit(err)
 		return
 	}
-	return
 }
 
 type Generator struct {
@@ -196,7 +196,6 @@ func (g *Generator) parseParameter(parameter string) error {
 				continue
 			}
 			err = ErrInvalidOption
-			break
 		}
 	}
 	if err != nil {
@@ -662,7 +661,7 @@ const (
 type Field struct {
 	Proto           *descriptorpb.FieldDescriptorProto
 	LocalName       string // name of the property on the message
-	JsonName        string // blank if the user did not specify the option json_name
+	JSONName        string // blank if the user did not specify the option json_name
 	Parent          *Message
 	Oneof           *Oneof // nil if not member of a oneof
 	Optional        bool   // whether the field is optional, regardless of syntax
@@ -692,7 +691,7 @@ func (g *Generator) newField(desc *descriptorpb.FieldDescriptorProto, parent *Me
 	}
 	f.Comments = newCommentSet(parent.File.Proto.SourceCodeInfo, f.sourcePath)
 	if protoCamelCase(f.Proto.GetName()) != desc.GetJsonName() {
-		f.JsonName = desc.GetJsonName()
+		f.JSONName = desc.GetJsonName()
 	}
 	switch f.Parent.File.Syntax {
 	case ProtoSyntax3:
@@ -758,8 +757,8 @@ func (f *Field) GetDeclarationString() string {
 		}
 		options = append(options, fmt.Sprintf("default = %s", value))
 	}
-	if f.JsonName != "" {
-		options = append(options, fmt.Sprintf("json_name = %q", f.JsonName))
+	if f.JSONName != "" {
+		options = append(options, fmt.Sprintf("json_name = %q", f.JSONName))
 	}
 	if f.Proto.GetOptions().GetDeprecated() {
 		options = append(options, "deprecated = true")
@@ -1084,7 +1083,6 @@ type Method struct {
 	Input      *Message
 	Output     *Message
 	Comments   CommentSet
-	sourcePath []int32
 }
 
 func (g *Generator) newMethod(proto *descriptorpb.MethodDescriptorProto, parent *Service, indexOnParent int) *Method {

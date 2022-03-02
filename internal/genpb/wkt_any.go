@@ -1,31 +1,32 @@
-package pb_generator
+package genpb
 
 import (
 	"errors"
 	"fmt"
-	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
+
+	"github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 type wktAny struct {
 	typeName         string
 	fieldCount       int
-	fieldNoTypeUrl   int32
+	fieldNoTypeURL   int32
 	fieldNoValue     int32
-	fieldTypeTypeUrl descriptorpb.FieldDescriptorProto_Type
+	fieldTypeTypeURL descriptorpb.FieldDescriptorProto_Type
 	fieldTypeValue   descriptorpb.FieldDescriptorProto_Type
 }
 
-func (g wktAny) matches(message *protoplugin2.Message) bool {
+func (g wktAny) matches(message *protoplugin.Message) bool {
 	_, _, err := g.getFields(message)
 	return err == nil
 }
 
-func (g wktAny) getFields(message *protoplugin2.Message) (typeUrl *protoplugin2.Field, value *protoplugin2.Field, err error) {
+func (g wktAny) getFields(message *protoplugin.Message) (typeURL *protoplugin.Field, value *protoplugin.Field, err error) {
 	if message.TypeName != g.typeName {
 		return nil, nil, errors.New("type name")
 	}
-	if message.File.Syntax != protoplugin2.ProtoSyntax3 {
+	if message.File.Syntax != protoplugin.ProtoSyntax3 {
 		return nil, nil, errors.New("syntax")
 	}
 	if len(message.Fields) != g.fieldCount {
@@ -33,45 +34,45 @@ func (g wktAny) getFields(message *protoplugin2.Message) (typeUrl *protoplugin2.
 	}
 	for _, f := range message.Fields {
 		switch f.Proto.GetNumber() {
-		case g.fieldNoTypeUrl:
-			typeUrl = f
+		case g.fieldNoTypeURL:
+			typeURL = f
 		case g.fieldNoValue:
 			value = f
 		}
 	}
-	if typeUrl == nil {
-		return nil, nil, fmt.Errorf("missing field %d", g.fieldNoTypeUrl)
+	if typeURL == nil {
+		return nil, nil, fmt.Errorf("missing field %d", g.fieldNoTypeURL)
 	}
 	if value == nil {
 		return nil, nil, fmt.Errorf("missing field %d", g.fieldNoValue)
 	}
-	if typeUrl.Proto.GetType() != g.fieldTypeTypeUrl {
-		return nil, nil, fmt.Errorf("want field %d type %s, got %s", g.fieldNoTypeUrl, g.fieldTypeTypeUrl, typeUrl.Proto.GetType())
+	if typeURL.Proto.GetType() != g.fieldTypeTypeURL {
+		return nil, nil, fmt.Errorf("want field %d type %s, got %s", g.fieldNoTypeURL, g.fieldTypeTypeURL, typeURL.Proto.GetType())
 	}
 	if value.Proto.GetType() != g.fieldTypeValue {
 		return nil, nil, fmt.Errorf("want field %d type %s, got %s", g.fieldNoValue, g.fieldTypeValue, value.Proto.GetType())
 	}
-	return typeUrl, value, nil
+	return typeURL, value, nil
 }
 
-func (g wktAny) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktAny) genWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	rt := message.File.RuntimeSymbols
-	typeUrl, value, _ := g.getFields(message)
+	typeURL, value, _ := g.getFields(message)
 	f.P("    override toJson(options?: Partial<", rt.JsonWriteOptions, ">): ", rt.JsonValue, " {")
-	f.P(`        if (this.`, typeUrl.LocalName, ` === "") {`)
+	f.P(`        if (this.`, typeURL.LocalName, ` === "") {`)
 	f.P("            return {};")
 	f.P("        }")
-	f.P("        const typeName = this.typeUrlToName(this.", typeUrl.LocalName, ");")
+	f.P("        const typeName = this.typeUrlToName(this.", typeURL.LocalName, ");")
 	f.P("        const messageType = options?.typeRegistry?.findMessage(typeName);")
 	f.P("        if (!messageType) {")
-	f.P("            throw new Error(`cannot encode message ", message.TypeName, " to JSON: \"${this.", typeUrl.LocalName, "}\" is not in the type registry`);")
+	f.P("            throw new Error(`cannot encode message ", message.TypeName, " to JSON: \"${this.", typeURL.LocalName, "}\" is not in the type registry`);")
 	f.P("        }")
 	f.P("        const message = messageType.fromBinary(this.", value.LocalName, ");")
 	f.P("        let json = message.toJson(options);")
 	f.P(`        if (typeName.startsWith("google.protobuf.") || (json === null || Array.isArray(json) || typeof json !== "object")) {`)
 	f.P("            json = {value: json};")
 	f.P("        }")
-	f.P(`        json["@type"] = this.`, typeUrl.LocalName, `;`)
+	f.P(`        json["@type"] = this.`, typeURL.LocalName, `;`)
 	f.P("        return json;")
 	f.P("    }")
 	f.P()
@@ -101,7 +102,7 @@ func (g wktAny) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugi
 	f.P()
 	f.P("    packFrom(message: Message): void {")
 	f.P("        this.", value.LocalName, " = message.toBinary();")
-	f.P("        this.", typeUrl.LocalName, " = this.typeNameToUrl(message.getType().typeName);")
+	f.P("        this.", typeURL.LocalName, " = this.typeNameToUrl(message.getType().typeName);")
 	f.P("    }")
 	f.P()
 	f.P("    unpackTo(target: Message): boolean {")
@@ -113,7 +114,7 @@ func (g wktAny) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugi
 	f.P("    }")
 	f.P()
 	f.P("    is(type: ", rt.MessageType, "): boolean {")
-	f.P("        return this.", typeUrl.LocalName, " === this.typeNameToUrl(type.typeName);")
+	f.P("        return this.", typeURL.LocalName, " === this.typeNameToUrl(type.typeName);")
 	f.P("    }")
 	f.P()
 	f.P("    private typeNameToUrl(name: string): string {")
@@ -134,7 +135,7 @@ func (g wktAny) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugi
 	f.P()
 }
 
-func (g wktAny) genWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktAny) genWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	f.P("    static pack(message: Message): ", message.Symbol, " {")
 	f.P("        const any = new ", message.Symbol, "();")
 	f.P("        any.packFrom(message);")

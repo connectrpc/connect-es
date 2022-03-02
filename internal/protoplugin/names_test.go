@@ -42,37 +42,37 @@ func assertMakeRelativeImportPathReturns(t *testing.T, importer string, importPa
 }
 
 func TestProtoCamelCaseEqualsProtocJsonName(t *testing.T) {
-	assertProtoCamelCaseEqualsProtocJsonName(t, "FooBar")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "foo_bar")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "__proto__")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "fieldname1")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "field_name2")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "_field_name3")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "field__name4_")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "field0name5")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "field_0_name6")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "fieldName7")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "FieldName8")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "field_Name9")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "Field_Name10")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "FIELD_NAME11")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "FIELD_name12")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "__field_name13")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "__Field_name14")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "field__name15")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "field__Name16")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "field_name17__")
-	assertProtoCamelCaseEqualsProtocJsonName(t, "Field_name18__")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "FooBar")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "foo_bar")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "__proto__")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "fieldname1")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "field_name2")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "_field_name3")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "field__name4_")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "field0name5")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "field_0_name6")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "fieldName7")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "FieldName8")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "field_Name9")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "Field_Name10")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "FIELD_NAME11")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "FIELD_name12")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "__field_name13")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "__Field_name14")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "field__name15")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "field__Name16")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "field_name17__")
+	assertProtoCamelCaseEqualsProtocJSONName(t, "Field_name18__")
 }
 
-// assertProtoCamelCaseEqualsProtocJsonName takes the given proto field name
+// assertProtoCamelCaseEqualsProtocJSONName takes the given proto field name
 // and runs it through protoc to get the JSON name.
 // The result is compared to our own implementation of the algorithm.
 // It is important that the implementations in JS and Go match the protoc
 // implementation.
-func assertProtoCamelCaseEqualsProtocJsonName(t *testing.T, name string) {
+func assertProtoCamelCaseEqualsProtocJSONName(t *testing.T, name string) {
 	got := protoCamelCase(name)
-	want, err := getProtocJsonName(name)
+	want, err := getProtocJSONName(name)
 	if err != nil {
 		if errors.Is(err, errInvalidProtoFieldName) {
 			return
@@ -87,8 +87,8 @@ func assertProtoCamelCaseEqualsProtocJsonName(t *testing.T, name string) {
 
 var errInvalidProtoFieldName = errors.New("proto field name is invalid")
 
-// getProtocJsonName runs protoc to get the "json name" for a field
-func getProtocJsonName(protoName string) (string, error) {
+// getProtocJSONName runs protoc to get the "json name" for a field
+func getProtocJSONName(protoName string) (string, error) {
 	if strings.TrimSpace(protoName) != protoName {
 		return "", errInvalidProtoFieldName
 	}
@@ -103,7 +103,7 @@ func getProtocJsonName(protoName string) (string, error) {
 	in.WriteString("message I {\n")
 	in.WriteString(fmt.Sprintf("  int32 %s = 1;\n", protoName))
 	in.WriteString("}\n")
-	err = os.WriteFile(inFilename, in.Bytes(), 0644)
+	err = os.WriteFile(inFilename, in.Bytes(), 0600)
 	if err != nil {
 		return "", err
 	}

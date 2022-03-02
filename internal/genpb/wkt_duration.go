@@ -1,9 +1,10 @@
-package pb_generator
+package genpb
 
 import (
 	"errors"
 	"fmt"
-	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
+
+	"github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -16,16 +17,16 @@ type wktDuration struct {
 	fieldTypeNanos   descriptorpb.FieldDescriptorProto_Type
 }
 
-func (g wktDuration) matches(message *protoplugin2.Message) bool {
+func (g wktDuration) matches(message *protoplugin.Message) bool {
 	_, _, err := g.getFields(message)
 	return err == nil
 }
 
-func (g wktDuration) getFields(message *protoplugin2.Message) (seconds *protoplugin2.Field, nanos *protoplugin2.Field, err error) {
+func (g wktDuration) getFields(message *protoplugin.Message) (seconds *protoplugin.Field, nanos *protoplugin.Field, err error) {
 	if message.TypeName != g.typeName {
 		return nil, nil, errors.New("type name")
 	}
-	if message.File.Syntax != protoplugin2.ProtoSyntax3 {
+	if message.File.Syntax != protoplugin.ProtoSyntax3 {
 		return nil, nil, errors.New("syntax")
 	}
 	if len(message.Fields) != g.fieldCount {
@@ -54,7 +55,7 @@ func (g wktDuration) getFields(message *protoplugin2.Message) (seconds *protoplu
 	return seconds, nanos, nil
 }
 
-func (g wktDuration) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktDuration) genWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	rt := message.File.RuntimeSymbols
 	seconds, nanos, _ := g.getFields(message)
 	f.P("    override fromJson(json: JsonValue, options?: Partial<", rt.JsonReadOptions, ">): this {")
@@ -98,9 +99,8 @@ func (g wktDuration) genWktMethods(f *protoplugin2.GeneratedFile, message *proto
 	f.P(`        return text + "s";`)
 	f.P("    }")
 	f.P()
-
 }
 
-func (g wktDuration) genWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktDuration) genWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	// TODO
 }

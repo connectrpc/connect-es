@@ -1,9 +1,10 @@
-package pb_generator
+package genpb
 
 import (
 	"errors"
 	"fmt"
-	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
+
+	"github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -12,16 +13,16 @@ type wktStruct struct {
 	fieldNoFields int32
 }
 
-func (g wktStruct) matches(message *protoplugin2.Message) bool {
+func (g wktStruct) matches(message *protoplugin.Message) bool {
 	_, err := g.getFields(message)
 	return err == nil
 }
 
-func (g wktStruct) getFields(message *protoplugin2.Message) (fieldFields *protoplugin2.Field, err error) {
+func (g wktStruct) getFields(message *protoplugin.Message) (fieldFields *protoplugin.Field, err error) {
 	if message.TypeName != g.typeName {
 		return nil, errors.New("type name")
 	}
-	if message.File.Syntax != protoplugin2.ProtoSyntax3 {
+	if message.File.Syntax != protoplugin.ProtoSyntax3 {
 		return nil, errors.New("syntax")
 	}
 	for _, f := range message.Fields {
@@ -33,19 +34,19 @@ func (g wktStruct) getFields(message *protoplugin2.Message) (fieldFields *protop
 	if fieldFields == nil {
 		return nil, fmt.Errorf("missing field %d", g.fieldNoFields)
 	}
-	if fieldFields.Kind != protoplugin2.FieldKindMap {
+	if fieldFields.Kind != protoplugin.FieldKindMap {
 		return nil, fmt.Errorf("wrong field kind")
 	}
 	if fieldFields.Map.Key != descriptorpb.FieldDescriptorProto_TYPE_STRING {
 		return nil, fmt.Errorf("wrong map key type")
 	}
-	if fieldFields.Map.ValueKind != protoplugin2.FieldKindMessage {
+	if fieldFields.Map.ValueKind != protoplugin.FieldKindMessage {
 		return nil, fmt.Errorf("wrong map value kind")
 	}
 	return
 }
 
-func (g wktStruct) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktStruct) genWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	rt := message.File.RuntimeSymbols
 	fieldFields, err := g.getFields(message)
 	if err != nil {
@@ -72,7 +73,7 @@ func (g wktStruct) genWktMethods(f *protoplugin2.GeneratedFile, message *protopl
 	f.P()
 }
 
-func (g wktStruct) genWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktStruct) genWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 }
 
 type wktValue struct {
@@ -91,23 +92,23 @@ type wktValue struct {
 	fieldTypeListValue   descriptorpb.FieldDescriptorProto_Type
 }
 
-func (g wktValue) matches(message *protoplugin2.Message) bool {
+func (g wktValue) matches(message *protoplugin.Message) bool {
 	_, _, _, _, _, _, err := g.getFields(message)
 	return err == nil
 }
 
-func (g wktValue) getFields(message *protoplugin2.Message) (
-	fieldNullValue *protoplugin2.Field,
-	fieldNumberValue *protoplugin2.Field,
-	fieldStringValue *protoplugin2.Field,
-	fieldBoolValue *protoplugin2.Field,
-	fieldStructValue *protoplugin2.Field,
-	fieldListValue *protoplugin2.Field,
+func (g wktValue) getFields(message *protoplugin.Message) (
+	fieldNullValue *protoplugin.Field,
+	fieldNumberValue *protoplugin.Field,
+	fieldStringValue *protoplugin.Field,
+	fieldBoolValue *protoplugin.Field,
+	fieldStructValue *protoplugin.Field,
+	fieldListValue *protoplugin.Field,
 	err error) {
 	if message.TypeName != g.typeName {
 		return nil, nil, nil, nil, nil, nil, errors.New("type name")
 	}
-	if message.File.Syntax != protoplugin2.ProtoSyntax3 {
+	if message.File.Syntax != protoplugin.ProtoSyntax3 {
 		return nil, nil, nil, nil, nil, nil, errors.New("syntax")
 	}
 	for _, f := range message.Fields {
@@ -168,10 +169,10 @@ func (g wktValue) getFields(message *protoplugin2.Message) (
 	if fieldListValue.Proto.GetType() != g.fieldTypeListValue {
 		return nil, nil, nil, nil, nil, nil, fmt.Errorf("want field %d type %q, got %q", g.fieldNoListValue, g.fieldTypeListValue, fieldListValue.Proto.GetType())
 	}
-	return
+	return fieldNullValue, fieldNumberValue, fieldStringValue, fieldBoolValue, fieldStructValue, fieldListValue, err
 }
 
-func (g wktValue) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktValue) genWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	rt := message.File.RuntimeSymbols
 	fieldNullValue, fieldNumberValue, fieldStringValue, fieldBoolValue, fieldStructValue, fieldListValue, err := g.getFields(message)
 	if err != nil {
@@ -221,26 +222,26 @@ func (g wktValue) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplu
 	f.P()
 }
 
-func (g wktValue) genWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktValue) genWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 }
 
 type wktListValue struct {
 	typeName string
 }
 
-func (g wktListValue) matches(message *protoplugin2.Message) bool {
+func (g wktListValue) matches(message *protoplugin.Message) bool {
 	_, err := g.getFields(message)
 	return err == nil
 }
 
-func (g wktListValue) getFields(message *protoplugin2.Message) (*protoplugin2.Field, error) {
+func (g wktListValue) getFields(message *protoplugin.Message) (*protoplugin.Field, error) {
 	if message.TypeName != g.typeName {
 		return nil, errors.New("type name")
 	}
-	if message.File.Syntax != protoplugin2.ProtoSyntax3 {
+	if message.File.Syntax != protoplugin.ProtoSyntax3 {
 		return nil, errors.New("syntax")
 	}
-	var fieldValues *protoplugin2.Field
+	var fieldValues *protoplugin.Field
 	for _, f := range message.Fields {
 		switch f.Proto.GetNumber() {
 		case 1:
@@ -250,13 +251,13 @@ func (g wktListValue) getFields(message *protoplugin2.Message) (*protoplugin2.Fi
 	if fieldValues == nil {
 		return nil, errors.New("missing field")
 	}
-	if fieldValues.Kind != protoplugin2.FieldKindMessage {
+	if fieldValues.Kind != protoplugin.FieldKindMessage {
 		return nil, fmt.Errorf("wrong field kind")
 	}
 	return fieldValues, nil
 }
 
-func (g wktListValue) genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktListValue) genWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	rt := message.File.RuntimeSymbols
 	fieldValues, err := g.getFields(message)
 	if err != nil {
@@ -278,5 +279,5 @@ func (g wktListValue) genWktMethods(f *protoplugin2.GeneratedFile, message *prot
 	f.P()
 }
 
-func (g wktListValue) genWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func (g wktListValue) genWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 }

@@ -140,7 +140,6 @@ func (f *GeneratedFile) GetContent() string {
 }
 
 func (f *GeneratedFile) processSymbols(makeImportStatement func(typeOnly bool, from string, nameToAlias map[string]string)) map[symbolID]string {
-
 	var symbolToIdentifier = make(map[symbolID]string) // identifiers to use in the output
 	var symbolToIsValue = make(map[symbolID]bool)      // symbols that need a value import (as opposed to a type-only import)
 	var identifiersTaken = make(map[string]bool)       // taken in this file

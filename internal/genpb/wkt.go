@@ -1,7 +1,7 @@
-package pb_generator
+package genpb
 
 import (
-	protoplugin2 "github.com/bufbuild/connect-web/internal/protoplugin"
+	"github.com/bufbuild/connect-web/internal/protoplugin"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -9,9 +9,9 @@ var generators = []wktGenerator{
 	wktAny{
 		typeName:         "google.protobuf.Any",
 		fieldCount:       2,
-		fieldNoTypeUrl:   1,
+		fieldNoTypeURL:   1,
 		fieldNoValue:     2,
-		fieldTypeTypeUrl: descriptorpb.FieldDescriptorProto_TYPE_STRING,
+		fieldTypeTypeURL: descriptorpb.FieldDescriptorProto_TYPE_STRING,
 		fieldTypeValue:   descriptorpb.FieldDescriptorProto_TYPE_BYTES,
 	},
 	wktDuration{
@@ -84,8 +84,8 @@ var wrapperToBaseType = map[string]descriptorpb.FieldDescriptorProto_Type{
 	"google.protobuf.BytesValue":  descriptorpb.FieldDescriptorProto_TYPE_BYTES,
 }
 
-func GetUnwrappedFieldType(field *protoplugin2.Field) (scalarType descriptorpb.FieldDescriptorProto_Type, ok bool) {
-	if field.Kind != protoplugin2.FieldKindMessage {
+func GetUnwrappedFieldType(field *protoplugin.Field) (scalarType descriptorpb.FieldDescriptorProto_Type, ok bool) {
+	if field.Kind != protoplugin.FieldKindMessage {
 		return 0, false
 	}
 	if field.Repeated {
@@ -96,12 +96,12 @@ func GetUnwrappedFieldType(field *protoplugin2.Field) (scalarType descriptorpb.F
 }
 
 type wktGenerator interface {
-	matches(message *protoplugin2.Message) bool
-	genWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message)
-	genWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message)
+	matches(message *protoplugin.Message) bool
+	genWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message)
+	genWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message)
 }
 
-func GenWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func GenWktMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	for _, g := range generators {
 		if g.matches(message) {
 			g.genWktMethods(f, message)
@@ -109,7 +109,7 @@ func GenWktMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message)
 	}
 }
 
-func GenWktStaticMethods(f *protoplugin2.GeneratedFile, message *protoplugin2.Message) {
+func GenWktStaticMethods(f *protoplugin.GeneratedFile, message *protoplugin.Message) {
 	for _, g := range generators {
 		if g.matches(message) {
 			g.genWktStaticMethods(f, message)

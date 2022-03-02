@@ -1,0 +1,67 @@
+run:
+  skip-dirs-use-default: false
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  forbidigo:
+    forbid:
+      - '^fmt\.Print'
+      - '^log\.'
+      - '^print$'
+      - '^println$'
+linters:
+  enable:
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - deadcode
+    - decorder
+    - depguard
+    - dogsled
+    - errcheck
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - gochecknoinits
+    - gofmt
+    - goheader
+    - goimports
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - grouper
+    - importas
+    - ineffassign
+    - makezero
+    - misspell
+    - nakedret
+    - nilerr
+    - nolintlint
+    - predeclared
+    - promlinter
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - wastedassign
+    - whitespace
+  disable-all: true
+issues:
+  exclude-rules:
+    - linters: [gosec]
+      path: internal/protoplugin/names.go
+      text: "G101: Potential hardcoded credentials"
+    - linters: [stylecheck]
+      path: internal/protoplugin/comments.go
+      text: "ST1003: should not use underscores in Go names; const fieldNumber_"
+    - linters: [stylecheck]
+      path: internal/protoplugin/runtime.go
+      text: "ST1003: struct field Json"

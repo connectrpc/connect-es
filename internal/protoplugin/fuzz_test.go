@@ -21,5 +21,5 @@ func FuzzProtoCamelCase(f *testing.F) {
 	for k, _ := range reservedObjectProperties {
 		f.Add(k)
 	}
-	f.Fuzz(assertProtoCamelCaseEqualsProtocJsonName)
+	f.Fuzz(assertProtoCamelCaseEqualsProtocJSONName)
 }

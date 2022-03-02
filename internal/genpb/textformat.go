@@ -1,4 +1,4 @@
-package pb_generator
+package genpb
 
 import (
 	"bytes"
