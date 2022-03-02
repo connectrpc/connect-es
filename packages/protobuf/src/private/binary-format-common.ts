@@ -135,10 +135,7 @@ export function makeBinaryFormatCommon(): Omit<BinaryFormat, "writeMessage"> {
             if (repeated) {
               // safe to assume presence of array, oneof cannot contain repeated values
               (target[localName] as any[]).push(
-                wrapField(
-                  messageType,
-                  messageType.fromBinary(reader.bytes(), options)
-                )
+                messageType.fromBinary(reader.bytes(), options)
               );
             } else {
               if (target[localName] instanceof messageType) {

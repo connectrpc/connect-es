@@ -16,6 +16,9 @@ export interface FieldWrapper<T extends Message = any, U = any> {
   unwrapField(value: T): U;
 }
 
+/**
+ * Wrap field values whose message type has a wrapper.
+ */
 export function wrapField<T extends Message>(
   type: MessageType<T>,
   value: any
@@ -31,12 +34,12 @@ export function wrapField<T extends Message>(
   );
 }
 
+/**
+ * Unwrap field values whose message type has a wrapper.
+ */
 export function unwrapField<T extends Message>(
   type: MessageType<T>,
   value: T
 ): any {
-  if (type.fieldWrapper) {
-    return type.fieldWrapper.unwrapField(value);
-  }
-  return value;
+  return type.fieldWrapper ? type.fieldWrapper.unwrapField(value) : value;
 }

@@ -8,6 +8,7 @@ import { wrapField } from "./field-wrapper.js";
 import type { FieldInfo } from "../field.js";
 import { assert } from "./assert.js";
 import { makeJsonFormatCommon } from "./json-format-common.js";
+import type { Message } from "../message.js";
 
 /* eslint-disable no-case-declarations, @typescript-eslint/restrict-plus-operands,@typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument */
 
@@ -29,13 +30,11 @@ export function makeJsonFormatProto2(): JsonFormat {
             }
             break;
           case "message":
-            const messageType = field.V.T;
             for (const [entryKey, entryValue] of Object.entries(value)) {
               // JSON standard allows only (double quoted) string as property key
-              jsonObj[entryKey.toString()] = wrapField(
-                messageType,
-                entryValue
-              ).toJson(options);
+              jsonObj[entryKey.toString()] = (entryValue as Message).toJson(
+                options
+              );
             }
             break;
           case "enum":
@@ -78,7 +77,7 @@ export function makeJsonFormatProto2(): JsonFormat {
             break;
           case "message":
             for (let i = 0; i < value.length; i++) {
-              jsonArr.push(wrapField(field.T, value[i]).toJson(options));
+              jsonArr.push(value[i].toJson(options));
             }
             break;
         }

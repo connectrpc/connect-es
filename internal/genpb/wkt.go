@@ -91,6 +91,9 @@ func GetUnwrappedFieldType(field *protoplugin.Field) (scalarType descriptorpb.Fi
 	if field.Repeated {
 		return 0, false
 	}
+	if field.Oneof != nil {
+		return 0, false
+	}
 	scalarType, ok = wrapperToBaseType[field.Message.TypeName]
 	return scalarType, ok
 }

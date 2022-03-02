@@ -1,11 +1,14 @@
 import { setEnumType } from "./enum.js";
-import type { Message, PartialMessage, PlainMessage } from "../message.js";
-import type { DynamicMessage } from "../message.js";
+import type {
+  DynamicMessage,
+  Message,
+  PartialMessage,
+  PlainMessage,
+} from "../message.js";
 import type { MessageType } from "../message-type.js";
 import { FieldInfo, ScalarType } from "../field.js";
 import type { Util } from "./util.js";
 import { scalarEquals } from "./scalars.js";
-import { wrapField } from "./field-wrapper.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-argument,no-case-declarations */
 
@@ -57,9 +60,13 @@ export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
               case "message":
                 const messageType = member.V.T;
                 for (const k of Object.keys(s[localName])) {
-                  const val = s[localName][k];
-                  t[localName][k] =
-                    val instanceof messageType ? val : new messageType(val);
+                  let val = s[localName][k];
+                  if (!messageType.fieldWrapper) {
+                    // We only take partial input for messages that are not a wrapper type.
+                    // For those messages, we recursively normalize the partial input.
+                    val = new messageType(val);
+                  }
+                  t[localName][k] = val;
                 }
                 break;
             }
@@ -117,11 +124,7 @@ export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
         }
         switch (m.kind) {
           case "message":
-            const messageType = m.T;
-            return m.T.equals(
-              wrapField(messageType, va),
-              wrapField(messageType, vb)
-            );
+            return m.T.equals(va, vb);
           case "enum":
             return scalarEquals(ScalarType.INT32, va, vb);
           case "scalar":
@@ -138,11 +141,7 @@ export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
             // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check -- oneof fields are never "map"
             switch (s.kind) {
               case "message":
-                const messageType = s.T;
-                return messageType.equals(
-                  wrapField(messageType, va[k]),
-                  wrapField(messageType, vb[k])
-                );
+                return s.T.equals(va[k], vb[k]);
               case "enum":
                 return scalarEquals(ScalarType.INT32, va, vb);
               case "scalar":
@@ -157,12 +156,7 @@ export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
             switch (m.V.kind) {
               case "message":
                 const messageType = m.V.T;
-                return keys.every((k) =>
-                  messageType.equals(
-                    wrapField(messageType, va[k]),
-                    wrapField(messageType, vb[k])
-                  )
-                );
+                return keys.every((k) => messageType.equals(va[k], vb[k]));
               case "enum":
                 return keys.every((k) =>
                   scalarEquals(ScalarType.INT32, va[k], vb[k])
@@ -225,6 +219,11 @@ function cloneSingularField(
       }
       return value;
     case "message":
+      if (field.T.fieldWrapper) {
+        return field.T.fieldWrapper.unwrapField(
+          field.T.fieldWrapper.wrapField(value).clone()
+        );
+      }
       return (value as Message).clone();
   }
 }

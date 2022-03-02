@@ -3,7 +3,9 @@ import {
   RepeatedScalarValuesMessage,
   ScalarValuesMessage,
 } from "./gen/extra/msg-scalar_pb.js";
+import { WrappersMessage } from "./gen/extra/wkt-wrappers_pb.js";
 import { testMT } from "./helpers.js";
+import { protoInt64 } from "@bufbuild/protobuf";
 
 describe("clone", function () {
   testMT(MessageFieldMessage, (messageType) => {
@@ -73,5 +75,23 @@ describe("clone", function () {
     expect(b).toStrictEqual(a);
     a.doubleField.push(1.2);
     expect(b.doubleField).not.toBe(a.doubleField);
+  });
+
+  testMT(WrappersMessage, (messageType) => {
+    const a = new messageType({
+      doubleValueField: 1.2,
+      boolValueField: true,
+      floatValueField: 1.3,
+      int64ValueField: protoInt64.parse(4),
+      uint64ValueField: protoInt64.parse(5),
+      int32ValueField: 6,
+      uint32ValueField: 7,
+      stringValueField: "a",
+      bytesValueField: new Uint8Array([0xff]),
+    });
+    const b = a.clone();
+    expect(b).toStrictEqual(a);
+    a.doubleValueField = 0.1;
+    expect(b.doubleValueField).not.toBe(a.doubleValueField);
   });
 });

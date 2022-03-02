@@ -372,55 +372,55 @@ export class OneofWellKnownTypes extends Message<OneofWellKnownTypes> {
         /**
          * @generated from field: google.protobuf.DoubleValue double_field = 10;
          */
-        value: number;
+        value: DoubleValue;
         case: "doubleField";
     } | {
         /**
          * @generated from field: google.protobuf.FloatValue float_field = 11;
          */
-        value: number;
+        value: FloatValue;
         case: "floatField";
     } | {
         /**
          * @generated from field: google.protobuf.Int64Value int64_field = 12;
          */
-        value: bigint;
+        value: Int64Value;
         case: "int64Field";
     } | {
         /**
          * @generated from field: google.protobuf.UInt64Value uint64_field = 13;
          */
-        value: bigint;
+        value: UInt64Value;
         case: "uint64Field";
     } | {
         /**
          * @generated from field: google.protobuf.Int32Value int32_field = 14;
          */
-        value: number;
+        value: Int32Value;
         case: "int32Field";
     } | {
         /**
          * @generated from field: google.protobuf.UInt32Value uint32_field = 15;
          */
-        value: number;
+        value: UInt32Value;
         case: "uint32Field";
     } | {
         /**
          * @generated from field: google.protobuf.BoolValue bool_field = 16;
          */
-        value: boolean;
+        value: BoolValue;
         case: "boolField";
     } | {
         /**
          * @generated from field: google.protobuf.StringValue string_field = 17;
          */
-        value: string;
+        value: StringValue;
         case: "stringField";
     } | {
         /**
          * @generated from field: google.protobuf.BytesValue bytes_field = 18;
          */
-        value: Uint8Array;
+        value: BytesValue;
         case: "bytesField";
     } | { case: undefined; value?: undefined } = { case: undefined };
 

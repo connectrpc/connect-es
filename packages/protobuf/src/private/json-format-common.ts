@@ -125,7 +125,7 @@ export function makeJsonFormatCommon(
             // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check -- "map" is invalid for repeated fields
             switch (field.kind) {
               case "message":
-                val = unwrapField(field.T, field.T.fromJson(jsonItem, options));
+                val = field.T.fromJson(jsonItem, options);
                 break;
               case "enum":
                 val = readEnum(field.T, jsonItem, options.ignoreUnknownFields);
@@ -168,11 +168,7 @@ export function makeJsonFormatCommon(
             let val;
             switch (field.V.kind) {
               case "message":
-                const messageType = field.V.T;
-                val = unwrapField(
-                  messageType,
-                  messageType.fromJson(jsonMapValue, options)
-                );
+                val = field.V.T.fromJson(jsonMapValue, options);
                 break;
               case "enum":
                 val = readEnum(

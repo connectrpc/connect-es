@@ -62,55 +62,55 @@ export class WrappersMessage extends Message<WrappersMessage> {
         /**
          * @generated from field: google.protobuf.DoubleValue oneof_double_value_field = 11;
          */
-        value: number;
+        value: DoubleValue;
         case: "oneofDoubleValueField";
     } | {
         /**
          * @generated from field: google.protobuf.BoolValue oneof_bool_value_field = 12;
          */
-        value: boolean;
+        value: BoolValue;
         case: "oneofBoolValueField";
     } | {
         /**
          * @generated from field: google.protobuf.FloatValue oneof_float_value_field = 13;
          */
-        value: number;
+        value: FloatValue;
         case: "oneofFloatValueField";
     } | {
         /**
          * @generated from field: google.protobuf.Int64Value oneof_int64_value_field = 14;
          */
-        value: bigint;
+        value: Int64Value;
         case: "oneofInt64ValueField";
     } | {
         /**
          * @generated from field: google.protobuf.UInt64Value oneof_uint64_value_field = 15;
          */
-        value: bigint;
+        value: UInt64Value;
         case: "oneofUint64ValueField";
     } | {
         /**
          * @generated from field: google.protobuf.Int32Value oneof_int32_value_field = 16;
          */
-        value: number;
+        value: Int32Value;
         case: "oneofInt32ValueField";
     } | {
         /**
          * @generated from field: google.protobuf.UInt32Value oneof_uint32_value_field = 17;
          */
-        value: number;
+        value: UInt32Value;
         case: "oneofUint32ValueField";
     } | {
         /**
          * @generated from field: google.protobuf.StringValue oneof_string_value_field = 18;
          */
-        value: string;
+        value: StringValue;
         case: "oneofStringValueField";
     } | {
         /**
          * @generated from field: google.protobuf.BytesValue oneof_bytes_value_field = 19;
          */
-        value: Uint8Array;
+        value: BytesValue;
         case: "oneofBytesValueField";
     } | { case: undefined; value?: undefined } = { case: undefined };
 

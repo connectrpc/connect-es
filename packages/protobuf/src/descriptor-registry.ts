@@ -36,6 +36,7 @@ import {
   Int64Value,
   StringValue,
   UInt32Value,
+  UInt64Value,
 } from "./google/protobuf/wrappers_pb.js";
 
 // well-known message types with specialized JSON representation
@@ -54,6 +55,7 @@ const wkMessages = [
   Int64Value,
   Int32Value,
   UInt32Value,
+  UInt64Value,
   BoolValue,
   StringValue,
   BytesValue,

@@ -3,14 +3,6 @@ import type { MessageType } from "./message-type.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// TODO investigate this as a replacement for the string union, but benchmark code size
-export enum FieldKind {
-  Scalar = 0,
-  Message = 1,
-  Enum = 2,
-  Map = 3,
-}
-
 /**
  * FieldInfo describes a field of a protobuf message for runtime reflection. We
  * distinguish between the following kinds of fields:
