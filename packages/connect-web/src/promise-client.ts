@@ -45,7 +45,7 @@ interface Options {
 export function makePromiseClient<T extends ServiceType>(
   service: T,
   transport: ClientTransport,
-  options?: { exactRequest: false | undefined }
+  options?: { exactRequest?: false }
 ): PromiseClient<T>;
 export function makePromiseClient<T extends ServiceType>(
   service: T,

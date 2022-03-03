@@ -43,7 +43,7 @@ interface Options {
 export function makeCallbackClient<T extends ServiceType>(
   service: T,
   transport: ClientTransport,
-  options?: { exactRequest: false | undefined }
+  options?: { exactRequest?: false }
 ): CallbackClient<T>;
 export function makeCallbackClient<T extends ServiceType>(
   service: T,
