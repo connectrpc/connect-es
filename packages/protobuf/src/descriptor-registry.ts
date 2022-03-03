@@ -74,14 +74,14 @@ const wkEnums = [getEnumType(NullValue)];
 export class DescriptorRegistry
   implements IMessageTypeRegistry, IEnumTypeRegistry, IServiceTypeRegistry
 {
-  private readonly unresolved: DescriptorSet;
+  private readonly ds: DescriptorSet;
 
   private readonly enums: Record<string, EnumType | undefined> = {};
   private readonly messages: Record<string, MessageType | undefined> = {};
   private readonly services: Record<string, ServiceType | undefined> = {};
 
   constructor(descriptorSet?: DescriptorSet, replaceWkt = true) {
-    this.unresolved = descriptorSet ?? new DescriptorSet();
+    this.ds = descriptorSet ?? new DescriptorSet();
     if (replaceWkt) {
       for (const mt of wkMessages) {
         this.messages["." + mt.typeName] = mt;
@@ -96,7 +96,7 @@ export class DescriptorRegistry
    * May raise an error on invalid descriptors.
    */
   add(...files: FileDescriptorProto[]): void {
-    this.unresolved.add(...files);
+    this.ds.add(...files);
   }
 
   /**
@@ -108,7 +108,7 @@ export class DescriptorRegistry
     if (existing) {
       return existing;
     }
-    const raw = this.unresolved.enums[protoTypeName];
+    const raw = this.ds.enums[protoTypeName];
     if (!raw) {
       return undefined;
     }
@@ -136,7 +136,7 @@ export class DescriptorRegistry
     if (existing) {
       return existing;
     }
-    const raw = this.unresolved.messages[protoTypeName];
+    const raw = this.ds.messages[protoTypeName];
     if (!raw) {
       return undefined;
     }
@@ -146,7 +146,7 @@ export class DescriptorRegistry
       localName: makeTypeLocalName(raw),
     });
     this.messages[protoTypeName] = type;
-    for (const field of raw.fields.map((f) => f.resolve(this.unresolved))) {
+    for (const field of raw.fields.map((f) => f.resolve(this.ds))) {
       const fieldInfo = makeFieldInfo(field, this);
       fields.push(fieldInfo);
     }
@@ -162,7 +162,7 @@ export class DescriptorRegistry
     if (existing) {
       return existing;
     }
-    const raw = this.unresolved.services[protoTypeName];
+    const raw = this.ds.services[protoTypeName];
     if (!raw) {
       return undefined;
     }

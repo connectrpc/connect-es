@@ -37,6 +37,22 @@ export class DescriptorSet implements UnresolvedSet {
       newFile(file, this);
     }
   }
+
+  listEnums(): UnresolvedEnum[] {
+    return Object.values(this.enums).filter(isDefined);
+  }
+
+  listMessages(): UnresolvedMessage[] {
+    return Object.values(this.messages).filter(isDefined);
+  }
+
+  listServices(): UnresolvedService[] {
+    return Object.values(this.services).filter(isDefined);
+  }
+}
+
+function isDefined<T>(v: T | undefined): v is T {
+  return v !== undefined;
 }
 
 interface UnresolvedSet {
@@ -76,7 +92,7 @@ interface File {
   toString(): string;
 }
 
-function newFile(proto: FileDescriptorProto, ds: DescriptorSet): File {
+function newFile(proto: FileDescriptorProto, ds: UnresolvedSet): File {
   assert(proto.name, `missing file descriptor name`);
   if (proto.syntax !== undefined && proto.syntax !== "proto3") {
     throw new Error(`invalid descriptor: unsupported syntax: ${proto.syntax}`);
