@@ -1,4 +1,6 @@
 import type {
+  BinaryReadOptions,
+  BinaryWriteOptions,
   Message,
   MessageType,
   MethodInfo,
@@ -9,12 +11,11 @@ import { codeFromHttpStatus, StatusCode } from "./status-code.js";
 import { parseBinaryHeader, percentDecodeHeader } from "./http-headers.js";
 import { Status } from "./grpc/status/v1/status_pb.js";
 import type {
-  ClientTransport,
-  ClientResponse,
-  ClientRequest,
   ClientCallOptions,
+  ClientRequest,
+  ClientResponse,
+  ClientTransport,
 } from "./client-transport.js";
-import type { BinaryReadOptions, BinaryWriteOptions } from "@bufbuild/protobuf";
 import {
   chainClientInterceptors,
   ClientInterceptor,
@@ -146,12 +147,8 @@ function createResponse<O extends Message>(
       function close(reason?: unknown) {
         isRead = true;
         isReading = false;
-        let error: ConnectError | undefined;
-        if (reason instanceof ConnectError) {
-          error = reason;
-        } else if (reason !== undefined) {
-          error = new ConnectError(String(reason));
-        }
+        const error =
+          reason !== undefined ? extractRejectionError(reason) : undefined;
         handler.onClose(error);
       }
       if (isRead) {
@@ -233,6 +230,19 @@ function createRequestHeaders(callOptions: ClientCallOptions): Headers {
     header.set("grpc-timeout", `${callOptions.timeout}m`);
   }
   return header;
+}
+
+function extractRejectionError(reason: unknown): ConnectError {
+  if (reason instanceof ConnectError) {
+    return reason;
+  }
+  if (reason instanceof Error && reason.name === "AbortError") {
+    // Fetch requests can only be canceled with an AbortController.
+    // We detect that condition by looking at the name of the raised
+    // error object, and translate to the appropriate status code.
+    return new ConnectError(reason.message, StatusCode.Canceled);
+  }
+  return new ConnectError(String(reason));
 }
 
 function extractHttpStatusError(response: Response): ConnectError | undefined {
