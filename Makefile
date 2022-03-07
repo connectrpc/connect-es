@@ -122,38 +122,6 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
-# The private NPM package "@bufbuild/requestbuilder-poc" is only here temporarily
-REQUESTBUILDERPOC_DIR = packages/requestbuilder-poc
-REQUESTBUILDERPOC_SOURCES = $(REQUESTBUILDERPOC_DIR)/*.json $(shell find $(REQUESTBUILDERPOC_DIR)/src -name '*.ts')
-serve-requestbuilder-poc: node_modules $(RUNTIME_BUILD) $(WEB_BUILD) $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
-	buf generate buf.build/bufbuild/buf --template '{"version": "v1", "plugins": [{"name":"es", "out": "$(REQUESTBUILDERPOC_DIR)/src/gen", "path": "$(PROTOC_GEN_ES_BIN)"},{"name":"connect-web", "out": "$(REQUESTBUILDERPOC_DIR)/src/gen", "path": "$(PROTOC_GEN_CONNECT_WEB_BIN)"}]}'
-	cd $(REQUESTBUILDERPOC_DIR) && npm run serve
-
-
-# The private NPM package "@bufbuild/connect-web-example" is only here temporarily
-WEBEXAMPLE_DIR = packages/connect-web-example
-WEBEXAMPLE_SOURCES = $(WEBEXAMPLE_DIR)/*.json $(shell find $(WEBEXAMPLE_DIR)/src -name '*.ts')
-WEBEXAMPLE_GEN = $(CACHE_DIR)/gen/web-example
-$(WEBEXAMPLE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN) $(shell find $(WEBEXAMPLE_DIR)/protos -name '*.proto')
-	rm -rf $(WEBEXAMPLE_DIR)/src/gen/*
-	buf generate $(WEBEXAMPLE_DIR)/protos --template \
-		'{"version": "v1", "plugins": [\
-			{\
-				"name":"es", \
-				"out": "$(WEBEXAMPLE_DIR)/src/gen", \
-				"path": "$(PROTOC_GEN_ES_BIN)",\
-			},{\
-				"name":"connect-web", \
-				"out": "$(WEBEXAMPLE_DIR)/src/gen", \
-				"path": "$(PROTOC_GEN_CONNECT_WEB_BIN)"\
-			}\
-		]}'
-	mkdir -p $(dir $(WEBEXAMPLE_GEN)) && touch $(WEBEXAMPLE_GEN)
-serve-web-example-client: node_modules $(RUNTIME_BUILD) $(WEB_BUILD) $(WEBEXAMPLE_GEN)
-	cd $(WEBEXAMPLE_DIR) && npm run serve
-
-
-
 # Commands
 
 .PHONY: default clean test-go test-jest test-conformance fuzz-go set-version go-build-npm
