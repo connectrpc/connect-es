@@ -9,7 +9,8 @@
     "./packages/connect-web-example",
     "./packages/connect-web-experimental",
     "./packages/requestbuilder-poc",
-    "./packages/protoc-gen-es"
+    "./packages/protoc-gen-es*",
+    "./packages/protoc-gen-connect-web*"
   ],
   "type": "module",
   "engineStrict": true,

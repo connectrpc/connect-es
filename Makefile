@@ -172,5 +172,60 @@ set-version:
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
 
 
-# TODO add a "release" target that cleans and runs all tests, cross compiles, and manages the version
+assert-no-uncommitted:
+	[ -z "$(shell git status --short)" ] || echo "Uncommitted changes found." && exit 1;
+
+
+# Release @bufbuild/protobuf.
+# Recommended procedure:
+# 1. Set a new version with the target `set-version`
+# 2. Commit and push all changes
+# 3. Login with `npm login`
+# 4. Run this target, publishing to npmjs.com
+# 5. Tag the release
+release-bufbuild-protobuf: assert-no-uncommitted clean test go-build-npm bench-codesize format lint go-build-npm assert-no-uncommitted
+	npm publish \
+		--access restricted \
+		--workspace packages/protobuf \
+		--workspace packages/protoc-gen-es \
+		--workspace packages/protoc-gen-es-darwin-64 \
+		--workspace packages/protoc-gen-es-darwin-arm64 \
+		--workspace packages/protoc-gen-es-freebsd-64 \
+		--workspace packages/protoc-gen-es-freebsd-arm64 \
+		--workspace packages/protoc-gen-es-linux-32 \
+		--workspace packages/protoc-gen-es-linux-64 \
+		--workspace packages/protoc-gen-es-linux-arm \
+		--workspace packages/protoc-gen-es-linux-arm64 \
+		--workspace packages/protoc-gen-es-netbsd-64 \
+		--workspace packages/protoc-gen-es-openbsd-64 \
+		--workspace packages/protoc-gen-es-windows-32 \
+		--workspace packages/protoc-gen-es-windows-64 \
+		--workspace packages/protoc-gen-es-windows-arm64
+
+
+# Release @bufbuild/connect-web.
+# Recommended procedure:
+# 1. Set a new version with the target `set-version`
+# 2. Commit and push all changes
+# 3. Login with `npm login`
+# 4. Run this target, publishing to npmjs.com
+# 5. Tag the release
+release-bufbuild-connect-web: assert-no-uncommitted clean test go-build-npm bench-codesize format lint go-build-npm assert-no-uncommitted
+	npm publish \
+		--access restricted \
+		--workspace packages/connect-web \
+		--workspace packages/protoc-gen-es \
+		--workspace packages/protoc-gen-es-darwin-64 \
+		--workspace packages/protoc-gen-es-darwin-arm64 \
+		--workspace packages/protoc-gen-es-freebsd-64 \
+		--workspace packages/protoc-gen-es-freebsd-arm64 \
+		--workspace packages/protoc-gen-es-linux-32 \
+		--workspace packages/protoc-gen-es-linux-64 \
+		--workspace packages/protoc-gen-es-linux-arm \
+		--workspace packages/protoc-gen-es-linux-arm64 \
+		--workspace packages/protoc-gen-es-netbsd-64 \
+		--workspace packages/protoc-gen-es-openbsd-64 \
+		--workspace packages/protoc-gen-es-windows-32 \
+		--workspace packages/protoc-gen-es-windows-64 \
+		--workspace packages/protoc-gen-es-windows-arm64
 
