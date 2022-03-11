@@ -38,10 +38,6 @@ export type PromiseClientWithExactRequest<T extends ServiceType> = {
     : never;
 };
 
-interface Options {
-  exactRequest?: boolean;
-}
-
 export function makePromiseClient<T extends ServiceType>(
   service: T,
   transport: ClientTransport,
@@ -59,9 +55,7 @@ export function makePromiseClient<T extends ServiceType>(
  */
 export function makePromiseClient<T extends ServiceType>(
   service: T,
-  transport: ClientTransport,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  options?: Options
+  transport: ClientTransport
 ) {
   const client: Record<string, unknown> = {};
   for (const call of createClientTransportCalls(service, transport)) {

@@ -97,7 +97,7 @@ function createRequest<I extends Message>(
     baseUrl = baseUrl.substring(0, baseUrl.length - 1);
   }
   const url = `${baseUrl}/${serviceTypeName}/${methodName}`;
-  const abort = callOptions.abort ?? new AbortController().signal;
+  const abort = callOptions.signal ?? new AbortController().signal;
   const request: ClientRequest = {
     url,
     init: {

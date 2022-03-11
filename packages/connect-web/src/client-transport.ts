@@ -39,9 +39,21 @@ export interface ClientCall<I extends Message, O extends Message> {
  * with this interface.
  */
 export interface ClientCallOptions {
+  /**
+   * Timeout in milliseconds.
+   */
   timeout?: number;
+
+  /**
+   * Custom headers to send with the request.
+   */
   headers?: HeadersInit;
-  abort?: AbortSignal;
+
+  /**
+   * An optional AbortSignal to cancel the call.
+   * If cancelled, an error with StatusCode.Canceled is raised.
+   */
+  signal?: AbortSignal;
 }
 
 /**

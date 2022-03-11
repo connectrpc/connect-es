@@ -52,10 +52,6 @@ export type CallbackClientWithExactRequest<T extends ServiceType> = {
 
 type CancelFn = () => void;
 
-interface Options {
-  exactRequest?: boolean;
-}
-
 export function makeCallbackClient<T extends ServiceType>(
   service: T,
   transport: ClientTransport,
@@ -73,9 +69,7 @@ export function makeCallbackClient<T extends ServiceType>(
  */
 export function makeCallbackClient<T extends ServiceType>(
   service: T,
-  transport: ClientTransport,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  options?: Options
+  transport: ClientTransport
 ) {
   const client: Record<string, unknown> = {};
   for (const call of createClientTransportCalls(service, transport)) {
@@ -184,10 +178,10 @@ function wrapSignal(
   abort: AbortController,
   options: ClientCallOptions | undefined
 ): ClientCallOptions {
-  if (options?.abort) {
-    options.abort.addEventListener("abort", () => abort.abort());
+  if (options?.signal) {
+    options.signal.addEventListener("abort", () => abort.abort());
   }
-  return { ...options, abort: abort.signal };
+  return { ...options, signal: abort.signal };
 }
 
 function messageFromPartial<T extends Message>(
