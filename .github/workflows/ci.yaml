@@ -20,10 +20,9 @@ jobs:
         with:
           path: |
             ~/.cache
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('**/package-lock.json', '**/go.sum') }}
+          key: ${{ runner.os }}-connect-web-ci
           restore-keys: |
-            ${{ runner.os }}-connect-web-ci-
+            ${{ runner.os }}-connect-web-ci
       - name: make-test
         run: make test
       - name: make-go-build-npm
