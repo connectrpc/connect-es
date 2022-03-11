@@ -19,8 +19,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ~/.cache/bazel
-          key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('**/package.json', '**/package-lock.json') }}
+            ~/.cache
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('**/package-lock.json', '**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
       - name: make-test
