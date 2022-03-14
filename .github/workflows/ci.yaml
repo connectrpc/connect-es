@@ -20,9 +20,11 @@ jobs:
         with:
           path: |
             ~/.cache
-          key: ${{ runner.os }}-connect-web-ci
+          key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
-            ${{ runner.os }}-connect-web-ci
+            ${{ runner.os }}-connect-web-ci-
+      - name: make-lint
+        run: make lint
       - name: make-test
         run: make test
       - name: make-go-build-npm
@@ -31,5 +33,3 @@ jobs:
         run: make bench-codesize
       - name: make-format
         run: make format
-      - name: make-lint
-        run: make lint
