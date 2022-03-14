@@ -1,0 +1,35 @@
+name: ci
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  ci:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: setup-go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18.0-rc1
+          stable: false
+      - name: install buf
+        run: go install github.com/bufbuild/buf/cmd/buf@v1.1.0
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache
+          key: ${{ runner.os }}-connect-web-ci
+          restore-keys: |
+            ${{ runner.os }}-connect-web-ci
+      - name: make-test
+        run: make test
+      - name: make-go-build-npm
+        run: make go-build-npm
+      - name: make-bench-codesize
+        run: make bench-codesize
+      - name: make-format
+        run: make format
+      - name: make-lint
+        run: make lint
