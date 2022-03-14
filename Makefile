@@ -97,30 +97,34 @@ $(TEST_BUILD): $(PROTOC_GEN_ES_BIN) $(TEST_GEN) $(RUNTIME_BUILD) $(TEST_SOURCES)
 BENCHCODESIZE_DIR = packages/bench-codesize
 BENCHCODESIZE_BUF_COMMIT=4505cba5e5a94a42af02ebc7ac3a0a04
 BENCHCODESIZE_GEN = $(CACHE_DIR)/gen/bench-codesize-$(BENCHCODESIZE_BUF_COMMIT)
+BUF_GENERATE_TEMPLATE = '\
+{\
+	"version": "v1",\
+	"plugins": [\
+		{\
+			"name":"es", \
+			"path": "$(PROTOC_GEN_ES_BIN)",\
+			"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
+			"opt": "ts_nocheck=false"\
+		},{\
+			"name":"connect-web", \
+			"path": "$(PROTOC_GEN_CONNECT_WEB_BIN)",\
+			"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
+			"opt": "ts_nocheck=false"\
+		},{\
+			"remote":"buf.build/protocolbuffers/plugins/js:v3.19.3-1", \
+			"out": "$(BENCHCODESIZE_DIR)/src/gen/grpcweb", \
+			"opt": "import_style=commonjs"\
+		},{\
+			"remote":"buf.build/grpc/plugins/web:v1.3.1-2", \
+			"out": "$(BENCHCODESIZE_DIR)/src/gen/grpcweb", \
+			"opt": "import_style=commonjs+dts,mode=grpcweb"\
+		}\
+	]\
+}'
 $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	rm -rf $(BENCHCODESIZE_DIR)/src/gen/*
-	buf generate buf.build/bufbuild/buf:$(BENCHCODESIZE_BUF_COMMIT) --template \
-		'{"version": "v1", "plugins": [\
-			{\
-				"name":"es", \
-				"path": "$(PROTOC_GEN_ES_BIN)",\
-				"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
-				"opt": "ts_nocheck=false"\
-			},{\
-				"name":"connect-web", \
-				"path": "$(PROTOC_GEN_CONNECT_WEB_BIN)",\
-				"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
-				"opt": "ts_nocheck=false"\
-			},{\
-				"remote":"buf.build/protocolbuffers/plugins/js:v3.19.3-1", \
-				"out": "$(BENCHCODESIZE_DIR)/src/gen/grpcweb", \
-				"opt": "import_style=commonjs"\
-			},{\
-				"remote":"buf.build/grpc/plugins/web:v1.3.1-2", \
-				"out": "$(BENCHCODESIZE_DIR)/src/gen/grpcweb", \
-				"opt": "import_style=commonjs+dts,mode=grpcweb"\
-			}\
-		]}'
+	buf generate buf.build/bufbuild/buf:$(BENCHCODESIZE_BUF_COMMIT) --template $(BUF_GENERATE_TEMPLATE)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
