@@ -4,7 +4,7 @@ export { protoInt64 } from "./proto-int64.js";
 
 export {
   Message,
-  DynamicMessage,
+  AnyMessage,
   PartialMessage,
   PlainMessage,
 } from "./message.js";

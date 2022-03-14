@@ -10,7 +10,7 @@ import type { MessageType } from "../message-type.js";
  * Note that this feature exists for google/protobuf/{wrappers,struct}.proto
  * and cannot be used to arbitrarily modify types in generated code.
  */
-export interface FieldWrapper<T extends Message = any, U = any> {
+export interface FieldWrapper<T extends Message<T> = any, U = any> {
   wrapField(value: U): T;
 
   unwrapField(value: T): U;
@@ -19,7 +19,7 @@ export interface FieldWrapper<T extends Message = any, U = any> {
 /**
  * Wrap field values whose message type has a wrapper.
  */
-export function wrapField<T extends Message>(
+export function wrapField<T extends Message<T>>(
   type: MessageType<T>,
   value: any
 ): T {
@@ -37,7 +37,7 @@ export function wrapField<T extends Message>(
 /**
  * Unwrap field values whose message type has a wrapper.
  */
-export function unwrapField<T extends Message>(
+export function unwrapField<T extends Message<T>>(
   type: MessageType<T>,
   value: T
 ): any {

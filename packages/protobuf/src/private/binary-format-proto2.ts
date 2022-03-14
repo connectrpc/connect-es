@@ -1,4 +1,4 @@
-import type { DynamicMessage, Message } from "../message.js";
+import type { AnyMessage, Message } from "../message.js";
 import type { BinaryFormat, BinaryWriteOptions } from "../binary-format.js";
 import type { IBinaryWriter } from "../binary-encoding.js";
 import { FieldInfo, ScalarType } from "../field.js";
@@ -28,13 +28,13 @@ export function makeBinaryFormatProto2(): BinaryFormat {
             repeated = field.repeated,
             localName = field.localName;
           if (field.oneof) {
-            const oneof = (message as DynamicMessage)[field.oneof.localName];
+            const oneof = (message as AnyMessage)[field.oneof.localName];
             if (oneof.case !== localName) {
               continue; // field is not selected, skip
             }
             value = oneof.value;
           } else {
-            value = (message as DynamicMessage)[localName];
+            value = (message as AnyMessage)[localName];
             // In contrast to proto3, we raise an error if a non-optional (proto2 required)
             // field is missing a value.
             if (value === undefined && !field.oneof && !field.opt) {

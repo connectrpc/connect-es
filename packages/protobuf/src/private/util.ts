@@ -35,7 +35,7 @@ export interface Util {
   /**
    * Set specified field values on the target message, recursively.
    */
-  initPartial<T extends Message>(
+  initPartial<T extends Message<T>>(
     source: PartialMessage<T> | undefined,
     target: T
   ): void;
@@ -44,7 +44,7 @@ export interface Util {
    * Compares two messages of the same type recursively.
    * Will also return true if both messages are `undefined`.
    */
-  equals<T extends Message>(
+  equals<T extends Message<T>>(
     type: MessageType,
     a: T | PlainMessage<T> | undefined,
     b: T | PlainMessage<T> | undefined
@@ -53,5 +53,5 @@ export interface Util {
   /**
    * Create a deep copy.
    */
-  clone<T extends Message>(message: T): T;
+  clone<T extends Message<T>>(message: T): T;
 }

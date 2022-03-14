@@ -1,6 +1,5 @@
 import { MessageFieldMessage } from "./gen/extra/msg-message_pb";
-import type { DynamicMessage, MessageType } from "@bufbuild/protobuf";
-import type { Message } from "@bufbuild/protobuf";
+import type { AnyMessage, Message, MessageType } from "@bufbuild/protobuf";
 import { ScalarValuesMessage } from "./gen/extra/msg-scalar_pb.js";
 
 describe("Message", () => {
@@ -9,8 +8,8 @@ describe("Message", () => {
     const methodsCallable = message.toJsonString();
     expect(methodsCallable).not.toBeUndefined();
   });
-  test("is assignable to DynamicMessage", () => {
-    const dynamicMessage: DynamicMessage = message;
+  test("is assignable to AnyMessage", () => {
+    const dynamicMessage: AnyMessage = message;
     const methodsCallable = dynamicMessage.toJsonString();
     expect(methodsCallable).not.toBeUndefined();
   });
@@ -22,8 +21,8 @@ describe("Message", () => {
   });
 });
 
-describe("DynamicMessage", () => {
-  const message = new MessageFieldMessage() as DynamicMessage;
+describe("AnyMessage", () => {
+  const message = new MessageFieldMessage() as AnyMessage;
   test("has methods", () => {
     const methodsCallable = message.toJsonString();
     expect(methodsCallable).not.toBeUndefined();
@@ -44,7 +43,7 @@ describe("DynamicMessage", () => {
     expect(methodsCallable).not.toBeUndefined();
   });
   test("access field value", () => {
-    const message = new ScalarValuesMessage() as DynamicMessage;
+    const message = new ScalarValuesMessage() as AnyMessage;
     const f = message.getType().fields.find(5);
     if (f) {
       expect(message[f.localName]).toBe(0);

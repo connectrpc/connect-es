@@ -6,7 +6,7 @@ import type {
 } from "@bufbuild/protobuf";
 import { MethodKind } from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
-import type { Message } from "@bufbuild/protobuf";
+import { Message } from "@bufbuild/protobuf";
 import {
   createClientTransportCalls,
   ClientCall,
@@ -74,12 +74,12 @@ export function makePromiseClient<T extends ServiceType>(
   return client as PromiseClient<T> | PromiseClientWithExactRequest<T>;
 }
 
-type UnaryFn<I extends Message, O extends Message> = (
+type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: I | PartialMessage<I>,
   options?: ClientCallOptions
 ) => Promise<O>;
 
-function createUnaryFn<I extends Message, O extends Message>(
+function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   call: ClientCall<I, O>
 ): UnaryFn<I, O> {
   return function (requestMessage, options) {
@@ -110,12 +110,12 @@ function createUnaryFn<I extends Message, O extends Message>(
   };
 }
 
-type ServerStreamingFn<I extends Message, O extends Message> = (
+type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: I | PartialMessage<I>,
   options?: ClientCallOptions
 ) => Promise<AsyncIterable<O>>;
 
-function createServerStreamingFn<I extends Message, O extends Message>(
+function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
   call: ClientCall<I, O>
 ): ServerStreamingFn<I, O> {
   return function (requestMessage, options) {
@@ -137,7 +137,7 @@ function createServerStreamingFn<I extends Message, O extends Message>(
   };
 }
 
-function createResponseMessageIterator<T extends Message>(
+function createResponseMessageIterator<T extends Message<T>>(
   response: ClientResponse<T>
 ): AsyncIterator<T> {
   return {
@@ -166,13 +166,12 @@ function createResponseMessageIterator<T extends Message>(
   };
 }
 
-function messageFromPartial<T extends Message>(
+function messageFromPartial<T extends Message<T>>(
   message: T | PartialMessage<T>,
   type: MessageType<T>
 ) {
-  if (message instanceof type) {
+  if (message instanceof type || message instanceof Message) {
     return message;
   }
-  // TODO investigate cast
-  return new type(message as PartialMessage<T>);
+  return new type(message);
 }

@@ -8,30 +8,34 @@ import type {
 import type { MessageType } from "./message-type.js";
 
 /**
- * Every message - generated or created at runtime - is an instance of this
- * class.
- *
- * It is unsafe to extend this class. If you want to create a message at run
- * time, use proto3.makeMessageType().
+ * AnyMessage is an interface implemented by all messages. If you need to
+ * handle messages of unknown type, this interface provides a convenient
+ * index signature to access fields with message["fieldname"].
  */
-export class Message<T extends Message = DynamicMessage> {
-  // TODO find better name to prevent field name conflicts?
+export interface AnyMessage extends Message<AnyMessage> {
+  [k: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- `any` is the best choice for dynamic access
+}
+
+/**
+ * Message is the base class of every message, generated, or created at
+ * runtime.
+ *
+ * It is _not_ safe to extend this class. If you want to create a message at
+ * run time, use proto3.makeMessageType().
+ */
+export class Message<T extends Message<T> = AnyMessage> {
   /**
    * Compare with a message of the same type.
    */
   equals(other: T | PlainMessage<T> | undefined): boolean {
-    return this.getType().runtime.util.equals<T>(
-      this.getType(),
-      this as unknown as T,
-      other
-    );
+    return this.getType().runtime.util.equals(this.getType(), this, other);
   }
 
-  // TODO find better name to prevent field name conflicts?
   /**
    * Create a deep copy.
    */
   clone(): T {
+    // return this.getType().runtime.util.clone(this);
     return this.getType().runtime.util.clone(this as unknown as T);
   }
 
@@ -150,13 +154,4 @@ type PartialField<F> =
 type OneofSelectedMessage<K extends string, M extends Message> = {
   case: K;
   value: M;
-};
-
-/**
- * DynamicMessage exposes the fields of the message with an index signature,
- * which means that fields can be accessed with message["fieldname"].
- */
-export type DynamicMessage = Message & {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` is the best choice for dynamic access
-  [k: string]: any;
 };

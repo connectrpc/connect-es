@@ -47,7 +47,7 @@ export function createConnectTransport(
 ): ClientTransport {
   const transportOptions = options;
   return {
-    call<I extends Message, O extends Message>(
+    call<I extends Message<I>, O extends Message<O>>(
       service: ServiceType,
       method: MethodInfo<I, O>,
       options: ClientCallOptions
@@ -79,7 +79,7 @@ export function createConnectTransport(
   };
 }
 
-function createRequest<I extends Message>(
+function createRequest<I extends Message<I>>(
   serviceTypeName: string,
   methodName: string,
   callOptions: ClientCallOptions,
@@ -133,7 +133,7 @@ function createRequest<I extends Message>(
   return [request, responsePromise];
 }
 
-function createResponse<O extends Message>(
+function createResponse<O extends Message<O>>(
   messageType: MessageType<O>,
   callOptions: ClientCallOptions,
   transportOptions: ConnectTransportOptions,

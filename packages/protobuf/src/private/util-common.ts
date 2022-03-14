@@ -1,6 +1,6 @@
 import { setEnumType } from "./enum.js";
 import type {
-  DynamicMessage,
+  AnyMessage,
   Message,
   PartialMessage,
   PlainMessage,
@@ -15,7 +15,7 @@ import { scalarEquals } from "./scalars.js";
 export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
   return {
     setEnumType,
-    initPartial<T extends Message>(
+    initPartial<T extends Message<T>>(
       source: PartialMessage<T> | undefined,
       target: T
     ): void {
@@ -25,8 +25,8 @@ export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
       const type = target.getType();
       for (const member of type.fields.byMember()) {
         const localName = member.localName,
-          t = target as DynamicMessage,
-          s = source as DynamicMessage;
+          t = target as AnyMessage,
+          s = source as PartialMessage<AnyMessage>;
         if (s[localName] === undefined) {
           continue;
         }
@@ -89,7 +89,7 @@ export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
         }
       }
     },
-    equals<T extends Message>(
+    equals<T extends Message<T>>(
       type: MessageType<T>,
       a: T | PlainMessage<T> | undefined,
       b: T | PlainMessage<T> | undefined
@@ -171,16 +171,17 @@ export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
         }
       });
     },
-    clone<T extends Message>(message: T): T {
+    clone<T extends Message<T>>(message: T): T {
       const type = message.getType(),
-        target = new type();
+        target = new type(),
+        any = target as AnyMessage;
       for (const member of type.fields.byMember()) {
-        const source = (message as DynamicMessage)[member.localName];
+        const source = (message as AnyMessage)[member.localName];
         let copy: any;
         if (member.repeated) {
           copy = (source as any[]).map((e) => cloneSingularField(member, e));
         } else if (member.kind == "map") {
-          copy = target[member.localName];
+          copy = any[member.localName];
           for (const [key, v] of Object.entries(source)) {
             copy[key] = cloneSingularField(member.V, v);
           }
@@ -192,9 +193,9 @@ export function makeUtilCommon(): Omit<Util, "newFieldList" | "initFields"> {
         } else {
           copy = cloneSingularField(member, source);
         }
-        target[member.localName] = copy;
+        any[member.localName] = copy;
       }
-      return target as T;
+      return target;
     },
   };
 }

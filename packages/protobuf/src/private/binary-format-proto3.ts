@@ -1,4 +1,4 @@
-import type { DynamicMessage, Message } from "../message.js";
+import type { AnyMessage, Message } from "../message.js";
 import type { BinaryFormat, BinaryWriteOptions } from "../binary-format.js";
 import type { IBinaryWriter } from "../binary-encoding.js";
 import { ScalarType } from "../field.js";
@@ -27,13 +27,13 @@ export function makeBinaryFormatProto3(): BinaryFormat {
           localName = field.localName;
 
         if (field.oneof) {
-          const oneof = (message as DynamicMessage)[field.oneof.localName];
+          const oneof = (message as AnyMessage)[field.oneof.localName];
           if (oneof.case !== localName) {
             continue; // field is not selected, skip
           }
           value = oneof.value;
         } else {
-          value = (message as DynamicMessage)[localName];
+          value = (message as AnyMessage)[localName];
         }
 
         switch (field.kind) {

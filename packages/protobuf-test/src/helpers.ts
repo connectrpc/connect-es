@@ -9,7 +9,7 @@ import { DescriptorRegistry } from "@bufbuild/protobuf";
  * 1. passing the given MessageType as is
  * 2. passing a dynamic version of the MessageType
  */
-export function describeMT<T extends Message>(
+export function describeMT<T extends Message<T>>(
   type: MessageType<T>,
   fn: (type: MessageType<T>) => void
 ) {
@@ -28,7 +28,7 @@ export function describeMT<T extends Message>(
  * 1. passing the given MessageType as is
  * 2. passing a dynamic version of the MessageType
  */
-export function testMT<T extends Message>(
+export function testMT<T extends Message<T>>(
   type: MessageType<T>,
   fn: (type: MessageType<T>) => void
 ) {
@@ -46,7 +46,7 @@ const fds = FileDescriptorSet.fromBinary(readFileSync("./descriptorset.bin"));
 const dr = new DescriptorRegistry();
 dr.add(...fds.file);
 
-function makeMessageTypeDynamic<T extends Message>(
+function makeMessageTypeDynamic<T extends Message<T>>(
   type: MessageType<T>
 ): MessageType<T> {
   const dyn = dr.findMessage(type.typeName);

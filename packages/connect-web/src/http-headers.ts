@@ -11,12 +11,12 @@ export function percentDecodeHeader(value: string): string {
  * Throws on invalid base-64 data, or on message parsing.
  */
 export function parseBinaryHeader(value: string): Uint8Array;
-export function parseBinaryHeader<T extends Message>(
+export function parseBinaryHeader<T extends Message<T>>(
   value: string,
   type: MessageType<T>,
   options?: Partial<BinaryReadOptions>
 ): T;
-export function parseBinaryHeader<T extends Message>(
+export function parseBinaryHeader<T extends Message<T>>(
   value: string,
   type?: MessageType<T>,
   options?: Partial<BinaryReadOptions>

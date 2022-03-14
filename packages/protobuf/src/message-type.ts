@@ -3,7 +3,7 @@ import type { ProtoRuntime } from "./private/proto-runtime.js";
 import type { JsonReadOptions, JsonValue } from "./json-format.js";
 import type { BinaryReadOptions } from "./binary-format.js";
 import type {
-  DynamicMessage,
+  AnyMessage,
   Message,
   PartialMessage,
   PlainMessage,
@@ -16,7 +16,7 @@ import type { FieldWrapper } from "./private/field-wrapper.js";
  * - metadata for reflection-based operations
  * - common functionality like serialization
  */
-export interface MessageType<T extends Message = DynamicMessage> {
+export interface MessageType<T extends Message<T> = AnyMessage> {
   /**
    * Create a new instance of this type.
    */

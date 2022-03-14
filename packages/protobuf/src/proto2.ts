@@ -3,7 +3,7 @@ import { makeBinaryFormatProto2 } from "./private/binary-format-proto2.js";
 import { makeUtilCommon } from "./private/util-common.js";
 import { FieldListSource, InternalFieldList } from "./private/field-list.js";
 import type { FieldList } from "./field-list.js";
-import type { DynamicMessage, Message } from "./message.js";
+import type { AnyMessage, Message } from "./message.js";
 import type { FieldInfo } from "./field.js";
 import { InternalOneofInfo } from "./private/field.js";
 import { makeFieldName, makeJsonName } from "./private/names.js";
@@ -24,7 +24,7 @@ export const proto2 = makeProtoRuntime(
     initFields(target: Message): void {
       for (const member of target.getType().fields.byMember()) {
         const name = member.localName,
-          t = target as DynamicMessage;
+          t = target as AnyMessage;
         if (member.repeated) {
           t[name] = [];
           continue;

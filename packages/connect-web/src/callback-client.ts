@@ -1,5 +1,4 @@
 import type {
-  Message,
   MessageType,
   MethodInfoServerStreaming,
   MethodInfoUnary,
@@ -16,6 +15,7 @@ import {
   receiveAll,
 } from "./client-transport.js";
 import { StatusCode } from "./status-code.js";
+import { Message } from "@bufbuild/protobuf";
 
 // prettier-ignore
 /**
@@ -88,13 +88,13 @@ export function makeCallbackClient<T extends ServiceType>(
   return client as CallbackClient<T> | CallbackClientWithExactRequest<T>;
 }
 
-type UnaryFn<I extends Message, O extends Message> = (
+type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: I | PartialMessage<I>,
   callback: (error: ConnectError | undefined, response: O) => void,
   options?: ClientCallOptions
 ) => CancelFn;
 
-function createUnaryFn<I extends Message, O extends Message>(
+function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   call: ClientCall<I, O>
 ): UnaryFn<I, O> {
   return function (requestMessage, callback, options) {
@@ -138,7 +138,7 @@ type ServerStreamingFn<I extends Message, O extends Message> = (
   options?: ClientCallOptions
 ) => CancelFn;
 
-function createServerStreamingFn<I extends Message, O extends Message>(
+function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
   call: ClientCall<I, O>
 ): ServerStreamingFn<I, O> {
   return function (requestMessage, onResponse, onClose, options) {
@@ -184,13 +184,12 @@ function wrapSignal(
   return { ...options, signal: abort.signal };
 }
 
-function messageFromPartial<T extends Message>(
+function messageFromPartial<T extends Message<T>>(
   message: T | PartialMessage<T>,
   type: MessageType<T>
-) {
-  if (message instanceof type) {
+): T {
+  if (message instanceof type || message instanceof Message) {
     return message;
   }
-  // TODO investigate cast
-  return new type(message as PartialMessage<T>);
+  return new type(message);
 }

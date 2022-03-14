@@ -5,13 +5,13 @@ import {
   Proto2RequiredMessage,
 } from "./gen/extra/proto2_pb.js";
 import { describeMT, testMT } from "./helpers.js";
-import type { DynamicMessage, Message } from "@bufbuild/protobuf";
+import type { AnyMessage, Message } from "@bufbuild/protobuf";
 import { protoInt64 } from "@bufbuild/protobuf";
 
-function setDefaults<T extends Message>(m: T): void {
+function setDefaults(m: AnyMessage): void {
   for (const f of m.getType().fields.list()) {
     if (f.kind == "scalar" || f.kind == "enum") {
-      (m as DynamicMessage)[f.localName] = f.default;
+      m[f.localName] = f.default;
     }
   }
 }
@@ -20,7 +20,7 @@ function verify<T extends Message>(m: T): boolean {
   return m
     .getType()
     .fields.list()
-    .every((f) => f.opt || (m as DynamicMessage)[f.localName] !== undefined);
+    .every((f) => f.opt || (m as AnyMessage)[f.localName] !== undefined);
 }
 
 describe("setDefaults", () => {

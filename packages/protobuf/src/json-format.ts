@@ -28,7 +28,7 @@ export interface JsonFormat {
   /**
    * Parse a message from JSON.
    */
-  readMessage<T extends Message>(
+  readMessage<T extends Message<T>>(
     type: MessageType<T>,
     jsonValue: JsonValue,
     options: JsonReadOptions,

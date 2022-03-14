@@ -1,6 +1,6 @@
 import type { JsonFormat, JsonValue } from "../json-format.js";
 import type { BinaryFormat } from "../binary-format.js";
-import type { DynamicMessage } from "../message.js";
+import type { AnyMessage } from "../message.js";
 import type { Message } from "../message.js";
 import type { EnumType, EnumValueInfo } from "../enum.js";
 import type { MessageType } from "../message-type.js";
@@ -22,7 +22,7 @@ export interface ProtoRuntime {
   /**
    * Create a message type at runtime, without generating code.
    */
-  makeMessageType<T extends Message = DynamicMessage>(
+  makeMessageType<T extends Message<T> = AnyMessage>(
     typeName: string,
     fields: FieldListSource,
     opt?: {

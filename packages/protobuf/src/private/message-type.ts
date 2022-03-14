@@ -1,5 +1,5 @@
 import {
-  DynamicMessage,
+  AnyMessage,
   Message,
   PartialMessage,
   PlainMessage,
@@ -13,7 +13,7 @@ import type { ProtoRuntime } from "./proto-runtime.js";
 /**
  * Create a new message type using the given runtime.
  */
-export function makeMessageType<T extends Message = DynamicMessage>(
+export function makeMessageType<T extends Message<T> = AnyMessage>(
   runtime: ProtoRuntime,
   typeName: string,
   fields: FieldListSource,

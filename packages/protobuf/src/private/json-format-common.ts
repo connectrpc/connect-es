@@ -6,7 +6,7 @@ import type {
   JsonWriteOptions,
   JsonWriteStringOptions,
 } from "../json-format.js";
-import type { DynamicMessage, Message } from "../message.js";
+import type { AnyMessage, Message } from "../message.js";
 import type { MessageType } from "../message-type.js";
 import { unwrapField, wrapField } from "./field-wrapper.js";
 import { FieldInfo, ScalarType } from "../field.js";
@@ -58,7 +58,7 @@ export function makeJsonFormatCommon(
   return {
     makeReadOptions,
     makeWriteOptions,
-    readMessage<T extends Message>(
+    readMessage<T extends Message<T>>(
       type: MessageType<T>,
       json: JsonValue,
       options: JsonReadOptions,
@@ -84,8 +84,7 @@ export function makeJsonFormatCommon(
           continue;
         }
         let localName = field.localName;
-        let target: { [localFieldName: string]: any } =
-          message as DynamicMessage;
+        let target: { [localFieldName: string]: any } = message;
         if (field.oneof) {
           if (jsonValue === null && field.kind == "scalar") {
             // see conformance test Required.Proto3.JsonInput.OneofFieldNull{First,Second}
@@ -275,7 +274,7 @@ export function makeJsonFormatCommon(
         for (const member of type.fields.byMember()) {
           let jsonValue: JsonValue | undefined;
           if (member.kind == "oneof") {
-            const oneof = (message as DynamicMessage)[member.localName];
+            const oneof = (message as AnyMessage)[member.localName];
             if (oneof.value === undefined) {
               continue;
             }
@@ -288,7 +287,7 @@ export function makeJsonFormatCommon(
             field = member;
             jsonValue = writeField(
               field,
-              (message as DynamicMessage)[field.localName],
+              (message as AnyMessage)[field.localName],
               options
             );
           }

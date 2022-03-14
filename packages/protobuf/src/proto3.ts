@@ -4,7 +4,7 @@ import { makeJsonFormatProto3 } from "./private/json-format-proto3.js";
 import { makeUtilCommon } from "./private/util-common.js";
 import { FieldListSource, InternalFieldList } from "./private/field-list.js";
 import type { FieldList } from "./field-list.js";
-import type { DynamicMessage, Message } from "./message.js";
+import type { AnyMessage, Message } from "./message.js";
 import { scalarDefaultValue } from "./private/scalars.js";
 import { FieldInfo, ScalarType } from "./field.js";
 import { InternalOneofInfo } from "./private/field.js";
@@ -28,7 +28,7 @@ export const proto3 = makeProtoRuntime(
           continue;
         }
         const name = member.localName,
-          t = target as DynamicMessage;
+          t = target as AnyMessage;
         if (member.repeated) {
           t[name] = [];
           continue;

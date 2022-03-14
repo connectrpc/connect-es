@@ -1,4 +1,4 @@
-import type { DynamicMessage, Message } from "./message.js";
+import type { AnyMessage, Message } from "./message.js";
 import type { MessageType } from "./message-type.js";
 
 /**
@@ -36,8 +36,8 @@ export interface ServiceType {
  *   the same effect every time it is called.
  */
 export type MethodInfo<
-  I extends Message = DynamicMessage,
-  O extends Message = DynamicMessage
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
 > =
   | MethodInfoUnary<I, O>
   | MethodInfoServerStreaming<I, O>
@@ -47,7 +47,7 @@ export type MethodInfo<
 /**
  * A unary method: rpc (Input) returns (Output)
  */
-export interface MethodInfoUnary<I extends Message, O extends Message>
+export interface MethodInfoUnary<I extends Message<I>, O extends Message<O>>
   extends miShared<I, O> {
   readonly kind: MethodKind.Unary;
 }
@@ -55,30 +55,36 @@ export interface MethodInfoUnary<I extends Message, O extends Message>
 /**
  * A server streaming method: rpc (Input) returns (stream Output)
  */
-export interface MethodInfoServerStreaming<I extends Message, O extends Message>
-  extends miShared<I, O> {
+export interface MethodInfoServerStreaming<
+  I extends Message<I>,
+  O extends Message<O>
+> extends miShared<I, O> {
   readonly kind: MethodKind.ServerStreaming;
 }
 
 /**
  * A client streaming method: rpc (stream Input) returns (Output)
  */
-export interface MethodInfoClientStreaming<I extends Message, O extends Message>
-  extends miShared<I, O> {
+export interface MethodInfoClientStreaming<
+  I extends Message<I>,
+  O extends Message<O>
+> extends miShared<I, O> {
   readonly kind: MethodKind.ClientStreaming;
 }
 
 /**
  * A method that streams bi-directionally: rpc (stream Input) returns (stream Output)
  */
-export interface MethodInfoBiDiStreaming<I extends Message, O extends Message>
-  extends miShared<I, O> {
+export interface MethodInfoBiDiStreaming<
+  I extends Message<I>,
+  O extends Message<O>
+> extends miShared<I, O> {
   readonly kind: MethodKind.BiDiStreaming;
 }
 
 interface miShared<
-  I extends Message = DynamicMessage,
-  O extends Message = DynamicMessage
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
 > {
   readonly name: string;
   readonly I: MessageType<I>;
