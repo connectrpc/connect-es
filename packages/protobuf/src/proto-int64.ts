@@ -1,4 +1,4 @@
-import { int64fromString, int64toString } from "./private/goog-varint.js";
+import { int64fromString, int64toString } from "./google/varint.js";
 
 /**
  * We use the `bigint` primitive to represent 64-bit integral types. If bigint

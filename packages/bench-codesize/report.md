@@ -9,5 +9,5 @@ minify the bundle, and compress it like a web server would usually do.
 
 | code generator                         | bundle size        | minified               | gzip               |
 |----------------------------------------|-------------------:|-----------------------:|-------------------:|
-| [connect-web](src/entry-connectweb.ts) | 269,102 b | 142,437 b | 25,371 b |
+| [connect-web](src/entry-connectweb.ts) | 269,096 b | 142,437 b | 25,371 b |
 | [grpc-web](src/entry-grpcweb.ts)       | 1,019,177 b    | 724,458 b    | 90,848 b    |

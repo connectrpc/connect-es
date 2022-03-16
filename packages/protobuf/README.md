@@ -23,4 +23,4 @@ suitable for web browsers and Node.js.
 
 ### Copyright
 
-The [code to encode and decode varint](./src/private/goog-varint.ts) is Copyright 2008 Google Inc., licensed under BSD-3-Clause.
+The [code to encode and decode varint](src/google/varint.ts) is Copyright 2008 Google Inc., licensed under BSD-3-Clause.
