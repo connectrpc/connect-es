@@ -19,7 +19,7 @@ jobs:
       - name: install buf
         run: go install github.com/bufbuild/buf/cmd/buf@v1.1.0
       - name: add deploy keys to ssh-agent # TODO remove after the repository has been made public
-        uses: webfactory/ssh-agent@v0.5.4
+        uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
         with:
           ssh-private-key: ${{ secrets.PROTOBUF_ES_DEPLOY_KEY }}
       - name: Cache
