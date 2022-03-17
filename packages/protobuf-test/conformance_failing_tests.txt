@@ -1,3 +1,0 @@
-# proto2 extensions are not implemented
-# WARNING, test=Recommended.Proto2.JsonInput.FieldNameExtension.Validator: Expected JSON payload but got type 1. request=json_payload: "{\n        \"[protobuf_test_messages.proto2.extension_int32]\": 1\n      }" requested_output_format: JSON message_type: "protobuf_test_messages.proto2.TestAllTypesProto2" test_category: JSON_TEST, response=parse_error: "Error: cannot decode message protobuf_test_messages.proto2.TestAllTypesProto2 from JSON: key \"[protobuf_test_messages.proto2.extension_int32]\" is unknown"
-Recommended.Proto2.JsonInput.FieldNameExtension.Validator

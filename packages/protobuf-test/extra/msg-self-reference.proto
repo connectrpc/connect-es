@@ -1,9 +1,0 @@
-syntax = "proto3";
-package spec;
-
-
-message SelfReferencingMessage {
-    SelfReferencingMessage self = 1;
-    repeated SelfReferencingMessage self_list = 2;
-    map<string, SelfReferencingMessage> self_map = 3;
-}

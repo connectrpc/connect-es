@@ -2,14 +2,8 @@
   "version": "0.0.1",
   "private": true,
   "workspaces": [
-    "./packages/protobuf",
     "./packages/connect-web",
-    "./packages/protobuf-test",
     "./packages/bench-codesize",
-    "./packages/connect-web-example",
-    "./packages/connect-web-experimental",
-    "./packages/requestbuilder-poc",
-    "./packages/protoc-gen-es*",
     "./packages/protoc-gen-connect-web*"
   ],
   "type": "module",
