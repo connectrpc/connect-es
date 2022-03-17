@@ -23,7 +23,7 @@ $(PROTOC_GEN_CONNECT_WEB_BIN): $(PROTOC_GEN_CONNECT_WEB_SOURCES)
 # (We need --ignore-scripts so that the postinstall scripts of
 # the NPM distribution packages do not run before they are built)
 node_modules: package-lock.json
-	npm ci --force --ignore-scripts
+	npm ci --force
 
 
 # The NPM package "@bufbuild/connect-web"
@@ -76,8 +76,6 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 default: test go-build-npm bench-codesize format lint
 
 clean:
-	cd $(RUNTIME_DIR); npm run clean
-	cd $(TEST_DIR); npm run clean
 	cd $(BENCHCODESIZE_DIR); npm run clean
 	cd $(WEB_DIR); npm run clean
 	rm -rf $(CACHE_DIR)/*
