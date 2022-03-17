@@ -11,7 +11,7 @@ try {
 } catch (e) {
     exitReadBasePackage(e);
 }
-const wantName = `${basePkg.name}-${process.platform}-${process.arch}`;
+const wantName = findPlatformPackageName(basePkg);
 if (!basePkg.optionalDependencies[wantName]) {
     exitUnsupportedPlatform(basePkg);
 }
@@ -67,4 +67,29 @@ function readPackage(dir) {
         );
     }
     return pkg;
+}
+
+function findPlatformPackageName() {
+    // prettier-ignore
+    const platforms = [
+        { name: "darwin-64",     npmOs: "darwin",  npmCpu: "x64",   },
+        { name: "darwin-64",     npmOs: "darwin",  npmCpu: "x64",   },
+        { name: "darwin-arm64",  npmOs: "darwin",  npmCpu: "arm64", },
+        { name: "windows-64",    npmOs: "win32",   npmCpu: "x64",   },
+        { name: "windows-arm64", npmOs: "win32",   npmCpu: "arm64", },
+        { name: "windows-32",    npmOs: "win32",   npmCpu: "ia32",  },
+        { name: "linux-64",      npmOs: "linux",   npmCpu: "x64",   },
+        { name: "linux-32",      npmOs: "linux",   npmCpu: "ia32",  },
+        { name: "linux-arm",     npmOs: "linux",   npmCpu: "arm",   },
+        { name: "linux-arm64",   npmOs: "linux",   npmCpu: "arm64", },
+        { name: "freebsd-64",    npmOs: "freebsd", npmCpu: "x64",   },
+        { name: "freebsd-arm64", npmOs: "freebsd", npmCpu: "arm64", },
+        { name: "netbsd-64",     npmOs: "netbsd",  npmCpu: "x64",   },
+        { name: "openbsd-64",    npmOs: "openbsd", npmCpu: "x64",   },
+    ];
+    const platform = platforms.find(p => p.npmOs === process.platform && p.npmCpu === process.arch);
+    if (!platform) {
+        return undefined;
+    }
+    return `${basePkg.name}-${platform.name}`;
 }
