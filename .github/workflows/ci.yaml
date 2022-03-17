@@ -2,6 +2,9 @@ name: ci
 on:
   push:
   workflow_dispatch:
+env:
+  # TODO remove after the repository has been made public
+  GOPRIVATE: github.com/bufbuild/protobuf-es
 jobs:
   ci:
     runs-on: ubuntu-20.04
