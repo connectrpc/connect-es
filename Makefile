@@ -1,4 +1,5 @@
 CACHE_DIR = .cache
+CACHE_BIN := $(CACHE_DIR)/bin
 SHELL := /usr/bin/env bash -o pipefail
 .DEFAULT_GOAL = default
 
@@ -21,7 +22,7 @@ $(GOOGPROTOBUF_PROTOC_BIN): $(GOOGPROTOBUF_SOURCE)
 	touch $(GOOGPROTOBUF_PROTOC_BIN)
 $(GOOGPROTOBUF_CONFORMANCE_RUNNER_BIN): $(GOOGPROTOBUF_SOURCE)
 	cd $(CACHE_DIR)/protobuf-$(GOOGPROTOBUF_VERSION) && bazel build test_messages_proto3_proto conformance_proto conformance_test conformance_test_runner
-export PATH := $(abspath $(GOOGPROTOBUF_SOURCE)/bazel-bin):$(PATH)
+export PATH := $(abspath $(GOOGPROTOBUF_SOURCE)/bazel-bin):$(abspath $(CACHE_BIN)):$(PATH)
 
 
 # Our code generator protoc-gen-es generates message and enum types
@@ -128,10 +129,19 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
+# The license header information in this project
+LICENSE_HEADER_VERSION := v1.1.0
+LICENSE_HEADER_LICENSE_TYPE := apache
+LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
+LICENSE_HEADER_YEAR_RANGE := 2021-2022
+LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/protobuf-test\/bin\/conformance_esm.js packages\/protobuf-test\/src\/gen\/ packages\/protobuf\/src\/google\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ packages\/protobuf\/dist\/ packages\/protobuf-test\/dist\/
+GIT_LS_FILES_UNSTAGED_VERSION ?= v1.1.0
+
+
 # Commands
 
 .PHONY: default clean test-go test-jest test-conformance fuzz-go set-version go-build-npm
-default: test go-build-npm bench-codesize format lint
+default: lint test go-build-npm bench-codesize format
 
 clean:
 	cd $(RUNTIME_DIR); npm run clean
@@ -156,7 +166,9 @@ test-go: $(TEST_GEN)
 fuzz-go:
 	gotip test ./internal/protoplugin -cpu=1 -parallel=1 -fuzz FuzzProtoCamelCase
 
-lint: lint-es
+lint:
+	@$(MAKE) checknodiffgenerated
+	@$(MAKE) lint-es
 
 lint-es: node_modules $(RUNTIME_BUILD) $(WEB_BUILD) $(TEST_BUILD)
 	npx eslint --max-warnings 0 .
@@ -177,10 +189,35 @@ set-version:
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
 
+install-license-header:
+	GOBIN=$(abspath $(CACHE_BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@$(LICENSE_HEADER_VERSION)
+
+install-git-ls-files-unstaged:
+	GOBIN=$(abspath $(CACHE_BIN)) go install github.com/bufbuild/buf/private/pkg/git/cmd/git-ls-files-unstaged@$(GIT_LS_FILES_UNSTAGED_VERSION)
+
+license-header: install-license-header install-git-ls-files-unstaged
+	git-ls-files-unstaged | \
+		grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))) | \
+		xargs license-header \
+			--license-type "$(LICENSE_HEADER_LICENSE_TYPE)" \
+			--copyright-holder "$(LICENSE_HEADER_COPYRIGHT_HOLDER)" \
+			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 assert-no-uncommitted:
 	[ -z "$(shell git status --short)" ] || echo "Uncommitted changes found." && exit 1;
 
+generate:
+	@$(MAKE) license-header
+
+checknodiffgenerated:
+	@ if [ -d .git ]; then \
+			$(MAKE) __checknodiffgeneratedinternal; \
+		else \
+			echo "skipping make checknodiffgenerated due to no .git repository" >&2; \
+		fi
+
+__checknodiffgeneratedinternal:
+	bash make/scripts/checknodiffgenerated.bash $(MAKE) generate
 
 # Release @bufbuild/protobuf.
 # Recommended procedure:
