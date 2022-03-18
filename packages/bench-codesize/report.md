@@ -11,3 +11,4 @@ minify the bundle, and compress it like a web server would usually do.
 |----------------------------------------|-------------------:|-----------------------:|-------------------:|
 | [connect-web](src/entry-connectweb.ts) | 273,316 b | 142,437 b | 20,584 b |
 | [grpc-web](src/entry-grpcweb.ts)       | 1,019,177 b    | 724,458 b    | 74,076 b    |
+TESTING
