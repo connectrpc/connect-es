@@ -30,13 +30,13 @@ jobs:
           key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
-      - name: make-lint
-        run: make lint
+      - name: make-build
+        run: make build
       - name: make-test
         run: make test
-      - name: make-go-build-npm
-        run: make go-build-npm
-      - name: make-bench-codesize
-        run: make bench-codesize
+      - name: make-lint
+        run: make lint
       - name: make-format
-        run: make format
+        run: bash make/scripts/checknodiffgenerated.bash make format
+      - name: make-bench-codesize
+        run: bash make/scripts/checknodiffgenerated.bash make bench-codesize
