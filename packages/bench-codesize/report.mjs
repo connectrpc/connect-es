@@ -16,8 +16,8 @@ minify the bundle, and compress it like a web server would usually do.
 
 | code generator                         | bundle size        | minified               | gzip               |
 |----------------------------------------|-------------------:|-----------------------:|-------------------:|
-| [connect-web](src/entry-connectweb.ts) | ${connectweb.size} | ${connectweb.minified} | ${connectweb.gzip} |
-| [grpc-web](src/entry-grpcweb.ts)       | ${grpcweb.size}    | ${grpcweb.minified}    | ${grpcweb.gzip}    |
+| [connect-web](src/entry-connectweb.ts) | ${connectweb.size} | ${connectweb.minified} | ${connectweb.brotli} |
+| [grpc-web](src/entry-grpcweb.ts)       | ${grpcweb.size}    | ${grpcweb.minified}    | ${grpcweb.brotli}    |
 `);
 
 
@@ -29,7 +29,7 @@ function gather(entryPoint) {
         entryPoint,
         size: formatSize(bundle.byteLength),
         minified: formatSize(bundleMinified.byteLength),
-        gzip: formatSize(compressed.gzip),
+        brotli: formatSize(compressed.brotli),
     };
 }
 
