@@ -13,6 +13,7 @@ We are generating code for the module [buf.build/bufbuild/buf](https://buf.build
 once with \`protoc-gen-grpc-web\`, once with \`protoc-gen-connect-web\`. Then we bundle a client 
 for the service \`buf.alpha.registry.v1alpha1.PluginService\` with [esbuild](https://esbuild.github.io/),
 minify the bundle, and compress it like a web server would usually do.
+TESTING
 
 | code generator                         | bundle size        | minified               | gzip               |
 |----------------------------------------|-------------------:|-----------------------:|-------------------:|
