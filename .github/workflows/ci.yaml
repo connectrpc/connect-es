@@ -28,6 +28,7 @@ jobs:
         with:
           path: |
             ~/.cache
+            .cache
           key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
