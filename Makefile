@@ -114,7 +114,6 @@ clean: ## Delete build artifacts and installed dependencies
 	rm -rf packages/protoc-gen-*/bin/*
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
-	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 
 test: $(TEST_GEN) ## Run all tests
 	go test ./internal/...
@@ -150,6 +149,7 @@ set-version: ## Set a new version in for the project, i.e. make set-version SET_
 # 5. Tag the release
 release: all ## Release @bufbuild/connect-web
 	@[ -z "$(shell git status --short)" ] || echo "Uncommitted changes found." && exit 1;
+	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	npm publish \
 		--access restricted \
 		--workspace packages/connect-web \
