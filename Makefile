@@ -1,6 +1,10 @@
 CACHE_DIR = .cache
+CACHE_BIN := $(CACHE_DIR)/bin
 SHELL := /usr/bin/env bash -o pipefail
+export PATH := $(abspath $(CACHE_BIN)):$(PATH)
 .DEFAULT_GOAL = default
+
+# TODO remove after the repository has been made public
 export GOPRIVATE := github.com/bufbuild/protobuf-es
 
 
@@ -70,6 +74,15 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
+# The license header information in this project
+LICENSE_HEADER_VERSION := v1.1.0
+LICENSE_HEADER_LICENSE_TYPE := apache
+LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
+LICENSE_HEADER_YEAR_RANGE := 2021-2022
+LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/protobuf-test\/bin\/conformance_esm.js packages\/protobuf-test\/src\/gen\/ packages\/protobuf\/src\/google\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ packages\/protobuf\/dist\/ packages\/protobuf-test\/dist\/
+GIT_LS_FILES_UNSTAGED_VERSION ?= v1.1.0
+
+
 # Commands
 
 .PHONY: default clean test-go test-jest test-conformance fuzz-go set-version go-build-npm
@@ -87,7 +100,9 @@ test: test-go
 test-go: $(TEST_GEN)
 	go test ./internal/...
 
-lint: lint-es
+lint:
+	@$(MAKE) checknodiffgenerated
+	@$(MAKE) lint-es
 
 lint-es: node_modules $(WEB_BUILD)
 	npx eslint --max-warnings 0 .
@@ -107,9 +122,35 @@ set-version:
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
 
+install-license-header:
+	GOBIN=$(abspath $(CACHE_BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@$(LICENSE_HEADER_VERSION)
+
+install-git-ls-files-unstaged:
+	GOBIN=$(abspath $(CACHE_BIN)) go install github.com/bufbuild/buf/private/pkg/git/cmd/git-ls-files-unstaged@$(GIT_LS_FILES_UNSTAGED_VERSION)
+
+license-header: install-license-header install-git-ls-files-unstaged
+	git-ls-files-unstaged | \
+		grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))) | \
+		xargs license-header \
+			--license-type "$(LICENSE_HEADER_LICENSE_TYPE)" \
+			--copyright-holder "$(LICENSE_HEADER_COPYRIGHT_HOLDER)" \
+			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 assert-no-uncommitted:
 	[ -z "$(shell git status --short)" ] || echo "Uncommitted changes found." && exit 1;
+
+generate:
+	@$(MAKE) license-header
+
+checknodiffgenerated:
+	@ if [ -d .git ]; then \
+			$(MAKE) __checknodiffgeneratedinternal; \
+		else \
+			echo "skipping make checknodiffgenerated due to no .git repository" >&2; \
+		fi
+
+__checknodiffgeneratedinternal:
+	bash make/scripts/checknodiffgenerated.bash $(MAKE) generate
 
 
 # Release @bufbuild/connect-web.
