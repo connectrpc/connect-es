@@ -24,8 +24,6 @@ $(PROTOC_GEN_CONNECT_WEB_BIN): $(PROTOC_GEN_CONNECT_WEB_SOURCES)
 # Install NPM dependencies
 # (We need --force so NPM doesn't bail on the platform-specific
 # packages in the workspace)
-# (We need --ignore-scripts so that the postinstall scripts of
-# the NPM distribution packages do not run before they are built)
 node_modules: package-lock.json
 	npm ci --force
 
