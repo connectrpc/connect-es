@@ -118,7 +118,7 @@ build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 test: $(TEST_GEN) ## Run all tests
 	go test ./internal/...
 
-lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) ## Lint all files
+lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
 	npx eslint --max-warnings 0 .
 
