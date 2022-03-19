@@ -99,7 +99,7 @@ $(GOLANGCI_LINT_DEP):
 
 
 # Commands
-.PHONY: all clean build test test-go lint lint-es format bench-codesize set-version release
+.PHONY: all clean build test lint format bench-codesize set-version release
 
 help: ## Describe useful make targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
@@ -116,14 +116,14 @@ clean: ## Delete build artifacts and installed dependencies
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
 test: ## Run all tests
-	go test ./internal/...
+	go test ./cmd/...
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
 	npx eslint --max-warnings 0 .
 
 format: node_modules $(GIT_LS_FILES_UNSTAGED_DEP) $(LICENSE_HEADER_DEP) ## Format all files, adding license headers
-	go fmt ./internal/... ./cmd/...
+	go fmt ./cmd/...
 	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --loglevel error
 	git-ls-files-unstaged | \
 		grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))) | \
