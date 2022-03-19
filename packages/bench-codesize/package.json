@@ -2,8 +2,8 @@
   "name": "@bufbuild/bench-codesize",
   "private": true,
   "scripts": {
-    "report": "node report.mjs > report.md",
-    "clean": "rm -rf report.md src/gen"
+    "report": "node report.mjs > README.md",
+    "clean": "rm -rf README.md src/gen"
   },
   "dependencies": {
     "@bufbuild/connect-web": "0.0.1",
