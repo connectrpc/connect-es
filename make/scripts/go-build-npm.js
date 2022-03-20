@@ -13,8 +13,15 @@
 // limitations under the License.
 
 import { exec } from "child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  copyFileSync,
+} from "fs";
 import { basename, dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 if (process.argv.length < 4) {
   process.stderr.write(
@@ -31,6 +38,7 @@ if (process.argv.length < 4) {
   process.exit(1);
 }
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const npmBase = process.argv[2];
 const goPkg = process.argv[3];
 const goFlags = `-ldflags="-s -w" -trimpath`;
@@ -38,16 +46,16 @@ const goFlags = `-ldflags="-s -w" -trimpath`;
 const platforms = [
     { name: "darwin-64",     npmOs: "darwin",  npmCpu: "x64",   goFlags, goEnv: { GOOS: "darwin",  GOARCH: "amd64", CGO_ENABLED: 0 } },
     { name: "darwin-64",     npmOs: "darwin",  npmCpu: "x64",   goFlags, goEnv: { GOOS: "darwin",  GOARCH: "amd64", CGO_ENABLED: 0 } },
-    { name: "darwin-arm64",  npmOs: "darwin",  npmCpu: "arm64", goFlags, goEnv: { GOOS: "darwin",  GOARCH: "amd64", CGO_ENABLED: 0 } },
+    { name: "darwin-arm64",  npmOs: "darwin",  npmCpu: "arm64", goFlags, goEnv: { GOOS: "darwin",  GOARCH: "arm64", CGO_ENABLED: 0 } },
     { name: "windows-64",    npmOs: "win32",   npmCpu: "x64",   goFlags, goEnv: { GOOS: "windows", GOARCH: "amd64", CGO_ENABLED: 0 } },
-    { name: "windows-arm64", npmOs: "win32",   npmCpu: "arm64", goFlags, goEnv: { GOOS: "windows", GOARCH: "amd64", CGO_ENABLED: 0 } },
+    { name: "windows-arm64", npmOs: "win32",   npmCpu: "arm64", goFlags, goEnv: { GOOS: "windows", GOARCH: "arm64", CGO_ENABLED: 0 } },
     { name: "windows-32",    npmOs: "win32",   npmCpu: "ia32",  goFlags, goEnv: { GOOS: "windows", GOARCH: "386"  , CGO_ENABLED: 0 } },
     { name: "linux-64",      npmOs: "linux",   npmCpu: "x64",   goFlags, goEnv: { GOOS: "linux",   GOARCH: "amd64", CGO_ENABLED: 0 } },
     { name: "linux-32",      npmOs: "linux",   npmCpu: "ia32",  goFlags, goEnv: { GOOS: "linux",   GOARCH: "386"  , CGO_ENABLED: 0 } },
     { name: "linux-arm",     npmOs: "linux",   npmCpu: "arm",   goFlags, goEnv: { GOOS: "linux",   GOARCH: "arm"  , CGO_ENABLED: 0 } },
-    { name: "linux-arm64",   npmOs: "linux",   npmCpu: "arm64", goFlags, goEnv: { GOOS: "linux",   GOARCH: "amd64", CGO_ENABLED: 0 } },
+    { name: "linux-arm64",   npmOs: "linux",   npmCpu: "arm64", goFlags, goEnv: { GOOS: "linux",   GOARCH: "arm64", CGO_ENABLED: 0 } },
     { name: "freebsd-64",    npmOs: "freebsd", npmCpu: "x64",   goFlags, goEnv: { GOOS: "freebsd", GOARCH: "amd64", CGO_ENABLED: 0 } },
-    { name: "freebsd-arm64", npmOs: "freebsd", npmCpu: "arm64", goFlags, goEnv: { GOOS: "freebsd", GOARCH: "amd64", CGO_ENABLED: 0 } },
+    { name: "freebsd-arm64", npmOs: "freebsd", npmCpu: "arm64", goFlags, goEnv: { GOOS: "freebsd", GOARCH: "arm64", CGO_ENABLED: 0 } },
     { name: "netbsd-64",     npmOs: "netbsd",  npmCpu: "x64",   goFlags, goEnv: { GOOS: "netbsd",  GOARCH: "amd64", CGO_ENABLED: 0 } },
     { name: "openbsd-64",    npmOs: "openbsd", npmCpu: "x64",   goFlags, goEnv: { GOOS: "openbsd", GOARCH: "amd64", CGO_ENABLED: 0 } },
 ];
@@ -117,6 +125,7 @@ function scaffold(npmBase, platforms) {
     delete pkg.peerDependencies;
     delete pkg.optionalDependencies;
     delete pkg.bin;
+    delete pkg.scripts;
     pkg.name = `${pkg.name}-${platform.name}`;
     pkg.os = [platform.npmOs];
     pkg.cpu = [platform.npmCpu];
@@ -129,6 +138,9 @@ function scaffold(npmBase, platforms) {
   }
   const pkg = readBasePackage(npmBase);
   pkg.optionalDependencies = optionalDependencies;
+  const shimTarget = join(npmBase, Object.values(pkg.bin)[0]);
+  mkdirSync(dirname(shimTarget), { recursive: true });
+  copyFileSync(join(__dirname, "go-build-npm-shim.cjs"), shimTarget);
   writePackage(pkg, join(npmBase, "package.json"));
 }
 
@@ -147,6 +159,9 @@ function readBasePackage(npmBase) {
   }
   if (!pkg.bin) {
     throw new Error(`${pkgPath} is missing "bin"`);
+  }
+  if (Object.keys(pkg.bin).length !== 1) {
+    throw new Error(`${pkgPath} is requires exactly one entry in "bin"`);
   }
   const binName = Object.keys(pkg.bin)[0];
   const binValue = Object.values(pkg.bin)[0];

@@ -22,7 +22,7 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "0.0.1"
+    "@bufbuild/protobuf": "^0.0.1-alpha.1"
   },
   "devDependencies": {
     "typescript": "^4.5.4"

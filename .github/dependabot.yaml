@@ -13,7 +13,7 @@ updates:
       timezone: UTC
       time: "07:00"
   - package-ecosystem: "npm"
-    directory: "/web"
+    directory: "/"
     schedule:
       interval: "weekly"
       timezone: UTC

@@ -9,7 +9,9 @@
       // ES2020.BigInt for the bigint representation of 64-bit integers
       "ES2020.BigInt",
       // DOM for the fetch API
-      "DOM"
+      "DOM",
+      // ES2018.AsyncIterable for the promise client
+      "ES2018.AsyncIterable"
     ]
   }
 }

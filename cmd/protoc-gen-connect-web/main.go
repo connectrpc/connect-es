@@ -15,8 +15,8 @@
 package main
 
 import (
-	"github.com/bufbuild/connect-web/internal/genconnectweb"
-	"github.com/bufbuild/connect-web/internal/protoplugin"
+	"github.com/bufbuild/connect-web/cmd/protoc-gen-connect-web/internal/genconnectweb"
+	"github.com/bufbuild/protobuf-es/private/protoplugin"
 	"google.golang.org/protobuf/types/pluginpb"
 )
 

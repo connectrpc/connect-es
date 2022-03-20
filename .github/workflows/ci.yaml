@@ -2,6 +2,9 @@ name: ci
 on:
   push:
   workflow_dispatch:
+env:
+  # TODO remove after the repository has been made public
+  GOPRIVATE: github.com/bufbuild/protobuf-es
 jobs:
   ci:
     runs-on: ubuntu-20.04
@@ -13,23 +16,29 @@ jobs:
         with:
           go-version: 1.18.0-rc1
           stable: false
-      - name: install buf
-        run: go install github.com/bufbuild/buf/cmd/buf@v1.1.0
+      - uses: bufbuild/buf-setup-action@v1.1.0
+        with:
+          version: 1.1.0
+      - name: add deploy keys to ssh-agent # TODO remove after the repository has been made public
+        uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
+        with:
+          ssh-private-key: ${{ secrets.PROTOBUF_ES_DEPLOY_KEY }}
       - name: Cache
         uses: actions/cache@v2
         with:
           path: |
             ~/.cache
+            .cache
           key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
+      - name: make-format
+        run: bash make/scripts/checknodiffgenerated.bash make format
+      - name: make-build
+        run: make build
       - name: make-lint
         run: make lint
       - name: make-test
         run: make test
-      - name: make-go-build-npm
-        run: make go-build-npm
       - name: make-bench-codesize
-        run: make bench-codesize
-      - name: make-format
-        run: make format
+        run: bash make/scripts/checknodiffgenerated.bash make bench-codesize
