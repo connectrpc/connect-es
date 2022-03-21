@@ -46,7 +46,7 @@ try {
 function updateGoVersion(path, newVersion) {
   const updates = [];
   const go = readFileSync(path, "utf-8");
-  const matches = /.*version = "(v?\d+\.\d+\.\d+)".*/.exec(go);
+  const matches = /.*version = "(v?\d+\.\d+\.\d+.*)".*/.exec(go);
   if (!matches) {
     throw "no version found in go file " + path;
   }

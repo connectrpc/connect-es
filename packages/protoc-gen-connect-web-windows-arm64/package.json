@@ -1,11 +1,19 @@
 {
   "name": "@bufbuild/protoc-gen-connect-web-windows-arm64",
-  "version": "0.0.1",
+  "version": "0.0.2-alpha.1",
   "description": "protoc-gen-connect-web (win32 / arm64)",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/bufbuild/connect-web.git"
+  },
+  "peerDependencies": {
+    "@bufbuild/connect-web": "^0.0.2-alpha.1"
+  },
+  "peerDependenciesMeta": {
+    "@bufbuild/connect-web": {
+      "optional": true
+    }
   },
   "os": [
     "win32"

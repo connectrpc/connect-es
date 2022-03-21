@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/protoc-gen-connect-web",
-  "version": "0.0.1",
+  "version": "0.0.2-alpha.1",
   "description": "protoc-gen-connect-web",
   "license": "Apache-2.0",
   "repository": {
@@ -10,19 +10,27 @@
   "bin": {
     "protoc-gen-connect-web": "bin/protoc-gen-connect-web"
   },
+  "peerDependencies": {
+    "@bufbuild/connect-web": "^0.0.2-alpha.1"
+  },
+  "peerDependenciesMeta": {
+    "@bufbuild/connect-web": {
+      "optional": true
+    }
+  },
   "optionalDependencies": {
-    "@bufbuild/protoc-gen-connect-web-darwin-64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-darwin-arm64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-windows-64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-windows-arm64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-windows-32": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-linux-64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-linux-32": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-linux-arm": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-linux-arm64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-freebsd-64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-freebsd-arm64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-netbsd-64": "0.0.1",
-    "@bufbuild/protoc-gen-connect-web-openbsd-64": "0.0.1"
+    "@bufbuild/protoc-gen-connect-web-darwin-64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-darwin-arm64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-windows-64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-windows-arm64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-windows-32": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-linux-64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-linux-32": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-linux-arm": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-linux-arm64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-freebsd-64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-freebsd-arm64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-netbsd-64": "0.0.2-alpha.1",
+    "@bufbuild/protoc-gen-connect-web-openbsd-64": "0.0.2-alpha.1"
   }
 }

@@ -122,7 +122,6 @@ function scaffold(npmBase, platforms) {
     const pkg = readBasePackage(npmBase);
     delete pkg.dependencies;
     delete pkg.devDependencies;
-    delete pkg.peerDependencies;
     delete pkg.optionalDependencies;
     delete pkg.bin;
     delete pkg.scripts;
