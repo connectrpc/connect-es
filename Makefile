@@ -146,7 +146,7 @@ set-version: ## Set a new version in for the project, i.e. make set-version SET_
 # 4. Run this target, publishing to npmjs.com
 # 5. Tag the release
 release: all ## Release @bufbuild/connect-web
-	@[ -z "$(shell git status --short)" ] || echo "Uncommitted changes found." && exit 1;
+	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
 	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	npm publish \
 		--access restricted \
