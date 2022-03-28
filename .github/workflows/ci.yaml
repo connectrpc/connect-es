@@ -16,7 +16,7 @@ jobs:
         with:
           go-version: 1.18.0-rc1
           stable: false
-      - uses: bufbuild/buf-setup-action@v1.1.0
+      - uses: bufbuild/buf-setup-action@v1.3.0
         with:
           version: 1.1.0
       - name: add deploy keys to ssh-agent # TODO remove after the repository has been made public
@@ -24,7 +24,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.PROTOBUF_ES_DEPLOY_KEY }}
       - name: Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache
