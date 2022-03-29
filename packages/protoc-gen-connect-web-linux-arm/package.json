@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/protoc-gen-connect-web-linux-arm",
-  "version": "0.0.2-alpha.1",
+  "version": "0.0.2-alpha.2",
   "description": "protoc-gen-connect-web (linux / arm)",
   "license": "Apache-2.0",
   "repository": {
@@ -8,10 +8,14 @@
     "url": "https://github.com/bufbuild/connect-web.git"
   },
   "peerDependencies": {
-    "@bufbuild/connect-web": "^0.0.2-alpha.1"
+    "@bufbuild/connect-web": "^0.0.2-alpha.2",
+    "@bufbuild/protoc-gen-es": "^0.0.2-alpha.2"
   },
   "peerDependenciesMeta": {
     "@bufbuild/connect-web": {
+      "optional": true
+    },
+    "@bufbuild/protoc-gen-es": {
       "optional": true
     }
   },
