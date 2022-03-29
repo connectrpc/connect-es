@@ -14,7 +14,6 @@
     "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types"
   },
   "type": "module",
-  "main": "./dist/cjs/index.js",
   "types": "./dist/types/index.d.ts",
   "exports": {
     "import": "./dist/esm/index.js",
@@ -22,7 +21,7 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^0.0.2-alpha.1"
+    "@bufbuild/protobuf": "^0.0.2-alpha.2"
   },
   "devDependencies": {
     "typescript": "^4.6.3"

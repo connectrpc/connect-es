@@ -80,10 +80,18 @@ function syncDeps(packages) {
         if (!dep) {
           continue;
         }
-        if (dep.version === version) {
+        let wantVersion = dep.version;
+        if (version.startsWith("^")) {
+          wantVersion = "^" + wantVersion;
+        } else if (version.startsWith("~")) {
+          wantVersion = "~" + wantVersion;
+        } else if (version.startsWith("=")) {
+          wantVersion = "=" + wantVersion;
+        }
+        if (wantVersion === version) {
           continue;
         }
-        pkg[key][name] = dep.version;
+        pkg[key][name] = wantVersion;
         updates.push({
           package: pkg,
           message: `updated ${key}["${name}"] from ${version} to ${dep.version}`,

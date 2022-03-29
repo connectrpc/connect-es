@@ -48,7 +48,7 @@ BUF_GENERATE_TEMPLATE = '\
 			"name":"es", \
 			"path": "$(PROTOC_GEN_ES_BIN)",\
 			"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
-			"opt": "ts_nocheck=false"\
+			"opt": "ts_nocheck=false,target=ts"\
 		},{\
 			"name":"connect-web", \
 			"path": "$(PROTOC_GEN_CONNECT_WEB_BIN)",\
@@ -137,6 +137,8 @@ bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code
 set-version: ## Set a new version in for the project, i.e. make set-version SET_VERSION=1.2.3
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
+	rm package-lock.json
+	npm i -f
 
 # Release @bufbuild/connect-web.
 # Recommended procedure:
