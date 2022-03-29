@@ -15,7 +15,9 @@
 package main
 
 import (
-	"github.com/bufbuild/connect-web/cmd/protoc-gen-connect-web/internal/genconnectweb"
+	"github.com/bufbuild/connect-web/cmd/protoc-gen-connect-web/internal/gendts"
+	"github.com/bufbuild/connect-web/cmd/protoc-gen-connect-web/internal/genjs"
+	"github.com/bufbuild/connect-web/cmd/protoc-gen-connect-web/internal/gents"
 	"github.com/bufbuild/protobuf-es/private/protoplugin"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -30,7 +32,16 @@ func main() {
 			if !file.Generate {
 				continue
 			}
-			genconnectweb.GenerateFile(gen, file)
+			for _, target := range gen.Targets {
+				switch target {
+				case protoplugin.TargetTypeScript:
+					gents.GenerateFile(gen, file)
+				case protoplugin.TargetJavaScript:
+					genjs.GenerateFile(gen, file)
+				case protoplugin.TargetTypeDeclaration:
+					gendts.GenerateFile(gen, file)
+				}
+			}
 		}
 		return nil
 	})

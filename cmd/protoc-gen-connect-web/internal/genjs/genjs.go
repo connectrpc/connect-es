@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package genconnectweb
+package genjs
 
 import (
 	"github.com/bufbuild/protobuf-es/private/protoplugin"
@@ -23,7 +23,7 @@ func GenerateFile(gen *protoplugin.Generator, file *protoplugin.File) {
 	if len(file.Services) == 0 {
 		return
 	}
-	f := gen.NewGeneratedFile(file.Name + "_connectweb.ts")
+	f := gen.NewGeneratedFile(file.Name + "_connectweb.js")
 	f.H(file.Preamble)
 
 	for _, service := range file.Services {
@@ -63,5 +63,5 @@ func generateService(f *protoplugin.GeneratedFile, service *protoplugin.Service)
 		f.P("        },")
 	}
 	f.P("    }")
-	f.P("} as const;")
+	f.P("};")
 }

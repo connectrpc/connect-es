@@ -53,7 +53,7 @@ BUF_GENERATE_TEMPLATE = '\
 			"name":"connect-web", \
 			"path": "$(PROTOC_GEN_CONNECT_WEB_BIN)",\
 			"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
-			"opt": "ts_nocheck=false"\
+			"opt": "ts_nocheck=false,target=ts"\
 		},{\
 			"remote":"buf.build/protocolbuffers/plugins/js:v3.19.3-1", \
 			"out": "$(BENCHCODESIZE_DIR)/src/gen/grpcweb", \
