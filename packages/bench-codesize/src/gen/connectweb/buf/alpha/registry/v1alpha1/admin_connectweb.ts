@@ -25,20 +25,20 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.AdminService
  */
 export const AdminService = {
-    typeName: "buf.alpha.registry.v1alpha1.AdminService",
-    methods: {
-        /**
-         * ForceDeleteUser forces to delete a user. Resources and organizations that are
-         * solely owned by the user will also be deleted.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.AdminService.ForceDeleteUser
-         */
-        forceDeleteUser: {
-            name: "ForceDeleteUser",
-            I: ForceDeleteUserRequest,
-            O: ForceDeleteUserResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.AdminService",
+  methods: {
+    /**
+     * ForceDeleteUser forces to delete a user. Resources and organizations that are
+     * solely owned by the user will also be deleted.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.AdminService.ForceDeleteUser
+     */
+    forceDeleteUser: {
+      name: "ForceDeleteUser",
+      I: ForceDeleteUserRequest,
+      O: ForceDeleteUserResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

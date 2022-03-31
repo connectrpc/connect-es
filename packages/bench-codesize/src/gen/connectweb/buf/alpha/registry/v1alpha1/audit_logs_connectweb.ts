@@ -25,19 +25,19 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.AuditLogsService
  */
 export const AuditLogsService = {
-    typeName: "buf.alpha.registry.v1alpha1.AuditLogsService",
-    methods: {
-        /**
-         * ListAuditLogs lists audit logs matching the filters specified.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.AuditLogsService.ListAuditLogs
-         */
-        listAuditLogs: {
-            name: "ListAuditLogs",
-            I: ListAuditLogsRequest,
-            O: ListAuditLogsResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.AuditLogsService",
+  methods: {
+    /**
+     * ListAuditLogs lists audit logs matching the filters specified.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.AuditLogsService.ListAuditLogs
+     */
+    listAuditLogs: {
+      name: "ListAuditLogs",
+      I: ListAuditLogsRequest,
+      O: ListAuditLogsResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

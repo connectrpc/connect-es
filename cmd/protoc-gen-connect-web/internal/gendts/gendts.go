@@ -28,7 +28,6 @@ func GenerateFile(gen *protoplugin.Generator, file *protoplugin.File) {
 
 	for _, service := range file.Services {
 		generateService(f, service)
-		f.P()
 	}
 }
 
@@ -36,32 +35,32 @@ func generateService(f *protoplugin.GeneratedFile, service *protoplugin.Service)
 	rt := service.File.RuntimeSymbols
 	f.P(service.JSDoc(""))
 	f.P("export declare const ", service.LocalName, ": {")
-	f.P(`    readonly typeName: "`, service.TypeName, `",`)
-	f.P("    readonly methods: {")
+	f.P(`  readonly typeName: "`, service.TypeName, `",`)
+	f.P("  readonly methods: {")
 	for _, method := range service.Methods {
-		f.P(method.JSDoc("        "))
-		f.P("        readonly ", method.LocalName, ": {")
-		f.P(`            readonly name: "`, method.Proto.GetName(), `",`)
-		f.P("            readonly I: ", method.Input.Symbol, ",")
-		f.P("            readonly O: ", method.Output.Symbol, ",")
+		f.P(method.JSDoc("    "))
+		f.P("    readonly ", method.LocalName, ": {")
+		f.P(`      readonly name: "`, method.Proto.GetName(), `",`)
+		f.P("      readonly I: ", method.Input.Symbol, ",")
+		f.P("      readonly O: ", method.Output.Symbol, ",")
 		switch {
 		case method.Proto.GetClientStreaming() && method.Proto.GetServerStreaming():
-			f.P("            readonly kind: ", rt.MethodKind, ".BiDiStreaming,")
+			f.P("      readonly kind: ", rt.MethodKind, ".BiDiStreaming,")
 		case method.Proto.GetClientStreaming():
-			f.P("            readonly kind: ", rt.MethodKind, ".ClientStreaming,")
+			f.P("      readonly kind: ", rt.MethodKind, ".ClientStreaming,")
 		case method.Proto.GetServerStreaming():
-			f.P("            readonly kind: ", rt.MethodKind, ".ServerStreaming,")
+			f.P("      readonly kind: ", rt.MethodKind, ".ServerStreaming,")
 		default:
-			f.P("            readonly kind: ", rt.MethodKind, ".Unary,")
+			f.P("      readonly kind: ", rt.MethodKind, ".Unary,")
 		}
 		switch method.Proto.Options.GetIdempotencyLevel() {
 		case descriptorpb.MethodOptions_NO_SIDE_EFFECTS:
-			f.P("            readonly idempotency: ", rt.MethodIdempotency, ".NoSideEffects,")
+			f.P("      readonly idempotency: ", rt.MethodIdempotency, ".NoSideEffects,")
 		case descriptorpb.MethodOptions_IDEMPOTENT:
-			f.P("            readonly idempotency: ", rt.MethodIdempotency, ".Idempotent,")
+			f.P("      readonly idempotency: ", rt.MethodIdempotency, ".Idempotent,")
 		}
-		f.P("        },")
+		f.P("    },")
 	}
-	f.P("    }")
+	f.P("  }")
 	f.P("};")
 }

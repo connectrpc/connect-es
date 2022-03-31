@@ -25,108 +25,108 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.UserService
  */
 export const UserService = {
-    typeName: "buf.alpha.registry.v1alpha1.UserService",
-    methods: {
-        /**
-         * CreateUser creates a new user with the given username.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.CreateUser
-         */
-        createUser: {
-            name: "CreateUser",
-            I: CreateUserRequest,
-            O: CreateUserResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetUser gets a user by ID.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.GetUser
-         */
-        getUser: {
-            name: "GetUser",
-            I: GetUserRequest,
-            O: GetUserResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetUserByUsername gets a user by username.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.GetUserByUsername
-         */
-        getUserByUsername: {
-            name: "GetUserByUsername",
-            I: GetUserByUsernameRequest,
-            O: GetUserByUsernameResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListUsers lists all users.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.ListUsers
-         */
-        listUsers: {
-            name: "ListUsers",
-            I: ListUsersRequest,
-            O: ListUsersResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListOrganizationUsers lists all users for an organization.
-         * TODO: #663 move this to organization service
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.ListOrganizationUsers
-         */
-        listOrganizationUsers: {
-            name: "ListOrganizationUsers",
-            I: ListOrganizationUsersRequest,
-            O: ListOrganizationUsersResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DeleteUser deletes a user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.DeleteUser
-         */
-        deleteUser: {
-            name: "DeleteUser",
-            I: DeleteUserRequest,
-            O: DeleteUserResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * Deactivate user deactivates a user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.DeactivateUser
-         */
-        deactivateUser: {
-            name: "DeactivateUser",
-            I: DeactivateUserRequest,
-            O: DeactivateUserResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * UpdateUserServerRole update the role of an user in the server.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.UpdateUserServerRole
-         */
-        updateUserServerRole: {
-            name: "UpdateUserServerRole",
-            I: UpdateUserServerRoleRequest,
-            O: UpdateUserServerRoleResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * CountUsers returns the number of users in the server by the user state provided.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.UserService.CountUsers
-         */
-        countUsers: {
-            name: "CountUsers",
-            I: CountUsersRequest,
-            O: CountUsersResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.UserService",
+  methods: {
+    /**
+     * CreateUser creates a new user with the given username.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.CreateUser
+     */
+    createUser: {
+      name: "CreateUser",
+      I: CreateUserRequest,
+      O: CreateUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetUser gets a user by ID.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.GetUser
+     */
+    getUser: {
+      name: "GetUser",
+      I: GetUserRequest,
+      O: GetUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetUserByUsername gets a user by username.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.GetUserByUsername
+     */
+    getUserByUsername: {
+      name: "GetUserByUsername",
+      I: GetUserByUsernameRequest,
+      O: GetUserByUsernameResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListUsers lists all users.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.ListUsers
+     */
+    listUsers: {
+      name: "ListUsers",
+      I: ListUsersRequest,
+      O: ListUsersResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListOrganizationUsers lists all users for an organization.
+     * TODO: #663 move this to organization service
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.ListOrganizationUsers
+     */
+    listOrganizationUsers: {
+      name: "ListOrganizationUsers",
+      I: ListOrganizationUsersRequest,
+      O: ListOrganizationUsersResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteUser deletes a user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.DeleteUser
+     */
+    deleteUser: {
+      name: "DeleteUser",
+      I: DeleteUserRequest,
+      O: DeleteUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Deactivate user deactivates a user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.DeactivateUser
+     */
+    deactivateUser: {
+      name: "DeactivateUser",
+      I: DeactivateUserRequest,
+      O: DeactivateUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateUserServerRole update the role of an user in the server.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.UpdateUserServerRole
+     */
+    updateUserServerRole: {
+      name: "UpdateUserServerRole",
+      I: UpdateUserServerRoleRequest,
+      O: UpdateUserServerRoleResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * CountUsers returns the number of users in the server by the user state provided.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.UserService.CountUsers
+     */
+    countUsers: {
+      name: "CountUsers",
+      I: CountUsersRequest,
+      O: CountUsersResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

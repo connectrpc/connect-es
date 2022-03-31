@@ -23,43 +23,43 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.RepositoryTrackCommitService
  */
 export const RepositoryTrackCommitService = {
-    typeName: "buf.alpha.registry.v1alpha1.RepositoryTrackCommitService",
-    methods: {
-        /**
-         * GetRepositoryTrackCommitByRepositoryCommit returns the RepositoryTrackCommit associated given repository_commit on
-         * the given repository_track. Returns NOT_FOUND if the RepositoryTrackCommit does not exist.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackCommitService.GetRepositoryTrackCommitByRepositoryCommit
-         */
-        getRepositoryTrackCommitByRepositoryCommit: {
-            name: "GetRepositoryTrackCommitByRepositoryCommit",
-            I: GetRepositoryTrackCommitByRepositoryCommitRequest,
-            O: GetRepositoryTrackCommitByRepositoryCommitResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRepositoryTrackCommitsByRepositoryTrack lists the RepositoryTrackCommitS associated with a repository track,
-         * ordered by their sequence id.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackCommitService.ListRepositoryTrackCommitsByRepositoryTrack
-         */
-        listRepositoryTrackCommitsByRepositoryTrack: {
-            name: "ListRepositoryTrackCommitsByRepositoryTrack",
-            I: ListRepositoryTrackCommitsByRepositoryTrackRequest,
-            O: ListRepositoryTrackCommitsByRepositoryTrackResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetRepositoryTrackCommitByReference returns the RepositoryTrackCommit associated with the given reference.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackCommitService.GetRepositoryTrackCommitByReference
-         */
-        getRepositoryTrackCommitByReference: {
-            name: "GetRepositoryTrackCommitByReference",
-            I: GetRepositoryTrackCommitByReferenceRequest,
-            O: GetRepositoryTrackCommitByReferenceResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.RepositoryTrackCommitService",
+  methods: {
+    /**
+     * GetRepositoryTrackCommitByRepositoryCommit returns the RepositoryTrackCommit associated given repository_commit on
+     * the given repository_track. Returns NOT_FOUND if the RepositoryTrackCommit does not exist.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackCommitService.GetRepositoryTrackCommitByRepositoryCommit
+     */
+    getRepositoryTrackCommitByRepositoryCommit: {
+      name: "GetRepositoryTrackCommitByRepositoryCommit",
+      I: GetRepositoryTrackCommitByRepositoryCommitRequest,
+      O: GetRepositoryTrackCommitByRepositoryCommitResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRepositoryTrackCommitsByRepositoryTrack lists the RepositoryTrackCommitS associated with a repository track,
+     * ordered by their sequence id.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackCommitService.ListRepositoryTrackCommitsByRepositoryTrack
+     */
+    listRepositoryTrackCommitsByRepositoryTrack: {
+      name: "ListRepositoryTrackCommitsByRepositoryTrack",
+      I: ListRepositoryTrackCommitsByRepositoryTrackRequest,
+      O: ListRepositoryTrackCommitsByRepositoryTrackResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetRepositoryTrackCommitByReference returns the RepositoryTrackCommit associated with the given reference.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackCommitService.GetRepositoryTrackCommitByReference
+     */
+    getRepositoryTrackCommitByReference: {
+      name: "GetRepositoryTrackCommitByReference",
+      I: GetRepositoryTrackCommitByReferenceRequest,
+      O: GetRepositoryTrackCommitByReferenceResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

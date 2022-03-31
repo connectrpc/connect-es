@@ -25,33 +25,33 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.GenerateService
  */
 export const GenerateService = {
-    typeName: "buf.alpha.registry.v1alpha1.GenerateService",
-    methods: {
-        /**
-         * GeneratePlugins generates an array of files given the provided
-         * module reference and plugin version and option tuples. No attempt
-         * is made at merging insertion points.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.GenerateService.GeneratePlugins
-         */
-        generatePlugins: {
-            name: "GeneratePlugins",
-            I: GeneratePluginsRequest,
-            O: GeneratePluginsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GenerateTemplate generates an array of files given the provided
-         * module reference and template version.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.GenerateService.GenerateTemplate
-         */
-        generateTemplate: {
-            name: "GenerateTemplate",
-            I: GenerateTemplateRequest,
-            O: GenerateTemplateResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.GenerateService",
+  methods: {
+    /**
+     * GeneratePlugins generates an array of files given the provided
+     * module reference and plugin version and option tuples. No attempt
+     * is made at merging insertion points.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.GenerateService.GeneratePlugins
+     */
+    generatePlugins: {
+      name: "GeneratePlugins",
+      I: GeneratePluginsRequest,
+      O: GeneratePluginsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GenerateTemplate generates an array of files given the provided
+     * module reference and template version.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.GenerateService.GenerateTemplate
+     */
+    generateTemplate: {
+      name: "GenerateTemplate",
+      I: GenerateTemplateRequest,
+      O: GenerateTemplateResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

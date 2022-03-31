@@ -25,74 +25,74 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.RecommendationService
  */
 export const RecommendationService = {
-    typeName: "buf.alpha.registry.v1alpha1.RecommendationService",
-    methods: {
-        /**
-         * RecommendedRepositories returns a list of recommended repositories.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.RecommendedRepositories
-         */
-        recommendedRepositories: {
-            name: "RecommendedRepositories",
-            I: RecommendedRepositoriesRequest,
-            O: RecommendedRepositoriesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * RecommendedTemplates returns a list of recommended templates.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.RecommendedTemplates
-         */
-        recommendedTemplates: {
-            name: "RecommendedTemplates",
-            I: RecommendedTemplatesRequest,
-            O: RecommendedTemplatesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRecommendedRepositories returns a list of recommended repositories that user have access to.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.ListRecommendedRepositories
-         */
-        listRecommendedRepositories: {
-            name: "ListRecommendedRepositories",
-            I: ListRecommendedRepositoriesRequest,
-            O: ListRecommendedRepositoriesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRecommendedTemplates returns a list of recommended templates that user have access to.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.ListRecommendedTemplates
-         */
-        listRecommendedTemplates: {
-            name: "ListRecommendedTemplates",
-            I: ListRecommendedTemplatesRequest,
-            O: ListRecommendedTemplatesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * SetRecommendedRepositories set the list of repository recommendations in the server.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.SetRecommendedRepositories
-         */
-        setRecommendedRepositories: {
-            name: "SetRecommendedRepositories",
-            I: SetRecommendedRepositoriesRequest,
-            O: SetRecommendedRepositoriesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * SetRecommendedTemplates set the list of template recommendations in the server.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.SetRecommendedTemplates
-         */
-        setRecommendedTemplates: {
-            name: "SetRecommendedTemplates",
-            I: SetRecommendedTemplatesRequest,
-            O: SetRecommendedTemplatesResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.RecommendationService",
+  methods: {
+    /**
+     * RecommendedRepositories returns a list of recommended repositories.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.RecommendedRepositories
+     */
+    recommendedRepositories: {
+      name: "RecommendedRepositories",
+      I: RecommendedRepositoriesRequest,
+      O: RecommendedRepositoriesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * RecommendedTemplates returns a list of recommended templates.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.RecommendedTemplates
+     */
+    recommendedTemplates: {
+      name: "RecommendedTemplates",
+      I: RecommendedTemplatesRequest,
+      O: RecommendedTemplatesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRecommendedRepositories returns a list of recommended repositories that user have access to.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.ListRecommendedRepositories
+     */
+    listRecommendedRepositories: {
+      name: "ListRecommendedRepositories",
+      I: ListRecommendedRepositoriesRequest,
+      O: ListRecommendedRepositoriesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRecommendedTemplates returns a list of recommended templates that user have access to.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.ListRecommendedTemplates
+     */
+    listRecommendedTemplates: {
+      name: "ListRecommendedTemplates",
+      I: ListRecommendedTemplatesRequest,
+      O: ListRecommendedTemplatesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * SetRecommendedRepositories set the list of repository recommendations in the server.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.SetRecommendedRepositories
+     */
+    setRecommendedRepositories: {
+      name: "SetRecommendedRepositories",
+      I: SetRecommendedRepositoriesRequest,
+      O: SetRecommendedRepositoriesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * SetRecommendedTemplates set the list of template recommendations in the server.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RecommendationService.SetRecommendedTemplates
+     */
+    setRecommendedTemplates: {
+      name: "SetRecommendedTemplates",
+      I: SetRecommendedTemplatesRequest,
+      O: SetRecommendedTemplatesResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

@@ -25,30 +25,30 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.RepositoryBranchService
  */
 export const RepositoryBranchService = {
-    typeName: "buf.alpha.registry.v1alpha1.RepositoryBranchService",
-    methods: {
-        /**
-         * CreateRepositoryBranch creates a new repository branch.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryBranchService.CreateRepositoryBranch
-         */
-        createRepositoryBranch: {
-            name: "CreateRepositoryBranch",
-            I: CreateRepositoryBranchRequest,
-            O: CreateRepositoryBranchResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRepositoryBranches lists the repository branches associated with a Repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryBranchService.ListRepositoryBranches
-         */
-        listRepositoryBranches: {
-            name: "ListRepositoryBranches",
-            I: ListRepositoryBranchesRequest,
-            O: ListRepositoryBranchesResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.RepositoryBranchService",
+  methods: {
+    /**
+     * CreateRepositoryBranch creates a new repository branch.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryBranchService.CreateRepositoryBranch
+     */
+    createRepositoryBranch: {
+      name: "CreateRepositoryBranch",
+      I: CreateRepositoryBranchRequest,
+      O: CreateRepositoryBranchResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRepositoryBranches lists the repository branches associated with a Repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryBranchService.ListRepositoryBranches
+     */
+    listRepositoryBranches: {
+      name: "ListRepositoryBranches",
+      I: ListRepositoryBranchesRequest,
+      O: ListRepositoryBranchesResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

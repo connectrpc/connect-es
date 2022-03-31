@@ -25,58 +25,58 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.TokenService
  */
 export const TokenService = {
-    typeName: "buf.alpha.registry.v1alpha1.TokenService",
-    methods: {
-        /**
-         * CreateToken creates a new token suitable for machine-to-machine authentication.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.TokenService.CreateToken
-         */
-        createToken: {
-            name: "CreateToken",
-            I: CreateTokenRequest,
-            O: CreateTokenResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetToken gets the specific token for the user
-         *
-         * This method requires authentication.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.TokenService.GetToken
-         */
-        getToken: {
-            name: "GetToken",
-            I: GetTokenRequest,
-            O: GetTokenResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListTokens lists the users active tokens
-         *
-         * This method requires authentication.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.TokenService.ListTokens
-         */
-        listTokens: {
-            name: "ListTokens",
-            I: ListTokensRequest,
-            O: ListTokensResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DeleteToken deletes an existing token.
-         *
-         * This method requires authentication.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.TokenService.DeleteToken
-         */
-        deleteToken: {
-            name: "DeleteToken",
-            I: DeleteTokenRequest,
-            O: DeleteTokenResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.TokenService",
+  methods: {
+    /**
+     * CreateToken creates a new token suitable for machine-to-machine authentication.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.TokenService.CreateToken
+     */
+    createToken: {
+      name: "CreateToken",
+      I: CreateTokenRequest,
+      O: CreateTokenResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetToken gets the specific token for the user
+     *
+     * This method requires authentication.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.TokenService.GetToken
+     */
+    getToken: {
+      name: "GetToken",
+      I: GetTokenRequest,
+      O: GetTokenResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListTokens lists the users active tokens
+     *
+     * This method requires authentication.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.TokenService.ListTokens
+     */
+    listTokens: {
+      name: "ListTokens",
+      I: ListTokensRequest,
+      O: ListTokensResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteToken deletes an existing token.
+     *
+     * This method requires authentication.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.TokenService.DeleteToken
+     */
+    deleteToken: {
+      name: "DeleteToken",
+      I: DeleteTokenRequest,
+      O: DeleteTokenResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

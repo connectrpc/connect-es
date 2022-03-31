@@ -25,20 +25,20 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.ImageService
  */
 export const ImageService = {
-    typeName: "buf.alpha.registry.v1alpha1.ImageService",
-    methods: {
-        /**
-         * GetImage serves a compiled image for the local module. It automatically
-         * downloads dependencies if necessary.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.ImageService.GetImage
-         */
-        getImage: {
-            name: "GetImage",
-            I: GetImageRequest,
-            O: GetImageResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.ImageService",
+  methods: {
+    /**
+     * GetImage serves a compiled image for the local module. It automatically
+     * downloads dependencies if necessary.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.ImageService.GetImage
+     */
+    getImage: {
+      name: "GetImage",
+      I: GetImageRequest,
+      O: GetImageResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

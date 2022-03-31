@@ -23,52 +23,52 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.RepositoryTrackService
  */
 export const RepositoryTrackService = {
-    typeName: "buf.alpha.registry.v1alpha1.RepositoryTrackService",
-    methods: {
-        /**
-         * CreateRepositoryTrack creates a new repository track.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackService.CreateRepositoryTrack
-         */
-        createRepositoryTrack: {
-            name: "CreateRepositoryTrack",
-            I: CreateRepositoryTrackRequest,
-            O: CreateRepositoryTrackResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRepositoryTracks lists the repository tracks associated with a repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackService.ListRepositoryTracks
-         */
-        listRepositoryTracks: {
-            name: "ListRepositoryTracks",
-            I: ListRepositoryTracksRequest,
-            O: ListRepositoryTracksResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DeleteRepositoryTrackByName deletes a repository track by name.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackService.DeleteRepositoryTrackByName
-         */
-        deleteRepositoryTrackByName: {
-            name: "DeleteRepositoryTrackByName",
-            I: DeleteRepositoryTrackByNameRequest,
-            O: DeleteRepositoryTrackByNameResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetRepositoryTrackByName gets a repository track by name.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackService.GetRepositoryTrackByName
-         */
-        getRepositoryTrackByName: {
-            name: "GetRepositoryTrackByName",
-            I: GetRepositoryTrackByNameRequest,
-            O: GetRepositoryTrackByNameResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.RepositoryTrackService",
+  methods: {
+    /**
+     * CreateRepositoryTrack creates a new repository track.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackService.CreateRepositoryTrack
+     */
+    createRepositoryTrack: {
+      name: "CreateRepositoryTrack",
+      I: CreateRepositoryTrackRequest,
+      O: CreateRepositoryTrackResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRepositoryTracks lists the repository tracks associated with a repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackService.ListRepositoryTracks
+     */
+    listRepositoryTracks: {
+      name: "ListRepositoryTracks",
+      I: ListRepositoryTracksRequest,
+      O: ListRepositoryTracksResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteRepositoryTrackByName deletes a repository track by name.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackService.DeleteRepositoryTrackByName
+     */
+    deleteRepositoryTrackByName: {
+      name: "DeleteRepositoryTrackByName",
+      I: DeleteRepositoryTrackByNameRequest,
+      O: DeleteRepositoryTrackByNameResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetRepositoryTrackByName gets a repository track by name.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTrackService.GetRepositoryTrackByName
+     */
+    getRepositoryTrackByName: {
+      name: "GetRepositoryTrackByName",
+      I: GetRepositoryTrackByNameRequest,
+      O: GetRepositoryTrackByNameResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

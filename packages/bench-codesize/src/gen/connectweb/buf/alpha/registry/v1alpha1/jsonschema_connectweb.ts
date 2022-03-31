@@ -26,20 +26,20 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.JSONSchemaService
  */
 export const JSONSchemaService = {
-    typeName: "buf.alpha.registry.v1alpha1.JSONSchemaService",
-    methods: {
-        /**
-         * GetJSONSchema allows users to get an (approximate) json schema for a
-         * protobuf type.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.JSONSchemaService.GetJSONSchema
-         */
-        getJSONSchema: {
-            name: "GetJSONSchema",
-            I: GetJSONSchemaRequest,
-            O: GetJSONSchemaResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.JSONSchemaService",
+  methods: {
+    /**
+     * GetJSONSchema allows users to get an (approximate) json schema for a
+     * protobuf type.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.JSONSchemaService.GetJSONSchema
+     */
+    getJSONSchema: {
+      name: "GetJSONSchema",
+      I: GetJSONSchemaRequest,
+      O: GetJSONSchemaResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 
