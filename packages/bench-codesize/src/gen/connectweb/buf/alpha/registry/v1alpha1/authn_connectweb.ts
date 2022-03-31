@@ -25,34 +25,34 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.AuthnService
  */
 export const AuthnService = {
-    typeName: "buf.alpha.registry.v1alpha1.AuthnService",
-    methods: {
-        /**
-         * GetCurrentUser gets information associated with the current user.
-         *
-         * The user's ID is retrieved from the request's authentication header.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.AuthnService.GetCurrentUser
-         */
-        getCurrentUser: {
-            name: "GetCurrentUser",
-            I: GetCurrentUserRequest,
-            O: GetCurrentUserResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetCurrentUserSubject gets the currently logged in users subject.
-         *
-         * The user's ID is retrieved from the request's authentication header.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.AuthnService.GetCurrentUserSubject
-         */
-        getCurrentUserSubject: {
-            name: "GetCurrentUserSubject",
-            I: GetCurrentUserSubjectRequest,
-            O: GetCurrentUserSubjectResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.AuthnService",
+  methods: {
+    /**
+     * GetCurrentUser gets information associated with the current user.
+     *
+     * The user's ID is retrieved from the request's authentication header.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.AuthnService.GetCurrentUser
+     */
+    getCurrentUser: {
+      name: "GetCurrentUser",
+      I: GetCurrentUserRequest,
+      O: GetCurrentUserResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetCurrentUserSubject gets the currently logged in users subject.
+     *
+     * The user's ID is retrieved from the request's authentication header.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.AuthnService.GetCurrentUserSubject
+     */
+    getCurrentUserSubject: {
+      name: "GetCurrentUserSubject",
+      I: GetCurrentUserSubjectRequest,
+      O: GetCurrentUserSubjectResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

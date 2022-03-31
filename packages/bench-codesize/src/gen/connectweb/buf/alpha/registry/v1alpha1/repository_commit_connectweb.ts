@@ -25,56 +25,56 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.RepositoryCommitService
  */
 export const RepositoryCommitService = {
-    typeName: "buf.alpha.registry.v1alpha1.RepositoryCommitService",
-    methods: {
-        /**
-         * ListRepositoryCommitsByBranch lists the repository commits associated
-         * with a repository branch on a repository, ordered by their create time.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryCommitService.ListRepositoryCommitsByBranch
-         */
-        listRepositoryCommitsByBranch: {
-            name: "ListRepositoryCommitsByBranch",
-            I: ListRepositoryCommitsByBranchRequest,
-            O: ListRepositoryCommitsByBranchResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRepositoryCommitsByReference returns repository commits up-to and including
-         * the provided reference.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryCommitService.ListRepositoryCommitsByReference
-         */
-        listRepositoryCommitsByReference: {
-            name: "ListRepositoryCommitsByReference",
-            I: ListRepositoryCommitsByReferenceRequest,
-            O: ListRepositoryCommitsByReferenceResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetRepositoryCommitByReference returns the repository commit matching
-         * the provided reference, if it exists.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryCommitService.GetRepositoryCommitByReference
-         */
-        getRepositoryCommitByReference: {
-            name: "GetRepositoryCommitByReference",
-            I: GetRepositoryCommitByReferenceRequest,
-            O: GetRepositoryCommitByReferenceResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetRepositoryCommitBySequenceId returns the repository commit matching
-         * the provided sequence ID and branch, if it exists.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryCommitService.GetRepositoryCommitBySequenceId
-         */
-        getRepositoryCommitBySequenceId: {
-            name: "GetRepositoryCommitBySequenceId",
-            I: GetRepositoryCommitBySequenceIdRequest,
-            O: GetRepositoryCommitBySequenceIdResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.RepositoryCommitService",
+  methods: {
+    /**
+     * ListRepositoryCommitsByBranch lists the repository commits associated
+     * with a repository branch on a repository, ordered by their create time.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryCommitService.ListRepositoryCommitsByBranch
+     */
+    listRepositoryCommitsByBranch: {
+      name: "ListRepositoryCommitsByBranch",
+      I: ListRepositoryCommitsByBranchRequest,
+      O: ListRepositoryCommitsByBranchResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRepositoryCommitsByReference returns repository commits up-to and including
+     * the provided reference.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryCommitService.ListRepositoryCommitsByReference
+     */
+    listRepositoryCommitsByReference: {
+      name: "ListRepositoryCommitsByReference",
+      I: ListRepositoryCommitsByReferenceRequest,
+      O: ListRepositoryCommitsByReferenceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetRepositoryCommitByReference returns the repository commit matching
+     * the provided reference, if it exists.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryCommitService.GetRepositoryCommitByReference
+     */
+    getRepositoryCommitByReference: {
+      name: "GetRepositoryCommitByReference",
+      I: GetRepositoryCommitByReferenceRequest,
+      O: GetRepositoryCommitByReferenceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetRepositoryCommitBySequenceId returns the repository commit matching
+     * the provided sequence ID and branch, if it exists.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryCommitService.GetRepositoryCommitBySequenceId
+     */
+    getRepositoryCommitBySequenceId: {
+      name: "GetRepositoryCommitBySequenceId",
+      I: GetRepositoryCommitBySequenceIdRequest,
+      O: GetRepositoryCommitBySequenceIdResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

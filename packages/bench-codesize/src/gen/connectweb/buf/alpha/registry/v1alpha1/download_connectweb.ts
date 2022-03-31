@@ -25,19 +25,19 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.DownloadService
  */
 export const DownloadService = {
-    typeName: "buf.alpha.registry.v1alpha1.DownloadService",
-    methods: {
-        /**
-         * Download downloads.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DownloadService.Download
-         */
-        download: {
-            name: "Download",
-            I: DownloadRequest,
-            O: DownloadResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.DownloadService",
+  methods: {
+    /**
+     * Download downloads.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DownloadService.Download
+     */
+    download: {
+      name: "Download",
+      I: DownloadRequest,
+      O: DownloadResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

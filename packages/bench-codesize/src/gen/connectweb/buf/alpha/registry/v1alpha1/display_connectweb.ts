@@ -26,146 +26,146 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.DisplayService
  */
 export const DisplayService = {
-    typeName: "buf.alpha.registry.v1alpha1.DisplayService",
-    methods: {
-        /**
-         * DisplayOrganizationElements returns which organization elements should be displayed to the user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayOrganizationElements
-         */
-        displayOrganizationElements: {
-            name: "DisplayOrganizationElements",
-            I: DisplayOrganizationElementsRequest,
-            O: DisplayOrganizationElementsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DisplayRepositoryElements returns which repository elements should be displayed to the user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayRepositoryElements
-         */
-        displayRepositoryElements: {
-            name: "DisplayRepositoryElements",
-            I: DisplayRepositoryElementsRequest,
-            O: DisplayRepositoryElementsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DisplayPluginElements returns which plugin elements should be displayed to the user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayPluginElements
-         */
-        displayPluginElements: {
-            name: "DisplayPluginElements",
-            I: DisplayPluginElementsRequest,
-            O: DisplayPluginElementsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DisplayTemplateElements returns which template elements should be displayed to the user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayTemplateElements
-         */
-        displayTemplateElements: {
-            name: "DisplayTemplateElements",
-            I: DisplayTemplateElementsRequest,
-            O: DisplayTemplateElementsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DisplayUserElements returns which user elements should be displayed to the user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayUserElements
-         */
-        displayUserElements: {
-            name: "DisplayUserElements",
-            I: DisplayUserElementsRequest,
-            O: DisplayUserElementsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DisplayServerElements returns which server elements should be displayed to the user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayServerElements
-         */
-        displayServerElements: {
-            name: "DisplayServerElements",
-            I: DisplayServerElementsRequest,
-            O: DisplayServerElementsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListManageableRepositoryRoles returns which roles should be displayed
-         * to the user when they are managing contributors on the repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableRepositoryRoles
-         */
-        listManageableRepositoryRoles: {
-            name: "ListManageableRepositoryRoles",
-            I: ListManageableRepositoryRolesRequest,
-            O: ListManageableRepositoryRolesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListManageableUserRepositoryRoles returns which roles should be displayed
-         * to the user when they are managing a specific contributor on the repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableUserRepositoryRoles
-         */
-        listManageableUserRepositoryRoles: {
-            name: "ListManageableUserRepositoryRoles",
-            I: ListManageableUserRepositoryRolesRequest,
-            O: ListManageableUserRepositoryRolesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListManageablePluginRoles returns which roles should be displayed
-         * to the user when they are managing contributors on the plugin.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageablePluginRoles
-         */
-        listManageablePluginRoles: {
-            name: "ListManageablePluginRoles",
-            I: ListManageablePluginRolesRequest,
-            O: ListManageablePluginRolesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListManageableUserPluginRoles returns which roles should be displayed
-         * to the user when they are managing a specific contributor on the plugin.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableUserPluginRoles
-         */
-        listManageableUserPluginRoles: {
-            name: "ListManageableUserPluginRoles",
-            I: ListManageableUserPluginRolesRequest,
-            O: ListManageableUserPluginRolesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListManageableTemplateRoles returns which roles should be displayed
-         * to the user when they are managing contributors on the template.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableTemplateRoles
-         */
-        listManageableTemplateRoles: {
-            name: "ListManageableTemplateRoles",
-            I: ListManageableTemplateRolesRequest,
-            O: ListManageableTemplateRolesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListManageableUserTemplateRoles returns which roles should be displayed
-         * to the user when they are managing a specific contributor on the template.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableUserTemplateRoles
-         */
-        listManageableUserTemplateRoles: {
-            name: "ListManageableUserTemplateRoles",
-            I: ListManageableUserTemplateRolesRequest,
-            O: ListManageableUserTemplateRolesResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.DisplayService",
+  methods: {
+    /**
+     * DisplayOrganizationElements returns which organization elements should be displayed to the user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayOrganizationElements
+     */
+    displayOrganizationElements: {
+      name: "DisplayOrganizationElements",
+      I: DisplayOrganizationElementsRequest,
+      O: DisplayOrganizationElementsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DisplayRepositoryElements returns which repository elements should be displayed to the user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayRepositoryElements
+     */
+    displayRepositoryElements: {
+      name: "DisplayRepositoryElements",
+      I: DisplayRepositoryElementsRequest,
+      O: DisplayRepositoryElementsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DisplayPluginElements returns which plugin elements should be displayed to the user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayPluginElements
+     */
+    displayPluginElements: {
+      name: "DisplayPluginElements",
+      I: DisplayPluginElementsRequest,
+      O: DisplayPluginElementsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DisplayTemplateElements returns which template elements should be displayed to the user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayTemplateElements
+     */
+    displayTemplateElements: {
+      name: "DisplayTemplateElements",
+      I: DisplayTemplateElementsRequest,
+      O: DisplayTemplateElementsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DisplayUserElements returns which user elements should be displayed to the user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayUserElements
+     */
+    displayUserElements: {
+      name: "DisplayUserElements",
+      I: DisplayUserElementsRequest,
+      O: DisplayUserElementsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DisplayServerElements returns which server elements should be displayed to the user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.DisplayServerElements
+     */
+    displayServerElements: {
+      name: "DisplayServerElements",
+      I: DisplayServerElementsRequest,
+      O: DisplayServerElementsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListManageableRepositoryRoles returns which roles should be displayed
+     * to the user when they are managing contributors on the repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableRepositoryRoles
+     */
+    listManageableRepositoryRoles: {
+      name: "ListManageableRepositoryRoles",
+      I: ListManageableRepositoryRolesRequest,
+      O: ListManageableRepositoryRolesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListManageableUserRepositoryRoles returns which roles should be displayed
+     * to the user when they are managing a specific contributor on the repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableUserRepositoryRoles
+     */
+    listManageableUserRepositoryRoles: {
+      name: "ListManageableUserRepositoryRoles",
+      I: ListManageableUserRepositoryRolesRequest,
+      O: ListManageableUserRepositoryRolesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListManageablePluginRoles returns which roles should be displayed
+     * to the user when they are managing contributors on the plugin.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageablePluginRoles
+     */
+    listManageablePluginRoles: {
+      name: "ListManageablePluginRoles",
+      I: ListManageablePluginRolesRequest,
+      O: ListManageablePluginRolesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListManageableUserPluginRoles returns which roles should be displayed
+     * to the user when they are managing a specific contributor on the plugin.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableUserPluginRoles
+     */
+    listManageableUserPluginRoles: {
+      name: "ListManageableUserPluginRoles",
+      I: ListManageableUserPluginRolesRequest,
+      O: ListManageableUserPluginRolesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListManageableTemplateRoles returns which roles should be displayed
+     * to the user when they are managing contributors on the template.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableTemplateRoles
+     */
+    listManageableTemplateRoles: {
+      name: "ListManageableTemplateRoles",
+      I: ListManageableTemplateRolesRequest,
+      O: ListManageableTemplateRolesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListManageableUserTemplateRoles returns which roles should be displayed
+     * to the user when they are managing a specific contributor on the template.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DisplayService.ListManageableUserTemplateRoles
+     */
+    listManageableUserTemplateRoles: {
+      name: "ListManageableUserTemplateRoles",
+      I: ListManageableUserTemplateRolesRequest,
+      O: ListManageableUserTemplateRolesResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

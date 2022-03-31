@@ -25,19 +25,19 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.SearchService
  */
 export const SearchService = {
-    typeName: "buf.alpha.registry.v1alpha1.SearchService",
-    methods: {
-        /**
-         * Search searches the BSR.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.SearchService.Search
-         */
-        search: {
-            name: "Search",
-            I: SearchRequest,
-            O: SearchResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.SearchService",
+  methods: {
+    /**
+     * Search searches the BSR.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.SearchService.Search
+     */
+    search: {
+      name: "Search",
+      I: SearchRequest,
+      O: SearchResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

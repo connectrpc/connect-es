@@ -25,176 +25,176 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.RepositoryService
  */
 export const RepositoryService = {
-    typeName: "buf.alpha.registry.v1alpha1.RepositoryService",
-    methods: {
-        /**
-         * GetRepository gets a repository by ID.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.GetRepository
-         */
-        getRepository: {
-            name: "GetRepository",
-            I: GetRepositoryRequest,
-            O: GetRepositoryResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetRepositoryByFullName gets a repository by full name.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.GetRepositoryByFullName
-         */
-        getRepositoryByFullName: {
-            name: "GetRepositoryByFullName",
-            I: GetRepositoryByFullNameRequest,
-            O: GetRepositoryByFullNameResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRepositories lists all repositories.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListRepositories
-         */
-        listRepositories: {
-            name: "ListRepositories",
-            I: ListRepositoriesRequest,
-            O: ListRepositoriesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListUserRepositories lists all repositories belonging to a user.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListUserRepositories
-         */
-        listUserRepositories: {
-            name: "ListUserRepositories",
-            I: ListUserRepositoriesRequest,
-            O: ListUserRepositoriesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListUserRepositories lists all repositories a user can access.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListRepositoriesUserCanAccess
-         */
-        listRepositoriesUserCanAccess: {
-            name: "ListRepositoriesUserCanAccess",
-            I: ListRepositoriesUserCanAccessRequest,
-            O: ListRepositoriesUserCanAccessResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListOrganizationRepositories lists all repositories for an organization.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListOrganizationRepositories
-         */
-        listOrganizationRepositories: {
-            name: "ListOrganizationRepositories",
-            I: ListOrganizationRepositoriesRequest,
-            O: ListOrganizationRepositoriesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * CreateRepositoryByFullName creates a new repository by full name.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.CreateRepositoryByFullName
-         */
-        createRepositoryByFullName: {
-            name: "CreateRepositoryByFullName",
-            I: CreateRepositoryByFullNameRequest,
-            O: CreateRepositoryByFullNameResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DeleteRepository deletes a repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.DeleteRepository
-         */
-        deleteRepository: {
-            name: "DeleteRepository",
-            I: DeleteRepositoryRequest,
-            O: DeleteRepositoryResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DeleteRepositoryByFullName deletes a repository by full name.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.DeleteRepositoryByFullName
-         */
-        deleteRepositoryByFullName: {
-            name: "DeleteRepositoryByFullName",
-            I: DeleteRepositoryByFullNameRequest,
-            O: DeleteRepositoryByFullNameResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * DeprecateRepositoryByName deprecates the repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.DeprecateRepositoryByName
-         */
-        deprecateRepositoryByName: {
-            name: "DeprecateRepositoryByName",
-            I: DeprecateRepositoryByNameRequest,
-            O: DeprecateRepositoryByNameResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * UndeprecateRepositoryByName makes the repository not deprecated and removes any deprecation_message.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.UndeprecateRepositoryByName
-         */
-        undeprecateRepositoryByName: {
-            name: "UndeprecateRepositoryByName",
-            I: UndeprecateRepositoryByNameRequest,
-            O: UndeprecateRepositoryByNameResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetRepositoriesByFullName gets repositories by full name. Response order is unspecified.
-         * Errors if any of the repositories don't exist or the caller does not have access to any of the repositories.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.GetRepositoriesByFullName
-         */
-        getRepositoriesByFullName: {
-            name: "GetRepositoriesByFullName",
-            I: GetRepositoriesByFullNameRequest,
-            O: GetRepositoriesByFullNameResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * SetRepositoryContributor sets the role of a user in the repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.SetRepositoryContributor
-         */
-        setRepositoryContributor: {
-            name: "SetRepositoryContributor",
-            I: SetRepositoryContributorRequest,
-            O: SetRepositoryContributorResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRepositoryContributors returns the list of contributors that has an explicit role against the repository.
-         * This does not include users who have implicit roles against the repository, unless they have also been
-         * assigned a role explicitly.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListRepositoryContributors
-         */
-        listRepositoryContributors: {
-            name: "ListRepositoryContributors",
-            I: ListRepositoryContributorsRequest,
-            O: ListRepositoryContributorsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetRepositorySettings gets the settings of a repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.GetRepositorySettings
-         */
-        getRepositorySettings: {
-            name: "GetRepositorySettings",
-            I: GetRepositorySettingsRequest,
-            O: GetRepositorySettingsResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.RepositoryService",
+  methods: {
+    /**
+     * GetRepository gets a repository by ID.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.GetRepository
+     */
+    getRepository: {
+      name: "GetRepository",
+      I: GetRepositoryRequest,
+      O: GetRepositoryResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetRepositoryByFullName gets a repository by full name.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.GetRepositoryByFullName
+     */
+    getRepositoryByFullName: {
+      name: "GetRepositoryByFullName",
+      I: GetRepositoryByFullNameRequest,
+      O: GetRepositoryByFullNameResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRepositories lists all repositories.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListRepositories
+     */
+    listRepositories: {
+      name: "ListRepositories",
+      I: ListRepositoriesRequest,
+      O: ListRepositoriesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListUserRepositories lists all repositories belonging to a user.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListUserRepositories
+     */
+    listUserRepositories: {
+      name: "ListUserRepositories",
+      I: ListUserRepositoriesRequest,
+      O: ListUserRepositoriesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListUserRepositories lists all repositories a user can access.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListRepositoriesUserCanAccess
+     */
+    listRepositoriesUserCanAccess: {
+      name: "ListRepositoriesUserCanAccess",
+      I: ListRepositoriesUserCanAccessRequest,
+      O: ListRepositoriesUserCanAccessResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListOrganizationRepositories lists all repositories for an organization.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListOrganizationRepositories
+     */
+    listOrganizationRepositories: {
+      name: "ListOrganizationRepositories",
+      I: ListOrganizationRepositoriesRequest,
+      O: ListOrganizationRepositoriesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * CreateRepositoryByFullName creates a new repository by full name.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.CreateRepositoryByFullName
+     */
+    createRepositoryByFullName: {
+      name: "CreateRepositoryByFullName",
+      I: CreateRepositoryByFullNameRequest,
+      O: CreateRepositoryByFullNameResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteRepository deletes a repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.DeleteRepository
+     */
+    deleteRepository: {
+      name: "DeleteRepository",
+      I: DeleteRepositoryRequest,
+      O: DeleteRepositoryResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteRepositoryByFullName deletes a repository by full name.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.DeleteRepositoryByFullName
+     */
+    deleteRepositoryByFullName: {
+      name: "DeleteRepositoryByFullName",
+      I: DeleteRepositoryByFullNameRequest,
+      O: DeleteRepositoryByFullNameResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeprecateRepositoryByName deprecates the repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.DeprecateRepositoryByName
+     */
+    deprecateRepositoryByName: {
+      name: "DeprecateRepositoryByName",
+      I: DeprecateRepositoryByNameRequest,
+      O: DeprecateRepositoryByNameResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UndeprecateRepositoryByName makes the repository not deprecated and removes any deprecation_message.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.UndeprecateRepositoryByName
+     */
+    undeprecateRepositoryByName: {
+      name: "UndeprecateRepositoryByName",
+      I: UndeprecateRepositoryByNameRequest,
+      O: UndeprecateRepositoryByNameResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetRepositoriesByFullName gets repositories by full name. Response order is unspecified.
+     * Errors if any of the repositories don't exist or the caller does not have access to any of the repositories.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.GetRepositoriesByFullName
+     */
+    getRepositoriesByFullName: {
+      name: "GetRepositoriesByFullName",
+      I: GetRepositoriesByFullNameRequest,
+      O: GetRepositoriesByFullNameResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * SetRepositoryContributor sets the role of a user in the repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.SetRepositoryContributor
+     */
+    setRepositoryContributor: {
+      name: "SetRepositoryContributor",
+      I: SetRepositoryContributorRequest,
+      O: SetRepositoryContributorResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRepositoryContributors returns the list of contributors that has an explicit role against the repository.
+     * This does not include users who have implicit roles against the repository, unless they have also been
+     * assigned a role explicitly.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.ListRepositoryContributors
+     */
+    listRepositoryContributors: {
+      name: "ListRepositoryContributors",
+      I: ListRepositoryContributorsRequest,
+      O: ListRepositoryContributorsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetRepositorySettings gets the settings of a repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryService.GetRepositorySettings
+     */
+    getRepositorySettings: {
+      name: "GetRepositorySettings",
+      I: GetRepositorySettingsRequest,
+      O: GetRepositorySettingsResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

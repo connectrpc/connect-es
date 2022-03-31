@@ -27,26 +27,26 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.ResolveService
  */
 export const ResolveService = {
-    typeName: "buf.alpha.registry.v1alpha1.ResolveService",
-    methods: {
-        /**
-         * GetModulePins finds all the latest digests and respective dependencies of
-         * the provided module references and picks a set of distinct modules pins.
-         *
-         * Note that module references with commits should still be passed to this function
-         * to make sure this function can do dependency resolution.
-         *
-         * This function also deals with tiebreaking what ModulePin wins for the same repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.ResolveService.GetModulePins
-         */
-        getModulePins: {
-            name: "GetModulePins",
-            I: GetModulePinsRequest,
-            O: GetModulePinsResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.ResolveService",
+  methods: {
+    /**
+     * GetModulePins finds all the latest digests and respective dependencies of
+     * the provided module references and picks a set of distinct modules pins.
+     *
+     * Note that module references with commits should still be passed to this function
+     * to make sure this function can do dependency resolution.
+     *
+     * This function also deals with tiebreaking what ModulePin wins for the same repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.ResolveService.GetModulePins
+     */
+    getModulePins: {
+      name: "GetModulePins",
+      I: GetModulePinsRequest,
+      O: GetModulePinsResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 
 /**
@@ -57,30 +57,30 @@ export const ResolveService = {
  * @generated from service buf.alpha.registry.v1alpha1.LocalResolveService
  */
 export const LocalResolveService = {
-    typeName: "buf.alpha.registry.v1alpha1.LocalResolveService",
-    methods: {
-        /**
-         * GetLocalModulePins gets the latest pins for the specified local module references.
-         * It also includes all of the modules transitive dependencies for the specified references.
-         *
-         * We want this for two reasons:
-         *
-         * 1. It makes it easy to say "we know we're looking for owner/repo on this specific remote".
-         *    While we could just do this in GetModulePins by being aware of what our remote is
-         *    (something we probably still need to know, DNS problems aside, which are more
-         *    theoretical), this helps.
-         * 2. Having a separate method makes us able to say "do not make decisions about what
-         *    wins between competing pins for the same repo". This should only be done in
-         *    GetModulePins, not in this function, i.e. only done at the top level.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.LocalResolveService.GetLocalModulePins
-         */
-        getLocalModulePins: {
-            name: "GetLocalModulePins",
-            I: GetLocalModulePinsRequest,
-            O: GetLocalModulePinsResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.LocalResolveService",
+  methods: {
+    /**
+     * GetLocalModulePins gets the latest pins for the specified local module references.
+     * It also includes all of the modules transitive dependencies for the specified references.
+     *
+     * We want this for two reasons:
+     *
+     * 1. It makes it easy to say "we know we're looking for owner/repo on this specific remote".
+     *    While we could just do this in GetModulePins by being aware of what our remote is
+     *    (something we probably still need to know, DNS problems aside, which are more
+     *    theoretical), this helps.
+     * 2. Having a separate method makes us able to say "do not make decisions about what
+     *    wins between competing pins for the same repo". This should only be done in
+     *    GetModulePins, not in this function, i.e. only done at the top level.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.LocalResolveService.GetLocalModulePins
+     */
+    getLocalModulePins: {
+      name: "GetLocalModulePins",
+      I: GetLocalModulePinsRequest,
+      O: GetLocalModulePinsResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

@@ -25,19 +25,19 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.PushService
  */
 export const PushService = {
-    typeName: "buf.alpha.registry.v1alpha1.PushService",
-    methods: {
-        /**
-         * Push pushes.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.PushService.Push
-         */
-        push: {
-            name: "Push",
-            I: PushRequest,
-            O: PushResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.PushService",
+  methods: {
+    /**
+     * Push pushes.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.PushService.Push
+     */
+    push: {
+      name: "Push",
+      I: PushRequest,
+      O: PushResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

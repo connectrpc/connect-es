@@ -26,71 +26,71 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.DocService
  */
 export const DocService = {
-    typeName: "buf.alpha.registry.v1alpha1.DocService",
-    methods: {
-        /**
-         * GetSourceDirectoryInfo retrieves the directory and file structure for the
-         * given owner, repository and reference.
-         *
-         * The purpose of this is to get a representation of the file tree for a given
-         * module to enable exploring the module by navigating through its contents.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetSourceDirectoryInfo
-         */
-        getSourceDirectoryInfo: {
-            name: "GetSourceDirectoryInfo",
-            I: GetSourceDirectoryInfoRequest,
-            O: GetSourceDirectoryInfoResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetSourceFile retrieves the source contents for the given owner, repository,
-         * reference, and path.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetSourceFile
-         */
-        getSourceFile: {
-            name: "GetSourceFile",
-            I: GetSourceFileRequest,
-            O: GetSourceFileResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetModulePackages retrieves the list of packages for the module based on the given
-         * owner, repository, and reference.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetModulePackages
-         */
-        getModulePackages: {
-            name: "GetModulePackages",
-            I: GetModulePackagesRequest,
-            O: GetModulePackagesResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetModuleDocumentation retrieves the documentation for module based on the given
-         * owner, repository, and reference.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetModuleDocumentation
-         */
-        getModuleDocumentation: {
-            name: "GetModuleDocumentation",
-            I: GetModuleDocumentationRequest,
-            O: GetModuleDocumentationResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * GetPackageDocumentation retrieves a a slice of documentation structures
-         * for the given owner, repository, reference, and package name.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetPackageDocumentation
-         */
-        getPackageDocumentation: {
-            name: "GetPackageDocumentation",
-            I: GetPackageDocumentationRequest,
-            O: GetPackageDocumentationResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.DocService",
+  methods: {
+    /**
+     * GetSourceDirectoryInfo retrieves the directory and file structure for the
+     * given owner, repository and reference.
+     *
+     * The purpose of this is to get a representation of the file tree for a given
+     * module to enable exploring the module by navigating through its contents.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetSourceDirectoryInfo
+     */
+    getSourceDirectoryInfo: {
+      name: "GetSourceDirectoryInfo",
+      I: GetSourceDirectoryInfoRequest,
+      O: GetSourceDirectoryInfoResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetSourceFile retrieves the source contents for the given owner, repository,
+     * reference, and path.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetSourceFile
+     */
+    getSourceFile: {
+      name: "GetSourceFile",
+      I: GetSourceFileRequest,
+      O: GetSourceFileResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetModulePackages retrieves the list of packages for the module based on the given
+     * owner, repository, and reference.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetModulePackages
+     */
+    getModulePackages: {
+      name: "GetModulePackages",
+      I: GetModulePackagesRequest,
+      O: GetModulePackagesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetModuleDocumentation retrieves the documentation for module based on the given
+     * owner, repository, and reference.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetModuleDocumentation
+     */
+    getModuleDocumentation: {
+      name: "GetModuleDocumentation",
+      I: GetModuleDocumentationRequest,
+      O: GetModuleDocumentationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetPackageDocumentation retrieves a a slice of documentation structures
+     * for the given owner, repository, reference, and package name.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.DocService.GetPackageDocumentation
+     */
+    getPackageDocumentation: {
+      name: "GetPackageDocumentation",
+      I: GetPackageDocumentationRequest,
+      O: GetPackageDocumentationResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

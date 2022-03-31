@@ -25,30 +25,30 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.RepositoryTagService
  */
 export const RepositoryTagService = {
-    typeName: "buf.alpha.registry.v1alpha1.RepositoryTagService",
-    methods: {
-        /**
-         * CreateRepositoryTag creates a new repository tag.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTagService.CreateRepositoryTag
-         */
-        createRepositoryTag: {
-            name: "CreateRepositoryTag",
-            I: CreateRepositoryTagRequest,
-            O: CreateRepositoryTagResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * ListRepositoryTags lists the repository tags associated with a Repository.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTagService.ListRepositoryTags
-         */
-        listRepositoryTags: {
-            name: "ListRepositoryTags",
-            I: ListRepositoryTagsRequest,
-            O: ListRepositoryTagsResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.RepositoryTagService",
+  methods: {
+    /**
+     * CreateRepositoryTag creates a new repository tag.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTagService.CreateRepositoryTag
+     */
+    createRepositoryTag: {
+      name: "CreateRepositoryTag",
+      I: CreateRepositoryTagRequest,
+      O: CreateRepositoryTagResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListRepositoryTags lists the repository tags associated with a Repository.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.RepositoryTagService.ListRepositoryTags
+     */
+    listRepositoryTags: {
+      name: "ListRepositoryTags",
+      I: ListRepositoryTagsRequest,
+      O: ListRepositoryTagsResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

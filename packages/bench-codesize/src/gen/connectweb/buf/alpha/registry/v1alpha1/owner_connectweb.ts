@@ -26,20 +26,20 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.OwnerService
  */
 export const OwnerService = {
-    typeName: "buf.alpha.registry.v1alpha1.OwnerService",
-    methods: {
-        /**
-         * GetOwnerByName takes an owner name and returns the owner as
-         * either a user or organization.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.OwnerService.GetOwnerByName
-         */
-        getOwnerByName: {
-            name: "GetOwnerByName",
-            I: GetOwnerByNameRequest,
-            O: GetOwnerByNameResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.OwnerService",
+  methods: {
+    /**
+     * GetOwnerByName takes an owner name and returns the owner as
+     * either a user or organization.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.OwnerService.GetOwnerByName
+     */
+    getOwnerByName: {
+      name: "GetOwnerByName",
+      I: GetOwnerByNameRequest,
+      O: GetOwnerByNameResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

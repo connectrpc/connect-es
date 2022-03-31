@@ -26,20 +26,20 @@ import {MethodKind} from "@bufbuild/protobuf";
  * @generated from service buf.alpha.registry.v1alpha1.ReferenceService
  */
 export const ReferenceService = {
-    typeName: "buf.alpha.registry.v1alpha1.ReferenceService",
-    methods: {
-        /**
-         * GetReferenceByName takes a reference name and returns the
-         * reference either as a tag, branch, track or commit.
-         *
-         * @generated from rpc buf.alpha.registry.v1alpha1.ReferenceService.GetReferenceByName
-         */
-        getReferenceByName: {
-            name: "GetReferenceByName",
-            I: GetReferenceByNameRequest,
-            O: GetReferenceByNameResponse,
-            kind: MethodKind.Unary,
-        },
-    }
+  typeName: "buf.alpha.registry.v1alpha1.ReferenceService",
+  methods: {
+    /**
+     * GetReferenceByName takes a reference name and returns the
+     * reference either as a tag, branch, track or commit.
+     *
+     * @generated from rpc buf.alpha.registry.v1alpha1.ReferenceService.GetReferenceByName
+     */
+    getReferenceByName: {
+      name: "GetReferenceByName",
+      I: GetReferenceByNameRequest,
+      O: GetReferenceByNameResponse,
+      kind: MethodKind.Unary,
+    },
+  }
 } as const;
 

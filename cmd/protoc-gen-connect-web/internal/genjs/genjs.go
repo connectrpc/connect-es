@@ -28,7 +28,6 @@ func GenerateFile(gen *protoplugin.Generator, file *protoplugin.File) {
 
 	for _, service := range file.Services {
 		generateService(f, service)
-		f.P()
 	}
 }
 
@@ -36,32 +35,32 @@ func generateService(f *protoplugin.GeneratedFile, service *protoplugin.Service)
 	rt := service.File.RuntimeSymbols
 	f.P(service.JSDoc(""))
 	f.P("export const ", service.LocalName, " = {")
-	f.P(`    typeName: "`, service.TypeName, `",`)
-	f.P("    methods: {")
+	f.P(`  typeName: "`, service.TypeName, `",`)
+	f.P("  methods: {")
 	for _, method := range service.Methods {
-		f.P(method.JSDoc("        "))
-		f.P("        ", method.LocalName, ": {")
-		f.P(`            name: "`, method.Proto.GetName(), `",`)
-		f.P("            I: ", method.Input.Symbol, ",")
-		f.P("            O: ", method.Output.Symbol, ",")
+		f.P(method.JSDoc("    "))
+		f.P("    ", method.LocalName, ": {")
+		f.P(`      name: "`, method.Proto.GetName(), `",`)
+		f.P("      I: ", method.Input.Symbol, ",")
+		f.P("      O: ", method.Output.Symbol, ",")
 		switch {
 		case method.Proto.GetClientStreaming() && method.Proto.GetServerStreaming():
-			f.P("            kind: ", rt.MethodKind, ".BiDiStreaming,")
+			f.P("      kind: ", rt.MethodKind, ".BiDiStreaming,")
 		case method.Proto.GetClientStreaming():
-			f.P("            kind: ", rt.MethodKind, ".ClientStreaming,")
+			f.P("      kind: ", rt.MethodKind, ".ClientStreaming,")
 		case method.Proto.GetServerStreaming():
-			f.P("            kind: ", rt.MethodKind, ".ServerStreaming,")
+			f.P("      kind: ", rt.MethodKind, ".ServerStreaming,")
 		default:
-			f.P("            kind: ", rt.MethodKind, ".Unary,")
+			f.P("      kind: ", rt.MethodKind, ".Unary,")
 		}
 		switch method.Proto.Options.GetIdempotencyLevel() {
 		case descriptorpb.MethodOptions_NO_SIDE_EFFECTS:
-			f.P("            idempotency: ", rt.MethodIdempotency, ".NoSideEffects,")
+			f.P("      idempotency: ", rt.MethodIdempotency, ".NoSideEffects,")
 		case descriptorpb.MethodOptions_IDEMPOTENT:
-			f.P("            idempotency: ", rt.MethodIdempotency, ".Idempotent,")
+			f.P("      idempotency: ", rt.MethodIdempotency, ".Idempotent,")
 		}
-		f.P("        },")
+		f.P("    },")
 	}
-	f.P("    }")
+	f.P("  }")
 	f.P("};")
 }
