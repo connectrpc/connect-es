@@ -63,4 +63,5 @@ func generateService(f *protoplugin.GeneratedFile, service *protoplugin.Service)
 	}
 	f.P("  }")
 	f.P("};")
+	f.P()
 }
