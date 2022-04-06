@@ -1,0 +1,8 @@
+{
+  "include": ["src/**/*.ts"],
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // TODO we do NOT want to set this option we must not use DOM features in the public API
+    "skipLibCheck": true
+  }
+}

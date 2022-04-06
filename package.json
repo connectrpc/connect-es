@@ -3,7 +3,8 @@
   "workspaces": [
     "./packages/connect-web",
     "./packages/bench-codesize",
-    "./packages/protoc-gen-connect-web*"
+    "./packages/protoc-gen-connect-web*",
+    "./packages/connect-ping-node-grpc-client"
   ],
   "type": "module",
   "engineStrict": true,
