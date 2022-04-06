@@ -10,7 +10,6 @@ module.exports = {
   ignorePatterns: [
     "packages/bench-codesize/src/gen/grpcweb/**/*",
     "packages/*/dist/**",
-    "packages/requestbuilder-poc/www/**",
     "node_modules/**",
   ],
   plugins: ["@typescript-eslint", "node"],
