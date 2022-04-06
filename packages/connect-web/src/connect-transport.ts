@@ -178,6 +178,7 @@ function createResponse<O extends Message<O>>(
           if (readFrame === undefined) {
             handler.onHeader?.(response.headers);
             const err =
+              extractContentTypeError(response.headers) ??
               extractDetailsError(response.headers) ??
               extractHeadersError(response.headers) ??
               extractHttpStatusError(response);
@@ -257,6 +258,28 @@ function extractRejectionError(reason: unknown): ConnectError {
     return new ConnectError(reason.message, StatusCode.Canceled);
   }
   return new ConnectError(String(reason));
+}
+
+function extractContentTypeError(header: Headers): ConnectError | undefined {
+  const type = header.get("Content-Type");
+  switch (type?.toLowerCase()) {
+    case "application/grpc-web":
+    case "application/grpc-web+proto":
+      return undefined;
+    case "application/grpc-web-text":
+    case "application/grpc-web-text+proto":
+      return new ConnectError(
+        "grpc-web-text is not supported",
+        StatusCode.Internal
+      );
+    case undefined:
+    case null:
+    default:
+      return new ConnectError(
+        `unexpected content type: ${String(type)}`,
+        StatusCode.Internal
+      );
+  }
 }
 
 function extractHttpStatusError(response: Response): ConnectError | undefined {
