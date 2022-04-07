@@ -19,12 +19,14 @@ describe("ConnectError", function () {
     const e = new ConnectError("foo");
     expect(e.code).toStrictEqual(StatusCode.Unknown);
     expect(e.message).toStrictEqual("[Unknown] foo");
+    expect(e.rawMessage).toStrictEqual("foo");
     expect(String(e)).toStrictEqual("ConnectError: [Unknown] foo");
   });
   it("should take other status", () => {
     const e = new ConnectError("foo", StatusCode.AlreadyExists);
     expect(e.code).toStrictEqual(StatusCode.AlreadyExists);
     expect(e.message).toStrictEqual("[AlreadyExists] foo");
+    expect(e.rawMessage).toStrictEqual("foo");
     expect(String(e)).toStrictEqual("ConnectError: [AlreadyExists] foo");
   });
 });
