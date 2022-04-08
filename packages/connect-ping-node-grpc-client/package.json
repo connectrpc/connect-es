@@ -10,9 +10,12 @@
     "clean": "rm -rf ./dist/esm/* ./dist/types/*",
     "build": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types",
     "client:verbose": "npm run build && GRPC_TRACE=call_stream GRPC_VERBOSITY=DEBUG node dist/esm/client.js",
-    "client": "npm run build && node dist/esm/client.js"
+    "client": "npm run build && node dist/esm/client.js",
+    "client2:verbose": "npm run build && GRPC_TRACE=call_stream GRPC_VERBOSITY=DEBUG node dist/esm/client2.js",
+    "client2": "npm run build && node dist/esm/client2.js"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "^0.0.2-alpha.2",
     "@grpc/grpc-js": "^1.6.2",
     "typescript": "^4.6.3"
   }

@@ -1,8 +1,14 @@
 {
   "include": ["src/**/*.ts"],
   "extends": "../../tsconfig.base.json",
+  "target": "es2020",
   "compilerOptions": {
     // TODO we do NOT want to set this option we must not use DOM features in the public API
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "lib": [
+      "ES2016",
+      // ES2017.Object for Object.entries
+      "ES2017.Object"
+    ]
   }
 }
