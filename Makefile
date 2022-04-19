@@ -36,6 +36,16 @@ $(WEB_BUILD): node_modules $(WEB_SOURCES)
 	mkdir -p $(CACHE_DIR)/build && touch $(WEB_BUILD)
 
 
+# The private NPM package "@bufbuild/connect-web-test" provides test coverage:
+TEST_DIR = packages/connect-web-test
+TEST_GEN = $(CACHE_DIR)/gen/connect-web-test
+TEST_BUILD = $(CACHE_DIR)/build/connect-web-test
+TEST_SOURCES = $(shell find $(TEST_DIR)/src -name '*.ts') $(TEST_DIR)/*.json
+$(TEST_BUILD): $(WEB_BUILD) $(TEST_SOURCES)
+	cd $(TEST_DIR) && npm run clean && npm run build
+	mkdir -p $(dir $(TEST_BUILD)) && touch $(TEST_BUILD)
+
+
 # The private NPM package "@bufbuild/bench-codesize" benchmarks code size
 BENCHCODESIZE_DIR = packages/bench-codesize
 BENCHCODESIZE_BUF_COMMIT=4505cba5e5a94a42af02ebc7ac3a0a04
@@ -114,8 +124,13 @@ clean: ## Delete build artifacts and installed dependencies
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
-test: ## Run all tests
+test: test-go test-jest ## Run all tests
+
+test-go:
 	go test ./cmd/...
+
+test-jest: $(TEST_BUILD) $(TEST_DIR)/*.config.js
+	cd $(TEST_DIR) && NODE_OPTIONS=--experimental-vm-modules npx jest
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run

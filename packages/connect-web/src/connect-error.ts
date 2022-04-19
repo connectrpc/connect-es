@@ -23,6 +23,7 @@ type ErrorCode = Exclude<StatusCode, StatusCode.Ok>;
 export class ConnectError extends Error {
   readonly code: ErrorCode;
   readonly details: Any[];
+  readonly rawMessage: string;
   override name = "ConnectError";
 
   constructor(
@@ -33,6 +34,7 @@ export class ConnectError extends Error {
     super(`[${StatusCode[code]}] ${message}`);
     // see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html#example
     Object.setPrototypeOf(this, new.target.prototype);
+    this.rawMessage = message;
     this.code = code;
     this.details = details ?? [];
   }
