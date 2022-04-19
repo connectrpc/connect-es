@@ -52,7 +52,7 @@ import { Message } from "@bufbuild/protobuf";
 export type CallbackClient<T extends ServiceType> = {
   [P in keyof T["methods"]]:
     T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: ClientCallOptions) => CancelFn
-  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, responseCallback: (response: O) => void, messageCallback: (error: ConnectError | undefined) => void, options?: ClientCallOptions) => CancelFn
+  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: ClientCallOptions) => CancelFn
   : never;
 };
 
@@ -60,7 +60,7 @@ export type CallbackClient<T extends ServiceType> = {
 export type CallbackClientWithExactRequest<T extends ServiceType> = {
   [P in keyof T["methods"]]:
     T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: I, callback: (error: ConnectError | undefined, response: O) => void, options?: ClientCallOptions) => CancelFn
-  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: I, responseCallback: (response: O) => void, messageCallback: (error: ConnectError | undefined) => void, options?: ClientCallOptions) => CancelFn
+  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: I, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: ClientCallOptions) => CancelFn
   : never;
 };
 
