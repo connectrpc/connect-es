@@ -27,12 +27,16 @@ import {
   SumResponse,
 } from "./gen/connect/ping/v1/ping_pb.js";
 import { StatusCode } from "@bufbuild/connect-web";
+import { makeGrpcClient } from "./make-grpc-client.js";
 
-const grpcClient = new grpc.Client(
-  "localhost:5002",
-  grpc.ChannelCredentials.createInsecure(),
-  {} // grpc.ClientOptions
-);
+const grpcClient = makeGrpcClient(PingService, {
+  address: "localhost:5002",
+  channelCredentials: grpc.ChannelCredentials.createInsecure(),
+  clientOptions: {},
+  binaryOptions: {},
+});
+
+// grpcClient2.ping()
 
 async function callEveryMethod() {
   await ping();
@@ -71,18 +75,12 @@ function ping(): Promise<void> {
       }
     };
 
-    grpcClient.makeUnaryRequest<PingRequest, PingResponse>(
-      `/${PingService.typeName}/${PingService.methods.ping.name}`,
-      (value) => {
-        const bytes = value.toBinary();
-        return Buffer.from(bytes);
-      },
-      (value) => {
-        return PingResponse.fromBinary(value);
-      },
+    // grpcClient.ping(req, callback);
+    // grpcClient.ping(req, new grpc.Metadata(), callback);
+    grpcClient.ping(
       req,
       new grpc.Metadata(),
-      {}, // grpc.CallOptions
+      {} /*grpc.CallOptions*/,
       callback
     );
   });
@@ -97,7 +95,7 @@ function fail(): Promise<void> {
 
     const callback: grpc.requestCallback<FailResponse> = (
       err: grpc.ServiceError | null,
-      value?: FailResponse
+      _value?: FailResponse
     ) => {
       if (err === null) {
         reject("fail() expected to fail but it didn't");
@@ -115,18 +113,10 @@ function fail(): Promise<void> {
       resolve();
     };
 
-    grpcClient.makeUnaryRequest<FailRequest, FailResponse>(
-      `/${PingService.typeName}/${PingService.methods.fail.name}`,
-      (value) => {
-        const bytes = value.toBinary();
-        return Buffer.from(bytes);
-      },
-      (value) => {
-        return FailResponse.fromBinary(value);
-      },
+    grpcClient.fail(
       req,
       new grpc.Metadata(),
-      {}, // grpc.CallOptions
+      {} /*grpc.CallOptions*/,
       callback
     );
   });
@@ -151,17 +141,9 @@ function sum(): Promise<void> {
       }
     };
 
-    const call = grpcClient.makeClientStreamRequest<SumRequest, SumResponse>(
-      `/${PingService.typeName}/${PingService.methods.sum.name}`,
-      (value) => {
-        const bytes = value.toBinary();
-        return Buffer.from(bytes);
-      },
-      (value) => {
-        return SumResponse.fromBinary(value);
-      },
+    const call = grpcClient.sum(
       new grpc.Metadata(),
-      {}, // grpc.CallOptions
+      {} /* grpc.CallOptions*/,
       callback
     );
 
@@ -200,21 +182,11 @@ function countUp(): Promise<void> {
     const request = new CountUpRequest({
       number: 5n,
     });
-    const call = grpcClient.makeServerStreamRequest<
-      CountUpRequest,
-      CountUpResponse
-    >(
-      `/${PingService.typeName}/${PingService.methods.countUp.name}`,
-      (value) => {
-        const bytes = value.toBinary();
-        return Buffer.from(bytes);
-      },
-      (value) => {
-        return CountUpResponse.fromBinary(value);
-      },
+
+    const call = grpcClient.countUp(
       request,
       new grpc.Metadata(),
-      {} // grpc.CallOptions
+      {} /* grpc.CallOptions*/
     );
 
     call.on("data", (arg1) => {
@@ -239,20 +211,9 @@ function countUp(): Promise<void> {
 function cumSum(): Promise<void> {
   process.stdout.write(`cumSum()\n`);
   return new Promise((resolve, reject) => {
-    const call = grpcClient.makeBidiStreamRequest<
-      CumSumRequest,
-      CumSumResponse
-    >(
-      `/${PingService.typeName}/${PingService.methods.cumSum.name}`,
-      (value) => {
-        const bytes = value.toBinary();
-        return Buffer.from(bytes);
-      },
-      (value) => {
-        return CumSumResponse.fromBinary(value);
-      },
+    const call = grpcClient.cumSum(
       new grpc.Metadata(),
-      {} // grpc.CallOptions
+      {} /* grpc.CallOptions*/
     );
 
     call.on("data", (arg1) => {

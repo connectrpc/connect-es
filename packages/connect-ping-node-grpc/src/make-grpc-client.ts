@@ -10,11 +10,11 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as grpc from "@grpc/grpc-js";
-import { createGrpcMethodDefinitions } from "./grpc-definitions.js";
+import { makeGrpcServiceDefinition } from "./grpc-definitions.js";
 
 // prettier-ignore
 /**
- * GrpcClient is identical to generated @grpc/grpc-js client.
+ * GrpcClient is identical to a generated @grpc/grpc-js client.
  */
 export type GrpcClient<T extends ServiceType> = {
   [P in keyof T["methods"]]:
@@ -34,7 +34,7 @@ export function makeGrpcClient<T extends ServiceType>(
   service: T,
   options: MakeGrpcClientOptions
 ): GrpcClient<T> {
-  const grpcDefinitions = createGrpcMethodDefinitions(
+  const grpcDefinitions = makeGrpcServiceDefinition(
     service,
     options.binaryOptions
   );

@@ -15,7 +15,7 @@ import type * as grpc from "@grpc/grpc-js";
  * The result is identical to a generated @grpc/grpc-js
  * client.
  */
-export function createGrpcMethodDefinitions<T extends ServiceType>(
+export function makeGrpcServiceDefinition<T extends ServiceType>(
   service: T,
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>
 ): Record<string, grpc.MethodDefinition<AnyMessage, AnyMessage>> {
@@ -34,7 +34,7 @@ export function createGrpcMethodDefinitions<T extends ServiceType>(
  * Create a method definition for @grpc/grpc-js from generated connect
  * service metadata.
  */
-export function createGrpcMethodDefinition<
+function createGrpcMethodDefinition<
   T extends ServiceType,
   M extends keyof T["methods"]
 >(

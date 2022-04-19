@@ -4,7 +4,7 @@
     "./packages/connect-web",
     "./packages/bench-codesize",
     "./packages/protoc-gen-connect-web*",
-    "./packages/connect-ping-node-grpc-client"
+    "./packages/connect-ping-node-grpc"
   ],
   "type": "module",
   "engineStrict": true,
