@@ -94,8 +94,8 @@ function fail(): Promise<void> {
     });
 
     const callback: grpc.requestCallback<FailResponse> = (
-      err: grpc.ServiceError | null,
-      _value?: FailResponse
+      err: grpc.ServiceError | null
+      // value?: FailResponse
     ) => {
       if (err === null) {
         reject("fail() expected to fail but it didn't");
