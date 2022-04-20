@@ -40,4 +40,4 @@ jobs:
       - name: make-test
         run: make test
       - name: make-bench-codesize
-        run: bash make/scripts/checknodiffgenerated.bash make bench-codesize
+        run: make bench-codesize

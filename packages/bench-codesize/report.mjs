@@ -1,5 +1,5 @@
-import {deflateRawSync, gzipSync, brotliCompressSync} from "zlib";
 import {buildSync} from "esbuild";
+import {brotliCompressSync} from "zlib";
 
 
 const connectweb = gather("src/entry-connectweb.ts");
@@ -14,10 +14,10 @@ once with \`protoc-gen-grpc-web\`, once with \`protoc-gen-connect-web\`. Then we
 for the service \`buf.alpha.registry.v1alpha1.PluginService\` with [esbuild](https://esbuild.github.io/),
 minify the bundle, and compress it like a web server would usually do.
 
-| code generator | bundle size        | minified               | gzip                 |
+| code generator | bundle size        | minified               | compressed           |
 |----------------|-------------------:|-----------------------:|---------------------:|
-| connect-web    | ${connectweb.size} | ${connectweb.minified} | ${connectweb.brotli} |
-| grpc-web       | ${grpcweb.size}    | ${grpcweb.minified}    | ${grpcweb.brotli}    |
+| connect-web    | ${connectweb.size} | ${connectweb.minified} | ${connectweb.compressed} |
+| grpc-web       | ${grpcweb.size}    | ${grpcweb.minified}    | ${grpcweb.compressed} |
 `);
 
 
@@ -29,7 +29,7 @@ function gather(entryPoint) {
         entryPoint,
         size: formatSize(bundle.byteLength),
         minified: formatSize(bundleMinified.byteLength),
-        brotli: formatSize(compressed.brotli),
+        compressed: formatSize(compressed.byteLength),
     };
 }
 
@@ -49,16 +49,7 @@ function build(entryPoint, minify, format) {
 }
 
 function compress(buf) {
-    const deflate = deflateRawSync(buf);
-    const gzip = gzipSync(buf, {
-        level: 7, // for mysterious reasons, the default (equivalent to 6) is unstable across node versions
-    });
-    const brotli = brotliCompressSync(buf);
-    return {
-        deflate: deflate.byteLength,
-        gzip: gzip.byteLength,
-        brotli: brotli.byteLength,
-    };
+    return brotliCompressSync(buf);
 }
 
 function formatSize(bytes) {
