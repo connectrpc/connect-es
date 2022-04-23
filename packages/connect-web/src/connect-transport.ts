@@ -234,15 +234,24 @@ function createResponse<O extends Message<O>>(
 
 function createRequestHeaders(callOptions: ClientCallOptions): Headers {
   const header = new Headers({
+    // We provide the most explicit description for our content type.
+    // Note that we do not support the grpc-web-text format.
+    // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2
     "Content-Type": "application/grpc-web+proto",
+    // Some servers may rely on the request header `X-Grpc-Web` to identify
+    // gRPC-web requests. For example the proxy by improbable:
+    // https://github.com/improbable-eng/grpc-web/blob/53aaf4cdc0fede7103c1b06f0cfc560c003a5c41/go/grpcweb/wrapper.go#L231
     "X-Grpc-Web": "1",
+    // Note that we do not comply with recommended structure for the
+    // user-agent string.
+    // https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
     "X-User-Agent": "@bufbuild/connect-web",
   });
   new Headers(callOptions.headers).forEach((value, key) =>
     header.set(key, value)
   );
   if (callOptions.timeout !== undefined) {
-    header.set("grpc-timeout", `${callOptions.timeout}m`);
+    header.set("Grpc-Timeout", `${callOptions.timeout}m`);
   }
   return header;
 }
