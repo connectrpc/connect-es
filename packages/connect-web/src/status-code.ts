@@ -116,15 +116,15 @@ export function codeFromHttpStatus(httpStatus: number): StatusCode {
     case 200:
       return StatusCode.Ok;
     case 400:
-      return StatusCode.InvalidArgument;
+      return StatusCode.Internal;
     case 401:
       return StatusCode.Unauthenticated;
     case 403:
       return StatusCode.PermissionDenied;
     case 404:
-      return StatusCode.NotFound;
+      return StatusCode.Unimplemented;
     case 429:
-      return StatusCode.ResourceExhausted;
+      return StatusCode.Unavailable;
     case 502:
       return StatusCode.Unavailable;
     case 503:
