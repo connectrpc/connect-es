@@ -44,4 +44,4 @@ export { StatusCode } from "./status-code.js";
 
 export { createConnectTransport } from "./connect-transport.js";
 
-export { parseBinaryHeader, percentDecodeHeader } from "./http-headers.js";
+export { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";

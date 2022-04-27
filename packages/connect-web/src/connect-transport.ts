@@ -22,7 +22,7 @@ import type {
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { codeFromHttpStatus, StatusCode } from "./status-code.js";
-import { parseBinaryHeader, percentDecodeHeader } from "./http-headers.js";
+import { decodeBinaryHeader } from "./http-headers.js";
 import { Status } from "./grpc/status/v1/status_pb.js";
 import type {
   ClientCallOptions,
@@ -297,7 +297,7 @@ function extractHttpStatusError(response: Response): ConnectError | undefined {
     return undefined;
   }
   return new ConnectError(
-    percentDecodeHeader(response.headers.get("grpc-message") ?? ""),
+    decodeURIComponent(response.headers.get("grpc-message") ?? ""),
     code
   );
 }
@@ -319,7 +319,7 @@ function extractHeadersError(header: Headers): ConnectError | undefined {
     );
   }
   return new ConnectError(
-    percentDecodeHeader(header.get("grpc-message") ?? ""),
+    decodeURIComponent(header.get("grpc-message") ?? ""),
     code
   );
 }
@@ -330,7 +330,7 @@ function extractDetailsError(header: Headers): ConnectError | undefined {
     return undefined;
   }
   try {
-    const status = parseBinaryHeader(grpcStatusDetailsBin, Status);
+    const status = decodeBinaryHeader(grpcStatusDetailsBin, Status);
     // Prefer the protobuf-encoded data to the headers.
     if (status.code === StatusCode.Ok) {
       return undefined;

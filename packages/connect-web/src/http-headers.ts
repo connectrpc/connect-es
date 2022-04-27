@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message } from "@bufbuild/protobuf";
-import type { MessageType } from "@bufbuild/protobuf";
-import { protoBase64 } from "@bufbuild/protobuf";
-import type { BinaryReadOptions } from "@bufbuild/protobuf";
+import type { BinaryReadOptions, MessageType } from "@bufbuild/protobuf";
+import { Message, protoBase64 } from "@bufbuild/protobuf";
+import { ConnectError } from "./connect-error";
+import { StatusCode } from "./status-code";
 
 /**
  * Encode a single binary header value according to the gRPC
@@ -48,7 +48,8 @@ export function encodeBinaryHeader(
  * split by `,` first.
  *
  * If this function detects invalid base-64 encoding, or invalid
- * binary message data, it throws an error.
+ * binary message data, it throws a ConnectError with status
+ * DataLoss.
  */
 export function decodeBinaryHeader(value: string): Uint8Array;
 export function decodeBinaryHeader<T extends Message<T>>(
@@ -61,9 +62,16 @@ export function decodeBinaryHeader<T extends Message<T>>(
   type?: MessageType<T>,
   options?: Partial<BinaryReadOptions>
 ): Uint8Array | T {
-  const bytes = protoBase64.dec(value);
-  if (type) {
-    return type.fromBinary(bytes, options);
+  try {
+    const bytes = protoBase64.dec(value);
+    if (type) {
+      return type.fromBinary(bytes, options);
+    }
+    return bytes;
+  } catch (e) {
+    throw new ConnectError(
+      e instanceof Error ? e.message : String(e),
+      StatusCode.DataLoss
+    );
   }
-  return bytes;
 }
