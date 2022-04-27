@@ -12,30 +12,56 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Message } from "@bufbuild/protobuf";
+import { Message } from "@bufbuild/protobuf";
 import type { MessageType } from "@bufbuild/protobuf";
-import { base64decode } from "./base64.js";
+import { protoBase64 } from "@bufbuild/protobuf";
 import type { BinaryReadOptions } from "@bufbuild/protobuf";
 
-export function percentDecodeHeader(value: string): string {
-  return decodeURIComponent(value);
+/**
+ * Encode a single binary header value according to the gRPC
+ * specification.
+ *
+ * Binary headers names end with `-bin`, and can contain arbitrary
+ * base64-encoded binary data.
+ */
+export function encodeBinaryHeader(
+  value: Uint8Array | ArrayBufferLike | Message
+): string {
+  let bytes: Uint8Array;
+  if (value instanceof Message) {
+    bytes = value.toBinary();
+  } else {
+    bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
+  }
+  return protoBase64.enc(bytes);
 }
 
 /**
- * Throws on invalid base-64 data, or on message parsing.
+ * Decode a single binary header value according to the gRPC
+ * specification.
+ *
+ * Binary headers names end with `-bin`, and can contain arbitrary
+ * base64-encoded binary data.
+ *
+ * Note that duplicate header names may have their values joined
+ * with a `,` as the delimiter, so you most likely will want to
+ * split by `,` first.
+ *
+ * If this function detects invalid base-64 encoding, or invalid
+ * binary message data, it throws an error.
  */
-export function parseBinaryHeader(value: string): Uint8Array;
-export function parseBinaryHeader<T extends Message<T>>(
+export function decodeBinaryHeader(value: string): Uint8Array;
+export function decodeBinaryHeader<T extends Message<T>>(
   value: string,
   type: MessageType<T>,
   options?: Partial<BinaryReadOptions>
 ): T;
-export function parseBinaryHeader<T extends Message<T>>(
+export function decodeBinaryHeader<T extends Message<T>>(
   value: string,
   type?: MessageType<T>,
   options?: Partial<BinaryReadOptions>
 ): Uint8Array | T {
-  const bytes = base64decode(value);
+  const bytes = protoBase64.dec(value);
   if (type) {
     return type.fromBinary(bytes, options);
   }
