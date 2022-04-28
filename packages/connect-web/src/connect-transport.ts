@@ -178,10 +178,10 @@ function createResponse<O extends Message<O>>(
           if (readFrame === undefined) {
             handler.onHeader?.(response.headers);
             const err =
+              extractHttpStatusError(response) ??
               extractContentTypeError(response.headers) ??
               extractDetailsError(response.headers) ??
-              extractHeadersError(response.headers) ??
-              extractHttpStatusError(response);
+              extractHeadersError(response.headers);
             if (err) {
               close(err);
               return;
