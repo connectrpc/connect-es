@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/protoc-gen-connect-web-linux-64",
-  "version": "0.0.2-alpha.3",
+  "version": "0.0.3",
   "description": "protoc-gen-connect-web (linux / x64)",
   "license": "Apache-2.0",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "https://github.com/bufbuild/connect-web.git"
   },
   "peerDependencies": {
-    "@bufbuild/connect-web": "^0.0.2-alpha.3",
+    "@bufbuild/connect-web": "^0.0.3",
     "@bufbuild/protoc-gen-es": "^0.0.2-alpha.3"
   },
   "peerDependenciesMeta": {

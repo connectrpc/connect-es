@@ -155,6 +155,7 @@ set-version: ## Set a new version in for the project, i.e. make set-version SET_
 	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	rm package-lock.json
 	npm i -f
+	$(MAKE) all
 
 # Release @bufbuild/connect-web.
 # Recommended procedure:
