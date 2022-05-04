@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-web",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^0.0.2-alpha.3"
+    "@bufbuild/protobuf": "^0.0.3"
   },
   "devDependencies": {
     "typescript": "^4.6.3"
