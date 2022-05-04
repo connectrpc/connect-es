@@ -49,6 +49,13 @@ export interface ConnectTransportOptions {
   baseUrl: string;
 
   /**
+   * Controls what the fetch client will do with credentials, such as
+   * Cookies. The default value is "same-origin". For reference, see
+   * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
+   */
+  credentials?: RequestCredentials;
+
+  /**
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
@@ -116,7 +123,7 @@ function createRequest<I extends Message<I>>(
     url,
     init: {
       method: "POST",
-      credentials: "same-origin",
+      credentials: transportOptions.credentials ?? "same-origin",
       redirect: "error",
       mode: "cors",
     },
