@@ -13,13 +13,14 @@
 // limitations under the License.
 
 import type {
+  AnyMessage,
   Message,
   MessageType,
   MethodInfo,
   ServiceType,
 } from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
-import type { AnyMessage } from "@bufbuild/protobuf";
+import type { ClientInterceptor } from "./client-interceptor";
 
 /**
  * ClientTransport represents the underlying transport for a client.
@@ -68,6 +69,16 @@ export interface ClientCallOptions {
    * If cancelled, an error with StatusCode.Canceled is raised.
    */
   signal?: AbortSignal;
+
+  /**
+   * Called when response headers are received.
+   */
+  onHeader?(headers: Headers): void;
+
+  /**
+   * Called when response trailers are received.
+   */
+  onTrailer?(trailers: Headers): void;
 }
 
 /**
@@ -127,6 +138,10 @@ export interface ClientRequest<T extends Message<T> = AnyMessage> {
   send(message: T, callback: ClientRequestCallback): void;
 }
 
+/**
+ * ClientRequestCallback is the callback for the sending a request from a
+ * client.
+ */
 export type ClientRequestCallback = (error: ConnectError | undefined) => void;
 
 /**
@@ -155,7 +170,7 @@ export interface ClientResponseHandler<T extends Message<T> = AnyMessage> {
  * A utility that sequentially reads all messages from the response, and calls
  * the callback for each of them.
  */
-export function receiveAll<T extends Message<T>>(
+export function receiveResponseUntilClose<T extends Message<T>>(
   response: ClientResponse<T>,
   handler: ClientResponseHandler<T>
 ): void {
@@ -195,3 +210,73 @@ type ServiceMethodOutput<
     ? O
     : never
   : never;
+
+/**
+ * wrapTransportCall is used by transport implementations to
+ * apply interceptors to the given request and response messages.
+ *
+ * It also adds and interceptor at the end, which will call the
+ * onHeader and onTrailer methods of user-provided call options.
+ */
+export function wrapTransportCall(
+  service: ServiceType,
+  method: MethodInfo,
+  options: Readonly<ClientCallOptions>,
+  request: ClientRequest,
+  response: ClientResponse,
+  interceptors: ClientInterceptor[] | undefined
+): [ClientRequest, ClientResponse] {
+  const chain = (interceptors ?? []).concat(delegateToClientCallOptions);
+  for (const interceptor of chain) {
+    [request, response] = interceptor(
+      service,
+      method,
+      options,
+      { ...request },
+      response
+    );
+  }
+  return [request, response];
+}
+
+function delegateToClientCallOptions(
+  service: ServiceType,
+  method: MethodInfo,
+  options: Readonly<ClientCallOptions>,
+  request: ClientRequest,
+  response: ClientResponse
+): [ClientRequest, ClientResponse] {
+  return [
+    request,
+    {
+      receive(handler) {
+        response.receive({
+          onHeader(header) {
+            console.log("delegateToClientCallOptions.onHeader", header);
+            options.onHeader?.(header);
+            handler.onHeader?.(header);
+          },
+          onMessage(message) {
+            console.log("delegateToClientCallOptions.onMessage", message);
+            handler.onMessage(message);
+          },
+          onTrailer(trailer) {
+            console.log(
+              "delegateToClientCallOptions.onTrailer",
+              trailer,
+              trailer.get("foo"),
+              "to",
+              options
+            );
+            options.onTrailer?.(trailer);
+            handler.onTrailer?.(trailer);
+          },
+          onClose(error) {
+            console.log("delegateToClientCallOptions.onClose", error);
+            handler.onClose(error);
+          },
+        });
+      },
+    },
+  ];
+}

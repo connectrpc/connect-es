@@ -25,7 +25,7 @@ import {
   createClientTransportCalls,
   ClientCall,
   ClientTransport,
-  receiveAll,
+  receiveResponseUntilClose,
   ClientResponse,
   ClientCallOptions,
 } from "./client-transport.js";
@@ -108,7 +108,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
         }
       );
       let singleMessage: O;
-      receiveAll(response, {
+      receiveResponseUntilClose(response, {
         onMessage(message): void {
           singleMessage = message;
         },

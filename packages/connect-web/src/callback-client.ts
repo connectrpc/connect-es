@@ -26,14 +26,14 @@ import {
   ClientCallOptions,
   ClientTransport,
   createClientTransportCalls,
-  receiveAll,
+  receiveResponseUntilClose,
 } from "./client-transport.js";
 import { StatusCode } from "./status-code.js";
 import { Message } from "@bufbuild/protobuf";
 
 // prettier-ignore
 /**
- * CallbackClient is a simple client that supports unary and server-
+ * CallbackClient is a simple client that supports unary and server
  * streaming methods. Methods take callback functions, which will be
  * called when a response message arrives, or an error occurs.
  *
@@ -125,7 +125,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
       }
     });
     let singleMessage = new call.method.O();
-    receiveAll(response, {
+    receiveResponseUntilClose(response, {
       onMessage(message): void {
         singleMessage = message;
       },
@@ -168,7 +168,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
         onClose(error);
       }
     });
-    receiveAll(response, {
+    receiveResponseUntilClose(response, {
       onMessage(message): void {
         onResponse(message);
       },
