@@ -252,27 +252,17 @@ function delegateToClientCallOptions(
       receive(handler) {
         response.receive({
           onHeader(header) {
-            console.log("delegateToClientCallOptions.onHeader", header);
             options.onHeader?.(header);
             handler.onHeader?.(header);
           },
           onMessage(message) {
-            console.log("delegateToClientCallOptions.onMessage", message);
             handler.onMessage(message);
           },
           onTrailer(trailer) {
-            console.log(
-              "delegateToClientCallOptions.onTrailer",
-              trailer,
-              trailer.get("foo"),
-              "to",
-              options
-            );
             options.onTrailer?.(trailer);
             handler.onTrailer?.(trailer);
           },
           onClose(error) {
-            console.log("delegateToClientCallOptions.onClose", error);
             handler.onClose(error);
           },
         });
