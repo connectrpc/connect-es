@@ -13,12 +13,16 @@
 // limitations under the License.
 
 import type {
-  ClientResponse,
-  ClientRequest,
   ClientCallOptions,
+  ClientRequest,
+  ClientResponse,
 } from "./client-transport.js";
 import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 
+/**
+ * ClientInterceptor gives you access to the request and response objects
+ * provided by a ClientTransport.
+ */
 export type ClientInterceptor = (
   service: ServiceType,
   method: MethodInfo,
@@ -26,23 +30,3 @@ export type ClientInterceptor = (
   request: ClientRequest,
   response: ClientResponse
 ) => [ClientRequest, ClientResponse];
-
-export function chainClientInterceptors(
-  service: ServiceType,
-  method: MethodInfo,
-  options: Readonly<ClientCallOptions>,
-  request: ClientRequest,
-  response: ClientResponse,
-  chain: ClientInterceptor[]
-): [ClientRequest, ClientResponse] {
-  for (const interceptor of chain.concat().reverse()) {
-    [request, response] = interceptor(
-      service,
-      method,
-      options,
-      { ...request },
-      response
-    );
-  }
-  return [request, response];
-}

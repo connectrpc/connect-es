@@ -30,10 +30,9 @@ import type {
   ClientResponse,
   ClientTransport,
 } from "./client-transport.js";
-import {
-  chainClientInterceptors,
-  ClientInterceptor,
-} from "./client-interceptor.js";
+import type { ClientInterceptor } from "./client-interceptor.js";
+import { createEnvelopeReader, EnvelopeReader } from "./envelope-reader";
+import { wrapTransportCall } from "./client-transport.js";
 
 export interface ConnectTransportOptions {
   /**
@@ -85,17 +84,14 @@ export function createConnectTransport(
         transportOptions,
         fetchResponse
       );
-      if (transportOptions.interceptors !== undefined) {
-        return chainClientInterceptors(
-          service,
-          method,
-          options,
-          request,
-          response,
-          transportOptions.interceptors
-        );
-      }
-      return [request, response];
+      return wrapTransportCall(
+        service,
+        method,
+        options,
+        request,
+        response,
+        transportOptions.interceptors
+      );
     },
   };
 }
@@ -128,11 +124,11 @@ function createRequest<I extends Message<I>>(
       mode: "cors",
     },
     abort,
-    header: createRequestHeaders(callOptions),
+    header: createGrpcWebRequestHeaders(callOptions),
     send(message: I, callback) {
       const data = message.toBinary(transportOptions.binaryOptions);
       const body = new Uint8Array(data.length + 5);
-      body[0] = FrameType.DATA; // first byte is frame type
+      body[0] = 0x00; // first byte is frame type
       for (let dataLength = data.length, i = 4; i > 0; i--) {
         body[i] = dataLength % 256; // 4 bytes message length
         dataLength >>>= 8;
@@ -162,7 +158,7 @@ function createResponse<O extends Message<O>>(
 ): ClientResponse<O> {
   let isReading = false;
   let isRead = false;
-  let readFrame: FrameReader | undefined;
+  let readFrame: EnvelopeReader | undefined;
   return {
     receive(handler): void {
       function close(reason?: unknown) {
@@ -198,7 +194,7 @@ function createResponse<O extends Message<O>>(
               return;
             }
             try {
-              readFrame = createFrameReader(response.body);
+              readFrame = createEnvelopeReader(response.body);
             } catch (e) {
               close(`failed to get response body reader: ${String(e)}`);
               return;
@@ -208,27 +204,26 @@ function createResponse<O extends Message<O>>(
           readFrame()
             .then((frame) => {
               isReading = false;
-              switch (frame.type) {
-                case FrameType.DATA:
-                  try {
-                    handler.onMessage(
-                      messageType.fromBinary(
-                        frame.data,
-                        transportOptions.binaryOptions
-                      )
-                    );
-                  } catch (e) {
-                    // prettier-ignore
-                    close(`failed to deserialize message ${messageType.typeName}: ${String(e)}`);
-                  }
-                  break;
-                case FrameType.TRAILER: {
-                  const trailer = parseTrailerFrame(frame);
-                  handler.onTrailer?.(trailer);
-                  close(
-                    extractDetailsError(trailer) ?? extractHeadersError(trailer)
+              if (frame === null) {
+                close();
+              } else if (frame.end) {
+                const trailer = parseGrpcWebTrailer(frame.data);
+                handler.onTrailer?.(trailer);
+                // callOptions.onTrailer?.(trailer);
+                close(
+                  extractDetailsError(trailer) ?? extractHeadersError(trailer)
+                );
+              } else {
+                try {
+                  handler.onMessage(
+                    messageType.fromBinary(
+                      frame.data,
+                      transportOptions.binaryOptions
+                    )
                   );
-                  break;
+                } catch (e) {
+                  // prettier-ignore
+                  close(`failed to deserialize message ${messageType.typeName}: ${String(e)}`);
                 }
               }
             })
@@ -239,7 +234,7 @@ function createResponse<O extends Message<O>>(
   };
 }
 
-function createRequestHeaders(callOptions: ClientCallOptions): Headers {
+function createGrpcWebRequestHeaders(callOptions: ClientCallOptions): Headers {
   const header = new Headers({
     // We provide the most explicit description for our content type.
     // Note that we do not support the grpc-web-text format.
@@ -348,9 +343,9 @@ function extractDetailsError(header: Headers): ConnectError | undefined {
   }
 }
 
-function parseTrailerFrame(frame: TrailerFrame): Headers {
+function parseGrpcWebTrailer(data: Uint8Array): Headers {
   const headers = new Headers();
-  const lines = String.fromCharCode(...frame.data).split("\r\n");
+  const lines = String.fromCharCode(...data).split("\r\n");
   for (const line of lines) {
     if (line === "") {
       continue;
@@ -363,97 +358,4 @@ function parseTrailerFrame(frame: TrailerFrame): Headers {
     }
   }
   return headers;
-}
-
-enum FrameType {
-  DATA = 0x00,
-  TRAILER = 0x80,
-}
-
-interface DataFrame {
-  type: FrameType.DATA;
-  data: Uint8Array;
-}
-interface TrailerFrame {
-  type: FrameType.TRAILER;
-  data: Uint8Array;
-}
-
-type FrameReader = () => Promise<DataFrame | TrailerFrame>;
-
-/**
- * Create a function that reads one frame per call from the given stream.
- */
-function createFrameReader(stream: ReadableStream<Uint8Array>): FrameReader {
-  const reader = stream.getReader();
-  let buffer = new Uint8Array(0);
-  function append(chunk: Uint8Array): void {
-    const n = new Uint8Array(buffer.length + chunk.length);
-    n.set(buffer);
-    n.set(chunk, buffer.length);
-    buffer = n;
-  }
-  async function readDataFrame(): Promise<DataFrame> {
-    let dataLength: number | undefined;
-    for (;;) {
-      if (dataLength === undefined && buffer.byteLength >= 5) {
-        dataLength = 0;
-        for (let i = 1; i < 5; i++) {
-          dataLength = (dataLength << 8) + buffer[i];
-        }
-      }
-      if (dataLength !== undefined && buffer.byteLength >= dataLength) {
-        break;
-      }
-      const result = await reader.read();
-      if (result.done) {
-        throw new ConnectError(
-          "premature end of response body",
-          StatusCode.DataLoss
-        );
-      }
-      append(result.value);
-    }
-    const data = buffer.subarray(5, 5 + dataLength);
-    buffer = buffer.subarray(5 + dataLength);
-    return {
-      type: FrameType.DATA,
-      data,
-    };
-  }
-  async function readTrailerFrame(): Promise<TrailerFrame> {
-    for (;;) {
-      const result = await reader.read();
-      if (result.done) {
-        break;
-      }
-      append(result.value);
-    }
-    const data = buffer.subarray(5);
-    buffer = new Uint8Array(0);
-    return {
-      type: FrameType.TRAILER,
-      data,
-    };
-  }
-  return async function readFrame(): Promise<DataFrame | TrailerFrame> {
-    for (;;) {
-      if (buffer.byteLength > 0) {
-        switch (buffer[0]) {
-          case FrameType.DATA:
-            return readDataFrame();
-          case FrameType.TRAILER:
-            return readTrailerFrame();
-        }
-      }
-      const result = await reader.read();
-      if (result.done) {
-        throw new ConnectError(
-          "premature end of response body",
-          StatusCode.DataLoss
-        );
-      }
-      append(result.value);
-    }
-  };
 }

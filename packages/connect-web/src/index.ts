@@ -23,19 +23,17 @@ export {
   PromiseClientWithExactRequest,
 } from "./promise-client.js";
 
-export {
-  ClientInterceptor,
-  chainClientInterceptors,
-} from "./client-interceptor.js";
+export { ClientInterceptor } from "./client-interceptor.js";
 
 export {
   ClientTransport,
   ClientCall,
-  createClientTransportCalls,
   ClientRequest,
   ClientRequestCallback,
   ClientResponse,
   ClientResponseHandler,
+  createClientTransportCalls,
+  wrapTransportCall,
 } from "./client-transport.js";
 
 export { ConnectError } from "./connect-error.js";
