@@ -1,6 +1,8 @@
 CACHE_DIR = .cache
 SHELL := /usr/bin/env bash -o pipefail
 .DEFAULT_GOAL = all
+UNAME_OS := $(shell uname -s)
+UNAME_ARCH := $(shell uname -m)
 export PATH := $(abspath $(CACHE_DIR)/bin):$(PATH)
 
 # TODO remove after the repository has been made public
@@ -106,6 +108,18 @@ $(GOLANGCI_LINT_DEP):
 	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	mkdir -p $(dir $(GOLANGCI_LINT_DEP)) && touch $(GOLANGCI_LINT_DEP)
 
+# Install Node.js v18
+NODE18_VERSION ?= v18.2.0
+NODE18_DEP := $(CACHE_DIR)/dep/node18-$(GOLANGCI_LINT_VERSION)
+NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(UNAME_OS)))
+NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(UNAME_ARCH)))
+$(NODE18_DEP):
+	curl -sSL https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH).tar.xz | tar xJ -C $(CACHE_DIR) node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node
+	mkdir -p $(CACHE_DIR)/bin
+	mv $(CACHE_DIR)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node $(CACHE_DIR)/bin/node18
+	rm -r $(CACHE_DIR)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)
+	mkdir -p $(dir $(NODE18_DEP)) && touch $(NODE18_DEP)
+
 
 # Commands
 .PHONY: all clean build test lint format bench-codesize set-version release
@@ -129,8 +143,8 @@ test: test-go test-jest ## Run all tests
 test-go:
 	go test ./cmd/...
 
-test-jest: $(TEST_BUILD) $(TEST_DIR)/*.config.js
-	cd $(TEST_DIR) && NODE_OPTIONS=--experimental-vm-modules npx jest
+test-jest: $(NODE18_DEP) $(TEST_BUILD) $(TEST_DIR)/*.config.js
+	cd $(TEST_DIR) && NODE_OPTIONS=--experimental-vm-modules node18 ../../node_modules/.bin/jest
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
