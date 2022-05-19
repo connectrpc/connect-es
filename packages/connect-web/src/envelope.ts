@@ -37,6 +37,14 @@ export interface EnvelopedMessage {
 }
 
 /**
+ * A set of 8 bitwise flags.
+ */
+export enum EnvelopeFlags {
+  EndStream = 0b10000000,
+  Compressed = 0b00000001,
+}
+
+/**
  * A function that reads one EnvelopedMessage per call from the given stream.
  */
 export type EnvelopeReader = () => Promise<EnvelopedMessage | null>;
@@ -84,11 +92,9 @@ export function createEnvelopeReader(
     const data = buffer.subarray(5, 5 + header.length);
     buffer = buffer.subarray(5 + header.length);
     return {
-      end: (header.flags & END_STREAM_MASK) === END_STREAM_MASK,
+      end: (header.flags & EnvelopeFlags.EndStream) === EnvelopeFlags.EndStream,
       flags: header.flags,
       data,
     };
   };
 }
-
-const END_STREAM_MASK = 0x80;
