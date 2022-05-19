@@ -209,7 +209,6 @@ function createResponse<O extends Message<O>>(
               } else if (frame.end) {
                 const trailer = parseGrpcWebTrailer(frame.data);
                 handler.onTrailer?.(trailer);
-                // callOptions.onTrailer?.(trailer);
                 close(
                   extractDetailsError(trailer) ?? extractHeadersError(trailer)
                 );
