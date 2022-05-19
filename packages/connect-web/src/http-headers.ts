@@ -14,8 +14,8 @@
 
 import type { BinaryReadOptions, MessageType } from "@bufbuild/protobuf";
 import { Message, protoBase64 } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error";
-import { StatusCode } from "./status-code";
+import { ConnectError } from "./connect-error.js";
+import { StatusCode } from "./status-code.js";
 
 /**
  * Encode a single binary header value according to the gRPC

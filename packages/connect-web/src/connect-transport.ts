@@ -31,7 +31,7 @@ import type {
   ClientTransport,
 } from "./client-transport.js";
 import type { ClientInterceptor } from "./client-interceptor.js";
-import { createEnvelopeReader, EnvelopeReader } from "./envelope";
+import { createEnvelopeReader, EnvelopeReader } from "./envelope.js";
 import { wrapTransportCall } from "./client-transport.js";
 
 export interface ConnectTransportOptions {

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "./connect-error";
-import { StatusCode } from "./status-code";
+import { ConnectError } from "./connect-error.js";
+import { StatusCode } from "./status-code.js";
 
 /**
  * Enveloped-Message
