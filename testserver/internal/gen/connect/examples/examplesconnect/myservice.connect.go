@@ -8,7 +8,7 @@ import (
 	context "context"
 	errors "errors"
 	connect_go "github.com/bufbuild/connect-go"
-	examples "github.com/bufbuild/connect-web/packages/connect-web-test/server/internal/gen/go/examples"
+	examples "github.com/bufbuild/connect-web/testserver/internal/gen/go/examples"
 	http "net/http"
 	strings "strings"
 )
