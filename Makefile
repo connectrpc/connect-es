@@ -6,9 +6,10 @@ UNAME_ARCH := $(shell uname -m)
 export PATH := $(abspath $(CACHE_DIR)/bin):$(PATH)
 
 # TODO
-export GOPRIVATE := "github.com/bufbuild/protobuf-es;github.com/bufbuild/connect-web/packages/connect-web-test/server;github.com/bufbuild/connect-web"
-export GONOSUMDB := "github.com/bufbuild/protobuf-es;github.com/bufbuild/connect-web/packages/connect-web-test/server;github.com/bufbuild/connect-web"
+export GOPRIVATE := github.com/bufbuild/connect-web/packages/connect-web-test/server
+export GONOSUMDB := github.com/bufbuild/connect-web/packages/connect-web-test/server
 xxx:
+	go env
 	cd packages/connect-web-test/server && go mod tidy
 
 
