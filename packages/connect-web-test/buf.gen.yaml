@@ -2,7 +2,7 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/bufbuild/connect-web/connect-web-test/packages/connect-web-test/server/internal/gen/go
+    default: github.com/bufbuild/connect-web/packages/connect-web-test/server/internal/gen/go
 plugins:
   - name: go
     out: server/internal/gen/go
