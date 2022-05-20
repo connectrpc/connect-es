@@ -4,7 +4,7 @@ managed:
   go_package_prefix:
     default: github.com/bufbuild/connect-web/testserver/internal/gen/go
 plugins:
-  - name: go
+  - remote: buf.build/protocolbuffers/plugins/go:v1.28.0-1
     out: internal/gen/go
     opt: paths=source_relative
   - name: connect-go
