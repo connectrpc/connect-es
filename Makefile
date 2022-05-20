@@ -39,7 +39,7 @@ $(WEB_BUILD): node_modules $(WEB_SOURCES)
 # Tests run against the connect-go test server
 TESTSERVER_DIR = testserver
 TESTSERVER_GEN = $(CACHE_DIR)/gen/testserver
-$(TESTSERVER_GEN): $(PROTOC_GEN_CONNECT_WEB_BIN) $(PROTOC_GEN_ES_BIN) $(shell find testserver/proto -name '*.proto')
+$(TESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find testserver/proto -name '*.proto')
 	rm -rf $(TESTSERVER_DIR)/internal/gen/*
 	buf generate testserver/proto --template $(TESTSERVER_DIR)/buf.gen.yaml --output $(TESTSERVER_DIR)
 	mkdir -p $(dir $(TESTSERVER_GEN)) && touch $(TESTSERVER_GEN)
