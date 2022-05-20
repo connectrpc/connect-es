@@ -144,15 +144,11 @@ test: test-go test-node test-browser ## Run all tests
 test-go:
 	go test ./cmd/...
 
-test-jest: $(NODE18_DEP) $(TEST_BUILD) $(TEST_DIR)/*.config.js
-	cd $(TEST_DIR) && NODE_OPTIONS=--experimental-vm-modules node18 ../../node_modules/.bin/jest
-
 test-node: $(NODE18_DEP) $(TEST_BUILD)
 	cd $(TEST_DIR) && node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 
 test-browser: $(TEST_BUILD)
 	npm run -w $(TEST_DIR) karma
-
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
