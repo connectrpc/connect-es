@@ -12,19 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*
- * For a detailed explanation regarding each configuration property and type check, visit:
- * https://jestjs.io/docs/configuration
+/**
+ * Create a WHATWG ReadableStream from a Uint8Array.
  */
-/** @type {import('@jest/types').Config.InitialOptions} */
-const config = {
-  // Indicates which provider should be used to instrument code for coverage
-  coverageProvider: "v8",
-
-  // The root directory that Jest should scan for tests and modules within
-  rootDir: "dist/esm",
-
-  transform: {},
-};
-
-export default config;
+export function webReadableStreamFromBytes(
+  bytes: Uint8Array,
+  chunkSize = 2,
+  delay = 5
+) {
+  let offset = 0;
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      const end = Math.min(offset + chunkSize, bytes.byteLength);
+      controller.enqueue(bytes.slice(offset, end));
+      offset = end;
+      if (offset === bytes.length) {
+        controller.close();
+      }
+    },
+  });
+}

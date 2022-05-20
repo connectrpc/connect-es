@@ -46,12 +46,12 @@ describe("encode / decode binary header", function () {
 describe("decodeBinaryHeader()", () => {
   it("throws error on invalid base64 input", () => {
     const encoded = "not-base-64-😞";
-    expect(() => decodeBinaryHeader(encoded)).toThrow(
+    expect(() => decodeBinaryHeader(encoded)).toThrowError(
       "[DataLoss] invalid base64 string."
     );
   });
   it("throws error on invalid message input", () => {
-    expect(() => decodeBinaryHeader("3q2+7w==", M)).toThrow(
+    expect(() => decodeBinaryHeader("3q2+7w==", M)).toThrowError(
       "[DataLoss] premature EOF"
     );
   });

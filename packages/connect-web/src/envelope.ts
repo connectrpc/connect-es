@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "./connect-error";
-import { StatusCode } from "./status-code";
+import { ConnectError } from "./connect-error.js";
+import { StatusCode } from "./status-code.js";
 
 /**
  * Enveloped-Message
@@ -34,6 +34,14 @@ export interface EnvelopedMessage {
    * response type defined in the service's IDL.
    */
   end: boolean;
+}
+
+/**
+ * A set of 8 bitwise flags.
+ */
+export enum EnvelopeFlags {
+  EndStream = 0b10000000,
+  Compressed = 0b00000001,
 }
 
 /**
@@ -84,11 +92,9 @@ export function createEnvelopeReader(
     const data = buffer.subarray(5, 5 + header.length);
     buffer = buffer.subarray(5 + header.length);
     return {
-      end: (header.flags & END_STREAM_MASK) === END_STREAM_MASK,
+      end: (header.flags & EnvelopeFlags.EndStream) === EnvelopeFlags.EndStream,
       flags: header.flags,
       data,
     };
   };
 }
-
-const END_STREAM_MASK = 0x80;

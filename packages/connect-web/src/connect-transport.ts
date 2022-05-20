@@ -31,7 +31,7 @@ import type {
   ClientTransport,
 } from "./client-transport.js";
 import type { ClientInterceptor } from "./client-interceptor.js";
-import { createEnvelopeReader, EnvelopeReader } from "./envelope-reader";
+import { createEnvelopeReader, EnvelopeReader } from "./envelope.js";
 import { wrapTransportCall } from "./client-transport.js";
 
 export interface ConnectTransportOptions {
@@ -209,7 +209,6 @@ function createResponse<O extends Message<O>>(
               } else if (frame.end) {
                 const trailer = parseGrpcWebTrailer(frame.data);
                 handler.onTrailer?.(trailer);
-                // callOptions.onTrailer?.(trailer);
                 close(
                   extractDetailsError(trailer) ?? extractHeadersError(trailer)
                 );

@@ -1,10 +1,9 @@
 CACHE_DIR = .cache
 SHELL := /usr/bin/env bash -o pipefail
 .DEFAULT_GOAL = all
+UNAME_OS := $(shell uname -s)
+UNAME_ARCH := $(shell uname -m)
 export PATH := $(abspath $(CACHE_DIR)/bin):$(PATH)
-
-# TODO remove after the repository has been made public
-export GOPRIVATE := github.com/bufbuild/protobuf-es
 
 
 # The code generator protoc-gen-es generates message and enum types.
@@ -32,7 +31,8 @@ WEB_DIR = packages/connect-web
 WEB_BUILD = $(CACHE_DIR)/build/packages-connect-web
 WEB_SOURCES = $(WEB_DIR)/*.json $(shell find $(WEB_DIR)/src -name '*.ts')
 $(WEB_BUILD): node_modules $(WEB_SOURCES)
-	cd $(WEB_DIR) && npm run clean && npm run build
+	npm run -w $(WEB_DIR) clean
+	npm run -w $(WEB_DIR) build
 	mkdir -p $(CACHE_DIR)/build && touch $(WEB_BUILD)
 
 
@@ -106,6 +106,18 @@ $(GOLANGCI_LINT_DEP):
 	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	mkdir -p $(dir $(GOLANGCI_LINT_DEP)) && touch $(GOLANGCI_LINT_DEP)
 
+# Install Node.js v18
+NODE18_VERSION ?= v18.2.0
+NODE18_DEP := $(CACHE_DIR)/dep/node18-$(GOLANGCI_LINT_VERSION)
+NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(UNAME_OS)))
+NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(UNAME_ARCH)))
+$(NODE18_DEP):
+	curl -sSL https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH).tar.xz | tar xJ -C $(CACHE_DIR) node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node
+	mkdir -p $(CACHE_DIR)/bin
+	mv $(CACHE_DIR)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node $(CACHE_DIR)/bin/node18
+	rm -r $(CACHE_DIR)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)
+	mkdir -p $(dir $(NODE18_DEP)) && touch $(NODE18_DEP)
+
 
 # Commands
 .PHONY: all clean build test lint format bench-codesize set-version release
@@ -116,21 +128,24 @@ help: ## Describe useful make targets
 all: build test format lint bench-codesize ## build, test, format, lint, and bench-codesize (default)
 
 clean: ## Delete build artifacts and installed dependencies
-	cd $(BENCHCODESIZE_DIR); npm run clean
-	cd $(WEB_DIR); npm run clean
+	npm run clean -w $(BENCHCODESIZE_DIR)
+	npm run clean -w $(WEB_DIR)
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
-test: test-go test-jest ## Run all tests
+test: test-go test-node test-browser ## Run all tests
 
 test-go:
 	go test ./cmd/...
 
-test-jest: $(TEST_BUILD) $(TEST_DIR)/*.config.js
-	cd $(TEST_DIR) && NODE_OPTIONS=--experimental-vm-modules npx jest
+test-node: $(NODE18_DEP) $(TEST_BUILD)
+	cd $(TEST_DIR) && node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+
+test-browser: $(TEST_BUILD)
+	npm run -w $(TEST_DIR) karma
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
@@ -147,7 +162,7 @@ format: node_modules $(GIT_LS_FILES_UNSTAGED_DEP) $(LICENSE_HEADER_DEP) ## Forma
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code size
-	cd $(BENCHCODESIZE_DIR) && npm run report
+	npm run -w $(BENCHCODESIZE_DIR) report
 
 set-version: ## Set a new version in for the project, i.e. make set-version SET_VERSION=1.2.3
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)

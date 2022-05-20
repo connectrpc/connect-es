@@ -17,16 +17,16 @@ import { ConnectError, StatusCode } from "@bufbuild/connect-web";
 describe("ConnectError", function () {
   it("should have status unknown by default", () => {
     const e = new ConnectError("foo");
-    expect(e.code).toStrictEqual(StatusCode.Unknown);
-    expect(e.message).toStrictEqual("[Unknown] foo");
-    expect(e.rawMessage).toStrictEqual("foo");
-    expect(String(e)).toStrictEqual("ConnectError: [Unknown] foo");
+    expect(e.code).toBe(StatusCode.Unknown);
+    expect(e.message).toBe("[Unknown] foo");
+    expect(e.rawMessage).toBe("foo");
+    expect(String(e)).toBe("ConnectError: [Unknown] foo");
   });
   it("should take other status", () => {
     const e = new ConnectError("foo", StatusCode.AlreadyExists);
-    expect(e.code).toStrictEqual(StatusCode.AlreadyExists);
-    expect(e.message).toStrictEqual("[AlreadyExists] foo");
-    expect(e.rawMessage).toStrictEqual("foo");
-    expect(String(e)).toStrictEqual("ConnectError: [AlreadyExists] foo");
+    expect(e.code).toBe(StatusCode.AlreadyExists);
+    expect(e.message).toBe("[AlreadyExists] foo");
+    expect(e.rawMessage).toBe("foo");
+    expect(String(e)).toBe("ConnectError: [AlreadyExists] foo");
   });
 });
