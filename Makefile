@@ -3,7 +3,7 @@ SHELL := /usr/bin/env bash -o pipefail
 .DEFAULT_GOAL = all
 UNAME_OS := $(shell uname -s)
 UNAME_ARCH := $(shell uname -m)
-export PATH := $(abspath $(CACHE_DIR)/bin):$(PATH)
+export PATH := $(abspath $(CACHE_DIR)/bin):$(abspath node_modules/.bin):$(PATH)
 
 
 # The code generator protoc-gen-es generates message and enum types.
