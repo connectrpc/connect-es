@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ReadableStream } from "node:stream/web";
-
 /**
  * Create a WHATWG ReadableStream from a Uint8Array.
  */
@@ -23,7 +21,7 @@ export function webReadableStreamFromBytes(
   delay = 5
 ) {
   let offset = 0;
-  return new ReadableStream({
+  return new ReadableStream<Uint8Array>({
     async pull(controller) {
       await new Promise((resolve) => setTimeout(resolve, delay));
       const end = Math.min(offset + chunkSize, bytes.byteLength);

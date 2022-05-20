@@ -34,7 +34,8 @@ WEB_DIR = packages/connect-web
 WEB_BUILD = $(CACHE_DIR)/build/packages-connect-web
 WEB_SOURCES = $(WEB_DIR)/*.json $(shell find $(WEB_DIR)/src -name '*.ts')
 $(WEB_BUILD): node_modules $(WEB_SOURCES)
-	cd $(WEB_DIR) && npm run clean && npm run build
+	npm run -w $(WEB_DIR) clean
+	npm run -w $(WEB_DIR) build
 	mkdir -p $(CACHE_DIR)/build && touch $(WEB_BUILD)
 
 
@@ -130,21 +131,28 @@ help: ## Describe useful make targets
 all: build test format lint bench-codesize ## build, test, format, lint, and bench-codesize (default)
 
 clean: ## Delete build artifacts and installed dependencies
-	cd $(BENCHCODESIZE_DIR); npm run clean
-	cd $(WEB_DIR); npm run clean
+	npm run clean -w $(BENCHCODESIZE_DIR)
+	npm run clean -w $(WEB_DIR)
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
-test: test-go test-jest ## Run all tests
+test: test-go test-node test-browser ## Run all tests
 
 test-go:
 	go test ./cmd/...
 
 test-jest: $(NODE18_DEP) $(TEST_BUILD) $(TEST_DIR)/*.config.js
 	cd $(TEST_DIR) && NODE_OPTIONS=--experimental-vm-modules node18 ../../node_modules/.bin/jest
+
+test-node: $(NODE18_DEP) $(TEST_BUILD)
+	cd $(TEST_DIR) && node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+
+test-browser: $(TEST_BUILD)
+	npm run -w $(TEST_DIR) karma
+
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
@@ -161,7 +169,7 @@ format: node_modules $(GIT_LS_FILES_UNSTAGED_DEP) $(LICENSE_HEADER_DEP) ## Forma
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code size
-	cd $(BENCHCODESIZE_DIR) && npm run report
+	npm run -w $(BENCHCODESIZE_DIR) report
 
 set-version: ## Set a new version in for the project, i.e. make set-version SET_VERSION=1.2.3
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)

@@ -12,19 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*
- * For a detailed explanation regarding each configuration property and type check, visit:
- * https://jestjs.io/docs/configuration
- */
-/** @type {import('@jest/types').Config.InitialOptions} */
-const config = {
-  // Indicates which provider should be used to instrument code for coverage
-  coverageProvider: "v8",
+import { ReadableStream } from "node:stream/web";
 
-  // The root directory that Jest should scan for tests and modules within
-  rootDir: "dist/esm",
-
-  transform: {},
-};
-
-export default config;
+// node >= v16 has an implementation for WHATWG streams, but doesn't expose
+// them in the global scope, nor globalThis.
+globalThis.ReadableStream = ReadableStream;
