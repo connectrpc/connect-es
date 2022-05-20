@@ -5,9 +5,6 @@ UNAME_OS := $(shell uname -s)
 UNAME_ARCH := $(shell uname -m)
 export PATH := $(abspath $(CACHE_DIR)/bin):$(PATH)
 
-# TODO remove after the repository has been made public
-export GOPRIVATE := github.com/bufbuild/protobuf-es
-
 
 # The code generator protoc-gen-es generates message and enum types.
 # It is installed via the NPM package @bufbuild/protoc-gen-es.
