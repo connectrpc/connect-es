@@ -31,6 +31,8 @@ jobs:
           key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
+      - name: make-ci-generate
+        run: bash make/scripts/checknodiffgenerated.bash make ci-generate
       - name: make-format
         run: bash make/scripts/checknodiffgenerated.bash make format
       - name: make-build
