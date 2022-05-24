@@ -63,6 +63,13 @@ describe("ConnectError", function () {
       });
     });
   });
+  describe("fromJsonString", () => {
+    it("with syntax error throws", () => {
+      expect(() => ConnectError.fromJsonString("invalid json")).toThrowError(
+        "[internal] cannot decode ConnectError from JSON: Unexpected token i in JSON at position 0"
+      );
+    });
+  });
   describe("fromJson", () => {
     it("parses code and message", () => {
       const error = ConnectError.fromJson({
@@ -80,7 +87,7 @@ describe("ConnectError", function () {
           message: "Not permitted",
         })
       ).toThrowError(
-        '[unknown] cannot decode ConnectError code from JSON: "wrong code"'
+        '[internal] cannot decode ConnectError.code from JSON: "wrong code"'
       );
     });
     it("with code Ok throws", () => {
@@ -90,7 +97,7 @@ describe("ConnectError", function () {
           message: "Not permitted",
         })
       ).toThrowError(
-        '[unknown] cannot decode ConnectError code from JSON: "ok"'
+        '[internal] cannot decode ConnectError.code from JSON: "ok"'
       );
     });
     it("with missing code throws", () => {
@@ -98,14 +105,14 @@ describe("ConnectError", function () {
         ConnectError.fromJson({
           message: "Not permitted",
         })
-      ).toThrowError("[unknown] cannot decode ConnectError from JSON: object");
+      ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
     });
     it("with missing message throws", () => {
       expect(() =>
         ConnectError.fromJson({
           code: statusCodeToString(StatusCode.PermissionDenied),
         })
-      ).toThrowError("[unknown] cannot decode ConnectError from JSON: object");
+      ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
     });
     describe("with details", () => {
       const json = {

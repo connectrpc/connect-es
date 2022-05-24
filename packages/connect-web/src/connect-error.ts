@@ -124,14 +124,22 @@ export class ConnectError extends Error {
 
   /**
    * Parse an error from a JSON string.
+   * Will return a ConnectError, but throw one in case the JSON is malformed.
    */
   static fromJsonString(jsonString: string): ConnectError {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- assigning to JsonValue is safe here
-    return this.fromJson(JSON.parse(jsonString));
+    let json: JsonValue;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      json = JSON.parse(jsonString);
+    } catch (e) {
+      throw newParseError(e, "syntax");
+    }
+    return this.fromJson(json);
   }
 
   /**
    * Parse an error from a JSON value.
+   * Will return a ConnectError, but throw one in case the JSON is malformed.
    */
   static fromJson(
     jsonValue: JsonValue,
@@ -150,7 +158,7 @@ export class ConnectError extends Error {
     }
     const code = statusCodeFromString(jsonValue.code);
     if (code == undefined || code == StatusCode.Ok) {
-      throw newParseError(jsonValue.code, "code");
+      throw newParseError(jsonValue.code, ".code");
     }
     const error = new ConnectError(jsonValue.message, code);
     if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
@@ -198,10 +206,25 @@ type RawDetail =
       [key: string]: JsonValue;
     };
 
-function newParseError(value: JsonValue, detail?: string): ConnectError {
-  detail = detail != null ? " " + detail : "";
+function newParseError(value: JsonValue, property?: ".code"): ConnectError;
+function newParseError(error: unknown, property: "syntax"): ConnectError;
+function newParseError(
+  valueOrError: unknown | JsonValue,
+  property?: "syntax" | string
+): ConnectError {
+  let d: string;
+  if (property == "syntax") {
+    property = "";
+    d =
+      valueOrError instanceof Error
+        ? valueOrError.message
+        : String(valueOrError);
+  } else {
+    d = proto3.json.debug(valueOrError as JsonValue);
+  }
   return new ConnectError(
-    `cannot decode ConnectError${detail} from JSON: ${proto3.json.debug(value)}`
+    `cannot decode ConnectError${property ?? ""} from JSON: ${d}`,
+    StatusCode.Internal
   );
 }
 
