@@ -7,3 +7,4 @@ node_modules
 /packages/*/dist
 /packages/protobuf-test/descriptorset.bin
 /.cache
+/test-test-test
