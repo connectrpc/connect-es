@@ -135,3 +135,46 @@ export function codeFromHttpStatus(httpStatus: number): StatusCode {
       return StatusCode.Unknown;
   }
 }
+
+let stringToStatusCode: Record<string, StatusCode> | undefined;
+
+/**
+ * statusCodeFromString parses the string representation of a StatusCode in
+ * PascalCase or snake_case. For example, the following strings parse to
+ * StatusCode.PermissionDenied: "PermissionDenied", "permission_denied".
+ *
+ * If the given value cannot be parsed, the function returns undefined.
+ */
+export function statusCodeFromString(value: string): StatusCode | undefined {
+  if (!stringToStatusCode) {
+    type EnumObject = {
+      [key: number]: string;
+      [k: string]: number | string;
+    };
+    stringToStatusCode = {};
+    for (const name of Object.keys(StatusCode)) {
+      const value = (StatusCode as EnumObject)[name] as StatusCode;
+      if (typeof value != "number") {
+        continue;
+      }
+      const snake = statusCodeToString(value, "snake_case");
+      stringToStatusCode[name] = stringToStatusCode[snake] = value;
+    }
+  }
+  return stringToStatusCode[value];
+}
+
+/**
+ * statusCodeToString returns the string representation of a StatusCode.
+ * By default, the string is in snake_case format.
+ */
+export function statusCodeToString(
+  value: StatusCode,
+  format: "PascalCase" | "snake_case" = "snake_case"
+): string {
+  const name = StatusCode[value];
+  return format == "PascalCase"
+    ? name
+    : name.substring(0, 1).toLowerCase() +
+        name.substring(1).replace(/[A-Z]/g, (c) => "_" + c.toLowerCase());
+}
