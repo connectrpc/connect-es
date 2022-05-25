@@ -38,7 +38,11 @@ export {
 
 export { ConnectError } from "./connect-error.js";
 
-export { StatusCode } from "./status-code.js";
+export {
+  StatusCode,
+  statusCodeFromString,
+  statusCodeToString,
+} from "./status-code.js";
 
 export { createConnectTransport } from "./connect-transport.js";
 
