@@ -81,7 +81,7 @@ export class ConnectError extends Error {
     code: ErrorCode = StatusCode.Unknown,
     details?: AnyMessage[]
   ) {
-    super(`[${statusCodeToString(code)}] ${message}`);
+    super(syntheticMessage(code, message));
     // see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html#example
     Object.setPrototypeOf(this, new.target.prototype);
     this.rawMessage = message;
@@ -150,17 +150,19 @@ export class ConnectError extends Error {
       jsonValue == null ||
       Array.isArray(jsonValue) ||
       !("code" in jsonValue) ||
-      !("message" in jsonValue) ||
-      typeof jsonValue.code !== "string" ||
-      typeof jsonValue.message !== "string"
+      typeof jsonValue.code !== "string"
     ) {
       throw newParseError(jsonValue);
     }
     const code = statusCodeFromString(jsonValue.code);
-    if (code == undefined || code == StatusCode.Ok) {
+    if (code == null || code == StatusCode.Ok) {
       throw newParseError(jsonValue.code, ".code");
     }
-    const error = new ConnectError(jsonValue.message, code);
+    const message = jsonValue.message;
+    if (message != null && typeof message !== "string") {
+      throw newParseError(jsonValue.code, ".message");
+    }
+    const error = new ConnectError(message ?? "", code);
     if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
       for (const raw of jsonValue.details) {
         let any: Any;
@@ -206,7 +208,16 @@ type RawDetail =
       [key: string]: JsonValue;
     };
 
-function newParseError(value: JsonValue, property?: ".code"): ConnectError;
+function syntheticMessage(code: ErrorCode, message: string) {
+  return message.length
+    ? `[${statusCodeToString(code)}] ${message}`
+    : `[${statusCodeToString(code)}]`;
+}
+
+function newParseError(
+  value: JsonValue,
+  property?: ".code" | ".message"
+): ConnectError;
 function newParseError(error: unknown, property: "syntax"): ConnectError;
 function newParseError(
   valueOrError: unknown | JsonValue,

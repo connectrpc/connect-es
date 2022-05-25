@@ -80,6 +80,13 @@ describe("ConnectError", function () {
       expect(error.rawMessage).toBe("Not permitted");
       expect(error.details.length).toBe(0);
     });
+    it("does not require message", () => {
+      const error = ConnectError.fromJson({
+        code: statusCodeToString(StatusCode.PermissionDenied),
+      });
+      expect(error.message).toBe("[permission_denied]");
+      expect(error.rawMessage).toBe("");
+    });
     it("with invalid code throws", () => {
       expect(() =>
         ConnectError.fromJson({
@@ -104,13 +111,6 @@ describe("ConnectError", function () {
       expect(() =>
         ConnectError.fromJson({
           message: "Not permitted",
-        })
-      ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
-    });
-    it("with missing message throws", () => {
-      expect(() =>
-        ConnectError.fromJson({
-          code: statusCodeToString(StatusCode.PermissionDenied),
         })
       ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
     });
