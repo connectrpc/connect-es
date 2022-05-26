@@ -201,3 +201,10 @@ release: all ## Release @bufbuild/connect-web
 # Some builds need code generation, some code generation needs builds.
 # We expose this target only for ci, so it can check for diffs.
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN) $(TESTSERVER_GEN)
+
+docker-compose-clean:
+	-docker-compose down --rmi local --remove-orphans
+	# clean up errors are ignored
+
+docker-compose-up: docker-compose-clean
+	docker-compose up
