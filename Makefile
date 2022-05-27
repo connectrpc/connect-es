@@ -6,6 +6,10 @@ UNAME_ARCH := $(shell uname -m)
 export PATH := $(abspath $(CACHE_DIR)/bin):$(abspath node_modules/.bin):$(PATH)
 
 
+# The crosstest git hash to be used by docker-compose and code generation
+CROSSTEST_VERSION := ae95e9554255a7ce55a9b7a5d80eb130a763a38e
+
+
 # The code generator protoc-gen-es generates message and enum types.
 # It is installed via the NPM package @bufbuild/protoc-gen-es.
 PROTOC_GEN_ES_BIN := node_modules/.bin/protoc-gen-es
@@ -207,4 +211,4 @@ docker-compose-clean:
 	# clean up errors are ignored
 
 docker-compose-up: docker-compose-clean
-	docker-compose up
+	CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose up
