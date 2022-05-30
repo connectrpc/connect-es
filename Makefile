@@ -48,17 +48,24 @@ $(WEB_BUILD): node_modules $(WEB_SOURCES)
 	mkdir -p $(CACHE_DIR)/build && touch $(WEB_BUILD)
 
 
+#TODO(tstamm) remove the temporary go test server
 # Tests run against the connect-go test server
-TESTSERVER_DIR = testserver
-TESTSERVER_GEN = $(CACHE_DIR)/gen/testserver
+TEMPTESTSERVER_DIR = testserver
+TEMPTESTSERVER_GEN = $(CACHE_DIR)/gen/temptestserver
+TEMPTESTSERVER_RUNNING = $(CACHE_DIR)/service/temptestserver
+$(TEMPTESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find testserver/proto -name '*.proto')
+	rm -rf $(TEMPTESTSERVER_DIR)/internal/gen/*
+	buf generate testserver/proto --template $(TEMPTESTSERVER_DIR)/buf.gen.yaml --output $(TEMPTESTSERVER_DIR)
+	mkdir -p $(dir $(TEMPTESTSERVER_GEN)) && touch $(TEMPTESTSERVER_GEN)
+$(TEMPTESTSERVER_RUNNING): $(TEMPTESTSERVER_GEN)
+	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
+	node make/scripts/service-start.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun 'serving at'
+__temptestserver-gorun:
+	cd testserver && go run ./cmd/serve
 TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
-#TODO(tstamm) clean this up by replacing the local go server completely with the crosstest server
-$(TESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find testserver/proto -name '*.proto')
-	rm -rf $(TESTSERVER_DIR)/internal/gen/*
-	buf generate testserver/proto --template $(TESTSERVER_DIR)/buf.gen.yaml --output $(TESTSERVER_DIR)
-	mkdir -p $(dir $(TESTSERVER_GEN)) && touch $(TESTSERVER_GEN)
-$(TESTSERVER_RUNNING): $(TESTSERVER_GEN) docker-compose.yaml
-	$(MAKE) testserver-start
+$(TESTSERVER_RUNNING): docker-compose.yaml
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
+	node make/scripts/service-start.js $(TESTSERVER_RUNNING) docker-compose-up '"port":"8083"'
 
 
 # The private NPM package "@bufbuild/connect-web-test" provides test coverage:
@@ -137,7 +144,11 @@ clean: ## Delete build artifacts and installed dependencies
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
-	rm -rf $(TESTSERVER_DIR)/internal/gen/*
+	rm -rf $(TEMPTESTSERVER_DIR)/internal/gen/*
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
+	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
+	$(MAKE) docker-compose-clean
+
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
@@ -146,14 +157,18 @@ test: test-go test-node test-browser ## Run all tests
 test-go:
 	go test ./cmd/...
 
-test-node: $(NODE18_DEP) $(TEST_BUILD) $(TESTSERVER_RUNNING)
+test-node: $(NODE18_DEP) $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
 	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 
-test-browser: $(TEST_BUILD) $(TESTSERVER_RUNNING)
+test-browser: $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
 	npm run -w $(TEST_DIR) karma
 
-test-local-browser: $(TEST_BUILD) $(TESTSERVER_RUNNING)
+test-local-browser: $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
 	npm run -w $(TEST_DIR) karma-serve
+
+#TODO(tstamm) remove the temporary go test server
+temptestserver-stop:
+	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
@@ -171,12 +186,6 @@ format: node_modules $(GIT_LS_FILES_UNSTAGED_DEP) $(LICENSE_HEADER_DEP) ## Forma
 
 bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code size
 	npm run -w $(BENCHCODESIZE_DIR) report
-
-testserver-start: $(TESTSERVER_GEN) ## (Re-)start the test server in the background
-	node make/scripts/service-start.js $(TESTSERVER_RUNNING) docker-compose-up '"port":"8083"'
-
-testserver-stop: ## Stop the test server
-	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
 
 set-version: ## Set a new version in for the project, i.e. make set-version SET_VERSION=1.2.3
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
@@ -217,7 +226,7 @@ release: all ## Release @bufbuild/connect-web
 
 # Some builds need code generation, some code generation needs builds.
 # We expose this target only for ci, so it can check for diffs.
-ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN) $(TESTSERVER_GEN)
+ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN) $(TEMPTESTSERVER_GEN)
 
 docker-compose-clean:
 	-docker-compose down --rmi local --remove-orphans
