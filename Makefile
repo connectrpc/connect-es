@@ -143,10 +143,13 @@ test-go:
 	go test ./cmd/...
 
 test-node: $(NODE18_DEP) $(TEST_BUILD) $(TESTSERVER_GEN)
-	cd $(TEST_DIR) && node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 
 test-browser: $(TEST_BUILD) $(TESTSERVER_GEN)
 	npm run -w $(TEST_DIR) karma
+
+test-local-browser: $(TEST_BUILD) $(TESTSERVER_GEN)
+	npm run -w $(TEST_DIR) karma-serve
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
