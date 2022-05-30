@@ -7,7 +7,7 @@
     "build": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
     "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json",
     "karma": "../../node_modules/.bin/karma start karma.conf.cjs",
-    "karma-no-single-run": "../../node_modules/.bin/karma start karma.conf.cjs --no-single-run"
+    "karma-serve": "../../node_modules/.bin/karma start karma.serve.conf.cjs"
   },
   "type": "module",
   "types": "./dist/types/index.d.ts",
