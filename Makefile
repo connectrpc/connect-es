@@ -51,10 +51,13 @@ $(WEB_BUILD): node_modules $(WEB_SOURCES)
 # Tests run against the connect-go test server
 TESTSERVER_DIR = testserver
 TESTSERVER_GEN = $(CACHE_DIR)/gen/testserver
+TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
 $(TESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find testserver/proto -name '*.proto')
 	rm -rf $(TESTSERVER_DIR)/internal/gen/*
 	buf generate testserver/proto --template $(TESTSERVER_DIR)/buf.gen.yaml --output $(TESTSERVER_DIR)
 	mkdir -p $(dir $(TESTSERVER_GEN)) && touch $(TESTSERVER_GEN)
+$(TESTSERVER_RUNNING): $(TESTSERVER_GEN) docker-compose.yaml
+	$(MAKE) testserver-start
 
 
 # The private NPM package "@bufbuild/connect-web-test" provides test coverage:
@@ -142,13 +145,13 @@ test: test-go test-node test-browser ## Run all tests
 test-go:
 	go test ./cmd/...
 
-test-node: $(NODE18_DEP) $(TEST_BUILD) $(TESTSERVER_GEN)
+test-node: $(NODE18_DEP) $(TEST_BUILD) $(TESTSERVER_RUNNING)
 	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 
-test-browser: $(TEST_BUILD) $(TESTSERVER_GEN)
+test-browser: $(TEST_BUILD) $(TESTSERVER_RUNNING)
 	npm run -w $(TEST_DIR) karma
 
-test-local-browser: $(TEST_BUILD) $(TESTSERVER_GEN)
+test-local-browser: $(TEST_BUILD) $(TESTSERVER_RUNNING)
 	npm run -w $(TEST_DIR) karma-serve
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
@@ -167,6 +170,12 @@ format: node_modules $(GIT_LS_FILES_UNSTAGED_DEP) $(LICENSE_HEADER_DEP) ## Forma
 
 bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code size
 	npm run -w $(BENCHCODESIZE_DIR) report
+
+testserver-start: $(TESTSERVER_GEN) ## (Re-)start the test server in the background
+	node make/scripts/service-start.js $(TESTSERVER_RUNNING) docker-compose-up '"port":"8083"'
+
+testserver-stop: ## Stop the test server
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
 
 set-version: ## Set a new version in for the project, i.e. make set-version SET_VERSION=1.2.3
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
