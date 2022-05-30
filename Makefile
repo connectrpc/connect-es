@@ -52,6 +52,7 @@ $(WEB_BUILD): node_modules $(WEB_SOURCES)
 TESTSERVER_DIR = testserver
 TESTSERVER_GEN = $(CACHE_DIR)/gen/testserver
 TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
+#TODO(tstamm) clean this up by replacing the local go server completely with the crosstest server
 $(TESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find testserver/proto -name '*.proto')
 	rm -rf $(TESTSERVER_DIR)/internal/gen/*
 	buf generate testserver/proto --template $(TESTSERVER_DIR)/buf.gen.yaml --output $(TESTSERVER_DIR)
