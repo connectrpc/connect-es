@@ -141,13 +141,13 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
+	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
+	$(MAKE) docker-compose-clean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
 	rm -rf $(TEMPTESTSERVER_DIR)/internal/gen/*
-	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
-	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
-	$(MAKE) docker-compose-clean
 
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
@@ -229,7 +229,7 @@ release: all ## Release @bufbuild/connect-web
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN) $(TEMPTESTSERVER_GEN)
 
 docker-compose-clean:
-	-docker-compose down --rmi local --remove-orphans
+	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans
 	# clean up errors are ignored
 
 docker-compose-up: docker-compose-clean
