@@ -98,7 +98,7 @@ LICENSE_HEADER_VERSION := v1.1.0
 LICENSE_HEADER_LICENSE_TYPE := apache
 LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
-LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/service-start.js make\/scripts\/service-stop.js packages\/connect-web-test\/src\/gen\/grpc\/testing
+LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/service-start.js make\/scripts\/service-stop.js packages\/connect-web-test\/src\/gen
 #TODO(tstamm) remove the temporary go test server
 LICENSE_HEADER_IGNORES := $(LICENSE_HEADER_IGNORES) temptestserver\/internal\/gen
 LICENSE_HEADER_DEP := $(CACHE_DIR)/dep/license-header-$(LICENSE_HEADER_VERSION)
