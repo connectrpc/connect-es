@@ -23,6 +23,8 @@
 export enum StatusCode {
   /**
    * Success
+   *
+   * @deprecated
    */
   Ok = 0,
 
@@ -107,11 +109,48 @@ export enum StatusCode {
   Unauthenticated = 16,
 }
 
+export function connectCodeFromHttpStatus(
+  httpStatus: number
+): Exclude<StatusCode, StatusCode.Ok> {
+  switch (httpStatus) {
+    case 400: // Bad Request
+      return StatusCode.InvalidArgument;
+    case 401: // Unauthorized
+      return StatusCode.Unauthenticated;
+    case 403: // Forbidden
+      return StatusCode.PermissionDenied;
+    case 404: // Not Found
+      return StatusCode.Unimplemented;
+    case 408: // Request Timeout
+      return StatusCode.DeadlineExceeded;
+    case 409: // Conflict
+      return StatusCode.Aborted;
+    case 412: // Precondition Failed
+      return StatusCode.FailedPrecondition;
+    case 413: // Payload Too Large
+      return StatusCode.ResourceExhausted;
+    case 415: // Unsupported Media Type
+      return StatusCode.Internal;
+    case 429: // Too Many Requests
+      return StatusCode.Unavailable;
+    case 431: // Request Header Fields Too Large
+      return StatusCode.ResourceExhausted;
+    case 502: // Bad Gateway
+      return StatusCode.Unavailable;
+    case 503: // Service Unavailable
+      return StatusCode.Unavailable;
+    case 504:
+      return StatusCode.Unavailable;
+    default:
+      return StatusCode.Unknown;
+  }
+}
+
 /**
  * Map from an HTTP status to code.
  * See https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md.
  */
-export function codeFromHttpStatus(httpStatus: number): StatusCode {
+export function grpcWebCodeFromHttpStatus(httpStatus: number): StatusCode {
   switch (httpStatus) {
     case 200:
       return StatusCode.Ok;

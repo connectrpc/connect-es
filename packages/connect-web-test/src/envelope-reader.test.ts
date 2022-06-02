@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createEnvelopeReader, EnvelopeFlags } from "@bufbuild/connect-web";
+import { createEnvelopeReader } from "@bufbuild/connect-web";
 import { webReadableStreamFromBytes } from "./util/web-streams.js";
 
 function envelopeMessages(
@@ -53,8 +53,7 @@ describe("envelope-reader", () => {
       },
       {
         data: new Uint8Array([0xde, 0xad, 0xbe, 0xe1]),
-        flags: EnvelopeFlags.EndStream,
-        end: true,
+        flags: 0b10000000,
       },
     ];
     const read = createEnvelopeReader(
@@ -63,7 +62,6 @@ describe("envelope-reader", () => {
     for (const want of input) {
       const r = await read();
       expect(r).not.toBeNull();
-      expect(r?.end).toBe(want.end ?? false);
       expect(r?.flags).toBe(want.flags);
       expect(r?.data).toEqual(want.data);
     }
@@ -74,7 +72,7 @@ describe("envelope-reader", () => {
     const input = [
       {
         data: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
-        flags: EnvelopeFlags.EndStream,
+        flags: 0b10000000,
       },
       {
         data: new Uint8Array([0xde, 0xad, 0xbe, 0xe1]),

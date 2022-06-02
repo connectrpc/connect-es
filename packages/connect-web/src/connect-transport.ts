@@ -12,27 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
+import {
+  AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
+  IMessageTypeRegistry,
+  JsonReadOptions,
+  JsonValue,
+  JsonWriteOptions,
   Message,
   MessageType,
   MethodInfo,
+  MethodKind,
   ServiceType,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
-import { codeFromHttpStatus, StatusCode } from "./status-code.js";
-import { decodeBinaryHeader } from "./http-headers.js";
-import { Status } from "./grpc/status/v1/status_pb.js";
+import { connectCodeFromHttpStatus, StatusCode } from "./status-code.js";
 import type {
   ClientCallOptions,
   ClientRequest,
   ClientResponse,
   ClientTransport,
 } from "./client-transport.js";
-import type { ClientInterceptor } from "./client-interceptor.js";
-import { createEnvelopeReader, EnvelopeReader } from "./envelope.js";
 import { wrapTransportCall } from "./client-transport.js";
+import type { ClientInterceptor } from "./client-interceptor.js";
+import {
+  createEnvelopeReader,
+  encodeEnvelopes,
+  EnvelopeReader,
+} from "./envelope.js";
+import { newParseError } from "./private/new-parse-error.js";
+import { extractRejectionError } from "./private/extract-rejection-error.js";
 
 export interface ConnectTransportOptions {
   /**
@@ -47,12 +57,21 @@ export interface ConnectTransportOptions {
    */
   baseUrl: string;
 
+  useBinaryFormat?: boolean;
+
+  typeRegistry?: IMessageTypeRegistry;
+
   /**
    * Controls what the fetch client will do with credentials, such as
    * Cookies. The default value is "same-origin". For reference, see
    * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
    */
   credentials?: RequestCredentials;
+
+  /**
+   * Options for the JSON format.
+   */
+  jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
 
   /**
    * Options for the binary wire format.
@@ -74,16 +93,24 @@ export function createConnectTransport(
     ): [ClientRequest<I>, ClientResponse<O>] {
       const [request, fetchResponse] = createRequest(
         service.typeName,
-        method.name,
+        method,
         options,
         transportOptions
       );
-      const response = createResponse(
-        method.O,
-        options,
-        transportOptions,
-        fetchResponse
-      );
+      const response =
+        method.kind == MethodKind.Unary
+          ? createUnaryResponse(
+              method.O,
+              options,
+              transportOptions,
+              fetchResponse
+            )
+          : createStreamResponse(
+              method.O,
+              options,
+              transportOptions,
+              fetchResponse
+            );
       return wrapTransportCall(
         service,
         method,
@@ -98,7 +125,7 @@ export function createConnectTransport(
 
 function createRequest<I extends Message<I>>(
   serviceTypeName: string,
-  methodName: string,
+  method: MethodInfo<I, AnyMessage>,
   callOptions: ClientCallOptions,
   transportOptions: ConnectTransportOptions
 ): [ClientRequest<I>, Promise<Response>] {
@@ -108,13 +135,13 @@ function createRequest<I extends Message<I>>(
     resolveResponse = resolve;
     rejectResponse = reject;
   });
-
   let baseUrl = transportOptions.baseUrl;
   if (baseUrl.endsWith("/")) {
     baseUrl = baseUrl.substring(0, baseUrl.length - 1);
   }
-  const url = `${baseUrl}/${serviceTypeName}/${methodName}`;
+  const url = `${baseUrl}/${serviceTypeName}/${method.name}`;
   const abort = callOptions.signal ?? new AbortController().signal;
+  const useBinaryFormat = transportOptions.useBinaryFormat ?? false;
   const request: ClientRequest = {
     url,
     init: {
@@ -124,20 +151,37 @@ function createRequest<I extends Message<I>>(
       mode: "cors",
     },
     abort,
-    header: createGrpcWebRequestHeaders(callOptions),
+    header: createConnectRequestHeaders(
+      callOptions.headers,
+      callOptions.timeout,
+      method.kind,
+      useBinaryFormat
+    ),
     send(message: I, callback) {
-      const data = message.toBinary(transportOptions.binaryOptions);
-      const body = new Uint8Array(data.length + 5);
-      body[0] = 0x00; // first byte is frame type
-      for (let dataLength = data.length, i = 4; i > 0; i--) {
-        body[i] = dataLength % 256; // 4 bytes message length
-        dataLength >>>= 8;
+      // TODO support request streams
+      let encodedMessage: Uint8Array;
+      if (useBinaryFormat) {
+        encodedMessage = message.toBinary();
+      } else {
+        encodedMessage = new TextEncoder().encode(
+          message.toJsonString({ typeRegistry: transportOptions.typeRegistry })
+        );
       }
-      body.set(data, 5);
+      const body: BodyInit =
+        method.kind == MethodKind.Unary
+          ? encodedMessage
+          : encodeEnvelopes(
+              { data: encodedMessage, flags: 0b00000000 },
+              {
+                data: new Uint8Array(0),
+                flags: endStreamResponseFlag,
+              }
+            );
       fetch(this.url, {
         ...this.init,
         headers: this.header,
         signal: this.abort,
+        // TODO don't do this for unary
         body,
       })
         .then(resolveResponse)
@@ -150,211 +194,338 @@ function createRequest<I extends Message<I>>(
   return [request, responsePromise];
 }
 
-function createResponse<O extends Message<O>>(
+function createStreamResponse<O extends Message<O>>(
   messageType: MessageType<O>,
   callOptions: ClientCallOptions,
   transportOptions: ConnectTransportOptions,
   response: Response | Promise<Response>
 ): ClientResponse<O> {
-  let isReading = false;
-  let isRead = false;
-  let readFrame: EnvelopeReader | undefined;
+  let closed = false; // the response is closed
+  let receiving = false; // we are currently waiting for the response, or reading from it
+  let head: Head | undefined;
+  let stream: EnvelopeReader | undefined;
   return {
     receive(handler): void {
-      function close(reason?: unknown) {
-        isRead = true;
-        isReading = false;
-        const error =
-          reason !== undefined ? extractRejectionError(reason) : undefined;
-        handler.onClose(error);
-      }
-      if (isRead) {
-        close("response already read");
+      if (closed) {
+        handler.onClose(
+          new ConnectError("response closed", StatusCode.Internal)
+        );
+        closed = true;
         return;
       }
-      if (isReading) {
-        close("cannot read response concurrently");
+      if (receiving) {
+        handler.onClose(
+          new ConnectError("cannot receive concurrently", StatusCode.Internal)
+        );
+        closed = true;
         return;
       }
-      Promise.resolve(response)
-        .then((response) => {
-          if (readFrame === undefined) {
-            handler.onHeader?.(response.headers);
-            const err =
-              extractHttpStatusError(response) ??
-              extractContentTypeError(response.headers) ??
-              extractDetailsError(response.headers) ??
-              extractHeadersError(response.headers);
-            if (err) {
-              close(err);
-              return;
+      receiving = true;
+      void Promise.resolve(response)
+        .then(async (response) => {
+          if (!head) {
+            head = parseHead(response);
+            handler.onHeader?.(head.header);
+            if (response.status != 200) {
+              handler.onTrailer?.(head.trailer);
+              if (head.contentType == "application/json") {
+                throw ConnectError.fromJsonString(await response.text(), {
+                  typeRegistry: transportOptions.typeRegistry,
+                });
+              }
+              throw new ConnectError(
+                `HTTP ${response.status} ${response.statusText}`,
+                connectCodeFromHttpStatus(response.status)
+              );
             }
-            if (response.body === null) {
-              close("missing response body");
-              return;
+            if (head.contentType == null) {
+              throw new ConnectError(
+                `missing response content type`,
+                connectCodeFromHttpStatus(response.status)
+              );
             }
-            try {
-              readFrame = createEnvelopeReader(response.body);
-            } catch (e) {
-              close(`failed to get response body reader: ${String(e)}`);
-              return;
+            if (head.format == null) {
+              throw new ConnectError(
+                `unexpected response content type ${head.contentType}`,
+                connectCodeFromHttpStatus(response.status)
+              );
             }
           }
-          isReading = true;
-          readFrame()
-            .then((frame) => {
-              isReading = false;
-              if (frame === null) {
-                close();
-              } else if (frame.end) {
-                const trailer = parseGrpcWebTrailer(frame.data);
-                handler.onTrailer?.(trailer);
-                close(
-                  extractDetailsError(trailer) ?? extractHeadersError(trailer)
-                );
-              } else {
-                try {
-                  handler.onMessage(
-                    messageType.fromBinary(
-                      frame.data,
-                      transportOptions.binaryOptions
-                    )
-                  );
-                } catch (e) {
-                  // prettier-ignore
-                  close(`failed to deserialize message ${messageType.typeName}: ${String(e)}`);
-                }
+
+          if (!stream) {
+            if (response.body === null) {
+              throw "missing response body";
+            }
+            stream = createEnvelopeReader(response.body);
+          }
+
+          const envelope = await stream();
+          if (envelope == null) {
+            handler.onClose();
+            return;
+          }
+          if (
+            (envelope.flags & endStreamResponseFlag) ===
+            endStreamResponseFlag
+          ) {
+            const endStream = EndStream.fromJsonString(
+              new TextDecoder().decode(envelope.data),
+              {
+                typeRegistry: transportOptions.typeRegistry,
               }
-            })
-            .catch(close);
+            );
+            handler.onTrailer?.(endStream.metadata);
+            handler.onClose(endStream.error);
+            return;
+          }
+          const message =
+            head.format == "json"
+              ? messageType.fromJsonString(
+                  new TextDecoder().decode(envelope.data)
+                )
+              : messageType.fromBinary(envelope.data);
+          receiving = false;
+          handler.onMessage(message);
         })
-        .catch(close);
+        .catch((reason) => {
+          handler.onClose(extractRejectionError(reason));
+        })
+        .then(() => (receiving = false));
     },
   };
 }
 
-function createGrpcWebRequestHeaders(callOptions: ClientCallOptions): Headers {
-  const header = new Headers({
-    // We provide the most explicit description for our content type.
-    // Note that we do not support the grpc-web-text format.
-    // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2
-    "Content-Type": "application/grpc-web+proto",
-    // Some servers may rely on the request header `X-Grpc-Web` to identify
-    // gRPC-web requests. For example the proxy by improbable:
-    // https://github.com/improbable-eng/grpc-web/blob/53aaf4cdc0fede7103c1b06f0cfc560c003a5c41/go/grpcweb/wrapper.go#L231
-    "X-Grpc-Web": "1",
-    // Note that we do not comply with recommended structure for the
-    // user-agent string.
-    // https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
-    "X-User-Agent": "@bufbuild/connect-web",
+function createUnaryResponse<O extends Message<O>>(
+  messageType: MessageType<O>,
+  callOptions: ClientCallOptions,
+  transportOptions: ConnectTransportOptions,
+  response: Response | Promise<Response>
+): ClientResponse<O> {
+  let closed = false; // the response is closed
+  let receiving = false; // we are currently waiting for the response, or reading from it
+  let head: Head | undefined;
+  let messageReceived = false;
+  return {
+    receive(handler): void {
+      if (closed) {
+        handler.onClose(
+          new ConnectError("response closed", StatusCode.Internal)
+        );
+        closed = true;
+        return;
+      }
+      if (receiving) {
+        handler.onClose(
+          new ConnectError("cannot receive concurrently", StatusCode.Internal)
+        );
+        closed = true;
+        return;
+      }
+      receiving = true;
+      void Promise.resolve(response)
+        .then(async (response) => {
+          if (!head) {
+            head = parseHead(response);
+            handler.onHeader?.(head.header);
+            if (response.status != 200) {
+              handler.onTrailer?.(head.trailer);
+              if (head.contentType == "application/json") {
+                throw ConnectError.fromJsonString(await response.text(), {
+                  typeRegistry: transportOptions.typeRegistry,
+                });
+              }
+              throw new ConnectError(
+                `HTTP ${response.status} ${response.statusText}`,
+                connectCodeFromHttpStatus(response.status)
+              );
+            }
+            if (head.contentType == null) {
+              throw new ConnectError(
+                `missing response content type`,
+                connectCodeFromHttpStatus(response.status)
+              );
+            }
+            if (head.format == null) {
+              throw new ConnectError(
+                `unexpected response content type ${head.contentType}`,
+                connectCodeFromHttpStatus(response.status)
+              );
+            }
+          }
+          if (!messageReceived) {
+            const message =
+              head.format == "json"
+                ? messageType.fromJsonString(await response.text())
+                : messageType.fromBinary(
+                    new Uint8Array(await response.arrayBuffer())
+                  );
+            messageReceived = true;
+            receiving = false;
+            handler.onMessage(message);
+            return;
+          }
+          closed = true;
+          handler.onTrailer?.(head.trailer);
+          handler.onClose();
+        })
+        .catch((reason) => {
+          closed = true;
+          handler.onClose(extractRejectionError(reason));
+        })
+        .then(() => (receiving = false));
+    },
+  };
+}
+
+function createConnectRequestHeaders(
+  headers: HeadersInit | undefined,
+  timeout: number | undefined,
+  methodKind: MethodKind,
+  useBinaryFormat: boolean
+): Headers {
+  const result = new Headers(headers);
+  let type = "application/";
+  if (methodKind != MethodKind.Unary) {
+    type += "connect+";
+  }
+  type += useBinaryFormat ? "proto" : "json";
+  result.set("Content-Type", type);
+  if (timeout !== undefined) {
+    result.set("Connect-Timeout-Ms", `${timeout}`);
+  }
+  return result;
+}
+
+type Head =
+  | {
+      header: Headers;
+      trailer: Headers;
+      contentType:
+        | "application/json"
+        | "application/proto"
+        | "application/connect+json"
+        | "application/connect+proto";
+      format: "json" | "proto";
+      stream: boolean;
+    }
+  | {
+      header: Headers;
+      trailer: Headers;
+      contentType: string | null;
+      format: null;
+      stream: null;
+    };
+
+function parseHead(response: Response): Head {
+  const header = new Headers(),
+    trailer = new Headers();
+  response.headers.forEach((value, key) => {
+    if (key.toLowerCase().startsWith("trailer-")) {
+      trailer.set(key.substring(8), value);
+    } else {
+      header.set(key, value);
+    }
   });
-  new Headers(callOptions.headers).forEach((value, key) =>
-    header.set(key, value)
-  );
-  if (callOptions.timeout !== undefined) {
-    header.set("Grpc-Timeout", `${callOptions.timeout}m`);
-  }
-  return header;
+  const contentType = header.get("Content-Type");
+  const match = contentType?.match(/^application\/(connect\+)?(json|proto)$/);
+  return match
+    ? {
+        header,
+        trailer,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
+        contentType: contentType as any,
+        stream: !!match[1],
+        format: match[2] as "json" | "proto",
+      }
+    : { header, trailer, contentType, format: null, stream: null };
 }
 
-function extractRejectionError(reason: unknown): ConnectError {
-  if (reason instanceof ConnectError) {
-    return reason;
-  }
-  if (reason instanceof Error && reason.name === "AbortError") {
-    // Fetch requests can only be canceled with an AbortController.
-    // We detect that condition by looking at the name of the raised
-    // error object, and translate to the appropriate status code.
-    return new ConnectError(reason.message, StatusCode.Canceled);
-  }
-  return new ConnectError(String(reason));
-}
+const endStreamResponseFlag = 0b00000010;
 
-function extractContentTypeError(header: Headers): ConnectError | undefined {
-  const type = header.get("Content-Type");
-  switch (type?.toLowerCase()) {
-    case "application/grpc-web":
-    case "application/grpc-web+proto":
-      return undefined;
-    case "application/grpc-web-text":
-    case "application/grpc-web-text+proto":
-      return new ConnectError(
-        "grpc-web-text is not supported",
-        StatusCode.Internal
-      );
-    case undefined:
-    case null:
-    default:
-      return new ConnectError(
-        `unexpected content type: ${String(type)}`,
-        StatusCode.Internal
-      );
-  }
-}
+/**
+ * Represents the EndStreamResponse of the Connect protocol.
+ */
+class EndStream {
+  error?: ConnectError;
 
-function extractHttpStatusError(response: Response): ConnectError | undefined {
-  const code = codeFromHttpStatus(response.status);
-  if (code === StatusCode.Ok) {
-    return undefined;
-  }
-  return new ConnectError(
-    decodeURIComponent(response.headers.get("grpc-message") ?? ""),
-    code
-  );
-}
+  metadata: Headers;
 
-function extractHeadersError(header: Headers): ConnectError | undefined {
-  const value = header.get("grpc-status");
-  if (value === null) {
-    return undefined;
+  constructor(metadata: Headers, error?: ConnectError) {
+    this.metadata = metadata;
+    this.error = error;
   }
-  const code = parseInt(value);
-  if (code === StatusCode.Ok) {
-    return undefined;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- condition is very much necessary to check code
-  if (StatusCode[code] === undefined) {
-    return new ConnectError(
-      `invalid grpc-status: ${value}`,
-      StatusCode.DataLoss
-    );
-  }
-  return new ConnectError(
-    decodeURIComponent(header.get("grpc-message") ?? ""),
-    code
-  );
-}
 
-function extractDetailsError(header: Headers): ConnectError | undefined {
-  const grpcStatusDetailsBin = header.get("grpc-status-details-bin");
-  if (grpcStatusDetailsBin === null) {
-    return undefined;
-  }
-  try {
-    const status = decodeBinaryHeader(grpcStatusDetailsBin, Status);
-    // Prefer the protobuf-encoded data to the headers.
-    if (status.code === StatusCode.Ok) {
-      return undefined;
+  /**
+   * Parse an EndStreamResponse from a JSON string.
+   * Will throw a ConnectError in case the JSON is malformed.
+   */
+  static fromJsonString(
+    jsonString: string,
+    options?: { typeRegistry?: IMessageTypeRegistry }
+  ): EndStream {
+    let json: JsonValue;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      json = JSON.parse(jsonString);
+    } catch (e) {
+      throw newParseError(e, "", false);
     }
-    return new ConnectError(status.message, status.code, status.details);
-  } catch (e) {
-    return new ConnectError("invalid grpc-status-details-bin");
+    return this.fromJson(json, options);
   }
-}
 
-function parseGrpcWebTrailer(data: Uint8Array): Headers {
-  const headers = new Headers();
-  const lines = String.fromCharCode(...data).split("\r\n");
-  for (const line of lines) {
-    if (line === "") {
-      continue;
+  /**
+   * Parse an EndStreamResponse from a JSON value.
+   * Will return a ConnectError, but throw one in case the JSON is malformed.
+   */
+  static fromJson(
+    jsonValue: JsonValue,
+    options?: { typeRegistry?: IMessageTypeRegistry }
+  ): EndStream {
+    if (
+      typeof jsonValue != "object" ||
+      jsonValue == null ||
+      Array.isArray(jsonValue)
+    ) {
+      throw newParseError(jsonValue);
     }
-    const i = line.indexOf(":");
-    if (i > 0) {
-      const name = line.substring(0, i).trim();
-      const value = line.substring(i + 1).trim();
-      headers.append(name, value);
+    let error: ConnectError | undefined;
+    if ("error" in jsonValue) {
+      if (
+        typeof jsonValue.error != "object" ||
+        jsonValue.error == null ||
+        Array.isArray(jsonValue.error)
+      ) {
+        throw newParseError(jsonValue, ".error");
+      }
+      if (Object.keys(jsonValue.error).length > 0) {
+        try {
+          error = ConnectError.fromJson(jsonValue.error, options);
+        } catch (e) {
+          throw newParseError(e, ".error", false);
+        }
+      }
     }
+    const metadata = new Headers();
+    if ("metadata" in jsonValue) {
+      if (
+        typeof jsonValue.metadata != "object" ||
+        jsonValue.metadata == null ||
+        Array.isArray(jsonValue.metadata)
+      ) {
+        throw newParseError(jsonValue, ".metadata");
+      }
+      for (const [key, values] of Object.entries(jsonValue.metadata)) {
+        if (
+          !Array.isArray(values) ||
+          values.some((value) => typeof value != "string")
+        ) {
+          throw newParseError(values, `.metadata["${key}"]`);
+        }
+        for (const value of values) {
+          metadata.append(key, value as string);
+        }
+      }
+    }
+    return new EndStream(metadata, error);
   }
-  return headers;
 }

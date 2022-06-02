@@ -7,7 +7,7 @@ export PATH := $(abspath $(CACHE_DIR)/bin):$(abspath node_modules/.bin):$(PATH)
 
 
 # The crosstest git hash to be used by docker-compose and code generation
-CROSSTEST_VERSION := ae95e9554255a7ce55a9b7a5d80eb130a763a38e
+CROSSTEST_VERSION := 75774b9dabba88b201be341dd65dee928a252d49
 
 
 # The code generator protoc-gen-es generates message and enum types.
@@ -24,7 +24,7 @@ node_modules: package-lock.json
 
 
 # Install protoc-gen-connect-go
-PROTOC_GEN_CONNECT_GO_VERSION ?= v0.0.0-20220519164640-df55eca48735
+PROTOC_GEN_CONNECT_GO_VERSION ?= v0.0.0-20220531183129-0b2d75aef5cc
 PROTOC_GEN_CONNECT_GO_DEP := $(CACHE_DIR)/dep/protoc-gen-connect-go-$(PROTOC_GEN_CONNECT_GO_VERSION)
 $(PROTOC_GEN_CONNECT_GO_DEP):
 	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@$(PROTOC_GEN_CONNECT_GO_VERSION)
@@ -50,18 +50,18 @@ $(WEB_BUILD): node_modules $(WEB_SOURCES)
 
 #TODO(tstamm) remove the temporary go test server
 # Tests run against the connect-go test server
-TEMPTESTSERVER_DIR = testserver
+TEMPTESTSERVER_DIR = temptestserver
 TEMPTESTSERVER_GEN = $(CACHE_DIR)/gen/temptestserver
 TEMPTESTSERVER_RUNNING = $(CACHE_DIR)/service/temptestserver
-$(TEMPTESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find testserver/proto -name '*.proto')
+$(TEMPTESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find $(TEMPTESTSERVER_DIR)/proto -name '*.proto')
 	rm -rf $(TEMPTESTSERVER_DIR)/internal/gen/*
-	buf generate testserver/proto --template $(TEMPTESTSERVER_DIR)/buf.gen.yaml --output $(TEMPTESTSERVER_DIR)
+	buf generate $(TEMPTESTSERVER_DIR)/proto --template $(TEMPTESTSERVER_DIR)/buf.gen.yaml --output $(TEMPTESTSERVER_DIR)
 	mkdir -p $(dir $(TEMPTESTSERVER_GEN)) && touch $(TEMPTESTSERVER_GEN)
 $(TEMPTESTSERVER_RUNNING): $(TEMPTESTSERVER_GEN)
 	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
 	node make/scripts/service-start.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun 'serving at'
 __temptestserver-gorun:
-	cd testserver && go run ./cmd/serve
+	cd temptestserver && go run ./cmd/serve
 TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
 $(TESTSERVER_RUNNING): docker-compose.yaml
 	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
@@ -76,9 +76,10 @@ TEST_SOURCES = $(shell find $(TEST_DIR)/src -name '*.ts') $(TEST_DIR)/*.json
 $(TEST_BUILD): $(TEST_GEN) $(WEB_BUILD) $(TEST_SOURCES)
 	cd $(TEST_DIR) && npm run clean && npm run build
 	mkdir -p $(dir $(TEST_BUILD)) && touch $(TEST_BUILD)
-$(TEST_GEN): $(PROTOC_GEN_CONNECT_WEB_BIN) $(PROTOC_GEN_ES_BIN) $(shell find testserver/proto -name '*.proto')
+$(TEST_GEN): $(PROTOC_GEN_CONNECT_WEB_BIN) $(PROTOC_GEN_ES_BIN) $(shell find $(TEMPTESTSERVER_DIR)/proto -name '*.proto')
 	rm -rf $(TEST_DIR)/src/gen/*
-	buf generate testserver/proto --template $(TEST_DIR)/buf.gen.yaml --output $(TEST_DIR)
+	buf generate $(TEMPTESTSERVER_DIR)/proto --template $(TEST_DIR)/buf.gen.yaml --output $(TEST_DIR)
+	buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto --template $(TEST_DIR)/buf.gen.yaml --output $(TEST_DIR)
 	mkdir -p $(dir $(TEST_GEN)) && touch $(TEST_GEN)
 
 
@@ -97,7 +98,9 @@ LICENSE_HEADER_VERSION := v1.1.0
 LICENSE_HEADER_LICENSE_TYPE := apache
 LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
-LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/service-start.js make\/scripts\/service-stop.js testserver\/internal\/gen
+LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/service-start.js make\/scripts\/service-stop.js packages\/connect-web-test\/src\/gen\/grpc\/testing
+#TODO(tstamm) remove the temporary go test server
+LICENSE_HEADER_IGNORES := $(LICENSE_HEADER_IGNORES) temptestserver\/internal\/gen
 LICENSE_HEADER_DEP := $(CACHE_DIR)/dep/license-header-$(LICENSE_HEADER_VERSION)
 $(LICENSE_HEADER_DEP):
 	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@$(LICENSE_HEADER_VERSION)

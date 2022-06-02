@@ -18,7 +18,7 @@ import {
   statusCodeToString,
 } from "@bufbuild/connect-web";
 import { TypeRegistry } from "@bufbuild/protobuf";
-import { FooRequest } from "./gen/examples/myservice_pb.js";
+import { ServerStreamingHappyRequest } from "./gen/testing/v1/test_pb.js";
 
 describe("ConnectError", function () {
   describe("constructor", () => {
@@ -52,13 +52,17 @@ describe("ConnectError", function () {
       const json = new ConnectError(
         "Not permitted",
         StatusCode.PermissionDenied,
-        [new FooRequest({ foo: "abc" })]
+        [new ServerStreamingHappyRequest({ value: 123 })]
       ).toJson();
       expect(json as unknown).toEqual({
         code: "permission_denied",
         message: "Not permitted",
         details: [
-          { foo: "abc", "@type": "type.googleapis.com/examples.FooRequest" },
+          {
+            value: 123,
+            "@type":
+              "type.googleapis.com/testing.v1.ServerStreamingHappyRequest",
+          },
         ],
       });
     });
@@ -120,8 +124,9 @@ describe("ConnectError", function () {
         message: "Not permitted",
         details: [
           {
-            foo: "abc",
-            "@type": "type.googleapis.com/examples.FooRequest",
+            value: 123,
+            "@type":
+              "type.googleapis.com/testing.v1.ServerStreamingHappyRequest",
           },
         ],
       };
@@ -139,8 +144,9 @@ describe("ConnectError", function () {
         const error = ConnectError.fromJson(json);
         expect(error.rawDetails as unknown).toEqual([
           {
-            foo: "abc",
-            "@type": "type.googleapis.com/examples.FooRequest",
+            value: 123,
+            "@type":
+              "type.googleapis.com/testing.v1.ServerStreamingHappyRequest",
           },
         ]);
       });
@@ -150,20 +156,21 @@ describe("ConnectError", function () {
         });
         expect(error.rawDetails as unknown).toEqual([
           {
-            foo: "abc",
-            "@type": "type.googleapis.com/examples.FooRequest",
+            value: 123,
+            "@type":
+              "type.googleapis.com/testing.v1.ServerStreamingHappyRequest",
           },
         ]);
       });
       it("decodes details using type registry", () => {
         const error = ConnectError.fromJson(json, {
-          typeRegistry: TypeRegistry.fromTypes(FooRequest),
+          typeRegistry: TypeRegistry.fromTypes(ServerStreamingHappyRequest),
         });
         expect(error.code).toBe(StatusCode.PermissionDenied);
         expect(error.rawMessage).toBe("Not permitted");
         expect(error.details.length).toBe(1);
-        if (error.details[0] instanceof FooRequest) {
-          expect(error.details[0].foo).toBe("abc");
+        if (error.details[0] instanceof ServerStreamingHappyRequest) {
+          expect(error.details[0].value).toBe(123);
         } else {
           fail();
         }

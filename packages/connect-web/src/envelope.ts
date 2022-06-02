@@ -28,21 +28,44 @@ export interface EnvelopedMessage {
    * Raw data of the message that was enveloped.
    */
   data: Uint8Array;
-
-  /**
-   * True if the Message is an EndStreamResponse rather than the
-   * response type defined in the service's IDL.
-   */
-  end: boolean;
 }
 
-/**
- * A set of 8 bitwise flags.
- */
-export enum EnvelopeFlags {
-  EndStream = 0b10000000,
-  Compressed = 0b00000001,
+export function encodeEnvelopes(...envelopes: EnvelopedMessage[]): Uint8Array {
+  const target = new ArrayBuffer(
+    envelopes.reduce(
+      (previousValue, currentValue) =>
+        previousValue + currentValue.data.length + 5,
+      0
+    )
+  );
+  let offset = 0;
+  for (const m of envelopes) {
+    offset += encodeEnvelope(m, target, offset);
+  }
+  return new Uint8Array(target);
 }
+
+function encodeEnvelope(
+  envelope: EnvelopedMessage,
+  target: ArrayBuffer,
+  byteOffset: number
+): number {
+  const len = envelope.data.length + 5;
+  const bytes = new Uint8Array(target, byteOffset, len);
+  bytes[0] = envelope.flags; // first byte is flags
+  for (let l = envelope.data.length, i = 4; i > 0; i--) {
+    bytes[i] = l % 256; // 4 bytes message length
+    l >>>= 8;
+  }
+  bytes.set(envelope.data, 5);
+  return len;
+}
+
+// export function createEnvelopeWriter(): ReadableStream {}
+//
+// interface EnvelopeWriter {
+//   write(message: EnvelopedMessage);
+// }
 
 /**
  * A function that reads one EnvelopedMessage per call from the given stream.
@@ -92,7 +115,6 @@ export function createEnvelopeReader(
     const data = buffer.subarray(5, 5 + header.length);
     buffer = buffer.subarray(5 + header.length);
     return {
-      end: (header.flags & EnvelopeFlags.EndStream) === EnvelopeFlags.EndStream,
       flags: header.flags,
       data,
     };

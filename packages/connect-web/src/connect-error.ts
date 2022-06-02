@@ -23,9 +23,9 @@ import {
   IMessageTypeRegistry,
   JsonValue,
   MessageType,
-  proto3,
   TypeRegistry,
 } from "@bufbuild/protobuf";
+import { newParseError } from "./private/new-parse-error.js";
 
 // TODO "procedure" - service / method name would be convenient to have her
 // TODO nest errors á la https://github.com/Veetaha/ts-nested-error/blob/master/src/nested-error.ts ?
@@ -126,15 +126,18 @@ export class ConnectError extends Error {
    * Parse an error from a JSON string.
    * Will return a ConnectError, but throw one in case the JSON is malformed.
    */
-  static fromJsonString(jsonString: string): ConnectError {
+  static fromJsonString(
+    jsonString: string,
+    options?: { typeRegistry?: IMessageTypeRegistry }
+  ): ConnectError {
     let json: JsonValue;
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       json = JSON.parse(jsonString);
     } catch (e) {
-      throw newParseError(e, "syntax");
+      throw newParseError(e, "", false);
     }
-    return this.fromJson(json);
+    return this.fromJson(json, options);
   }
 
   /**
@@ -212,31 +215,6 @@ function syntheticMessage(code: ErrorCode, message: string) {
   return message.length
     ? `[${statusCodeToString(code)}] ${message}`
     : `[${statusCodeToString(code)}]`;
-}
-
-function newParseError(
-  value: JsonValue,
-  property?: ".code" | ".message"
-): ConnectError;
-function newParseError(error: unknown, property: "syntax"): ConnectError;
-function newParseError(
-  valueOrError: unknown | JsonValue,
-  property?: "syntax" | string
-): ConnectError {
-  let d: string;
-  if (property == "syntax") {
-    property = "";
-    d =
-      valueOrError instanceof Error
-        ? valueOrError.message
-        : String(valueOrError);
-  } else {
-    d = proto3.json.debug(valueOrError as JsonValue);
-  }
-  return new ConnectError(
-    `cannot decode ConnectError${property ?? ""} from JSON: ${d}`,
-    StatusCode.Internal
-  );
 }
 
 function addTypesToSet(
