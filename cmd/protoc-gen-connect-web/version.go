@@ -14,4 +14,4 @@
 
 package main
 
-var version = "v0.0.2-alpha.2"
+var version = "v0.0.6"

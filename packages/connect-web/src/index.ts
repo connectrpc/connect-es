@@ -23,25 +23,36 @@ export {
   PromiseClientWithExactRequest,
 } from "./promise-client.js";
 
-export {
-  ClientInterceptor,
-  chainClientInterceptors,
-} from "./client-interceptor.js";
+export { ClientInterceptor } from "./client-interceptor.js";
 
 export {
   ClientTransport,
   ClientCall,
-  createClientTransportCalls,
   ClientRequest,
   ClientRequestCallback,
   ClientResponse,
   ClientResponseHandler,
+  createClientTransportCalls,
+  wrapTransportCall,
 } from "./client-transport.js";
 
 export { ConnectError } from "./connect-error.js";
 
-export { StatusCode } from "./status-code.js";
+export {
+  StatusCode,
+  statusCodeFromString,
+  statusCodeToString,
+} from "./status-code.js";
 
 export { createConnectTransport } from "./connect-transport.js";
 
-export { parseBinaryHeader, percentDecodeHeader } from "./http-headers.js";
+export { createGrpcWebTransport } from "./grpc-web-transport.js";
+
+export { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
+
+export {
+  createEnvelopeReader,
+  EnvelopeReader,
+  EnvelopedMessage,
+  encodeEnvelopes,
+} from "./envelope.js";

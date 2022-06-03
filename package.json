@@ -14,9 +14,9 @@
     "npm": ">=8"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.20.0",
-    "@typescript-eslint/parser": "^5.20.0",
-    "eslint": "^8.13.0",
+    "@typescript-eslint/eslint-plugin": "^5.27.0",
+    "@typescript-eslint/parser": "^5.27.0",
+    "eslint": "^8.16.0",
     "eslint-plugin-node": "^11.1.0",
     "prettier": "^2.6.2"
   }

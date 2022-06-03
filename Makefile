@@ -1,23 +1,19 @@
 CACHE_DIR = .cache
 SHELL := /usr/bin/env bash -o pipefail
 .DEFAULT_GOAL = all
-export PATH := $(abspath $(CACHE_DIR)/bin):$(PATH)
+UNAME_OS := $(shell uname -s)
+UNAME_ARCH := $(shell uname -m)
+export PATH := $(abspath $(CACHE_DIR)/bin):$(abspath node_modules/.bin):$(PATH)
 
-# TODO remove after the repository has been made public
-export GOPRIVATE := github.com/bufbuild/protobuf-es
+
+# The crosstest git hash to be used by docker-compose and code generation
+CROSSTEST_VERSION := 75774b9dabba88b201be341dd65dee928a252d49
 
 
 # The code generator protoc-gen-es generates message and enum types.
 # It is installed via the NPM package @bufbuild/protoc-gen-es.
 PROTOC_GEN_ES_BIN := node_modules/.bin/protoc-gen-es
 $(PROTOC_GEN_ES_BIN): node_modules
-
-
-# Our code generator protoc-gen-connect-web generates service types
-PROTOC_GEN_CONNECT_WEB_BIN := $(CACHE_DIR)/protoc-gen-connect-web
-PROTOC_GEN_CONNECT_WEB_SOURCES = go.mod $(shell find . -name '*.go')
-$(PROTOC_GEN_CONNECT_WEB_BIN): $(PROTOC_GEN_CONNECT_WEB_SOURCES)
-	go build -o $(PROTOC_GEN_CONNECT_WEB_BIN) ./cmd/protoc-gen-connect-web
 
 
 # Install NPM dependencies
@@ -27,13 +23,49 @@ node_modules: package-lock.json
 	npm ci --force
 
 
+# Install protoc-gen-connect-go
+PROTOC_GEN_CONNECT_GO_VERSION ?= v0.0.0-20220531183129-0b2d75aef5cc
+PROTOC_GEN_CONNECT_GO_DEP := $(CACHE_DIR)/dep/protoc-gen-connect-go-$(PROTOC_GEN_CONNECT_GO_VERSION)
+$(PROTOC_GEN_CONNECT_GO_DEP):
+	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@$(PROTOC_GEN_CONNECT_GO_VERSION)
+	mkdir -p $(dir $(PROTOC_GEN_CONNECT_GO_DEP)) && touch $(PROTOC_GEN_CONNECT_GO_DEP)
+
+
+# Our code generator protoc-gen-connect-web generates service types
+PROTOC_GEN_CONNECT_WEB_BIN := $(CACHE_DIR)/bin/protoc-gen-connect-web
+PROTOC_GEN_CONNECT_WEB_SOURCES = go.mod $(shell find . -name '*.go')
+$(PROTOC_GEN_CONNECT_WEB_BIN): $(PROTOC_GEN_CONNECT_WEB_SOURCES)
+	go build -o $(PROTOC_GEN_CONNECT_WEB_BIN) ./cmd/protoc-gen-connect-web
+
+
 # The NPM package "@bufbuild/connect-web"
 WEB_DIR = packages/connect-web
 WEB_BUILD = $(CACHE_DIR)/build/packages-connect-web
 WEB_SOURCES = $(WEB_DIR)/*.json $(shell find $(WEB_DIR)/src -name '*.ts')
 $(WEB_BUILD): node_modules $(WEB_SOURCES)
-	cd $(WEB_DIR) && npm run clean && npm run build
+	npm run -w $(WEB_DIR) clean
+	npm run -w $(WEB_DIR) build
 	mkdir -p $(CACHE_DIR)/build && touch $(WEB_BUILD)
+
+
+#TODO(tstamm) remove the temporary go test server
+# Tests run against the connect-go test server
+TEMPTESTSERVER_DIR = temptestserver
+TEMPTESTSERVER_GEN = $(CACHE_DIR)/gen/temptestserver
+TEMPTESTSERVER_RUNNING = $(CACHE_DIR)/service/temptestserver
+$(TEMPTESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find $(TEMPTESTSERVER_DIR)/proto -name '*.proto')
+	rm -rf $(TEMPTESTSERVER_DIR)/internal/gen/*
+	buf generate $(TEMPTESTSERVER_DIR)/proto --template $(TEMPTESTSERVER_DIR)/buf.gen.yaml --output $(TEMPTESTSERVER_DIR)
+	mkdir -p $(dir $(TEMPTESTSERVER_GEN)) && touch $(TEMPTESTSERVER_GEN)
+$(TEMPTESTSERVER_RUNNING): $(TEMPTESTSERVER_GEN)
+	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
+	node make/scripts/service-start.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun 'serving at'
+__temptestserver-gorun:
+	cd temptestserver && go run ./cmd/serve
+TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
+$(TESTSERVER_RUNNING): docker-compose.yaml
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
+	node make/scripts/service-start.js $(TESTSERVER_RUNNING) docker-compose-up '"port":"8083"'
 
 
 # The private NPM package "@bufbuild/connect-web-test" provides test coverage:
@@ -41,43 +73,23 @@ TEST_DIR = packages/connect-web-test
 TEST_GEN = $(CACHE_DIR)/gen/connect-web-test
 TEST_BUILD = $(CACHE_DIR)/build/connect-web-test
 TEST_SOURCES = $(shell find $(TEST_DIR)/src -name '*.ts') $(TEST_DIR)/*.json
-$(TEST_BUILD): $(WEB_BUILD) $(TEST_SOURCES)
+$(TEST_BUILD): $(TEST_GEN) $(WEB_BUILD) $(TEST_SOURCES)
 	cd $(TEST_DIR) && npm run clean && npm run build
 	mkdir -p $(dir $(TEST_BUILD)) && touch $(TEST_BUILD)
+$(TEST_GEN): $(PROTOC_GEN_CONNECT_WEB_BIN) $(PROTOC_GEN_ES_BIN) $(shell find $(TEMPTESTSERVER_DIR)/proto -name '*.proto')
+	rm -rf $(TEST_DIR)/src/gen/*
+	buf generate $(TEMPTESTSERVER_DIR)/proto --template $(TEST_DIR)/buf.gen.yaml --output $(TEST_DIR)
+	buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto --template $(TEST_DIR)/buf.gen.yaml --output $(TEST_DIR)
+	mkdir -p $(dir $(TEST_GEN)) && touch $(TEST_GEN)
 
 
 # The private NPM package "@bufbuild/bench-codesize" benchmarks code size
 BENCHCODESIZE_DIR = packages/bench-codesize
 BENCHCODESIZE_BUF_COMMIT=4505cba5e5a94a42af02ebc7ac3a0a04
 BENCHCODESIZE_GEN = $(CACHE_DIR)/gen/bench-codesize-$(BENCHCODESIZE_BUF_COMMIT)
-BUF_GENERATE_TEMPLATE = '\
-{\
-	"version": "v1",\
-	"plugins": [\
-		{\
-			"name":"es", \
-			"path": "$(PROTOC_GEN_ES_BIN)",\
-			"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
-			"opt": "ts_nocheck=false,target=ts"\
-		},{\
-			"name":"connect-web", \
-			"path": "$(PROTOC_GEN_CONNECT_WEB_BIN)",\
-			"out": "$(BENCHCODESIZE_DIR)/src/gen/connectweb",\
-			"opt": "ts_nocheck=false,target=ts"\
-		},{\
-			"remote":"buf.build/protocolbuffers/plugins/js:v3.19.3-1", \
-			"out": "$(BENCHCODESIZE_DIR)/src/gen/grpcweb", \
-			"opt": "import_style=commonjs"\
-		},{\
-			"remote":"buf.build/grpc/plugins/web:v1.3.1-2", \
-			"out": "$(BENCHCODESIZE_DIR)/src/gen/grpcweb", \
-			"opt": "import_style=commonjs+dts,mode=grpcweb"\
-		}\
-	]\
-}'
 $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	rm -rf $(BENCHCODESIZE_DIR)/src/gen/*
-	buf generate buf.build/bufbuild/buf:$(BENCHCODESIZE_BUF_COMMIT) --template $(BUF_GENERATE_TEMPLATE)
+	buf generate buf.build/bufbuild/buf:$(BENCHCODESIZE_BUF_COMMIT) --template $(BENCHCODESIZE_DIR)/buf.gen.yaml --output $(BENCHCODESIZE_DIR)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
@@ -86,7 +98,9 @@ LICENSE_HEADER_VERSION := v1.1.0
 LICENSE_HEADER_LICENSE_TYPE := apache
 LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
-LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/
+LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/service-start.js make\/scripts\/service-stop.js packages\/connect-web-test\/src\/gen
+#TODO(tstamm) remove the temporary go test server
+LICENSE_HEADER_IGNORES := $(LICENSE_HEADER_IGNORES) temptestserver\/internal\/gen
 LICENSE_HEADER_DEP := $(CACHE_DIR)/dep/license-header-$(LICENSE_HEADER_VERSION)
 $(LICENSE_HEADER_DEP):
 	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@$(LICENSE_HEADER_VERSION)
@@ -106,6 +120,18 @@ $(GOLANGCI_LINT_DEP):
 	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	mkdir -p $(dir $(GOLANGCI_LINT_DEP)) && touch $(GOLANGCI_LINT_DEP)
 
+# Install Node.js v18
+NODE18_VERSION ?= v18.2.0
+NODE18_DEP := $(CACHE_DIR)/dep/node18-$(GOLANGCI_LINT_VERSION)
+NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(UNAME_OS)))
+NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(UNAME_ARCH)))
+$(NODE18_DEP):
+	curl -sSL https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH).tar.xz | tar xJ -C $(CACHE_DIR) node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node
+	mkdir -p $(CACHE_DIR)/bin
+	mv $(CACHE_DIR)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node $(CACHE_DIR)/bin/node18
+	rm -r $(CACHE_DIR)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)
+	mkdir -p $(dir $(NODE18_DEP)) && touch $(NODE18_DEP)
+
 
 # Commands
 .PHONY: all clean build test lint format bench-codesize set-version release
@@ -116,21 +142,36 @@ help: ## Describe useful make targets
 all: build test format lint bench-codesize ## build, test, format, lint, and bench-codesize (default)
 
 clean: ## Delete build artifacts and installed dependencies
-	cd $(BENCHCODESIZE_DIR); npm run clean
-	cd $(WEB_DIR); npm run clean
+	npm run clean -w $(BENCHCODESIZE_DIR)
+	npm run clean -w $(WEB_DIR)
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
+	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
+	$(MAKE) docker-compose-clean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
+	rm -rf $(TEMPTESTSERVER_DIR)/internal/gen/*
+
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
-test: test-go test-jest ## Run all tests
+test: test-go test-node test-browser ## Run all tests
 
 test-go:
 	go test ./cmd/...
 
-test-jest: $(TEST_BUILD) $(TEST_DIR)/*.config.js
-	cd $(TEST_DIR) && NODE_OPTIONS=--experimental-vm-modules npx jest
+test-node: $(NODE18_DEP) $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
+	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+
+test-browser: $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
+	npm run -w $(TEST_DIR) karma
+
+test-local-browser: $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
+	npm run -w $(TEST_DIR) karma-serve
+
+#TODO(tstamm) remove the temporary go test server
+temptestserver-stop:
+	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
@@ -147,13 +188,15 @@ format: node_modules $(GIT_LS_FILES_UNSTAGED_DEP) $(LICENSE_HEADER_DEP) ## Forma
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code size
-	cd $(BENCHCODESIZE_DIR) && npm run report
+	npm run -w $(BENCHCODESIZE_DIR) report
 
 set-version: ## Set a new version in for the project, i.e. make set-version SET_VERSION=1.2.3
 	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
+	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	rm package-lock.json
 	npm i -f
+	$(MAKE) all
 
 # Release @bufbuild/connect-web.
 # Recommended procedure:
@@ -182,3 +225,15 @@ release: all ## Release @bufbuild/connect-web
 		--workspace packages/protoc-gen-connect-web-windows-32 \
 		--workspace packages/protoc-gen-connect-web-windows-64 \
 		--workspace packages/protoc-gen-connect-web-windows-arm64
+
+
+# Some builds need code generation, some code generation needs builds.
+# We expose this target only for ci, so it can check for diffs.
+ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN) $(TEMPTESTSERVER_GEN)
+
+docker-compose-clean:
+	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans
+	# clean up errors are ignored
+
+docker-compose-up: docker-compose-clean
+	CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose up

@@ -13,13 +13,14 @@
 // limitations under the License.
 
 import type {
+  AnyMessage,
   Message,
   MessageType,
   MethodInfo,
   ServiceType,
 } from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
-import type { AnyMessage } from "@bufbuild/protobuf";
+import type { ClientInterceptor } from "./client-interceptor";
 
 /**
  * ClientTransport represents the underlying transport for a client.
@@ -68,6 +69,16 @@ export interface ClientCallOptions {
    * If cancelled, an error with StatusCode.Canceled is raised.
    */
   signal?: AbortSignal;
+
+  /**
+   * Called when response headers are received.
+   */
+  onHeader?(headers: Headers): void;
+
+  /**
+   * Called when response trailers are received.
+   */
+  onTrailer?(trailers: Headers): void;
 }
 
 /**
@@ -127,6 +138,10 @@ export interface ClientRequest<T extends Message<T> = AnyMessage> {
   send(message: T, callback: ClientRequestCallback): void;
 }
 
+/**
+ * ClientRequestCallback is the callback for the sending a request from a
+ * client.
+ */
 export type ClientRequestCallback = (error: ConnectError | undefined) => void;
 
 /**
@@ -134,9 +149,15 @@ export type ClientRequestCallback = (error: ConnectError | undefined) => void;
  */
 export interface ClientResponse<T extends Message<T> = AnyMessage> {
   /**
-   * Receive reads from the response. For every invocation, the callback is
-   * guaranteed to be called at least once. One invocation will never produce
-   * more than one message.
+   * Receive tries to read exactly one message from the response, and
+   * invokes either onMessage() or onClose() on the callback.
+   *
+   * Receive must not be called concurrently. To read all data from a
+   * response, call receive() in the onMessage() callback.
+   *
+   * The optional callback onHeader() is invoked before receiving the
+   * first message. The optional callback onTrailer() is invoked before
+   * onClose().
    */
   receive(handler: ClientResponseHandler<T>): void;
 }
@@ -145,9 +166,27 @@ export interface ClientResponse<T extends Message<T> = AnyMessage> {
  * ClientResponseHandler is the callback for the receiving half of a client.
  */
 export interface ClientResponseHandler<T extends Message<T> = AnyMessage> {
+  /**
+   * Called when response headers are received, before the first message
+   * is received.
+   */
   onHeader?(header: Headers): void;
+
+  /**
+   * Called when a message is received.
+   */
   onMessage(message: T): void;
+
+  /**
+   * Called when response trailers are received, after the last message
+   * (if there are any), and before onClose().
+   */
   onTrailer?(trailer: Headers): void;
+
+  /**
+   * Called when the response is finished. If an error occurred, it is
+   * passed here.
+   */
   onClose(error?: ConnectError): void;
 }
 
@@ -155,7 +194,7 @@ export interface ClientResponseHandler<T extends Message<T> = AnyMessage> {
  * A utility that sequentially reads all messages from the response, and calls
  * the callback for each of them.
  */
-export function receiveAll<T extends Message<T>>(
+export function receiveResponseUntilClose<T extends Message<T>>(
   response: ClientResponse<T>,
   handler: ClientResponseHandler<T>
 ): void {
@@ -195,3 +234,63 @@ type ServiceMethodOutput<
     ? O
     : never
   : never;
+
+/**
+ * wrapTransportCall is used by transport implementations to
+ * apply interceptors to the given request and response messages.
+ *
+ * It also adds and interceptor at the end, which will call the
+ * onHeader and onTrailer methods of user-provided call options.
+ */
+export function wrapTransportCall(
+  service: ServiceType,
+  method: MethodInfo,
+  options: Readonly<ClientCallOptions>,
+  request: ClientRequest,
+  response: ClientResponse,
+  interceptors: ClientInterceptor[] | undefined
+): [ClientRequest, ClientResponse] {
+  const chain = (interceptors ?? []).concat(delegateToClientCallOptions);
+  for (const interceptor of chain) {
+    [request, response] = interceptor(
+      service,
+      method,
+      options,
+      { ...request },
+      response
+    );
+  }
+  return [request, response];
+}
+
+function delegateToClientCallOptions(
+  service: ServiceType,
+  method: MethodInfo,
+  options: Readonly<ClientCallOptions>,
+  request: ClientRequest,
+  response: ClientResponse
+): [ClientRequest, ClientResponse] {
+  return [
+    request,
+    {
+      receive(handler) {
+        response.receive({
+          onHeader(header) {
+            options.onHeader?.(header);
+            handler.onHeader?.(header);
+          },
+          onMessage(message) {
+            handler.onMessage(message);
+          },
+          onTrailer(trailer) {
+            options.onTrailer?.(trailer);
+            handler.onTrailer?.(trailer);
+          },
+          onClose(error) {
+            handler.onClose(error);
+          },
+        });
+      },
+    },
+  ];
+}
