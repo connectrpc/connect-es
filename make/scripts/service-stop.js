@@ -34,7 +34,7 @@ if (existsSync(lockFilePath)) {
       });
       stopped = true;
     } catch (e) {
-      process.stdout.write(`${makeTarget} doesn't appear to be running\n`);
+      //
     }
     try {
       unlinkSync(lockFilePath);

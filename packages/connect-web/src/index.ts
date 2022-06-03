@@ -46,11 +46,13 @@ export {
 
 export { createConnectTransport } from "./connect-transport.js";
 
+export { createGrpcWebTransport } from "./grpc-web-transport.js";
+
 export { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
 
 export {
   createEnvelopeReader,
   EnvelopeReader,
   EnvelopedMessage,
-  EnvelopeFlags,
+  encodeEnvelopes,
 } from "./envelope.js";

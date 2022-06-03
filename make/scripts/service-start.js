@@ -42,11 +42,12 @@ if (!existsSync(dirname(lockFilePath))) {
   });
 }
 const child = spawn(
-  "bash",
-  ["-c", `make ${makeTarget} >${lockFilePath}.out 2>${lockFilePath}.err`],
+  `make ${makeTarget} >${lockFilePath}.out 2>${lockFilePath}.err`,
+  [],
   {
     stdio: "inherit",
     detached: true,
+    shell: true,
   }
 );
 let childExitCode, childExitSignal;

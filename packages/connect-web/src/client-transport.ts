@@ -149,9 +149,15 @@ export type ClientRequestCallback = (error: ConnectError | undefined) => void;
  */
 export interface ClientResponse<T extends Message<T> = AnyMessage> {
   /**
-   * Receive reads from the response. For every invocation, the callback is
-   * guaranteed to be called at least once. One invocation will never produce
-   * more than one message.
+   * Receive tries to read exactly one message from the response, and
+   * invokes either onMessage() or onClose() on the callback.
+   *
+   * Receive must not be called concurrently. To read all data from a
+   * response, call receive() in the onMessage() callback.
+   *
+   * The optional callback onHeader() is invoked before receiving the
+   * first message. The optional callback onTrailer() is invoked before
+   * onClose().
    */
   receive(handler: ClientResponseHandler<T>): void;
 }
@@ -160,9 +166,27 @@ export interface ClientResponse<T extends Message<T> = AnyMessage> {
  * ClientResponseHandler is the callback for the receiving half of a client.
  */
 export interface ClientResponseHandler<T extends Message<T> = AnyMessage> {
+  /**
+   * Called when response headers are received, before the first message
+   * is received.
+   */
   onHeader?(header: Headers): void;
+
+  /**
+   * Called when a message is received.
+   */
   onMessage(message: T): void;
+
+  /**
+   * Called when response trailers are received, after the last message
+   * (if there are any), and before onClose().
+   */
   onTrailer?(trailer: Headers): void;
+
+  /**
+   * Called when the response is finished. If an error occurred, it is
+   * passed here.
+   */
   onClose(error?: ConnectError): void;
 }
 

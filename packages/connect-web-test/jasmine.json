@@ -1,6 +1,6 @@
 {
   "spec_dir": "dist/esm",
-  "spec_files": ["**/*.test.js"],
+  "spec_files": ["**/*.spec.js"],
   "helpers": ["node-init/**/*.js"],
   "env": {
     "stopSpecOnExpectationFailure": false,

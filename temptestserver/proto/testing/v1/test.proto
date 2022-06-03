@@ -1,0 +1,149 @@
+// Copyright 2021-2022 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package testing.v1;
+
+service TestService {
+
+  // Returns the numeric value from the request as a string in the response
+  rpc UnaryHappy(UnaryHappyRequest) returns (UnaryHappyResponse);
+
+  // Always raises an error "already_exists", and a message with whitespace
+  // and unicode content
+  rpc UnaryError(UnaryErrorRequest) returns (UnaryErrorResponse);
+
+  // Responds with headers:
+  // single-value: foo
+  // separate-values: bar
+  // separate-values: baz
+  // joined-values: bar,baz
+  rpc UnaryHeaders(UnaryHeadersRequest) returns (UnaryHeadersResponse);
+
+  // Responds with trailers:
+  // single-value: foo
+  // separate-values: bar
+  // separate-values: baz
+  // joined-values: bar,baz
+  rpc UnaryTrailers(UnaryTrailersRequest) returns (UnaryTrailersResponse);
+
+  // Expects a set of headers in the request:
+  // single-value: foo
+  // separate-values: bar
+  // separate-values: baz
+  // joined-values: bar, baz
+  // Clients may join the two `separate-values` headers into one, with values
+  // separated by `, `. Errors with invalid_argument if not met.
+  rpc UnaryExpectHeaders(UnaryExpectHeadersRequest) returns (UnaryExpectHeadersResponse);
+
+  // Not implemented by the server
+  rpc UnaryUnimplemented(UnaryUnimplementedRequest) returns (UnaryUnimplementedResponse);
+
+  // Returns exactly 5 responses. The value from the request is incremented
+  // and given in each response.
+  rpc ServerStreamingHappy(ServerStreamingHappyRequest) returns (stream ServerStreamingHappyResponse);
+
+  // Always raises an error "already_exists", and a message with whitespace
+  // and unicode content
+  rpc ServerStreamingError(ServerStreamingErrorRequest) returns (stream ServerStreamingErrorResponse);
+
+  rpc ServerStreamingEmpty(ServerStreamingEmptyRequest) returns (stream ServerStreamingEmptyResponse);
+
+  rpc ServerStreamingUnimplemented(ServerStreamingUnimplementedRequest) returns (ServerStreamingUnimplementedResponse);
+
+  // A sequence of requests with each request served by the server immediately.
+  // As one request could lead to multiple responses, this interface
+  // demonstrates the idea of full duplexing.
+  rpc FullDuplexCall(stream FullDuplexCallRequest) returns (stream FullDuplexCallResponse);
+}
+
+message FullDuplexCallRequest {
+  int32 value = 1;
+}
+message FullDuplexCallResponse {
+  string value = 1;
+}
+
+// ---
+
+message UnaryHappyRequest {
+  int32 value = 1;
+}
+message UnaryHappyResponse {
+  string value = 1;
+}
+
+message UnaryErrorRequest {
+  int32 value = 1;
+}
+message UnaryErrorResponse {
+  string value = 1;
+}
+
+message UnaryHeadersRequest {
+  int32 value = 1;
+}
+message UnaryHeadersResponse {
+  string value = 1;
+}
+
+message UnaryTrailersRequest {
+  int32 value = 1;
+}
+message UnaryTrailersResponse {
+  string value = 1;
+}
+
+message UnaryExpectHeadersRequest {
+  int32 value = 1;
+}
+message UnaryExpectHeadersResponse {
+  string value = 1;
+}
+
+message UnaryUnimplementedRequest {
+  int32 value = 1;
+}
+message UnaryUnimplementedResponse {
+  string value = 1;
+}
+
+message ServerStreamingHappyRequest {
+  int32 value = 1;
+}
+message ServerStreamingHappyResponse {
+  string value = 1;
+}
+
+message ServerStreamingErrorRequest {
+  int32 value = 1;
+}
+message ServerStreamingErrorResponse {
+  string value = 1;
+}
+
+message ServerStreamingEmptyRequest {
+  int32 value = 1;
+}
+message ServerStreamingEmptyResponse {
+  string value = 1;
+}
+
+message ServerStreamingUnimplementedRequest {
+  int32 value = 1;
+}
+message ServerStreamingUnimplementedResponse {
+  string value = 1;
+}
