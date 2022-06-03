@@ -31,7 +31,8 @@ describe("fetch API", () => {
     const bodyText = await response.text();
     expect(bodyText).toBe(`{"payload":{}}`);
   });
-  xit("unsupported unary request content encoding raises HTTP 500 with explanatory error message", async () => {
+  it("unsupported unary request content encoding raises HTTP 500 with explanatory error message", async () => {
+    pending("Awaiting TCN-151, can be removed afterwards.");
     const response = await fetch(unaryUrl, {
       method: "POST",
       body: "{}",
@@ -46,7 +47,8 @@ describe("fetch API", () => {
       `{"code":"unimplemented","message":"unknown compression \\"WRONG\\": supported encodings are gzip"}`
     );
   });
-  xit("unsupported server streaming request content encoding raises HTTP 500 with explanatory error message", async () => {
+  it("unsupported server streaming request content encoding raises HTTP 500 with explanatory error message", async () => {
+    pending("Awaiting TCN-151, can be removed afterwards.");
     const response = await fetch(serverStreamingUrl, {
       method: "POST",
       body: encodeEnvelopes({
