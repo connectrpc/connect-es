@@ -26,6 +26,7 @@ import (
 	"github.com/bufbuild/connect-web/testserver/internal/gen/connect/testing/v1/testingv1connect"
 	"github.com/bufbuild/connect-web/testserver/internal/gen/go/testing/v1"
 	"github.com/rs/cors"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type TestService struct {
@@ -40,7 +41,14 @@ func (TestService) UnaryHappy(ctx context.Context, req *connect.Request[testingv
 }
 
 func (TestService) UnaryError(context.Context, *connect.Request[testingv1.UnaryErrorRequest]) (*connect.Response[testingv1.UnaryErrorResponse], error) {
-	return nil, connect.NewError(connect.CodeAlreadyExists, errors.New("\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n"))
+	e := connect.NewError(connect.CodeAlreadyExists, errors.New("\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n"))
+	d, err := anypb.New(&testingv1.UnaryErrorRequest{Value: 123})
+	if err != nil {
+		return nil, err
+	}
+	e.AddDetail(d)
+	e.Meta().Add("single-value", "foo")
+	return nil, e
 }
 
 func (TestService) UnaryHeaders(ctx context.Context, req *connect.Request[testingv1.UnaryHeadersRequest]) (*connect.Response[testingv1.UnaryHeadersResponse], error) {

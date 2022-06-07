@@ -15,6 +15,7 @@
 import type {
   BinaryReadOptions,
   BinaryWriteOptions,
+  IMessageTypeRegistry,
   Message,
   MessageType,
   MethodInfo,
@@ -30,10 +31,11 @@ import type {
   ClientResponse,
   ClientTransport,
 } from "./client-transport.js";
+import { wrapTransportCall } from "./client-transport.js";
 import type { ClientInterceptor } from "./client-interceptor.js";
 import { createEnvelopeReader, EnvelopeReader } from "./envelope.js";
-import { wrapTransportCall } from "./client-transport.js";
 import { extractRejectionError } from "./private/extract-rejection-error.js";
+import { grpcStatusDetailsBinName } from "./private/grpc-status.js";
 
 export interface GrpcWebTransportOptions {
   /**
@@ -54,6 +56,9 @@ export interface GrpcWebTransportOptions {
    * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
    */
   credentials?: RequestCredentials;
+
+  // TODO explain
+  typeRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the binary wire format.
@@ -186,7 +191,10 @@ function createResponse<O extends Message<O>>(
             const err =
               extractHttpStatusError(response) ??
               extractContentTypeError(response.headers) ??
-              extractDetailsError(response.headers) ??
+              extractDetailsError(
+                response.headers,
+                transportOptions.typeRegistry
+              ) ??
               extractHeadersError(response.headers);
             if (err) {
               close(err);
@@ -212,7 +220,8 @@ function createResponse<O extends Message<O>>(
                 const trailer = parseGrpcWebTrailer(frame.data);
                 handler.onTrailer?.(trailer);
                 close(
-                  extractDetailsError(trailer) ?? extractHeadersError(trailer)
+                  extractDetailsError(trailer, transportOptions.typeRegistry) ??
+                    extractHeadersError(trailer)
                 );
               } else {
                 try {
@@ -307,17 +316,24 @@ function extractHeadersError(header: Headers): ConnectError | undefined {
   if (StatusCode[code] === undefined) {
     return new ConnectError(
       `invalid grpc-status: ${value}`,
-      StatusCode.DataLoss
+      StatusCode.Internal,
+      undefined,
+      header
     );
   }
   return new ConnectError(
     decodeURIComponent(header.get("grpc-message") ?? ""),
-    code
+    code,
+    undefined,
+    header
   );
 }
 
-function extractDetailsError(header: Headers): ConnectError | undefined {
-  const grpcStatusDetailsBin = header.get("grpc-status-details-bin");
+function extractDetailsError(
+  header: Headers,
+  typeRegistry?: IMessageTypeRegistry
+): ConnectError | undefined {
+  const grpcStatusDetailsBin = header.get(grpcStatusDetailsBinName);
   if (grpcStatusDetailsBin === null) {
     return undefined;
   }
@@ -327,9 +343,35 @@ function extractDetailsError(header: Headers): ConnectError | undefined {
     if (status.code === StatusCode.Ok) {
       return undefined;
     }
-    return new ConnectError(status.message, status.code, status.details);
+    const error = new ConnectError(
+      status.message,
+      status.code,
+      undefined,
+      header
+    );
+    // TODO deduplicate with similar logic in ConnectError
+    for (const any of status.details) {
+      const typeName = any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1);
+      if (!typeRegistry) {
+        error.rawDetails.push(any);
+        continue;
+      }
+      const messageType = typeRegistry.findMessage(typeName);
+      if (messageType) {
+        const message = new messageType();
+        if (any.unpackTo(message)) {
+          error.details.push(message);
+        }
+      }
+    }
+    return error;
   } catch (e) {
-    return new ConnectError("invalid grpc-status-details-bin");
+    return new ConnectError(
+      grpcStatusDetailsBinName,
+      StatusCode.Internal,
+      undefined,
+      header
+    );
   }
 }
 
