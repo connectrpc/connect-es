@@ -22,7 +22,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
-import { grpcWebCodeFromHttpStatus, StatusCode } from "./status-code.js";
+import { codeFromGrpcWebHttpStatus, Code } from "./code.js";
 import { decodeBinaryHeader } from "./http-headers.js";
 import { Status } from "./grpc/status/v1/status_pb.js";
 import type {
@@ -278,23 +278,20 @@ function extractContentTypeError(header: Headers): ConnectError | undefined {
       return undefined;
     case "application/grpc-web-text":
     case "application/grpc-web-text+proto":
-      return new ConnectError(
-        "grpc-web-text is not supported",
-        StatusCode.Internal
-      );
+      return new ConnectError("grpc-web-text is not supported", Code.Internal);
     case undefined:
     case null:
     default:
       return new ConnectError(
         `unexpected content type: ${String(type)}`,
-        StatusCode.Internal
+        Code.Internal
       );
   }
 }
 
 function extractHttpStatusError(response: Response): ConnectError | undefined {
-  const code = grpcWebCodeFromHttpStatus(response.status);
-  if (code === StatusCode.Ok) {
+  const code = codeFromGrpcWebHttpStatus(response.status);
+  if (!code) {
     return undefined;
   }
   return new ConnectError(
@@ -309,14 +306,13 @@ function extractHeadersError(header: Headers): ConnectError | undefined {
     return undefined;
   }
   const code = parseInt(value);
-  if (code === StatusCode.Ok) {
+  if (code === 0) {
     return undefined;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- condition is very much necessary to check code
-  if (StatusCode[code] === undefined) {
+  if (!(code in Code)) {
     return new ConnectError(
       `invalid grpc-status: ${value}`,
-      StatusCode.Internal,
+      Code.Internal,
       undefined,
       header
     );
@@ -334,13 +330,13 @@ function extractDetailsError(
   typeRegistry?: IMessageTypeRegistry
 ): ConnectError | undefined {
   const grpcStatusDetailsBin = header.get(grpcStatusDetailsBinName);
-  if (grpcStatusDetailsBin === null) {
+  if (grpcStatusDetailsBin == null) {
     return undefined;
   }
   try {
     const status = decodeBinaryHeader(grpcStatusDetailsBin, Status);
     // Prefer the protobuf-encoded data to the headers.
-    if (status.code === StatusCode.Ok) {
+    if (status.code == 0) {
       return undefined;
     }
     const error = new ConnectError(
@@ -368,7 +364,7 @@ function extractDetailsError(
   } catch (e) {
     return new ConnectError(
       grpcStatusDetailsBinName,
-      StatusCode.Internal,
+      Code.Internal,
       undefined,
       header
     );

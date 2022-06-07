@@ -16,7 +16,7 @@ import {
   ConnectError,
   makeCallbackClient,
   makePromiseClient,
-  StatusCode,
+  Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransports } from "../util/describe-transports.js";
@@ -28,14 +28,14 @@ describe("special_status", function () {
     const TEST_STATUS_MESSAGE = `\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n`;
     const req = new SimpleRequest({
       responseStatus: {
-        code: StatusCode.Unknown,
+        code: Code.Unknown,
         message: TEST_STATUS_MESSAGE,
       },
     });
     function expectError(err: unknown) {
       expect(err).toBeInstanceOf(ConnectError);
       if (err instanceof ConnectError) {
-        expect(err.code).toEqual(StatusCode.Unknown);
+        expect(err.code).toEqual(Code.Unknown);
         expect(err.rawMessage).toEqual(TEST_STATUS_MESSAGE);
       }
     }

@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  StatusCode,
-  statusCodeFromString,
-  statusCodeToString,
-} from "./status-code.js";
+import { Code, codeFromString, codeToString } from "./code.js";
 import {
   Any,
   AnyMessage,
@@ -31,12 +27,7 @@ import { newParseError } from "./private/new-parse-error.js";
 // TODO nest errors á la https://github.com/Veetaha/ts-nested-error/blob/master/src/nested-error.ts ?
 
 /**
- * ErrorCode is every StatusCode, except Ok.
- */
-type ErrorCode = Exclude<StatusCode, StatusCode.Ok>;
-
-/**
- * ConnectError captures three pieces of information: a StatusCode, an error
+ * ConnectError captures three pieces of information: a Code, an error
  * message, and an optional collection of arbitrary Protobuf messages called
  * "details".
  *
@@ -49,9 +40,9 @@ type ErrorCode = Exclude<StatusCode, StatusCode.Ok>;
  */
 export class ConnectError extends Error {
   /**
-   * The StatusCode for this error. This is never StatusCode.Ok.
+   * The Code for this error.
    */
-  readonly code: ErrorCode;
+  readonly code: Code;
 
   /**
    * Optional collection of arbitrary Protobuf messages.
@@ -74,7 +65,7 @@ export class ConnectError extends Error {
   /**
    * The error message, but without a status code in front.
    *
-   * For example, a new `ConnectError("hello", StatusCode.NotFound)` will have
+   * For example, a new `ConnectError("hello", Code.NotFound)` will have
    * the message `[not found] hello`, and the rawMessage `hello`.
    */
   readonly rawMessage: string;
@@ -83,7 +74,7 @@ export class ConnectError extends Error {
 
   constructor(
     message: string,
-    code: ErrorCode = StatusCode.Unknown,
+    code: Code = Code.Unknown,
     details?: AnyMessage[],
     metadata?: HeadersInit
   ) {
@@ -103,7 +94,7 @@ export class ConnectError extends Error {
    */
   toJson(): JsonValue {
     const value: { code: string; message: string; details?: JsonValue[] } = {
-      code: statusCodeToString(this.code),
+      code: codeToString(this.code),
       message: this.rawMessage,
     };
     if (this.details.length > 0) {
@@ -164,8 +155,8 @@ export class ConnectError extends Error {
     ) {
       throw newParseError(jsonValue);
     }
-    const code = statusCodeFromString(jsonValue.code);
-    if (code == null || code == StatusCode.Ok) {
+    const code = codeFromString(jsonValue.code);
+    if (!code) {
       throw newParseError(jsonValue.code, ".code");
     }
     const message = jsonValue.message;
@@ -223,10 +214,10 @@ type RawDetail =
       [key: string]: JsonValue;
     };
 
-function syntheticMessage(code: ErrorCode, message: string) {
+function syntheticMessage(code: Code, message: string) {
   return message.length
-    ? `[${statusCodeToString(code)}] ${message}`
-    : `[${statusCodeToString(code)}]`;
+    ? `[${codeToString(code)}] ${message}`
+    : `[${codeToString(code)}]`;
 }
 
 function addTypesToSet(

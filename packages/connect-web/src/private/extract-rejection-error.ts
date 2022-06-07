@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { ConnectError } from "../connect-error.js";
-import { StatusCode } from "../status-code.js";
+import { Code } from "../code.js";
 
 export function extractRejectionError(reason: unknown): ConnectError {
   if (reason instanceof ConnectError) {
@@ -24,7 +24,7 @@ export function extractRejectionError(reason: unknown): ConnectError {
       // Fetch requests can only be canceled with an AbortController.
       // We detect that condition by looking at the name of the raised
       // error object, and translate to the appropriate status code.
-      return new ConnectError(reason.message, StatusCode.Canceled);
+      return new ConnectError(reason.message, Code.Canceled);
     }
     return new ConnectError(reason.message);
   }

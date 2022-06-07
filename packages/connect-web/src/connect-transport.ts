@@ -27,7 +27,7 @@ import {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
-import { connectCodeFromHttpStatus, StatusCode } from "./status-code.js";
+import { codeFromConnectHttpStatus, Code } from "./code.js";
 import type {
   ClientCallOptions,
   ClientRequest,
@@ -212,15 +212,13 @@ function createStreamResponse<O extends Message<O>>(
   return {
     receive(handler): void {
       if (closed) {
-        handler.onClose(
-          new ConnectError("response closed", StatusCode.Internal)
-        );
+        handler.onClose(new ConnectError("response closed", Code.Internal));
         closed = true;
         return;
       }
       if (receiving) {
         handler.onClose(
-          new ConnectError("cannot receive concurrently", StatusCode.Internal)
+          new ConnectError("cannot receive concurrently", Code.Internal)
         );
         closed = true;
         return;
@@ -241,19 +239,19 @@ function createStreamResponse<O extends Message<O>>(
               }
               throw new ConnectError(
                 `HTTP ${response.status} ${response.statusText}`,
-                connectCodeFromHttpStatus(response.status)
+                codeFromConnectHttpStatus(response.status)
               );
             }
             if (head.contentType == null) {
               throw new ConnectError(
                 `missing response content type`,
-                StatusCode.Internal
+                Code.Internal
               );
             }
             if (head.format == null) {
               throw new ConnectError(
                 `unexpected response content type ${head.contentType}`,
-                StatusCode.Internal
+                Code.Internal
               );
             }
           }
@@ -314,15 +312,13 @@ function createUnaryResponse<O extends Message<O>>(
   return {
     receive(handler): void {
       if (closed) {
-        handler.onClose(
-          new ConnectError("response closed", StatusCode.Internal)
-        );
+        handler.onClose(new ConnectError("response closed", Code.Internal));
         closed = true;
         return;
       }
       if (receiving) {
         handler.onClose(
-          new ConnectError("cannot receive concurrently", StatusCode.Internal)
+          new ConnectError("cannot receive concurrently", Code.Internal)
         );
         closed = true;
         return;
@@ -343,19 +339,19 @@ function createUnaryResponse<O extends Message<O>>(
               }
               throw new ConnectError(
                 `HTTP ${response.status} ${response.statusText}`,
-                connectCodeFromHttpStatus(response.status)
+                codeFromConnectHttpStatus(response.status)
               );
             }
             if (head.contentType == null) {
               throw new ConnectError(
                 `missing response content type`,
-                StatusCode.Internal
+                Code.Internal
               );
             }
             if (head.format == null) {
               throw new ConnectError(
                 `unexpected response content type ${head.contentType}`,
-                StatusCode.Internal
+                Code.Internal
               );
             }
           }
