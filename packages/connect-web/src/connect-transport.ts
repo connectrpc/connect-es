@@ -158,7 +158,7 @@ function createRequest<I extends Message<I>>(
     abort,
     header: createConnectRequestHeaders(
       callOptions.headers,
-      callOptions.timeout,
+      callOptions.timeoutMs,
       method.kind,
       useBinaryFormat
     ),

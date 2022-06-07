@@ -57,7 +57,7 @@ export interface ClientCallOptions {
   /**
    * Timeout in milliseconds.
    */
-  timeout?: number;
+  timeoutMs?: number;
 
   /**
    * Custom headers to send with the request.
