@@ -15,7 +15,7 @@
 import type { BinaryReadOptions, MessageType } from "@bufbuild/protobuf";
 import { Message, protoBase64 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
-import { StatusCode } from "./status-code.js";
+import { Code } from "./code.js";
 
 /**
  * Encode a single binary header value according to the gRPC
@@ -71,7 +71,7 @@ export function decodeBinaryHeader<T extends Message<T>>(
   } catch (e) {
     throw new ConnectError(
       e instanceof Error ? e.message : String(e),
-      StatusCode.DataLoss
+      Code.DataLoss
     );
   }
 }

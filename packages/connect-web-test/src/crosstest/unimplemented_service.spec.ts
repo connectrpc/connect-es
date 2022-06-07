@@ -16,7 +16,7 @@ import {
   ConnectError,
   makeCallbackClient,
   makePromiseClient,
-  StatusCode,
+  Code,
 } from "@bufbuild/connect-web";
 import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransports } from "../util/describe-transports.js";
@@ -30,10 +30,7 @@ describe("unimplemented_service", function () {
     // case and the client should not retry on either status.
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
-      expect(
-        err.code === StatusCode.Unknown ||
-          err.code === StatusCode.DeadlineExceeded
-      );
+      expect(err.code === Code.Unknown || err.code === Code.DeadlineExceeded);
     }
   }
 

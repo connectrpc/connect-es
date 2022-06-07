@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { ConnectError } from "./connect-error.js";
-import { StatusCode } from "./status-code.js";
+import { Code } from "./code.js";
 
 /**
  * Enveloped-Message
@@ -110,7 +110,7 @@ export function createEnvelopeReader(
       if (buffer.byteLength == 0) {
         return null;
       }
-      throw new ConnectError("premature end of stream", StatusCode.DataLoss);
+      throw new ConnectError("premature end of stream", Code.DataLoss);
     }
     const data = buffer.subarray(5, 5 + header.length);
     buffer = buffer.subarray(5 + header.length);

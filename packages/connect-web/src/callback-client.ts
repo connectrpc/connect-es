@@ -28,7 +28,7 @@ import {
   createClientTransportCalls,
   receiveResponseUntilClose,
 } from "./client-transport.js";
-import { StatusCode } from "./status-code.js";
+import { Code } from "./code.js";
 import { Message } from "@bufbuild/protobuf";
 
 // prettier-ignore
@@ -117,7 +117,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
     const [request, response] = call(options);
     request.send(messageFromPartial(requestMessage, call.method.I), (error) => {
       if (error) {
-        if (error.code === StatusCode.Canceled && abort.signal.aborted) {
+        if (error.code === Code.Canceled && abort.signal.aborted) {
           // As documented, discard Canceled errors if canceled by the user.
           return;
         }
@@ -130,11 +130,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
         singleMessage = message;
       },
       onClose(error?: ConnectError) {
-        if (
-          error &&
-          error.code === StatusCode.Canceled &&
-          abort.signal.aborted
-        ) {
+        if (error && error.code === Code.Canceled && abort.signal.aborted) {
           // As documented, discard Canceled errors if canceled by the user.
           return;
         }
@@ -161,7 +157,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
     const [request, response] = call(options);
     request.send(messageFromPartial(requestMessage, call.method.I), (error) => {
       if (error) {
-        if (error.code === StatusCode.Canceled && abort.signal.aborted) {
+        if (error.code === Code.Canceled && abort.signal.aborted) {
           // As documented, discard Canceled errors if canceled by the user.
           return;
         }
@@ -173,11 +169,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
         onResponse(message);
       },
       onClose(error?: ConnectError): void {
-        if (
-          error &&
-          error.code === StatusCode.Canceled &&
-          abort.signal.aborted
-        ) {
+        if (error && error.code === Code.Canceled && abort.signal.aborted) {
           // As documented, discard Canceled errors if canceled by the user.
           return;
         }
