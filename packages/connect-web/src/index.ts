@@ -27,6 +27,7 @@ export { ClientInterceptor } from "./client-interceptor.js";
 
 export {
   ClientTransport,
+  ClientCallOptions,
   ClientCall,
   ClientRequest,
   ClientRequestCallback,

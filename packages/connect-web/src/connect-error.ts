@@ -200,6 +200,42 @@ export class ConnectError extends Error {
     }
     return error;
   }
+
+  /**
+   * Converts the argument into a ConnectError, if it is not already one.
+   *
+   * This method is convenient for error handling in TypeScript. Connect only
+   * raises ConnectErrors, the type system is not aware of that, forcing you
+   * to check the type of the raised error:
+   *
+   * ```typescript
+   * catch(throwable) {
+   *   if (throwable instanceof ConnectError) {
+   *     e.details;
+   *   } else {
+   *     // ?
+   *   }
+   * }
+   * ```
+   *
+   * Example usage:
+   *
+   * ```typescript
+   * catch(throwable) {
+   *   const e = ConnectError.from(throwable);
+   *   e.details;
+   * }
+   * ```
+   */
+  static from(throwable: unknown): ConnectError {
+    if (throwable instanceof ConnectError) {
+      return throwable;
+    }
+    if (throwable instanceof Error) {
+      return new ConnectError(throwable.message);
+    }
+    return new ConnectError(String(throwable));
+  }
 }
 
 /**

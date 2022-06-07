@@ -61,6 +61,41 @@ describe("ConnectError", function () {
       });
     });
   });
+  describe("from", () => {
+    it("does not touch ConnectError", () => {
+      const connectError = new ConnectError(
+        "Not permitted",
+        Code.PermissionDenied
+      );
+      const fromError = ConnectError.from(connectError);
+      expect(fromError).toBe(connectError);
+    });
+    it("wraps other Error", () => {
+      const e = ConnectError.from(new Error("foo"));
+      expect(e.message).toBe("[unknown] foo");
+      expect(e.rawMessage).toBe("foo");
+    });
+    it("wraps string", () => {
+      const e = ConnectError.from("foo");
+      expect(e.message).toBe("[unknown] foo");
+      expect(e.rawMessage).toBe("foo");
+    });
+    it("works as documented", () => {
+      const connectError = new ConnectError(
+        "Not permitted",
+        Code.PermissionDenied
+      );
+      try {
+        throw connectError;
+      } catch (throwable) {
+        const e = ConnectError.from(throwable);
+        expect(e).toBe(connectError);
+        expect(e.message).toBe("[permission_denied] Not permitted");
+        expect(e.rawMessage).toBe("Not permitted");
+        expect(e.code).toBe(Code.PermissionDenied);
+      }
+    });
+  });
   describe("fromJsonString", () => {
     it("with syntax error throws", () => {
       expect(() => ConnectError.fromJsonString("invalid json")).toThrowError(
