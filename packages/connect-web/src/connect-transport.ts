@@ -57,9 +57,10 @@ export interface ConnectTransportOptions {
    */
   baseUrl: string;
 
+  /**
+   * By default, connect-web clients use the JSON format.
+   */
   useBinaryFormat?: boolean;
-
-  typeRegistry?: IMessageTypeRegistry;
 
   /**
    * Controls what the fetch client will do with credentials, such as
@@ -67,6 +68,10 @@ export interface ConnectTransportOptions {
    * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
    */
   credentials?: RequestCredentials;
+
+  // TODO explain
+  // TODO solve the duplicate with jsonOptions.typeRegistry
+  typeRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the JSON format.
@@ -231,6 +236,7 @@ function createStreamResponse<O extends Message<O>>(
               if (head.contentType == "application/json") {
                 throw ConnectError.fromJsonString(await response.text(), {
                   typeRegistry: transportOptions.typeRegistry,
+                  metadata: head.trailer,
                 });
               }
               throw new ConnectError(
@@ -241,13 +247,13 @@ function createStreamResponse<O extends Message<O>>(
             if (head.contentType == null) {
               throw new ConnectError(
                 `missing response content type`,
-                connectCodeFromHttpStatus(response.status)
+                StatusCode.Internal
               );
             }
             if (head.format == null) {
               throw new ConnectError(
                 `unexpected response content type ${head.contentType}`,
-                connectCodeFromHttpStatus(response.status)
+                StatusCode.Internal
               );
             }
           }
@@ -332,6 +338,7 @@ function createUnaryResponse<O extends Message<O>>(
               if (head.contentType == "application/json") {
                 throw ConnectError.fromJsonString(await response.text(), {
                   typeRegistry: transportOptions.typeRegistry,
+                  metadata: head.header,
                 });
               }
               throw new ConnectError(
@@ -342,13 +349,13 @@ function createUnaryResponse<O extends Message<O>>(
             if (head.contentType == null) {
               throw new ConnectError(
                 `missing response content type`,
-                connectCodeFromHttpStatus(response.status)
+                StatusCode.Internal
               );
             }
             if (head.format == null) {
               throw new ConnectError(
                 `unexpected response content type ${head.contentType}`,
-                connectCodeFromHttpStatus(response.status)
+                StatusCode.Internal
               );
             }
           }
@@ -488,23 +495,6 @@ class EndStream {
     ) {
       throw newParseError(jsonValue);
     }
-    let error: ConnectError | undefined;
-    if ("error" in jsonValue) {
-      if (
-        typeof jsonValue.error != "object" ||
-        jsonValue.error == null ||
-        Array.isArray(jsonValue.error)
-      ) {
-        throw newParseError(jsonValue, ".error");
-      }
-      if (Object.keys(jsonValue.error).length > 0) {
-        try {
-          error = ConnectError.fromJson(jsonValue.error, options);
-        } catch (e) {
-          throw newParseError(e, ".error", false);
-        }
-      }
-    }
     const metadata = new Headers();
     if ("metadata" in jsonValue) {
       if (
@@ -523,6 +513,26 @@ class EndStream {
         }
         for (const value of values) {
           metadata.append(key, value as string);
+        }
+      }
+    }
+    let error: ConnectError | undefined;
+    if ("error" in jsonValue) {
+      if (
+        typeof jsonValue.error != "object" ||
+        jsonValue.error == null ||
+        Array.isArray(jsonValue.error)
+      ) {
+        throw newParseError(jsonValue, ".error");
+      }
+      if (Object.keys(jsonValue.error).length > 0) {
+        try {
+          error = ConnectError.fromJson(jsonValue.error, {
+            ...options,
+            metadata,
+          });
+        } catch (e) {
+          throw newParseError(e, ".error", false);
         }
       }
     }

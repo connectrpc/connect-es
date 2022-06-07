@@ -59,6 +59,11 @@ export class ConnectError extends Error {
   readonly details: AnyMessage[];
 
   /**
+   * Response headers or trailers associated with this error.
+   */
+  readonly metadata: Headers;
+
+  /**
    * When an error is parsed from the wire, details are unwrapped
    * automatically from google.protobuf.Any, but we can only do so if you
    * provide the message types in a type registry. If a message type is not
@@ -79,7 +84,8 @@ export class ConnectError extends Error {
   constructor(
     message: string,
     code: ErrorCode = StatusCode.Unknown,
-    details?: AnyMessage[]
+    details?: AnyMessage[],
+    metadata?: HeadersInit
   ) {
     super(syntheticMessage(code, message));
     // see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html#example
@@ -87,6 +93,7 @@ export class ConnectError extends Error {
     this.rawMessage = message;
     this.code = code;
     this.details = details ?? [];
+    this.metadata = new Headers(metadata);
     this.rawDetails = [];
   }
 
@@ -128,7 +135,7 @@ export class ConnectError extends Error {
    */
   static fromJsonString(
     jsonString: string,
-    options?: { typeRegistry?: IMessageTypeRegistry }
+    options?: { typeRegistry?: IMessageTypeRegistry; metadata?: HeadersInit }
   ): ConnectError {
     let json: JsonValue;
     try {
@@ -146,7 +153,7 @@ export class ConnectError extends Error {
    */
   static fromJson(
     jsonValue: JsonValue,
-    options?: { typeRegistry?: IMessageTypeRegistry }
+    options?: { typeRegistry?: IMessageTypeRegistry; metadata?: HeadersInit }
   ): ConnectError {
     if (
       typeof jsonValue !== "object" ||
@@ -165,7 +172,12 @@ export class ConnectError extends Error {
     if (message != null && typeof message !== "string") {
       throw newParseError(jsonValue.code, ".message");
     }
-    const error = new ConnectError(message ?? "", code);
+    const error = new ConnectError(
+      message ?? "",
+      code,
+      undefined,
+      options?.metadata
+    );
     if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
       for (const raw of jsonValue.details) {
         let any: Any;
