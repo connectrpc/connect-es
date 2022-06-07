@@ -24,7 +24,7 @@ describe("empty_unary_with_timeout", function () {
     const deadlineMs = 1000; // 1 second
     it("with promise client", async function () {
       const client = makePromiseClient(TestService, transport);
-      const response = await client.emptyCall(empty, { timeout: deadlineMs });
+      const response = await client.emptyCall(empty, { timeoutMs: deadlineMs });
       expect(response).toEqual(empty);
     });
     it("with callback client", function (done) {
@@ -36,7 +36,7 @@ describe("empty_unary_with_timeout", function () {
           expect(response).toEqual(empty);
           done();
         },
-        { timeout: deadlineMs }
+        { timeoutMs: deadlineMs }
       );
     });
   });

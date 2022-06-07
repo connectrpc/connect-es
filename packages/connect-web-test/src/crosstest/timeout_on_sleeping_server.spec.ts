@@ -37,7 +37,7 @@ describe("timeout_on_sleeping_server", function () {
     ],
   });
   const options: ClientCallOptions = {
-    timeout: 1, // 1ms
+    timeoutMs: 1, // 1ms
   };
   function expectError(err: unknown) {
     expect(err).toBeInstanceOf(ConnectError);

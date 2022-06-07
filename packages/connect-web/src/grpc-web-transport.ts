@@ -264,8 +264,8 @@ function createGrpcWebRequestHeaders(callOptions: ClientCallOptions): Headers {
   new Headers(callOptions.headers).forEach((value, key) =>
     header.set(key, value)
   );
-  if (callOptions.timeout !== undefined) {
-    header.set("Grpc-Timeout", `${callOptions.timeout}m`);
+  if (callOptions.timeoutMs !== undefined) {
+    header.set("Grpc-Timeout", `${callOptions.timeoutMs}m`);
   }
   return header;
 }
