@@ -12,16 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export {
-  makeCallbackClient,
-  CallbackClient,
-  CallbackClientWithExactRequest,
-} from "./callback-client.js";
-export {
-  makePromiseClient,
-  PromiseClient,
-  PromiseClientWithExactRequest,
-} from "./promise-client.js";
+export { makeCallbackClient, CallbackClient } from "./callback-client.js";
+export { makePromiseClient, PromiseClient } from "./promise-client.js";
 
 export { ClientInterceptor } from "./client-interceptor.js";
 

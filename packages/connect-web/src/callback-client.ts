@@ -56,26 +56,7 @@ export type CallbackClient<T extends ServiceType> = {
   : never;
 };
 
-// prettier-ignore
-export type CallbackClientWithExactRequest<T extends ServiceType> = {
-  [P in keyof T["methods"]]:
-    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: I, callback: (error: ConnectError | undefined, response: O) => void, options?: ClientCallOptions) => CancelFn
-  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: I, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: ClientCallOptions) => CancelFn
-  : never;
-};
-
 type CancelFn = () => void;
-
-export function makeCallbackClient<T extends ServiceType>(
-  service: T,
-  transport: ClientTransport,
-  options?: { exactRequest?: false }
-): CallbackClient<T>;
-export function makeCallbackClient<T extends ServiceType>(
-  service: T,
-  transport: ClientTransport,
-  options: { exactRequest: true }
-): CallbackClientWithExactRequest<T>;
 
 /**
  * Create a CallbackClient for the given service, invoking RPCs through the
@@ -99,7 +80,7 @@ export function makeCallbackClient<T extends ServiceType>(
         break;
     }
   }
-  return client as CallbackClient<T> | CallbackClientWithExactRequest<T>;
+  return client as CallbackClient<T>;
 }
 
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
