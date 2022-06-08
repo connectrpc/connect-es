@@ -68,7 +68,7 @@ describe("interceptors", function () {
       body: new Uint8Array(271828).fill(0),
     },
   });
-  fit("work with gRPC-web transport", async function () {
+  it("work with gRPC-web transport", async function () {
     const log: string[] = [];
     const transport = createGrpcWebTransport({
       baseUrl,
