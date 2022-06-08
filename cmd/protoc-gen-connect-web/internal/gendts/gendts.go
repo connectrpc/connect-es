@@ -41,8 +41,8 @@ func generateService(f *protoplugin.GeneratedFile, service *protoplugin.Service)
 		f.P(method.JSDoc("    "))
 		f.P("    readonly ", method.LocalName, ": {")
 		f.P(`      readonly name: "`, method.Proto.GetName(), `",`)
-		f.P("      readonly I: ", method.Input.Symbol, ",")
-		f.P("      readonly O: ", method.Output.Symbol, ",")
+		f.P("      readonly I: typeof ", method.Input.Symbol, ",")
+		f.P("      readonly O: typeof ", method.Output.Symbol, ",")
 		switch {
 		case method.Proto.GetClientStreaming() && method.Proto.GetServerStreaming():
 			f.P("      readonly kind: ", rt.MethodKind, ".BiDiStreaming,")
