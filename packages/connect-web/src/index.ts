@@ -14,18 +14,17 @@
 
 export { makeCallbackClient, CallbackClient } from "./callback-client.js";
 export { makePromiseClient, PromiseClient } from "./promise-client.js";
+export { makeAnyClient, AnyClient } from "./any-client.js";
 
 export { ClientInterceptor } from "./client-interceptor.js";
 
 export {
   ClientTransport,
   ClientCallOptions,
-  ClientCall,
   ClientRequest,
   ClientRequestCallback,
   ClientResponse,
   ClientResponseHandler,
-  createClientTransportCalls,
   wrapTransportCall,
 } from "./client-transport.js";
 
