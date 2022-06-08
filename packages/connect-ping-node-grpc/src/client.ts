@@ -26,7 +26,7 @@ import {
   SumRequest,
   SumResponse,
 } from "./gen/connect/ping/v1/ping_pb.js";
-import { StatusCode } from "@bufbuild/connect-web";
+import { Code } from "@bufbuild/connect-web";
 import { makeGrpcClient } from "./make-grpc-client.js";
 
 const grpcClient = makeGrpcClient(PingService, {
@@ -90,7 +90,7 @@ function fail(): Promise<void> {
   process.stdout.write(`fail()\n`);
   return new Promise<void>((resolve, reject) => {
     const req = new FailRequest({
-      code: StatusCode.FailedPrecondition,
+      code: Code.FailedPrecondition,
     });
 
     const callback: grpc.requestCallback<FailResponse> = (
@@ -101,11 +101,11 @@ function fail(): Promise<void> {
         reject("fail() expected to fail but it didn't");
         return;
       }
-      if (err.code !== (StatusCode.FailedPrecondition as number)) {
+      if (err.code !== (Code.FailedPrecondition as number)) {
         reject(
           `fail() expected fail to fail with ${
-            StatusCode[StatusCode.FailedPrecondition]
-          } (${StatusCode.FailedPrecondition}), but got ${err.code}`
+            Code[Code.FailedPrecondition]
+          } (${Code.FailedPrecondition}), but got ${err.code}`
         );
         return;
       }
