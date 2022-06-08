@@ -57,7 +57,7 @@ export interface ClientCallOptions {
   /**
    * Timeout in milliseconds.
    */
-  timeout?: number;
+  timeoutMs?: number;
 
   /**
    * Custom headers to send with the request.
@@ -66,7 +66,7 @@ export interface ClientCallOptions {
 
   /**
    * An optional AbortSignal to cancel the call.
-   * If cancelled, an error with StatusCode.Canceled is raised.
+   * If cancelled, an error with Code.Canceled is raised.
    */
   signal?: AbortSignal;
 

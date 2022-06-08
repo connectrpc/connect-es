@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { StatusCode } from "../status-code.js";
+import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import { JsonValue, proto3 } from "@bufbuild/protobuf";
 
@@ -43,6 +43,6 @@ export function newParseError(
   }
   return new ConnectError(
     `cannot decode ConnectError${property ?? ""} from JSON: ${d}`,
-    StatusCode.Internal
+    Code.Internal
   );
 }

@@ -16,7 +16,7 @@ import {
   ConnectError,
   makeCallbackClient,
   makePromiseClient,
-  StatusCode,
+  Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransports } from "../util/describe-transports.js";
@@ -37,7 +37,7 @@ describe("timeout_on_sleeping_server", function () {
     ],
   });
   const options: ClientCallOptions = {
-    timeout: 1, // 1ms
+    timeoutMs: 1, // 1ms
   };
   function expectError(err: unknown) {
     expect(err).toBeInstanceOf(ConnectError);
@@ -46,8 +46,7 @@ describe("timeout_on_sleeping_server", function () {
       // and will return an HTTP status code 408 when stream max duration time reached, which
       // cannot be translated to a connect error code, so connect-web client throws an Unknown.
       expect(
-        err.code === StatusCode.Unknown ||
-          err.code === StatusCode.DeadlineExceeded
+        err.code === Code.Unknown || err.code === Code.DeadlineExceeded
       ).toBeTrue();
     }
   }

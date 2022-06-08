@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ConnectError,
-  StatusCode,
-  statusCodeToString,
-} from "@bufbuild/connect-web";
+import { ConnectError, Code, codeToString } from "@bufbuild/connect-web";
 import { TypeRegistry } from "@bufbuild/protobuf";
 import { ServerStreamingHappyRequest } from "./gen/testing/v1/test_pb.js";
 
@@ -24,14 +20,14 @@ describe("ConnectError", function () {
   describe("constructor", () => {
     it("should have status unknown by default", () => {
       const e = new ConnectError("foo");
-      expect(e.code).toBe(StatusCode.Unknown);
+      expect(e.code).toBe(Code.Unknown);
       expect(e.message).toBe("[unknown] foo");
       expect(e.rawMessage).toBe("foo");
       expect(String(e)).toBe("ConnectError: [unknown] foo");
     });
     it("should take other status", () => {
-      const e = new ConnectError("foo", StatusCode.AlreadyExists);
-      expect(e.code).toBe(StatusCode.AlreadyExists);
+      const e = new ConnectError("foo", Code.AlreadyExists);
+      expect(e.code).toBe(Code.AlreadyExists);
       expect(e.message).toBe("[already_exists] foo");
       expect(e.rawMessage).toBe("foo");
       expect(String(e)).toBe("ConnectError: [already_exists] foo");
@@ -41,7 +37,7 @@ describe("ConnectError", function () {
     it("serializes code and message", () => {
       const json = new ConnectError(
         "Not permitted",
-        StatusCode.PermissionDenied
+        Code.PermissionDenied
       ).toJson();
       expect(json as unknown).toEqual({
         code: "permission_denied",
@@ -49,11 +45,9 @@ describe("ConnectError", function () {
       });
     });
     it("serializes details", () => {
-      const json = new ConnectError(
-        "Not permitted",
-        StatusCode.PermissionDenied,
-        [new ServerStreamingHappyRequest({ value: 123 })]
-      ).toJson();
+      const json = new ConnectError("Not permitted", Code.PermissionDenied, [
+        new ServerStreamingHappyRequest({ value: 123 }),
+      ]).toJson();
       expect(json as unknown).toEqual({
         code: "permission_denied",
         message: "Not permitted",
@@ -80,13 +74,13 @@ describe("ConnectError", function () {
         code: "permission_denied",
         message: "Not permitted",
       });
-      expect(error.code).toBe(StatusCode.PermissionDenied);
+      expect(error.code).toBe(Code.PermissionDenied);
       expect(error.rawMessage).toBe("Not permitted");
       expect(error.details.length).toBe(0);
     });
     it("does not require message", () => {
       const error = ConnectError.fromJson({
-        code: statusCodeToString(StatusCode.PermissionDenied),
+        code: codeToString(Code.PermissionDenied),
       });
       expect(error.message).toBe("[permission_denied]");
       expect(error.rawMessage).toBe("");
@@ -104,7 +98,7 @@ describe("ConnectError", function () {
     it("with code Ok throws", () => {
       expect(() =>
         ConnectError.fromJson({
-          code: statusCodeToString(StatusCode.Ok),
+          code: "ok",
           message: "Not permitted",
         })
       ).toThrowError(
@@ -166,7 +160,7 @@ describe("ConnectError", function () {
         const error = ConnectError.fromJson(json, {
           typeRegistry: TypeRegistry.fromTypes(ServerStreamingHappyRequest),
         });
-        expect(error.code).toBe(StatusCode.PermissionDenied);
+        expect(error.code).toBe(Code.PermissionDenied);
         expect(error.rawMessage).toBe("Not permitted");
         expect(error.details.length).toBe(1);
         if (error.details[0] instanceof ServerStreamingHappyRequest) {

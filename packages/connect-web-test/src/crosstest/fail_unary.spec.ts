@@ -16,7 +16,7 @@ import {
   ConnectError,
   makeCallbackClient,
   makePromiseClient,
-  StatusCode,
+  Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransports } from "../util/describe-transports.js";
@@ -26,7 +26,7 @@ describe("fail_unary", () => {
   function expectError(err: unknown) {
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
-      expect(err.code).toEqual(StatusCode.ResourceExhausted);
+      expect(err.code).toEqual(Code.ResourceExhausted);
       expect(err.rawMessage).toEqual("soirée 🎉");
     }
   }

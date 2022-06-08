@@ -13,28 +13,29 @@
 // limitations under the License.
 
 import { TestService } from "./gen/testing/v1/test_connectweb.js";
-import {
-  ConnectError,
-  makePromiseClient,
-  StatusCode,
-} from "@bufbuild/connect-web";
+import { ConnectError, makePromiseClient, Code } from "@bufbuild/connect-web";
 import { createConnectTransport } from "@bufbuild/connect-web";
 import { describeTransports } from "./util/describe-transports.js";
 import { createGrpcWebTransport } from "@bufbuild/connect-web";
+import { TypeRegistry } from "@bufbuild/protobuf";
+import { UnaryErrorRequest } from "./gen/testing/v1/test_pb.js";
 
 const temptestserverBaseUrl = "http://127.0.0.1:9000";
 
 export const temptestserverTransports = {
   "gRPC-web transport": createGrpcWebTransport({
     baseUrl: temptestserverBaseUrl,
+    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
   }),
   "connect JSON transport": createConnectTransport({
     baseUrl: temptestserverBaseUrl,
     useBinaryFormat: false,
+    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
   }),
   "connect binary transport": createConnectTransport({
     baseUrl: temptestserverBaseUrl,
     useBinaryFormat: true,
+    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
   }),
 } as const;
 
@@ -46,17 +47,41 @@ describeTransports(temptestserverTransports, (transport) => {
     });
     expect(response.value).toBe("123");
   });
-  it("unaryError", async () => {
+  it("unaryError has code and message", async () => {
     try {
       await client.unaryError({});
     } catch (e) {
+      expect(e).toBeInstanceOf(ConnectError);
       if (e instanceof ConnectError) {
-        expect(e.code).toBe(StatusCode.AlreadyExists);
+        expect(e.code).toBe(Code.AlreadyExists);
         expect(e.rawMessage).toBe(
           "\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n"
         );
-      } else {
-        fail();
+      }
+    }
+  });
+  it("unaryError has metadata", async () => {
+    try {
+      await client.unaryError({});
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConnectError);
+      if (e instanceof ConnectError) {
+        expect(e.metadata.get("single-value")).toBe("foo");
+      }
+    }
+  });
+  it("unaryError has details", async () => {
+    try {
+      await client.unaryError({});
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConnectError);
+      if (e instanceof ConnectError) {
+        expect(e.details.length).toBe(1);
+        const got = e.details[0];
+        expect(got).toBeInstanceOf(UnaryErrorRequest);
+        if (got instanceof UnaryErrorRequest) {
+          expect(got.value).toBe(123);
+        }
       }
     }
   });
@@ -111,7 +136,7 @@ describeTransports(temptestserverTransports, (transport) => {
       await client.unaryUnimplemented({});
     } catch (e) {
       if (e instanceof ConnectError) {
-        expect(e.code).toBe(StatusCode.Unimplemented);
+        expect(e.code).toBe(Code.Unimplemented);
       } else {
         fail();
       }
@@ -142,7 +167,7 @@ describeTransports(temptestserverTransports, (transport) => {
       }
     } catch (e) {
       if (e instanceof ConnectError) {
-        expect(e.code).toBe(StatusCode.AlreadyExists);
+        expect(e.code).toBe(Code.AlreadyExists);
         expect(e.rawMessage).toBe(
           "\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n"
         );
@@ -168,7 +193,7 @@ describeTransports(temptestserverTransports, (transport) => {
       await client.serverStreamingUnimplemented({});
     } catch (e) {
       if (e instanceof ConnectError) {
-        expect(e.code).toBe(StatusCode.Unimplemented);
+        expect(e.code).toBe(Code.Unimplemented);
       } else {
         fail();
       }
