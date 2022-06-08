@@ -44,25 +44,6 @@ export type PromiseClient<T extends ServiceType> = {
     : never;
 };
 
-// prettier-ignore
-export type PromiseClientWithExactRequest<T extends ServiceType> = {
-    [P in keyof T["methods"]]:
-      T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: I, options?: ClientCallOptions) => Promise<O>
-    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: I, options?: ClientCallOptions) => Promise<AsyncIterable<O>>
-    : never;
-};
-
-export function makePromiseClient<T extends ServiceType>(
-  service: T,
-  transport: ClientTransport,
-  options?: { exactRequest?: false }
-): PromiseClient<T>;
-export function makePromiseClient<T extends ServiceType>(
-  service: T,
-  transport: ClientTransport,
-  options: { exactRequest: true }
-): PromiseClientWithExactRequest<T>;
-
 /**
  * Create a PromiseClient for the given service, invoking RPCs through the
  * given transport.
@@ -85,7 +66,7 @@ export function makePromiseClient<T extends ServiceType>(
         break;
     }
   }
-  return client as PromiseClient<T> | PromiseClientWithExactRequest<T>;
+  return client as PromiseClient<T>;
 }
 
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
