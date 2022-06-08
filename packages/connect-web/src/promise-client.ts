@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type {
+  MethodInfo,
   MethodInfoServerStreaming,
   MethodInfoUnary,
   PartialMessage,
@@ -22,14 +23,13 @@ import { MethodKind } from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
 import { Message } from "@bufbuild/protobuf";
 import {
-  createClientTransportCalls,
-  ClientCall,
   ClientTransport,
   receiveResponseUntilClose,
   ClientResponse,
   ClientCallOptions,
 } from "./client-transport.js";
 import type { MessageType } from "@bufbuild/protobuf";
+import { makeAnyClient } from "./any-client.js";
 
 // prettier-ignore
 /**
@@ -52,21 +52,16 @@ export function makePromiseClient<T extends ServiceType>(
   service: T,
   transport: ClientTransport
 ) {
-  const client: Record<string, unknown> = {};
-  for (const call of createClientTransportCalls(service, transport)) {
-    switch (call.method.kind) {
+  return makeAnyClient(service, (method) => {
+    switch (method.kind) {
       case MethodKind.Unary:
-        client[call.localName] = createUnaryFn(call);
-        break;
+        return createUnaryFn(transport, service, method);
       case MethodKind.ServerStreaming:
-        client[call.localName] = createServerStreamingFn(call);
-        break;
-      case MethodKind.ClientStreaming:
-      case MethodKind.BiDiStreaming:
-        break;
+        return createServerStreamingFn(transport, service, method);
+      default:
+        return null;
     }
-  }
-  return client as PromiseClient<T>;
+  }) as PromiseClient<T>;
 }
 
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
@@ -75,19 +70,22 @@ type UnaryFn<I extends Message<I>, O extends Message<O>> = (
 ) => Promise<O>;
 
 function createUnaryFn<I extends Message<I>, O extends Message<O>>(
-  call: ClientCall<I, O>
+  transport: ClientTransport,
+  service: ServiceType,
+  method: MethodInfo<I, O>
 ): UnaryFn<I, O> {
   return function (requestMessage, options) {
     return new Promise((resolve, reject) => {
-      const [request, response] = call(options);
-      request.send(
-        messageFromPartial(requestMessage, call.method.I),
-        (error) => {
-          if (error) {
-            reject(error);
-          }
-        }
+      const [request, response] = transport.call(
+        service,
+        method,
+        options ?? {}
       );
+      request.send(messageFromPartial(requestMessage, method.I), (error) => {
+        if (error) {
+          reject(error);
+        }
+      });
       let singleMessage: O;
       receiveResponseUntilClose(response, {
         onMessage(message): void {
@@ -111,12 +109,14 @@ type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
 ) => Promise<AsyncIterable<O>>;
 
 function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
-  call: ClientCall<I, O>
+  transport: ClientTransport,
+  service: ServiceType,
+  method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
   return function (requestMessage, options) {
-    const [request, response] = call(options);
+    const [request, response] = transport.call(service, method, options ?? {});
     return new Promise<AsyncIterable<O>>((resolve, reject) => {
-      const message = messageFromPartial(requestMessage, call.method.I);
+      const message = messageFromPartial(requestMessage, method.I);
       request.send(message, (error) => {
         if (error) {
           reject(error);

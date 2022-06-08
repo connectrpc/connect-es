@@ -15,7 +15,6 @@
 import type {
   AnyMessage,
   Message,
-  MessageType,
   MethodInfo,
   ServiceType,
 } from "@bufbuild/protobuf";
@@ -33,20 +32,6 @@ export interface ClientTransport {
     method: MethodInfo<I, O>,
     options: ClientCallOptions
   ): [ClientRequest<I>, ClientResponse<O>];
-}
-
-/**
- * A ClientCall is a function that will invoke one specific RPC.
- * The function is tied to a ClientTransport.
- *
- * This primitive is used by all concrete clients.
- */
-export interface ClientCall<I extends Message<I>, O extends Message<O>> {
-  (options?: ClientCallOptions): [ClientRequest<I>, ClientResponse<O>];
-  localName: string;
-  service: ServiceType;
-  method: MethodInfo<I, O>;
-  transport: ClientTransport;
 }
 
 /**
@@ -79,47 +64,6 @@ export interface ClientCallOptions {
    * Called when response trailers are received.
    */
   onTrailer?(trailers: Headers): void;
-}
-
-/**
- * Create a ClientCall for each method of the given service, using
- * the given transport.
- */
-export function createClientTransportCalls(
-  service: ServiceType,
-  transport: ClientTransport
-) {
-  return Object.keys(service.methods).map((localName) =>
-    createClientTransportCall(transport, service, localName)
-  );
-}
-
-/**
- * Create a ClientCall for the given RPC - a function that will invoke the RPC
- * through the given transport when called.
- */
-function createClientTransportCall<
-  T extends ServiceType,
-  N extends keyof T["methods"] & string
->(
-  transport: ClientTransport,
-  service: T,
-  methodLocalName: N
-): ClientCall<ServiceMethodInput<T, N>, ServiceMethodOutput<T, N>> {
-  type I = ServiceMethodInput<T, N>;
-  type O = ServiceMethodOutput<T, N>;
-  const method = service.methods[methodLocalName] as MethodInfo<I, O>;
-  return Object.assign(
-    function (options?: ClientCallOptions) {
-      return transport.call(service, method, options ?? {});
-    },
-    {
-      localName: methodLocalName,
-      service,
-      method,
-      transport,
-    }
-  );
 }
 
 /**
@@ -214,26 +158,6 @@ export function receiveResponseUntilClose<T extends Message<T>>(
     },
   });
 }
-
-// extract the input type of a RPC
-type ServiceMethodInput<
-  T extends ServiceType,
-  M extends keyof T["methods"]
-> = T["methods"][M]["I"] extends MessageType<infer I>
-  ? I extends Message<I>
-    ? I
-    : never
-  : never;
-
-// extract the output type of a RPC
-type ServiceMethodOutput<
-  T extends ServiceType,
-  M extends keyof T["methods"]
-> = T["methods"][M]["O"] extends MessageType<infer O>
-  ? O extends Message<O>
-    ? O
-    : never
-  : never;
 
 /**
  * wrapTransportCall is used by transport implementations to
