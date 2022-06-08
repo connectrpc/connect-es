@@ -250,7 +250,9 @@ export function wrapTransportCall(
   response: ClientResponse,
   interceptors: ClientInterceptor[] | undefined
 ): [ClientRequest, ClientResponse] {
-  const chain = (interceptors ?? []).concat(delegateToClientCallOptions);
+  const chain = (interceptors ?? [])
+    .concat(delegateToClientCallOptions)
+    .reverse();
   for (const interceptor of chain) {
     [request, response] = interceptor(
       service,
