@@ -13,22 +13,10 @@
 // limitations under the License.
 
 module.exports = function (config) {
+  require("./karma.conf.cjs")(config);
   config.set({
-    frameworks: ["jasmine"],
-    files: [
-      "src/**/*.ts",
-    ],
-    exclude: [
-      // Do not include node-specific workarounds when running in a browser.
-      "src/node-init/**/*"
-    ],
     singleRun: false,
-    reporters: ["progress"],
     browsers: [],
-    preprocessors: {"/**/*.ts": "esbuild"},
-    esbuild: {
-      target: "esnext",
-      tsconfig: "./tsconfig.json",
-    },
+    customLaunchers: {},
   });
 }
