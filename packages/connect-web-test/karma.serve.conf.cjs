@@ -13,22 +13,14 @@
 // limitations under the License.
 
 module.exports = function (config) {
+  require("./karma.conf.cjs")(config);
   config.set({
-    frameworks: ["jasmine"],
-    files: [
-      "src/**/*.ts",
-    ],
-    exclude: [
-      // Do not include node-specific workarounds when running in a browser.
-      "src/node-init/**/*"
-    ],
+    // Override the configuration settings so that we can simply serve
+    // karma, instead of running against configured browsers.
+    // This is used by the npm script "karma-serve", and the make target
+    // "test-local-browser".
     singleRun: false,
-    reporters: ["progress"],
     browsers: [],
-    preprocessors: {"/**/*.ts": "esbuild"},
-    esbuild: {
-      target: "esnext",
-      tsconfig: "./tsconfig.json",
-    },
+    customLaunchers: {},
   });
 }
