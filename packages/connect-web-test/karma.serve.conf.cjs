@@ -15,6 +15,10 @@
 module.exports = function (config) {
   require("./karma.conf.cjs")(config);
   config.set({
+    // Override the configuration settings so that we can simply serve
+    // karma, instead of running against configured browsers.
+    // This is used by the npm script "karma-serve", and the make target
+    // "test-local-browser".
     singleRun: false,
     browsers: [],
     customLaunchers: {},
