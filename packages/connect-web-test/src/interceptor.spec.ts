@@ -78,6 +78,7 @@ describe("interceptors", function () {
         },
       ],
     });
+    // eslint-disable-next-line
     for await (const _ of asyncIterable) {
       //
     }

@@ -101,7 +101,7 @@ export interface ConnectTransportOptions {
 export function createConnectTransport(
   options: ConnectTransportOptions
 ): ClientTransport {
-  const transportOptions = options;
+  const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
@@ -130,7 +130,7 @@ export function createConnectTransport(
               header,
               timeoutMs,
               method.kind,
-              transportOptions.useBinaryFormat ?? false
+              useBinaryFormat
             ),
             message:
               message instanceof method.I ? message : new method.I(message),
@@ -141,7 +141,7 @@ export function createConnectTransport(
               ...unaryRequest.init,
               headers: unaryRequest.header,
               signal: unaryRequest.signal,
-              body: options.useBinaryFormat
+              body: useBinaryFormat
                 ? unaryRequest.message.toBinary(options.binaryOptions)
                 : unaryRequest.message.toJsonString(options.jsonOptions),
             });
@@ -149,23 +149,22 @@ export function createConnectTransport(
             const responseType = response.headers.get("Content-Type") ?? "";
             if (response.status != 200) {
               if (responseType == "application/json") {
-                throw ConnectError.fromJson(await response.json(), {
-                  typeRegistry: options.typeRegistry,
-                  metadata: mergeHeaders(
-                    ...demuxHeaderTrailers(response.headers)
-                  ),
-                });
+                throw ConnectError.fromJson(
+                  (await response.json()) as JsonValue,
+                  {
+                    typeRegistry: options.typeRegistry,
+                    metadata: mergeHeaders(
+                      ...demuxHeaderTrailers(response.headers)
+                    ),
+                  }
+                );
               }
               throw new ConnectError(
                 `HTTP ${response.status} ${response.statusText}`,
                 codeFromConnectHttpStatus(response.status)
               );
             }
-            expectContentType(
-              responseType,
-              false,
-              options.useBinaryFormat ?? false
-            );
+            expectContentType(responseType, false, useBinaryFormat);
 
             const [demuxedHeader, demuxedTrailer] = demuxHeaderTrailers(
               response.headers
@@ -175,15 +174,15 @@ export function createConnectTransport(
               service,
               method,
               header: demuxedHeader,
-              message: options.useBinaryFormat
+              message: useBinaryFormat
                 ? method.O.fromBinary(
                     new Uint8Array(await response.arrayBuffer())
                   )
-                : method.O.fromJson(await response.json()),
+                : method.O.fromJson((await response.json()) as JsonValue),
               trailer: demuxedTrailer,
             };
           },
-          transportOptions.unaryInterceptors
+          options.unaryInterceptors
         );
       } catch (e) {
         if (e instanceof ConnectError) {
@@ -199,27 +198,27 @@ export function createConnectTransport(
     call<I extends Message<I>, O extends Message<O>>(
       service: ServiceType,
       method: MethodInfo<I, O>,
-      options: ClientCallOptions
+      clientCallOptions: ClientCallOptions
     ): [ClientRequest<I>, ClientResponse<O>] {
       const [request, fetchResponse] = createStreamRequest(
         service.typeName,
         method,
-        options,
-        transportOptions
+        clientCallOptions,
+        options
       );
       const response = createStreamResponse(
         method.O,
+        clientCallOptions,
         options,
-        transportOptions,
         fetchResponse
       );
       return wrapTransportCall(
         service,
         method,
-        options,
+        clientCallOptions,
         request,
         response,
-        transportOptions.interceptors
+        options.interceptors
       );
     },
   };
@@ -423,7 +422,7 @@ function expectContentType(
   const gotBinaryFormat = match && match[2] == "proto";
   if (!match || stream !== !!match[1] || binaryFormat !== gotBinaryFormat) {
     throw new ConnectError(
-      `unexpected response content type ${contentType}`,
+      `unexpected response content type ${String(contentType)}`,
       Code.Internal
     );
   }

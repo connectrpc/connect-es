@@ -20,15 +20,14 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
-import type { ConnectError } from "./connect-error.js";
+import { Message, MethodKind } from "@bufbuild/protobuf";
+import { ConnectError } from "./connect-error.js";
 import {
   ClientCallOptions,
   ClientTransport,
   receiveResponseUntilClose,
 } from "./client-transport.js";
 import { Code } from "./code.js";
-import { Message } from "@bufbuild/protobuf";
 import { makeAnyClient } from "./any-client.js";
 
 // prettier-ignore
@@ -97,8 +96,8 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
         service,
         method,
         abort.signal,
-        options?.timeoutMs,
-        options?.headers,
+        options.timeoutMs,
+        options.headers,
         requestMessage
       )
       .then(
@@ -108,11 +107,15 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
           callback(undefined, response.message);
         },
         (reason) => {
-          if (reason.code === Code.Canceled && abort.signal.aborted) {
+          const ce =
+            reason instanceof ConnectError
+              ? reason
+              : new ConnectError(String(reason), Code.Internal);
+          if (ce.code === Code.Canceled && abort.signal.aborted) {
             // As documented, discard Canceled errors if canceled by the user.
             return;
           }
-          callback(reason, new method.O());
+          callback(ce, new method.O());
         }
       );
     return () => abort.abort();

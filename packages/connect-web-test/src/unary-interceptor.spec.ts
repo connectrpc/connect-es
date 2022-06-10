@@ -71,7 +71,7 @@ describe("unary interceptors", () => {
             body: new Uint8Array(271828).fill(0),
           },
         },
-        (error, response) => {
+        () => {
           expect(log).toEqual([
             "outer sending request message",
             "inner sending request message",
