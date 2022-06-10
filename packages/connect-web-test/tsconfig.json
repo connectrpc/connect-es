@@ -10,6 +10,6 @@
       "DOM",
       // DOM.Iterable for methods entries(), keys() and values() of the Headers class
       "DOM.Iterable"
-    ],
+    ]
   }
 }
