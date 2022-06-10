@@ -92,29 +92,29 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   return function (requestMessage, callback, options) {
     const abort = new AbortController();
     options = wrapSignal(abort, options);
-    const [request, response] = transport.call(service, method, options);
-    request.send(messageFromPartial(requestMessage, method.I), (error) => {
-      if (error) {
-        if (error.code === Code.Canceled && abort.signal.aborted) {
-          // As documented, discard Canceled errors if canceled by the user.
-          return;
+    transport
+      .unary(
+        service,
+        method,
+        abort.signal,
+        options?.timeoutMs,
+        options?.headers,
+        requestMessage
+      )
+      .then(
+        (response) => {
+          options?.onHeader?.(response.header);
+          options?.onTrailer?.(response.trailer);
+          callback(undefined, response.message);
+        },
+        (reason) => {
+          if (reason.code === Code.Canceled && abort.signal.aborted) {
+            // As documented, discard Canceled errors if canceled by the user.
+            return;
+          }
+          callback(reason, new method.O());
         }
-        callback(error, new method.O());
-      }
-    });
-    let singleMessage = new method.O();
-    receiveResponseUntilClose(response, {
-      onMessage(message): void {
-        singleMessage = message;
-      },
-      onClose(error?: ConnectError) {
-        if (error && error.code === Code.Canceled && abort.signal.aborted) {
-          // As documented, discard Canceled errors if canceled by the user.
-          return;
-        }
-        callback(error, singleMessage);
-      },
-    });
+      );
     return () => abort.abort();
   };
 }

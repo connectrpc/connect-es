@@ -13,31 +13,45 @@
 // limitations under the License.
 
 import { TestService } from "./gen/testing/v1/test_connectweb.js";
-import { ConnectError, makePromiseClient, Code } from "@bufbuild/connect-web";
-import { createConnectTransport } from "@bufbuild/connect-web";
+import type { ClientTransport, UnaryInterceptor } from "@bufbuild/connect-web";
+import {
+  Code,
+  ConnectError,
+  createConnectTransport,
+  createGrpcWebTransport,
+  makePromiseClient,
+} from "@bufbuild/connect-web";
 import { describeTransports } from "./util/describe-transports.js";
-import { createGrpcWebTransport } from "@bufbuild/connect-web";
 import { TypeRegistry } from "@bufbuild/protobuf";
 import { UnaryErrorRequest } from "./gen/testing/v1/test_pb.js";
 
 const temptestserverBaseUrl = "http://127.0.0.1:9000";
 
-export const temptestserverTransports = {
-  "gRPC-web transport": createGrpcWebTransport({
-    baseUrl: temptestserverBaseUrl,
-    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
-  }),
-  "connect JSON transport": createConnectTransport({
-    baseUrl: temptestserverBaseUrl,
-    useBinaryFormat: false,
-    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
-  }),
-  "connect binary transport": createConnectTransport({
-    baseUrl: temptestserverBaseUrl,
-    useBinaryFormat: true,
-    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
-  }),
-} as const;
+export const temptestserverTransports: Record<
+  string,
+  (unaryInterceptors?: UnaryInterceptor[]) => ClientTransport
+> = {
+  "gRPC-web transport": (unaryInterceptors) =>
+    createGrpcWebTransport({
+      baseUrl: temptestserverBaseUrl,
+      typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+      unaryInterceptors,
+    }),
+  "connect JSON transport": (unaryInterceptors) =>
+    createConnectTransport({
+      baseUrl: temptestserverBaseUrl,
+      useBinaryFormat: false,
+      typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+      unaryInterceptors,
+    }),
+  "connect binary transport": (unaryInterceptors) =>
+    createConnectTransport({
+      baseUrl: temptestserverBaseUrl,
+      useBinaryFormat: true,
+      typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+      unaryInterceptors,
+    }),
+};
 
 describeTransports(temptestserverTransports, (transport) => {
   const client = makePromiseClient(TestService, transport);

@@ -18,6 +18,15 @@ export { makeAnyClient, AnyClient } from "./any-client.js";
 
 export { ClientInterceptor } from "./client-interceptor.js";
 
+// TODO
+export {
+  UnaryFn,
+  UnaryResponse,
+  UnaryRequest,
+  UnaryInterceptor,
+  runUnary,
+} from "./client-interceptor.js";
+
 export {
   ClientTransport,
   ClientCallOptions,

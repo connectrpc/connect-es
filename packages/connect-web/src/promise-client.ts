@@ -13,22 +13,20 @@
 // limitations under the License.
 
 import type {
+  MessageType,
   MethodInfo,
   MethodInfoServerStreaming,
   MethodInfoUnary,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
+import { Message, MethodKind } from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
-import { Message } from "@bufbuild/protobuf";
-import {
-  ClientTransport,
-  receiveResponseUntilClose,
-  ClientResponse,
+import type {
   ClientCallOptions,
+  ClientResponse,
+  ClientTransport,
 } from "./client-transport.js";
-import type { MessageType } from "@bufbuild/protobuf";
 import { makeAnyClient } from "./any-client.js";
 
 // prettier-ignore
@@ -74,32 +72,18 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   service: ServiceType,
   method: MethodInfo<I, O>
 ): UnaryFn<I, O> {
-  return function (requestMessage, options) {
-    return new Promise((resolve, reject) => {
-      const [request, response] = transport.call(
-        service,
-        method,
-        options ?? {}
-      );
-      request.send(messageFromPartial(requestMessage, method.I), (error) => {
-        if (error) {
-          reject(error);
-        }
-      });
-      let singleMessage: O;
-      receiveResponseUntilClose(response, {
-        onMessage(message): void {
-          singleMessage = message;
-        },
-        onClose(error?: ConnectError) {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(singleMessage);
-          }
-        },
-      });
-    });
+  return async function (requestMessage, options) {
+    const response = await transport.unary(
+      service,
+      method,
+      options?.signal,
+      options?.timeoutMs,
+      options?.headers,
+      requestMessage
+    );
+    options?.onHeader?.(response.header);
+    options?.onTrailer?.(response.trailer);
+    return response.message;
   };
 }
 

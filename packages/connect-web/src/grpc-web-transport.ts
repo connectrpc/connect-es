@@ -13,16 +13,18 @@
 // limitations under the License.
 
 import type {
+  AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
   IMessageTypeRegistry,
   Message,
   MessageType,
   MethodInfo,
+  PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
-import { codeFromGrpcWebHttpStatus, Code } from "./code.js";
+import { Code, codeFromGrpcWebHttpStatus } from "./code.js";
 import { decodeBinaryHeader } from "./http-headers.js";
 import { Status } from "./grpc/status/v1/status_pb.js";
 import type {
@@ -32,10 +34,15 @@ import type {
   ClientTransport,
 } from "./client-transport.js";
 import { wrapTransportCall } from "./client-transport.js";
-import type { ClientInterceptor } from "./client-interceptor.js";
-import { createEnvelopeReader, EnvelopeReader } from "./envelope.js";
+import type { ClientInterceptor, UnaryResponse } from "./client-interceptor.js";
+import {
+  createEnvelopeReader,
+  encodeEnvelopes,
+  EnvelopeReader,
+} from "./envelope.js";
 import { extractRejectionError } from "./private/extract-rejection-error.js";
 import { grpcStatusDetailsBinName } from "./private/grpc-status.js";
+import { runUnary, UnaryInterceptor } from "./client-interceptor.js";
 
 export interface GrpcWebTransportOptions {
   /**
@@ -65,7 +72,11 @@ export interface GrpcWebTransportOptions {
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
+  // TODO
   interceptors?: ClientInterceptor[];
+
+  // TODO
+  unaryInterceptors?: UnaryInterceptor[];
 }
 
 export function createGrpcWebTransport(
@@ -73,18 +84,117 @@ export function createGrpcWebTransport(
 ): ClientTransport {
   const transportOptions = options;
   return {
+    async unary<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
+      service: ServiceType,
+      method: MethodInfo<I, O>,
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: Headers,
+      message: PartialMessage<I>
+    ): Promise<UnaryResponse<O>> {
+      try {
+        return runUnary<I, O>(
+          {
+            service,
+            method,
+            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            init: {
+              method: "POST",
+              credentials: options.credentials ?? "same-origin",
+              redirect: "error",
+              mode: "cors",
+            },
+            header: createGrpcWebRequestHeaders(header, timeoutMs),
+            message:
+              message instanceof method.I ? message : new method.I(message),
+            signal: signal ?? new AbortController().signal,
+          },
+          async (unaryRequest) => {
+            const response = await fetch(unaryRequest.url, {
+              ...unaryRequest.init,
+              headers: unaryRequest.header,
+              signal: unaryRequest.signal,
+              body: encodeEnvelopes({
+                data: unaryRequest.message.toBinary(options.binaryOptions),
+                flags: 0x00,
+              }),
+            });
+
+            const err =
+              extractHttpStatusError(response) ??
+              extractContentTypeError(response.headers) ??
+              extractDetailsError(
+                response.headers,
+                transportOptions.typeRegistry
+              ) ??
+              extractHeadersError(response.headers);
+            if (err) {
+              throw err;
+            }
+            if (!response.body) {
+              throw "missing response body";
+            }
+            const readFrame = createEnvelopeReader(response.body);
+            let frame = await readFrame();
+            let responseMessage: O | undefined;
+            let trailer: Headers | undefined;
+            while (frame) {
+              if ((frame.flags & trailerFlag) === trailerFlag) {
+                trailer = parseGrpcWebTrailer(frame.data);
+                const err =
+                  extractDetailsError(trailer, transportOptions.typeRegistry) ??
+                  extractHeadersError(trailer);
+                if (err) {
+                  throw err;
+                }
+                break;
+              }
+              responseMessage = method.O.fromBinary(
+                frame.data,
+                transportOptions.binaryOptions
+              );
+              frame = await readFrame();
+            }
+            if (!responseMessage) {
+              throw "missing message";
+            }
+            if (!trailer) {
+              throw "missing trailers";
+            }
+            return <UnaryResponse<O>>{
+              header: response.headers,
+              message: responseMessage,
+              trailer,
+            };
+          },
+          transportOptions.unaryInterceptors
+        );
+      } catch (e) {
+        if (e instanceof ConnectError) {
+          throw e;
+        }
+        throw new ConnectError(
+          e instanceof Error ? e.message : String(e),
+          Code.Internal
+        );
+      }
+    },
+    /** @deprecated */
     call<I extends Message<I>, O extends Message<O>>(
       service: ServiceType,
       method: MethodInfo<I, O>,
       options: ClientCallOptions
     ): [ClientRequest<I>, ClientResponse<O>] {
-      const [request, fetchResponse] = createRequest(
+      const [request, fetchResponse] = createStreamRequest(
         service.typeName,
         method.name,
         options,
         transportOptions
       );
-      const response = createResponse(
+      const response = createStreamResponse(
         method.O,
         options,
         transportOptions,
@@ -102,7 +212,8 @@ export function createGrpcWebTransport(
   };
 }
 
-function createRequest<I extends Message<I>>(
+/** @deprecated */
+function createStreamRequest<I extends Message<I>>(
   serviceTypeName: string,
   methodName: string,
   callOptions: ClientCallOptions,
@@ -130,7 +241,7 @@ function createRequest<I extends Message<I>>(
       mode: "cors",
     },
     abort,
-    header: createGrpcWebRequestHeaders(callOptions),
+    header: createGrpcWebRequestHeadersOLD(callOptions),
     send(message: I, callback) {
       const data = message.toBinary(transportOptions.binaryOptions);
       const body = new Uint8Array(data.length + 5);
@@ -156,7 +267,8 @@ function createRequest<I extends Message<I>>(
   return [request, responsePromise];
 }
 
-function createResponse<O extends Message<O>>(
+/** @deprecated */
+function createStreamResponse<O extends Message<O>>(
   messageType: MessageType<O>,
   callOptions: ClientCallOptions,
   transportOptions: GrpcWebTransportOptions,
@@ -246,7 +358,33 @@ function createResponse<O extends Message<O>>(
 
 const trailerFlag = 0b10000000;
 
-function createGrpcWebRequestHeaders(callOptions: ClientCallOptions): Headers {
+function createGrpcWebRequestHeaders(
+  headers: HeadersInit | undefined,
+  timeoutMs: number | undefined
+): Headers {
+  const result = new Headers(headers);
+  // We provide the most explicit description for our content type.
+  // Note that we do not support the grpc-web-text format.
+  // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2
+  result.set("Content-Type", "application/grpc-web+proto");
+  // Some servers may rely on the request header `X-Grpc-Web` to identify
+  // gRPC-web requests. For example the proxy by improbable:
+  // https://github.com/improbable-eng/grpc-web/blob/53aaf4cdc0fede7103c1b06f0cfc560c003a5c41/go/grpcweb/wrapper.go#L231
+  result.set("X-Grpc-Web", "1");
+  // Note that we do not comply with recommended structure for the
+  // user-agent string.
+  // https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
+  result.set("X-User-Agent", "@bufbuild/connect-web");
+  if (timeoutMs !== undefined) {
+    result.set("Grpc-Timeout", `${timeoutMs}m`);
+  }
+  return result;
+}
+
+/** @deprecated */
+function createGrpcWebRequestHeadersOLD(
+  callOptions: ClientCallOptions
+): Headers {
   const header = new Headers({
     // We provide the most explicit description for our content type.
     // Note that we do not support the grpc-web-text format.

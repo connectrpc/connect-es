@@ -16,10 +16,11 @@ import type {
   AnyMessage,
   Message,
   MethodInfo,
+  PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
-import type { ClientInterceptor } from "./client-interceptor";
+import type { ClientInterceptor, UnaryResponse } from "./client-interceptor";
 
 /**
  * ClientTransport represents the underlying transport for a client.
@@ -27,6 +28,16 @@ import type { ClientInterceptor } from "./client-interceptor";
  * concrete clients to be independent of the protocol.
  */
 export interface ClientTransport {
+  unary<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
+    service: ServiceType,
+    method: MethodInfo<I, O>,
+    signal: AbortSignal | undefined,
+    timeoutMs: number | undefined,
+    header: HeadersInit | undefined,
+    message: PartialMessage<I>
+  ): Promise<UnaryResponse<O>>;
+
+  /** @deprecated */
   call<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
     service: ServiceType,
     method: MethodInfo<I, O>,
@@ -69,6 +80,7 @@ export interface ClientCallOptions {
 /**
  * ClientRequest represents the sending half of a client.
  */
+/** @deprecated */
 export interface ClientRequest<T extends Message<T> = AnyMessage> {
   readonly url: string;
   readonly init: Exclude<RequestInit, "body" | "headers" | "signal">;
@@ -86,11 +98,13 @@ export interface ClientRequest<T extends Message<T> = AnyMessage> {
  * ClientRequestCallback is the callback for the sending a request from a
  * client.
  */
+/** @deprecated */
 export type ClientRequestCallback = (error: ConnectError | undefined) => void;
 
 /**
  * ClientResponse represents the receiving half of a client.
  */
+/** @deprecated */
 export interface ClientResponse<T extends Message<T> = AnyMessage> {
   /**
    * Receive tries to read exactly one message from the response, and
@@ -109,6 +123,7 @@ export interface ClientResponse<T extends Message<T> = AnyMessage> {
 /**
  * ClientResponseHandler is the callback for the receiving half of a client.
  */
+/** @deprecated */
 export interface ClientResponseHandler<T extends Message<T> = AnyMessage> {
   /**
    * Called when response headers are received, before the first message
@@ -138,6 +153,7 @@ export interface ClientResponseHandler<T extends Message<T> = AnyMessage> {
  * A utility that sequentially reads all messages from the response, and calls
  * the callback for each of them.
  */
+/** @deprecated */
 export function receiveResponseUntilClose<T extends Message<T>>(
   response: ClientResponse<T>,
   handler: ClientResponseHandler<T>
@@ -166,6 +182,7 @@ export function receiveResponseUntilClose<T extends Message<T>>(
  * It also adds and interceptor at the end, which will call the
  * onHeader and onTrailer methods of user-provided call options.
  */
+/** @deprecated */
 export function wrapTransportCall(
   service: ServiceType,
   method: MethodInfo,
@@ -189,6 +206,7 @@ export function wrapTransportCall(
   return [request, response];
 }
 
+/** @deprecated */
 function delegateToClientCallOptions(
   service: ServiceType,
   method: MethodInfo,

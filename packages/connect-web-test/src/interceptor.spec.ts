@@ -18,7 +18,6 @@ import {
   createGrpcWebTransport,
   makePromiseClient,
 } from "@bufbuild/connect-web";
-import { SimpleRequest } from "./gen/grpc/testing/messages_pb.js";
 import { TestService } from "./gen/grpc/testing/test_connectweb.js";
 
 function makeLoggingInterceptor(
@@ -62,12 +61,6 @@ function makeLoggingInterceptor(
 }
 
 describe("interceptors", function () {
-  const req = new SimpleRequest({
-    responseSize: 314159,
-    payload: {
-      body: new Uint8Array(271828).fill(0),
-    },
-  });
   it("work with gRPC-web transport", async function () {
     const log: string[] = [];
     const transport = createGrpcWebTransport({
@@ -78,7 +71,16 @@ describe("interceptors", function () {
       ],
     });
     const client = makePromiseClient(TestService, transport);
-    await client.unaryCall(req);
+    const asyncIterable = await client.streamingOutputCall({
+      responseParameters: [
+        {
+          size: 1,
+        },
+      ],
+    });
+    for await (const _ of asyncIterable) {
+      //
+    }
     expect(log).toEqual([
       "outer sending request message",
       "inner sending request message",
