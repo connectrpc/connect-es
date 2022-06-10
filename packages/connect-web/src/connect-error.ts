@@ -50,7 +50,7 @@ export class ConnectError extends Error {
   readonly details: AnyMessage[];
 
   /**
-   * Response headers or trailers associated with this error.
+   * A union of response headers and trailers associated with this error.
    */
   readonly metadata: Headers;
 

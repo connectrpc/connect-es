@@ -65,7 +65,7 @@ export function makePromiseClient<T extends ServiceType>(
 }
 
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
-  request: I | PartialMessage<I>,
+  request: PartialMessage<I>,
   options?: ClientCallOptions
 ) => Promise<O>;
 
@@ -104,7 +104,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
 }
 
 type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
-  request: I | PartialMessage<I>,
+  request: PartialMessage<I>,
   options?: ClientCallOptions
 ) => Promise<AsyncIterable<O>>;
 

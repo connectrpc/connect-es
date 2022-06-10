@@ -75,3 +75,17 @@ export function decodeBinaryHeader<T extends Message<T>>(
     );
   }
 }
+
+/**
+ * Create a union of several Headers objects, by appending all fields from all
+ * inputs to a single Headers object.
+ */
+export function mergeHeaders(...headers: Headers[]): Headers {
+  const h = new Headers();
+  for (const e of headers) {
+    e.forEach((value, key) => {
+      h.append(key, value);
+    });
+  }
+  return h;
+}
