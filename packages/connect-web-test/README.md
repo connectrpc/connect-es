@@ -5,7 +5,8 @@ This package provides test coverage for @bufbuild/connect-web with Jasmine.
 The test suite is run twice, once in a headless browser, once in Node.js.
 Note running in Node.js requires the fetch API implementation added in v18.
 You can conveniently run the suite with `make test-node test-browser` from 
-the project root.
+the project root. Files with a `.nodeonly` extension are excluded from 
+browser runs.
 
 To run the test suite in local browsers, you can start the karma server
 with `npm run karma-serve` and open the printed karma server URL in the 
