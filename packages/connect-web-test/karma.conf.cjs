@@ -19,8 +19,8 @@ module.exports = function (config) {
       "src/**/*.ts",
     ],
     exclude: [
-      // Do not include node-specific workarounds when running in a browser.
-      "src/node-init/**/*"
+      // We don't want node-specific files when running in a browser.
+      "src/**/*.nodeonly*.ts",
     ],
     singleRun: true,
     reporters: ["progress"],
