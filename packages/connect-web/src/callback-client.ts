@@ -79,7 +79,7 @@ export function makeCallbackClient<T extends ServiceType>(
 }
 
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
-  request: I | PartialMessage<I>,
+  request: PartialMessage<I>,
   callback: (error: ConnectError | undefined, response: O) => void,
   options?: ClientCallOptions
 ) => CancelFn;
@@ -120,7 +120,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
 }
 
 type ServerStreamingFn<I extends Message, O extends Message> = (
-  request: I | PartialMessage<I>,
+  request: PartialMessage<I>,
   onResponse: (response: O) => void,
   onClose: (error: ConnectError | undefined) => void,
   options?: ClientCallOptions
