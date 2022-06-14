@@ -34,21 +34,21 @@ export const temptestserverTransports: Record<
   "gRPC-web transport": (unaryInterceptors) =>
     createGrpcWebTransport({
       baseUrl: temptestserverBaseUrl,
-      typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+      typeRegistry: TypeRegistry.from(UnaryErrorRequest),
       unaryInterceptors,
     }),
   "connect JSON transport": (unaryInterceptors) =>
     createConnectTransport({
       baseUrl: temptestserverBaseUrl,
       useBinaryFormat: false,
-      typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+      typeRegistry: TypeRegistry.from(UnaryErrorRequest),
       unaryInterceptors,
     }),
   "connect binary transport": (unaryInterceptors) =>
     createConnectTransport({
       baseUrl: temptestserverBaseUrl,
       useBinaryFormat: true,
-      typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+      typeRegistry: TypeRegistry.from(UnaryErrorRequest),
       unaryInterceptors,
     }),
 };

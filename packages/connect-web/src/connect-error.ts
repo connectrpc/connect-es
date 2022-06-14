@@ -18,7 +18,6 @@ import {
   AnyMessage,
   IMessageTypeRegistry,
   JsonValue,
-  MessageType,
   TypeRegistry,
 } from "@bufbuild/protobuf";
 import { newParseError } from "./private/new-parse-error.js";
@@ -98,11 +97,8 @@ export class ConnectError extends Error {
       message: this.rawMessage,
     };
     if (this.details.length > 0) {
-      const typeRegistry = TypeRegistry.fromIterable(
-        this.details.reduce(
-          (prev, cur) => addTypesToSet(cur.getType(), prev),
-          new Set<MessageType>()
-        )
+      const typeRegistry = TypeRegistry.from(
+        ...this.details.map((message) => message.getType())
       );
       value.details = this.details.map((detail) => {
         const any = new Any();
@@ -218,22 +214,4 @@ function syntheticMessage(code: Code, message: string) {
   return message.length
     ? `[${codeToString(code)}] ${message}`
     : `[${codeToString(code)}]`;
-}
-
-function addTypesToSet(
-  type: MessageType,
-  set: Set<MessageType>
-): Set<MessageType> {
-  if (set.has(type)) {
-    return set;
-  }
-  set.add(type);
-  for (const field of type.fields.list()) {
-    if (field.kind == "message") {
-      addTypesToSet(field.T, set);
-    } else if (field.kind == "map" && field.V.kind == "message") {
-      addTypesToSet(field.V.T, set);
-    }
-  }
-  return set;
 }
