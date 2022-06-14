@@ -22,10 +22,10 @@
     "default": "./dist/esm/index.js"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^0.0.4"
+    "@bufbuild/protobuf": "^0.0.5"
   },
   "devDependencies": {
-    "typescript": "^4.7.2"
+    "typescript": "^4.7.3"
   },
   "files": [
     "dist/**/"
