@@ -11,7 +11,7 @@
   "scripts": {
     "clean": "rm -rf ./dist/cjs/* ./dist/esm/* ./dist/types/*",
     "build": "npm run build:cjs && npm run build:esm+types",
-    "build:cjs": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
+    "build:cjs": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types"
   },
   "type": "module",
