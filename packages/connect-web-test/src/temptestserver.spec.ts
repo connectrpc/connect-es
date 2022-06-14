@@ -25,17 +25,17 @@ const temptestserverBaseUrl = "http://127.0.0.1:9000";
 export const temptestserverTransports = {
   "gRPC-web transport": createGrpcWebTransport({
     baseUrl: temptestserverBaseUrl,
-    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+    typeRegistry: TypeRegistry.from(UnaryErrorRequest),
   }),
   "connect JSON transport": createConnectTransport({
     baseUrl: temptestserverBaseUrl,
     useBinaryFormat: false,
-    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+    typeRegistry: TypeRegistry.from(UnaryErrorRequest),
   }),
   "connect binary transport": createConnectTransport({
     baseUrl: temptestserverBaseUrl,
     useBinaryFormat: true,
-    typeRegistry: TypeRegistry.fromTypes(UnaryErrorRequest),
+    typeRegistry: TypeRegistry.from(UnaryErrorRequest),
   }),
 } as const;
 

@@ -158,7 +158,7 @@ describe("ConnectError", function () {
       });
       it("decodes details using type registry", () => {
         const error = ConnectError.fromJson(json, {
-          typeRegistry: TypeRegistry.fromTypes(ServerStreamingHappyRequest),
+          typeRegistry: TypeRegistry.from(ServerStreamingHappyRequest),
         });
         expect(error.code).toBe(Code.PermissionDenied);
         expect(error.rawMessage).toBe("Not permitted");
