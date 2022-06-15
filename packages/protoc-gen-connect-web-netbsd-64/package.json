@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/protoc-gen-connect-web-netbsd-64",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "protoc-gen-connect-web (netbsd / x64)",
   "license": "Apache-2.0",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "https://github.com/bufbuild/connect-web.git"
   },
   "peerDependencies": {
-    "@bufbuild/connect-web": "^0.0.6",
+    "@bufbuild/connect-web": "^0.0.7",
     "@bufbuild/protoc-gen-es": "^0.0.6"
   },
   "peerDependenciesMeta": {
