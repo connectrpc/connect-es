@@ -12,7 +12,7 @@
   },
   "peerDependencies": {
     "@bufbuild/connect-web": "^0.0.6",
-    "@bufbuild/protoc-gen-es": "^0.0.5"
+    "@bufbuild/protoc-gen-es": "^0.0.6"
   },
   "peerDependenciesMeta": {
     "@bufbuild/connect-web": {
