@@ -109,6 +109,16 @@ export const TestService = {
     /**
      * Returns exactly 5 responses. The value from the request is incremented
      * and given in each response.
+     * Responds with headers:
+     * single-value-head: foo
+     * separate-values-head: bar
+     * separate-values-head: baz
+     * joined-values-head: bar,baz
+     * Responds with trailers:
+     * single-value: foo
+     * separate-values: bar
+     * separate-values: baz
+     * joined-values: bar,baz
      *
      * @generated from rpc testing.v1.TestService.ServerStreamingHappy
      */

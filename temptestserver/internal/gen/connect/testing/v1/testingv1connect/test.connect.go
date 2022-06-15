@@ -56,6 +56,16 @@ type TestServiceClient interface {
 	UnaryUnimplemented(context.Context, *connect_go.Request[v1.UnaryUnimplementedRequest]) (*connect_go.Response[v1.UnaryUnimplementedResponse], error)
 	// Returns exactly 5 responses. The value from the request is incremented
 	// and given in each response.
+	// Responds with headers:
+	// single-value-head: foo
+	// separate-values-head: bar
+	// separate-values-head: baz
+	// joined-values-head: bar,baz
+	// Responds with trailers:
+	// single-value: foo
+	// separate-values: bar
+	// separate-values: baz
+	// joined-values: bar,baz
 	ServerStreamingHappy(context.Context, *connect_go.Request[v1.ServerStreamingHappyRequest]) (*connect_go.ServerStreamForClient[v1.ServerStreamingHappyResponse], error)
 	// Always raises an error "already_exists", and a message with whitespace
 	// and unicode content
@@ -237,6 +247,16 @@ type TestServiceHandler interface {
 	UnaryUnimplemented(context.Context, *connect_go.Request[v1.UnaryUnimplementedRequest]) (*connect_go.Response[v1.UnaryUnimplementedResponse], error)
 	// Returns exactly 5 responses. The value from the request is incremented
 	// and given in each response.
+	// Responds with headers:
+	// single-value-head: foo
+	// separate-values-head: bar
+	// separate-values-head: baz
+	// joined-values-head: bar,baz
+	// Responds with trailers:
+	// single-value: foo
+	// separate-values: bar
+	// separate-values: baz
+	// joined-values: bar,baz
 	ServerStreamingHappy(context.Context, *connect_go.Request[v1.ServerStreamingHappyRequest], *connect_go.ServerStream[v1.ServerStreamingHappyResponse]) error
 	// Always raises an error "already_exists", and a message with whitespace
 	// and unicode content

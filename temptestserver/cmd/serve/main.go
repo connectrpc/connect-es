@@ -95,6 +95,14 @@ func (TestService) UnaryExpectHeaders(ctx context.Context, req *connect.Request[
 }
 
 func (TestService) ServerStreamingHappy(ctx context.Context, req *connect.Request[testingv1.ServerStreamingHappyRequest], res *connect.ServerStream[testingv1.ServerStreamingHappyResponse]) error {
+	res.ResponseHeader().Add("single-value-head", "foo")
+	res.ResponseHeader().Add("separate-values-head", "bar")
+	res.ResponseHeader().Add("separate-values-head", "baz")
+	res.ResponseHeader().Add("joined-values-head", "bar, baz")
+	res.ResponseTrailer().Add("single-value", "foo")
+	res.ResponseTrailer().Add("separate-values", "bar")
+	res.ResponseTrailer().Add("separate-values", "baz")
+	res.ResponseTrailer().Add("joined-values", "bar, baz")
 	for i := 0; i < 5; i++ {
 		err := res.Send(&testingv1.ServerStreamingHappyResponse{
 			Value: fmt.Sprint(req.Msg.GetValue() + int32(i)),
@@ -170,6 +178,7 @@ func main() {
 			"Grpc-Status", "Grpc-Message", "Grpc-Status-Details-Bin",
 			// headers used in tests
 			"Joined-Values", "Separate-Values", "Single-Value",
+			"Joined-Values-Head", "Separate-Values-Head", "Single-Value-Head",
 			"Trailer-Joined-Values", "Trailer-Separate-Values", "Trailer-Single-Value",
 		},
 	}).Handler(mux)
