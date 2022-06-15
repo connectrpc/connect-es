@@ -53,6 +53,16 @@ service TestService {
 
   // Returns exactly 5 responses. The value from the request is incremented
   // and given in each response.
+  // Responds with headers:
+  // single-value-head: foo
+  // separate-values-head: bar
+  // separate-values-head: baz
+  // joined-values-head: bar,baz
+  // Responds with trailers:
+  // single-value: foo
+  // separate-values: bar
+  // separate-values: baz
+  // joined-values: bar,baz
   rpc ServerStreamingHappy(ServerStreamingHappyRequest) returns (stream ServerStreamingHappyResponse);
 
   // Always raises an error "already_exists", and a message with whitespace
