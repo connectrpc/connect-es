@@ -17,7 +17,6 @@ import {
   createGrpcWebTransport,
 } from "@bufbuild/connect-web";
 import type { ClientTransport } from "@bufbuild/connect-web";
-import type { UnaryInterceptor } from "@bufbuild/connect-web/src";
 
 // The following servers are available through crosstests:
 //
@@ -32,24 +31,24 @@ export const baseUrl = "https://127.0.0.1:8080";
 
 export const crosstestTransports: Record<
   string,
-  (unaryInterceptors?: UnaryInterceptor[]) => ClientTransport
+  (options?: Record<string, unknown>) => ClientTransport
 > = {
-  "gRPC-web transport": (unaryInterceptors) =>
+  "gRPC-web transport": (options) =>
     createGrpcWebTransport({
+      ...options,
       baseUrl,
-      unaryInterceptors,
     }),
-  "connect JSON transport": (unaryInterceptors) =>
+  "connect JSON transport": (options) =>
     createConnectTransport({
+      ...options,
       baseUrl,
       useBinaryFormat: false,
-      unaryInterceptors,
     }),
-  "connect binary transport": (unaryInterceptors) =>
+  "connect binary transport": (options) =>
     createConnectTransport({
+      ...options,
       baseUrl,
       useBinaryFormat: true,
-      unaryInterceptors,
     }),
 };
 
