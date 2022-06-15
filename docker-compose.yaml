@@ -11,3 +11,16 @@ services:
     entrypoint: /usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
     ports:
       - "8083:8083"
+  startup-message:
+    build:
+      context: .
+      dockerfile: Dockerfile.waitforit
+    command:
+      - |
+        ./wait-for-it.sh server-connect:8080 --strict --timeout=10 -- \
+        ./wait-for-it.sh server-connect:8081 --strict --timeout=10 -- \
+        ./wait-for-it.sh server-grpc:8083 --strict --timeout=10 -- \
+        echo "all testing servers are started and listening"
+    depends_on:
+      - server-connect
+      - server-grpc
