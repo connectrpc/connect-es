@@ -37,10 +37,12 @@ describe("unary interceptors", () => {
       const log: string[] = [];
       const client = makePromiseClient(
         TestService,
-        transportFactory([
-          makeLoggingInterceptor("outer", log),
-          makeLoggingInterceptor("inner", log),
-        ])
+        transportFactory({
+          unaryInterceptors: [
+            makeLoggingInterceptor("outer", log),
+            makeLoggingInterceptor("inner", log),
+          ],
+        })
       );
       await client.unaryCall({
         responseSize: 314159,
@@ -59,10 +61,12 @@ describe("unary interceptors", () => {
       const log: string[] = [];
       const client = makeCallbackClient(
         TestService,
-        transportFactory([
-          makeLoggingInterceptor("outer", log),
-          makeLoggingInterceptor("inner", log),
-        ])
+        transportFactory({
+          unaryInterceptors: [
+            makeLoggingInterceptor("outer", log),
+            makeLoggingInterceptor("inner", log),
+          ],
+        })
       );
       client.unaryCall(
         {
