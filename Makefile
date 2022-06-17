@@ -64,8 +64,8 @@ __temptestserver-gorun:
 	cd temptestserver && go run ./cmd/serve
 TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
 $(TESTSERVER_RUNNING): docker-compose.yaml
-	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) dockercomposeup
-	node make/scripts/service-start.js $(TESTSERVER_RUNNING) dockercomposeup 'all testing servers are started and listening'
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
+	node make/scripts/service-start.js $(TESTSERVER_RUNNING) docker-compose-up '"port":"8083"'
 
 
 # The private NPM package "@bufbuild/connect-web-test" provides test coverage:
@@ -144,9 +144,9 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) dockercomposeup
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
 	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
-	$(MAKE) dockercomposeclean
+	$(MAKE) docker-compose-clean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
@@ -231,9 +231,9 @@ release: all ## Release @bufbuild/connect-web
 # We expose this target only for ci, so it can check for diffs.
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN) $(TEMPTESTSERVER_GEN)
 
-dockercomposeclean:
+docker-compose-clean:
 	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans
 	# clean up errors are ignored
 
-dockercomposeup: dockercomposeclean
+docker-compose-up: docker-compose-clean
 	CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose up
