@@ -1,14 +1,9 @@
 #!/usr/bin/env node
 
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-} from "fs";
+import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
 import { spawn } from "child_process";
 import { dirname } from "path";
+import * as net from "net";
 
 if (process.argv.length !== 5) {
   process.stderr.write(
@@ -26,7 +21,7 @@ if (process.argv.length !== 5) {
   process.exit(1);
 }
 
-const [, , lockFilePath, makeTarget, successfulStartSubstring] = process.argv;
+const [, , lockFilePath, makeTarget, targetAddress] = process.argv;
 const stdoutLog = lockFilePath + ".out";
 const stderrLog = lockFilePath + ".err";
 
@@ -55,6 +50,20 @@ child.on("exit", (code, signal) => {
   childExitCode = code;
   childExitSignal = signal;
 });
+
+let connectionReady;
+const [host, port] = targetAddress.split(":");
+const socket = new net.Socket();
+socket.connect(Number(port), host);
+socket.on("error", () => {
+  new Promise((r) => setTimeout(r, 1000)).then(() => {
+    socket.connect(Number(port), host);
+  });
+});
+socket.on("ready", () => {
+  connectionReady = true;
+});
+
 const checkIntervalId = setInterval(() => {
   if (childExitCode !== undefined || childExitSignal !== undefined) {
     process.stderr.write(`failed to start ${makeTarget}\n`);
@@ -64,10 +73,7 @@ const checkIntervalId = setInterval(() => {
   if (!existsSync(stdoutLog)) {
     return;
   }
-  const log = readFileSync(stdoutLog, {
-    encoding: "utf-8",
-  });
-  if (log.lastIndexOf(successfulStartSubstring) === -1) {
+  if (!connectionReady) {
     return;
   }
   clearInterval(checkIntervalId);
