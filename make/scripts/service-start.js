@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { spawn } from "child_process";
 import { dirname } from "path";
 import * as net from "net";
@@ -22,29 +22,17 @@ if (process.argv.length !== 5) {
 }
 
 const [, , lockFilePath, makeTarget, targetAddress] = process.argv;
-const stdoutLog = lockFilePath + ".out";
-const stderrLog = lockFilePath + ".err";
 
-if (existsSync(stdoutLog)) {
-  unlinkSync(stdoutLog);
-}
-if (existsSync(stderrLog)) {
-  unlinkSync(stderrLog);
-}
 if (!existsSync(dirname(lockFilePath))) {
   mkdirSync(dirname(lockFilePath), {
     recursive: true,
   });
 }
-const child = spawn(
-  `make ${makeTarget} >${lockFilePath}.out 2>${lockFilePath}.err`,
-  [],
-  {
-    stdio: "inherit",
-    detached: true,
-    shell: true,
-  }
-);
+const child = spawn(`make ${makeTarget}`, [], {
+  stdio: "inherit",
+  detached: true,
+  shell: true,
+});
 let childExitCode, childExitSignal;
 child.on("exit", (code, signal) => {
   childExitCode = code;
@@ -68,9 +56,6 @@ const checkIntervalId = setInterval(() => {
   if (childExitCode !== undefined || childExitSignal !== undefined) {
     process.stderr.write(`failed to start ${makeTarget}\n`);
     process.exit(childExitCode ?? 1);
-    return;
-  }
-  if (!existsSync(stdoutLog)) {
     return;
   }
   if (!connectionReady) {
