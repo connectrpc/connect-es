@@ -8,13 +8,13 @@ import * as net from "net";
 if (process.argv.length !== 5) {
   process.stderr.write(
     [
-      `USAGE: ${process.argv[1]} <lock-file-path> <make-target> <successful-start-substring>`,
+      `USAGE: ${process.argv[1]} <lock-file-path> <make-target> <target-address>`,
       "",
       "(Re-)start a service in the background. ",
       "",
-      "lock-file-path:             path to use for the lock file",
-      "make-target:                make target to run as the service",
-      "successful-start-substring: if the output of the make target matches this string, consider the service running",
+      "lock-file-path:  path to use for the lock file",
+      "make-target:     make target to run as the service",
+      "target-address:  target address to check if the service is running",
       "",
     ].join("\n")
   );
@@ -29,7 +29,7 @@ if (!existsSync(dirname(lockFilePath))) {
   });
 }
 const child = spawn(`make ${makeTarget}`, [], {
-  stdio: "inherit",
+  stdio: "ignore",
   detached: true,
   shell: true,
 });
@@ -39,33 +39,24 @@ child.on("exit", (code, signal) => {
   childExitSignal = signal;
 });
 
-let connectionReady;
 const [host, port] = targetAddress.split(":");
 const socket = new net.Socket();
-socket.connect(Number(port), host);
+socket.connect(parseInt(port, 10), host);
 socket.on("error", () => {
-  new Promise((r) => setTimeout(r, 1000)).then(() => {
-    socket.connect(Number(port), host);
-  });
-});
-socket.on("ready", () => {
-  connectionReady = true;
-});
-
-const checkIntervalId = setInterval(() => {
   if (childExitCode !== undefined || childExitSignal !== undefined) {
     process.stderr.write(`failed to start ${makeTarget}\n`);
     process.exit(childExitCode ?? 1);
     return;
   }
-  if (!connectionReady) {
-    return;
-  }
-  clearInterval(checkIntervalId);
+  setTimeout(() => {
+    socket.connect(Number(port), host);
+  }, 1000);
+});
+socket.on("ready", () => {
   writeFileSync(lockFilePath, child.pid.toString(10), {
     encoding: "utf-8",
   });
   child.unref();
   process.stdout.write(`${makeTarget} runnning\n`);
   process.exit(0);
-}, 250);
+});
