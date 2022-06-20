@@ -65,7 +65,7 @@ __temptestserver-gorun:
 TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
 $(TESTSERVER_RUNNING): docker-compose.yaml
 	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) dockercomposeup
-	node make/scripts/service-start.js $(TESTSERVER_RUNNING) dockercomposeup 'localhost:8083'
+	node make/scripts/service-start.js $(TESTSERVER_RUNNING) dockercomposeup 'localhost:8080,localhost:8081,localhost:8083'
 
 
 # The private NPM package "@bufbuild/connect-web-test" provides test coverage:
