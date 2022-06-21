@@ -7,7 +7,7 @@ export PATH := $(abspath $(CACHE_DIR)/bin):$(abspath node_modules/.bin):$(PATH)
 
 
 # The crosstest git hash to be used by docker-compose and code generation
-CROSSTEST_VERSION := 75774b9dabba88b201be341dd65dee928a252d49
+CROSSTEST_VERSION := e982fb10e5f9c3e74061b50716317003e3e736b3
 
 
 # The code generator protoc-gen-es generates message and enum types.
@@ -59,13 +59,13 @@ $(TEMPTESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find $(TEMPTESTSERVE
 	mkdir -p $(dir $(TEMPTESTSERVER_GEN)) && touch $(TEMPTESTSERVER_GEN)
 $(TEMPTESTSERVER_RUNNING): $(TEMPTESTSERVER_GEN)
 	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
-	node make/scripts/service-start.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun 'serving at'
+	node make/scripts/service-start.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun 'localhost:9000'
 __temptestserver-gorun:
 	cd temptestserver && go run ./cmd/serve
 TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
 $(TESTSERVER_RUNNING): docker-compose.yaml
-	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
-	node make/scripts/service-start.js $(TESTSERVER_RUNNING) docker-compose-up '"port":"8083"'
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) dockercomposeup
+	node make/scripts/service-start.js $(TESTSERVER_RUNNING) dockercomposeup 'localhost:8080,localhost:8081,localhost:8083'
 
 
 # The private NPM package "@bufbuild/connect-web-test" provides test coverage:
@@ -144,9 +144,9 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) docker-compose-up
+	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) dockercomposeup
 	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
-	$(MAKE) docker-compose-clean
+	$(MAKE) dockercomposeclean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
@@ -231,9 +231,9 @@ release: all ## Release @bufbuild/connect-web
 # We expose this target only for ci, so it can check for diffs.
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN) $(TEMPTESTSERVER_GEN)
 
-docker-compose-clean:
+dockercomposeclean:
 	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans
 	# clean up errors are ignored
 
-docker-compose-up: docker-compose-clean
+dockercomposeup: dockercomposeclean
 	CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose up
