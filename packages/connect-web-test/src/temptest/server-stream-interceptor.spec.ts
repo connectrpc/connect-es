@@ -24,6 +24,7 @@ import {
 import { TestService } from "../gen/testing/v1/test_connectweb.js";
 import { ServerStreamingHappyRequest } from "../gen/testing/v1/test_pb.js";
 import type { Interceptor } from "@bufbuild/connect-web";
+import { listHeaderKeys } from "../util/list-header-keys.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   const fieldsToIgnore = [
@@ -41,7 +42,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
     log.push(`${name} sending request message`);
     const res = await next(req);
-    const headerKeys = Array.from(res.header.keys())
+    const headerKeys = listHeaderKeys(res.header)
       .filter((value) => !fieldsToIgnore.includes(value))
       .join(", ");
     log.push(`${name} response received with headers: ${headerKeys}`);
@@ -53,7 +54,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
           if (!r.done) {
             log.push(`${name} response stream received message`);
           } else {
-            const trailerKeys = Array.from(res.trailer.keys())
+            const trailerKeys = listHeaderKeys(res.trailer)
               .filter((value) => !fieldsToIgnore.includes(value))
               .join(", ");
             log.push(
