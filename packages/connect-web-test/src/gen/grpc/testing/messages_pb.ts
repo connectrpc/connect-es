@@ -21,7 +21,7 @@
 /* eslint-disable */
 
 import type {BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage} from "@bufbuild/protobuf";
-import {Message, proto3} from "@bufbuild/protobuf";
+import {Any, Message, proto3} from "@bufbuild/protobuf";
 
 /**
  * The type of payload that should be returned.
@@ -1221,6 +1221,98 @@ export class ClientConfigureResponse extends Message<ClientConfigureResponse> {
 
   static equals(a: ClientConfigureResponse | PlainMessage<ClientConfigureResponse> | undefined, b: ClientConfigureResponse | PlainMessage<ClientConfigureResponse> | undefined): boolean {
     return proto3.util.equals(ClientConfigureResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message grpc.testing.ErrorDetail
+ */
+export class ErrorDetail extends Message<ErrorDetail> {
+  /**
+   * @generated from field: string reason = 1;
+   */
+  reason = "";
+
+  /**
+   * @generated from field: string domain = 2;
+   */
+  domain = "";
+
+  constructor(data?: PartialMessage<ErrorDetail>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "grpc.testing.ErrorDetail";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "domain", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ErrorDetail {
+    return new ErrorDetail().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ErrorDetail {
+    return new ErrorDetail().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ErrorDetail {
+    return new ErrorDetail().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ErrorDetail | PlainMessage<ErrorDetail> | undefined, b: ErrorDetail | PlainMessage<ErrorDetail> | undefined): boolean {
+    return proto3.util.equals(ErrorDetail, a, b);
+  }
+}
+
+/**
+ * @generated from message grpc.testing.ErrorStatus
+ */
+export class ErrorStatus extends Message<ErrorStatus> {
+  /**
+   * @generated from field: int32 code = 1;
+   */
+  code = 0;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  /**
+   * @generated from field: repeated google.protobuf.Any details = 3;
+   */
+  details: Any[] = [];
+
+  constructor(data?: PartialMessage<ErrorStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "grpc.testing.ErrorStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "code", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "details", kind: "message", T: Any, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ErrorStatus {
+    return new ErrorStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ErrorStatus {
+    return new ErrorStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ErrorStatus {
+    return new ErrorStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ErrorStatus | PlainMessage<ErrorStatus> | undefined, b: ErrorStatus | PlainMessage<ErrorStatus> | undefined): boolean {
+    return proto3.util.equals(ErrorStatus, a, b);
   }
 }
 
