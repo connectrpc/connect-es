@@ -41,6 +41,7 @@ import {
   encodeEnvelopes,
   EnvelopeReader,
 } from "./envelope.js";
+import { fromJson, fromJsonString } from "./json.js";
 import { newParseError } from "./private/new-parse-error.js";
 import { extractRejectionError } from "./private/extract-rejection-error.js";
 
@@ -232,7 +233,7 @@ function createStreamResponse<O extends Message<O>>(
             if (response.status != 200) {
               handler.onTrailer?.(head.trailer);
               if (head.contentType == "application/json") {
-                throw ConnectError.fromJsonString(await response.text(), {
+                throw fromJsonString(await response.text(), {
                   typeRegistry: transportOptions.typeRegistry,
                   metadata: head.trailer,
                 });
@@ -332,7 +333,7 @@ function createUnaryResponse<O extends Message<O>>(
             if (response.status != 200) {
               handler.onTrailer?.(head.trailer);
               if (head.contentType == "application/json") {
-                throw ConnectError.fromJsonString(await response.text(), {
+                throw fromJsonString(await response.text(), {
                   typeRegistry: transportOptions.typeRegistry,
                   metadata: head.header,
                 });
@@ -523,7 +524,7 @@ class EndStream {
       }
       if (Object.keys(jsonValue.error).length > 0) {
         try {
-          error = ConnectError.fromJson(jsonValue.error, {
+          error = fromJson(jsonValue.error, {
             ...options,
             metadata,
           });

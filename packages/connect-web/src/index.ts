@@ -48,3 +48,5 @@ export {
   EnvelopedMessage,
   encodeEnvelopes,
 } from "./envelope.js";
+
+export { fromJson, fromJsonString, toJson, toJsonString } from "./json.js";
