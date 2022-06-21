@@ -34,3 +34,15 @@ crosstestTransports["gRPC transport"] = (options?: Record<string, unknown>) =>
       })
     ),
   });
+
+// We don't have h2c or h2 on the temptestserver
+/*
+temptestserverTransports["gRPC transport"] = (
+  options?: Record<string, unknown>
+) =>
+  createGrpcTransport({
+    ...options,
+    address: baseUrl.substring("https://".length),
+    channelCredentials: grpc.ChannelCredentials.createInsecure(),
+  });
+*/

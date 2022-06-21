@@ -12,15 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { baseUrl, crosstestTransports } from "./util/crosstestserver.js";
+import { crosstestTransports } from "./util/crosstestserver.js";
 import type { UnaryInterceptor } from "@bufbuild/connect-web";
-import {
-  createConnectTransport,
-  makePromiseClient,
-} from "@bufbuild/connect-web";
-import { SimpleRequest } from "./gen/grpc/testing/messages_pb.js";
+import { makeCallbackClient, makePromiseClient } from "@bufbuild/connect-web";
 import { TestService } from "./gen/grpc/testing/test_connectweb.js";
-import { makeCallbackClient } from "@bufbuild/connect-web";
 
 function makeLoggingInterceptor(name: string, log: string[]): UnaryInterceptor {
   return (next) => async (req) => {
@@ -57,7 +52,7 @@ describe("unary interceptors", () => {
         "outer response received",
       ]);
     });
-    it(`via ${name} and callback client`, () => {
+    it(`via ${name} and callback client`, (done) => {
       const log: string[] = [];
       const client = makeCallbackClient(
         TestService,
@@ -82,35 +77,9 @@ describe("unary interceptors", () => {
             "inner response received",
             "outer response received",
           ]);
+          done();
         }
       );
     });
   }
-});
-
-describe("unary interceptors", function () {
-  const req = new SimpleRequest({
-    responseSize: 314159,
-    payload: {
-      body: new Uint8Array(271828).fill(0),
-    },
-  });
-  it("work with Connect transport", async function () {
-    const log: string[] = [];
-    const transport = createConnectTransport({
-      baseUrl,
-      unaryInterceptors: [
-        makeLoggingInterceptor("outer", log),
-        makeLoggingInterceptor("inner", log),
-      ],
-    });
-    const client = makePromiseClient(TestService, transport);
-    await client.unaryCall(req);
-    expect(log).toEqual([
-      "outer sending request message",
-      "inner sending request message",
-      "inner response received",
-      "outer response received",
-    ]);
-  });
 });

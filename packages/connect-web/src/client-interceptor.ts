@@ -15,29 +15,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type {
-  ClientCallOptions,
-  ClientRequest,
-  ClientResponse,
-} from "./client-transport.js";
-import type {
   AnyMessage,
   Message,
   MethodInfo,
   ServiceType,
 } from "@bufbuild/protobuf";
-
-/**
- * ClientInterceptor gives you access to the request and response objects
- * provided by a ClientTransport.
- */
-/** @deprecated */
-export type ClientInterceptor = (
-  service: ServiceType,
-  method: MethodInfo,
-  options: Readonly<ClientCallOptions>,
-  request: ClientRequest,
-  response: ClientResponse
-) => [ClientRequest, ClientResponse];
 
 // TODO
 export interface UnaryRequest<I extends Message<I> = AnyMessage> {
@@ -72,16 +54,95 @@ export type UnaryInterceptor<
 
 // TODO
 export function runUnary<I extends Message<I>, O extends Message<O>>(
-  unaryRequest: UnaryRequest<I>,
-  unaryFn: UnaryFn<I, O>,
+  req: UnaryRequest<I>,
+  next: UnaryFn<I, O>,
   interceptors?: UnaryInterceptor[]
 ): Promise<UnaryResponse<O>> {
-  let next = unaryFn;
   if (interceptors) {
     next = interceptors
       .concat()
       .reverse()
       .reduce((n, i) => i(n), next);
   }
-  return next(unaryRequest);
+  return next(req);
+}
+
+// TODO
+type ServerStreamFn<I extends Message<I> = any, O extends Message<O> = any> = (
+  req: UnaryRequest<I>
+) => Promise<StreamResponse<O>>;
+
+// TODO
+export type ServerStreamInterceptor<
+  I extends Message<I> = any,
+  O extends Message<O> = any
+> = (next: ServerStreamFn<I, O>) => ServerStreamFn<I, O>;
+
+// TODO
+export function runServerStream<I extends Message<I>, O extends Message<O>>(
+  req: UnaryRequest<I>,
+  next: ServerStreamFn<I, O>,
+  interceptors?: ServerStreamInterceptor<I, O>[]
+): Promise<StreamResponse<O>> {
+  if (interceptors) {
+    next = interceptors
+      .concat()
+      .reverse()
+      .reduce((n, i) => i(n), next);
+  }
+  return next(req);
+}
+
+/*
+const ws = new WritableStream<string>(
+  {
+    start(controller) {
+      controller.error();
+    },
+    write(chunk, controller): void | PromiseLike<void> {
+      controller.error();
+      controller.error();
+    },
+  },
+  {
+    highWaterMark: 1,
+    size(chunk: string): number {
+      return 1;
+    },
+  }
+);
+void ws.close();
+const w = ws.getWriter();
+void w.ready;
+void w.write();
+
+// TODO
+export interface StreamRequest<I extends Message<I> = AnyMessage> {
+  readonly service: ServiceType;
+  readonly method: MethodInfo<I, AnyMessage>;
+  readonly url: string;
+  readonly init: Exclude<RequestInit, "body" | "headers" | "signal">;
+  readonly abort: AbortSignal;
+  readonly header: Headers;
+  readonly ready: Promise<void>;
+
+  write(message: I): Promise<void>;
+
+  close(): Promise<void>;
+
+  // readonly closed: Promise<undefined>;
+}
+
+*/
+
+// TODO
+export interface StreamResponse<O extends Message<O> = AnyMessage> {
+  readonly service: ServiceType;
+  readonly method: MethodInfo<AnyMessage, O>;
+  readonly header: Headers;
+
+  // cancel(reason?: any): Promise<void>;
+  read(): Promise<ReadableStreamDefaultReadResult<O>>;
+
+  readonly trailer: Headers;
 }

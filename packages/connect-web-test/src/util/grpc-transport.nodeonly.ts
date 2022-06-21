@@ -13,33 +13,31 @@
 // limitations under the License.
 
 import type {
-  ClientCallOptions,
-  ClientInterceptor,
-  ClientRequest,
-  ClientResponse,
   ClientTransport,
+  ServerStreamInterceptor,
+  StreamResponse,
   UnaryInterceptor,
+  UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-web";
 import {
-  ClientRequestCallback,
   Code,
   ConnectError,
   mergeHeaders,
   runUnary,
-  wrapTransportCall,
 } from "@bufbuild/connect-web";
 import {
   AnyMessage,
   IMessageTypeRegistry,
   Message,
+  MessageType,
   MethodInfo,
-  MethodKind,
   PartialMessage,
   protoBase64,
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as grpc from "@grpc/grpc-js";
+import { runServerStream } from "@bufbuild/connect-web";
 
 export interface GrpcTransportOptions {
   address: string;
@@ -48,10 +46,10 @@ export interface GrpcTransportOptions {
   typeRegistry?: IMessageTypeRegistry;
 
   // TODO
-  interceptors?: ClientInterceptor[];
+  unaryInterceptors?: UnaryInterceptor[];
 
   // TODO
-  unaryInterceptors?: UnaryInterceptor[];
+  serverStreamInterceptors?: ServerStreamInterceptor[];
 }
 
 interface GrpcClientTransport extends ClientTransport {
@@ -99,7 +97,6 @@ export function createGrpcTransport(
       if (signal) {
         signal.addEventListener("abort", () => abort.abort());
       }
-      const { serialize, deserialize } = makeSerializerFns(method);
       return runUnary<I, O>(
         {
           service,
@@ -119,8 +116,8 @@ export function createGrpcTransport(
             let trailer: Headers = new Headers();
             const clientCall = client.makeUnaryRequest(
               unaryRequest.url,
-              serialize,
-              deserialize,
+              makeSerializerFn(),
+              makeDeserializerFn(method.O),
               unaryRequest.message,
               grpcMetadataFromHeaders(unaryRequest.header),
               {
@@ -164,259 +161,162 @@ export function createGrpcTransport(
         transportOptions.unaryInterceptors
       );
     },
-
-    /** @deprecated */
-    call<I extends Message<I>, O extends Message<O>>(
+    async serverStream<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
       service: ServiceType,
       method: MethodInfo<I, O>,
-      options: ClientCallOptions
-    ): [ClientRequest<I>, ClientResponse<O>] {
-      const { serialize, deserialize } = makeSerializerFns(method);
-      const signal = options.signal ?? new AbortController().signal;
-      const grpcCallOptions: grpc.CallOptions = {};
-      if (options.timeoutMs !== undefined) {
-        grpcCallOptions.deadline = Date.now() + options.timeoutMs;
-      }
-      const grpcMetadata = new grpc.Metadata();
-      const requestUrl = `/${service.typeName}/${method.name}`;
-      const requestHeader = new Headers(options.headers);
-
-      switch (method.kind) {
-        case MethodKind.ServerStreaming: {
-          const [request, callPromise, callErrorPromise] =
-            createServerStreamingRequest(
-              service,
-              method,
-              client,
-              signal,
-              grpcCallOptions,
-              requestHeader
-            );
-          const response = createServerStreamingResponse(
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: HeadersInit | undefined,
+      message: PartialMessage<I>
+    ): Promise<StreamResponse<O>> {
+      try {
+        return runServerStream<I, O>(
+          <UnaryRequest<I>>{
             service,
             method,
-            signal,
-            callPromise,
-            callErrorPromise
-          );
-          return wrapTransportCall(
-            service,
-            method,
-            options,
-            request,
-            response,
-            transportOptions.interceptors
-          );
-        }
-        case MethodKind.BiDiStreaming: {
-          const bidiCall = client.makeBidiStreamRequest(
-            requestUrl,
-            serialize,
-            deserialize,
-            grpcMetadata,
-            grpcCallOptions
-          );
-          signal.addEventListener("abort", () => bidiCall.cancel());
-          bidiCall.on("status", (x) => {});
-          bidiCall.on("metadata", (x) => {});
-          bidiCall.on("data", (x) => {});
-          bidiCall.on("error", (x) => {});
-          bidiCall.on("close", () => {});
-          bidiCall.on("end", () => {});
-          //          bidiCall.read()
-          const req: ClientRequest = {
-            url: requestUrl,
+            url: `/${service.typeName}/${method.name}`,
             init: {},
-            header: requestHeader,
-            abort: signal,
-            send(message: I, callback: ClientRequestCallback) {
-              bidiCall.write(message, callback);
-            },
-          };
-          const res: ClientResponse = {
-            receive(handler) {
-              //handler.
-            },
-          };
-          return wrapTransportCall(
-            service,
-            method,
-            options,
-            req,
-            res,
-            transportOptions.interceptors
-          );
-        }
-        default:
-          throw "TODO";
-      }
-    },
-  };
-}
+            header: new Headers(header),
+            message:
+              message instanceof method.I ? message : new method.I(message),
+            signal: signal ?? new AbortController().signal,
+          },
+          async (unaryRequest: UnaryRequest<I>): Promise<StreamResponse<O>> => {
+            // TODO cancellation
+            const clientCall = client.makeServerStreamRequest(
+              unaryRequest.url,
+              makeSerializerFn(),
+              makeDeserializerFn(method.O),
+              unaryRequest.message,
+              grpcMetadataFromHeaders(unaryRequest.header),
+              {
+                deadline: timeoutMs ? Date.now() + timeoutMs : undefined,
+              }
+            );
 
-function createServerStreamingRequest<
-  I extends Message<I>,
-  O extends Message<O>
->(
-  service: ServiceType,
-  method: MethodInfo<I, O>,
-  client: grpc.Client,
-  signal: AbortSignal,
-  grpcCallOptions: grpc.CallOptions,
-  header: Headers
-): [
-  ClientRequest<I>,
-  Promise<grpc.ClientReadableStream<O>>,
-  Promise<ConnectError>
-] {
-  let resolveCall: (value: grpc.ClientReadableStream<O>) => void;
-  const callPromise = new Promise<grpc.ClientReadableStream<O>>((resolve) => {
-    resolveCall = resolve;
-  });
-  let resolveCallError: (value: ConnectError) => void;
-  const callErrorPromise = new Promise<ConnectError>((resolve) => {
-    resolveCallError = resolve;
-  });
-  const request: ClientRequest<I> = {
-    url: `/${service.typeName}/${method.name}`,
-    init: {},
-    header,
-    abort: signal,
-    send(message, callback) {
-      // TODO cancellation
-      const { serialize, deserialize } = makeSerializerFns(method);
-      const clientCall = client.makeServerStreamRequest(
-        this.url,
-        serialize,
-        deserialize,
-        message,
-        grpcCallOptions
-      );
-      clientCall.pause();
-      clientCall.on("error", (e) => {
-        // @ts-ignore
-        resolveCallError(new ConnectError(e.message, e.code));
-      });
-      resolveCall(clientCall);
-      callback(undefined);
-    },
-  };
-  return [request, callPromise, callErrorPromise];
-}
+            clientCall.pause();
 
-function createServerStreamingResponse<
-  I extends Message<I>,
-  O extends Message<O>
->(
-  service: ServiceType,
-  method: MethodInfo<I, O>,
-  signal: AbortSignal,
-  call: Promise<grpc.ClientReadableStream<O>>,
-  callError: Promise<ConnectError>
-): ClientResponse<O> {
-  let onMetadata: any;
-  let onData: any;
-  let onStatus: any;
-  let onEnd: any;
-  let onError: any;
-  return <ClientResponse<O>>{
-    receive(handler) {
-      let closed = false;
-
-      function close(reason?: unknown) {
-        if (closed) {
-          return;
-        }
-        const error =
-          reason !== undefined ? extractRejectionError(reason) : undefined;
-        handler.onClose(error);
-        closed = true;
-      }
-
-      callError.then(close);
-      let responseHeader: Headers = new Headers();
-      let responseTrailer: Headers = new Headers();
-      call
-        .then((call) => {
-          if (!call.isPaused()) {
-            close("cannot read response concurrently");
-            return;
-          }
-          if (onMetadata) {
-            call.off("metadata", onMetadata);
-            call.off("status", onStatus);
-            call.off("end", onEnd);
-            call.off("data", onData);
-            call.off("error", onError);
-          }
-          onMetadata = (metadata: grpc.Metadata) => {
-            responseHeader = grpcMetadataToHeaders(metadata);
-            handler.onHeader?.(responseHeader);
-          };
-          call.on("metadata", onMetadata);
-          onStatus = (status: grpc.StatusObject) => {
-            responseTrailer = grpcMetadataToHeaders(status.metadata);
-            handler.onTrailer?.(responseTrailer);
-            if (status.code != grpc.status.OK) {
-              // TODO grpc-status-details-bin
-              close(
-                new ConnectError(
+            let clientError: Error | undefined;
+            const header: Headers = new Headers();
+            const trailer: Headers = new Headers();
+            let callEnded = false;
+            clientCall.on("metadata", (metadata: grpc.Metadata) => {
+              grpcMetadataToHeaders(metadata).forEach((value, key) =>
+                header.append(key, value)
+              );
+            });
+            clientCall.on("status", (status: grpc.StatusObject) => {
+              grpcMetadataToHeaders(status.metadata).forEach((value, key) =>
+                trailer.append(key, value)
+              );
+              if (status.code != grpc.status.OK) {
+                // TODO grpc-status-details-bin
+                clientError = new ConnectError(
                   status.details,
                   status.code as number,
                   undefined,
-                  mergeHeaders(responseHeader, responseTrailer)
-                )
-              );
-            }
-          };
-          call.on("status", onStatus);
-          onData = (data: O) => {
-            handler.onMessage(data);
-            call.pause();
-          };
-          call.on("data", onData);
-          onError = (error: Error) => {
-            close(error);
-          };
-          call.on("error", onError);
-          onEnd = () => {
-            close();
-          };
-          call.on("end", onEnd);
-          call.resume();
-        })
-        .catch(close);
+                  mergeHeaders(header, trailer)
+                );
+              }
+            });
+            clientCall.on("error", (error: Error) => {
+              clientError = error;
+            });
+            clientCall.on("end", () => {
+              callEnded = true;
+            });
+
+            return <StreamResponse<O>>{
+              service,
+              method,
+              header,
+              trailer,
+              async read(): Promise<ReadableStreamDefaultReadResult<O>> {
+                const outcome = await new Promise<O | Error | null>(
+                  (resolve) => {
+                    if (callEnded) {
+                      resolve(null);
+                      return;
+                    }
+                    if (clientError) {
+                      resolve(clientError);
+                      return;
+                    }
+                    clientCall.resume();
+                    clientCall.once("data", (data) => {
+                      resolve(data);
+                      clientCall.pause();
+                    });
+                    clientCall.once("error", (error) => {
+                      resolve(error);
+                    });
+                    clientCall.once("end", () => {
+                      resolve(clientError ?? null);
+                    });
+                  }
+                );
+
+                if (outcome instanceof Message) {
+                  return {
+                    done: false,
+                    value: outcome,
+                  };
+                }
+                if (outcome instanceof ConnectError) {
+                  throw outcome;
+                }
+                if (outcome instanceof Error) {
+                  throw connectErrorFromError(outcome);
+                }
+                return {
+                  done: true,
+                  value: undefined,
+                };
+              },
+            };
+          }
+        );
+      } catch (e) {
+        if (e instanceof ConnectError) {
+          throw e;
+        }
+        throw new ConnectError(
+          e instanceof Error ? e.message : String(e),
+          Code.Internal
+        );
+      }
     },
   };
 }
 
-function extractRejectionError(reason: unknown): ConnectError {
-  if (reason instanceof ConnectError) {
-    return reason;
-  }
-  if (reason instanceof Error) {
-    if (reason.name == "AbortError") {
-      // Fetch requests can only be canceled with an AbortController.
-      // We detect that condition by looking at the name of the raised
-      // error object, and translate to the appropriate status code.
-      return new ConnectError(reason.message, Code.Canceled);
-    }
-    return new ConnectError(reason.message);
-  }
-  return new ConnectError(String(reason));
+function makeSerializerFn<T extends Message<T>>() {
+  return (value: T): Buffer => Buffer.from(value.toBinary());
 }
 
-function makeSerializerFns<I extends Message<I>, O extends Message<O>>(
-  method: MethodInfo<I, O>
-) {
-  return {
-    serialize(value: I): Buffer {
-      return Buffer.from(value.toBinary());
-    },
-    deserialize(buffer: Buffer): O {
-      return method.O.fromBinary(buffer);
-    },
-  };
+function makeDeserializerFn<T extends Message<T>>(type: MessageType<T>) {
+  return (buffer: Buffer): T => type.fromBinary(buffer);
+}
+
+function connectErrorFromError(
+  err: Error | grpc.ServiceError | ConnectError
+): ConnectError {
+  if (err instanceof ConnectError) {
+    return err;
+  }
+  if ("details" in err) {
+    const se = err as grpc.ServiceError;
+    // TODO grpc-status-details-bin
+    return new ConnectError(
+      se.details,
+      se.code as number,
+      undefined,
+      grpcMetadataToHeaders(se.metadata)
+    );
+  }
+  return new ConnectError(err.message, Code.Internal);
 }
 
 function grpcMetadataFromHeaders(headers: Headers): grpc.Metadata {

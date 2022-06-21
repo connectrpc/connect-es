@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createEnvelopeReader } from "@bufbuild/connect-web";
+import {
+  createEnvelopeReader,
+  createEnvelopeReadableStream,
+} from "@bufbuild/connect-web";
 import { webReadableStreamFromBytes } from "./util/web-streams.js";
 
 function envelopeMessages(
@@ -33,7 +36,7 @@ function envelopeMessages(
   return env;
 }
 
-describe("envelope-reader", () => {
+describe("createEnvelopeReader()", () => {
   it("reads empty stream", async () => {
     const read = createEnvelopeReader(
       webReadableStreamFromBytes(new Uint8Array(0))
@@ -90,5 +93,68 @@ describe("envelope-reader", () => {
     }
     const r = await read();
     expect(r).toBeNull();
+  });
+});
+
+describe("createEnvelopeReadableStream()", () => {
+  it("reads empty stream", async () => {
+    const reader = createEnvelopeReadableStream(
+      webReadableStreamFromBytes(new Uint8Array(0))
+    ).getReader();
+    const r = await reader.read();
+    expect(r.done).toBeTrue();
+    expect(r.value).toBeUndefined();
+  });
+  it("reads multiple messages", async () => {
+    const input = [
+      {
+        data: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+        flags: 0b00000000,
+      },
+      {
+        data: new Uint8Array([0xde, 0xad, 0xbe, 0xe0]),
+        flags: 0b00000000,
+      },
+      {
+        data: new Uint8Array([0xde, 0xad, 0xbe, 0xe1]),
+        flags: 0b10000000,
+      },
+    ];
+    const reader = createEnvelopeReadableStream(
+      webReadableStreamFromBytes(envelopeMessages(...input))
+    ).getReader();
+    for (const want of input) {
+      const r = await reader.read();
+      expect(r.done).toBeFalse();
+      expect(r.value).toBeDefined();
+      expect(r.value?.flags).toBe(want.flags);
+      expect(r.value?.data).toEqual(want.data);
+    }
+    const r = await reader.read();
+    expect(r.done).toBeTrue();
+  });
+  it("reads an EndStreamResponse out of usual order", async () => {
+    const input = [
+      {
+        data: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+        flags: 0b10000000,
+      },
+      {
+        data: new Uint8Array([0xde, 0xad, 0xbe, 0xe1]),
+        flags: 0b00000000,
+      },
+    ];
+    const reader = createEnvelopeReadableStream(
+      webReadableStreamFromBytes(envelopeMessages(...input))
+    ).getReader();
+    for (const want of input) {
+      const r = await reader.read();
+      expect(r.done).toBeFalse();
+      expect(r.value).toBeDefined();
+      expect(r.value?.flags).toBe(want.flags);
+      expect(r.value?.data).toEqual(want.data);
+    }
+    const r = await reader.read();
+    expect(r.done).toBeTrue();
   });
 });

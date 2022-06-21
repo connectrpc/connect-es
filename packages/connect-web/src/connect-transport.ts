@@ -21,7 +21,6 @@ import {
   JsonValue,
   JsonWriteOptions,
   Message,
-  MessageType,
   MethodInfo,
   MethodKind,
   PartialMessage,
@@ -29,27 +28,17 @@ import {
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code, codeFromConnectHttpStatus } from "./code.js";
+import type { ClientTransport } from "./client-transport.js";
 import type {
-  ClientCallOptions,
-  ClientRequest,
-  ClientResponse,
-  ClientTransport,
-} from "./client-transport.js";
-import { wrapTransportCall } from "./client-transport.js";
-import type {
-  ClientInterceptor,
+  ServerStreamInterceptor,
+  StreamResponse,
   UnaryInterceptor,
   UnaryRequest,
   UnaryResponse,
 } from "./client-interceptor.js";
-import { runUnary } from "./client-interceptor.js";
-import {
-  createEnvelopeReader,
-  encodeEnvelopes,
-  EnvelopeReader,
-} from "./envelope.js";
+import { runServerStream, runUnary } from "./client-interceptor.js";
+import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { newParseError } from "./private/new-parse-error.js";
-import { extractRejectionError } from "./private/extract-rejection-error.js";
 import { mergeHeaders } from "./http-headers.js";
 
 export interface ConnectTransportOptions {
@@ -92,10 +81,10 @@ export interface ConnectTransportOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
   // TODO
-  interceptors?: ClientInterceptor[];
+  unaryInterceptors?: UnaryInterceptor[];
 
   // TODO
-  unaryInterceptors?: UnaryInterceptor[];
+  serverStreamInterceptors?: ServerStreamInterceptor[];
 }
 
 export function createConnectTransport(
@@ -141,9 +130,12 @@ export function createConnectTransport(
               ...unaryRequest.init,
               headers: unaryRequest.header,
               signal: unaryRequest.signal,
-              body: useBinaryFormat
-                ? unaryRequest.message.toBinary(options.binaryOptions)
-                : unaryRequest.message.toJsonString(options.jsonOptions),
+              body: createConnectRequestBody(
+                unaryRequest.message,
+                method.kind,
+                useBinaryFormat,
+                options.typeRegistry
+              ),
             });
 
             const responseType = response.headers.get("Content-Type") ?? "";
@@ -194,204 +186,168 @@ export function createConnectTransport(
         );
       }
     },
-    /** @deprecated */
-    call<I extends Message<I>, O extends Message<O>>(
+    async serverStream<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
       service: ServiceType,
       method: MethodInfo<I, O>,
-      clientCallOptions: ClientCallOptions
-    ): [ClientRequest<I>, ClientResponse<O>] {
-      const [request, fetchResponse] = createStreamRequest(
-        service.typeName,
-        method,
-        clientCallOptions,
-        options
-      );
-      const response = createStreamResponse(
-        method.O,
-        clientCallOptions,
-        options,
-        fetchResponse
-      );
-      return wrapTransportCall(
-        service,
-        method,
-        clientCallOptions,
-        request,
-        response,
-        options.interceptors
-      );
-    },
-  };
-}
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: HeadersInit | undefined,
+      message: PartialMessage<I>
+    ): Promise<StreamResponse<O>> {
+      try {
+        return runServerStream<I, O>(
+          <UnaryRequest<I>>{
+            service,
+            method,
+            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            init: {
+              method: "POST",
+              credentials: options.credentials ?? "same-origin",
+              redirect: "error",
+              mode: "cors",
+            },
+            header: createConnectRequestHeaders(
+              header,
+              timeoutMs,
+              method.kind,
+              useBinaryFormat
+            ),
+            message:
+              message instanceof method.I ? message : new method.I(message),
+            signal: signal ?? new AbortController().signal,
+          },
+          async (unaryRequest: UnaryRequest<I>): Promise<StreamResponse<O>> => {
+            const response = await fetch(unaryRequest.url, {
+              ...unaryRequest.init,
+              headers: unaryRequest.header,
+              signal: unaryRequest.signal,
+              body: createConnectRequestBody(
+                unaryRequest.message,
+                method.kind,
+                useBinaryFormat,
+                options.typeRegistry
+              ),
+            });
 
-/** @deprecated */
-function createStreamRequest<I extends Message<I>>(
-  serviceTypeName: string,
-  method: MethodInfo<I, AnyMessage>,
-  callOptions: ClientCallOptions,
-  transportOptions: ConnectTransportOptions
-): [ClientRequest<I>, Promise<Response>] {
-  let resolveResponse: (value: Response) => void;
-  let rejectResponse: (reason: unknown) => void;
-  const responsePromise = new Promise<Response>((resolve, reject) => {
-    resolveResponse = resolve;
-    rejectResponse = reject;
-  });
-  let baseUrl = transportOptions.baseUrl;
-  if (baseUrl.endsWith("/")) {
-    baseUrl = baseUrl.substring(0, baseUrl.length - 1);
-  }
-  const url = `${baseUrl}/${serviceTypeName}/${method.name}`;
-  const abort = callOptions.signal ?? new AbortController().signal;
-  const useBinaryFormat = transportOptions.useBinaryFormat ?? false;
-  const request: ClientRequest = {
-    url,
-    init: {
-      method: "POST",
-      credentials: transportOptions.credentials ?? "same-origin",
-      redirect: "error",
-      mode: "cors",
-    },
-    abort,
-    header: createConnectRequestHeaders(
-      callOptions.headers,
-      callOptions.timeoutMs,
-      method.kind,
-      useBinaryFormat
-    ),
-    send(message: I, callback) {
-      // TODO support request streams
-      let encodedMessage: Uint8Array;
-      if (useBinaryFormat) {
-        encodedMessage = message.toBinary();
-      } else {
-        encodedMessage = new TextEncoder().encode(
-          message.toJsonString({ typeRegistry: transportOptions.typeRegistry })
-        );
-      }
-      const body: BodyInit = encodeEnvelopes(
-        { data: encodedMessage, flags: 0b00000000 },
-        {
-          data: new Uint8Array(0),
-          flags: endStreamResponseFlag,
-        }
-      );
-      fetch(this.url, {
-        ...this.init,
-        headers: this.header,
-        signal: this.abort,
-        // TODO don't do this for unary
-        body,
-      })
-        .then(resolveResponse)
-        .catch(rejectResponse);
-      // We cannot make a meaningful callback to send() via fetch.
-      callback(undefined);
-    },
-  };
-
-  return [request, responsePromise];
-}
-
-/** @deprecated */
-function createStreamResponse<O extends Message<O>>(
-  messageType: MessageType<O>,
-  callOptions: ClientCallOptions,
-  transportOptions: ConnectTransportOptions,
-  response: Response | Promise<Response>
-): ClientResponse<O> {
-  let closed = false; // the response is closed
-  let receiving = false; // we are currently waiting for the response, or reading from it
-  let head: Head | undefined;
-  let stream: EnvelopeReader | undefined;
-  return {
-    receive(handler): void {
-      if (closed) {
-        handler.onClose(new ConnectError("response closed", Code.Internal));
-        closed = true;
-        return;
-      }
-      if (receiving) {
-        handler.onClose(
-          new ConnectError("cannot receive concurrently", Code.Internal)
-        );
-        closed = true;
-        return;
-      }
-      receiving = true;
-      void Promise.resolve(response)
-        .then(async (response) => {
-          if (!head) {
-            head = parseHead(response);
-            handler.onHeader?.(head.header);
+            const responseType = response.headers.get("Content-Type") ?? "";
             if (response.status != 200) {
-              handler.onTrailer?.(head.trailer);
-              if (head.contentType == "application/json") {
-                throw ConnectError.fromJsonString(await response.text(), {
-                  typeRegistry: transportOptions.typeRegistry,
-                  metadata: head.trailer,
-                });
+              if (responseType == "application/json") {
+                throw ConnectError.fromJson(
+                  (await response.json()) as JsonValue,
+                  {
+                    typeRegistry: options.typeRegistry,
+                    metadata: mergeHeaders(
+                      ...demuxHeaderTrailers(response.headers)
+                    ),
+                  }
+                );
               }
               throw new ConnectError(
                 `HTTP ${response.status} ${response.statusText}`,
                 codeFromConnectHttpStatus(response.status)
               );
             }
-            if (head.contentType == null) {
-              throw new ConnectError(
-                `missing response content type`,
-                Code.Internal
-              );
-            }
-            if (head.format == null) {
-              throw new ConnectError(
-                `unexpected response content type ${head.contentType}`,
-                Code.Internal
-              );
-            }
-          }
+            expectContentType(responseType, true, useBinaryFormat);
 
-          if (!stream) {
             if (response.body === null) {
               throw "missing response body";
             }
-            stream = createEnvelopeReader(response.body);
-          }
+            const reader = createEnvelopeReadableStream(
+              response.body
+            ).getReader();
 
-          const envelope = await stream();
-          if (envelope == null) {
-            handler.onClose();
-            return;
-          }
-          if (
-            (envelope.flags & endStreamResponseFlag) ===
-            endStreamResponseFlag
-          ) {
-            const endStream = EndStream.fromJsonString(
-              new TextDecoder().decode(envelope.data),
-              {
-                typeRegistry: transportOptions.typeRegistry,
-              }
-            );
-            handler.onTrailer?.(endStream.metadata);
-            handler.onClose(endStream.error);
-            return;
-          }
-          const message =
-            head.format == "json"
-              ? messageType.fromJsonString(
-                  new TextDecoder().decode(envelope.data)
-                )
-              : messageType.fromBinary(envelope.data);
-          receiving = false;
-          handler.onMessage(message);
-        })
-        .catch((reason) => {
-          handler.onClose(extractRejectionError(reason));
-        })
-        .then(() => (receiving = false));
+            let endStreamReceived = false;
+            return <StreamResponse<O>>{
+              service,
+              method,
+              header: response.headers,
+              trailer: new Headers(),
+              async read(): Promise<ReadableStreamDefaultReadResult<O>> {
+                const result = await reader.read();
+                if (result.done) {
+                  if (!endStreamReceived) {
+                    throw new ConnectError("missing EndStreamResponse");
+                  }
+                  return {
+                    done: true,
+                    value: undefined,
+                  };
+                }
+                if (
+                  (result.value.flags & endStreamResponseFlag) ===
+                  endStreamResponseFlag
+                ) {
+                  endStreamReceived = true;
+                  const endStream = EndStream.fromJsonString(
+                    new TextDecoder().decode(result.value.data),
+                    {
+                      typeRegistry: options.typeRegistry,
+                    }
+                  );
+                  endStream.metadata.forEach((value, key) =>
+                    this.trailer.append(key, value)
+                  );
+                  if (endStream.error) {
+                    throw endStream.error;
+                  }
+                  return {
+                    done: true,
+                    value: undefined,
+                  };
+                }
+                return {
+                  done: false,
+                  value: useBinaryFormat
+                    ? method.O.fromBinary(result.value.data)
+                    : method.O.fromJsonString(
+                        new TextDecoder().decode(result.value.data)
+                      ),
+                };
+              },
+            };
+          },
+          options.serverStreamInterceptors
+        );
+      } catch (e) {
+        if (e instanceof ConnectError) {
+          throw e;
+        }
+        throw new ConnectError(
+          e instanceof Error ? e.message : String(e),
+          Code.Internal
+        );
+      }
     },
   };
+}
+
+function createConnectRequestBody<T extends Message<T>>(
+  message: T,
+  methodKind: MethodKind,
+  useBinaryFormat: boolean,
+  typeRegistry: IMessageTypeRegistry | undefined
+): BodyInit {
+  const encoded = useBinaryFormat
+    ? message.toBinary()
+    : message.toJsonString({ typeRegistry });
+  if (methodKind == MethodKind.Unary) {
+    return encoded;
+  }
+  const data =
+    typeof encoded == "string" ? new TextEncoder().encode(encoded) : encoded;
+  return encodeEnvelopes(
+    {
+      data,
+      flags: 0b00000000,
+    },
+    {
+      data: new Uint8Array(0),
+      flags: endStreamResponseFlag,
+    }
+  );
 }
 
 function createConnectRequestHeaders(
@@ -448,51 +404,6 @@ function demuxHeaderTrailers(
     }
   });
   return [h, t];
-}
-
-/** @deprecated */
-type Head =
-  | {
-      header: Headers;
-      trailer: Headers;
-      contentType:
-        | "application/json"
-        | "application/proto"
-        | "application/connect+json"
-        | "application/connect+proto";
-      format: "json" | "proto";
-      stream: boolean;
-    }
-  | {
-      header: Headers;
-      trailer: Headers;
-      contentType: string | null;
-      format: null;
-      stream: null;
-    };
-/** @deprecated */
-function parseHead(response: Response): Head {
-  const header = new Headers(),
-    trailer = new Headers();
-  response.headers.forEach((value, key) => {
-    if (key.toLowerCase().startsWith("trailer-")) {
-      trailer.set(key.substring(8), value);
-    } else {
-      header.set(key, value);
-    }
-  });
-  const contentType = header.get("Content-Type");
-  const match = contentType?.match(/^application\/(connect\+)?(json|proto)$/);
-  return match
-    ? {
-        header,
-        trailer,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
-        contentType: contentType as any,
-        stream: !!match[1],
-        format: match[2] as "json" | "proto",
-      }
-    : { header, trailer, contentType, format: null, stream: null };
 }
 
 const endStreamResponseFlag = 0b00000010;

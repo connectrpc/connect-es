@@ -16,8 +16,6 @@ export { makeCallbackClient, CallbackClient } from "./callback-client.js";
 export { makePromiseClient, PromiseClient } from "./promise-client.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
 
-export { ClientInterceptor } from "./client-interceptor.js";
-
 // TODO
 export {
   UnaryFn,
@@ -25,17 +23,12 @@ export {
   UnaryRequest,
   UnaryInterceptor,
   runUnary,
+  StreamResponse,
+  runServerStream,
+  ServerStreamInterceptor,
 } from "./client-interceptor.js";
 
-export {
-  ClientTransport,
-  ClientCallOptions,
-  ClientRequest,
-  ClientRequestCallback,
-  ClientResponse,
-  ClientResponseHandler,
-  wrapTransportCall,
-} from "./client-transport.js";
+export { ClientTransport, ClientCallOptions } from "./client-transport.js";
 
 export { ConnectError } from "./connect-error.js";
 
@@ -53,6 +46,7 @@ export {
 
 export {
   createEnvelopeReader,
+  createEnvelopeReadableStream,
   EnvelopeReader,
   EnvelopedMessage,
   encodeEnvelopes,

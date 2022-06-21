@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import type {
-  MessageType,
   MethodInfo,
   MethodInfoServerStreaming,
   MethodInfoUnary,
@@ -22,11 +21,7 @@ import type {
 } from "@bufbuild/protobuf";
 import { Message, MethodKind } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
-import {
-  ClientCallOptions,
-  ClientTransport,
-  receiveResponseUntilClose,
-} from "./client-transport.js";
+import type { ClientCallOptions, ClientTransport } from "./client-transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
 
@@ -136,29 +131,39 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
 ): ServerStreamingFn<I, O> {
   return function (requestMessage, onResponse, onClose, options) {
     const abort = new AbortController();
-    options = wrapSignal(abort, options);
-    const [request, response] = transport.call(service, method, options);
-    request.send(messageFromPartial(requestMessage, method.I), (error) => {
-      if (error) {
-        if (error.code === Code.Canceled && abort.signal.aborted) {
-          // As documented, discard Canceled errors if canceled by the user.
-          return;
-        }
-        onClose(error);
+
+    async function run() {
+      options = wrapSignal(abort, options);
+      const streamResponse = await transport.serverStream(
+        service,
+        method,
+        options.signal,
+        options.timeoutMs,
+        options.headers,
+        requestMessage
+      );
+
+      let result = await streamResponse.read();
+      while (!result.done) {
+        onResponse(result.value);
+        result = await streamResponse.read();
       }
+      options.onTrailer?.(streamResponse.trailer);
+      onClose(undefined);
+    }
+
+    run().catch((reason) => {
+      const ce =
+        reason instanceof ConnectError
+          ? reason
+          : new ConnectError(String(reason), Code.Internal);
+      if (ce.code === Code.Canceled && abort.signal.aborted) {
+        // As documented, discard Canceled errors if canceled by the user.
+        return;
+      }
+      onClose(ce);
     });
-    receiveResponseUntilClose(response, {
-      onMessage(message): void {
-        onResponse(message);
-      },
-      onClose(error?: ConnectError): void {
-        if (error && error.code === Code.Canceled && abort.signal.aborted) {
-          // As documented, discard Canceled errors if canceled by the user.
-          return;
-        }
-        onClose(error);
-      },
-    });
+
     return () => abort.abort();
   };
 }
@@ -171,14 +176,4 @@ function wrapSignal(
     options.signal.addEventListener("abort", () => abort.abort());
   }
   return { ...options, signal: abort.signal };
-}
-
-function messageFromPartial<T extends Message<T>>(
-  message: T | PartialMessage<T>,
-  type: MessageType<T>
-): T {
-  if (message instanceof type || message instanceof Message) {
-    return message;
-  }
-  return new type(message);
 }

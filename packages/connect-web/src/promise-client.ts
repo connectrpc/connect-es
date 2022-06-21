@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import type {
-  MessageType,
   MethodInfo,
   MethodInfoServerStreaming,
   MethodInfoUnary,
@@ -21,13 +20,9 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { Message, MethodKind } from "@bufbuild/protobuf";
-import type { ConnectError } from "./connect-error.js";
-import type {
-  ClientCallOptions,
-  ClientResponse,
-  ClientTransport,
-} from "./client-transport.js";
+import type { ClientCallOptions, ClientTransport } from "./client-transport.js";
 import { makeAnyClient } from "./any-client.js";
+import type { StreamResponse } from "./client-interceptor";
 
 // prettier-ignore
 /**
@@ -97,60 +92,40 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
-  return function (requestMessage, options) {
-    const [request, response] = transport.call(service, method, options ?? {});
-    return new Promise<AsyncIterable<O>>((resolve, reject) => {
-      const message = messageFromPartial(requestMessage, method.I);
-      request.send(message, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve({
-            [Symbol.asyncIterator](): AsyncIterator<O> {
-              return createResponseMessageIterator(response);
-            },
-          });
-        }
-      });
-    });
-  };
-}
-
-function createResponseMessageIterator<T extends Message<T>>(
-  response: ClientResponse<T>
-): AsyncIterator<T> {
-  return {
-    next() {
-      return new Promise((resolve, reject) => {
-        response.receive({
-          onMessage(message: T) {
-            resolve({
-              value: message,
-              done: false,
-            });
-          },
-          onClose(error?: ConnectError) {
-            if (error) {
-              reject(error);
-            } else {
-              resolve({
-                value: undefined,
-                done: true,
-              });
+  return async function (requestMessage, options): Promise<AsyncIterable<O>> {
+    // TODO
+    await new Promise<void>((resolve) => resolve());
+    let streamResponse: StreamResponse<O> | undefined;
+    return {
+      [Symbol.asyncIterator](): AsyncIterator<O> {
+        return {
+          async next() {
+            if (!streamResponse) {
+              streamResponse = await transport.serverStream(
+                service,
+                method,
+                options?.signal,
+                options?.timeoutMs,
+                options?.headers,
+                requestMessage
+              );
+              options?.onHeader?.(streamResponse.header);
             }
+            const result = await streamResponse.read();
+            if (result.done) {
+              options?.onTrailer?.(streamResponse.trailer);
+              return {
+                done: true,
+                value: undefined,
+              };
+            }
+            return {
+              done: false,
+              value: result.value,
+            };
           },
-        });
-      });
-    },
+        };
+      },
+    };
   };
-}
-
-function messageFromPartial<T extends Message<T>>(
-  message: T | PartialMessage<T>,
-  type: MessageType<T>
-) {
-  if (message instanceof type || message instanceof Message) {
-    return message;
-  }
-  return new type(message);
 }
