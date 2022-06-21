@@ -15,7 +15,7 @@
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 
-export function extractRejectionError(reason: unknown): ConnectError {
+export function connectErrorFromFetchError(reason: unknown): ConnectError {
   if (reason instanceof ConnectError) {
     return reason;
   }

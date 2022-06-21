@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  createEnvelopeReader,
-  createEnvelopeReadableStream,
-} from "@bufbuild/connect-web";
+import { createEnvelopeReadableStream } from "@bufbuild/connect-web";
 import { webReadableStreamFromBytes } from "./util/web-streams.js";
 
 function envelopeMessages(
@@ -35,66 +32,6 @@ function envelopeMessages(
   }
   return env;
 }
-
-describe("createEnvelopeReader()", () => {
-  it("reads empty stream", async () => {
-    const read = createEnvelopeReader(
-      webReadableStreamFromBytes(new Uint8Array(0))
-    );
-    const r = await read();
-    expect(r).toBeNull();
-  });
-  it("reads multiple messages", async () => {
-    const input = [
-      {
-        data: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
-        flags: 0b00000000,
-      },
-      {
-        data: new Uint8Array([0xde, 0xad, 0xbe, 0xe0]),
-        flags: 0b00000000,
-      },
-      {
-        data: new Uint8Array([0xde, 0xad, 0xbe, 0xe1]),
-        flags: 0b10000000,
-      },
-    ];
-    const read = createEnvelopeReader(
-      webReadableStreamFromBytes(envelopeMessages(...input))
-    );
-    for (const want of input) {
-      const r = await read();
-      expect(r).not.toBeNull();
-      expect(r?.flags).toBe(want.flags);
-      expect(r?.data).toEqual(want.data);
-    }
-    const r = await read();
-    expect(r).toBeNull();
-  });
-  it("reads an EndStreamResponse out of usual order", async () => {
-    const input = [
-      {
-        data: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
-        flags: 0b10000000,
-      },
-      {
-        data: new Uint8Array([0xde, 0xad, 0xbe, 0xe1]),
-        flags: 0b00000000,
-      },
-    ];
-    const read = createEnvelopeReader(
-      webReadableStreamFromBytes(envelopeMessages(...input))
-    );
-    for (const want of input) {
-      const r = await read();
-      expect(r).not.toBeNull();
-      expect(r?.flags).toBe(want.flags);
-      expect(r?.data).toEqual(want.data);
-    }
-    const r = await read();
-    expect(r).toBeNull();
-  });
-});
 
 describe("createEnvelopeReadableStream()", () => {
   it("reads empty stream", async () => {

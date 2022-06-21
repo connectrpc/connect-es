@@ -40,6 +40,7 @@ import { runServerStream, runUnary } from "./client-interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { newParseError } from "./private/new-parse-error.js";
 import { mergeHeaders } from "./http-headers.js";
+import { connectErrorFromFetchError } from "./private/connect-error-from-fetch-error.js";
 
 export interface ConnectTransportOptions {
   /**
@@ -177,13 +178,7 @@ export function createConnectTransport(
           options.unaryInterceptors
         );
       } catch (e) {
-        if (e instanceof ConnectError) {
-          throw e;
-        }
-        throw new ConnectError(
-          e instanceof Error ? e.message : String(e),
-          Code.Internal
-        );
+        throw connectErrorFromFetchError(e);
       }
     },
     async serverStream<
@@ -312,13 +307,7 @@ export function createConnectTransport(
           options.serverStreamInterceptors
         );
       } catch (e) {
-        if (e instanceof ConnectError) {
-          throw e;
-        }
-        throw new ConnectError(
-          e instanceof Error ? e.message : String(e),
-          Code.Internal
-        );
+        throw connectErrorFromFetchError(e);
       }
     },
   };

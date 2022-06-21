@@ -269,7 +269,7 @@ export function createGrpcTransport(
                   throw outcome;
                 }
                 if (outcome instanceof Error) {
-                  throw connectErrorFromError(outcome);
+                  throw connectErrorFromGrpcError(outcome);
                 }
                 return {
                   done: true,
@@ -280,13 +280,7 @@ export function createGrpcTransport(
           }
         );
       } catch (e) {
-        if (e instanceof ConnectError) {
-          throw e;
-        }
-        throw new ConnectError(
-          e instanceof Error ? e.message : String(e),
-          Code.Internal
-        );
+        throw connectErrorFromGrpcError(e);
       }
     },
   };
@@ -300,13 +294,13 @@ function makeDeserializerFn<T extends Message<T>>(type: MessageType<T>) {
   return (buffer: Buffer): T => type.fromBinary(buffer);
 }
 
-function connectErrorFromError(
-  err: Error | grpc.ServiceError | ConnectError
+function connectErrorFromGrpcError(
+  err: ConnectError | grpc.ServiceError | Error | unknown
 ): ConnectError {
   if (err instanceof ConnectError) {
     return err;
   }
-  if ("details" in err) {
+  if (typeof err == "object" && err != null && "details" in err) {
     const se = err as grpc.ServiceError;
     // TODO grpc-status-details-bin
     return new ConnectError(
@@ -316,7 +310,10 @@ function connectErrorFromError(
       grpcMetadataToHeaders(se.metadata)
     );
   }
-  return new ConnectError(err.message, Code.Internal);
+  if (err instanceof Error) {
+    return new ConnectError(err.message, Code.Internal);
+  }
+  return new ConnectError(String(err), Code.Internal);
 }
 
 function grpcMetadataFromHeaders(headers: Headers): grpc.Metadata {

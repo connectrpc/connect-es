@@ -16,7 +16,6 @@ export { makeCallbackClient, CallbackClient } from "./callback-client.js";
 export { makePromiseClient, PromiseClient } from "./promise-client.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
 
-// TODO
 export {
   UnaryFn,
   UnaryResponse,
@@ -45,9 +44,7 @@ export {
 } from "./http-headers.js";
 
 export {
-  createEnvelopeReader,
   createEnvelopeReadableStream,
-  EnvelopeReader,
   EnvelopedMessage,
   encodeEnvelopes,
 } from "./envelope.js";

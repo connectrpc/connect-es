@@ -35,12 +35,9 @@ import {
   UnaryInterceptor,
   UnaryRequest,
 } from "./client-interceptor.js";
-import {
-  createEnvelopeReadableStream,
-  createEnvelopeReader,
-  encodeEnvelopes,
-} from "./envelope.js";
+import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { grpcStatusDetailsBinName } from "./private/grpc-status.js";
+import { connectErrorFromFetchError } from "./private/connect-error-from-fetch-error.js";
 
 export interface GrpcWebTransportOptions {
   /**
@@ -115,13 +112,12 @@ export function createGrpcWebTransport(
               ...unaryRequest.init,
               headers: unaryRequest.header,
               signal: unaryRequest.signal,
-              body: encodeEnvelopes({
-                data: unaryRequest.message.toBinary(options.binaryOptions),
-                flags: 0x00,
-              }),
+              body: createGrpcWebRequestBody(
+                unaryRequest.message,
+                options.binaryOptions
+              ),
             });
-
-            const err =
+            const headError =
               extractHttpStatusError(response) ??
               extractContentTypeError(response.headers) ??
               extractDetailsError(
@@ -129,55 +125,54 @@ export function createGrpcWebTransport(
                 transportOptions.typeRegistry
               ) ??
               extractHeadersError(response.headers);
-            if (err) {
-              throw err;
+            if (headError) {
+              throw headError;
             }
             if (!response.body) {
               throw "missing response body";
             }
-            const readFrame = createEnvelopeReader(response.body);
-            let frame = await readFrame();
-            let responseMessage: O | undefined;
-            let trailer: Headers | undefined;
-            while (frame) {
-              if ((frame.flags & trailerFlag) === trailerFlag) {
-                trailer = parseGrpcWebTrailer(frame.data);
-                const err =
-                  extractDetailsError(trailer, transportOptions.typeRegistry) ??
-                  extractHeadersError(trailer);
-                if (err) {
-                  throw err;
-                }
-                break;
-              }
-              responseMessage = method.O.fromBinary(
-                frame.data,
-                transportOptions.binaryOptions
-              );
-              frame = await readFrame();
-            }
-            if (!responseMessage) {
+            const reader = createEnvelopeReadableStream(
+              response.body
+            ).getReader();
+            const messageResult = await reader.read();
+            if (messageResult.done) {
               throw "missing message";
             }
-            if (!trailer) {
-              throw "missing trailers";
+            if (messageResult.value.flags !== 0b00000000) {
+              throw "unexpected trailer";
+            }
+            const message = method.O.fromBinary(
+              messageResult.value.data,
+              transportOptions.binaryOptions
+            );
+            const trailerResult = await reader.read();
+            if (trailerResult.done) {
+              throw "missing trailer";
+            }
+            if ((trailerResult.value.flags & trailerFlag) !== trailerFlag) {
+              throw "missing trailer";
+            }
+            const trailer = parseGrpcWebTrailer(trailerResult.value.data);
+            const trailerError =
+              extractDetailsError(trailer, transportOptions.typeRegistry) ??
+              extractHeadersError(trailer);
+            if (trailerError) {
+              throw trailerError;
+            }
+            const eofResult = await reader.read();
+            if (!eofResult.done) {
+              throw "extraneous data";
             }
             return <UnaryResponse<O>>{
               header: response.headers,
-              message: responseMessage,
+              message,
               trailer,
             };
           },
           transportOptions.unaryInterceptors
         );
       } catch (e) {
-        if (e instanceof ConnectError) {
-          throw e;
-        }
-        throw new ConnectError(
-          e instanceof Error ? e.message : String(e),
-          Code.Internal
-        );
+        throw connectErrorFromFetchError(e);
       }
     },
     async serverStream<
@@ -213,7 +208,10 @@ export function createGrpcWebTransport(
               ...unaryRequest.init,
               headers: unaryRequest.header,
               signal: unaryRequest.signal,
-              body: createGrpcWebRequestBody(unaryRequest.message),
+              body: createGrpcWebRequestBody(
+                unaryRequest.message,
+                options.binaryOptions
+              ),
             });
 
             const err =
@@ -246,7 +244,7 @@ export function createGrpcWebTransport(
                 const result = await reader.read();
                 if (result.done) {
                   if (messageReceived && !endStreamReceived) {
-                    throw new ConnectError("missing trailers");
+                    throw new ConnectError("missing trailers", Code.Internal);
                   }
                   return {
                     done: true,
@@ -284,25 +282,23 @@ export function createGrpcWebTransport(
           options.serverStreamInterceptors
         );
       } catch (e) {
-        if (e instanceof ConnectError) {
-          throw e;
-        }
-        throw new ConnectError(
-          e instanceof Error ? e.message : String(e),
-          Code.Internal
-        );
+        throw connectErrorFromFetchError(e);
       }
     },
   };
 }
 
-function createGrpcWebRequestBody(message: AnyMessage): BodyInit {
+function createGrpcWebRequestBody(
+  message: AnyMessage,
+  options: Partial<BinaryWriteOptions> | undefined
+): BodyInit {
   return encodeEnvelopes({
-    data: message.toBinary(),
-    flags: 0b00000000,
+    data: message.toBinary(options),
+    flags: messageFlag,
   });
 }
 
+const messageFlag = 0b00000000;
 const trailerFlag = 0b10000000;
 
 function createGrpcWebRequestHeaders(
