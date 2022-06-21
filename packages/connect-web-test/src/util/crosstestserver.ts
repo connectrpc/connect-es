@@ -17,6 +17,8 @@ import {
   createGrpcWebTransport,
 } from "@bufbuild/connect-web";
 import type { ClientTransport } from "@bufbuild/connect-web";
+import { TypeRegistry } from "@bufbuild/protobuf";
+import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
 
 // The following servers are available through crosstests:
 //
@@ -37,18 +39,21 @@ export const crosstestTransports: Record<
     createGrpcWebTransport({
       ...options,
       baseUrl,
+      typeRegistry: TypeRegistry.from(ErrorDetail),
     }),
   "connect JSON transport": (options) =>
     createConnectTransport({
       ...options,
       baseUrl,
       useBinaryFormat: false,
+      typeRegistry: TypeRegistry.from(ErrorDetail),
     }),
   "connect binary transport": (options) =>
     createConnectTransport({
       ...options,
       baseUrl,
       useBinaryFormat: true,
+      typeRegistry: TypeRegistry.from(ErrorDetail),
     }),
 };
 

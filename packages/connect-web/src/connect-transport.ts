@@ -70,7 +70,7 @@ export interface ConnectTransportOptions {
   credentials?: RequestCredentials;
 
   // TODO explain
-  // TODO solve the duplicate with jsonOptions.typeRegistry
+  // TODO instead of requiring the registry upfront, provide a function to parse raw details?
   typeRegistry?: IMessageTypeRegistry;
 
   /**
@@ -169,7 +169,9 @@ function createRequest<I extends Message<I>>(
         encodedMessage = message.toBinary();
       } else {
         encodedMessage = new TextEncoder().encode(
-          message.toJsonString({ typeRegistry: transportOptions.typeRegistry })
+          message.toJsonString({
+            typeRegistry: transportOptions.typeRegistry,
+          })
         );
       }
       const body: BodyInit =

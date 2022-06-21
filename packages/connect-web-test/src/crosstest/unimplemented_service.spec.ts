@@ -24,13 +24,12 @@ import { crosstestTransports } from "../util/crosstestserver.js";
 
 describe("unimplemented_service", function () {
   function expectError(err: unknown) {
-    // We expect this to be either Unimplemented or NotFound, depending on the implementation.
-    // In order to support a consistent behaviour for this case, the backend would need to
-    // own the router and all fallback behaviours. Both statuses are valid returns for this
-    // case and the client should not retry on either status.
+    // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
+    // and will return an HTTP status code 408 when stream max duration time reached, which
+    // cannot be translated to a connect error code.
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
-      expect(err.code === Code.Unknown || err.code === Code.DeadlineExceeded);
+      expect(err.code === Code.DeadlineExceeded);
     }
   }
 
