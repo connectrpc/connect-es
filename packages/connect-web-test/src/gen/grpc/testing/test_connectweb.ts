@@ -1,7 +1,16 @@
 // This is copied from gRPC's testing Protobuf definitions: https://github.com/grpc/grpc/blob/master/src/proto/grpc/testing/test.proto
+//
 // The TestService has been extended to include the following RPCs:
-// Fail(SimpleRequest) returns (SimpleResponse): this RPC is a unary
-// call that always returns a readable non-ASCII error.
+// FailUnaryCall(SimpleRequest) returns (SimpleResponse): this RPC is a unary
+// call that always returns a readable non-ASCII error with error details.
+// FailStreamingOutputCall(StreamingOutputCallRequest) returns (stream StreamingOutputCallResponse):
+// this RPC is a server streaming call that always returns a readable non-ASCII error with error details.
+// UnimplementedStreamingOutputCall(grpc.testing.Empty) returns (stream grpc.testing.Empty): this RPC
+// is a server streaming call that will not be implemented.
+//
+// The UnimplementedService has been extended to include the following RPCs:
+// UnimplementedStreamingOutputCall(grpc.testing.Empty) returns (stream grpc.testing.Empty): this RPC
+// is a server streaming call that will not be implemented.
 
 // Copyright 2015-2016 gRPC authors.
 //
@@ -60,7 +69,7 @@ export const TestService = {
       kind: MethodKind.Unary,
     },
     /**
-     * One request followed by one response. This RPC always failes.
+     * One request followed by one response. This RPC always fails.
      *
      * @generated from rpc grpc.testing.TestService.FailUnaryCall
      */
@@ -91,6 +100,17 @@ export const TestService = {
      */
     streamingOutputCall: {
       name: "StreamingOutputCall",
+      I: StreamingOutputCallRequest,
+      O: StreamingOutputCallResponse,
+      kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * One request followed by a sequence of responses (streamed download). This RPC always fails.
+     *
+     * @generated from rpc grpc.testing.TestService.FailStreamingOutputCall
+     */
+    failStreamingOutputCall: {
+      name: "FailStreamingOutputCall",
       I: StreamingOutputCallRequest,
       O: StreamingOutputCallResponse,
       kind: MethodKind.ServerStreaming,
@@ -146,6 +166,18 @@ export const TestService = {
       O: Empty,
       kind: MethodKind.Unary,
     },
+    /**
+     * The test server will not implement this method. It will be used
+     * to test the behavior when clients call unimplemented streaming output methods.
+     *
+     * @generated from rpc grpc.testing.TestService.UnimplementedStreamingOutputCall
+     */
+    unimplementedStreamingOutputCall: {
+      name: "UnimplementedStreamingOutputCall",
+      I: Empty,
+      O: Empty,
+      kind: MethodKind.ServerStreaming,
+    },
   }
 } as const;
 
@@ -168,6 +200,17 @@ export const UnimplementedService = {
       I: Empty,
       O: Empty,
       kind: MethodKind.Unary,
+    },
+    /**
+     * A call that no server should implement
+     *
+     * @generated from rpc grpc.testing.UnimplementedService.UnimplementedStreamingOutputCall
+     */
+    unimplementedStreamingOutputCall: {
+      name: "UnimplementedStreamingOutputCall",
+      I: Empty,
+      O: Empty,
+      kind: MethodKind.ServerStreaming,
     },
   }
 } as const;

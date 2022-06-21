@@ -7,7 +7,7 @@ export PATH := $(abspath $(CACHE_DIR)/bin):$(abspath node_modules/.bin):$(PATH)
 
 
 # The crosstest git hash to be used by docker-compose and code generation
-CROSSTEST_VERSION := 75774b9dabba88b201be341dd65dee928a252d49
+CROSSTEST_VERSION := e982fb10e5f9c3e74061b50716317003e3e736b3
 
 
 # The code generator protoc-gen-es generates message and enum types.
