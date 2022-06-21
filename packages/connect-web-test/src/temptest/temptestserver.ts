@@ -30,20 +30,20 @@ export const temptestserverTransports: Record<
     createGrpcWebTransport({
       ...options,
       baseUrl: temptestserverBaseUrl,
-      typeRegistry: TypeRegistry.from(UnaryErrorRequest), // used as error detail in tests
+      errorDetailRegistry: TypeRegistry.from(UnaryErrorRequest), // used as error detail in tests
     }),
   "connect JSON transport": (options) =>
     createConnectTransport({
       ...options,
       baseUrl: temptestserverBaseUrl,
       useBinaryFormat: false,
-      typeRegistry: TypeRegistry.from(UnaryErrorRequest), // used as error detail in tests
+      errorDetailRegistry: TypeRegistry.from(UnaryErrorRequest), // used as error detail in tests
     }),
   "connect binary transport": (options) =>
     createConnectTransport({
       ...options,
       baseUrl: temptestserverBaseUrl,
       useBinaryFormat: true,
-      typeRegistry: TypeRegistry.from(UnaryErrorRequest), // used as error detail in tests
+      errorDetailRegistry: TypeRegistry.from(UnaryErrorRequest), // used as error detail in tests
     }),
 };
