@@ -21,15 +21,13 @@ import {
   fromJsonString,
 } from "@bufbuild/connect-web";
 import { TypeRegistry } from "@bufbuild/protobuf";
-import { ServerStreamingHappyRequest } from "./gen/testing/v1/test_pb.js";
+import { ErrorDetail } from "./gen/grpc/testing/messages_pb.js";
 
 describe("Json", function () {
   describe("toJson", () => {
     it("serializes code and message", () => {
       const error = new ConnectError("Not permitted", Code.PermissionDenied);
-
       const json = toJson(error);
-
       expect(json as unknown).toEqual({
         code: "permission_denied",
         message: "Not permitted",
@@ -37,7 +35,7 @@ describe("Json", function () {
     });
     it("serializes details", () => {
       const error = new ConnectError("Not permitted", Code.PermissionDenied, [
-        new ServerStreamingHappyRequest({ value: 123 }),
+        new ErrorDetail({ domain: "example.com", reason: "soirée 🎉" }),
       ]);
       const json = toJson(error);
       expect(json as unknown).toEqual({
@@ -45,9 +43,9 @@ describe("Json", function () {
         message: "Not permitted",
         details: [
           {
-            value: 123,
-            "@type":
-              "type.googleapis.com/testing.v1.ServerStreamingHappyRequest",
+            reason: "soirée 🎉",
+            domain: "example.com",
+            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
           },
         ],
       });
@@ -110,9 +108,9 @@ describe("Json", function () {
         message: "Not permitted",
         details: [
           {
-            value: 123,
-            "@type":
-              "type.googleapis.com/testing.v1.ServerStreamingHappyRequest",
+            reason: "soirée 🎉",
+            domain: "example.com",
+            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
           },
         ],
       };
@@ -130,9 +128,9 @@ describe("Json", function () {
         const error = fromJson(json);
         expect(error.rawDetails as unknown).toEqual([
           {
-            value: 123,
-            "@type":
-              "type.googleapis.com/testing.v1.ServerStreamingHappyRequest",
+            reason: "soirée 🎉",
+            domain: "example.com",
+            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
           },
         ]);
       });
@@ -142,21 +140,22 @@ describe("Json", function () {
         });
         expect(error.rawDetails as unknown).toEqual([
           {
-            value: 123,
-            "@type":
-              "type.googleapis.com/testing.v1.ServerStreamingHappyRequest",
+            reason: "soirée 🎉",
+            domain: "example.com",
+            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
           },
         ]);
       });
       it("decodes details using type registry", () => {
         const error = fromJson(json, {
-          typeRegistry: TypeRegistry.from(ServerStreamingHappyRequest),
+          typeRegistry: TypeRegistry.from(ErrorDetail),
         });
         expect(error.code).toBe(Code.PermissionDenied);
         expect(error.rawMessage).toBe("Not permitted");
         expect(error.details.length).toBe(1);
-        if (error.details[0] instanceof ServerStreamingHappyRequest) {
-          expect(error.details[0].value).toBe(123);
+        if (error.details[0] instanceof ErrorDetail) {
+          expect(error.details[0].domain).toBe("example.com");
+          expect(error.details[0].reason).toBe("soirée 🎉");
         } else {
           fail();
         }

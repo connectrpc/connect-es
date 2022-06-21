@@ -21,9 +21,13 @@ import {
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransports } from "../util/describe-transports.js";
 import { crosstestTransports } from "../util/crosstestserver.js";
-import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
+import {
+  ErrorDetail,
+  StreamingOutputCallRequest,
+  StreamingOutputCallResponse,
+} from "../gen/grpc/testing/messages_pb.js";
 
-describe("fail_unary", () => {
+describe("fail_server_streaming", () => {
   function expectError(err: unknown, transportName: string) {
     const expectedErrorDetail = new ErrorDetail({
       reason: "soirée 🎉",
@@ -43,11 +47,23 @@ describe("fail_unary", () => {
       }
     }
   }
+  const size = 314159;
+  function expectResponseSize(response: StreamingOutputCallResponse) {
+    expect(response.payload).toBeDefined();
+    expect(response.payload?.body.length).toEqual(size);
+  }
+  const request = new StreamingOutputCallRequest({
+    responseParameters: [{ size }],
+  });
   describeTransports(crosstestTransports, (transport, transportName) => {
     it("with promise client", async function () {
       const client = makePromiseClient(TestService, transport);
       try {
-        await client.failUnaryCall({});
+        for await (const response of await client.failStreamingOutputCall(
+          request
+        )) {
+          expectResponseSize(response);
+        }
         fail("expected to catch an error");
       } catch (e) {
         expectError(e, transportName);
@@ -55,10 +71,16 @@ describe("fail_unary", () => {
     });
     it("with callback client", function (done) {
       const client = makeCallbackClient(TestService, transport);
-      client.failUnaryCall({}, (err: ConnectError | undefined) => {
-        expectError(err, transportName);
-        done();
-      });
+      client.failStreamingOutputCall(
+        request,
+        (response) => {
+          expectResponseSize(response);
+        },
+        (err: ConnectError | undefined) => {
+          expectError(err, transportName);
+          done();
+        }
+      );
     });
   });
 });

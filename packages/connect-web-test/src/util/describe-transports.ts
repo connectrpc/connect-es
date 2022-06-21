@@ -16,11 +16,11 @@ import type { ClientTransport } from "@bufbuild/connect-web/src";
 
 export function describeTransports(
   transports: Record<string, () => ClientTransport>,
-  specDefinitions: (transport: ClientTransport) => void
+  specDefinitions: (transport: ClientTransport, transportName: string) => void
 ) {
   for (const [name, transportFactory] of Object.entries(transports)) {
     describe(name, () => {
-      specDefinitions(transportFactory());
+      specDefinitions(transportFactory(), name);
     });
   }
 }

@@ -58,6 +58,7 @@ export interface GrpcWebTransportOptions {
   credentials?: RequestCredentials;
 
   // TODO explain
+  // TODO instead of requiring the registry upfront, provide a function to parse raw details?
   typeRegistry?: IMessageTypeRegistry;
 
   /**
