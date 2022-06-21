@@ -21,7 +21,7 @@ import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 describe("server_streaming", function () {
   describeTransports(crosstestTransports, (transport) => {
     const sizes = [31415, 9, 2653, 58979];
-    const req = new StreamingOutputCallRequest({
+    const request = new StreamingOutputCallRequest({
       responseParameters: sizes.map((size, index) => ({
         size,
         intervalUs: index * 10,
@@ -30,7 +30,7 @@ describe("server_streaming", function () {
     it("with promise client", async function () {
       const client = makePromiseClient(TestService, transport);
       let responseCount = 0;
-      for await (const response of await client.streamingOutputCall(req)) {
+      for await (const response of await client.streamingOutputCall(request)) {
         expect(response.payload).toBeDefined();
         expect(response.payload?.body.length).toEqual(sizes[responseCount]);
         responseCount++;
@@ -41,7 +41,7 @@ describe("server_streaming", function () {
       const client = makeCallbackClient(TestService, transport);
       let responseCount = 0;
       client.streamingOutputCall(
-        req,
+        request,
         (response) => {
           expect(response.payload).toBeDefined();
           expect(response.payload?.body.length).toEqual(sizes[responseCount]);

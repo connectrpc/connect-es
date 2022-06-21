@@ -26,7 +26,7 @@ import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 describe("status_code_and_message", function () {
   describeTransports(crosstestTransports, (transport) => {
     const TEST_STATUS_MESSAGE = "test status message";
-    const req = new SimpleRequest({
+    const request = new SimpleRequest({
       responseStatus: {
         code: Code.Unknown,
         message: TEST_STATUS_MESSAGE,
@@ -42,7 +42,7 @@ describe("status_code_and_message", function () {
     it("with promise client", async function () {
       const client = makePromiseClient(TestService, transport);
       try {
-        await client.unaryCall(req);
+        await client.unaryCall(request);
         fail("expected to catch an error");
       } catch (e) {
         expectError(e);
@@ -50,7 +50,7 @@ describe("status_code_and_message", function () {
     });
     it("with callback client", function (done) {
       const client = makeCallbackClient(TestService, transport);
-      client.unaryCall(req, (err: ConnectError | undefined) => {
+      client.unaryCall(request, (err: ConnectError | undefined) => {
         expectError(err);
         done();
       });
