@@ -30,9 +30,8 @@ import { ConnectError } from "./connect-error.js";
 import { Code, codeFromConnectHttpStatus } from "./code.js";
 import type { ClientTransport } from "./client-transport.js";
 import type {
-  ServerStreamInterceptor,
+  Interceptor,
   StreamResponse,
-  UnaryInterceptor,
   UnaryRequest,
   UnaryResponse,
 } from "./client-interceptor.js";
@@ -82,10 +81,7 @@ export interface ConnectTransportOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
   // TODO
-  unaryInterceptors?: UnaryInterceptor[];
-
-  // TODO
-  serverStreamInterceptors?: ServerStreamInterceptor[];
+  interceptors?: Interceptor[];
 }
 
 export function createConnectTransport(
@@ -107,6 +103,7 @@ export function createConnectTransport(
       try {
         return runUnary<I, O>(
           {
+            stream: false,
             service,
             method,
             url: `${options.baseUrl}/${service.typeName}/${method.name}`,
@@ -164,6 +161,7 @@ export function createConnectTransport(
             );
 
             return <UnaryResponse<O>>{
+              stream: false,
               service,
               method,
               header: demuxedHeader,
@@ -179,7 +177,7 @@ export function createConnectTransport(
               trailer: demuxedTrailer,
             };
           },
-          options.unaryInterceptors
+          options.interceptors
         );
       } catch (e) {
         throw connectErrorFromFetchError(e);
@@ -199,6 +197,7 @@ export function createConnectTransport(
       try {
         return runServerStream<I, O>(
           <UnaryRequest<I>>{
+            stream: false,
             service,
             method,
             url: `${options.baseUrl}/${service.typeName}/${method.name}`,
@@ -260,6 +259,7 @@ export function createConnectTransport(
 
             let endStreamReceived = false;
             return <StreamResponse<O>>{
+              stream: true,
               service,
               method,
               header: response.headers,
@@ -312,7 +312,7 @@ export function createConnectTransport(
               },
             };
           },
-          options.serverStreamInterceptors
+          options.interceptors
         );
       } catch (e) {
         throw connectErrorFromFetchError(e);

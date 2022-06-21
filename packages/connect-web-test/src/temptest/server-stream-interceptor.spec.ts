@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ServerStreamInterceptor } from "@bufbuild/connect-web";
 import {
   createConnectTransport,
   makeCallbackClient,
@@ -24,11 +23,9 @@ import {
 } from "./temptestserver.js";
 import { TestService } from "../gen/testing/v1/test_connectweb.js";
 import { ServerStreamingHappyRequest } from "../gen/testing/v1/test_pb.js";
+import type { Interceptor } from "@bufbuild/connect-web";
 
-function makeLoggingInterceptor(
-  name: string,
-  log: string[]
-): ServerStreamInterceptor {
+function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   const fieldsToIgnore = [
     "access-control-allow-origin",
     "access-control-expose-headers",
@@ -48,23 +45,26 @@ function makeLoggingInterceptor(
       .filter((value) => !fieldsToIgnore.includes(value))
       .join(", ");
     log.push(`${name} response received with headers: ${headerKeys}`);
-    return {
-      ...res,
-      async read() {
-        const r = await res.read();
-        if (!r.done) {
-          log.push(`${name} response stream received message`);
-        } else {
-          const trailerKeys = Array.from(res.trailer.keys())
-            .filter((value) => !fieldsToIgnore.includes(value))
-            .join(", ");
-          log.push(
-            `${name} response stream done with trailers: ${trailerKeys}`
-          );
-        }
-        return r;
-      },
-    };
+    if (res.stream) {
+      return {
+        ...res,
+        async read() {
+          const r = await res.read();
+          if (!r.done) {
+            log.push(`${name} response stream received message`);
+          } else {
+            const trailerKeys = Array.from(res.trailer.keys())
+              .filter((value) => !fieldsToIgnore.includes(value))
+              .join(", ");
+            log.push(
+              `${name} response stream done with trailers: ${trailerKeys}`
+            );
+          }
+          return r;
+        },
+      };
+    }
+    return res;
   };
 }
 
@@ -98,7 +98,7 @@ describe("server stream interceptors", () => {
     it(`via ${name} and promise client`, async () => {
       const log: string[] = [];
       const transport = transportFactory({
-        serverStreamInterceptors: [
+        interceptors: [
           makeLoggingInterceptor("outer", log),
           makeLoggingInterceptor("inner", log),
         ],
@@ -114,7 +114,7 @@ describe("server stream interceptors", () => {
       const log: string[] = [];
       const transport = createConnectTransport({
         baseUrl: temptestserverBaseUrl,
-        serverStreamInterceptors: [
+        interceptors: [
           makeLoggingInterceptor("outer", log),
           makeLoggingInterceptor("inner", log),
         ],

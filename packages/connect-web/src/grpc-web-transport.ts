@@ -29,10 +29,9 @@ import { Status } from "./grpc/status/v1/status_pb.js";
 import type { ClientTransport } from "./client-transport.js";
 import type { StreamResponse, UnaryResponse } from "./client-interceptor.js";
 import {
+  Interceptor,
   runServerStream,
   runUnary,
-  ServerStreamInterceptor,
-  UnaryInterceptor,
   UnaryRequest,
 } from "./client-interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
@@ -69,10 +68,7 @@ export interface GrpcWebTransportOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
   // TODO
-  unaryInterceptors?: UnaryInterceptor[];
-
-  // TODO
-  serverStreamInterceptors?: ServerStreamInterceptor[];
+  interceptors?: Interceptor[];
 }
 
 export function createGrpcWebTransport(
@@ -94,6 +90,7 @@ export function createGrpcWebTransport(
       try {
         return runUnary<I, O>(
           {
+            stream: false,
             service,
             method,
             url: `${options.baseUrl}/${service.typeName}/${method.name}`,
@@ -167,12 +164,13 @@ export function createGrpcWebTransport(
               throw "extraneous data";
             }
             return <UnaryResponse<O>>{
+              stream: false,
               header: response.headers,
               message,
               trailer,
             };
           },
-          transportOptions.unaryInterceptors
+          transportOptions.interceptors
         );
       } catch (e) {
         throw connectErrorFromFetchError(e);
@@ -192,6 +190,7 @@ export function createGrpcWebTransport(
       try {
         return runServerStream<I, O>(
           <UnaryRequest<I>>{
+            stream: false,
             service,
             method,
             url: `${options.baseUrl}/${service.typeName}/${method.name}`,
@@ -239,6 +238,7 @@ export function createGrpcWebTransport(
             let endStreamReceived = false;
             let messageReceived = false;
             return <StreamResponse<O>>{
+              stream: true,
               service,
               method,
               header: response.headers,
@@ -285,7 +285,7 @@ export function createGrpcWebTransport(
               },
             };
           },
-          options.serverStreamInterceptors
+          options.interceptors
         );
       } catch (e) {
         throw connectErrorFromFetchError(e);

@@ -17,14 +17,12 @@ export { makePromiseClient, PromiseClient } from "./promise-client.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
 
 export {
-  UnaryFn,
-  UnaryResponse,
+  Interceptor,
   UnaryRequest,
-  UnaryInterceptor,
-  runUnary,
+  UnaryResponse,
   StreamResponse,
+  runUnary,
   runServerStream,
-  ServerStreamInterceptor,
 } from "./client-interceptor.js";
 
 export { ClientTransport, ClientCallOptions } from "./client-transport.js";

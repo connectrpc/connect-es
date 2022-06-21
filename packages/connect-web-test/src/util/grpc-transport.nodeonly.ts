@@ -14,16 +14,16 @@
 
 import type {
   ClientTransport,
-  ServerStreamInterceptor,
   StreamResponse,
-  UnaryInterceptor,
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-web";
 import {
   Code,
   ConnectError,
+  Interceptor,
   mergeHeaders,
+  runServerStream,
   runUnary,
 } from "@bufbuild/connect-web";
 import {
@@ -37,7 +37,6 @@ import {
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as grpc from "@grpc/grpc-js";
-import { runServerStream } from "@bufbuild/connect-web";
 
 /* eslint-disable */
 
@@ -57,10 +56,7 @@ export interface GrpcTransportOptions {
   errorDetailRegistry?: IMessageTypeRegistry;
 
   // TODO
-  unaryInterceptors?: UnaryInterceptor[];
-
-  // TODO
-  serverStreamInterceptors?: ServerStreamInterceptor[];
+  interceptors?: Interceptor[];
 }
 
 interface GrpcClientTransport extends ClientTransport {
@@ -112,6 +108,7 @@ export function createGrpcTransport(
       }
       return runUnary<I, O>(
         {
+          stream: false,
           service,
           method,
           url: `/${service.typeName}/${method.name}`,
@@ -164,6 +161,7 @@ export function createGrpcTransport(
                 return;
               }
               resolve(<UnaryResponse<O>>{
+                stream: false,
                 header,
                 message,
                 trailer,
@@ -171,7 +169,7 @@ export function createGrpcTransport(
             });
           });
         },
-        transportOptions.unaryInterceptors
+        transportOptions.interceptors
       );
     },
     async serverStream<
@@ -188,6 +186,7 @@ export function createGrpcTransport(
       try {
         return runServerStream<I, O>(
           <UnaryRequest<I>>{
+            stream: false,
             service,
             method,
             url: `/${service.typeName}/${method.name}`,
@@ -243,6 +242,7 @@ export function createGrpcTransport(
             });
 
             return <StreamResponse<O>>{
+              stream: true,
               service,
               method,
               header,
@@ -290,7 +290,8 @@ export function createGrpcTransport(
                 };
               },
             };
-          }
+          },
+          transportOptions.interceptors
         );
       } catch (e) {
         throw connectErrorFromGrpcError(e);

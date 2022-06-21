@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import { crosstestTransports } from "./util/crosstestserver.js";
-import type { UnaryInterceptor } from "@bufbuild/connect-web";
 import { makeCallbackClient, makePromiseClient } from "@bufbuild/connect-web";
 import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import type { Interceptor } from "@bufbuild/connect-web";
 
-function makeLoggingInterceptor(name: string, log: string[]): UnaryInterceptor {
+function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
     log.push(`${name} sending request message`);
     const res = await next(req);
@@ -33,7 +33,7 @@ describe("unary interceptors", () => {
       const client = makePromiseClient(
         TestService,
         transportFactory({
-          unaryInterceptors: [
+          interceptors: [
             makeLoggingInterceptor("outer", log),
             makeLoggingInterceptor("inner", log),
           ],
@@ -57,7 +57,7 @@ describe("unary interceptors", () => {
       const client = makeCallbackClient(
         TestService,
         transportFactory({
-          unaryInterceptors: [
+          interceptors: [
             makeLoggingInterceptor("outer", log),
             makeLoggingInterceptor("inner", log),
           ],
