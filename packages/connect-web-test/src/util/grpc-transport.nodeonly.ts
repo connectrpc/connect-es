@@ -39,11 +39,22 @@ import {
 import * as grpc from "@grpc/grpc-js";
 import { runServerStream } from "@bufbuild/connect-web";
 
+/* eslint-disable */
+
+/**
+ * Options for the gRPC transport.
+ *
+ * Note that the gRPC transport is a proof of concept. It may be missing
+ * important implementation details and may have bugs.
+ */
 export interface GrpcTransportOptions {
   address: string;
   channelCredentials: grpc.ChannelCredentials;
   clientOptions?: grpc.ClientOptions;
-  typeRegistry?: IMessageTypeRegistry;
+
+  // TODO explain
+  // TODO instead of requiring the registry upfront, provide a function to parse raw details?
+  errorDetailRegistry?: IMessageTypeRegistry;
 
   // TODO
   unaryInterceptors?: UnaryInterceptor[];
@@ -60,9 +71,11 @@ interface GrpcClientTransport extends ClientTransport {
   waitForReady(deadline: number, callback: (error?: Error) => void): void;
 }
 
-// TODO
-/* eslint-disable */
-
+/**
+ * Create a gRPC transport for Node.js using the @grpc/grpc-js package.
+ * Note that this is a proof of concept. It may be missing important
+ * implementation details and may have bugs.
+ */
 export function createGrpcTransport(
   options: GrpcTransportOptions
 ): GrpcClientTransport {

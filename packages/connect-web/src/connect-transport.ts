@@ -68,8 +68,8 @@ export interface ConnectTransportOptions {
   credentials?: RequestCredentials;
 
   // TODO explain
-  // TODO solve the duplicate with jsonOptions.typeRegistry
-  typeRegistry?: IMessageTypeRegistry;
+  // TODO instead of requiring the registry upfront, provide a function to parse raw details?
+  errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the JSON format.
@@ -135,7 +135,7 @@ export function createConnectTransport(
                 unaryRequest.message,
                 method.kind,
                 useBinaryFormat,
-                options.typeRegistry
+                options.jsonOptions
               ),
             });
 
@@ -145,7 +145,7 @@ export function createConnectTransport(
                 throw ConnectError.fromJson(
                   (await response.json()) as JsonValue,
                   {
-                    typeRegistry: options.typeRegistry,
+                    typeRegistry: options.errorDetailRegistry,
                     metadata: mergeHeaders(
                       ...demuxHeaderTrailers(response.headers)
                     ),
@@ -169,9 +169,13 @@ export function createConnectTransport(
               header: demuxedHeader,
               message: useBinaryFormat
                 ? method.O.fromBinary(
-                    new Uint8Array(await response.arrayBuffer())
+                    new Uint8Array(await response.arrayBuffer()),
+                    options.binaryOptions
                   )
-                : method.O.fromJson((await response.json()) as JsonValue),
+                : method.O.fromJson(
+                    (await response.json()) as JsonValue,
+                    options.jsonOptions
+                  ),
               trailer: demuxedTrailer,
             };
           },
@@ -223,7 +227,7 @@ export function createConnectTransport(
                 unaryRequest.message,
                 method.kind,
                 useBinaryFormat,
-                options.typeRegistry
+                options.jsonOptions
               ),
             });
 
@@ -233,7 +237,7 @@ export function createConnectTransport(
                 throw ConnectError.fromJson(
                   (await response.json()) as JsonValue,
                   {
-                    typeRegistry: options.typeRegistry,
+                    typeRegistry: options.errorDetailRegistry,
                     metadata: mergeHeaders(
                       ...demuxHeaderTrailers(response.headers)
                     ),
@@ -279,7 +283,7 @@ export function createConnectTransport(
                   const endStream = EndStream.fromJsonString(
                     new TextDecoder().decode(result.value.data),
                     {
-                      typeRegistry: options.typeRegistry,
+                      typeRegistry: options.errorDetailRegistry,
                     }
                   );
                   endStream.metadata.forEach((value, key) =>
@@ -296,9 +300,13 @@ export function createConnectTransport(
                 return {
                   done: false,
                   value: useBinaryFormat
-                    ? method.O.fromBinary(result.value.data)
+                    ? method.O.fromBinary(
+                        result.value.data,
+                        options.binaryOptions
+                      )
                     : method.O.fromJsonString(
-                        new TextDecoder().decode(result.value.data)
+                        new TextDecoder().decode(result.value.data),
+                        options.jsonOptions
                       ),
                 };
               },
@@ -317,11 +325,11 @@ function createConnectRequestBody<T extends Message<T>>(
   message: T,
   methodKind: MethodKind,
   useBinaryFormat: boolean,
-  typeRegistry: IMessageTypeRegistry | undefined
+  jsonOptions: Partial<JsonWriteOptions> | undefined
 ): BodyInit {
   const encoded = useBinaryFormat
     ? message.toBinary()
-    : message.toJsonString({ typeRegistry });
+    : message.toJsonString(jsonOptions);
   if (methodKind == MethodKind.Unary) {
     return encoded;
   }

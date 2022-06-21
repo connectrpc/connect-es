@@ -60,7 +60,8 @@ export interface GrpcWebTransportOptions {
   credentials?: RequestCredentials;
 
   // TODO explain
-  typeRegistry?: IMessageTypeRegistry;
+  // TODO instead of requiring the registry upfront, provide a function to parse raw details?
+  errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the binary wire format.
@@ -122,7 +123,7 @@ export function createGrpcWebTransport(
               extractContentTypeError(response.headers) ??
               extractDetailsError(
                 response.headers,
-                transportOptions.typeRegistry
+                transportOptions.errorDetailRegistry
               ) ??
               extractHeadersError(response.headers);
             if (headError) {
@@ -154,8 +155,10 @@ export function createGrpcWebTransport(
             }
             const trailer = parseGrpcWebTrailer(trailerResult.value.data);
             const trailerError =
-              extractDetailsError(trailer, transportOptions.typeRegistry) ??
-              extractHeadersError(trailer);
+              extractDetailsError(
+                trailer,
+                transportOptions.errorDetailRegistry
+              ) ?? extractHeadersError(trailer);
             if (trailerError) {
               throw trailerError;
             }
@@ -219,7 +222,7 @@ export function createGrpcWebTransport(
               extractContentTypeError(response.headers) ??
               extractDetailsError(
                 response.headers,
-                transportOptions.typeRegistry
+                transportOptions.errorDetailRegistry
               ) ??
               extractHeadersError(response.headers);
             if (err) {
@@ -257,7 +260,7 @@ export function createGrpcWebTransport(
                   const err =
                     extractDetailsError(
                       trailer,
-                      transportOptions.typeRegistry
+                      transportOptions.errorDetailRegistry
                     ) ?? extractHeadersError(trailer);
                   if (err) {
                     throw err;
@@ -274,7 +277,10 @@ export function createGrpcWebTransport(
                 messageReceived = true;
                 return {
                   done: false,
-                  value: method.O.fromBinary(result.value.data),
+                  value: method.O.fromBinary(
+                    result.value.data,
+                    options.binaryOptions
+                  ),
                 };
               },
             };
