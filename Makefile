@@ -48,26 +48,6 @@ $(WEB_BUILD): node_modules $(WEB_SOURCES)
 	mkdir -p $(CACHE_DIR)/build && touch $(WEB_BUILD)
 
 
-#TODO(tstamm) remove the temporary go test server
-# Tests run against the connect-go test server
-TEMPTESTSERVER_DIR = temptestserver
-TEMPTESTSERVER_GEN = $(CACHE_DIR)/gen/temptestserver
-TEMPTESTSERVER_RUNNING = $(CACHE_DIR)/service/temptestserver
-$(TEMPTESTSERVER_GEN): $(PROTOC_GEN_CONNECT_GO_DEP) $(shell find $(TEMPTESTSERVER_DIR)/proto -name '*.proto')
-	rm -rf $(TEMPTESTSERVER_DIR)/internal/gen/*
-	buf generate $(TEMPTESTSERVER_DIR)/proto --template $(TEMPTESTSERVER_DIR)/buf.gen.yaml --output $(TEMPTESTSERVER_DIR)
-	mkdir -p $(dir $(TEMPTESTSERVER_GEN)) && touch $(TEMPTESTSERVER_GEN)
-$(TEMPTESTSERVER_RUNNING): $(TEMPTESTSERVER_GEN)
-	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
-	node make/scripts/service-start.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun 'localhost:9000'
-__temptestserver-gorun:
-	cd temptestserver && go run ./cmd/serve
-TESTSERVER_RUNNING = $(CACHE_DIR)/service/testserver
-$(TESTSERVER_RUNNING): docker-compose.yaml
-	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) dockercomposeup
-	node make/scripts/service-start.js $(TESTSERVER_RUNNING) dockercomposeup 'localhost:8080,localhost:8081,localhost:8083'
-
-
 # The private NPM package "@bufbuild/connect-web-test" provides test coverage:
 TEST_DIR = packages/connect-web-test
 TEST_GEN = $(CACHE_DIR)/gen/connect-web-test
@@ -76,9 +56,8 @@ TEST_SOURCES = $(shell find $(TEST_DIR)/src -name '*.ts') $(TEST_DIR)/*.json
 $(TEST_BUILD): $(TEST_GEN) $(WEB_BUILD) $(TEST_SOURCES)
 	cd $(TEST_DIR) && npm run clean && npm run build
 	mkdir -p $(dir $(TEST_BUILD)) && touch $(TEST_BUILD)
-$(TEST_GEN): $(PROTOC_GEN_CONNECT_WEB_BIN) $(PROTOC_GEN_ES_BIN) $(shell find $(TEMPTESTSERVER_DIR)/proto -name '*.proto')
+$(TEST_GEN): $(PROTOC_GEN_CONNECT_WEB_BIN) $(PROTOC_GEN_ES_BIN)
 	rm -rf $(TEST_DIR)/src/gen/*
-	buf generate $(TEMPTESTSERVER_DIR)/proto --template $(TEST_DIR)/buf.gen.yaml --output $(TEST_DIR)
 	buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto --template $(TEST_DIR)/buf.gen.yaml --output $(TEST_DIR)
 	mkdir -p $(dir $(TEST_GEN)) && touch $(TEST_GEN)
 
@@ -93,14 +72,19 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
+# Ensure that the the crosstest server is running
+CROSSTEST_SERVER_RUNNING = $(CACHE_DIR)/service/crosstestserver
+$(CROSSTEST_SERVER_RUNNING): docker-compose.yaml
+	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
+	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup 'localhost:8080,localhost:8081,localhost:8083'
+
+
 # Install license-header
 LICENSE_HEADER_VERSION := v1.1.0
 LICENSE_HEADER_LICENSE_TYPE := apache
 LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
 LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/service-start.js make\/scripts\/service-stop.js packages\/connect-web-test\/src\/gen
-#TODO(tstamm) remove the temporary go test server
-LICENSE_HEADER_IGNORES := $(LICENSE_HEADER_IGNORES) temptestserver\/internal\/gen
 LICENSE_HEADER_DEP := $(CACHE_DIR)/dep/license-header-$(LICENSE_HEADER_VERSION)
 $(LICENSE_HEADER_DEP):
 	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@$(LICENSE_HEADER_VERSION)
@@ -144,13 +128,11 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	node make/scripts/service-stop.js $(TESTSERVER_RUNNING) dockercomposeup
-	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
+	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
 	$(MAKE) dockercomposeclean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
-	rm -rf $(TEMPTESTSERVER_DIR)/internal/gen/*
 
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
@@ -160,18 +142,14 @@ test: test-go test-node test-browser ## Run all tests
 test-go:
 	go test ./cmd/...
 
-test-node: $(NODE18_DEP) $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
+test-node: $(NODE18_DEP) $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
 	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 
-test-browser: $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
+test-browser: $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
 	npm run -w $(TEST_DIR) karma
 
-test-local-browser: $(TEST_BUILD) $(TEMPTESTSERVER_RUNNING) $(TESTSERVER_RUNNING)
+test-local-browser: $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
 	npm run -w $(TEST_DIR) karma-serve
-
-#TODO(tstamm) remove the temporary go test server
-temptestserver-stop:
-	node make/scripts/service-stop.js $(TEMPTESTSERVER_RUNNING) __temptestserver-gorun
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
@@ -229,7 +207,7 @@ release: all ## Release @bufbuild/connect-web
 
 # Some builds need code generation, some code generation needs builds.
 # We expose this target only for ci, so it can check for diffs.
-ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN) $(TEMPTESTSERVER_GEN)
+ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN)
 
 dockercomposeclean:
 	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans

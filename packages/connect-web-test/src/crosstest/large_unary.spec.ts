@@ -20,7 +20,7 @@ import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
 describe("large_unary", function () {
   describeTransports(crosstestTransports, (transport) => {
-    const req = new SimpleRequest({
+    const request = new SimpleRequest({
       responseSize: 314159,
       payload: {
         body: new Uint8Array(271828).fill(0),
@@ -28,16 +28,16 @@ describe("large_unary", function () {
     });
     it("with promise client", async function () {
       const client = makePromiseClient(TestService, transport);
-      const response = await client.unaryCall(req);
+      const response = await client.unaryCall(request);
       expect(response.payload).toBeDefined();
-      expect(response.payload?.body.length).toEqual(req.responseSize);
+      expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
       const client = makeCallbackClient(TestService, transport);
-      client.unaryCall(req, (err, response) => {
+      client.unaryCall(request, (err, response) => {
         expect(err).toBeUndefined();
         expect(response.payload).toBeDefined();
-        expect(response.payload?.body.length).toEqual(req.responseSize);
+        expect(response.payload?.body.length).toEqual(request.responseSize);
         done();
       });
     });
