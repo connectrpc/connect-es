@@ -4,8 +4,7 @@
     "./packages/connect-web",
     "./packages/connect-web-test",
     "./packages/bench-codesize",
-    "./packages/protoc-gen-connect-web*",
-    "./packages/connect-ping-node-grpc"
+    "./packages/protoc-gen-connect-web*"
   ],
   "type": "module",
   "engineStrict": true,

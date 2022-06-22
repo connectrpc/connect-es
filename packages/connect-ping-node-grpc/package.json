@@ -12,12 +12,5 @@
     "client:verbose": "npm run build && GRPC_TRACE=call_stream GRPC_VERBOSITY=DEBUG node dist/esm/client.js",
     "client": "npm run build && node dist/esm/client.js",
     "server": "npm run build && GRPC_TRACE=call_stream GRPC_VERBOSITY=DEBUG node dist/esm/server.js"
-  },
-  "dependencies": {
-    "@bufbuild/protobuf": "^0.0.4",
-    "@grpc/grpc-js": "^1.6.7"
-  },
-  "devDependencies": {
-    "typescript": "^4.7.2"
   }
 }
