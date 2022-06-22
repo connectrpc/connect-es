@@ -26,8 +26,8 @@ import {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error.js";
-import { Code, codeFromConnectHttpStatus } from "./code.js";
+import { ConnectError, connectErrorFromJson } from "./connect-error.js";
+import { codeFromConnectHttpStatus, Code } from "./code.js";
 import type { ClientTransport } from "./client-transport.js";
 import type {
   Interceptor,
@@ -139,7 +139,7 @@ export function createConnectTransport(
             const responseType = response.headers.get("Content-Type") ?? "";
             if (response.status != 200) {
               if (responseType == "application/json") {
-                throw ConnectError.fromJson(
+                throw connectErrorFromJson(
                   (await response.json()) as JsonValue,
                   {
                     typeRegistry: options.errorDetailRegistry,
@@ -233,7 +233,7 @@ export function createConnectTransport(
             const responseType = response.headers.get("Content-Type") ?? "";
             if (response.status != 200) {
               if (responseType == "application/json") {
-                throw ConnectError.fromJson(
+                throw connectErrorFromJson(
                   (await response.json()) as JsonValue,
                   {
                     typeRegistry: options.errorDetailRegistry,
@@ -483,7 +483,7 @@ class EndStream {
       }
       if (Object.keys(jsonValue.error).length > 0) {
         try {
-          error = ConnectError.fromJson(jsonValue.error, {
+          error = connectErrorFromJson(jsonValue.error, {
             ...options,
             metadata,
           });

@@ -27,7 +27,7 @@ export {
 
 export { ClientTransport, ClientCallOptions } from "./client-transport.js";
 
-export { ConnectError } from "./connect-error.js";
+export { ConnectError, connectErrorFromJson } from "./connect-error.js";
 
 export { Code, codeFromString, codeToString } from "./code.js";
 
