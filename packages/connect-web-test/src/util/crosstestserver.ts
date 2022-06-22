@@ -39,21 +39,21 @@ export const crosstestTransports: Record<
     createGrpcWebTransport({
       ...options,
       baseUrl,
-      typeRegistry: TypeRegistry.from(ErrorDetail),
+      errorDetailRegistry: TypeRegistry.from(ErrorDetail),
     }),
   "connect JSON transport": (options) =>
     createConnectTransport({
       ...options,
       baseUrl,
       useBinaryFormat: false,
-      typeRegistry: TypeRegistry.from(ErrorDetail),
+      errorDetailRegistry: TypeRegistry.from(ErrorDetail),
     }),
   "connect binary transport": (options) =>
     createConnectTransport({
       ...options,
       baseUrl,
       useBinaryFormat: true,
-      typeRegistry: TypeRegistry.from(ErrorDetail),
+      errorDetailRegistry: TypeRegistry.from(ErrorDetail),
     }),
 };
 

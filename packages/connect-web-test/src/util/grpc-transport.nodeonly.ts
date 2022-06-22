@@ -184,7 +184,7 @@ export function createGrpcTransport(
       message: PartialMessage<I>
     ): Promise<StreamResponse<O>> {
       try {
-        return runServerStream<I, O>(
+        return await runServerStream<I, O>(
           <UnaryRequest<I>>{
             stream: false,
             service,
@@ -239,6 +239,20 @@ export function createGrpcTransport(
             });
             clientCall.on("end", () => {
               callEnded = true;
+            });
+            if (clientError != undefined) {
+              throw clientError;
+            }
+
+            // Only resolve once we received response metadata, so we are consistent with
+            // behavior of fetch API transports.
+            await new Promise((resolve, reject) => {
+              clientCall.once("metadata", () => {
+                resolve(undefined);
+              });
+              clientCall.once("error", (error: Error) => {
+                reject(error);
+              });
             });
 
             return <StreamResponse<O>>{
@@ -334,7 +348,7 @@ function grpcMetadataFromHeaders(headers: Headers): grpc.Metadata {
   const metadata = new grpc.Metadata();
   headers.forEach((value, key) => {
     if (key.toLowerCase().endsWith("-bin")) {
-      metadata.add(key, new Buffer(protoBase64.dec(value)));
+      metadata.add(key, Buffer.from(protoBase64.dec(value)));
     } else {
       metadata.add(key, value);
     }
@@ -349,8 +363,8 @@ function grpcMetadataToHeaders(metadata: grpc.Metadata): Headers {
       for (const e of b) {
         headers.append(a, e);
       }
-      // } else if (typeof b != "string" && b != undefined) {
-      //   headers.append(a, b as unknown as string); // Http2Headers can be number, but grpc.Metadata cannot
+    } else if (b != undefined) {
+      headers.append(a, b.toString());
     }
   }
   return headers;

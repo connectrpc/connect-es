@@ -20,10 +20,11 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { Message, MethodKind } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error.js";
+import type { ConnectError } from "./connect-error.js";
 import type { ClientCallOptions, ClientTransport } from "./client-transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
+import { connectErrorFromFetchError } from "./private/connect-error-from-fetch-error.js";
 
 // prettier-ignore
 /**
@@ -102,15 +103,12 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
           callback(undefined, response.message);
         },
         (reason) => {
-          const ce =
-            reason instanceof ConnectError
-              ? reason
-              : new ConnectError(String(reason), Code.Internal);
-          if (ce.code === Code.Canceled && abort.signal.aborted) {
+          const err = connectErrorFromFetchError(reason);
+          if (err.code === Code.Canceled && abort.signal.aborted) {
             // As documented, discard Canceled errors if canceled by the user.
             return;
           }
-          callback(ce, new method.O());
+          callback(err, new method.O());
         }
       );
     return () => abort.abort();
@@ -131,7 +129,6 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
 ): ServerStreamingFn<I, O> {
   return function (requestMessage, onResponse, onClose, options) {
     const abort = new AbortController();
-
     async function run() {
       options = wrapSignal(abort, options);
       const streamResponse = await transport.serverStream(
@@ -142,7 +139,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
         options.headers,
         requestMessage
       );
-
+      options.onHeader?.(streamResponse.header);
       let result = await streamResponse.read();
       while (!result.done) {
         onResponse(result.value);
@@ -151,19 +148,14 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
       options.onTrailer?.(streamResponse.trailer);
       onClose(undefined);
     }
-
     run().catch((reason) => {
-      const ce =
-        reason instanceof ConnectError
-          ? reason
-          : new ConnectError(String(reason), Code.Internal);
-      if (ce.code === Code.Canceled && abort.signal.aborted) {
+      const err = connectErrorFromFetchError(reason);
+      if (err.code === Code.Canceled && abort.signal.aborted) {
         // As documented, discard Canceled errors if canceled by the user.
         return;
       }
-      onClose(ce);
+      onClose(err);
     });
-
     return () => abort.abort();
   };
 }

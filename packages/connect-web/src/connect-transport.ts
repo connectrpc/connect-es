@@ -101,7 +101,7 @@ export function createConnectTransport(
       message: PartialMessage<I>
     ): Promise<UnaryResponse<O>> {
       try {
-        return runUnary<I, O>(
+        return await runUnary<I, O>(
           {
             stream: false,
             service,
@@ -195,7 +195,7 @@ export function createConnectTransport(
       message: PartialMessage<I>
     ): Promise<StreamResponse<O>> {
       try {
-        return runServerStream<I, O>(
+        return await runServerStream<I, O>(
           <UnaryRequest<I>>{
             stream: false,
             service,

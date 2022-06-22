@@ -21,10 +21,13 @@ import {
 import { createGrpcTransport } from "../util/grpc-transport.nodeonly.js";
 import * as grpc from "@grpc/grpc-js";
 import * as tls from "tls";
+import { TypeRegistry } from "@bufbuild/protobuf";
+import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
 
 // add the gRPC transport - but only when running in node
 crosstestTransports["gRPC transport"] = (options?: Record<string, unknown>) =>
   createGrpcTransport({
+    errorDetailRegistry: TypeRegistry.from(ErrorDetail),
     ...options,
     address: baseUrl.substring("https://".length),
     channelCredentials: grpc.ChannelCredentials.createFromSecureContext(
@@ -34,15 +37,3 @@ crosstestTransports["gRPC transport"] = (options?: Record<string, unknown>) =>
       })
     ),
   });
-
-// We don't have h2c or h2 on the temptestserver
-/*
-temptestserverTransports["gRPC transport"] = (
-  options?: Record<string, unknown>
-) =>
-  createGrpcTransport({
-    ...options,
-    address: baseUrl.substring("https://".length),
-    channelCredentials: grpc.ChannelCredentials.createInsecure(),
-  });
-*/
