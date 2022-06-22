@@ -9,5 +9,5 @@ minify the bundle, and compress it like a web server would usually do.
 
 | code generator | bundle size        | minified               | compressed           |
 |----------------|-------------------:|-----------------------:|---------------------:|
-| connect-web    | 237,782 b | 122,511 b | 18,748 b |
+| connect-web    | 237,735 b | 122,485 b | 18,735 b |
 | grpc-web       | 1,019,192 b    | 725,020 b    | 74,132 b |

@@ -92,9 +92,9 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
+  // TODO there is no reason to return a promise here, we could simply return the async iterable right away
+  // eslint-disable-next-line @typescript-eslint/require-await
   return async function (requestMessage, options): Promise<AsyncIterable<O>> {
-    // TODO
-    await new Promise<void>((resolve) => resolve());
     let streamResponse: StreamResponse<O> | undefined;
     return {
       [Symbol.asyncIterator](): AsyncIterator<O> {
