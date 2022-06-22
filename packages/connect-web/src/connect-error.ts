@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code, codeToString } from "./code.js";
-import type { Any, AnyMessage, JsonValue } from "@bufbuild/protobuf";
+import { Code, codeFromString, codeToString } from "./code.js";
+import type {
+  AnyMessage,
+  IMessageTypeRegistry,
+  JsonValue,
+} from "@bufbuild/protobuf";
+import { Any } from "@bufbuild/protobuf";
+import { newParseError } from "./private/new-parse-error.js";
 
 // TODO "procedure" - service / method name would be convenient to have her
 // TODO nest errors á la https://github.com/Veetaha/ts-nested-error/blob/master/src/nested-error.ts ?
@@ -97,4 +103,65 @@ function syntheticMessage(code: Code, message: string) {
   return message.length
     ? `[${codeToString(code)}] ${message}`
     : `[${codeToString(code)}]`;
+}
+
+/**
+ * Parse an error from a JSON value.
+ * Will return a ConnectError, but throw one in case the JSON is malformed.
+ */
+export function connectErrorFromJson(
+  jsonValue: JsonValue,
+  options?: { typeRegistry?: IMessageTypeRegistry; metadata?: HeadersInit }
+): ConnectError {
+  if (
+    typeof jsonValue !== "object" ||
+    jsonValue == null ||
+    Array.isArray(jsonValue) ||
+    !("code" in jsonValue) ||
+    typeof jsonValue.code !== "string"
+  ) {
+    throw newParseError(jsonValue);
+  }
+  const code = codeFromString(jsonValue.code);
+  if (!code) {
+    throw newParseError(jsonValue.code, ".code");
+  }
+  const message = jsonValue.message;
+  if (message != null && typeof message !== "string") {
+    throw newParseError(jsonValue.code, ".message");
+  }
+  const error = new ConnectError(
+    message ?? "",
+    code,
+    undefined,
+    options?.metadata
+  );
+  if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
+    for (const raw of jsonValue.details) {
+      let any: Any;
+      try {
+        any = Any.fromJson(raw, options);
+      } catch (e) {
+        // We consider error details to be supplementary information.
+        // Parsing error details must not hide elementary information
+        // like code and message, so we deliberately ignore parsing
+        // errors here.
+        error.rawDetails.push(raw as RawDetail);
+        continue;
+      }
+      const typeName = any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1);
+      if (!options?.typeRegistry) {
+        error.rawDetails.push(raw as RawDetail);
+        continue;
+      }
+      const messageType = options.typeRegistry.findMessage(typeName);
+      if (messageType) {
+        const message = new messageType();
+        if (any.unpackTo(message)) {
+          error.details.push(message);
+        }
+      }
+    }
+  }
+  return error;
 }

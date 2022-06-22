@@ -12,7 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError, Code } from "@bufbuild/connect-web";
+import {
+  ConnectError,
+  Code,
+  codeToString,
+  connectErrorFromJson,
+} from "@bufbuild/connect-web";
+import { TypeRegistry } from "@bufbuild/protobuf";
+import { ErrorDetail } from "./gen/grpc/testing/messages_pb.js";
 
 describe("ConnectError", function () {
   describe("constructor", () => {
@@ -29,6 +36,110 @@ describe("ConnectError", function () {
       expect(e.message).toBe("[already_exists] foo");
       expect(e.rawMessage).toBe("foo");
       expect(String(e)).toBe("ConnectError: [already_exists] foo");
+    });
+  });
+  describe("connectErrorFromJson", () => {
+    it("parses code and message", () => {
+      const error = connectErrorFromJson({
+        code: "permission_denied",
+        message: "Not permitted",
+      });
+      expect(error.code).toBe(Code.PermissionDenied);
+      expect(error.rawMessage).toBe("Not permitted");
+      expect(error.details.length).toBe(0);
+    });
+    it("does not require message", () => {
+      const error = connectErrorFromJson({
+        code: codeToString(Code.PermissionDenied),
+      });
+      expect(error.message).toBe("[permission_denied]");
+      expect(error.rawMessage).toBe("");
+    });
+    it("with invalid code throws", () => {
+      expect(() =>
+        connectErrorFromJson({
+          code: "wrong code",
+          message: "Not permitted",
+        })
+      ).toThrowError(
+        '[internal] cannot decode ConnectError.code from JSON: "wrong code"'
+      );
+    });
+    it("with code Ok throws", () => {
+      expect(() =>
+        connectErrorFromJson({
+          code: "ok",
+          message: "Not permitted",
+        })
+      ).toThrowError(
+        '[internal] cannot decode ConnectError.code from JSON: "ok"'
+      );
+    });
+    it("with missing code throws", () => {
+      expect(() =>
+        connectErrorFromJson({
+          message: "Not permitted",
+        })
+      ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
+    });
+    describe("with details", () => {
+      const json = {
+        code: "permission_denied",
+        message: "Not permitted",
+        details: [
+          {
+            reason: "soirée 🎉",
+            domain: "example.com",
+            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
+          },
+        ],
+      };
+      it("skips details when not given a type registry", () => {
+        const error = connectErrorFromJson(json);
+        expect(error.details.length).toBe(0);
+      });
+      it("skips details not present in type registry", () => {
+        const error = connectErrorFromJson(json, {
+          typeRegistry: new TypeRegistry(),
+        });
+        expect(error.details.length).toBe(0);
+      });
+      it("uses rawDetails when not given a type registry", () => {
+        const error = connectErrorFromJson(json);
+        expect(error.rawDetails as unknown).toEqual([
+          {
+            reason: "soirée 🎉",
+            domain: "example.com",
+            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
+          },
+        ]);
+      });
+      it("uses rawDetails for details not present in type registry", () => {
+        const error = connectErrorFromJson(json, {
+          typeRegistry: new TypeRegistry(),
+        });
+        expect(error.rawDetails as unknown).toEqual([
+          {
+            reason: "soirée 🎉",
+            domain: "example.com",
+            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
+          },
+        ]);
+      });
+      it("decodes details using type registry", () => {
+        const error = connectErrorFromJson(json, {
+          typeRegistry: TypeRegistry.from(ErrorDetail),
+        });
+        expect(error.code).toBe(Code.PermissionDenied);
+        expect(error.rawMessage).toBe("Not permitted");
+        expect(error.details.length).toBe(1);
+        if (error.details[0] instanceof ErrorDetail) {
+          expect(error.details[0].domain).toBe("example.com");
+          expect(error.details[0].reason).toBe("soirée 🎉");
+        } else {
+          fail();
+        }
+      });
     });
   });
 });

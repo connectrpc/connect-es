@@ -28,7 +28,7 @@ export {
   wrapTransportCall,
 } from "./client-transport.js";
 
-export { ConnectError } from "./connect-error.js";
+export { ConnectError, connectErrorFromJson } from "./connect-error.js";
 
 export { Code, codeFromString, codeToString } from "./code.js";
 
@@ -48,5 +48,3 @@ export {
   EnvelopedMessage,
   encodeEnvelopes,
 } from "./envelope.js";
-
-export { fromJson, fromJsonString, toJson, toJsonString } from "./json.js";

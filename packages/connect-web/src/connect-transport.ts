@@ -26,7 +26,7 @@ import {
   MethodKind,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error.js";
+import { ConnectError, connectErrorFromJson } from "./connect-error.js";
 import { codeFromConnectHttpStatus, Code } from "./code.js";
 import type {
   ClientCallOptions,
@@ -41,7 +41,6 @@ import {
   encodeEnvelopes,
   EnvelopeReader,
 } from "./envelope.js";
-import { fromJson, fromJsonString } from "./json.js";
 import { newParseError } from "./private/new-parse-error.js";
 import { extractRejectionError } from "./private/extract-rejection-error.js";
 
@@ -235,7 +234,7 @@ function createStreamResponse<O extends Message<O>>(
             if (response.status != 200) {
               handler.onTrailer?.(head.trailer);
               if (head.contentType == "application/json") {
-                throw fromJsonString(await response.text(), {
+                throw connectErrorFromJson(await response.json(), {
                   typeRegistry: transportOptions.typeRegistry,
                   metadata: head.trailer,
                 });
@@ -335,7 +334,7 @@ function createUnaryResponse<O extends Message<O>>(
             if (response.status != 200) {
               handler.onTrailer?.(head.trailer);
               if (head.contentType == "application/json") {
-                throw fromJsonString(await response.text(), {
+                throw connectErrorFromJson(await response.json(), {
                   typeRegistry: transportOptions.typeRegistry,
                   metadata: head.header,
                 });
@@ -526,7 +525,7 @@ class EndStream {
       }
       if (Object.keys(jsonValue.error).length > 0) {
         try {
-          error = fromJson(jsonValue.error, {
+          error = connectErrorFromJson(jsonValue.error, {
             ...options,
             metadata,
           });
