@@ -15,7 +15,13 @@
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 
-export function connectErrorFromFetchError(reason: unknown): ConnectError {
+/**
+ * Convert any value - typically a caught error into a ConnectError.
+ * If the value is already a ConnectError, return it as is.
+ * If the value is an AbortError from the fetch API, return code Canceled.
+ * For other values, return code Internal.
+ */
+export function connectErrorFromReason(reason: unknown): ConnectError {
   if (reason instanceof ConnectError) {
     return reason;
   }
@@ -28,5 +34,5 @@ export function connectErrorFromFetchError(reason: unknown): ConnectError {
     }
     return new ConnectError(reason.message);
   }
-  return new ConnectError(String(reason));
+  return new ConnectError(String(reason), Code.Internal);
 }

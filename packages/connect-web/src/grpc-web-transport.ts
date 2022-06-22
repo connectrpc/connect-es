@@ -36,7 +36,7 @@ import {
 } from "./client-interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { grpcStatusDetailsBinName } from "./private/grpc-status.js";
-import { connectErrorFromFetchError } from "./private/connect-error-from-fetch-error.js";
+import { connectErrorFromReason } from "./private/connect-error-from-reason.js";
 
 export interface GrpcWebTransportOptions {
   /**
@@ -173,7 +173,7 @@ export function createGrpcWebTransport(
           transportOptions.interceptors
         );
       } catch (e) {
-        throw connectErrorFromFetchError(e);
+        throw connectErrorFromReason(e);
       }
     },
     async serverStream<
@@ -288,7 +288,7 @@ export function createGrpcWebTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromFetchError(e);
+        throw connectErrorFromReason(e);
       }
     },
   };

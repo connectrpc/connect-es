@@ -24,7 +24,7 @@ import type { ConnectError } from "./connect-error.js";
 import type { ClientCallOptions, ClientTransport } from "./client-transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
-import { connectErrorFromFetchError } from "./private/connect-error-from-fetch-error.js";
+import { connectErrorFromReason } from "./private/connect-error-from-reason.js";
 
 // prettier-ignore
 /**
@@ -103,7 +103,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
           callback(undefined, response.message);
         },
         (reason) => {
-          const err = connectErrorFromFetchError(reason);
+          const err = connectErrorFromReason(reason);
           if (err.code === Code.Canceled && abort.signal.aborted) {
             // As documented, discard Canceled errors if canceled by the user.
             return;
@@ -149,7 +149,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
       onClose(undefined);
     }
     run().catch((reason) => {
-      const err = connectErrorFromFetchError(reason);
+      const err = connectErrorFromReason(reason);
       if (err.code === Code.Canceled && abort.signal.aborted) {
         // As documented, discard Canceled errors if canceled by the user.
         return;

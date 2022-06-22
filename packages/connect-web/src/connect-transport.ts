@@ -39,7 +39,7 @@ import { runServerStream, runUnary } from "./client-interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { newParseError } from "./private/new-parse-error.js";
 import { mergeHeaders } from "./http-headers.js";
-import { connectErrorFromFetchError } from "./private/connect-error-from-fetch-error.js";
+import { connectErrorFromReason } from "./private/connect-error-from-reason.js";
 
 export interface ConnectTransportOptions {
   /**
@@ -180,7 +180,7 @@ export function createConnectTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromFetchError(e);
+        throw connectErrorFromReason(e);
       }
     },
     async serverStream<
@@ -315,7 +315,7 @@ export function createConnectTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromFetchError(e);
+        throw connectErrorFromReason(e);
       }
     },
   };
