@@ -26,7 +26,7 @@ import {
   MethodKind,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error.js";
+import { ConnectError, connectErrorFromJson } from "./connect-error.js";
 import { codeFromConnectHttpStatus, Code } from "./code.js";
 import type {
   ClientCallOptions,
@@ -234,10 +234,13 @@ function createStreamResponse<O extends Message<O>>(
             if (response.status != 200) {
               handler.onTrailer?.(head.trailer);
               if (head.contentType == "application/json") {
-                throw ConnectError.fromJsonString(await response.text(), {
-                  typeRegistry: transportOptions.typeRegistry,
-                  metadata: head.trailer,
-                });
+                throw connectErrorFromJson(
+                  (await response.json()) as JsonValue,
+                  {
+                    typeRegistry: transportOptions.typeRegistry,
+                    metadata: head.trailer,
+                  }
+                );
               }
               throw new ConnectError(
                 `HTTP ${response.status} ${response.statusText}`,
@@ -334,10 +337,13 @@ function createUnaryResponse<O extends Message<O>>(
             if (response.status != 200) {
               handler.onTrailer?.(head.trailer);
               if (head.contentType == "application/json") {
-                throw ConnectError.fromJsonString(await response.text(), {
-                  typeRegistry: transportOptions.typeRegistry,
-                  metadata: head.header,
-                });
+                throw connectErrorFromJson(
+                  (await response.json()) as JsonValue,
+                  {
+                    typeRegistry: transportOptions.typeRegistry,
+                    metadata: head.header,
+                  }
+                );
               }
               throw new ConnectError(
                 `HTTP ${response.status} ${response.statusText}`,
@@ -525,7 +531,7 @@ class EndStream {
       }
       if (Object.keys(jsonValue.error).length > 0) {
         try {
-          error = ConnectError.fromJson(jsonValue.error, {
+          error = connectErrorFromJson(jsonValue.error, {
             ...options,
             metadata,
           });
