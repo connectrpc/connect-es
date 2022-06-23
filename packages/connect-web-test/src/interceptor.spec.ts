@@ -65,6 +65,11 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
           return r;
         },
       };
+    } else {
+      const trailerKeys = listHeaderKeys(res.trailer)
+        .filter((value) => !fieldsToIgnore.includes(value))
+        .join(", ");
+      log.push(`${name} response done with trailers: ${trailerKeys}`);
     }
     return res;
   };
@@ -83,7 +88,9 @@ describe("unary interceptors", () => {
     "outer sending request message",
     "inner sending request message",
     "inner response received with headers: x-grpc-test-echo-initial",
+    "inner response done with trailers: x-grpc-test-echo-trailing-bin",
     "outer response received with headers: x-grpc-test-echo-initial",
+    "outer response done with trailers: x-grpc-test-echo-trailing-bin",
   ] as const;
   for (const [name, transportFactory] of Object.entries(crosstestTransports)) {
     it(`via ${name} and promise client`, async () => {
