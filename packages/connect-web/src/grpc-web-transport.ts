@@ -22,7 +22,7 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error.js";
+import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import { Code, codeFromGrpcWebHttpStatus } from "./code.js";
 import { decodeBinaryHeader } from "./http-headers.js";
 import { Status } from "./grpc/status/v1/status_pb.js";
@@ -35,8 +35,6 @@ import {
   UnaryRequest,
 } from "./client-interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
-import { grpcStatusDetailsBinName } from "./private/grpc-status.js";
-import { connectErrorFromReason } from "./private/connect-error-from-reason.js";
 
 export interface GrpcWebTransportOptions {
   /**
@@ -389,7 +387,7 @@ function extractDetailsError(
   header: Headers,
   typeRegistry?: IMessageTypeRegistry
 ): ConnectError | undefined {
-  const grpcStatusDetailsBin = header.get(grpcStatusDetailsBinName);
+  const grpcStatusDetailsBin = header.get("grpc-status-details-bin");
   if (grpcStatusDetailsBin == null) {
     return undefined;
   }
@@ -422,12 +420,9 @@ function extractDetailsError(
     }
     return error;
   } catch (e) {
-    return new ConnectError(
-      grpcStatusDetailsBinName,
-      Code.Internal,
-      undefined,
-      header
-    );
+    const ce = connectErrorFromReason(e);
+    header.forEach((value, key) => ce.metadata.append(key, value));
+    return ce;
   }
 }
 

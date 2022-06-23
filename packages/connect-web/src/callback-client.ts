@@ -24,7 +24,7 @@ import type { ConnectError } from "./connect-error.js";
 import type { ClientCallOptions, ClientTransport } from "./client-transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
-import { connectErrorFromReason } from "./private/connect-error-from-reason.js";
+import { connectErrorFromReason } from "./connect-error.js";
 
 // prettier-ignore
 /**

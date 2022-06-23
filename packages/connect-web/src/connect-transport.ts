@@ -26,7 +26,12 @@ import {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { ConnectError, connectErrorFromJson } from "./connect-error.js";
+import {
+  ConnectError,
+  connectErrorFromJson,
+  connectErrorFromReason,
+  newParseError,
+} from "./connect-error.js";
 import { codeFromConnectHttpStatus, Code } from "./code.js";
 import type { ClientTransport } from "./client-transport.js";
 import type {
@@ -37,9 +42,7 @@ import type {
 } from "./client-interceptor.js";
 import { runServerStream, runUnary } from "./client-interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
-import { newParseError } from "./private/new-parse-error.js";
 import { mergeHeaders } from "./http-headers.js";
-import { connectErrorFromReason } from "./private/connect-error-from-reason.js";
 
 export interface ConnectTransportOptions {
   /**
