@@ -21,8 +21,6 @@ import {
 } from "@bufbuild/protobuf";
 import { Any } from "@bufbuild/protobuf";
 
-// TODO "procedure" - service / method name would be convenient to have here
-
 /**
  * ConnectError captures three pieces of information: a Code, an error
  * message, and an optional collection of arbitrary Protobuf messages called
