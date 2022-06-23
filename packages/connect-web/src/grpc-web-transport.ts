@@ -58,7 +58,7 @@ export interface GrpcWebTransportOptions {
    */
   credentials?: RequestCredentials;
 
-  // TODO explain
+  // TODO document
   // TODO instead of requiring the registry upfront, provide a function to parse raw details?
   errorDetailRegistry?: IMessageTypeRegistry;
 
@@ -67,7 +67,7 @@ export interface GrpcWebTransportOptions {
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
-  // TODO
+  // TODO document
   interceptors?: Interceptor[];
 }
 

@@ -43,19 +43,19 @@ import * as grpc from "@grpc/grpc-js";
 /**
  * Options for the gRPC transport.
  *
- * Note that the gRPC transport is a proof of concept. It may be missing
- * important implementation details and may have bugs.
+ * Note that the gRPC transport is a proof of concept. It does not support
+ * cancellation and error details, and it may have bugs.
  */
 export interface GrpcTransportOptions {
   address: string;
   channelCredentials: grpc.ChannelCredentials;
   clientOptions?: grpc.ClientOptions;
 
-  // TODO explain
+  // TODO document
   // TODO instead of requiring the registry upfront, provide a function to parse raw details?
   errorDetailRegistry?: IMessageTypeRegistry;
 
-  // TODO
+  // TODO document
   interceptors?: Interceptor[];
 }
 
@@ -69,8 +69,9 @@ interface GrpcClientTransport extends ClientTransport {
 
 /**
  * Create a gRPC transport for Node.js using the @grpc/grpc-js package.
- * Note that this is a proof of concept. It may be missing important
- * implementation details and may have bugs.
+ *
+ * Note that the gRPC transport is a proof of concept. It does not support
+ * cancellation and error details, and it may have bugs.
  */
 export function createGrpcTransport(
   options: GrpcTransportOptions
@@ -120,7 +121,7 @@ export function createGrpcTransport(
         },
         (unaryRequest) => {
           return new Promise((resolve, reject) => {
-            // TODO cancellation
+            // We are missing support for cancellation here
             let header: Headers = new Headers();
             let message: O | undefined;
             let trailer: Headers = new Headers();
@@ -143,7 +144,7 @@ export function createGrpcTransport(
             clientCall.on("status", (status: grpc.StatusObject) => {
               trailer = grpcMetadataToHeaders(status.metadata);
               if (status.code != grpc.status.OK) {
-                // TODO grpc-status-details-bin
+                // We are missing support for error details here
                 reject(
                   new ConnectError(
                     status.details,
@@ -197,7 +198,7 @@ export function createGrpcTransport(
             signal: signal ?? new AbortController().signal,
           },
           async (unaryRequest: UnaryRequest<I>): Promise<StreamResponse<O>> => {
-            // TODO cancellation
+            // We are missing support for cancellation here
             const clientCall = client.makeServerStreamRequest(
               unaryRequest.url,
               makeSerializerFn(),
@@ -225,7 +226,7 @@ export function createGrpcTransport(
                 trailer.append(key, value)
               );
               if (status.code != grpc.status.OK) {
-                // TODO grpc-status-details-bin
+                // We are missing support for error details here
                 clientError = new ConnectError(
                   status.details,
                   status.code as number,
@@ -330,7 +331,7 @@ function connectErrorFromGrpcError(
   }
   if (typeof err == "object" && err != null && "details" in err) {
     const se = err as grpc.ServiceError;
-    // TODO grpc-status-details-bin
+    // We are missing support for error details here
     return new ConnectError(
       se.details,
       se.code as number,

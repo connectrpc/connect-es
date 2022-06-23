@@ -21,8 +21,7 @@ import type {
 import { Any } from "@bufbuild/protobuf";
 import { newParseError } from "./private/new-parse-error.js";
 
-// TODO "procedure" - service / method name would be convenient to have her
-// TODO nest errors á la https://github.com/Veetaha/ts-nested-error/blob/master/src/nested-error.ts ?
+// TODO "procedure" - service / method name would be convenient to have here
 
 /**
  * ConnectError captures three pieces of information: a Code, an error
