@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { createEnvelopeReadableStream } from "@bufbuild/connect-web";
-import { webReadableStreamFromBytes } from "./util/web-streams.js";
+import { webReadableStreamFromBytes } from "./helpers/web-streams.js";
 
 function envelopeMessages(
   ...messageAndFlags: Array<{ data: Uint8Array; flags?: number }>

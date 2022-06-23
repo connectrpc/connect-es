@@ -19,8 +19,8 @@ import {
   Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../util/describe-transports.js";
-import { crosstestTransports } from "../util/crosstestserver.js";
+import { describeTransports } from "../helpers/describe-transports.js";
+import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import type { ClientCallOptions } from "@bufbuild/connect-web/src/client-transport";
 

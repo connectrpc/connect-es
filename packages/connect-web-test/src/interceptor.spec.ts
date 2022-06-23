@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { crosstestTransports } from "./util/crosstestserver.js";
+import { crosstestTransports } from "./helpers/crosstestserver.js";
 import {
   encodeBinaryHeader,
   makeCallbackClient,
@@ -20,7 +20,7 @@ import {
 } from "@bufbuild/connect-web";
 import { TestService } from "./gen/grpc/testing/test_connectweb.js";
 import type { Interceptor } from "@bufbuild/connect-web";
-import { listHeaderKeys } from "./util/list-header-keys.js";
+import { listHeaderKeys } from "./helpers/list-header-keys.js";
 import { StreamingOutputCallRequest } from "./gen/grpc/testing/messages_pb.js";
 import type { ClientCallOptions } from "@bufbuild/connect-web";
 

@@ -19,8 +19,8 @@ import {
   makePromiseClient,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../util/describe-transports.js";
-import { crosstestTransports } from "../util/crosstestserver.js";
+import { describeTransports } from "../helpers/describe-transports.js";
+import { crosstestTransports } from "../helpers/crosstestserver.js";
 import {
   SimpleRequest,
   SimpleResponse,

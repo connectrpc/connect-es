@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TestService } from "./gen/grpc/testing/test_connectweb.js";
-import { makeGrpcClient } from "./util/make-grpc-client.nodeonly.js";
+import { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { makeGrpcClient } from "./make-grpc-client.js";
 import * as grpc from "@grpc/grpc-js";
 
 describe("makeGrpcClient()", function () {

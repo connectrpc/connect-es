@@ -23,7 +23,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import type * as grpc from "@grpc/grpc-js";
-import { makeGrpcServiceDefinition } from "./make-grpc-definition.nodeonly.js";
+import { makeGrpcServiceDefinition } from "./make-grpc-definition.js";
 
 // prettier-ignore
 /**

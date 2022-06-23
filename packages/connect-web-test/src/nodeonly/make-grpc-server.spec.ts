@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import * as grpc from "@grpc/grpc-js";
-import { addGrpcService } from "./util/make-grpc-server.nodeonly.js";
+import { addGrpcService } from "./make-grpc-server.js";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
