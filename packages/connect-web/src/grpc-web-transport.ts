@@ -263,7 +263,6 @@ export function createGrpcWebTransport(
                   if (err) {
                     throw err;
                   }
-                  // TODO should strip everything but user payload
                   trailer.forEach((value, key) =>
                     this.trailer.append(key, value)
                   );
