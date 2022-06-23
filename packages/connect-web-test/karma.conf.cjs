@@ -20,7 +20,7 @@ module.exports = function (config) {
     ],
     exclude: [
       // We don't want node-specific files when running in a browser.
-      "src/**/*.nodeonly*.ts",
+      "src/nodeonly/**/*.ts",
     ],
     singleRun: true,
     reporters: ["progress"],

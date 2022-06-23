@@ -14,13 +14,13 @@
 
 import {
   ConnectError,
-  makeCallbackClient,
-  makePromiseClient,
+  createCallbackClient,
+  createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
 import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../util/describe-transports.js";
-import { crosstestTransports } from "../util/crosstestserver.js";
+import { describeTransports } from "../helpers/describe-transports.js";
+import { crosstestTransports } from "../helpers/crosstestserver.js";
 
 describe("unimplemented_service", function () {
   function expectError(err: unknown) {
@@ -35,7 +35,7 @@ describe("unimplemented_service", function () {
 
   describeTransports(crosstestTransports, (transport) => {
     it("with promise client", async function () {
-      const client = makePromiseClient(UnimplementedService, transport);
+      const client = createPromiseClient(UnimplementedService, transport);
       try {
         await client.unimplementedCall({});
         fail("expected to catch an error");
@@ -44,7 +44,7 @@ describe("unimplemented_service", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = makeCallbackClient(UnimplementedService, transport);
+      const client = createCallbackClient(UnimplementedService, transport);
       client.unimplementedCall({}, (err: ConnectError | undefined) => {
         expectError(err);
         done();

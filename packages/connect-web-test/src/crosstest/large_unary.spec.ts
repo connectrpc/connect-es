@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { makeCallbackClient, makePromiseClient } from "@bufbuild/connect-web";
+import {
+  createCallbackClient,
+  createPromiseClient,
+} from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../util/describe-transports.js";
-import { crosstestTransports } from "../util/crosstestserver.js";
+import { describeTransports } from "../helpers/describe-transports.js";
+import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
 describe("large_unary", function () {
@@ -27,13 +30,13 @@ describe("large_unary", function () {
       },
     });
     it("with promise client", async function () {
-      const client = makePromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport);
       const response = await client.unaryCall(request);
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
-      const client = makeCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport);
       client.unaryCall(request, (err, response) => {
         expect(err).toBeUndefined();
         expect(response.payload).toBeDefined();

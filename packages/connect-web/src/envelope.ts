@@ -61,25 +61,16 @@ function encodeEnvelope(
   return len;
 }
 
-// export function createEnvelopeWriter(): ReadableStream {}
-//
-// interface EnvelopeWriter {
-//   write(message: EnvelopedMessage);
-// }
-
 /**
- * A function that reads one EnvelopedMessage per call from the given stream.
+ * Create a ReadableStream of enveloped messages from a ReadableStream of bytes.
+ *
+ * Ideally, this would simply be a TransformStream, but ReadableStream.pipeThrough
+ * does not have the necessary availability at this time.
  */
-export type EnvelopeReader = () => Promise<EnvelopedMessage | null>;
-
-/**
- * Create a function that reads one EnvelopedMessage per call from the given
- * stream.
- */
-export function createEnvelopeReader(
+export function createEnvelopeReadableStream(
   stream: ReadableStream<Uint8Array>
-): EnvelopeReader {
-  const reader = stream.getReader();
+): ReadableStream<EnvelopedMessage> {
+  let reader: ReadableStreamDefaultReader<Uint8Array>;
   let buffer = new Uint8Array(0);
   function append(chunk: Uint8Array): void {
     const n = new Uint8Array(buffer.length + chunk.length);
@@ -87,36 +78,45 @@ export function createEnvelopeReader(
     n.set(chunk, buffer.length);
     buffer = n;
   }
-  return async function readEnvelopedMessage(): Promise<EnvelopedMessage | null> {
-    let header: { length: number; flags: number } | undefined = undefined;
-    for (;;) {
-      if (header === undefined && buffer.byteLength >= 5) {
-        let length = 0;
-        for (let i = 1; i < 5; i++) {
-          length = (length << 8) + buffer[i];
+  return new ReadableStream<EnvelopedMessage>({
+    start() {
+      reader = stream.getReader();
+    },
+    async pull(controller): Promise<void> {
+      let header: { length: number; flags: number } | undefined = undefined;
+      for (;;) {
+        if (header === undefined && buffer.byteLength >= 5) {
+          let length = 0;
+          for (let i = 1; i < 5; i++) {
+            length = (length << 8) + buffer[i];
+          }
+          header = { flags: buffer[0], length };
         }
-        header = { flags: buffer[0], length };
+        const result = await reader.read();
+        if (result.done) {
+          break;
+        }
+        append(result.value);
+        if (header !== undefined && buffer.byteLength >= header.length + 5) {
+          break;
+        }
       }
-      const result = await reader.read();
-      if (result.done) {
-        break;
+      if (header === undefined) {
+        if (buffer.byteLength == 0) {
+          controller.close();
+          return;
+        }
+        controller.error(
+          new ConnectError("premature end of stream", Code.DataLoss)
+        );
+        return;
       }
-      append(result.value);
-      if (header !== undefined && buffer.byteLength >= header.length + 5) {
-        break;
-      }
-    }
-    if (header === undefined) {
-      if (buffer.byteLength == 0) {
-        return null;
-      }
-      throw new ConnectError("premature end of stream", Code.DataLoss);
-    }
-    const data = buffer.subarray(5, 5 + header.length);
-    buffer = buffer.subarray(5 + header.length);
-    return {
-      flags: header.flags,
-      data,
-    };
-  };
+      const data = buffer.subarray(5, 5 + header.length);
+      buffer = buffer.subarray(5 + header.length);
+      controller.enqueue({
+        flags: header.flags,
+        data,
+      });
+    },
+  });
 }

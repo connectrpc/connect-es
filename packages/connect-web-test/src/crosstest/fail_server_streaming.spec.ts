@@ -14,13 +14,13 @@
 
 import {
   ConnectError,
-  makeCallbackClient,
-  makePromiseClient,
+  createCallbackClient,
+  createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../util/describe-transports.js";
-import { crosstestTransports } from "../util/crosstestserver.js";
+import { describeTransports } from "../helpers/describe-transports.js";
+import { crosstestTransports } from "../helpers/crosstestserver.js";
 import {
   ErrorDetail,
   StreamingOutputCallRequest,
@@ -57,7 +57,7 @@ describe("fail_server_streaming", () => {
   });
   describeTransports(crosstestTransports, (transport, transportName) => {
     it("with promise client", async function () {
-      const client = makePromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport);
       try {
         for await (const response of await client.failStreamingOutputCall(
           request
@@ -70,7 +70,7 @@ describe("fail_server_streaming", () => {
       }
     });
     it("with callback client", function (done) {
-      const client = makeCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport);
       client.failStreamingOutputCall(
         request,
         (response) => {

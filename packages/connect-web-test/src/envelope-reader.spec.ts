@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createEnvelopeReader } from "@bufbuild/connect-web";
-import { webReadableStreamFromBytes } from "./util/web-streams.js";
+import { createEnvelopeReadableStream } from "@bufbuild/connect-web";
+import { webReadableStreamFromBytes } from "./helpers/web-streams.js";
 
 function envelopeMessages(
   ...messageAndFlags: Array<{ data: Uint8Array; flags?: number }>
@@ -33,13 +33,14 @@ function envelopeMessages(
   return env;
 }
 
-describe("envelope-reader", () => {
+describe("createEnvelopeReadableStream()", () => {
   it("reads empty stream", async () => {
-    const read = createEnvelopeReader(
+    const reader = createEnvelopeReadableStream(
       webReadableStreamFromBytes(new Uint8Array(0))
-    );
-    const r = await read();
-    expect(r).toBeNull();
+    ).getReader();
+    const r = await reader.read();
+    expect(r.done).toBeTrue();
+    expect(r.value).toBeUndefined();
   });
   it("reads multiple messages", async () => {
     const input = [
@@ -56,17 +57,18 @@ describe("envelope-reader", () => {
         flags: 0b10000000,
       },
     ];
-    const read = createEnvelopeReader(
+    const reader = createEnvelopeReadableStream(
       webReadableStreamFromBytes(envelopeMessages(...input))
-    );
+    ).getReader();
     for (const want of input) {
-      const r = await read();
-      expect(r).not.toBeNull();
-      expect(r?.flags).toBe(want.flags);
-      expect(r?.data).toEqual(want.data);
+      const r = await reader.read();
+      expect(r.done).toBeFalse();
+      expect(r.value).toBeDefined();
+      expect(r.value?.flags).toBe(want.flags);
+      expect(r.value?.data).toEqual(want.data);
     }
-    const r = await read();
-    expect(r).toBeNull();
+    const r = await reader.read();
+    expect(r.done).toBeTrue();
   });
   it("reads an EndStreamResponse out of usual order", async () => {
     const input = [
@@ -79,16 +81,17 @@ describe("envelope-reader", () => {
         flags: 0b00000000,
       },
     ];
-    const read = createEnvelopeReader(
+    const reader = createEnvelopeReadableStream(
       webReadableStreamFromBytes(envelopeMessages(...input))
-    );
+    ).getReader();
     for (const want of input) {
-      const r = await read();
-      expect(r).not.toBeNull();
-      expect(r?.flags).toBe(want.flags);
-      expect(r?.data).toEqual(want.data);
+      const r = await reader.read();
+      expect(r.done).toBeFalse();
+      expect(r.value).toBeDefined();
+      expect(r.value?.flags).toBe(want.flags);
+      expect(r.value?.data).toEqual(want.data);
     }
-    const r = await read();
-    expect(r).toBeNull();
+    const r = await reader.read();
+    expect(r.done).toBeTrue();
   });
 });

@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ClientTransport } from "@bufbuild/connect-web/src";
-
-export function describeTransports(
-  transports: Record<string, () => ClientTransport>,
-  specDefinitions: (transport: ClientTransport, transportName: string) => void
-) {
-  for (const [name, transportFactory] of Object.entries(transports)) {
-    describe(name, () => {
-      specDefinitions(transportFactory(), name);
-    });
-  }
+/**
+ * Return all keys of a Headers object, without needing
+ * DOM.iterable for Headers.keys().
+ */
+export function listHeaderKeys(header: Headers): string[] {
+  const keys: string[] = [];
+  header.forEach((_, key) => keys.push(key));
+  return keys;
 }

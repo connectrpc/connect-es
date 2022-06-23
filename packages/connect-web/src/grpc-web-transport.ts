@@ -13,31 +13,30 @@
 // limitations under the License.
 
 import type {
+  AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
   IMessageTypeRegistry,
   Message,
-  MessageType,
   MethodInfo,
+  PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error.js";
-import { codeFromGrpcWebHttpStatus, Code } from "./code.js";
+import { ConnectError, connectErrorFromReason } from "./connect-error.js";
+import { Code, codeFromGrpcWebHttpStatus } from "./code.js";
 import { decodeBinaryHeader } from "./http-headers.js";
 import { Status } from "./grpc/status/v1/status_pb.js";
-import type {
-  ClientCallOptions,
-  ClientRequest,
-  ClientResponse,
-  ClientTransport,
-} from "./client-transport.js";
-import { wrapTransportCall } from "./client-transport.js";
-import type { ClientInterceptor } from "./client-interceptor.js";
-import { createEnvelopeReader, EnvelopeReader } from "./envelope.js";
-import { extractRejectionError } from "./private/extract-rejection-error.js";
-import { grpcStatusDetailsBinName } from "./private/grpc-status.js";
+import type { Transport } from "./transport.js";
+import type { StreamResponse, UnaryResponse } from "./interceptor.js";
+import {
+  Interceptor,
+  runServerStream,
+  runUnary,
+  UnaryRequest,
+} from "./interceptor.js";
+import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 
-export interface GrpcWebTransportOptions {
+interface GrpcWebTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
@@ -57,218 +56,275 @@ export interface GrpcWebTransportOptions {
    */
   credentials?: RequestCredentials;
 
-  // TODO explain
+  // TODO document
   // TODO instead of requiring the registry upfront, provide a function to parse raw details?
-  typeRegistry?: IMessageTypeRegistry;
+  errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
-  interceptors?: ClientInterceptor[];
+  // TODO document
+  interceptors?: Interceptor[];
 }
 
 export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
-): ClientTransport {
+): Transport {
   const transportOptions = options;
   return {
-    call<I extends Message<I>, O extends Message<O>>(
+    async unary<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
       service: ServiceType,
       method: MethodInfo<I, O>,
-      options: ClientCallOptions
-    ): [ClientRequest<I>, ClientResponse<O>] {
-      const [request, fetchResponse] = createRequest(
-        service.typeName,
-        method.name,
-        options,
-        transportOptions
-      );
-      const response = createResponse(
-        method.O,
-        options,
-        transportOptions,
-        fetchResponse
-      );
-      return wrapTransportCall(
-        service,
-        method,
-        options,
-        request,
-        response,
-        transportOptions.interceptors
-      );
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: Headers,
+      message: PartialMessage<I>
+    ): Promise<UnaryResponse<O>> {
+      try {
+        return await runUnary<I, O>(
+          {
+            stream: false,
+            service,
+            method,
+            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            init: {
+              method: "POST",
+              credentials: options.credentials ?? "same-origin",
+              redirect: "error",
+              mode: "cors",
+            },
+            header: createGrpcWebRequestHeaders(header, timeoutMs),
+            message:
+              message instanceof method.I ? message : new method.I(message),
+            signal: signal ?? new AbortController().signal,
+          },
+          async (unaryRequest) => {
+            const response = await fetch(unaryRequest.url, {
+              ...unaryRequest.init,
+              headers: unaryRequest.header,
+              signal: unaryRequest.signal,
+              body: createGrpcWebRequestBody(
+                unaryRequest.message,
+                options.binaryOptions
+              ),
+            });
+            const headError =
+              extractHttpStatusError(response) ??
+              extractContentTypeError(response.headers) ??
+              extractDetailsError(
+                response.headers,
+                transportOptions.errorDetailRegistry
+              ) ??
+              extractHeadersError(response.headers);
+            if (headError) {
+              throw headError;
+            }
+            if (!response.body) {
+              throw "missing response body";
+            }
+            const reader = createEnvelopeReadableStream(
+              response.body
+            ).getReader();
+            const messageResult = await reader.read();
+            if (messageResult.done) {
+              throw "missing message";
+            }
+            if (messageResult.value.flags !== 0b00000000) {
+              throw "unexpected trailer";
+            }
+            const message = method.O.fromBinary(
+              messageResult.value.data,
+              transportOptions.binaryOptions
+            );
+            const trailerResult = await reader.read();
+            if (trailerResult.done) {
+              throw "missing trailer";
+            }
+            if ((trailerResult.value.flags & trailerFlag) !== trailerFlag) {
+              throw "missing trailer";
+            }
+            const trailer = parseGrpcWebTrailer(trailerResult.value.data);
+            const trailerError =
+              extractDetailsError(
+                trailer,
+                transportOptions.errorDetailRegistry
+              ) ?? extractHeadersError(trailer);
+            if (trailerError) {
+              throw trailerError;
+            }
+            const eofResult = await reader.read();
+            if (!eofResult.done) {
+              throw "extraneous data";
+            }
+            return <UnaryResponse<O>>{
+              stream: false,
+              header: response.headers,
+              message,
+              trailer,
+            };
+          },
+          transportOptions.interceptors
+        );
+      } catch (e) {
+        throw connectErrorFromReason(e);
+      }
     },
-  };
-}
+    async serverStream<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
+      service: ServiceType,
+      method: MethodInfo<I, O>,
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: HeadersInit | undefined,
+      message: PartialMessage<I>
+    ): Promise<StreamResponse<O>> {
+      try {
+        return await runServerStream<I, O>(
+          <UnaryRequest<I>>{
+            stream: false,
+            service,
+            method,
+            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            init: {
+              method: "POST",
+              credentials: options.credentials ?? "same-origin",
+              redirect: "error",
+              mode: "cors",
+            },
+            header: createGrpcWebRequestHeaders(header, timeoutMs),
+            message:
+              message instanceof method.I ? message : new method.I(message),
+            signal: signal ?? new AbortController().signal,
+          },
+          async (unaryRequest: UnaryRequest<I>): Promise<StreamResponse<O>> => {
+            const response = await fetch(unaryRequest.url, {
+              ...unaryRequest.init,
+              headers: unaryRequest.header,
+              signal: unaryRequest.signal,
+              body: createGrpcWebRequestBody(
+                unaryRequest.message,
+                options.binaryOptions
+              ),
+            });
 
-function createRequest<I extends Message<I>>(
-  serviceTypeName: string,
-  methodName: string,
-  callOptions: ClientCallOptions,
-  transportOptions: GrpcWebTransportOptions
-): [ClientRequest<I>, Promise<Response>] {
-  let resolveResponse: (value: Response) => void;
-  let rejectResponse: (reason: unknown) => void;
-  const responsePromise = new Promise<Response>((resolve, reject) => {
-    resolveResponse = resolve;
-    rejectResponse = reject;
-  });
-
-  let baseUrl = transportOptions.baseUrl;
-  if (baseUrl.endsWith("/")) {
-    baseUrl = baseUrl.substring(0, baseUrl.length - 1);
-  }
-  const url = `${baseUrl}/${serviceTypeName}/${methodName}`;
-  const abort = callOptions.signal ?? new AbortController().signal;
-  const request: ClientRequest = {
-    url,
-    init: {
-      method: "POST",
-      credentials: transportOptions.credentials ?? "same-origin",
-      redirect: "error",
-      mode: "cors",
-    },
-    abort,
-    header: createGrpcWebRequestHeaders(callOptions),
-    send(message: I, callback) {
-      const data = message.toBinary(transportOptions.binaryOptions);
-      const body = new Uint8Array(data.length + 5);
-      body[0] = 0x00; // first byte is frame type
-      for (let dataLength = data.length, i = 4; i > 0; i--) {
-        body[i] = dataLength % 256; // 4 bytes message length
-        dataLength >>>= 8;
-      }
-      body.set(data, 5);
-      fetch(this.url, {
-        ...this.init,
-        headers: this.header,
-        signal: this.abort,
-        body,
-      })
-        .then(resolveResponse)
-        .catch(rejectResponse);
-      // We cannot make a meaningful callback to send() via fetch.
-      callback(undefined);
-    },
-  };
-
-  return [request, responsePromise];
-}
-
-function createResponse<O extends Message<O>>(
-  messageType: MessageType<O>,
-  callOptions: ClientCallOptions,
-  transportOptions: GrpcWebTransportOptions,
-  response: Response | Promise<Response>
-): ClientResponse<O> {
-  let isReading = false;
-  let isRead = false;
-  let readFrame: EnvelopeReader | undefined;
-  return {
-    receive(handler): void {
-      function close(reason?: unknown) {
-        isRead = true;
-        isReading = false;
-        const error =
-          reason !== undefined ? extractRejectionError(reason) : undefined;
-        handler.onClose(error);
-      }
-      if (isRead) {
-        close("response already read");
-        return;
-      }
-      if (isReading) {
-        close("cannot read response concurrently");
-        return;
-      }
-      isReading = true;
-      Promise.resolve(response)
-        .then((response) => {
-          if (readFrame === undefined) {
-            // TODO should check http status and content type first?
-            handler.onHeader?.(response.headers);
             const err =
               extractHttpStatusError(response) ??
               extractContentTypeError(response.headers) ??
               extractDetailsError(
                 response.headers,
-                transportOptions.typeRegistry
+                transportOptions.errorDetailRegistry
               ) ??
               extractHeadersError(response.headers);
             if (err) {
-              close(err);
-              return;
+              throw err;
             }
-            if (response.body === null) {
-              close("missing response body");
-              return;
+            if (!response.body) {
+              throw "missing response body";
             }
-            try {
-              readFrame = createEnvelopeReader(response.body);
-            } catch (e) {
-              close(`failed to get response body reader: ${String(e)}`);
-              return;
-            }
-          }
-          readFrame()
-            .then((frame) => {
-              isReading = false;
-              if (frame === null) {
-                close();
-              } else if ((frame.flags & trailerFlag) === trailerFlag) {
-                const trailer = parseGrpcWebTrailer(frame.data);
-                handler.onTrailer?.(trailer);
-                close(
-                  extractDetailsError(trailer, transportOptions.typeRegistry) ??
-                    extractHeadersError(trailer)
-                );
-              } else {
-                try {
-                  handler.onMessage(
-                    messageType.fromBinary(
-                      frame.data,
-                      transportOptions.binaryOptions
-                    )
-                  );
-                } catch (e) {
-                  // prettier-ignore
-                  close(`failed to deserialize message ${messageType.typeName}: ${String(e)}`);
+
+            const reader = createEnvelopeReadableStream(
+              response.body
+            ).getReader();
+
+            let endStreamReceived = false;
+            let messageReceived = false;
+            return <StreamResponse<O>>{
+              stream: true,
+              service,
+              method,
+              header: response.headers,
+              trailer: new Headers(),
+              async read(): Promise<ReadableStreamDefaultReadResult<O>> {
+                const result = await reader.read();
+                if (result.done) {
+                  if (messageReceived && !endStreamReceived) {
+                    throw new ConnectError("missing trailers", Code.Internal);
+                  }
+                  return {
+                    done: true,
+                    value: undefined,
+                  };
                 }
-              }
-            })
-            .catch(close);
-        })
-        .catch(close);
+                if ((result.value.flags & trailerFlag) === trailerFlag) {
+                  endStreamReceived = true;
+                  const trailer = parseGrpcWebTrailer(result.value.data);
+                  const err =
+                    extractDetailsError(
+                      trailer,
+                      transportOptions.errorDetailRegistry
+                    ) ?? extractHeadersError(trailer);
+                  if (err) {
+                    throw err;
+                  }
+                  trailer.forEach((value, key) =>
+                    this.trailer.append(key, value)
+                  );
+                  return {
+                    done: true,
+                    value: undefined,
+                  };
+                }
+                messageReceived = true;
+                return {
+                  done: false,
+                  value: method.O.fromBinary(
+                    result.value.data,
+                    options.binaryOptions
+                  ),
+                };
+              },
+            };
+          },
+          options.interceptors
+        );
+      } catch (e) {
+        throw connectErrorFromReason(e);
+      }
     },
   };
 }
 
+function createGrpcWebRequestBody(
+  message: AnyMessage,
+  options: Partial<BinaryWriteOptions> | undefined
+): BodyInit {
+  return encodeEnvelopes({
+    data: message.toBinary(options),
+    flags: messageFlag,
+  });
+}
+
+const messageFlag = 0b00000000;
 const trailerFlag = 0b10000000;
 
-function createGrpcWebRequestHeaders(callOptions: ClientCallOptions): Headers {
-  const header = new Headers({
-    // We provide the most explicit description for our content type.
-    // Note that we do not support the grpc-web-text format.
-    // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2
-    "Content-Type": "application/grpc-web+proto",
-    // Some servers may rely on the request header `X-Grpc-Web` to identify
-    // gRPC-web requests. For example the proxy by improbable:
-    // https://github.com/improbable-eng/grpc-web/blob/53aaf4cdc0fede7103c1b06f0cfc560c003a5c41/go/grpcweb/wrapper.go#L231
-    "X-Grpc-Web": "1",
-    // Note that we do not comply with recommended structure for the
-    // user-agent string.
-    // https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
-    "X-User-Agent": "@bufbuild/connect-web",
-  });
-  new Headers(callOptions.headers).forEach((value, key) =>
-    header.set(key, value)
-  );
-  if (callOptions.timeoutMs !== undefined) {
-    header.set("Grpc-Timeout", `${callOptions.timeoutMs}m`);
+function createGrpcWebRequestHeaders(
+  headers: HeadersInit | undefined,
+  timeoutMs: number | undefined
+): Headers {
+  const result = new Headers(headers);
+  // We provide the most explicit description for our content type.
+  // Note that we do not support the grpc-web-text format.
+  // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2
+  result.set("Content-Type", "application/grpc-web+proto");
+  // Some servers may rely on the request header `X-Grpc-Web` to identify
+  // gRPC-web requests. For example the proxy by improbable:
+  // https://github.com/improbable-eng/grpc-web/blob/53aaf4cdc0fede7103c1b06f0cfc560c003a5c41/go/grpcweb/wrapper.go#L231
+  result.set("X-Grpc-Web", "1");
+  // Note that we do not comply with recommended structure for the
+  // user-agent string.
+  // https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
+  result.set("X-User-Agent", "@bufbuild/connect-web");
+  if (timeoutMs !== undefined) {
+    result.set("Grpc-Timeout", `${timeoutMs}m`);
   }
-  return header;
+  return result;
 }
 
 function extractContentTypeError(header: Headers): ConnectError | undefined {
@@ -330,7 +386,7 @@ function extractDetailsError(
   header: Headers,
   typeRegistry?: IMessageTypeRegistry
 ): ConnectError | undefined {
-  const grpcStatusDetailsBin = header.get(grpcStatusDetailsBinName);
+  const grpcStatusDetailsBin = header.get("grpc-status-details-bin");
   if (grpcStatusDetailsBin == null) {
     return undefined;
   }
@@ -363,12 +419,9 @@ function extractDetailsError(
     }
     return error;
   } catch (e) {
-    return new ConnectError(
-      grpcStatusDetailsBinName,
-      Code.Internal,
-      undefined,
-      header
-    );
+    const ce = connectErrorFromReason(e);
+    header.forEach((value, key) => ce.metadata.append(key, value));
+    return ce;
   }
 }
 

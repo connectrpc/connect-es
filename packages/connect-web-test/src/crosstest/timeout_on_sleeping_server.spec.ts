@@ -14,15 +14,15 @@
 
 import {
   ConnectError,
-  makeCallbackClient,
-  makePromiseClient,
+  createCallbackClient,
+  createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../util/describe-transports.js";
-import { crosstestTransports } from "../util/crosstestserver.js";
+import { describeTransports } from "../helpers/describe-transports.js";
+import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
-import type { ClientCallOptions } from "@bufbuild/connect-web/src/client-transport";
+import type { CallOptions } from "@bufbuild/connect-web/src/transport";
 
 describe("timeout_on_sleeping_server", function () {
   const request = new StreamingOutputCallRequest({
@@ -36,7 +36,7 @@ describe("timeout_on_sleeping_server", function () {
       },
     ],
   });
-  const options: ClientCallOptions = {
+  const options: CallOptions = {
     timeoutMs: 1, // 1ms
   };
   function expectError(err: unknown) {
@@ -52,7 +52,7 @@ describe("timeout_on_sleeping_server", function () {
   }
   describeTransports(crosstestTransports, (transport) => {
     it("with promise client", async function () {
-      const client = makePromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport);
       try {
         for await (const response of await client.streamingOutputCall(
           request,
@@ -68,7 +68,7 @@ describe("timeout_on_sleeping_server", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = makeCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport);
       client.streamingOutputCall(
         request,
         (response) => {

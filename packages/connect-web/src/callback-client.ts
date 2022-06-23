@@ -13,23 +13,18 @@
 // limitations under the License.
 
 import type {
-  MessageType,
   MethodInfo,
   MethodInfoServerStreaming,
   MethodInfoUnary,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
+import { Message, MethodKind } from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
-import {
-  ClientCallOptions,
-  ClientTransport,
-  receiveResponseUntilClose,
-} from "./client-transport.js";
+import type { CallOptions, Transport } from "./transport.js";
 import { Code } from "./code.js";
-import { Message } from "@bufbuild/protobuf";
 import { makeAnyClient } from "./any-client.js";
+import { connectErrorFromReason } from "./connect-error.js";
 
 // prettier-ignore
 /**
@@ -51,8 +46,8 @@ import { makeAnyClient } from "./any-client.js";
  */
 export type CallbackClient<T extends ServiceType> = {
   [P in keyof T["methods"]]:
-    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: ClientCallOptions) => CancelFn
-  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: ClientCallOptions) => CancelFn
+    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: CallOptions) => CancelFn
+  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
   : never;
 };
 
@@ -62,9 +57,9 @@ type CancelFn = () => void;
  * Create a CallbackClient for the given service, invoking RPCs through the
  * given transport.
  */
-export function makeCallbackClient<T extends ServiceType>(
+export function createCallbackClient<T extends ServiceType>(
   service: T,
-  transport: ClientTransport
+  transport: Transport
 ) {
   return makeAnyClient(service, (method) => {
     switch (method.kind) {
@@ -81,40 +76,41 @@ export function makeCallbackClient<T extends ServiceType>(
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   callback: (error: ConnectError | undefined, response: O) => void,
-  options?: ClientCallOptions
+  options?: CallOptions
 ) => CancelFn;
 
 function createUnaryFn<I extends Message<I>, O extends Message<O>>(
-  transport: ClientTransport,
+  transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): UnaryFn<I, O> {
   return function (requestMessage, callback, options) {
     const abort = new AbortController();
     options = wrapSignal(abort, options);
-    const [request, response] = transport.call(service, method, options);
-    request.send(messageFromPartial(requestMessage, method.I), (error) => {
-      if (error) {
-        if (error.code === Code.Canceled && abort.signal.aborted) {
-          // As documented, discard Canceled errors if canceled by the user.
-          return;
+    transport
+      .unary(
+        service,
+        method,
+        abort.signal,
+        options.timeoutMs,
+        options.headers,
+        requestMessage
+      )
+      .then(
+        (response) => {
+          options?.onHeader?.(response.header);
+          options?.onTrailer?.(response.trailer);
+          callback(undefined, response.message);
+        },
+        (reason) => {
+          const err = connectErrorFromReason(reason);
+          if (err.code === Code.Canceled && abort.signal.aborted) {
+            // As documented, discard Canceled errors if canceled by the user.
+            return;
+          }
+          callback(err, new method.O());
         }
-        callback(error, new method.O());
-      }
-    });
-    let singleMessage = new method.O();
-    receiveResponseUntilClose(response, {
-      onMessage(message): void {
-        singleMessage = message;
-      },
-      onClose(error?: ConnectError) {
-        if (error && error.code === Code.Canceled && abort.signal.aborted) {
-          // As documented, discard Canceled errors if canceled by the user.
-          return;
-        }
-        callback(error, singleMessage);
-      },
-    });
+      );
     return () => abort.abort();
   };
 }
@@ -123,38 +119,42 @@ type ServerStreamingFn<I extends Message, O extends Message> = (
   request: PartialMessage<I>,
   onResponse: (response: O) => void,
   onClose: (error: ConnectError | undefined) => void,
-  options?: ClientCallOptions
+  options?: CallOptions
 ) => CancelFn;
 
 function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
-  transport: ClientTransport,
+  transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
   return function (requestMessage, onResponse, onClose, options) {
     const abort = new AbortController();
-    options = wrapSignal(abort, options);
-    const [request, response] = transport.call(service, method, options);
-    request.send(messageFromPartial(requestMessage, method.I), (error) => {
-      if (error) {
-        if (error.code === Code.Canceled && abort.signal.aborted) {
-          // As documented, discard Canceled errors if canceled by the user.
-          return;
-        }
-        onClose(error);
+    async function run() {
+      options = wrapSignal(abort, options);
+      const streamResponse = await transport.serverStream(
+        service,
+        method,
+        options.signal,
+        options.timeoutMs,
+        options.headers,
+        requestMessage
+      );
+      options.onHeader?.(streamResponse.header);
+      let result = await streamResponse.read();
+      while (!result.done) {
+        onResponse(result.value);
+        result = await streamResponse.read();
       }
-    });
-    receiveResponseUntilClose(response, {
-      onMessage(message): void {
-        onResponse(message);
-      },
-      onClose(error?: ConnectError): void {
-        if (error && error.code === Code.Canceled && abort.signal.aborted) {
-          // As documented, discard Canceled errors if canceled by the user.
-          return;
-        }
-        onClose(error);
-      },
+      options.onTrailer?.(streamResponse.trailer);
+      onClose(undefined);
+    }
+    run().catch((reason) => {
+      const err = connectErrorFromReason(reason);
+      if (err.code === Code.Canceled && abort.signal.aborted) {
+        // As documented, discard Canceled errors if canceled by the user.
+        return;
+      }
+      onClose(err);
     });
     return () => abort.abort();
   };
@@ -162,20 +162,10 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
 
 function wrapSignal(
   abort: AbortController,
-  options: ClientCallOptions | undefined
-): ClientCallOptions {
+  options: CallOptions | undefined
+): CallOptions {
   if (options?.signal) {
     options.signal.addEventListener("abort", () => abort.abort());
   }
   return { ...options, signal: abort.signal };
-}
-
-function messageFromPartial<T extends Message<T>>(
-  message: T | PartialMessage<T>,
-  type: MessageType<T>
-): T {
-  if (message instanceof type || message instanceof Message) {
-    return message;
-  }
-  return new type(message);
 }

@@ -12,21 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { makeCallbackClient, CallbackClient } from "./callback-client.js";
-export { makePromiseClient, PromiseClient } from "./promise-client.js";
+export { createCallbackClient, CallbackClient } from "./callback-client.js";
+export { createPromiseClient, PromiseClient } from "./promise-client.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
 
-export { ClientInterceptor } from "./client-interceptor.js";
-
 export {
-  ClientTransport,
-  ClientCallOptions,
-  ClientRequest,
-  ClientRequestCallback,
-  ClientResponse,
-  ClientResponseHandler,
-  wrapTransportCall,
-} from "./client-transport.js";
+  Interceptor,
+  UnaryRequest,
+  UnaryResponse,
+  StreamResponse,
+  runUnary,
+  runServerStream,
+} from "./interceptor.js";
+
+export { Transport, CallOptions } from "./transport.js";
 
 export { ConnectError, connectErrorFromJson } from "./connect-error.js";
 
@@ -43,8 +42,7 @@ export {
 } from "./http-headers.js";
 
 export {
-  createEnvelopeReader,
-  EnvelopeReader,
+  createEnvelopeReadableStream,
   EnvelopedMessage,
   encodeEnvelopes,
 } from "./envelope.js";

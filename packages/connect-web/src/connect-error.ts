@@ -13,16 +13,13 @@
 // limitations under the License.
 
 import { Code, codeFromString, codeToString } from "./code.js";
-import type {
+import {
   AnyMessage,
   IMessageTypeRegistry,
   JsonValue,
+  proto3,
 } from "@bufbuild/protobuf";
 import { Any } from "@bufbuild/protobuf";
-import { newParseError } from "./private/new-parse-error.js";
-
-// TODO "procedure" - service / method name would be convenient to have her
-// TODO nest errors á la https://github.com/Veetaha/ts-nested-error/blob/master/src/nested-error.ts ?
 
 /**
  * ConnectError captures three pieces of information: a Code, an error
@@ -164,4 +161,61 @@ export function connectErrorFromJson(
     }
   }
   return error;
+}
+
+/**
+ * Convert any value - typically a caught error into a ConnectError.
+ * If the value is already a ConnectError, return it as is.
+ * If the value is an AbortError from the fetch API, return code Canceled.
+ * For other values, return code Internal.
+ */
+export function connectErrorFromReason(reason: unknown): ConnectError {
+  if (reason instanceof ConnectError) {
+    return reason;
+  }
+  if (reason instanceof Error) {
+    if (reason.name == "AbortError") {
+      // Fetch requests can only be canceled with an AbortController.
+      // We detect that condition by looking at the name of the raised
+      // error object, and translate to the appropriate status code.
+      return new ConnectError(reason.message, Code.Canceled);
+    }
+    return new ConnectError(reason.message);
+  }
+  return new ConnectError(String(reason), Code.Internal);
+}
+
+/**
+ * newParseError() is an internal utility to create a ConnectError while
+ * parsing a Connect EndStreamResponse or a Connect Error from the wire.
+ */
+export function newParseError(
+  error: unknown,
+  property: string,
+  json: false
+): ConnectError;
+export function newParseError(
+  value: JsonValue,
+  property?: string,
+  json?: true
+): ConnectError;
+export function newParseError(
+  valueOrError: JsonValue | unknown,
+  property?: string,
+  json?: boolean
+): ConnectError {
+  let d: string;
+  if (json ?? true) {
+    d = proto3.json.debug(valueOrError as JsonValue);
+  } else {
+    property = "";
+    d =
+      valueOrError instanceof Error
+        ? valueOrError.message
+        : String(valueOrError);
+  }
+  return new ConnectError(
+    `cannot decode ConnectError${property ?? ""} from JSON: ${d}`,
+    Code.Internal
+  );
 }

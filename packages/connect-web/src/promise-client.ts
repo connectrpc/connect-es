@@ -19,17 +19,10 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
-import type { ConnectError } from "./connect-error.js";
-import { Message } from "@bufbuild/protobuf";
-import {
-  ClientTransport,
-  receiveResponseUntilClose,
-  ClientResponse,
-  ClientCallOptions,
-} from "./client-transport.js";
-import type { MessageType } from "@bufbuild/protobuf";
+import { Message, MethodKind } from "@bufbuild/protobuf";
+import type { CallOptions, Transport } from "./transport.js";
 import { makeAnyClient } from "./any-client.js";
+import type { StreamResponse } from "./interceptor.js";
 
 // prettier-ignore
 /**
@@ -39,8 +32,8 @@ import { makeAnyClient } from "./any-client.js";
  */
 export type PromiseClient<T extends ServiceType> = {
     [P in keyof T["methods"]]:
-      T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: ClientCallOptions) => Promise<O>
-    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: ClientCallOptions) => Promise<AsyncIterable<O>>
+      T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
+    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => Promise<AsyncIterable<O>>
     : never;
 };
 
@@ -48,9 +41,9 @@ export type PromiseClient<T extends ServiceType> = {
  * Create a PromiseClient for the given service, invoking RPCs through the
  * given transport.
  */
-export function makePromiseClient<T extends ServiceType>(
+export function createPromiseClient<T extends ServiceType>(
   service: T,
-  transport: ClientTransport
+  transport: Transport
 ) {
   return makeAnyClient(service, (method) => {
     switch (method.kind) {
@@ -66,107 +59,73 @@ export function makePromiseClient<T extends ServiceType>(
 
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
-  options?: ClientCallOptions
+  options?: CallOptions
 ) => Promise<O>;
 
 function createUnaryFn<I extends Message<I>, O extends Message<O>>(
-  transport: ClientTransport,
+  transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): UnaryFn<I, O> {
-  return function (requestMessage, options) {
-    return new Promise((resolve, reject) => {
-      const [request, response] = transport.call(
-        service,
-        method,
-        options ?? {}
-      );
-      request.send(messageFromPartial(requestMessage, method.I), (error) => {
-        if (error) {
-          reject(error);
-        }
-      });
-      let singleMessage: O;
-      receiveResponseUntilClose(response, {
-        onMessage(message): void {
-          singleMessage = message;
-        },
-        onClose(error?: ConnectError) {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(singleMessage);
-          }
-        },
-      });
-    });
+  return async function (requestMessage, options) {
+    const response = await transport.unary(
+      service,
+      method,
+      options?.signal,
+      options?.timeoutMs,
+      options?.headers,
+      requestMessage
+    );
+    options?.onHeader?.(response.header);
+    options?.onTrailer?.(response.trailer);
+    return response.message;
   };
 }
 
 type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
-  options?: ClientCallOptions
+  options?: CallOptions
 ) => Promise<AsyncIterable<O>>;
 
 function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
-  transport: ClientTransport,
+  transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
-  return function (requestMessage, options) {
-    const [request, response] = transport.call(service, method, options ?? {});
-    return new Promise<AsyncIterable<O>>((resolve, reject) => {
-      const message = messageFromPartial(requestMessage, method.I);
-      request.send(message, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve({
-            [Symbol.asyncIterator](): AsyncIterator<O> {
-              return createResponseMessageIterator(response);
-            },
-          });
-        }
-      });
-    });
-  };
-}
-
-function createResponseMessageIterator<T extends Message<T>>(
-  response: ClientResponse<T>
-): AsyncIterator<T> {
-  return {
-    next() {
-      return new Promise((resolve, reject) => {
-        response.receive({
-          onMessage(message: T) {
-            resolve({
-              value: message,
-              done: false,
-            });
-          },
-          onClose(error?: ConnectError) {
-            if (error) {
-              reject(error);
-            } else {
-              resolve({
-                value: undefined,
-                done: true,
-              });
+  // TODO there is no reason to return a promise here, we could simply return the async iterable right away
+  // eslint-disable-next-line @typescript-eslint/require-await
+  return async function (requestMessage, options): Promise<AsyncIterable<O>> {
+    let streamResponse: StreamResponse<O> | undefined;
+    return {
+      [Symbol.asyncIterator](): AsyncIterator<O> {
+        return {
+          async next() {
+            if (!streamResponse) {
+              streamResponse = await transport.serverStream(
+                service,
+                method,
+                options?.signal,
+                options?.timeoutMs,
+                options?.headers,
+                requestMessage
+              );
+              options?.onHeader?.(streamResponse.header);
             }
+            const result = await streamResponse.read();
+            if (result.done) {
+              options?.onTrailer?.(streamResponse.trailer);
+              return {
+                done: true,
+                value: undefined,
+              };
+            }
+            return {
+              done: false,
+              value: result.value,
+            };
           },
-        });
-      });
-    },
+        };
+      },
+    };
   };
-}
-
-function messageFromPartial<T extends Message<T>>(
-  message: T | PartialMessage<T>,
-  type: MessageType<T>
-) {
-  if (message instanceof type || message instanceof Message) {
-    return message;
-  }
-  return new type(message);
 }

@@ -14,13 +14,13 @@
 
 import {
   ConnectError,
-  makeCallbackClient,
-  makePromiseClient,
+  createCallbackClient,
+  createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
 import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../util/describe-transports.js";
-import { crosstestTransports } from "../util/crosstestserver.js";
+import { describeTransports } from "../helpers/describe-transports.js";
+import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 
 describe("unimplemented_server_streaming_service", function () {
@@ -42,7 +42,7 @@ describe("unimplemented_server_streaming_service", function () {
   const request = new Empty();
   describeTransports(crosstestTransports, (transport, transportName) => {
     it("with promise client", async function () {
-      const client = makePromiseClient(UnimplementedService, transport);
+      const client = createPromiseClient(UnimplementedService, transport);
       try {
         for await (const response of await client.unimplementedStreamingOutputCall(
           request
@@ -56,7 +56,7 @@ describe("unimplemented_server_streaming_service", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = makeCallbackClient(UnimplementedService, transport);
+      const client = createCallbackClient(UnimplementedService, transport);
       client.unimplementedStreamingOutputCall(
         request,
         (response) => {

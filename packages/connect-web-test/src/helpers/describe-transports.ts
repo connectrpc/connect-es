@@ -12,4 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const grpcStatusDetailsBinName = "grpc-status-details-bin";
+import type { Transport } from "@bufbuild/connect-web/src";
+
+export function describeTransports(
+  transports: Record<string, () => Transport>,
+  specDefinitions: (transport: Transport, transportName: string) => void
+) {
+  for (const [name, transportFactory] of Object.entries(transports)) {
+    describe(name, () => {
+      specDefinitions(transportFactory(), name);
+    });
+  }
+}

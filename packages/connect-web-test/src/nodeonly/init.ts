@@ -12,7 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import {
+  baseUrl,
+  clientCert,
+  clientKey,
+  crosstestTransports,
+} from "../helpers/crosstestserver.js";
+import { createGrpcTransport } from "./grpc-transport.js";
+import * as grpc from "@grpc/grpc-js";
+import * as tls from "tls";
+import { TypeRegistry } from "@bufbuild/protobuf";
+import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
 import { ReadableStream } from "node:stream/web";
+
+// add the gRPC transport - but only when running in node
+crosstestTransports["gRPC transport"] = (options?: Record<string, unknown>) =>
+  createGrpcTransport({
+    errorDetailRegistry: TypeRegistry.from(ErrorDetail),
+    ...options,
+    address: baseUrl.substring("https://".length),
+    channelCredentials: grpc.ChannelCredentials.createFromSecureContext(
+      tls.createSecureContext({
+        cert: clientCert,
+        key: clientKey,
+      })
+    ),
+  });
 
 // node >= v16 has an implementation for WHATWG streams, but doesn't expose
 // them in the global scope, nor globalThis.

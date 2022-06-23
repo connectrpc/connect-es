@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import {
-  makePromiseClient,
+  createPromiseClient,
   createConnectTransport,
 } from "@bufbuild/connect-web";
 import { PluginService } from "./gen/connectweb/buf/alpha/registry/v1alpha1/plugin_connectweb.js";
 
-const pluginClient = makePromiseClient(
+const pluginClient = createPromiseClient(
   PluginService,
   createConnectTransport({
     baseUrl: "https://localhost",
