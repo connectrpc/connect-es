@@ -14,8 +14,8 @@
 
 import {
   ConnectError,
-  makeCallbackClient,
-  makePromiseClient,
+  createCallbackClient,
+  createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
@@ -52,7 +52,7 @@ describe("timeout_on_sleeping_server", function () {
   }
   describeTransports(crosstestTransports, (transport) => {
     it("with promise client", async function () {
-      const client = makePromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport);
       try {
         for await (const response of await client.streamingOutputCall(
           request,
@@ -68,7 +68,7 @@ describe("timeout_on_sleeping_server", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = makeCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport);
       client.streamingOutputCall(
         request,
         (response) => {

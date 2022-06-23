@@ -14,8 +14,8 @@
 
 import {
   ConnectError,
-  makeCallbackClient,
-  makePromiseClient,
+  createCallbackClient,
+  createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
@@ -40,7 +40,7 @@ describe("special_status", function () {
       }
     }
     it("with promise client", async function () {
-      const client = makePromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport);
       try {
         await client.unaryCall(request);
         fail("expected to catch an error");
@@ -49,7 +49,7 @@ describe("special_status", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = makeCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport);
       client.unaryCall(request, (err: ConnectError | undefined) => {
         expectError(err);
         done();

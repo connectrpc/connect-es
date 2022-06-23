@@ -15,8 +15,8 @@
 import { crosstestTransports } from "./helpers/crosstestserver.js";
 import {
   encodeBinaryHeader,
-  makeCallbackClient,
-  makePromiseClient,
+  createCallbackClient,
+  createPromiseClient,
 } from "@bufbuild/connect-web";
 import { TestService } from "./gen/grpc/testing/test_connectweb.js";
 import type { Interceptor } from "@bufbuild/connect-web";
@@ -95,7 +95,7 @@ describe("unary interceptors", () => {
   for (const [name, transportFactory] of Object.entries(crosstestTransports)) {
     it(`via ${name} and promise client`, async () => {
       const log: string[] = [];
-      const client = makePromiseClient(
+      const client = createPromiseClient(
         TestService,
         transportFactory({
           interceptors: [
@@ -117,7 +117,7 @@ describe("unary interceptors", () => {
     });
     it(`via ${name} and callback client`, (done) => {
       const log: string[] = [];
-      const client = makeCallbackClient(
+      const client = createCallbackClient(
         TestService,
         transportFactory({
           interceptors: [
@@ -186,7 +186,7 @@ describe("server stream interceptors", () => {
           makeLoggingInterceptor("inner", log),
         ],
       });
-      const client = makePromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const _response of await client.streamingOutputCall(
         request,
@@ -204,7 +204,7 @@ describe("server stream interceptors", () => {
           makeLoggingInterceptor("inner", log),
         ],
       });
-      const client = makeCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport);
       client.streamingOutputCall(
         request,
         () => void 0,

@@ -41,7 +41,7 @@ export type PromiseClient<T extends ServiceType> = {
  * Create a PromiseClient for the given service, invoking RPCs through the
  * given transport.
  */
-export function makePromiseClient<T extends ServiceType>(
+export function createPromiseClient<T extends ServiceType>(
   service: T,
   transport: Transport
 ) {

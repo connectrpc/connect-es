@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { makeCallbackClient, makePromiseClient } from "@bufbuild/connect-web";
+import {
+  createCallbackClient,
+  createPromiseClient,
+} from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransports } from "../helpers/describe-transports.js";
 import { crosstestTransports } from "../helpers/crosstestserver.js";
@@ -28,7 +31,7 @@ describe("server_streaming", function () {
       })),
     });
     it("with promise client", async function () {
-      const client = makePromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport);
       let responseCount = 0;
       for await (const response of await client.streamingOutputCall(request)) {
         expect(response.payload).toBeDefined();
@@ -38,7 +41,7 @@ describe("server_streaming", function () {
       expect(responseCount).toEqual(sizes.length);
     });
     it("with callback client", function (done) {
-      const client = makeCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport);
       let responseCount = 0;
       client.streamingOutputCall(
         request,

@@ -57,7 +57,7 @@ type CancelFn = () => void;
  * Create a CallbackClient for the given service, invoking RPCs through the
  * given transport.
  */
-export function makeCallbackClient<T extends ServiceType>(
+export function createCallbackClient<T extends ServiceType>(
   service: T,
   transport: Transport
 ) {
