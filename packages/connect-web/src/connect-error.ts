@@ -188,8 +188,8 @@ export function connectErrorFromReason(reason: unknown): ConnectError {
 }
 
 /**
- * newParseError() is an internal utility to create a ConnectError
- * while parsing a Connect EndStreamResponse or a Connect Error.
+ * newParseError() is an internal utility to create a ConnectError while
+ * parsing a Connect EndStreamResponse or a Connect Error from the wire.
  */
 export function newParseError(
   error: unknown,
