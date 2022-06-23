@@ -16,8 +16,8 @@ import { TestService } from "./gen/grpc/testing/test_connectweb.js";
 import { makeGrpcClient } from "./util/make-grpc-client.nodeonly.js";
 import * as grpc from "@grpc/grpc-js";
 
-describe("ff", function () {
-  it("should ", function () {
+describe("makeGrpcClient()", function () {
+  it("should create the expected methods", function () {
     const grpcClient = makeGrpcClient(TestService, {
       address: "localhost:5002",
       channelCredentials: grpc.ChannelCredentials.createInsecure(),
@@ -25,5 +25,9 @@ describe("ff", function () {
       binaryOptions: {},
     });
     expect(grpcClient).toBeDefined();
+    expect(typeof grpcClient.emptyCall).toBe("function");
+    expect(typeof grpcClient.streamingOutputCall).toBe("function");
+    expect(typeof grpcClient.streamingInputCall).toBe("function");
+    expect(typeof grpcClient.fullDuplexCall).toBe("function");
   });
 });
