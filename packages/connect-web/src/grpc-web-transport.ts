@@ -26,17 +26,17 @@ import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import { Code, codeFromGrpcWebHttpStatus } from "./code.js";
 import { decodeBinaryHeader } from "./http-headers.js";
 import { Status } from "./grpc/status/v1/status_pb.js";
-import type { ClientTransport } from "./client-transport.js";
-import type { StreamResponse, UnaryResponse } from "./client-interceptor.js";
+import type { Transport } from "./transport.js";
+import type { StreamResponse, UnaryResponse } from "./interceptor.js";
 import {
   Interceptor,
   runServerStream,
   runUnary,
   UnaryRequest,
-} from "./client-interceptor.js";
+} from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 
-export interface GrpcWebTransportOptions {
+interface GrpcWebTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
@@ -71,7 +71,7 @@ export interface GrpcWebTransportOptions {
 
 export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
-): ClientTransport {
+): Transport {
   const transportOptions = options;
   return {
     async unary<

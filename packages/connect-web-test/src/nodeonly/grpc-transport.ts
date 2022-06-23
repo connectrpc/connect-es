@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type {
-  ClientTransport,
+  Transport,
   StreamResponse,
   UnaryRequest,
   UnaryResponse,
@@ -46,7 +46,7 @@ import * as grpc from "@grpc/grpc-js";
  * Note that the gRPC transport is a proof of concept. It does not support
  * cancellation and error details, and it may have bugs.
  */
-export interface GrpcTransportOptions {
+interface GrpcTransportOptions {
   address: string;
   channelCredentials: grpc.ChannelCredentials;
   clientOptions?: grpc.ClientOptions;
@@ -59,7 +59,7 @@ export interface GrpcTransportOptions {
   interceptors?: Interceptor[];
 }
 
-interface GrpcClientTransport extends ClientTransport {
+interface GrpcTransport extends Transport {
   close(): void;
 
   getChannel(): grpc.ChannelInterface;
@@ -75,7 +75,7 @@ interface GrpcClientTransport extends ClientTransport {
  */
 export function createGrpcTransport(
   options: GrpcTransportOptions
-): GrpcClientTransport {
+): GrpcTransport {
   const transportOptions = options;
   const client = new grpc.Client(
     transportOptions.address,

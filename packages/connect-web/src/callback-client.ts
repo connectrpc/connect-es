@@ -21,7 +21,7 @@ import type {
 } from "@bufbuild/protobuf";
 import { Message, MethodKind } from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
-import type { ClientCallOptions, ClientTransport } from "./client-transport.js";
+import type { CallOptions, Transport } from "./transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
 import { connectErrorFromReason } from "./connect-error.js";
@@ -46,8 +46,8 @@ import { connectErrorFromReason } from "./connect-error.js";
  */
 export type CallbackClient<T extends ServiceType> = {
   [P in keyof T["methods"]]:
-    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: ClientCallOptions) => CancelFn
-  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: ClientCallOptions) => CancelFn
+    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: CallOptions) => CancelFn
+  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
   : never;
 };
 
@@ -59,7 +59,7 @@ type CancelFn = () => void;
  */
 export function makeCallbackClient<T extends ServiceType>(
   service: T,
-  transport: ClientTransport
+  transport: Transport
 ) {
   return makeAnyClient(service, (method) => {
     switch (method.kind) {
@@ -76,11 +76,11 @@ export function makeCallbackClient<T extends ServiceType>(
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   callback: (error: ConnectError | undefined, response: O) => void,
-  options?: ClientCallOptions
+  options?: CallOptions
 ) => CancelFn;
 
 function createUnaryFn<I extends Message<I>, O extends Message<O>>(
-  transport: ClientTransport,
+  transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): UnaryFn<I, O> {
@@ -119,11 +119,11 @@ type ServerStreamingFn<I extends Message, O extends Message> = (
   request: PartialMessage<I>,
   onResponse: (response: O) => void,
   onClose: (error: ConnectError | undefined) => void,
-  options?: ClientCallOptions
+  options?: CallOptions
 ) => CancelFn;
 
 function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
-  transport: ClientTransport,
+  transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
@@ -162,8 +162,8 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
 
 function wrapSignal(
   abort: AbortController,
-  options: ClientCallOptions | undefined
-): ClientCallOptions {
+  options: CallOptions | undefined
+): CallOptions {
   if (options?.signal) {
     options.signal.addEventListener("abort", () => abort.abort());
   }

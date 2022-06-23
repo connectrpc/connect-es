@@ -22,7 +22,7 @@ import { TestService } from "./gen/grpc/testing/test_connectweb.js";
 import type { Interceptor } from "@bufbuild/connect-web";
 import { listHeaderKeys } from "./helpers/list-header-keys.js";
 import { StreamingOutputCallRequest } from "./gen/grpc/testing/messages_pb.js";
-import type { ClientCallOptions } from "@bufbuild/connect-web";
+import type { CallOptions } from "@bufbuild/connect-web";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   const fieldsToIgnore = [
@@ -76,7 +76,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
 }
 
 describe("unary interceptors", () => {
-  const options: ClientCallOptions = {
+  const options: CallOptions = {
     headers: {
       "x-grpc-test-echo-initial": "test_initial_metadata_value",
       "x-grpc-test-echo-trailing-bin": encodeBinaryHeader(
@@ -151,7 +151,7 @@ describe("server stream interceptors", () => {
       intervalUs: index * 10,
     })),
   });
-  const options: ClientCallOptions = {
+  const options: CallOptions = {
     headers: {
       "x-grpc-test-echo-initial": "test_initial_metadata_value",
       "x-grpc-test-echo-trailing-bin": encodeBinaryHeader(

@@ -19,14 +19,14 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { StreamResponse, UnaryResponse } from "./client-interceptor.js";
+import type { StreamResponse, UnaryResponse } from "./interceptor.js";
 
 /**
- * ClientTransport represents the underlying transport for a client.
- * A transport implements a protocol, such as gRPC-web, and allows for the
- * concrete clients to be independent of the protocol.
+ * Transport represents the underlying transport for a client.
+ * A transport implements a protocol, such as Connect or gRPC-web, and allows
+ * for the concrete clients to be independent of the protocol.
  */
-export interface ClientTransport {
+export interface Transport {
   unary<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
     service: ServiceType,
     method: MethodInfo<I, O>,
@@ -50,10 +50,10 @@ export interface ClientTransport {
 }
 
 /**
- * Options for a call. Each client method accepts an optional argument
- * with this interface.
+ * Options for a call. Every client should accept CallOptions as optional
+ * argument in its RPC methods.
  */
-export interface ClientCallOptions {
+export interface CallOptions {
   /**
    * Timeout in milliseconds.
    */

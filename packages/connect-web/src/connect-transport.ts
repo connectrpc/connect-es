@@ -33,18 +33,18 @@ import {
   newParseError,
 } from "./connect-error.js";
 import { codeFromConnectHttpStatus, Code } from "./code.js";
-import type { ClientTransport } from "./client-transport.js";
+import type { Transport } from "./transport.js";
 import type {
   Interceptor,
   StreamResponse,
   UnaryRequest,
   UnaryResponse,
-} from "./client-interceptor.js";
-import { runServerStream, runUnary } from "./client-interceptor.js";
+} from "./interceptor.js";
+import { runServerStream, runUnary } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { mergeHeaders } from "./http-headers.js";
 
-export interface ConnectTransportOptions {
+interface ConnectTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
@@ -89,7 +89,7 @@ export interface ConnectTransportOptions {
 
 export function createConnectTransport(
   options: ConnectTransportOptions
-): ClientTransport {
+): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<

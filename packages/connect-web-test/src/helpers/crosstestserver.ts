@@ -16,7 +16,7 @@ import {
   createConnectTransport,
   createGrpcWebTransport,
 } from "@bufbuild/connect-web";
-import type { ClientTransport } from "@bufbuild/connect-web";
+import type { Transport } from "@bufbuild/connect-web";
 import { TypeRegistry } from "@bufbuild/protobuf";
 import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
 
@@ -33,7 +33,7 @@ export const baseUrl = "https://127.0.0.1:8080";
 
 export const crosstestTransports: Record<
   string,
-  (options?: Record<string, unknown>) => ClientTransport
+  (options?: Record<string, unknown>) => Transport
 > = {
   "gRPC-web transport": (options) =>
     createGrpcWebTransport({

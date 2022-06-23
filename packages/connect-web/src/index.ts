@@ -23,9 +23,9 @@ export {
   StreamResponse,
   runUnary,
   runServerStream,
-} from "./client-interceptor.js";
+} from "./interceptor.js";
 
-export { ClientTransport, ClientCallOptions } from "./client-transport.js";
+export { Transport, CallOptions } from "./transport.js";
 
 export { ConnectError, connectErrorFromJson } from "./connect-error.js";
 

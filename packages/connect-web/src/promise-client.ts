@@ -20,9 +20,9 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { Message, MethodKind } from "@bufbuild/protobuf";
-import type { ClientCallOptions, ClientTransport } from "./client-transport.js";
+import type { CallOptions, Transport } from "./transport.js";
 import { makeAnyClient } from "./any-client.js";
-import type { StreamResponse } from "./client-interceptor";
+import type { StreamResponse } from "./interceptor.js";
 
 // prettier-ignore
 /**
@@ -32,8 +32,8 @@ import type { StreamResponse } from "./client-interceptor";
  */
 export type PromiseClient<T extends ServiceType> = {
     [P in keyof T["methods"]]:
-      T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: ClientCallOptions) => Promise<O>
-    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: ClientCallOptions) => Promise<AsyncIterable<O>>
+      T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
+    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => Promise<AsyncIterable<O>>
     : never;
 };
 
@@ -43,7 +43,7 @@ export type PromiseClient<T extends ServiceType> = {
  */
 export function makePromiseClient<T extends ServiceType>(
   service: T,
-  transport: ClientTransport
+  transport: Transport
 ) {
   return makeAnyClient(service, (method) => {
     switch (method.kind) {
@@ -59,11 +59,11 @@ export function makePromiseClient<T extends ServiceType>(
 
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
-  options?: ClientCallOptions
+  options?: CallOptions
 ) => Promise<O>;
 
 function createUnaryFn<I extends Message<I>, O extends Message<O>>(
-  transport: ClientTransport,
+  transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): UnaryFn<I, O> {
@@ -84,11 +84,11 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
 
 type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
-  options?: ClientCallOptions
+  options?: CallOptions
 ) => Promise<AsyncIterable<O>>;
 
 function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
-  transport: ClientTransport,
+  transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
