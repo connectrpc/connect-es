@@ -24,7 +24,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as grpc from "@grpc/grpc-js";
-import { makeGrpcServiceDefinition } from "./make-grpc-definition.js";
+import { createGrpcServiceDefinition } from "./create-grpc-definition.js";
 
 // prettier-ignore
 /**
@@ -40,15 +40,15 @@ export type GrpcClient<T extends ServiceType> = {
 };
 
 /**
- * makeGrpcClient() creates a @grpc/grpc-js client from generated connect
+ * createGrpcClient() creates a @grpc/grpc-js client from generated connect
  * service metadata. It is identical to a generated @grpc/grpc-js
  * client.
  */
-export function makeGrpcClient<T extends ServiceType>(
+export function createGrpcClient<T extends ServiceType>(
   service: T,
-  options: MakeGrpcClientOptions
+  options: CreateGrpcClientOptions
 ): GrpcClient<T> {
-  const grpcDefinitions = makeGrpcServiceDefinition(
+  const grpcDefinitions = createGrpcServiceDefinition(
     service,
     options.binaryOptions
   );
@@ -64,7 +64,7 @@ export function makeGrpcClient<T extends ServiceType>(
   return grpcClient as GrpcClient<T>;
 }
 
-export interface MakeGrpcClientOptions {
+export interface CreateGrpcClientOptions {
   address: string;
   channelCredentials: grpc.ChannelCredentials;
   clientOptions?: grpc.ClientOptions;

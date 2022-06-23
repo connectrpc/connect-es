@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { makeGrpcClient } from "./make-grpc-client.js";
+import { createGrpcClient } from "./create-grpc-client.js";
 import * as grpc from "@grpc/grpc-js";
 
-describe("makeGrpcClient()", function () {
+describe("createGrpcClient()", function () {
   it("should create the expected methods", function () {
-    const grpcClient = makeGrpcClient(TestService, {
+    const grpcClient = createGrpcClient(TestService, {
       address: "localhost:5002",
       channelCredentials: grpc.ChannelCredentials.createInsecure(),
       clientOptions: {},

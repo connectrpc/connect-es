@@ -14,7 +14,7 @@
 
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import * as grpc from "@grpc/grpc-js";
-import { addGrpcService } from "./make-grpc-server.js";
+import { addGrpcService } from "./add-grpc-service.js";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 

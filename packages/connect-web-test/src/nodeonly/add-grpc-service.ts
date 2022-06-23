@@ -23,7 +23,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import type * as grpc from "@grpc/grpc-js";
-import { makeGrpcServiceDefinition } from "./make-grpc-definition.js";
+import { createGrpcServiceDefinition } from "./create-grpc-definition.js";
 
 // prettier-ignore
 /**
@@ -50,6 +50,6 @@ export function addGrpcService<T extends ServiceType>(
   implementation: GrpcServiceImplementation<T>,
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>
 ): void {
-  const definition = makeGrpcServiceDefinition(service, binaryOptions);
+  const definition = createGrpcServiceDefinition(service, binaryOptions);
   grpcServer.addService(definition, implementation);
 }

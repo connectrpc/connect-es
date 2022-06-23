@@ -29,7 +29,7 @@ import type * as grpc from "@grpc/grpc-js";
  * The result is identical to a generated @grpc/grpc-js
  * client.
  */
-export function makeGrpcServiceDefinition<T extends ServiceType>(
+export function createGrpcServiceDefinition<T extends ServiceType>(
   service: T,
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>
 ): Record<string, grpc.MethodDefinition<AnyMessage, AnyMessage>> {
