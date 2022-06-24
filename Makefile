@@ -23,14 +23,6 @@ node_modules: package-lock.json
 	npm ci --force
 
 
-# Install protoc-gen-connect-go
-PROTOC_GEN_CONNECT_GO_VERSION ?= v0.0.0-20220531183129-0b2d75aef5cc
-PROTOC_GEN_CONNECT_GO_DEP := $(CACHE_DIR)/dep/protoc-gen-connect-go-$(PROTOC_GEN_CONNECT_GO_VERSION)
-$(PROTOC_GEN_CONNECT_GO_DEP):
-	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@$(PROTOC_GEN_CONNECT_GO_VERSION)
-	mkdir -p $(dir $(PROTOC_GEN_CONNECT_GO_DEP)) && touch $(PROTOC_GEN_CONNECT_GO_DEP)
-
-
 # Our code generator protoc-gen-connect-web generates service types
 PROTOC_GEN_CONNECT_WEB_BIN := $(CACHE_DIR)/bin/protoc-gen-connect-web
 PROTOC_GEN_CONNECT_WEB_SOURCES = go.mod $(shell find . -name '*.go')
