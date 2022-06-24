@@ -58,7 +58,7 @@ describe("custom_metadata_server_streaming", function () {
       const client = createPromiseClient(TestService, transport);
       let responseHeaders: Headers | undefined;
       let responseTrailers: Headers | undefined;
-      for await (const response of await client.streamingOutputCall(request, {
+      for await (const response of client.streamingOutputCall(request, {
         headers: requestHeaders,
         onHeader(header) {
           responseHeaders = header;

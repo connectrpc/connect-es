@@ -54,7 +54,7 @@ describe("timeout_on_sleeping_server", function () {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport);
       try {
-        for await (const response of await client.streamingOutputCall(
+        for await (const response of client.streamingOutputCall(
           request,
           options
         )) {

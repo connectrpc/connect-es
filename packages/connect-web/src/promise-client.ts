@@ -33,7 +33,7 @@ import type { StreamResponse } from "./interceptor.js";
 export type PromiseClient<T extends ServiceType> = {
     [P in keyof T["methods"]]:
       T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
-    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => Promise<AsyncIterable<O>>
+    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>
     : never;
 };
 

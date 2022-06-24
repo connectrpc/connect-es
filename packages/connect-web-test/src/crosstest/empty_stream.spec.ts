@@ -27,9 +27,7 @@ describe("empty_stream", function () {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport);
       try {
-        for await (const response of await client.streamingOutputCall(
-          request
-        )) {
+        for await (const response of client.streamingOutputCall(request)) {
           fail(
             `expecting no response in the empty stream, got: ${response.toJsonString()}`
           );
