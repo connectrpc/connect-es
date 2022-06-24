@@ -1,0 +1,60 @@
+name: Publish release
+
+on:
+  pull_request_review:
+    types: [edited, submitted]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  perform-release:
+    if: contains(github.event.pull_request.labels.*.name, 'release') && github.event.review.state == 'approved'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          # Fetch full depth so we can get history and compare
+          fetch-depth: 0
+          ref: 'main'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.15.0
+      - name: setup-go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      # The follow step is custom per repo
+      - name: publish
+        id: publish
+        run: |
+          NEXT_VERSION=$(echo "${{ github.event.pull_request.title }}" | awk '{print $NF}')
+          make set-version SET_VERSION=$NEXT_VERSION
+          echo "::set-output name=nextVersion::$NEXT_VERSION"
+      - name: commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          tagging_message: ${{ steps.publish.outputs.nextVersion }}
+      - name: publish to npm
+        env:
+          NPM_PUBLISH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        run: |
+          npm set //registry.npmjs.org/:_authToken $NPM_PUBLISH_TOKEN
+          make release
+      - name: create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.publish.outputs.nextVersion }}
+          release_name: ${{ steps.publish.outputs.nextVersion }}
+          body: ${{ github.event.pull_request.body }}
+          prerelease: true
+      - name: close PR
+        run: |
+          gh pr close ${{ github.event.pull_request.number }} -d -c "Released!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
