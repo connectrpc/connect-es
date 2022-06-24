@@ -49,7 +49,6 @@ describe("unimplemented_server_streaming_service", function () {
         )) {
           fail(`expecting no response, got: ${response.toJsonString()}`);
         }
-        client.unimplementedStreamingOutputCall({});
         fail("expected to catch an error");
       } catch (e) {
         expectError(e, transportName);
