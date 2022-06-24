@@ -44,12 +44,11 @@ describe("unimplemented_server_streaming_service", function () {
     it("with promise client", async function () {
       const client = createPromiseClient(UnimplementedService, transport);
       try {
-        for await (const response of await client.unimplementedStreamingOutputCall(
+        for await (const response of client.unimplementedStreamingOutputCall(
           request
         )) {
           fail(`expecting no response, got: ${response.toJsonString()}`);
         }
-        await client.unimplementedStreamingOutputCall({});
         fail("expected to catch an error");
       } catch (e) {
         expectError(e, transportName);

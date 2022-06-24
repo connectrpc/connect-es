@@ -33,7 +33,7 @@ describe("server_streaming", function () {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport);
       let responseCount = 0;
-      for await (const response of await client.streamingOutputCall(request)) {
+      for await (const response of client.streamingOutputCall(request)) {
         expect(response.payload).toBeDefined();
         expect(response.payload?.body.length).toEqual(sizes[responseCount]);
         responseCount++;

@@ -59,9 +59,7 @@ describe("fail_server_streaming", () => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport);
       try {
-        for await (const response of await client.failStreamingOutputCall(
-          request
-        )) {
+        for await (const response of client.failStreamingOutputCall(request)) {
           expectResponseSize(response);
         }
         fail("expected to catch an error");

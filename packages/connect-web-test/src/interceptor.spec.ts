@@ -188,7 +188,7 @@ describe("server stream interceptors", () => {
       });
       const client = createPromiseClient(TestService, transport);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for await (const _response of await client.streamingOutputCall(
+      for await (const _response of client.streamingOutputCall(
         request,
         options
       )) {

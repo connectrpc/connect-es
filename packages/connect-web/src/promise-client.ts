@@ -33,7 +33,7 @@ import type { StreamResponse } from "./interceptor.js";
 export type PromiseClient<T extends ServiceType> = {
     [P in keyof T["methods"]]:
       T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
-    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => Promise<AsyncIterable<O>>
+    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>
     : never;
 };
 
@@ -85,16 +85,14 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
 type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   options?: CallOptions
-) => Promise<AsyncIterable<O>>;
+) => AsyncIterable<O>;
 
 function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
   transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
-  // TODO there is no reason to return a promise here, we could simply return the async iterable right away
-  // eslint-disable-next-line @typescript-eslint/require-await
-  return async function (requestMessage, options): Promise<AsyncIterable<O>> {
+  return function (requestMessage, options): AsyncIterable<O> {
     let streamResponse: StreamResponse<O> | undefined;
     return {
       [Symbol.asyncIterator](): AsyncIterator<O> {

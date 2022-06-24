@@ -35,7 +35,7 @@ describe("unimplemented_server_streaming_method", function () {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport);
       try {
-        for await (const response of await client.unimplementedStreamingOutputCall(
+        for await (const response of client.unimplementedStreamingOutputCall(
           request
         )) {
           fail(`expecting no response, got: ${response.toJsonString()}`);
