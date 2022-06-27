@@ -130,33 +130,37 @@ export function createGrpcWebTransport(
             const reader = createEnvelopeReadableStream(
               response.body
             ).getReader();
-            const messageResult = await reader.read();
-            if (messageResult.done) {
-              throw "missing message";
+            const messageOrTrailerResult = await reader.read();
+            if (messageOrTrailerResult.done) {
+              throw "premature eof";
             }
-            if (messageResult.value.flags !== 0b00000000) {
+            if (messageOrTrailerResult.value.flags === trailerFlag) {
+              // Unary responses require exactly one response message, but in
+              // case of an error, it is perfectly valid to have a response body
+              // that only contains error trailers.
+              parseGrpcWebTrailerAndExtractError(
+                messageOrTrailerResult.value.data,
+                transportOptions.errorDetailRegistry
+              );
+              // At this point, we received trailers only, but the trailers did
+              // not have an error status code.
               throw "unexpected trailer";
             }
             const message = method.O.fromBinary(
-              messageResult.value.data,
+              messageOrTrailerResult.value.data,
               transportOptions.binaryOptions
             );
             const trailerResult = await reader.read();
             if (trailerResult.done) {
               throw "missing trailer";
             }
-            if ((trailerResult.value.flags & trailerFlag) !== trailerFlag) {
+            if (trailerResult.value.flags !== trailerFlag) {
               throw "missing trailer";
             }
-            const trailer = parseGrpcWebTrailer(trailerResult.value.data);
-            const trailerError =
-              extractDetailsError(
-                trailer,
-                transportOptions.errorDetailRegistry
-              ) ?? extractHeadersError(trailer);
-            if (trailerError) {
-              throw trailerError;
-            }
+            const trailer = parseGrpcWebTrailerAndExtractError(
+              trailerResult.value.data,
+              transportOptions.errorDetailRegistry
+            );
             const eofResult = await reader.read();
             if (!eofResult.done) {
               throw "extraneous data";
@@ -254,15 +258,10 @@ export function createGrpcWebTransport(
                 }
                 if ((result.value.flags & trailerFlag) === trailerFlag) {
                   endStreamReceived = true;
-                  const trailer = parseGrpcWebTrailer(result.value.data);
-                  const err =
-                    extractDetailsError(
-                      trailer,
-                      transportOptions.errorDetailRegistry
-                    ) ?? extractHeadersError(trailer);
-                  if (err) {
-                    throw err;
-                  }
+                  const trailer = parseGrpcWebTrailerAndExtractError(
+                    result.value.data,
+                    transportOptions.errorDetailRegistry
+                  );
                   trailer.forEach((value, key) =>
                     this.trailer.append(key, value)
                   );
@@ -423,6 +422,20 @@ function extractDetailsError(
     header.forEach((value, key) => ce.metadata.append(key, value));
     return ce;
   }
+}
+
+function parseGrpcWebTrailerAndExtractError(
+  data: Uint8Array,
+  errorDetailRegistry: IMessageTypeRegistry | undefined
+): Headers {
+  const trailer = parseGrpcWebTrailer(data);
+  const err =
+    extractDetailsError(trailer, errorDetailRegistry) ??
+    extractHeadersError(trailer);
+  if (err) {
+    throw err;
+  }
+  return trailer;
 }
 
 function parseGrpcWebTrailer(data: Uint8Array): Headers {
