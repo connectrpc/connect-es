@@ -1,5 +1,5 @@
-github.com/bufbuild/protobuf-es v0.0.6 h1:atAcU8KqNCCZalD0Z3S+ZHPHrxuqO2W+w3wPAPt7TXo=
-github.com/bufbuild/protobuf-es v0.0.6/go.mod h1:JW2JZk0Zvl+jDx956ZwRqZoWmrm+rIxyvI6NdKuBEdQ=
+github.com/bufbuild/protobuf-es v0.0.7 h1:qeSUadWmNVwbOsUgalVR+OYjT2ezaqHhjzM+4RNzUtA=
+github.com/bufbuild/protobuf-es v0.0.7/go.mod h1:JW2JZk0Zvl+jDx956ZwRqZoWmrm+rIxyvI6NdKuBEdQ=
 github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=
 github.com/google/go-cmp v0.5.5 h1:Khx7svrCpmxxtHBq5j2mp/xVjsi8hQMfNLvJFAlrGgU=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
