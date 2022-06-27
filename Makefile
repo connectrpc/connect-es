@@ -165,6 +165,7 @@ set-version: ## Set a new version in for the project, i.e. make set-version SET_
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
 	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	rm package-lock.json
+	rm -rf node_modules
 	npm i -f
 	$(MAKE) all
 
