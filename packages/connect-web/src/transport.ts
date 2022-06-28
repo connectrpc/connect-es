@@ -27,6 +27,9 @@ import type { StreamResponse, UnaryResponse } from "./interceptor.js";
  * for the concrete clients to be independent of the protocol.
  */
 export interface Transport {
+  /**
+   * Call a unary method.
+   */
   unary<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
     service: ServiceType,
     method: MethodInfo<I, O>,
@@ -36,6 +39,9 @@ export interface Transport {
     message: PartialMessage<I>
   ): Promise<UnaryResponse<O>>;
 
+  /**
+   * Call a server-streaming method.
+   */
   serverStream<
     I extends Message<I> = AnyMessage,
     O extends Message<O> = AnyMessage
@@ -47,36 +53,4 @@ export interface Transport {
     header: HeadersInit | undefined,
     message: PartialMessage<I>
   ): Promise<StreamResponse<O>>;
-}
-
-/**
- * Options for a call. Every client should accept CallOptions as optional
- * argument in its RPC methods.
- */
-export interface CallOptions {
-  /**
-   * Timeout in milliseconds.
-   */
-  timeoutMs?: number;
-
-  /**
-   * Custom headers to send with the request.
-   */
-  headers?: HeadersInit;
-
-  /**
-   * An optional AbortSignal to cancel the call.
-   * If cancelled, an error with Code.Canceled is raised.
-   */
-  signal?: AbortSignal;
-
-  /**
-   * Called when response headers are received.
-   */
-  onHeader?(headers: Headers): void;
-
-  /**
-   * Called when response trailers are received.
-   */
-  onTrailer?(trailers: Headers): void;
 }

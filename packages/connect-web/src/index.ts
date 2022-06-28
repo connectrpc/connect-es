@@ -15,6 +15,11 @@
 export { createCallbackClient, CallbackClient } from "./callback-client.js";
 export { createPromiseClient, PromiseClient } from "./promise-client.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
+export type { CallOptions } from "./call-options.js";
+
+export { createConnectTransport } from "./connect-transport.js";
+export { createGrpcWebTransport } from "./grpc-web-transport.js";
+export type { Transport } from "./transport.js";
 
 export {
   Interceptor,
@@ -25,15 +30,8 @@ export {
   runServerStream,
 } from "./interceptor.js";
 
-export { Transport, CallOptions } from "./transport.js";
-
 export { ConnectError, connectErrorFromJson } from "./connect-error.js";
-
 export { Code, codeFromString, codeToString } from "./code.js";
-
-export { createConnectTransport } from "./connect-transport.js";
-
-export { createGrpcWebTransport } from "./grpc-web-transport.js";
 
 export {
   decodeBinaryHeader,
@@ -41,8 +39,4 @@ export {
   mergeHeaders,
 } from "./http-headers.js";
 
-export {
-  createEnvelopeReadableStream,
-  EnvelopedMessage,
-  encodeEnvelopes,
-} from "./envelope.js";
+export { createEnvelopeReadableStream } from "./envelope.js";

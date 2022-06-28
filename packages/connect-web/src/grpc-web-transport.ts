@@ -50,25 +50,37 @@ interface GrpcWebTransportOptions {
   baseUrl: string;
 
   /**
+   * Interceptors that should be applied to all calls running through
+   * this transport. See the Interceptor type for details.
+   */
+  interceptors?: Interceptor[];
+
+  /**
    * Controls what the fetch client will do with credentials, such as
    * Cookies. The default value is "same-origin". For reference, see
    * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
    */
   credentials?: RequestCredentials;
 
-  // TODO document
-  // TODO instead of requiring the registry upfront, provide a function to parse raw details?
+  // TODO replace with TCN-189
   errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
-
-  // TODO document
-  interceptors?: Interceptor[];
 }
 
+/**
+ * Create a Transport for the gRPC-web protocol. The protocol encodes
+ * trailers in the response body and makes unary and server-streaming
+ * methods available to web browsers. It uses the fetch API to make
+ * HTTP requests.
+ *
+ * Note that this transport does not implement the grpc-web-text format,
+ * which applies base64 encoding to the request and response bodies to
+ * support reading streaming responses from an XMLHttpRequest.
+ */
 export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
 ): Transport {
@@ -401,7 +413,7 @@ function extractDetailsError(
       undefined,
       header
     );
-    // TODO deduplicate with similar logic in ConnectError
+    // TODO deduplicate with similar logic in ConnectError, but see TCN-189
     for (const any of status.details) {
       const typeName = any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1);
       if (!typeRegistry) {

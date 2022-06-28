@@ -20,9 +20,10 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { Message, MethodKind } from "@bufbuild/protobuf";
-import type { CallOptions, Transport } from "./transport.js";
+import type { Transport } from "./transport.js";
 import { makeAnyClient } from "./any-client.js";
 import type { StreamResponse } from "./interceptor.js";
+import type { CallOptions } from "./call-options.js";
 
 // prettier-ignore
 /**

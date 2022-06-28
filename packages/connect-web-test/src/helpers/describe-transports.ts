@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Transport } from "@bufbuild/connect-web/src";
+import type { Transport } from "@bufbuild/connect-web";
 
 export function describeTransports(
   transports: Record<string, () => Transport>,

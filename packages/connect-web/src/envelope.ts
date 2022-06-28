@@ -16,7 +16,8 @@ import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 
 /**
- * Enveloped-Message
+ * Represents an Enveloped-Message of the Connect protocol.
+ * https://connect.build/docs/protocol#streaming-rpcs
  */
 export interface EnvelopedMessage {
   /**
@@ -28,37 +29,6 @@ export interface EnvelopedMessage {
    * Raw data of the message that was enveloped.
    */
   data: Uint8Array;
-}
-
-export function encodeEnvelopes(...envelopes: EnvelopedMessage[]): Uint8Array {
-  const target = new ArrayBuffer(
-    envelopes.reduce(
-      (previousValue, currentValue) =>
-        previousValue + currentValue.data.length + 5,
-      0
-    )
-  );
-  let offset = 0;
-  for (const m of envelopes) {
-    offset += encodeEnvelope(m, target, offset);
-  }
-  return new Uint8Array(target);
-}
-
-function encodeEnvelope(
-  envelope: EnvelopedMessage,
-  target: ArrayBuffer,
-  byteOffset: number
-): number {
-  const len = envelope.data.length + 5;
-  const bytes = new Uint8Array(target, byteOffset, len);
-  bytes[0] = envelope.flags; // first byte is flags
-  for (let l = envelope.data.length, i = 4; i > 0; i--) {
-    bytes[i] = l % 256; // 4 bytes message length
-    l >>>= 8;
-  }
-  bytes.set(envelope.data, 5);
-  return len;
 }
 
 /**
@@ -119,4 +89,35 @@ export function createEnvelopeReadableStream(
       });
     },
   });
+}
+
+export function encodeEnvelopes(...envelopes: EnvelopedMessage[]): Uint8Array {
+  const target = new ArrayBuffer(
+    envelopes.reduce(
+      (previousValue, currentValue) =>
+        previousValue + currentValue.data.length + 5,
+      0
+    )
+  );
+  let offset = 0;
+  for (const m of envelopes) {
+    offset += encodeEnvelope(m, target, offset);
+  }
+  return new Uint8Array(target);
+}
+
+function encodeEnvelope(
+  envelope: EnvelopedMessage,
+  target: ArrayBuffer,
+  byteOffset: number
+): number {
+  const len = envelope.data.length + 5;
+  const bytes = new Uint8Array(target, byteOffset, len);
+  bytes[0] = envelope.flags; // first byte is flags
+  for (let l = envelope.data.length, i = 4; i > 0; i--) {
+    bytes[i] = l % 256; // 4 bytes message length
+    l >>>= 8;
+  }
+  bytes.set(envelope.data, 5);
+  return len;
 }

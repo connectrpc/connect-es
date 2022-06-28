@@ -22,7 +22,7 @@ import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransports } from "../helpers/describe-transports.js";
 import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
-import type { CallOptions } from "@bufbuild/connect-web/src/transport";
+import type { CallOptions } from "@bufbuild/connect-web";
 
 describe("timeout_on_sleeping_server", function () {
   const request = new StreamingOutputCallRequest({
