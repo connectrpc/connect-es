@@ -18,9 +18,9 @@ import { join } from "path";
 if (process.argv.length < 4) {
   process.stderr.write(
     [
-      `USAGE: ${process.argv[1]} <version.go-file> <new-semver-version>`,
+      `USAGE: ${process.argv[1]} <main.go-file> <new-semver-version>`,
       "",
-      "Updates the version number in a version.go file",
+      "Updates the version number in a main.go file",
       "",
     ].join("\n")
   );

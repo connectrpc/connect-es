@@ -161,7 +161,7 @@ bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code
 	npm run -w $(BENCHCODESIZE_DIR) report
 
 set-version: ## Set a new version in for the project, i.e. make set-version SET_VERSION=1.2.3
-	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
+	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/main.go $(SET_VERSION)
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
 	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	rm package-lock.json
