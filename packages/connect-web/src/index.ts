@@ -15,11 +15,11 @@
 export { createCallbackClient, CallbackClient } from "./callback-client.js";
 export { createPromiseClient, PromiseClient } from "./promise-client.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
-export { CallOptions } from "./call-options.js";
+export type { CallOptions } from "./call-options.js";
 
 export { createConnectTransport } from "./connect-transport.js";
 export { createGrpcWebTransport } from "./grpc-web-transport.js";
-export { Transport } from "./transport.js";
+export type { Transport } from "./transport.js";
 
 export {
   Interceptor,
