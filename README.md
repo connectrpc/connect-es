@@ -5,9 +5,9 @@ client. Unlike REST, you get a type-safe client and never have to think about
 serialization again. 
 
 The procedures are defined in a [Protocol Buffer](https://developers.google.com/protocol-buffers) 
-schema implemented by your backend, and Connect-Web generates the types and 
-clients for you. The clients support two protocols: gRPC-web, and Connect's 
-own protocol.
+schema implemented by your backend, and Connect-Web generates the  
+clients and related types to access the backend.
+The clients support two protocols: gRPC-web, and Connect's own protocol.
 
 The [Connect protocol](https://connect.build/docs/protocol/) is a simple, 
 POST-only protocol that works over HTTP/1.1 or HTTP/2. It supports 
