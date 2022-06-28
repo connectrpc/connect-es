@@ -67,8 +67,8 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 # Ensure that the the crosstest server is running
 CROSSTEST_SERVER_RUNNING = $(CACHE_DIR)/service/crosstestserver
 $(CROSSTEST_SERVER_RUNNING):
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
-	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup 'localhost:8080,localhost:8081,localhost:8083'
+	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockertestserverup
+	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) dockertestserverup 'localhost:8080,localhost:8081,localhost:8083'
 
 
 # Install license-header
@@ -120,8 +120,8 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
-	$(MAKE) dockercomposeclean
+	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockertestserverup
+	$(MAKE) dockertestserverclean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
@@ -129,7 +129,10 @@ clean: ## Delete build artifacts and installed dependencies
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
-test: test-go test-node test-browser ## Run all tests
+test: dockertestserverclean  ## Run all tests
+	$(MAKE) test-go
+	$(MAKE) test-node
+	$(MAKE) test-browser
 
 test-go:
 	go test ./cmd/...
@@ -202,12 +205,13 @@ release: all ## Release @bufbuild/connect-web
 # We expose this target only for ci, so it can check for diffs.
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN)
 
-dockercomposeclean:
+dockertestserverclean:
+	-node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockertestserverup
 	-docker container stop connect-crosstest-server-connect
 	-docker container stop connect-crosstest-server-grpc
 	# clean up errors are ignored
 
-dockercomposeup: dockercomposeclean
+dockertestserverup: dockertestserverclean
 	docker run --rm --name connect-crosstest-server-connect -d \
 		-p 8080:8080 -p 8081:8081 \
 		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
