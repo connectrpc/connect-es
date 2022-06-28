@@ -25,7 +25,7 @@ import type { Transport } from "./transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
 import { connectErrorFromReason } from "./connect-error.js";
-import type { CallOptions } from "./call-options";
+import type { CallOptions } from "./call-options.js";
 
 // prettier-ignore
 /**

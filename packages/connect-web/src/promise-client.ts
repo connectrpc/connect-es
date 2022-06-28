@@ -23,7 +23,7 @@ import { Message, MethodKind } from "@bufbuild/protobuf";
 import type { Transport } from "./transport.js";
 import { makeAnyClient } from "./any-client.js";
 import type { StreamResponse } from "./interceptor.js";
-import type { CallOptions } from "./call-options";
+import type { CallOptions } from "./call-options.js";
 
 // prettier-ignore
 /**
