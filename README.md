@@ -1,18 +1,18 @@
 # Connect-Web
 
-Connect-Web is a simple library to call remote procedures from a browser 
-client. Unlike REST, you get a type-safe client and never have to think about 
-serialization again. 
+Connect-Web is a simple library to call remote procedures from a browser
+client. Unlike REST, you get a type-safe client and never have to think about
+serialization again.
 
-The procedures are defined in a [Protocol Buffer](https://developers.google.com/protocol-buffers) 
-schema implemented by your backend, and Connect-Web generates the clients and 
-related types to access the backend. The clients support two protocols: 
+The procedures are defined in a [Protocol Buffer](https://developers.google.com/protocol-buffers)
+schema implemented by your backend, and Connect-Web generates the clients and
+related types to access the backend. The clients support two protocols:
 gRPC-web, and Connect's own protocol.
 
-The [Connect protocol](https://connect.build/docs/protocol/) is a simple, 
-POST-only protocol that works over HTTP/1.1 or HTTP/2. It supports 
-server-streaming methods just like gRPC-Web, but is easy to debug in the 
-network inspector. Calling a Connect API is easy enough just with the fetch 
+The [Connect protocol](https://connect.build/docs/protocol/) is a simple,
+POST-only protocol that works over HTTP/1.1 or HTTP/2. It supports
+server-streaming methods just like gRPC-Web, but is easy to debug in the
+network inspector. Calling a Connect API is easy enough just with the fetch
 API. Try it with our live demo:
 
 ```ts
@@ -37,19 +37,21 @@ console.log(answer);
 
 ## Packages
 
-### `@bufbuild/connect-web`
-[Source](packages/connect-web) | [npmjs.com](https://www.npmjs.com/package/@bufbuild/connect-web)
-
+### @bufbuild/connect-web
 The library that implements the Connect and gRPC-web protocols, interceptors,
 and error handling. It depends on [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf),
 our Protocol Buffers implementation for ECMAScript.
 
-### `@bufbuild/protoc-gen-connect-web`
-[Source](cmd/protoc-gen-connect-web) | [npmjs.com](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web)
+[Source](packages/connect-web) | [npmjs.com](https://www.npmjs.com/package/@bufbuild/connect-web)
+
+
+### @bufbuild/protoc-gen-connect-web
 
 The code generator plugin that generates services from your Protocol Buffer
-schema. It works in tandem with `@bufbuild/protoc-gen-es`, the code generator
-plugin for all Protocol Buffer base types.
+schema. It works in tandem with [@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es), 
+the code generator plugin for all Protocol Buffer base types.
+
+[Source](cmd/protoc-gen-connect-web) | [npmjs.com](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web)
 
 
 ## Compatibility and support
