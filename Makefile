@@ -66,7 +66,7 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 
 # Ensure that the the crosstest server is running
 CROSSTEST_SERVER_RUNNING = $(CACHE_DIR)/service/crosstestserver
-$(CROSSTEST_SERVER_RUNNING): docker-compose.yaml
+$(CROSSTEST_SERVER_RUNNING):
 	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
 	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup 'localhost:8080,localhost:8081,localhost:8083'
 
@@ -203,8 +203,20 @@ release: all ## Release @bufbuild/connect-web
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN)
 
 dockercomposeclean:
-	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans
+	-docker container stop connect-crosstest-server-connect
+	-docker container stop connect-crosstest-server-grpc
 	# clean up errors are ignored
 
 dockercomposeup: dockercomposeclean
-	CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose up
+	docker run --rm --name connect-crosstest-server-connect -d \
+		-p 8080:8080 -p 8081:8081 \
+		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
+		/usr/local/bin/serverconnect \
+		--h1port "8080" --h2port "8081" \
+		--cert "cert/localhost.crt" --key "cert/localhost.key"
+	docker run --rm --name connect-crosstest-server-grpc -d \
+		-p 8083:8083 \
+		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
+		/usr/local/bin/servergrpc \
+		--port "8083" \
+		--cert "cert/localhost.crt" --key "cert/localhost.key"
