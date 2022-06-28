@@ -51,12 +51,14 @@ interface GrpcTransportOptions {
   channelCredentials: grpc.ChannelCredentials;
   clientOptions?: grpc.ClientOptions;
 
-  // TODO document
-  // TODO instead of requiring the registry upfront, provide a function to parse raw details?
-  errorDetailRegistry?: IMessageTypeRegistry;
-
-  // TODO document
+  /**
+   * Interceptors that should be applied to all calls running through
+   * this transport. See the Interceptor type for details.
+   */
   interceptors?: Interceptor[];
+
+  // TODO replace with TCN-189
+  errorDetailRegistry?: IMessageTypeRegistry;
 }
 
 interface GrpcTransport extends Transport {

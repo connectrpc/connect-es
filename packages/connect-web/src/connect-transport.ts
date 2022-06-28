@@ -69,8 +69,13 @@ interface ConnectTransportOptions {
    */
   credentials?: RequestCredentials;
 
-  // TODO document
-  // TODO instead of requiring the registry upfront, provide a function to parse raw details?
+  /**
+   * Interceptors that should be applied to all calls running through
+   * this transport. See the Interceptor type for details.
+   */
+  interceptors?: Interceptor[];
+
+  // TODO replace with TCN-189
   errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
@@ -82,11 +87,13 @@ interface ConnectTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
-
-  // TODO document
-  interceptors?: Interceptor[];
 }
 
+/**
+ * Create a Transport for the Connect protocol, which makes unary and
+ * server-streaming methods available to web browsers. It uses the fetch
+ * API to make HTTP requests.
+ */
 export function createConnectTransport(
   options: ConnectTransportOptions
 ): Transport {
