@@ -66,9 +66,9 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 
 # Ensure that the the crosstest server is running
 CROSSTEST_SERVER_RUNNING = $(CACHE_DIR)/service/crosstestserver
-$(CROSSTEST_SERVER_RUNNING): docker-compose.yaml
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
-	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup 'localhost:8080,localhost:8081,localhost:8083'
+$(CROSSTEST_SERVER_RUNNING):
+	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) crosstestserverclean
+	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) crosstestserverup 'localhost:8080,localhost:8081,localhost:8083'
 
 
 # Install license-header
@@ -120,8 +120,8 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
-	$(MAKE) dockercomposeclean
+	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) crosstestserverclean
+	$(MAKE) crosstestserverclean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
@@ -202,9 +202,11 @@ release: all ## Release @bufbuild/connect-web
 # We expose this target only for ci, so it can check for diffs.
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN)
 
-dockercomposeclean:
-	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans
+crosstestserverclean:
+	-docker container stop connect-crosstest-serverconnect
+	-docker container stop connect-crosstest-servergrpc
 	# clean up errors are ignored
 
-dockercomposeup: dockercomposeclean
-	CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose up
+crosstestserverup:
+	node make/scripts/crosstest-server-start.js ${CROSSTEST_VERSION} serverconnect '--h1port "8080" --h2port "8081"' 8080 8081
+	node make/scripts/crosstest-server-start.js ${CROSSTEST_VERSION} servergrpc '--port "8083"' 8083
