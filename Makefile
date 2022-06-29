@@ -129,10 +129,7 @@ clean: ## Delete build artifacts and installed dependencies
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
-test: crosstestserverclean  ## Run all tests
-	$(MAKE) test-go
-	$(MAKE) test-node
-	$(MAKE) test-browser
+test: test-go test-node test-browser ## Run all tests
 
 test-go:
 	go test ./cmd/...
@@ -206,7 +203,6 @@ release: all ## Release @bufbuild/connect-web
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN)
 
 crosstestserverclean:
-	-node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) crosstestserverup
 	-docker container stop connect-crosstest-serverconnect
 	-docker container stop connect-crosstest-server-grpc
 	# clean up errors are ignored
