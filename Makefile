@@ -122,19 +122,24 @@ clean: ## Delete build artifacts and installed dependencies
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
 test: test-go test-node test-browser ## Run all tests
-	$(MAKE) crosstestserverclean
 
 test-go:
 	go test ./cmd/...
 
-test-node: $(NODE18_DEP) $(TEST_BUILD) crosstestserverup
+test-node: $(NODE18_DEP) $(TEST_BUILD)
+	$(MAKE) crosstestserverup
 	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	$(MAKE) crosstestserverclean
 
-test-browser: $(TEST_BUILD) crosstestserverup
+test-browser: $(TEST_BUILD)
+	$(MAKE) crosstestserverup
 	npm run -w $(TEST_DIR) karma
+	$(MAKE) crosstestserverclean
 
-test-local-browser: $(TEST_BUILD) crosstestserverup
+test-local-browser: $(TEST_BUILD)
+	$(MAKE) crosstestserverup
 	npm run -w $(TEST_DIR) karma-serve
+	$(MAKE) crosstestserverclean
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
@@ -201,5 +206,9 @@ crosstestserverclean:
 	# clean up errors are ignored
 
 crosstestserverup: crosstestserverclean
-	node make/scripts/crosstest-server-start.js ${CROSSTEST_VERSION} serverconnect '--h1port "8080" --h2port "8081"' 8080 8081
-	node make/scripts/crosstest-server-start.js ${CROSSTEST_VERSION} servergrpc '--port "8083"' 8083
+	docker run --rm --name connect-crosstest-serverconnect -p 8080:8080 -p 8081:8081 -d \
+		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
+		/usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
+	docker run --rm --name connect-crosstest-servergrpc -p 8083:8083 -d \
+		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
+		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
