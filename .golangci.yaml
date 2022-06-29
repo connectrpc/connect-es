@@ -44,3 +44,6 @@ issues:
     # Don't ban use of fmt.Errorf to create new errors, but the remaining
     # checks from err113 are useful.
     - "err113: do not define dynamic errors.*"
+    - "parameter name 'f' is too short for the scope of its usage"
+    - "variable name 'rt' is too short for the scope of its usage"
+    - "missing cases in switch of type descriptorpb.MethodOptions_IdempotencyLevel: Default_MethodOptions_IdempotencyLevel|MethodOptions_IDEMPOTENCY_UNKNOWN"
