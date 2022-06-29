@@ -64,13 +64,6 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
-# Ensure that the the crosstest server is running
-CROSSTEST_SERVER_RUNNING = $(CACHE_DIR)/service/crosstestserver
-$(CROSSTEST_SERVER_RUNNING): docker-compose.yaml
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
-	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup 'localhost:8080,localhost:8081,localhost:8083'
-
-
 # Install license-header
 LICENSE_HEADER_VERSION := v1.1.0
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
@@ -118,8 +111,7 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockercomposeup
-	$(MAKE) dockercomposeclean
+	$(MAKE) crosstestserverstop
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
@@ -132,14 +124,20 @@ test: test-go test-node test-browser ## Run all tests
 test-go:
 	go test ./cmd/...
 
-test-node: $(NODE18_DEP) $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
+test-node: $(NODE18_DEP) $(TEST_BUILD)
+	$(MAKE) crosstestserverrun
 	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	$(MAKE) crosstestserverstop
 
-test-browser: $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
+test-browser: $(TEST_BUILD)
+	$(MAKE) crosstestserverrun
 	npm run -w $(TEST_DIR) karma
+	$(MAKE) crosstestserverstop
 
-test-local-browser: $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
+test-local-browser: $(TEST_BUILD)
+	$(MAKE) crosstestserverrun
 	npm run -w $(TEST_DIR) karma-serve
+	$(MAKE) crosstestserverstop
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
@@ -201,9 +199,14 @@ checkgenerate:
 	git checkout packages/bench-codesize/README.md
 	test -z "$$(git status --porcelain | tee /dev/stderr)"
 
-dockercomposeclean:
-	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans
+crosstestserverstop:
+	-docker container stop serverconnect servergrpc
 	# clean up errors are ignored
 
-dockercomposeup: dockercomposeclean
-	CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose up
+crosstestserverrun: crosstestserverstop
+	docker run --rm --name serverconnect -p 8080:8080 -p 8081:8081 -d \
+		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
+		/usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
+	docker run --rm --name servergrpc -p 8083:8083 -d \
+		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
+		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
