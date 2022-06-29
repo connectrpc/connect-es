@@ -31,37 +31,39 @@ func GenerateFile(gen *protoplugin.Generator, file *protoplugin.File) {
 	}
 }
 
-func generateService(f *protoplugin.GeneratedFile, service *protoplugin.Service) {
-	rt := service.File.RuntimeSymbols
-	f.P(service.JSDoc(""))
-	f.P("export declare const ", service.LocalName, ": {")
-	f.P(`  readonly typeName: "`, service.TypeName, `",`)
-	f.P("  readonly methods: {")
+func generateService(file *protoplugin.GeneratedFile, service *protoplugin.Service) {
+	runtime := service.File.RuntimeSymbols
+	file.P(service.JSDoc(""))
+	file.P("export declare const ", service.LocalName, ": {")
+	file.P(`  readonly typeName: "`, service.TypeName, `",`)
+	file.P("  readonly methods: {")
 	for _, method := range service.Methods {
-		f.P(method.JSDoc("    "))
-		f.P("    readonly ", method.LocalName, ": {")
-		f.P(`      readonly name: "`, method.Proto.GetName(), `",`)
-		f.P("      readonly I: typeof ", method.Input.Symbol, ",")
-		f.P("      readonly O: typeof ", method.Output.Symbol, ",")
+		file.P(method.JSDoc("    "))
+		file.P("    readonly ", method.LocalName, ": {")
+		file.P(`      readonly name: "`, method.Proto.GetName(), `",`)
+		file.P("      readonly I: typeof ", method.Input.Symbol, ",")
+		file.P("      readonly O: typeof ", method.Output.Symbol, ",")
 		switch {
 		case method.Proto.GetClientStreaming() && method.Proto.GetServerStreaming():
-			f.P("      readonly kind: ", rt.MethodKind, ".BiDiStreaming,")
+			file.P("      readonly kind: ", runtime.MethodKind, ".BiDiStreaming,")
 		case method.Proto.GetClientStreaming():
-			f.P("      readonly kind: ", rt.MethodKind, ".ClientStreaming,")
+			file.P("      readonly kind: ", runtime.MethodKind, ".ClientStreaming,")
 		case method.Proto.GetServerStreaming():
-			f.P("      readonly kind: ", rt.MethodKind, ".ServerStreaming,")
+			file.P("      readonly kind: ", runtime.MethodKind, ".ServerStreaming,")
 		default:
-			f.P("      readonly kind: ", rt.MethodKind, ".Unary,")
+			file.P("      readonly kind: ", runtime.MethodKind, ".Unary,")
 		}
 		switch method.Proto.Options.GetIdempotencyLevel() {
 		case descriptorpb.MethodOptions_NO_SIDE_EFFECTS:
-			f.P("      readonly idempotency: ", rt.MethodIdempotency, ".NoSideEffects,")
+			file.P("      readonly idempotency: ", runtime.MethodIdempotency, ".NoSideEffects,")
 		case descriptorpb.MethodOptions_IDEMPOTENT:
-			f.P("      readonly idempotency: ", rt.MethodIdempotency, ".Idempotent,")
+			file.P("      readonly idempotency: ", runtime.MethodIdempotency, ".Idempotent,")
+		case descriptorpb.MethodOptions_IDEMPOTENCY_UNKNOWN:
+			// undefined
 		}
-		f.P("    },")
+		file.P("    },")
 	}
-	f.P("  }")
-	f.P("};")
-	f.P()
+	file.P("  }")
+	file.P("};")
+	file.P()
 }

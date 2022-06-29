@@ -31,37 +31,39 @@ func GenerateFile(gen *protoplugin.Generator, file *protoplugin.File) {
 	}
 }
 
-func generateService(f *protoplugin.GeneratedFile, service *protoplugin.Service) {
-	rt := service.File.RuntimeSymbols
-	f.P(service.JSDoc(""))
-	f.P("export const ", service.LocalName, " = {")
-	f.P(`  typeName: "`, service.TypeName, `",`)
-	f.P("  methods: {")
+func generateService(file *protoplugin.GeneratedFile, service *protoplugin.Service) {
+	runtime := service.File.RuntimeSymbols
+	file.P(service.JSDoc(""))
+	file.P("export const ", service.LocalName, " = {")
+	file.P(`  typeName: "`, service.TypeName, `",`)
+	file.P("  methods: {")
 	for _, method := range service.Methods {
-		f.P(method.JSDoc("    "))
-		f.P("    ", method.LocalName, ": {")
-		f.P(`      name: "`, method.Proto.GetName(), `",`)
-		f.P("      I: ", method.Input.Symbol, ",")
-		f.P("      O: ", method.Output.Symbol, ",")
+		file.P(method.JSDoc("    "))
+		file.P("    ", method.LocalName, ": {")
+		file.P(`      name: "`, method.Proto.GetName(), `",`)
+		file.P("      I: ", method.Input.Symbol, ",")
+		file.P("      O: ", method.Output.Symbol, ",")
 		switch {
 		case method.Proto.GetClientStreaming() && method.Proto.GetServerStreaming():
-			f.P("      kind: ", rt.MethodKind, ".BiDiStreaming,")
+			file.P("      kind: ", runtime.MethodKind, ".BiDiStreaming,")
 		case method.Proto.GetClientStreaming():
-			f.P("      kind: ", rt.MethodKind, ".ClientStreaming,")
+			file.P("      kind: ", runtime.MethodKind, ".ClientStreaming,")
 		case method.Proto.GetServerStreaming():
-			f.P("      kind: ", rt.MethodKind, ".ServerStreaming,")
+			file.P("      kind: ", runtime.MethodKind, ".ServerStreaming,")
 		default:
-			f.P("      kind: ", rt.MethodKind, ".Unary,")
+			file.P("      kind: ", runtime.MethodKind, ".Unary,")
 		}
 		switch method.Proto.Options.GetIdempotencyLevel() {
 		case descriptorpb.MethodOptions_NO_SIDE_EFFECTS:
-			f.P("      idempotency: ", rt.MethodIdempotency, ".NoSideEffects,")
+			file.P("      idempotency: ", runtime.MethodIdempotency, ".NoSideEffects,")
 		case descriptorpb.MethodOptions_IDEMPOTENT:
-			f.P("      idempotency: ", rt.MethodIdempotency, ".Idempotent,")
+			file.P("      idempotency: ", runtime.MethodIdempotency, ".Idempotent,")
+		case descriptorpb.MethodOptions_IDEMPOTENCY_UNKNOWN:
+			// undefined
 		}
-		f.P("    },")
+		file.P("    },")
 	}
-	f.P("  }")
-	f.P("};")
-	f.P()
+	file.P("  }")
+	file.P("};")
+	file.P()
 }
