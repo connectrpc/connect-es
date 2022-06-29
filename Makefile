@@ -197,10 +197,10 @@ release: all ## Release @bufbuild/connect-web
 		--workspace packages/protoc-gen-connect-web-windows-64 \
 		--workspace packages/protoc-gen-connect-web-windows-arm64
 
-
-# Some builds need code generation, some code generation needs builds.
-# We expose this target only for ci, so it can check for diffs.
-ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN)
+.PHONY: checkgenerate
+checkgenerate:
+	@# Used in CI to verify that `make generate` doesn't produce a diff.
+	test -z "$$(git status --porcelain | tee /dev/stderr)"
 
 dockercomposeclean:
 	-CROSSTEST_VERSION=${CROSSTEST_VERSION} docker-compose down --rmi local --remove-orphans
