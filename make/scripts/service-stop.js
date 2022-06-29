@@ -43,7 +43,7 @@ if (existsSync(lockFilePath)) {
   if (!isNaN(pid)) {
     let stopped = false;
     try {
-      execSync(`make ${makeTarget}`, {
+      execSync(`kill ${pid}`, {
         stdio: "ignore",
       });
       stopped = true;

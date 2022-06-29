@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  server-connect:
+    image: "bufbuild/connect-crosstest:${CROSSTEST_VERSION}"
+    entrypoint: /usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+  server-grpc:
+    image: "bufbuild/connect-crosstest:${CROSSTEST_VERSION}"
+    entrypoint: /usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
+    ports:
+      - "8083:8083"
