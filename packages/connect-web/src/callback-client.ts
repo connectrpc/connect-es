@@ -27,7 +27,18 @@ import { makeAnyClient } from "./any-client.js";
 import { connectErrorFromReason } from "./connect-error.js";
 import type { CallOptions } from "./call-options.js";
 
+type FilterOutNever<T> = {
+  [P in keyof T]: T[P] extends never ? never : P;
+}[keyof T];
+
 // prettier-ignore
+type CallbackClientBase<T extends ServiceType> = {
+  [P in keyof T["methods"]]:
+    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: CallOptions) => CancelFn
+  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
+  : never;
+};
+
 /**
  * CallbackClient is a simple client that supports unary and server
  * streaming methods. Methods take callback functions, which will be
@@ -45,11 +56,10 @@ import type { CallOptions } from "./call-options.js";
  * a function returned by the effect is called when the effect is
  * torn down.
  */
-export type CallbackClient<T extends ServiceType> = {
-  [P in keyof T["methods"]]:
-    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: CallOptions) => CancelFn
-  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
-  : never;
+export type CallbackClient<Service extends ServiceType> = {
+  [P in FilterOutNever<
+    CallbackClientBase<Service>
+  >]: CallbackClientBase<Service>[P];
 };
 
 type CancelFn = () => void;

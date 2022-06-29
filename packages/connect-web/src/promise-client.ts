@@ -25,17 +25,27 @@ import { makeAnyClient } from "./any-client.js";
 import type { StreamResponse } from "./interceptor.js";
 import type { CallOptions } from "./call-options.js";
 
+type FilterOutNever<T> = {
+  [P in keyof T]: T[P] extends never ? never : P;
+}[keyof T];
+
 // prettier-ignore
+type PromiseClientBase<T extends ServiceType> = {
+  [P in keyof T["methods"]]:
+    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
+  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>
+  : never;
+};
+
 /**
  * PromiseClient is a simple client that supports unary and server-streaming
  * methods. Methods will produce a promise for the response message,
  * or an asynchronous iterable of response messages.
  */
-export type PromiseClient<T extends ServiceType> = {
-    [P in keyof T["methods"]]:
-      T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
-    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>
-    : never;
+export type PromiseClient<Service extends ServiceType> = {
+  [P in FilterOutNever<
+    PromiseClientBase<Service>
+  >]: PromiseClientBase<Service>[P];
 };
 
 /**
