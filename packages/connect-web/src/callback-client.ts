@@ -27,6 +27,8 @@ import { makeAnyClient } from "./any-client.js";
 import { connectErrorFromReason } from "./connect-error.js";
 import type { CallOptions } from "./call-options.js";
 
+// This type returns the keys of an object where the right hand side
+// DOESN'T match never.
 type FilterOutNever<T> = {
   [P in keyof T]: T[P] extends never ? never : P;
 }[keyof T];
