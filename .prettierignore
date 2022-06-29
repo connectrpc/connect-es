@@ -1,6 +1,6 @@
-/packages/*/src/gen
-/packages/*/dist
-/packages/*/bin
-/node_modules
-/.cache
+node_modules
 /packages/protobuf/src/google
+/packages/*/bin
+/packages/*/dist
+/packages/*/src/gen
+/.cache
