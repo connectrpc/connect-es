@@ -113,7 +113,7 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	$(MAKE) crosstestserverclean
+	$(MAKE) crosstestserverstop
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
@@ -127,19 +127,19 @@ test-go:
 	go test ./cmd/...
 
 test-node: $(NODE18_DEP) $(TEST_BUILD)
-	$(MAKE) crosstestserverup
+	$(MAKE) crosstestserverrun
 	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
-	$(MAKE) crosstestserverclean
+	$(MAKE) crosstestserverstop
 
 test-browser: $(TEST_BUILD)
-	$(MAKE) crosstestserverup
+	$(MAKE) crosstestserverrun
 	npm run -w $(TEST_DIR) karma
-	$(MAKE) crosstestserverclean
+	$(MAKE) crosstestserverstop
 
 test-local-browser: $(TEST_BUILD)
-	$(MAKE) crosstestserverup
+	$(MAKE) crosstestserverrun
 	npm run -w $(TEST_DIR) karma-serve
-	$(MAKE) crosstestserverclean
+	$(MAKE) crosstestserverstop
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
 	golangci-lint run
@@ -200,15 +200,14 @@ release: all ## Release @bufbuild/connect-web
 # We expose this target only for ci, so it can check for diffs.
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN)
 
-crosstestserverclean:
-	-docker container stop connect-crosstest-serverconnect
-	-docker container stop connect-crosstest-servergrpc
+crosstestserverstop:
+	-docker container stop serverconnect servergrpc
 	# clean up errors are ignored
 
-crosstestserverup: crosstestserverclean
-	docker run --rm --name connect-crosstest-serverconnect -p 8080:8080 -p 8081:8081 -d \
+crosstestserverrun: crosstestserverstop
+	docker run --rm --name serverconnect -p 8080:8080 -p 8081:8081 -d \
 		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
 		/usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
-	docker run --rm --name connect-crosstest-servergrpc -p 8083:8083 -d \
+	docker run --rm --name servergrpc -p 8083:8083 -d \
 		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
 		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
