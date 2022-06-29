@@ -64,13 +64,6 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 	mkdir -p $(dir $(BENCHCODESIZE_GEN)) && touch $(BENCHCODESIZE_GEN)
 
 
-# Ensure that the the crosstest server is running
-CROSSTEST_SERVER_RUNNING = $(CACHE_DIR)/service/crosstestserver
-$(CROSSTEST_SERVER_RUNNING):
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) crosstestserverclean
-	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) crosstestserverup 'localhost:8080,localhost:8081,localhost:8083'
-
-
 # Install license-header
 LICENSE_HEADER_VERSION := v1.1.0
 LICENSE_HEADER_LICENSE_TYPE := apache
@@ -120,7 +113,6 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) crosstestserverclean
 	$(MAKE) crosstestserverclean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
@@ -130,17 +122,18 @@ clean: ## Delete build artifacts and installed dependencies
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
 test: test-go test-node test-browser ## Run all tests
+	$(MAKE) crosstestserverclean
 
 test-go:
 	go test ./cmd/...
 
-test-node: $(NODE18_DEP) $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
+test-node: $(NODE18_DEP) $(TEST_BUILD) crosstestserverup
 	cd $(TEST_DIR) && NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 
-test-browser: $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
+test-browser: $(TEST_BUILD) crosstestserverup
 	npm run -w $(TEST_DIR) karma
 
-test-local-browser: $(TEST_BUILD) $(CROSSTEST_SERVER_RUNNING)
+test-local-browser: $(TEST_BUILD) crosstestserverup
 	npm run -w $(TEST_DIR) karma-serve
 
 lint: $(GOLANGCI_LINT_DEP) node_modules $(WEB_BUILD) $(BENCHCODESIZE_GEN) ## Lint all files
@@ -207,6 +200,6 @@ crosstestserverclean:
 	-docker container stop connect-crosstest-servergrpc
 	# clean up errors are ignored
 
-crosstestserverup:
+crosstestserverup: crosstestserverclean
 	node make/scripts/crosstest-server-start.js ${CROSSTEST_VERSION} serverconnect '--h1port "8080" --h2port "8081"' 8080 8081
 	node make/scripts/crosstest-server-start.js ${CROSSTEST_VERSION} servergrpc '--port "8083"' 8083

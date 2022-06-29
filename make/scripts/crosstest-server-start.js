@@ -47,7 +47,7 @@ const child = spawn(
   }
 );
 child.on("exit", (code, signal) => {
-  if (code !== undefined || signal !== undefined) {
+  if (code !== 0 || signal !== null) {
     process.stderr.write(`failed to start ${name}\n`);
     process.exit(code ?? 1);
     return;
