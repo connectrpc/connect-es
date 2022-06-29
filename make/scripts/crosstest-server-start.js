@@ -42,7 +42,7 @@ const child = spawn(
   ],
   {
     stdio: "ignore",
-    detached: false,
+    detached: true,
     shell: true,
   }
 );
