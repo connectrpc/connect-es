@@ -27,7 +27,7 @@ $(PROTOC_GEN_CONNECT_WEB_BIN): $(PROTOC_GEN_CONNECT_WEB_SOURCES)
 
 # The NPM package "@bufbuild/connect-web"
 WEB_DIR = packages/connect-web
-WEB_BUILD = $(CACHE_DIR)/build/packages-connect-web
+WEB_BUILD = $(CACHE_DIR)/build/connect-web
 WEB_SOURCES = $(WEB_DIR)/*.json $(shell find $(WEB_DIR)/src -name '*.ts')
 $(WEB_BUILD): node_modules $(WEB_SOURCES)
 	npm run -w $(WEB_DIR) clean
