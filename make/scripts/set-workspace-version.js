@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Copyright 2021-2022 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

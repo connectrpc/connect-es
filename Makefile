@@ -76,7 +76,7 @@ LICENSE_HEADER_VERSION := v1.1.0
 LICENSE_HEADER_LICENSE_TYPE := apache
 LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
-LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/service-start.js make\/scripts\/service-stop.js packages\/connect-web-test\/src\/gen
+LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/ packages\/connect-web-test\/src\/gen
 LICENSE_HEADER_DEP := $(CACHE_DIR)/dep/license-header-$(LICENSE_HEADER_VERSION)
 $(LICENSE_HEADER_DEP):
 	GOBIN=$(abspath $(CACHE_DIR)/bin) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@$(LICENSE_HEADER_VERSION)
@@ -161,7 +161,7 @@ bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code
 	npm run -w $(BENCHCODESIZE_DIR) report
 
 set-version: ## Set a new version in for the project, i.e. make set-version SET_VERSION=1.2.3
-	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/version.go $(SET_VERSION)
+	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/main.go $(SET_VERSION)
 	node make/scripts/set-workspace-version.js $(SET_VERSION)
 	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	rm package-lock.json

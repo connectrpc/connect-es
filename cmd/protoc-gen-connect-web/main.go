@@ -22,6 +22,9 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
+// version is the semantic version of the connect-web module.
+const version = "v0.0.9"
+
 func main() {
 	protoplugin.Options{
 		Name:    "protoc-gen-connect-web",
