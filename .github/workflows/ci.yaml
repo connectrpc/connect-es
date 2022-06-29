@@ -24,16 +24,6 @@ jobs:
           key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
-      - name: make format
-        run: make format
-      - name: make build
-        run: make build
-      - name: make lint
-        run: make lint
-      - name: make test
-        run: make test
-      - name: make bench-codesize
-        run: make bench-codesize
-      - name: make checkgenerate
-        run: make checkgenerate
+      - name: make
+        run: make format build lint test bench-codesize checkgenerate
 
