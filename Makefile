@@ -100,13 +100,9 @@ help: ## Describe useful make targets
 all: build test format lint bench-codesize ## build, test, format, lint, and bench-codesize (default)
 
 .PHONY: clean
-clean: ## Delete build artifacts and installed dependencies
-	npm run clean -w $(BENCHCODESIZE_DIR)
-	npm run clean -w $(WEB_DIR)
-	$(MAKE) crosstestserverstop
-	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
-	rm -rf node_modules
-	rm -rf packages/protoc-gen-*/bin/*
+clean: crosstestserverstop ## Delete build artifacts and installed dependencies
+	@# -X only removes untracked files, -d recurses into directories, -f actually removes files/dirs
+	git clean -Xdf
 
 .PHONY: build
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
