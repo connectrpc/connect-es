@@ -73,8 +73,6 @@ $(CROSSTEST_SERVER_RUNNING): docker-compose.yaml
 
 # Install license-header
 LICENSE_HEADER_VERSION := v1.1.0
-LICENSE_HEADER_LICENSE_TYPE := apache
-LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
 LICENSE_HEADER_IGNORES := .cache\/ node_module\/ packages\/bench-codesize\/src\/gen\/ packages\/connect-web\/dist\/ make\/scripts\/ packages\/connect-web-test\/src\/gen
 LICENSE_HEADER_DEP := $(CACHE_DIR)/dep/license-header-$(LICENSE_HEADER_VERSION)
@@ -153,8 +151,8 @@ format: node_modules $(GIT_LS_FILES_UNSTAGED_DEP) $(LICENSE_HEADER_DEP) ## Forma
 	git-ls-files-unstaged | \
 		grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))) | \
 		xargs license-header \
-			--license-type "$(LICENSE_HEADER_LICENSE_TYPE)" \
-			--copyright-holder "$(LICENSE_HEADER_COPYRIGHT_HOLDER)" \
+			--license-type "apache" \
+			--copyright-holder "Buf Technologies, Inc." \
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 bench-codesize: $(BENCHCODESIZE_GEN) node_modules $(WEB_BUILD) ## Benchmark code size
