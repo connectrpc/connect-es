@@ -197,7 +197,8 @@ release: all ## Release @bufbuild/connect-web
 
 .PHONY: checkgenerate
 checkgenerate:
-	@# Used in CI to verify that `make generate` doesn't produce a diff.
+	@# Used in CI to verify that `make generate` doesn't produce a diff, but ignore random bench changes
+	git checkout packages/bench-codesize/README.md
 	test -z "$$(git status --porcelain | tee /dev/stderr)"
 
 dockercomposeclean:
