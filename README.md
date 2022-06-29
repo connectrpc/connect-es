@@ -55,6 +55,16 @@ the code generator plugin for all Protocol Buffer base types.
 [Source](cmd/protoc-gen-connect-web) | [npmjs.com](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web)
 
 
+## Ecosystem
+
+* [connect-go](https://github.com/bufbuild/connect-go):
+  Go implementation of gRPC, gRPC-Web, and Connect
+* [connect-demo](https://github.com/bufbuild/connect-demo): 
+  demonstration service powering demo.connect.build
+* [connect-crosstest](https://github.com/bufbuild/connect-crosstest): 
+  gRPC-Web and Connect interoperability tests
+
+
 ## Compatibility and support
 
 `@bufbuild/connect-web` requires the [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
