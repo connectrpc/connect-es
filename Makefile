@@ -67,8 +67,8 @@ $(BENCHCODESIZE_GEN): $(PROTOC_GEN_ES_BIN) $(PROTOC_GEN_CONNECT_WEB_BIN)
 # Ensure that the the crosstest server is running
 CROSSTEST_SERVER_RUNNING = $(CACHE_DIR)/service/crosstestserver
 $(CROSSTEST_SERVER_RUNNING):
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockertestserverup
-	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) dockertestserverup 'localhost:8080,localhost:8081,localhost:8083'
+	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) crosstestserverup
+	node make/scripts/service-start.js $(CROSSTEST_SERVER_RUNNING) crosstestserverup 'localhost:8080,localhost:8081,localhost:8083'
 
 
 # Install license-header
@@ -120,8 +120,8 @@ all: build test format lint bench-codesize ## build, test, format, lint, and ben
 clean: ## Delete build artifacts and installed dependencies
 	npm run clean -w $(BENCHCODESIZE_DIR)
 	npm run clean -w $(WEB_DIR)
-	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockertestserverup
-	$(MAKE) dockertestserverclean
+	node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) crosstestserverup
+	$(MAKE) crosstestserverclean
 	[ -n "$(CACHE_DIR)" ] && rm -rf $(CACHE_DIR)/*
 	rm -rf node_modules
 	rm -rf packages/protoc-gen-*/bin/*
@@ -129,7 +129,7 @@ clean: ## Delete build artifacts and installed dependencies
 
 build: $(WEB_BUILD) $(PROTOC_GEN_CONNECT_WEB_BIN) ## Build
 
-test: dockertestserverclean  ## Run all tests
+test: crosstestserverclean  ## Run all tests
 	$(MAKE) test-go
 	$(MAKE) test-node
 	$(MAKE) test-browser
@@ -205,22 +205,12 @@ release: all ## Release @bufbuild/connect-web
 # We expose this target only for ci, so it can check for diffs.
 ci-generate: $(BENCHCODESIZE_GEN) $(TEST_GEN)
 
-dockertestserverclean:
-	-node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) dockertestserverup
-	-docker container stop connect-crosstest-server-connect
+crosstestserverclean:
+	-node make/scripts/service-stop.js $(CROSSTEST_SERVER_RUNNING) crosstestserverup
+	-docker container stop connect-crosstest-serverconnect
 	-docker container stop connect-crosstest-server-grpc
 	# clean up errors are ignored
 
-dockertestserverup: dockertestserverclean
-	docker run --rm --name connect-crosstest-server-connect -d \
-		-p 8080:8080 -p 8081:8081 \
-		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
-		/usr/local/bin/serverconnect \
-		--h1port "8080" --h2port "8081" \
-		--cert "cert/localhost.crt" --key "cert/localhost.key"
-	docker run --rm --name connect-crosstest-server-grpc -d \
-		-p 8083:8083 \
-		bufbuild/connect-crosstest:${CROSSTEST_VERSION} \
-		/usr/local/bin/servergrpc \
-		--port "8083" \
-		--cert "cert/localhost.crt" --key "cert/localhost.key"
+crosstestserverup: crosstestserverclean
+	node make/scripts/crosstest-server-start.js ${CROSSTEST_VERSION} serverconnect '--h1port "8080" --h2port "8081"' 8080 8081
+	node make/scripts/crosstest-server-start.js ${CROSSTEST_VERSION} servergrpc '--port "8083"' 8083
