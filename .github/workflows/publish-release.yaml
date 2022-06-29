@@ -34,9 +34,14 @@ jobs:
           make set-version SET_VERSION=$NEXT_VERSION
           echo "::set-output name=nextVersion::$NEXT_VERSION"
       - name: commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          tagging_message: ${{ steps.publish.outputs.nextVersion }}
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "Release ${{ steps.publish.outputs.nextVersion }}"
+          git tag -a "${{ steps.publish.outputs.nextVersion }}" -m "Release ${{ steps.publish.outputs.nextVersion }}"
+          git push
+          git push --tags
       - name: publish to npm
         env:
           NPM_PUBLISH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}

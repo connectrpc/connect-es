@@ -13,12 +13,12 @@ on:
           - patch
         default: patch
 
-permissions:
-  contents: write
-  pull-requests: write
 
 jobs:
-  create-pr:
+  gather-change-logs:
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-20.04
     steps:
       - name: checkout
@@ -26,17 +26,6 @@ jobs:
         with:
           # Fetch full depth so we can get history and compare
           fetch-depth: 0
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16.15.0
-      - name: perpare version
-        id: prepare
-        run: |
-          CURRENT_VERSION=$(cat package.json | jq -r '.version')
-          NEXT_VERSION=$(npx -y semver -i ${{ github.event.inputs.releaseType }} $CURRENT_VERSION)
-          echo "::set-output name=currentVersion::v$CURRENT_VERSION"
-          echo "::set-output name=nextVersion::v$NEXT_VERSION"
-          echo "v$NEXT_VERSION" > version
       - name: build message
         uses: mikepenz/release-changelog-builder-action@2ef19db678c29357b2438963a1758eb9fd375a1e
         id: diff
@@ -51,13 +40,65 @@ jobs:
         run: |
           echo 'No PRs available to release.' >> $GITHUB_STEP_SUMMARY
           exit 1
+      - name: save changelog to file
+        run: |
+          echo "${{ steps.diff.outputs.changelog }}" > changelog.txt
+      - uses: actions/upload-artifact@v2
+        with:
+          name: changelog
+          path: changelog.txt
+  create-pr:
+    needs: gather-change-logs
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: prepare version
+        id: prepare
+        run: |
+          CURRENT_VERSION=$(cat package.json | jq -r '.version')
+          NEXT_VERSION=$(npx -y semver -i ${{ github.event.inputs.releaseType }} $CURRENT_VERSION)
+          echo "::set-output name=currentVersion::v$CURRENT_VERSION"
+          echo "::set-output name=nextVersion::v$NEXT_VERSION"
+          echo "v$NEXT_VERSION" > version
+      - name: commit changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git switch -c "prep-release-${{ steps.prepare.outputs.nextVersion }}"
+          git add .
+          git commit -m "Release ${{ steps.prepare.outputs.nextVersion }}"
+          git push -u origin "prep-release-${{ steps.prepare.outputs.nextVersion }}"
+      - uses: actions/download-artifact@v2
+        with:
+          name: changelog
       - name: create pr
-        uses: peter-evans/create-pull-request@923ad837f191474af6b1721408744feb989a4c27
-        with: 
-          commit-message: "Publishing ${{ steps.prepare.outputs.nextVersion }}"
-          delete-branch: true
-          title: "Prepare release ${{ steps.prepare.outputs.nextVersion }}"
-          body: ${{ steps.diff.outputs.changelog }}
-          labels: "release"
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs')
+            const util = require('util')
+
+            const readFile = util.promisify(fs.readFile)
+
+            const changeLog = await readFile('changelog.txt', 'utf8')
+            const { data: newPr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Prepare release ${{ steps.prepare.outputs.nextVersion }}",
+              body: changeLog,
+              base: "main",
+              head: "prep-release-${{ steps.prepare.outputs.nextVersion }}"
+            })
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: newPr.number,
+              labels: ["release"]
+            })
 
           
