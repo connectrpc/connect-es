@@ -9,48 +9,41 @@ linters-settings:
       - '^log\.'
       - '^print$'
       - '^println$'
+      - '^panic$'
+  godox:
+    # TODO, OPT, etc. comments are fine to commit. Use FIXME comments for
+    # temporary hacks, and use godox to prevent committing them.
+    keywords: [FIXME]
+  varnamelen:
+    ignore-decls:
+      - T any
+      - i int
+      - wg sync.WaitGroup
 linters:
-  enable:
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - containedctx
-    - contextcheck
-    - deadcode
-    - decorder
-    - depguard
-    - dogsled
-    - errcheck
-    - exportloopref
-    - forbidigo
-    - forcetypeassert
-    - gochecknoinits
-    - gofmt
-    - goheader
-    - goimports
-    - gomodguard
-    - goprintffuncname
-    - gosec
-    - gosimple
-    - govet
-    - grouper
-    - importas
-    - ineffassign
-    - makezero
-    - misspell
-    - nakedret
-    - nilerr
-    - nolintlint
-    - predeclared
-    - promlinter
-    - rowserrcheck
-    - staticcheck
-    - structcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unused
-    - varcheck
-    - wastedassign
-    - whitespace
-  disable-all: true
+  enable-all: true
+  disable:
+    - cyclop            # covered by gocyclo
+    - exhaustivestruct  # replaced by exhaustruct
+    - funlen            # rely on code review to limit function length
+    - gocognit          # dubious "cognitive overhead" quantification
+    - gofumpt           # prefer standard gofmt
+    - golint            # deprecated by Go team
+    - gomnd             # some unnamed constants are okay
+    - interfacer        # deprecated by author
+    - ireturn           # "accept interfaces, return structs" isn't ironclad
+    - lll               # don't want hard limits for line length
+    - maintidx          # covered by gocyclo
+    - maligned          # readability trumps efficient struct packing
+    - nlreturn          # generous whitespace violates house style
+    - scopelint         # deprecated by author
+    - testpackage       # internal tests are fine
+    - wrapcheck         # don't _always_ need to wrap errors
+    - wsl               # generous whitespace violates house style
+issues:
+  exclude:
+    # Don't ban use of fmt.Errorf to create new errors, but the remaining
+    # checks from err113 are useful.
+    - "err113: do not define dynamic errors.*"
+    - "parameter name 'f' is too short for the scope of its usage"
+    - "variable name 'rt' is too short for the scope of its usage"
+    - "missing cases in switch of type descriptorpb.MethodOptions_IdempotencyLevel: Default_MethodOptions_IdempotencyLevel|MethodOptions_IDEMPOTENCY_UNKNOWN"

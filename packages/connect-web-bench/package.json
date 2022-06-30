@@ -1,5 +1,5 @@
 {
-  "name": "@bufbuild/bench-codesize",
+  "name": "@bufbuild/connect-web-bench",
   "private": true,
   "scripts": {
     "report": "node report.mjs > README.md",

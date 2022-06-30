@@ -8,7 +8,7 @@ module.exports = {
     node: true,
   },
   ignorePatterns: [
-    "packages/bench-codesize/src/gen/grpcweb/**/*",
+    "packages/connect-web-bench/src/gen/grpcweb/**/*",
     "packages/*/dist/**",
     "node_modules/**",
   ],
