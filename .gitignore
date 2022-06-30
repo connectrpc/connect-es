@@ -6,4 +6,4 @@ node_modules
 /testdata/gen/**/*.js
 /testdata/gen/**/*.ts
 /testdata/gen/**/**.d.ts
-/.cache
+/.tmp

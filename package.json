@@ -3,7 +3,7 @@
   "workspaces": [
     "./packages/connect-web",
     "./packages/connect-web-test",
-    "./packages/bench-codesize",
+    "./packages/connect-web-bench",
     "./packages/protoc-gen-connect-web*"
   ],
   "type": "module",

@@ -19,11 +19,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache
-            .cache
+            ~/.tmp
+            .tmp
           key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
       - name: make
-        run: make format build lint test bench-codesize checkgenerate
+        run: make format build lint test bench checkdiff
 
