@@ -63,6 +63,16 @@ The library and the generated code are compatible with ES2017 and TypeScript 4.5
 Connect-Web follows semantic versioning.
 
 
+## Ecosystem
+
+* [connect-go](https://github.com/bufbuild/connect-go):
+  Go implementation of gRPC, gRPC-Web, and Connect
+* [connect-demo](https://github.com/bufbuild/connect-demo):
+  demonstration service powering demo.connect.build
+* [connect-crosstest](https://github.com/bufbuild/connect-crosstest):
+  gRPC-Web and Connect interoperability tests
+
+
 ## Status
 
 This project is a beta: we rely on it in production, but we may make a few
