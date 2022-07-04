@@ -181,7 +181,7 @@ export function createConnectTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
     async serverStream<
@@ -306,7 +306,7 @@ export function createConnectTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
   };
@@ -466,10 +466,7 @@ function endStreamFromJson(data: Uint8Array): EndStreamResponse {
     }
     if (Object.keys(jsonValue.error).length > 0) {
       try {
-        error = connectErrorFromJson(jsonValue.error, {
-          typeRegistry,
-          metadata,
-        });
+        error = connectErrorFromJson(jsonValue.error, metadata);
       } catch (e) {
         throw newParseError(e, ".error", false);
       }

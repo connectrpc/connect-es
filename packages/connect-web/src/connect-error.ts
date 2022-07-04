@@ -181,12 +181,19 @@ export function connectErrorFromJson(
 }
 
 /**
- * Convert any value - typically a caught error into a ConnectError.
- * If the value is already a ConnectError, return it as is.
- * If the value is an AbortError from the fetch API, return code Canceled.
- * For other values, return code Internal.
+ * Convert any value - typically a caught error into a ConnectError,
+ * following these rules:
+ * - If the value is already a ConnectError, return it as is.
+ * - If the value is an AbortError from the fetch API, return the message
+ *   of the AbortError with code Canceled.
+ * - For other Errors, return the Errors message with code Unknown by default.
+ * - For other values, return the values String representation as a message,
+ *   with the code Unknown by default.
  */
-export function connectErrorFromReason(reason: unknown): ConnectError {
+export function connectErrorFromReason(
+  reason: unknown,
+  code = Code.Unknown
+): ConnectError {
   if (reason instanceof ConnectError) {
     return reason;
   }
@@ -199,7 +206,7 @@ export function connectErrorFromReason(reason: unknown): ConnectError {
     }
     return new ConnectError(reason.message);
   }
-  return new ConnectError(String(reason), Code.Internal);
+  return new ConnectError(String(reason), code);
 }
 
 /**

@@ -30,7 +30,12 @@ export {
   runServerStream,
 } from "./interceptor.js";
 
-export { ConnectError, connectErrorFromJson } from "./connect-error.js";
+export {
+  ConnectError,
+  connectErrorDetails,
+  connectErrorFromReason,
+  connectErrorFromJson,
+} from "./connect-error.js";
 export { Code, codeFromString, codeToString } from "./code.js";
 
 export {
