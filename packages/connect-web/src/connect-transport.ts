@@ -16,7 +16,6 @@ import {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
-  IMessageTypeRegistry,
   JsonReadOptions,
   JsonValue,
   JsonWriteOptions,
@@ -32,7 +31,7 @@ import {
   connectErrorFromReason,
   newParseError,
 } from "./connect-error.js";
-import { codeFromConnectHttpStatus, Code } from "./code.js";
+import { Code, codeFromConnectHttpStatus } from "./code.js";
 import type { Transport } from "./transport.js";
 import type {
   Interceptor,
@@ -74,9 +73,6 @@ interface ConnectTransportOptions {
    * this transport. See the Interceptor type for details.
    */
   interceptors?: Interceptor[];
-
-  // TODO replace with TCN-189
-  errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the JSON format.
@@ -151,12 +147,7 @@ export function createConnectTransport(
               if (responseType == "application/json") {
                 throw connectErrorFromJson(
                   (await response.json()) as JsonValue,
-                  {
-                    typeRegistry: options.errorDetailRegistry,
-                    metadata: mergeHeaders(
-                      ...demuxHeaderTrailers(response.headers)
-                    ),
-                  }
+                  mergeHeaders(...demuxHeaderTrailers(response.headers))
                 );
               }
               throw new ConnectError(
@@ -245,12 +236,7 @@ export function createConnectTransport(
               if (responseType == "application/json") {
                 throw connectErrorFromJson(
                   (await response.json()) as JsonValue,
-                  {
-                    typeRegistry: options.errorDetailRegistry,
-                    metadata: mergeHeaders(
-                      ...demuxHeaderTrailers(response.headers)
-                    ),
-                  }
+                  mergeHeaders(...demuxHeaderTrailers(response.headers))
                 );
               }
               throw new ConnectError(
@@ -290,10 +276,7 @@ export function createConnectTransport(
                   endStreamResponseFlag
                 ) {
                   endStreamReceived = true;
-                  const endStream = endStreamFromJson(
-                    result.value.data,
-                    options.errorDetailRegistry
-                  );
+                  const endStream = endStreamFromJson(result.value.data);
                   endStream.metadata.forEach((value, key) =>
                     this.trailer.append(key, value)
                   );
@@ -436,10 +419,7 @@ interface EndStreamResponse {
 /**
  * Parse an EndStreamResponse of the Connect protocol.
  */
-function endStreamFromJson(
-  data: Uint8Array,
-  typeRegistry?: IMessageTypeRegistry
-): EndStreamResponse {
+function endStreamFromJson(data: Uint8Array): EndStreamResponse {
   let jsonValue: JsonValue;
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

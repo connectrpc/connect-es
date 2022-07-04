@@ -16,6 +16,7 @@ import {
   ConnectError,
   createCallbackClient,
   createPromiseClient,
+  connectErrorDetails,
   Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
@@ -39,10 +40,11 @@ describe("fail_server_streaming", () => {
       expect(err.rawMessage).toEqual("soirée 🎉");
       // the experimental gRPC transport does not implement error details
       if (transportName !== "gRPC transport") {
-        expect(err.details.length).toEqual(1);
-        expect(err.details[0]).toBeInstanceOf(ErrorDetail);
-        if (err.details[0] instanceof ErrorDetail) {
-          expect(expectedErrorDetail.equals(err.details[0])).toBeTrue();
+        const details = connectErrorDetails(err, ErrorDetail);
+        expect(details.length).toEqual(1);
+        expect(details[0]).toBeInstanceOf(ErrorDetail);
+        if (details[0] instanceof ErrorDetail) {
+          expect(expectedErrorDetail.equals(details[0])).toBeTrue();
         }
       }
     }
