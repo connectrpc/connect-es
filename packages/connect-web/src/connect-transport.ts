@@ -331,6 +331,11 @@ export function createConnectTransport(
   };
 }
 
+/**
+ * Creates a body for a Connect request. Supports only requests with a single
+ * message because of browser API limitations, but applies the enveloping
+ * required for server-streaming requests.
+ */
 function createConnectRequestBody<T extends Message<T>>(
   message: T,
   methodKind: MethodKind,
@@ -357,6 +362,9 @@ function createConnectRequestBody<T extends Message<T>>(
   );
 }
 
+/**
+ * Creates headers for a Connect request.
+ */
 function createConnectRequestHeaders(
   headers: HeadersInit | undefined,
   timeoutMs: number | undefined,
@@ -376,6 +384,10 @@ function createConnectRequestHeaders(
   return result;
 }
 
+/**
+ * Asserts a valid Connect Content-Type response header. Raises a ConnectError
+ * otherwise.
+ */
 function expectContentType(
   contentType: string | null,
   stream: boolean,
