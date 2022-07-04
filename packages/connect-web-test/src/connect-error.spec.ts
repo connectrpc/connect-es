@@ -18,6 +18,7 @@ import {
   ConnectError,
   connectErrorDetails,
   connectErrorFromJson,
+  connectErrorFromReason,
 } from "@bufbuild/connect-web";
 import { Any, TypeRegistry, Struct, BoolValue } from "@bufbuild/protobuf";
 import { ErrorDetail } from "./gen/grpc/testing/messages_pb.js";
@@ -116,6 +117,32 @@ describe("connectErrorDetails()", () => {
       expect(details.length).toBe(1);
       expect(details[0]).toBeInstanceOf(ErrorDetail);
     });
+  });
+});
+
+describe("connectErrorFromReason()", () => {
+  it("accepts ConnectError as unknown", () => {
+    const error: unknown = new ConnectError(
+      "Not permitted",
+      Code.PermissionDenied
+    );
+    const got = connectErrorFromReason(error);
+    expect(got as unknown).toBe(error);
+    expect(got.code).toBe(Code.PermissionDenied);
+    expect(got.rawMessage).toBe("Not permitted");
+  });
+  it("accepts any Error", () => {
+    const error: unknown = new Error("Not permitted");
+    const got = connectErrorFromReason(error);
+    expect(got as unknown).not.toBe(error);
+    expect(got.code).toBe(Code.Unknown);
+    expect(got.rawMessage).toBe("Not permitted");
+  });
+  it("accepts string value", () => {
+    const error: unknown = "Not permitted";
+    const got = connectErrorFromReason(error);
+    expect(got.code).toBe(Code.Unknown);
+    expect(got.rawMessage).toBe("Not permitted");
   });
 });
 
