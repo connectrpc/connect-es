@@ -290,11 +290,9 @@ export function createConnectTransport(
                   endStreamResponseFlag
                 ) {
                   endStreamReceived = true;
-                  const endStream = EndStream.fromJsonString(
-                    new TextDecoder().decode(result.value.data),
-                    {
-                      typeRegistry: options.errorDetailRegistry,
-                    }
+                  const endStream = endStreamFromJson(
+                    result.value.data,
+                    options.errorDetailRegistry
                   );
                   endStream.metadata.forEach((value, key) =>
                     this.trailer.append(key, value)
@@ -430,90 +428,72 @@ const endStreamResponseFlag = 0b00000010;
 /**
  * Represents the EndStreamResponse of the Connect protocol.
  */
-class EndStream {
-  error?: ConnectError;
-
+interface EndStreamResponse {
   metadata: Headers;
+  error?: ConnectError;
+}
 
-  constructor(metadata: Headers, error?: ConnectError) {
-    this.metadata = metadata;
-    this.error = error;
+/**
+ * Parse an EndStreamResponse of the Connect protocol.
+ */
+function endStreamFromJson(
+  data: Uint8Array,
+  typeRegistry?: IMessageTypeRegistry
+): EndStreamResponse {
+  let jsonValue: JsonValue;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    jsonValue = JSON.parse(new TextDecoder().decode(data));
+  } catch (e) {
+    throw newParseError(e, "", false);
   }
-
-  /**
-   * Parse an EndStreamResponse from a JSON string.
-   * Will throw a ConnectError in case the JSON is malformed.
-   */
-  static fromJsonString(
-    jsonString: string,
-    options?: { typeRegistry?: IMessageTypeRegistry }
-  ): EndStream {
-    let json: JsonValue;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      json = JSON.parse(jsonString);
-    } catch (e) {
-      throw newParseError(e, "", false);
-    }
-    return this.fromJson(json, options);
+  if (
+    typeof jsonValue != "object" ||
+    jsonValue == null ||
+    Array.isArray(jsonValue)
+  ) {
+    throw newParseError(jsonValue);
   }
-
-  /**
-   * Parse an EndStreamResponse from a JSON value.
-   * Will return a ConnectError, but throw one in case the JSON is malformed.
-   */
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: { typeRegistry?: IMessageTypeRegistry }
-  ): EndStream {
+  const metadata = new Headers();
+  if ("metadata" in jsonValue) {
     if (
-      typeof jsonValue != "object" ||
-      jsonValue == null ||
-      Array.isArray(jsonValue)
+      typeof jsonValue.metadata != "object" ||
+      jsonValue.metadata == null ||
+      Array.isArray(jsonValue.metadata)
     ) {
-      throw newParseError(jsonValue);
+      throw newParseError(jsonValue, ".metadata");
     }
-    const metadata = new Headers();
-    if ("metadata" in jsonValue) {
+    for (const [key, values] of Object.entries(jsonValue.metadata)) {
       if (
-        typeof jsonValue.metadata != "object" ||
-        jsonValue.metadata == null ||
-        Array.isArray(jsonValue.metadata)
+        !Array.isArray(values) ||
+        values.some((value) => typeof value != "string")
       ) {
-        throw newParseError(jsonValue, ".metadata");
+        throw newParseError(values, `.metadata["${key}"]`);
       }
-      for (const [key, values] of Object.entries(jsonValue.metadata)) {
-        if (
-          !Array.isArray(values) ||
-          values.some((value) => typeof value != "string")
-        ) {
-          throw newParseError(values, `.metadata["${key}"]`);
-        }
-        for (const value of values) {
-          metadata.append(key, value as string);
-        }
+      for (const value of values) {
+        metadata.append(key, value as string);
       }
     }
-    let error: ConnectError | undefined;
-    if ("error" in jsonValue) {
-      if (
-        typeof jsonValue.error != "object" ||
-        jsonValue.error == null ||
-        Array.isArray(jsonValue.error)
-      ) {
-        throw newParseError(jsonValue, ".error");
-      }
-      if (Object.keys(jsonValue.error).length > 0) {
-        try {
-          error = connectErrorFromJson(jsonValue.error, {
-            ...options,
-            metadata,
-          });
-        } catch (e) {
-          throw newParseError(e, ".error", false);
-        }
-      }
-    }
-    return new EndStream(metadata, error);
   }
+  let error: ConnectError | undefined;
+  if ("error" in jsonValue) {
+    if (
+      typeof jsonValue.error != "object" ||
+      jsonValue.error == null ||
+      Array.isArray(jsonValue.error)
+    ) {
+      throw newParseError(jsonValue, ".error");
+    }
+    if (Object.keys(jsonValue.error).length > 0) {
+      try {
+        error = connectErrorFromJson(jsonValue.error, {
+          typeRegistry,
+          metadata,
+        });
+      } catch (e) {
+        throw newParseError(e, ".error", false);
+      }
+    }
+  }
+  return { metadata, error };
 }
