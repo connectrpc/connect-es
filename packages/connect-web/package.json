@@ -21,6 +21,7 @@
     "require": "./dist/cjs/index.js",
     "default": "./dist/esm/index.js"
   },
+  "main": "./dist/esm/index.js",
   "peerDependencies": {
     "@bufbuild/protobuf": "^0.0.7"
   },
