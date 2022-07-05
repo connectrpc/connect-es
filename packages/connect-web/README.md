@@ -3,8 +3,8 @@
 This is the runtime library package for Connect-Web. You'll find its code 
 generator at [@bufbuild/protoc-gen-connect-web](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web).
 
-Connect-Web is a simple library to call remote procedures from a browser
-client. Unlike REST, you get a type-safe client and never have to think about
+Connect-Web is a simple library to call remote procedures from a web browser. 
+Unlike REST, you get a type-safe client and never have to think about
 serialization again.
 
 The procedures are defined in a [Protocol Buffer](https://developers.google.com/protocol-buffers)
