@@ -13,15 +13,17 @@
 // limitations under the License.
 
 import {
-  ConnectError,
   Code,
   codeToString,
+  ConnectError,
+  connectErrorDetails,
   connectErrorFromJson,
+  connectErrorFromReason,
 } from "@bufbuild/connect-web";
-import { TypeRegistry } from "@bufbuild/protobuf";
+import { Any, TypeRegistry, Struct, BoolValue } from "@bufbuild/protobuf";
 import { ErrorDetail } from "./gen/grpc/testing/messages_pb.js";
 
-describe("ConnectError", function () {
+describe("ConnectError", () => {
   describe("constructor", () => {
     it("should have status unknown by default", () => {
       const e = new ConnectError("foo");
@@ -38,108 +40,171 @@ describe("ConnectError", function () {
       expect(String(e)).toBe("ConnectError: [already_exists] foo");
     });
   });
-  describe("connectErrorFromJson", () => {
-    it("parses code and message", () => {
-      const error = connectErrorFromJson({
-        code: "permission_denied",
+});
+
+describe("connectErrorDetails()", () => {
+  describe("on error without details", () => {
+    const err = new ConnectError("foo");
+    it("with empty TypeRegistry produces no details", () => {
+      const details = connectErrorDetails(err, TypeRegistry.from());
+      expect(details.length).toBe(0);
+    });
+    it("with non-empty TypeRegistry produces no details", () => {
+      const details = connectErrorDetails(err, TypeRegistry.from(ErrorDetail));
+      expect(details.length).toBe(0);
+    });
+    it("with MessageType produces no details", () => {
+      const details = connectErrorDetails(err, ErrorDetail);
+      expect(details.length).toBe(0);
+    });
+  });
+  describe("on error with JSON details", () => {
+    const err = new ConnectError("foo");
+    err.rawDetails.push({
+      reason: "soirée 🎉",
+      domain: "example.com",
+      "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
+    });
+    it("with empty TypeRegistry produces no details", () => {
+      const details = connectErrorDetails(err, TypeRegistry.from());
+      expect(details.length).toBe(0);
+    });
+    it("with non-empty TypeRegistry produces detail", () => {
+      const details = connectErrorDetails(err, TypeRegistry.from(ErrorDetail));
+      expect(details.length).toBe(1);
+    });
+    it("with MessageType produces detail", () => {
+      const details = connectErrorDetails(err, ErrorDetail);
+      expect(details.length).toBe(1);
+      if (details[0] instanceof ErrorDetail) {
+        expect(details[0].domain).toBe("example.com");
+        expect(details[0].reason).toBe("soirée 🎉");
+      } else {
+        fail();
+      }
+    });
+  });
+  describe("on error with Any details", () => {
+    const err = new ConnectError("foo");
+    err.rawDetails.push(
+      Any.pack(
+        new ErrorDetail({
+          reason: "soirée 🎉",
+          domain: "example.com",
+        })
+      )
+    );
+    it("with empty TypeRegistry produces no details", () => {
+      const details = connectErrorDetails(err, TypeRegistry.from());
+      expect(details.length).toBe(0);
+    });
+    it("with non-empty TypeRegistry produces detail", () => {
+      const details = connectErrorDetails(err, TypeRegistry.from(ErrorDetail));
+      expect(details.length).toBe(1);
+    });
+    it("with MessageType produces detail", () => {
+      const details = connectErrorDetails(err, ErrorDetail);
+      expect(details.length).toBe(1);
+      if (details[0] instanceof ErrorDetail) {
+        expect(details[0].domain).toBe("example.com");
+        expect(details[0].reason).toBe("soirée 🎉");
+      } else {
+        fail();
+      }
+    });
+    it("with multiple MessageTypes produces detail", () => {
+      const details = connectErrorDetails(err, Struct, ErrorDetail, BoolValue);
+      expect(details.length).toBe(1);
+      expect(details[0]).toBeInstanceOf(ErrorDetail);
+    });
+  });
+});
+
+describe("connectErrorFromReason()", () => {
+  it("accepts ConnectError as unknown", () => {
+    const error: unknown = new ConnectError(
+      "Not permitted",
+      Code.PermissionDenied
+    );
+    const got = connectErrorFromReason(error);
+    expect(got as unknown).toBe(error);
+    expect(got.code).toBe(Code.PermissionDenied);
+    expect(got.rawMessage).toBe("Not permitted");
+  });
+  it("accepts any Error", () => {
+    const error: unknown = new Error("Not permitted");
+    const got = connectErrorFromReason(error);
+    expect(got as unknown).not.toBe(error);
+    expect(got.code).toBe(Code.Unknown);
+    expect(got.rawMessage).toBe("Not permitted");
+  });
+  it("accepts string value", () => {
+    const error: unknown = "Not permitted";
+    const got = connectErrorFromReason(error);
+    expect(got.code).toBe(Code.Unknown);
+    expect(got.rawMessage).toBe("Not permitted");
+  });
+});
+
+describe("connectErrorFromJson()", () => {
+  it("parses code and message", () => {
+    const error = connectErrorFromJson({
+      code: "permission_denied",
+      message: "Not permitted",
+    });
+    expect(error.code).toBe(Code.PermissionDenied);
+    expect(error.rawMessage).toBe("Not permitted");
+    expect(error.rawDetails.length).toBe(0);
+  });
+  it("does not require message", () => {
+    const error = connectErrorFromJson({
+      code: codeToString(Code.PermissionDenied),
+    });
+    expect(error.message).toBe("[permission_denied]");
+    expect(error.rawMessage).toBe("");
+  });
+  it("with invalid code throws", () => {
+    expect(() =>
+      connectErrorFromJson({
+        code: "wrong code",
         message: "Not permitted",
-      });
-      expect(error.code).toBe(Code.PermissionDenied);
-      expect(error.rawMessage).toBe("Not permitted");
-      expect(error.details.length).toBe(0);
-    });
-    it("does not require message", () => {
-      const error = connectErrorFromJson({
-        code: codeToString(Code.PermissionDenied),
-      });
-      expect(error.message).toBe("[permission_denied]");
-      expect(error.rawMessage).toBe("");
-    });
-    it("with invalid code throws", () => {
-      expect(() =>
-        connectErrorFromJson({
-          code: "wrong code",
-          message: "Not permitted",
-        })
-      ).toThrowError(
-        '[internal] cannot decode ConnectError.code from JSON: "wrong code"'
-      );
-    });
-    it("with code Ok throws", () => {
-      expect(() =>
-        connectErrorFromJson({
-          code: "ok",
-          message: "Not permitted",
-        })
-      ).toThrowError(
-        '[internal] cannot decode ConnectError.code from JSON: "ok"'
-      );
-    });
-    it("with missing code throws", () => {
-      expect(() =>
-        connectErrorFromJson({
-          message: "Not permitted",
-        })
-      ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
-    });
-    describe("with details", () => {
-      const json = {
-        code: "permission_denied",
+      })
+    ).toThrowError(
+      '[internal] cannot decode ConnectError.code from JSON: "wrong code"'
+    );
+  });
+  it("with code Ok throws", () => {
+    expect(() =>
+      connectErrorFromJson({
+        code: "ok",
         message: "Not permitted",
-        details: [
-          {
-            reason: "soirée 🎉",
-            domain: "example.com",
-            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
-          },
-        ],
-      };
-      it("skips details when not given a type registry", () => {
-        const error = connectErrorFromJson(json);
-        expect(error.details.length).toBe(0);
-      });
-      it("skips details not present in type registry", () => {
-        const error = connectErrorFromJson(json, {
-          typeRegistry: new TypeRegistry(),
-        });
-        expect(error.details.length).toBe(0);
-      });
-      it("uses rawDetails when not given a type registry", () => {
-        const error = connectErrorFromJson(json);
-        expect(error.rawDetails as unknown).toEqual([
-          {
-            reason: "soirée 🎉",
-            domain: "example.com",
-            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
-          },
-        ]);
-      });
-      it("uses rawDetails for details not present in type registry", () => {
-        const error = connectErrorFromJson(json, {
-          typeRegistry: new TypeRegistry(),
-        });
-        expect(error.rawDetails as unknown).toEqual([
-          {
-            reason: "soirée 🎉",
-            domain: "example.com",
-            "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
-          },
-        ]);
-      });
-      it("decodes details using type registry", () => {
-        const error = connectErrorFromJson(json, {
-          typeRegistry: TypeRegistry.from(ErrorDetail),
-        });
-        expect(error.code).toBe(Code.PermissionDenied);
-        expect(error.rawMessage).toBe("Not permitted");
-        expect(error.details.length).toBe(1);
-        if (error.details[0] instanceof ErrorDetail) {
-          expect(error.details[0].domain).toBe("example.com");
-          expect(error.details[0].reason).toBe("soirée 🎉");
-        } else {
-          fail();
-        }
-      });
+      })
+    ).toThrowError(
+      '[internal] cannot decode ConnectError.code from JSON: "ok"'
+    );
+  });
+  it("with missing code throws", () => {
+    expect(() =>
+      connectErrorFromJson({
+        message: "Not permitted",
+      })
+    ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
+  });
+  describe("with details", () => {
+    const json = {
+      code: "permission_denied",
+      message: "Not permitted",
+      details: [
+        {
+          reason: "soirée 🎉",
+          domain: "example.com",
+          "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
+        },
+      ],
+    };
+    it("adds to raw detail", () => {
+      const error = connectErrorFromJson(json);
+      expect(error.rawDetails.length).toBe(1);
     });
   });
 });

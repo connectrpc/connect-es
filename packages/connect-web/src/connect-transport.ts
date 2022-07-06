@@ -16,7 +16,6 @@ import {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
-  IMessageTypeRegistry,
   JsonReadOptions,
   JsonValue,
   JsonWriteOptions,
@@ -74,9 +73,6 @@ interface ConnectTransportOptions {
    * this transport. See the Interceptor type for details.
    */
   interceptors?: Interceptor[];
-
-  // TODO replace with TCN-189
-  errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the JSON format.
@@ -151,12 +147,7 @@ export function createConnectTransport(
               if (responseType == "application/json") {
                 throw connectErrorFromJson(
                   (await response.json()) as JsonValue,
-                  {
-                    typeRegistry: options.errorDetailRegistry,
-                    metadata: mergeHeaders(
-                      ...demuxHeaderTrailers(response.headers)
-                    ),
-                  }
+                  mergeHeaders(...demuxHeaderTrailers(response.headers))
                 );
               }
               throw new ConnectError(
@@ -190,7 +181,7 @@ export function createConnectTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
     async serverStream<
@@ -245,12 +236,7 @@ export function createConnectTransport(
               if (responseType == "application/json") {
                 throw connectErrorFromJson(
                   (await response.json()) as JsonValue,
-                  {
-                    typeRegistry: options.errorDetailRegistry,
-                    metadata: mergeHeaders(
-                      ...demuxHeaderTrailers(response.headers)
-                    ),
-                  }
+                  mergeHeaders(...demuxHeaderTrailers(response.headers))
                 );
               }
               throw new ConnectError(
@@ -290,10 +276,7 @@ export function createConnectTransport(
                   endStreamResponseFlag
                 ) {
                   endStreamReceived = true;
-                  const endStream = endStreamFromJson(
-                    result.value.data,
-                    options.errorDetailRegistry
-                  );
+                  const endStream = endStreamFromJson(result.value.data);
                   endStream.metadata.forEach((value, key) =>
                     this.trailer.append(key, value)
                   );
@@ -323,7 +306,7 @@ export function createConnectTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
   };
@@ -436,10 +419,7 @@ interface EndStreamResponse {
 /**
  * Parse an EndStreamResponse of the Connect protocol.
  */
-function endStreamFromJson(
-  data: Uint8Array,
-  typeRegistry?: IMessageTypeRegistry
-): EndStreamResponse {
+function endStreamFromJson(data: Uint8Array): EndStreamResponse {
   let jsonValue: JsonValue;
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -486,10 +466,7 @@ function endStreamFromJson(
     }
     if (Object.keys(jsonValue.error).length > 0) {
       try {
-        error = connectErrorFromJson(jsonValue.error, {
-          typeRegistry,
-          metadata,
-        });
+        error = connectErrorFromJson(jsonValue.error, metadata);
       } catch (e) {
         throw newParseError(e, ".error", false);
       }

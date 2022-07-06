@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { Transport } from "@bufbuild/connect-web";
 import {
   createConnectTransport,
   createGrpcWebTransport,
 } from "@bufbuild/connect-web";
-import type { Transport } from "@bufbuild/connect-web";
-import { TypeRegistry } from "@bufbuild/protobuf";
-import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
 
 // The following servers are available through crosstests:
 //
@@ -39,21 +37,18 @@ export const crosstestTransports: Record<
     createGrpcWebTransport({
       ...options,
       baseUrl,
-      errorDetailRegistry: TypeRegistry.from(ErrorDetail),
     }),
   "connect JSON transport": (options) =>
     createConnectTransport({
       ...options,
       baseUrl,
       useBinaryFormat: false,
-      errorDetailRegistry: TypeRegistry.from(ErrorDetail),
     }),
   "connect binary transport": (options) =>
     createConnectTransport({
       ...options,
       baseUrl,
       useBinaryFormat: true,
-      errorDetailRegistry: TypeRegistry.from(ErrorDetail),
     }),
 };
 

@@ -16,7 +16,6 @@ import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
-  IMessageTypeRegistry,
   Message,
   MethodInfo,
   PartialMessage,
@@ -61,9 +60,6 @@ interface GrpcWebTransportOptions {
    * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
    */
   credentials?: RequestCredentials;
-
-  // TODO replace with TCN-189
-  errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the binary wire format.
@@ -128,10 +124,7 @@ export function createGrpcWebTransport(
             const headError =
               extractHttpStatusError(response) ??
               extractContentTypeError(response.headers) ??
-              extractDetailsError(
-                response.headers,
-                transportOptions.errorDetailRegistry
-              ) ??
+              extractDetailsError(response.headers) ??
               extractHeadersError(response.headers);
             if (headError) {
               throw headError;
@@ -151,8 +144,7 @@ export function createGrpcWebTransport(
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
               parseGrpcWebTrailerAndExtractError(
-                messageOrTrailerResult.value.data,
-                transportOptions.errorDetailRegistry
+                messageOrTrailerResult.value.data
               );
               // At this point, we received trailers only, but the trailers did
               // not have an error status code.
@@ -170,8 +162,7 @@ export function createGrpcWebTransport(
               throw "missing trailer";
             }
             const trailer = parseGrpcWebTrailerAndExtractError(
-              trailerResult.value.data,
-              transportOptions.errorDetailRegistry
+              trailerResult.value.data
             );
             const eofResult = await reader.read();
             if (!eofResult.done) {
@@ -187,7 +178,7 @@ export function createGrpcWebTransport(
           transportOptions.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
     async serverStream<
@@ -233,10 +224,7 @@ export function createGrpcWebTransport(
             const err =
               extractHttpStatusError(response) ??
               extractContentTypeError(response.headers) ??
-              extractDetailsError(
-                response.headers,
-                transportOptions.errorDetailRegistry
-              ) ??
+              extractDetailsError(response.headers) ??
               extractHeadersError(response.headers);
             if (err) {
               throw err;
@@ -271,8 +259,7 @@ export function createGrpcWebTransport(
                 if ((result.value.flags & trailerFlag) === trailerFlag) {
                   endStreamReceived = true;
                   const trailer = parseGrpcWebTrailerAndExtractError(
-                    result.value.data,
-                    transportOptions.errorDetailRegistry
+                    result.value.data
                   );
                   trailer.forEach((value, key) =>
                     this.trailer.append(key, value)
@@ -296,7 +283,7 @@ export function createGrpcWebTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
   };
@@ -393,10 +380,7 @@ function extractHeadersError(header: Headers): ConnectError | undefined {
   );
 }
 
-function extractDetailsError(
-  header: Headers,
-  typeRegistry?: IMessageTypeRegistry
-): ConnectError | undefined {
+function extractDetailsError(header: Headers): ConnectError | undefined {
   const grpcStatusDetailsBin = header.get("grpc-status-details-bin");
   if (grpcStatusDetailsBin == null) {
     return undefined;
@@ -413,37 +397,18 @@ function extractDetailsError(
       undefined,
       header
     );
-    // TODO deduplicate with similar logic in ConnectError, but see TCN-189
-    for (const any of status.details) {
-      const typeName = any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1);
-      if (!typeRegistry) {
-        error.rawDetails.push(any);
-        continue;
-      }
-      const messageType = typeRegistry.findMessage(typeName);
-      if (messageType) {
-        const message = new messageType();
-        if (any.unpackTo(message)) {
-          error.details.push(message);
-        }
-      }
-    }
+    error.rawDetails.push(...status.details);
     return error;
   } catch (e) {
-    const ce = connectErrorFromReason(e);
+    const ce = connectErrorFromReason(e, Code.Internal);
     header.forEach((value, key) => ce.metadata.append(key, value));
     return ce;
   }
 }
 
-function parseGrpcWebTrailerAndExtractError(
-  data: Uint8Array,
-  errorDetailRegistry: IMessageTypeRegistry | undefined
-): Headers {
+function parseGrpcWebTrailerAndExtractError(data: Uint8Array): Headers {
   const trailer = parseGrpcWebTrailer(data);
-  const err =
-    extractDetailsError(trailer, errorDetailRegistry) ??
-    extractHeadersError(trailer);
+  const err = extractDetailsError(trailer) ?? extractHeadersError(trailer);
   if (err) {
     throw err;
   }
