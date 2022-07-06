@@ -9,10 +9,12 @@
     "test": "ng test"
   },
   "private": true,
-  "dependencies": {
+  "peerDependencies": {
     "@angular/common": "8 - 14",
     "@angular/core": "8 - 14",
-    "rxjs": "~7.5.0"
+    "rxjs": "^6.5",
+    "@bufbuild/protobuf": "^0.0.7",
+    "@bufbuild/connect-web": "^0.0.9"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^14.0.4",
