@@ -208,3 +208,45 @@ describe("connectErrorFromJson()", () => {
     });
   });
 });
+
+describe("assertConnectError() example", () => {
+  /**
+   * Asserts that the given reason is a ConnectError.
+   * If the reason is not a ConnectError, or does not
+   * have the wanted Code, rethrow it.
+   */
+  function assertConnectError(
+    reason: unknown,
+    ...codes: Code[]
+  ): asserts reason is ConnectError {
+    if (reason instanceof ConnectError) {
+      if (codes.length === 0) {
+        return;
+      }
+      if (codes.includes(reason.code)) {
+        return;
+      }
+    }
+    // reason is not a ConnectError, or does
+    // not have the wanted Code - rethrow it.
+    throw reason;
+  }
+  it("asserts ConnectError", () => {
+    const err: unknown = new ConnectError("foo");
+    assertConnectError(err);
+    expect(err.rawMessage).toBe("foo");
+  });
+  it("asserts ConnectError with Code", () => {
+    const err: unknown = new ConnectError("foo", Code.PermissionDenied);
+    assertConnectError(err, Code.PermissionDenied);
+    expect(err.code).toBe(Code.PermissionDenied);
+    expect(err.rawMessage).toBe("foo");
+  });
+  it("rethrows non-ConnectErrors", () => {
+    expect(() => assertConnectError(true)).toThrow(true);
+  });
+  it("rethrows ConnectError with unwanted Code", () => {
+    const err: unknown = new ConnectError("foo", Code.PermissionDenied);
+    expect(() => assertConnectError(err, Code.InvalidArgument)).toThrow(err);
+  });
+});

@@ -31,7 +31,7 @@ import {
   connectErrorFromReason,
   newParseError,
 } from "./connect-error.js";
-import { Code, codeFromConnectHttpStatus } from "./code.js";
+import { codeFromConnectHttpStatus, Code } from "./code.js";
 import type { Transport } from "./transport.js";
 import type {
   Interceptor,
