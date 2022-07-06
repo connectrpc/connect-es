@@ -35,7 +35,12 @@ import {
 } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 
-interface GrpcWebTransportOptions {
+/**
+ * Options used to configure the gRPC-web transport.
+ *
+ * See createGrpcWebTransport().
+ */
+export interface GrpcWebTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
