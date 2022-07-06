@@ -36,7 +36,7 @@ import {
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 
 /**
- * Options used to configure `grpc-web` transport.
+ * Options used to configure the `grpc-web` transport.
  *
  * See `createGrpcWebTransport`.
  */
