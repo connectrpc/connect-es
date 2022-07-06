@@ -17,8 +17,14 @@ export { createPromiseClient, PromiseClient } from "./promise-client.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
 export type { CallOptions } from "./call-options.js";
 
-export { createConnectTransport } from "./connect-transport.js";
-export { createGrpcWebTransport } from "./grpc-web-transport.js";
+export {
+  createConnectTransport,
+  ConnectTransportOptions,
+} from "./connect-transport.js";
+export {
+  createGrpcWebTransport,
+  GrpcWebTransportOptions,
+} from "./grpc-web-transport.js";
 export type { Transport } from "./transport.js";
 
 export {
