@@ -44,9 +44,9 @@ import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { mergeHeaders } from "./http-headers.js";
 
 /**
- * Options used to configure the `connect` transport.
+ * Options used to configure the Connect transport.
  *
- * See `createConnectTransport`.
+ * See createConnectTransport().
  */
 export interface ConnectTransportOptions {
   /**
