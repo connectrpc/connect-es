@@ -120,7 +120,7 @@ testngx: $(BUILD)/connect-ngx
 	cd packages/connect-ngx; npm run test -- --browsers ChromeHeadless --watch false
 
 .PHONY: lint
-lint: $(BIN)/golangci-lint node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
+lint: $(BIN)/golangci-lint node_modules $(BUILD)/connect-web $(BUILD)/connect-ngx $(GEN)/connect-web-bench ## Lint all files
 	$(BIN)/golangci-lint run
 	npx eslint --max-warnings 0 .
 
