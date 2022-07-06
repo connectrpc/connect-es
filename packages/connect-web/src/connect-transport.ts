@@ -43,7 +43,12 @@ import { runServerStream, runUnary } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { mergeHeaders } from "./http-headers.js";
 
-interface ConnectTransportOptions {
+/**
+ * Options used to configure the `connect` transport.
+ *
+ * See `createConnectTransport`.
+ */
+export interface ConnectTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
