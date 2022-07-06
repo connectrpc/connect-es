@@ -82,4 +82,4 @@ stable v1 later this year.
 
 ## Legal
 
-Offered under the [Apache 2 license][https://github.com/bufbuild/connect-web/blob/main/LICENSE].
+Offered under the [Apache 2 license](/LICENSE).
