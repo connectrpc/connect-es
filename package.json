@@ -4,6 +4,7 @@
     "./packages/connect-web",
     "./packages/connect-web-test",
     "./packages/connect-web-bench",
+    "./packages/connect-ngx",
     "./packages/protoc-gen-connect-web*"
   ],
   "type": "module",
