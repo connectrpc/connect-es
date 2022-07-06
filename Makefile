@@ -55,6 +55,9 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell 
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-ngx: $(BUILD)/connect-web
+	cd packages/connect-ngx && npm run build
+
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-connect-web
 	rm -rf packages/connect-web-test/src/gen/*
 	PATH=$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH) \
@@ -88,7 +91,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect-web $(BIN)/protoc-gen-connect-web ## Build
 
 .PHONY: test
-test: testgo testnode testbrowser ## Run all tests
+test: testgo testnode testbrowser testngx ## Run all tests
 
 .PHONY: testgo
 testgo:
@@ -111,6 +114,10 @@ testlocalbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
 	npm run -w packages/connect-web-test karma-serve
 	$(MAKE) crosstestserverstop
+
+.PHONY: testngx
+testngx: $(BUILD)/connect-ngx
+	cd packages/connect-ngx; npm run test -- --browsers ChromeHeadless --watch false
 
 .PHONY: lint
 lint: $(BIN)/golangci-lint node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
