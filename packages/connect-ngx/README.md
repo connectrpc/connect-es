@@ -1,27 +1,121 @@
-# ConnectNgx
+# @bufbuild/connect-ngx
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.0.4.
+[Angular](https://angular.io) support library for [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web). 
 
-## Development server
+It has the following features:
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- An [Observable](https://rxjs.dev/guide/observable) based client.
+- Support for [Angular DI](https://angular.io/guide/glossary#dependency-injection-di).
+- [NgModules](https://angular.io/guide/glossary#ngmodule) for `connect` and `grpc-web` transports.
 
-## Code scaffolding
+## Getting started
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Get started by importing the `ConnectModule` as shown below.
 
-## Build
+```ts
+import { ConnectModule } from '@bufbuild/connect-ngx';
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
 
-## Running unit tests
+@NgModule({
+    imports: [
+        ConnectModule.forRoot({
+            // The address of the connect server
+            baseUrl: 'https://demo.connect.build',
+        })
+    ],
+})
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Next add a client provider.
 
-## Running end-to-end tests
+```ts
+import { ConnectModule, provideClient } from '@bufbuild/connect-ngx';
+import { ElizaService } from 'src/gen/buf/connect/demo/eliza/v1/eliza_connectweb';
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
 
-## Further help
+@NgModule({
+    imports: [
+        ConnectModule.forRoot({
+            baseUrl: 'https://demo.connect.build',
+        })
+    ],
+    providers: [
+        provideClient(ElizaService)
+    ],
+})
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+Here we are passing the generated service definition to `provideClient`. For information on how to generate these please see [Generate code section](https://connect.build/docs/web/getting-started#generate-code).
+
+Now, let's use the client in a component,
+
+```ts
+import { Component, Inject } from '@angular/core'
+import { ObservableClient } from '@bufbuild/connect-ngx'
+import { ElizaService } from 'src/gen/buf/connect/demo/eliza/v1/eliza_connectweb'
+
+@Component({
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.css'],
+})
+export class AppComponent {
+    constructor(
+        @Inject(ElizaService)
+        private client: ObservableClient<typeof ElizaService>
+    ) {}
+
+    ngOnInit() {
+        this.client.say({ sentence: "Let's connect!" }).subscribe((next) => {
+            console.log(next.sentence)
+        })
+    }
+}
+```
+
+## Interceptors
+
+[Interceptors](https://connect.build/docs/web/interceptors) can be added using Angular DI. Here's an example:
+
+```ts
+import { ConnectModule, provideClient, INTERCEPTORS } from '@bufbuild/connect-ngx';
+import { ElizaService } from 'src/gen/buf/connect/demo/eliza/v1/eliza_connectweb'
+
+@NgModule({
+    declarations: [AppComponent],
+    imports: [
+        BrowserModule,
+        ConnectModule.forRoot({
+            baseUrl: 'https://demo.connect.build',
+        }),
+    ],
+    providers: [
+        provideClient(ElizaService),
+        { provide: INTERCEPTORS, multi: true, useValue: logInterceptor },
+    ],
+})
+```
+
+The order in which these are provided will affect the call order. The last interceptor will receive the request first and the first interceptor will recieve the response first.
+
+## Grpc Web Protocol
+
+`grpc-web` can be used by replacing the `ConnectModule` with `GrpcWebModule`.
+
+```ts
+import { GrpcWebModule } from '@bufbuild/connect-ngx';
+
+
+@NgModule({
+    imports: [
+        GrpcWebModule.forRoot({
+            // The address of the connect server
+            baseUrl: 'https://demo.connect.build',
+        })
+    ],
+})
+```
+
+## Examples
+
+For an end-to-end setup checkout the [examples](https://github.com/bufbuild/connect-web-integration/tree/main/angular).
