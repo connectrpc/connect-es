@@ -1,6 +1,6 @@
 {
-  "name": "connect-ngx",
-  "version": "0.0.0",
+  "name": "@bufbuild/connect-ngx",
+  "version": "0.0.1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
