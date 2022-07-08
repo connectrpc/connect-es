@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import {
+  NgModule,
+  ModuleWithProviders,
   Inject,
   Injectable,
-  ModuleWithProviders,
-  NgModule,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Interceptor, Transport } from '@bufbuild/connect-web';
@@ -25,42 +25,30 @@ import { TRANSPORT } from './transport.token';
 import { FooService } from './test-utils/foo-service';
 
 @Injectable()
-class TestService {
+export class TestTransportService {
   constructor(@Inject(TRANSPORT) public transport: Transport) {}
 }
 
-export function testModule<T extends NgModule>(
-  connectModule: ModuleWithProviders<T>
-) {
-  it('should provide `Transport`', () => {
-    expect(connectModule.providers).toEqual(
-      jasmine.arrayContaining([
-        jasmine.objectContaining({
-          provide: TRANSPORT,
-        }),
-      ])
-    );
-  });
+export function testModule<T extends NgModule>(module: ModuleWithProviders<T>) {
   it('should be able to inject `Transport`', () => {
     TestBed.configureTestingModule({
-      imports: [connectModule],
-      providers: [TestService],
+      imports: [module],
+      providers: [TestTransportService],
     });
-    const service = TestBed.inject(TestService);
+    const service = TestBed.inject(TestTransportService);
     expect(service.transport).toBeTruthy();
   });
-  it('should provide `Transport` that depends on interceptors', () => {
+  it('should provide `Transport` that depends on interceptors', async () => {
     const interceptorSpy = jasmine.createSpy<Interceptor>('interceptor');
     TestBed.configureTestingModule({
-      imports: [connectModule],
+      imports: [module],
       providers: [
-        TestService,
+        TestTransportService,
         { provide: INTERCEPTORS, multi: true, useValue: interceptorSpy },
       ],
     });
-    const service = TestBed.inject(TestService);
-    // eslint-disable-next-line  @typescript-eslint/no-floating-promises
-    expectAsync(
+    const service = TestBed.inject(TestTransportService);
+    await expectAsync(
       service.transport.unary(
         FooService,
         FooService.methods.foo,
@@ -69,7 +57,7 @@ export function testModule<T extends NgModule>(
         undefined,
         {}
       )
-    ).toBeResolved();
+    ).toBeRejected();
     expect(interceptorSpy).toHaveBeenCalled();
   });
 }

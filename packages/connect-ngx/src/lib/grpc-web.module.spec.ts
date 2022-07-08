@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GrpcWebModule } from 'dist/connect-ngx';
+import { GrpcWebModule } from './grpc-web.module';
 import { testModule } from './module.spec';
 
 describe('GrpcWebModule', () => {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectModule } from 'dist/connect-ngx';
+import { ConnectModule } from './connect.module';
 import { testModule } from './module.spec';
 
 describe('ConnectModule', () => {
