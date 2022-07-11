@@ -18,18 +18,22 @@ import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 
 /**
- * Encode a single binary header value according to the gRPC
- * specification.
+ * Encode a single binary header value according to the Connect
+ * and gRPC specifications.
  *
- * Binary headers names end with `-bin`, and can contain arbitrary
- * base64-encoded binary data.
+ * This function accepts raw binary data from a buffer, a string
+ * with UTF-8 text, or a protobuf message. It encodes the input
+ * with base64 and returns a string that can be used for a header
+ * whose name ends with `-bin`.
  */
 export function encodeBinaryHeader(
-  value: Uint8Array | ArrayBufferLike | Message
+  value: Uint8Array | ArrayBufferLike | Message | string
 ): string {
   let bytes: Uint8Array;
   if (value instanceof Message) {
     bytes = value.toBinary();
+  } else if (typeof value == "string") {
+    bytes = new TextEncoder().encode(value);
   } else {
     bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
   }
@@ -37,18 +41,21 @@ export function encodeBinaryHeader(
 }
 
 /**
- * Decode a single binary header value according to the gRPC
- * specification.
+ * Decode a single binary header value according to the Connect
+ * and gRPC specifications.
  *
- * Binary headers names end with `-bin`, and can contain arbitrary
- * base64-encoded binary data.
+ * This function returns the raw binary data from a header whose
+ * name ends with `-bin`. If given a message type in the second
+ * argument, it deserializes a protobuf message. To decode a value
+ * that contains unicode text, pass the raw binary data returned
+ * from this function through TextDecoder.decode.
  *
  * Note that duplicate header names may have their values joined
  * with a `,` as the delimiter, so you most likely will want to
  * split by `,` first.
  *
  * If this function detects invalid base-64 encoding, or invalid
- * binary message data, it throws a ConnectError with status
+ * binary message data, it throws a ConnectError with code
  * DataLoss.
  */
 export function decodeBinaryHeader(value: string): Uint8Array;

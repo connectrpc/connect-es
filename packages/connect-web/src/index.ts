@@ -45,8 +45,8 @@ export {
 export { Code, codeFromString, codeToString } from "./code.js";
 
 export {
-  decodeBinaryHeader,
   encodeBinaryHeader,
+  decodeBinaryHeader,
   mergeHeaders,
 } from "./http-headers.js";
 
