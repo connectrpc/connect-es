@@ -58,6 +58,9 @@ export function createPromiseClient<T extends ServiceType>(
   }) as PromiseClient<T>;
 }
 
+/**
+ * UnaryFn is the method signature for a unary method of a PromiseClient.
+ */
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   options?: CallOptions
@@ -83,6 +86,10 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   };
 }
 
+/**
+ * ServerStreamingFn is the method signature for a server-streaming method of
+ * a PromiseClient.
+ */
 type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   options?: CallOptions
