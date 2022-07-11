@@ -12,7 +12,7 @@
   "peerDependencies": {
     "@angular/common": "8 - 14",
     "@angular/core": "8 - 14",
-    "rxjs": "^6.5",
+    "rxjs": "6 - 7",
     "@bufbuild/protobuf": "^0.0.7",
     "@bufbuild/connect-web": "^0.0.9"
   },
