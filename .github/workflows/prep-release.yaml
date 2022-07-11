@@ -43,7 +43,7 @@ jobs:
       - name: save changelog to file
         run: |
           echo "${{ steps.diff.outputs.changelog }}" > changelog.txt
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: changelog
           path: changelog.txt
