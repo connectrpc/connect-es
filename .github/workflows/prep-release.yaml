@@ -72,7 +72,7 @@ jobs:
           git add .
           git commit -m "Release ${{ steps.prepare.outputs.nextVersion }}"
           git push -u origin "prep-release-${{ steps.prepare.outputs.nextVersion }}"
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: changelog
       - name: create pr
