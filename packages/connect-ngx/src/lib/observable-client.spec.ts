@@ -17,8 +17,7 @@
 import { fakeAsync, tick } from '@angular/core/testing';
 import { StreamResponse, Transport } from '@bufbuild/connect-web';
 import { Empty } from '@bufbuild/protobuf';
-import { ObservableClient } from 'dist/connect-ngx';
-import { createObservableClient } from './observable-client';
+import { createObservableClient, ObservableClient } from './observable-client';
 import { FooService } from './test-utils/foo-service';
 
 describe('ObservableClient', () => {

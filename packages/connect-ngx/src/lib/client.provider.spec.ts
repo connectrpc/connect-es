@@ -14,7 +14,7 @@
 
 import { Inject, Injectable } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ObservableClient } from 'dist/connect-ngx';
+import { ObservableClient } from './observable-client';
 import { provideClient } from './client.provider';
 import { FooService } from './test-utils/foo-service';
 import { TRANSPORT } from './transport.token';
