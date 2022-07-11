@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { PluginServiceClient } from "./gen/grpcweb/buf/alpha/registry/v1alpha1/plugin_grpc_web_pb.js";
+import { ElizaServiceClient } from "./gen/grpcweb/buf/connect/demo/eliza/v1/eliza_grpc_web_pb.js";
 
-const pluginClient = new PluginServiceClient("localhost");
+const client = new ElizaServiceClient("localhost");
 
 // eslint-disable-next-line no-console -- log statement makes sure the variable is in use
-console.log(pluginClient);
+console.log(client);
