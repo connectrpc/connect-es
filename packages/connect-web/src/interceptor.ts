@@ -56,8 +56,11 @@ export type Interceptor = (next: AnyFn) => AnyFn;
 type AnyFn = (req: UnaryRequest) => Promise<UnaryResponse | StreamResponse>;
 
 /**
- * UnaryFn represents the client-side invocation of a unary RPC. A Transport
- * implements such a function, and makes it available to interceptors.
+ * UnaryFn represents the client-side invocation of a unary RPC - a method
+ * that takes a single input message, and responds with a single output
+ * message.
+ * A Transport implements such a function, and makes it available to
+ * interceptors.
  */
 type UnaryFn<
   I extends Message<I> = AnyMessage,
@@ -66,7 +69,9 @@ type UnaryFn<
 
 /**
  * ServerStreamFn represents the client-side invocation of a server-streaming
- * RPC. A Transport implements such a function, and makes it available to
+ * RPC - a method that takes one input message, and responds with zero or
+ * more output messages.
+ * A Transport implements such a function, and makes it available to
  * interceptors.
  */
 type ServerStreamFn<

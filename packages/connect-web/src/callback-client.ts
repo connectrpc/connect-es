@@ -74,6 +74,9 @@ export function createCallbackClient<T extends ServiceType>(
   }) as CallbackClient<T>;
 }
 
+/**
+ * UnaryFn is the method signature for a unary method of a CallbackClient.
+ */
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   callback: (error: ConnectError | undefined, response: O) => void,
@@ -116,6 +119,10 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   };
 }
 
+/**
+ * ServerStreamingFn is the method signature for a server-streaming method of
+ * a CallbackClient.
+ */
 type ServerStreamingFn<I extends Message, O extends Message> = (
   request: PartialMessage<I>,
   onResponse: (response: O) => void,

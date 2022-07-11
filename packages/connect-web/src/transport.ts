@@ -28,7 +28,8 @@ import type { StreamResponse, UnaryResponse } from "./interceptor.js";
  */
 export interface Transport {
   /**
-   * Call a unary method.
+   * Call a unary RPC - a method that takes a single input message, and
+   * responds with a single output message.
    */
   unary<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
     service: ServiceType,
@@ -40,7 +41,8 @@ export interface Transport {
   ): Promise<UnaryResponse<O>>;
 
   /**
-   * Call a server-streaming method.
+   * Call a server-streaming RPC - a method that takes a single input message,
+   * and responds with zero or more output messages.
    */
   serverStream<
     I extends Message<I> = AnyMessage,
