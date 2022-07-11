@@ -66,7 +66,7 @@ $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-conne
 $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-connect-web
 	rm -rf packages/connect-web-bench/src/gen/*
 	PATH="$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH)" \
-		buf generate buf.build/bufbuild/buf:4505cba5e5a94a42af02ebc7ac3a0a04 \
+		buf generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568 \
 		--template packages/connect-web-bench/buf.gen.yaml --output packages/connect-web-bench
 	@mkdir -p $(@D)
 	@touch $(@)
