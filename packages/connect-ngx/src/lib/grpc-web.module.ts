@@ -14,7 +14,7 @@
 
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { createGrpcWebTransport, Interceptor } from '@bufbuild/connect-web';
-import { GrpcWebTransportOptions } from '@bufbuild/connect-web/dist/types/grpc-web-transport';
+import { GrpcWebTransportOptions } from '@bufbuild/connect-web';
 import { INTERCEPTORS } from './interceptor.token';
 import { TRANSPORT } from './transport.token';
 

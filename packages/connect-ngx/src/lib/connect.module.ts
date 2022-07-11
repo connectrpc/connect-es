@@ -14,7 +14,7 @@
 
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { createConnectTransport, Interceptor } from '@bufbuild/connect-web';
-import { ConnectTransportOptions } from '@bufbuild/connect-web/dist/types/connect-transport';
+import { ConnectTransportOptions } from '@bufbuild/connect-web';
 import { INTERCEPTORS } from './interceptor.token';
 import { TRANSPORT } from './transport.token';
 
