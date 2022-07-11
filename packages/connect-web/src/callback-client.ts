@@ -152,10 +152,12 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
     run().catch((reason) => {
       const err = connectErrorFromReason(reason, Code.Internal);
       if (err.code === Code.Canceled && abort.signal.aborted) {
-        // As documented, discard Canceled errors if canceled by the user.
-        return;
+        // As documented, discard Canceled errors if canceled by the user,
+        // but do invoke the close-callback.
+        onClose(undefined);
+      } else {
+        onClose(err);
       }
-      onClose(err);
     });
     return () => abort.abort();
   };
@@ -167,6 +169,9 @@ function wrapSignal(
 ): CallOptions {
   if (options?.signal) {
     options.signal.addEventListener("abort", () => abort.abort());
+    if (options.signal.aborted) {
+      abort.abort();
+    }
   }
   return { ...options, signal: abort.signal };
 }

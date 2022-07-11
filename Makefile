@@ -57,7 +57,7 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell 
 
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-connect-web
 	rm -rf packages/connect-web-test/src/gen/*
-	PATH=$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH) \
+	PATH="$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH)" \
 		buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto \
 		--template packages/connect-web-test/buf.gen.yaml --output packages/connect-web-test
 	@mkdir -p $(@D)
@@ -65,7 +65,7 @@ $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-conne
 
 $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-connect-web
 	rm -rf packages/connect-web-bench/src/gen/*
-	PATH=$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH) \
+	PATH="$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH)" \
 		buf generate buf.build/bufbuild/buf:4505cba5e5a94a42af02ebc7ac3a0a04 \
 		--template packages/connect-web-bench/buf.gen.yaml --output packages/connect-web-bench
 	@mkdir -p $(@D)
@@ -97,7 +97,7 @@ testgo:
 .PHONY: testnode
 testnode: $(BIN)/node18 $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
-	cd packages/connect-web-test && PATH=$(abspath $(BIN)):$(PATH) NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
 
 .PHONY: testbrowser
