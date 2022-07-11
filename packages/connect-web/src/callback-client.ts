@@ -104,7 +104,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
           callback(undefined, response.message);
         },
         (reason) => {
-          const err = connectErrorFromReason(reason);
+          const err = connectErrorFromReason(reason, Code.Internal);
           if (err.code === Code.Canceled && abort.signal.aborted) {
             // As documented, discard Canceled errors if canceled by the user.
             return;
@@ -150,7 +150,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
       onClose(undefined);
     }
     run().catch((reason) => {
-      const err = connectErrorFromReason(reason);
+      const err = connectErrorFromReason(reason, Code.Internal);
       if (err.code === Code.Canceled && abort.signal.aborted) {
         // As documented, discard Canceled errors if canceled by the user,
         // but do invoke the close-callback.

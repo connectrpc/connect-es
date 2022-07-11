@@ -35,10 +35,11 @@ $(BIN)/golangci-lint: Makefile
 	GOBIN=$(abspath $(BIN)) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.0
 
 $(BIN)/node18: Makefile
-	curl -sSL https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node
 	@mkdir -p $(@D)
+	curl -sSL https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node
 	mv $(TMP)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node $(@)
 	rm -r $(TMP)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)
+	@touch $(@)
 
 $(BIN)/protoc-gen-connect-web: go.mod cmd/protoc-gen-connect-web/main.go
 	go build -o $(@) ./cmd/protoc-gen-connect-web

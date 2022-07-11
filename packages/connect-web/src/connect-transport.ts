@@ -16,7 +16,6 @@ import {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
-  IMessageTypeRegistry,
   JsonReadOptions,
   JsonValue,
   JsonWriteOptions,
@@ -44,7 +43,12 @@ import { runServerStream, runUnary } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { mergeHeaders } from "./http-headers.js";
 
-interface ConnectTransportOptions {
+/**
+ * Options used to configure the Connect transport.
+ *
+ * See createConnectTransport().
+ */
+export interface ConnectTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
@@ -74,9 +78,6 @@ interface ConnectTransportOptions {
    * this transport. See the Interceptor type for details.
    */
   interceptors?: Interceptor[];
-
-  // TODO replace with TCN-189
-  errorDetailRegistry?: IMessageTypeRegistry;
 
   /**
    * Options for the JSON format.
@@ -151,12 +152,7 @@ export function createConnectTransport(
               if (responseType == "application/json") {
                 throw connectErrorFromJson(
                   (await response.json()) as JsonValue,
-                  {
-                    typeRegistry: options.errorDetailRegistry,
-                    metadata: mergeHeaders(
-                      ...demuxHeaderTrailers(response.headers)
-                    ),
-                  }
+                  mergeHeaders(...demuxHeaderTrailers(response.headers))
                 );
               }
               throw new ConnectError(
@@ -190,7 +186,7 @@ export function createConnectTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
     async serverStream<
@@ -245,12 +241,7 @@ export function createConnectTransport(
               if (responseType == "application/json") {
                 throw connectErrorFromJson(
                   (await response.json()) as JsonValue,
-                  {
-                    typeRegistry: options.errorDetailRegistry,
-                    metadata: mergeHeaders(
-                      ...demuxHeaderTrailers(response.headers)
-                    ),
-                  }
+                  mergeHeaders(...demuxHeaderTrailers(response.headers))
                 );
               }
               throw new ConnectError(
@@ -290,12 +281,7 @@ export function createConnectTransport(
                   endStreamResponseFlag
                 ) {
                   endStreamReceived = true;
-                  const endStream = EndStream.fromJsonString(
-                    new TextDecoder().decode(result.value.data),
-                    {
-                      typeRegistry: options.errorDetailRegistry,
-                    }
-                  );
+                  const endStream = endStreamFromJson(result.value.data);
                   endStream.metadata.forEach((value, key) =>
                     this.trailer.append(key, value)
                   );
@@ -325,12 +311,17 @@ export function createConnectTransport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
   };
 }
 
+/**
+ * Creates a body for a Connect request. Supports only requests with a single
+ * message because of browser API limitations, but applies the enveloping
+ * required for server-streaming requests.
+ */
 function createConnectRequestBody<T extends Message<T>>(
   message: T,
   methodKind: MethodKind,
@@ -357,6 +348,9 @@ function createConnectRequestBody<T extends Message<T>>(
   );
 }
 
+/**
+ * Creates headers for a Connect request.
+ */
 function createConnectRequestHeaders(
   headers: HeadersInit | undefined,
   timeoutMs: number | undefined,
@@ -376,6 +370,10 @@ function createConnectRequestHeaders(
   return result;
 }
 
+/**
+ * Asserts a valid Connect Content-Type response header. Raises a ConnectError
+ * otherwise.
+ */
 function expectContentType(
   contentType: string | null,
   stream: boolean,
@@ -418,90 +416,66 @@ const endStreamResponseFlag = 0b00000010;
 /**
  * Represents the EndStreamResponse of the Connect protocol.
  */
-class EndStream {
-  error?: ConnectError;
-
+interface EndStreamResponse {
   metadata: Headers;
+  error?: ConnectError;
+}
 
-  constructor(metadata: Headers, error?: ConnectError) {
-    this.metadata = metadata;
-    this.error = error;
+/**
+ * Parse an EndStreamResponse of the Connect protocol.
+ */
+function endStreamFromJson(data: Uint8Array): EndStreamResponse {
+  let jsonValue: JsonValue;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    jsonValue = JSON.parse(new TextDecoder().decode(data));
+  } catch (e) {
+    throw newParseError(e, "", false);
   }
-
-  /**
-   * Parse an EndStreamResponse from a JSON string.
-   * Will throw a ConnectError in case the JSON is malformed.
-   */
-  static fromJsonString(
-    jsonString: string,
-    options?: { typeRegistry?: IMessageTypeRegistry }
-  ): EndStream {
-    let json: JsonValue;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      json = JSON.parse(jsonString);
-    } catch (e) {
-      throw newParseError(e, "", false);
-    }
-    return this.fromJson(json, options);
+  if (
+    typeof jsonValue != "object" ||
+    jsonValue == null ||
+    Array.isArray(jsonValue)
+  ) {
+    throw newParseError(jsonValue);
   }
-
-  /**
-   * Parse an EndStreamResponse from a JSON value.
-   * Will return a ConnectError, but throw one in case the JSON is malformed.
-   */
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: { typeRegistry?: IMessageTypeRegistry }
-  ): EndStream {
+  const metadata = new Headers();
+  if ("metadata" in jsonValue) {
     if (
-      typeof jsonValue != "object" ||
-      jsonValue == null ||
-      Array.isArray(jsonValue)
+      typeof jsonValue.metadata != "object" ||
+      jsonValue.metadata == null ||
+      Array.isArray(jsonValue.metadata)
     ) {
-      throw newParseError(jsonValue);
+      throw newParseError(jsonValue, ".metadata");
     }
-    const metadata = new Headers();
-    if ("metadata" in jsonValue) {
+    for (const [key, values] of Object.entries(jsonValue.metadata)) {
       if (
-        typeof jsonValue.metadata != "object" ||
-        jsonValue.metadata == null ||
-        Array.isArray(jsonValue.metadata)
+        !Array.isArray(values) ||
+        values.some((value) => typeof value != "string")
       ) {
-        throw newParseError(jsonValue, ".metadata");
+        throw newParseError(values, `.metadata["${key}"]`);
       }
-      for (const [key, values] of Object.entries(jsonValue.metadata)) {
-        if (
-          !Array.isArray(values) ||
-          values.some((value) => typeof value != "string")
-        ) {
-          throw newParseError(values, `.metadata["${key}"]`);
-        }
-        for (const value of values) {
-          metadata.append(key, value as string);
-        }
+      for (const value of values) {
+        metadata.append(key, value as string);
       }
     }
-    let error: ConnectError | undefined;
-    if ("error" in jsonValue) {
-      if (
-        typeof jsonValue.error != "object" ||
-        jsonValue.error == null ||
-        Array.isArray(jsonValue.error)
-      ) {
-        throw newParseError(jsonValue, ".error");
-      }
-      if (Object.keys(jsonValue.error).length > 0) {
-        try {
-          error = connectErrorFromJson(jsonValue.error, {
-            ...options,
-            metadata,
-          });
-        } catch (e) {
-          throw newParseError(e, ".error", false);
-        }
-      }
-    }
-    return new EndStream(metadata, error);
   }
+  let error: ConnectError | undefined;
+  if ("error" in jsonValue) {
+    if (
+      typeof jsonValue.error != "object" ||
+      jsonValue.error == null ||
+      Array.isArray(jsonValue.error)
+    ) {
+      throw newParseError(jsonValue, ".error");
+    }
+    if (Object.keys(jsonValue.error).length > 0) {
+      try {
+        error = connectErrorFromJson(jsonValue.error, metadata);
+      } catch (e) {
+        throw newParseError(e, ".error", false);
+      }
+    }
+  }
+  return { metadata, error };
 }

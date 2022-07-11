@@ -28,7 +28,6 @@ import {
 } from "@bufbuild/connect-web";
 import {
   AnyMessage,
-  IMessageTypeRegistry,
   Message,
   MessageType,
   MethodInfo,
@@ -56,9 +55,6 @@ interface GrpcTransportOptions {
    * this transport. See the Interceptor type for details.
    */
   interceptors?: Interceptor[];
-
-  // TODO replace with TCN-189
-  errorDetailRegistry?: IMessageTypeRegistry;
 }
 
 interface GrpcTransport extends Transport {

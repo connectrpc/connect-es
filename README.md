@@ -1,7 +1,7 @@
 # Connect-Web
 
-Connect-Web is a simple library to call remote procedures from a browser
-client. Unlike REST, you get a type-safe client and never have to think about
+Connect-Web is a simple library to call remote procedures from a web browser. 
+Unlike REST, you get a type-safe client and never have to think about
 serialization again.
 
 The procedures are defined in a [Protocol Buffer](https://developers.google.com/protocol-buffers)
@@ -82,4 +82,4 @@ stable v1 later this year.
 
 ## Legal
 
-Offered under the [Apache 2 license][https://github.com/bufbuild/connect-web/blob/main/LICENSE].
+Offered under the [Apache 2 license](/LICENSE).
