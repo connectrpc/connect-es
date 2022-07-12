@@ -59,7 +59,7 @@ jobs:
       - name: prepare version
         id: prepare
         run: |
-          CURRENT_VERSION=$(cat package.json | jq -r '.version')
+          CURRENT_VERSION=$(cat packages/connect-web/package.json | jq -r '.version')
           NEXT_VERSION=$(npx -y semver -i ${{ github.event.inputs.releaseType }} $CURRENT_VERSION)
           echo "::set-output name=currentVersion::v$CURRENT_VERSION"
           echo "::set-output name=nextVersion::v$NEXT_VERSION"
