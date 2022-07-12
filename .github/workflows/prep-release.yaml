@@ -31,7 +31,7 @@ jobs:
         id: diff
         with:
           # See https://github.com/mikepenz/release-changelog-builder-action#advanced-workflow-specification for configuration options
-          configuration: "release-notes-config.json"
+          configuration: "./.github/release-notes-config.json"
           fromTag: ${{ steps.prepare.outputs.currentVersion }}
           toTag: HEAD
           token: ${{ secrets.GITHUB_TOKEN }}
