@@ -3,6 +3,6 @@ module github.com/bufbuild/connect-web
 go 1.16
 
 require (
-	github.com/bufbuild/protobuf-es v0.0.7
+	github.com/bufbuild/protobuf-es v0.0.8
 	google.golang.org/protobuf v1.28.0
 )
