@@ -134,9 +134,9 @@ bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark c
 
 .PHONY: setversion
 setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
-	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/main.go $(SET_VERSION)
-	node make/scripts/set-workspace-version.js $(SET_VERSION)
-	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
+	node scripts/update-go-version-file.js cmd/protoc-gen-connect-web/main.go $(SET_VERSION)
+	node scripts/set-workspace-version.js $(SET_VERSION)
+	node scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	rm package-lock.json
 	rm -rf node_modules
 	npm i -f
@@ -152,7 +152,7 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 .PHONY: release
 release: all ## Release @bufbuild/connect-web
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
-	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
+	node scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	npm publish \
 		--access restricted \
 		--workspace packages/connect-web \

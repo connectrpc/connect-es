@@ -30,7 +30,7 @@ if (process.argv.length < 4) {
 }
 
 try {
-  const projectDir = new URL("../../", import.meta.url).pathname;
+  const projectDir = new URL("../", import.meta.url).pathname;
   const goVersionPath = join(projectDir, process.argv[2]);
   const newVersionVLess = process.argv[3].startsWith("v")
     ? process.argv[3].substring(1)
