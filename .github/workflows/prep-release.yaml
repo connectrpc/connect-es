@@ -67,7 +67,7 @@ jobs:
         run: |
           CURRENT_VERSION=$(cat packages/connect-web/package.json | jq -r '.version')
           NEXT_VERSION=$(npx -y semver -i ${{ github.event.inputs.releaseType }} $CURRENT_VERSION)
-          make set-version SET_VERSION=$NEXT_VERSION
+          make setversion SET_VERSION=$NEXT_VERSION
           echo "::set-output name=currentVersion::v$CURRENT_VERSION"
           echo "::set-output name=nextVersion::v$NEXT_VERSION"
       - name: commit changes
