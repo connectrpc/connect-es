@@ -13,7 +13,6 @@ on:
           - patch
         default: patch
 
-
 jobs:
   gather-change-logs:
     permissions:
@@ -56,14 +55,21 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.15.0
+      - name: setup-go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
       - name: prepare version
         id: prepare
         run: |
           CURRENT_VERSION=$(cat packages/connect-web/package.json | jq -r '.version')
           NEXT_VERSION=$(npx -y semver -i ${{ github.event.inputs.releaseType }} $CURRENT_VERSION)
+          make set-version SET_VERSION=$NEXT_VERSION
           echo "::set-output name=currentVersion::v$CURRENT_VERSION"
           echo "::set-output name=nextVersion::v$NEXT_VERSION"
-          echo "v$NEXT_VERSION" > version
       - name: commit changes
         run: |
           git config user.name github-actions
@@ -100,5 +106,3 @@ jobs:
               issue_number: newPr.number,
               labels: ["release"]
             })
-
-          
