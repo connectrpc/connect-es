@@ -59,7 +59,7 @@ the code generator plugin for all Protocol Buffer base types.
 
 `@bufbuild/connect-web` requires the [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).  
-The library and the generated code are compatible with ES2017 and TypeScript 4.5.   
+The library and the generated code are compatible with ES2017 and TypeScript 4.1.   
 Connect-Web follows semantic versioning.
 
 
