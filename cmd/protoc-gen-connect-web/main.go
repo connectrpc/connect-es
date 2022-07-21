@@ -20,7 +20,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "v0.0.9"
+const version = "v0.0.10"
 
 func main() {
 	protoplugin.Options{
