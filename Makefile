@@ -22,7 +22,7 @@ node_modules: package-lock.json
 
 node_modules/.bin/protoc-gen-es: node_modules
 
-$(BIN)/licenseheader: Makefile
+$(BIN)/license-header: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@v1.1.0
 
@@ -118,7 +118,7 @@ lint: $(BIN)/golangci-lint node_modules $(BUILD)/connect-web $(GEN)/connect-web-
 	npx eslint --max-warnings 0 .
 
 .PHONY: format
-format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/licenseheader ## Format all files, adding license headers
+format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/license-header ## Format all files, adding license headers
 	go fmt ./cmd/...
 	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --loglevel error
 	$(BIN)/git-ls-files-unstaged | \
