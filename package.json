@@ -18,8 +18,5 @@
     "eslint": "^8.20.0",
     "eslint-plugin-node": "^11.1.0",
     "prettier": "^2.7.1"
-  },
-  "dependencies": {
-    "esbuild": "^0.14.49"
   }
 }
