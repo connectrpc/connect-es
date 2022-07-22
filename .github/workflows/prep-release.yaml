@@ -26,7 +26,7 @@ jobs:
           # Fetch full depth so we can get history and compare
           fetch-depth: 0
       - name: build message
-        uses: mikepenz/release-changelog-builder-action@2ef19db678c29357b2438963a1758eb9fd375a1e
+        uses: mikepenz/release-changelog-builder-action@f3776883ea2e511b41298ec5853017efecd7c2ee
         id: diff
         with:
           # See https://github.com/mikepenz/release-changelog-builder-action#advanced-workflow-specification for configuration options
