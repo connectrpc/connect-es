@@ -125,9 +125,7 @@ bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark c
 
 .PHONY: setversion
 setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
-	node scripts/update-go-version-file.js cmd/protoc-gen-connect-web/main.go $(SET_VERSION)
 	node scripts/set-workspace-version.js $(SET_VERSION)
-	node scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	rm package-lock.json
 	rm -rf node_modules
 	npm i
@@ -143,24 +141,10 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 .PHONY: release
 release: all ## Release @bufbuild/connect-web
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
-	node scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	npm publish \
 		--access restricted \
 		--workspace packages/connect-web \
-		--workspace packages/protoc-gen-connect-web \
-		--workspace packages/protoc-gen-connect-web-darwin-64 \
-		--workspace packages/protoc-gen-connect-web-darwin-arm64 \
-		--workspace packages/protoc-gen-connect-web-freebsd-64 \
-		--workspace packages/protoc-gen-connect-web-freebsd-arm64 \
-		--workspace packages/protoc-gen-connect-web-linux-32 \
-		--workspace packages/protoc-gen-connect-web-linux-64 \
-		--workspace packages/protoc-gen-connect-web-linux-arm \
-		--workspace packages/protoc-gen-connect-web-linux-arm64 \
-		--workspace packages/protoc-gen-connect-web-netbsd-64 \
-		--workspace packages/protoc-gen-connect-web-openbsd-64 \
-		--workspace packages/protoc-gen-connect-web-windows-32 \
-		--workspace packages/protoc-gen-connect-web-windows-64 \
-		--workspace packages/protoc-gen-connect-web-windows-arm64
+		--workspace packages/protoc-gen-connect-web
 
 .PHONY: crosstestserverstop
 crosstestserverstop:
