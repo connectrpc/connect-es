@@ -6,12 +6,6 @@ updates:
       interval: "weekly"
       timezone: UTC
       time: "07:00"
-  - package-ecosystem: "gomod"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      timezone: UTC
-      time: "07:00"
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
