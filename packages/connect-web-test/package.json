@@ -11,9 +11,6 @@
   },
   "type": "module",
   "types": "./dist/types/index.d.ts",
-  "engines": {
-    "node": ">=18"
-  },
   "exports": {
     "import": "./dist/esm/index.js",
     "default": "./dist/esm/index.js"

@@ -18,7 +18,7 @@ NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
 
 node_modules: package-lock.json
-	npm ci --force
+	npm ci
 
 node_modules/.bin/protoc-gen-es: node_modules
 
@@ -30,10 +30,6 @@ $(BIN)/git-ls-files-unstaged: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/git/cmd/git-ls-files-unstaged@v1.1.0
 
-$(BIN)/golangci-lint: Makefile
-	@mkdir -p $(@D)
-	GOBIN=$(abspath $(BIN)) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.0
-
 $(BIN)/node18: Makefile
 	@mkdir -p $(@D)
 	curl -sSL https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)/bin/node
@@ -41,8 +37,11 @@ $(BIN)/node18: Makefile
 	rm -r $(TMP)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)
 	@touch $(@)
 
-$(BIN)/protoc-gen-connect-web: go.mod cmd/protoc-gen-connect-web/main.go
-	go build -o $(@) ./cmd/protoc-gen-connect-web
+$(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc-gen-connect-web/tsconfig.json $(shell find packages/protoc-gen-connect-web/src -name '*.ts')
+	npm run -w packages/protoc-gen-connect-web clean
+	npm run -w packages/protoc-gen-connect-web build
+	@mkdir -p $(@D)
+	@touch $(@)
 
 $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
@@ -55,18 +54,16 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell 
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-connect-web
+$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
 	rm -rf packages/connect-web-test/src/gen/*
-	PATH="$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH)" \
-		buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto \
+	buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto \
 		--template packages/connect-web-test/buf.gen.yaml --output packages/connect-web-test
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-connect-web
+$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
 	rm -rf packages/connect-web-bench/src/gen/*
-	PATH="$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH)" \
-		buf generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568 \
+	buf generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568 \
 		--template packages/connect-web-bench/buf.gen.yaml --output packages/connect-web-bench
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -85,14 +82,10 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect-web $(BIN)/protoc-gen-connect-web ## Build
+build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web ## Build
 
 .PHONY: test
-test: testgo testnode testbrowser ## Run all tests
-
-.PHONY: testgo
-testgo:
-	go test ./cmd/...
+test: testnode testbrowser ## Run all tests
 
 .PHONY: testnode
 testnode: $(BIN)/node18 $(BUILD)/connect-web-test
@@ -113,13 +106,11 @@ testlocalbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverstop
 
 .PHONY: lint
-lint: $(BIN)/golangci-lint node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
-	$(BIN)/golangci-lint run
+lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
 	npx eslint --max-warnings 0 .
 
 .PHONY: format
 format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/license-header ## Format all files, adding license headers
-	go fmt ./cmd/...
 	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --loglevel error
 	$(BIN)/git-ls-files-unstaged | \
 		grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))) | \
@@ -139,7 +130,7 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 	node scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	rm package-lock.json
 	rm -rf node_modules
-	npm i -f
+	npm i
 	$(MAKE) all
 
 # Release @bufbuild/connect-web.
