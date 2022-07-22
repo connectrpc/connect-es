@@ -144,20 +144,7 @@ release: all ## Release @bufbuild/connect-web
 	npm publish \
 		--access restricted \
 		--workspace packages/connect-web \
-		--workspace packages/protoc-gen-connect-web \
-		--workspace packages/protoc-gen-connect-web-darwin-64 \
-		--workspace packages/protoc-gen-connect-web-darwin-arm64 \
-		--workspace packages/protoc-gen-connect-web-freebsd-64 \
-		--workspace packages/protoc-gen-connect-web-freebsd-arm64 \
-		--workspace packages/protoc-gen-connect-web-linux-32 \
-		--workspace packages/protoc-gen-connect-web-linux-64 \
-		--workspace packages/protoc-gen-connect-web-linux-arm \
-		--workspace packages/protoc-gen-connect-web-linux-arm64 \
-		--workspace packages/protoc-gen-connect-web-netbsd-64 \
-		--workspace packages/protoc-gen-connect-web-openbsd-64 \
-		--workspace packages/protoc-gen-connect-web-windows-32 \
-		--workspace packages/protoc-gen-connect-web-windows-64 \
-		--workspace packages/protoc-gen-connect-web-windows-arm64
+		--workspace packages/protoc-gen-connect-web
 
 .PHONY: crosstestserverstop
 crosstestserverstop:
