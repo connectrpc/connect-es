@@ -460,22 +460,6 @@ function endStreamFromJson(data: Uint8Array): EndStreamResponse {
       }
     }
   }
-  let error: ConnectError | undefined;
-  if ("error" in jsonValue) {
-    if (
-      typeof jsonValue.error != "object" ||
-      jsonValue.error == null ||
-      Array.isArray(jsonValue.error)
-    ) {
-      throw newParseError(jsonValue, ".error");
-    }
-    if (Object.keys(jsonValue.error).length > 0) {
-      try {
-        error = connectErrorFromJson(jsonValue.error, metadata);
-      } catch (e) {
-        throw newParseError(e, ".error", false);
-      }
-    }
-  }
+  const error = "error" in jsonValue ? connectErrorFromJson(jsonValue.error, metadata) : undefined;
   return { metadata, error };
 }
