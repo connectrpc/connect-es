@@ -190,7 +190,6 @@ describe("connectErrorFromJson()", () => {
             reason: "soirée 🎉",
             domain: "example.com",
           }).toBinary()),
-          // "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
         },
       ],
     };
