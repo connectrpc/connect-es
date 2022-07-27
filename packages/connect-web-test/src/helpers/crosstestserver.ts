@@ -27,7 +27,7 @@ import {
 // | grpc-go       | 8083 |
 //
 // Source: // https://github.com/bufbuild/connect-web/pull/87
-export const baseUrl = "https://127.0.0.1:8080";
+export const baseUrl = "https://127.0.0.1:8080/";
 
 export const crosstestTransports: Record<
   string,
