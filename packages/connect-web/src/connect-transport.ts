@@ -42,6 +42,7 @@ import type {
 import { runServerStream, runUnary } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { mergeHeaders } from "./http-headers.js";
+import { assertFetchApi } from "./assert-fetch-api.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -98,6 +99,7 @@ export interface ConnectTransportOptions {
 export function createConnectTransport(
   options: ConnectTransportOptions
 ): Transport {
+  assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<

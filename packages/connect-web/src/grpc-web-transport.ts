@@ -34,6 +34,7 @@ import {
   UnaryRequest,
 } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
+import { assertFetchApi } from "./assert-fetch-api.js";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -85,6 +86,7 @@ export interface GrpcWebTransportOptions {
 export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
 ): Transport {
+  assertFetchApi();
   const transportOptions = options;
   return {
     async unary<
