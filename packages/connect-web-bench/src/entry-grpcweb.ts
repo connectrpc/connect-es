@@ -14,7 +14,7 @@
 
 import { ElizaServiceClient } from "./gen/grpcweb/buf/connect/demo/eliza/v1/eliza_grpc_web_pb.js";
 
-const client = new ElizaServiceClient("localhost");
+const client = new ElizaServiceClient("https://demo.connect.build");
 
 // eslint-disable-next-line no-console -- log statement makes sure the variable is in use
 console.log(client);
