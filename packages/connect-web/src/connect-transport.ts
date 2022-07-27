@@ -119,7 +119,9 @@ export function createConnectTransport(
             stream: false,
             service,
             method,
-            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
+              method.name
+            }`,
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
@@ -208,7 +210,9 @@ export function createConnectTransport(
             stream: false,
             service,
             method,
-            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
+              method.name
+            }`,
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
