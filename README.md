@@ -57,7 +57,7 @@ or on [GitHub discussions](https://github.com/bufbuild/connect-web/discussions).
 - [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web):
   Implements the Connect and gRPC-web protocols ([source code](packages/connect-web)).
 - [@bufbuild/protoc-gen-connect-web](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web):
-  Code generator plugin for the services in your Protocol Buffer schema ([source code](packages/protoc-gen-connect-web)).
+  Code generator plugin for the services in your schema ([source code](packages/protoc-gen-connect-web)).
 
 
 ## Ecosystem
