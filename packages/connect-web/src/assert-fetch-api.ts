@@ -12,9 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ElizaServiceClient } from "./gen/grpcweb/buf/connect/demo/eliza/v1/eliza_grpc_web_pb.js";
-
-const client = new ElizaServiceClient("https://demo.connect.build");
-
-// eslint-disable-next-line no-console -- log statement makes sure the variable is in use
-console.log(client);
+/**
+ * Asserts that the fetch API is available.
+ */
+export function assertFetchApi(): void {
+  try {
+    new Headers();
+  } catch (_) {
+    throw new Error(
+      "connect-web requires the fetch API. Are you running on an old version of Node.js? Node.js is not supported in Connect for Web - please stay tuned for Connect for Node."
+    );
+  }
+}

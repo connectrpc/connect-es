@@ -21,7 +21,7 @@ import { ElizaService } from "./gen/connectweb/buf/connect/demo/eliza/v1/eliza_c
 const client = createPromiseClient(
   ElizaService,
   createConnectTransport({
-    baseUrl: "https://localhost",
+    baseUrl: "https://demo.connect.build",
   })
 );
 
