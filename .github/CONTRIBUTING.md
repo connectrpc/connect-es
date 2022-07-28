@@ -18,16 +18,14 @@ you to accept the CLA when you open your pull request.
 [Fork][fork], then clone the repository:
 
 ```
-mkdir -p $GOPATH/src/github.com/bufbuild
-cd $GOPATH/src/github.com/bufbuild
 git clone git@github.com:your_github_username/connect-web.git
 cd connect-web
 git remote add upstream https://github.com/bufbuild/connect-web.git
 git fetch upstream
 ```
 
-Make sure that the tests and the linters pass (you'll need `bash` and the
-latest stable Go release installed):
+Make sure that the tests and the linters pass (you'll need `node`, 
+`buf`, `bash`, Docker, and the latest stable Go release installed):
 
 ```
 make 
@@ -38,15 +36,13 @@ make
 Start by creating a new branch for your changes:
 
 ```
-cd $GOPATH/src/github.com/bufbuild/connect-web
 git checkout main
 git fetch upstream
 git rebase upstream/main
 git checkout -b cool_new_feature
 ```
 
-Make your changes, then ensure that `make` still passes. (If you'd prefer, you
-can use the standard `go build ./...` and `go test ./...` while you're coding.)
+Make your changes, then ensure that `make` still passes. 
 When you're satisfied with your changes, push them to your fork.
 
 ```
