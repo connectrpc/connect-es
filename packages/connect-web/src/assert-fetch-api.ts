@@ -19,6 +19,8 @@ export function assertFetchApi(): void {
   try {
     new Headers();
   } catch (_) {
-    throw new Error("connect-web requires the fetch API");
+    throw new Error(
+      "connect-web requires the fetch API. Are you running on an old version of Node.js? Node.js is not supported in Connect for Web - please stay tuned for Connect for Node."
+    );
   }
 }
