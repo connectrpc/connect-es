@@ -35,36 +35,35 @@ console.log(answer);
 // {sentence: 'When you feel happy, what do you do?'}
 ```
 
+To get started, head over to the [docs](https://connect.build/docs/web/getting-started), 
+for a tutorial, or take a look at [our examples](https://github.com/bufbuild/connect-web-integration)
+for integration with various frameworks. 
+
+
+## Supported Browsers
+
+Connect-Web supports all modern web browsers that implement the widely
+available [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
+and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).
+The library and the generated code are compatible with ES2017 and TypeScript 4.1.
+
+Node.js is not supported. We are working on Connect for Node.js - if you are 
+interested, let us know on [Slack](https://join.slack.com/t/bufbuild/shared_invite/zt-f5k547ki-VDs_iC4TblNCu7ubhRD17w) 
+or on [GitHub discussions](https://github.com/bufbuild/connect-web/discussions).
+
 
 ## Packages
 
-### @bufbuild/connect-web
-The library that implements the Connect and gRPC-web protocols, interceptors,
-and error handling. It depends on [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf),
-our Protocol Buffers implementation for ECMAScript.
-
-[Source](packages/connect-web) | [npmjs.com](https://www.npmjs.com/package/@bufbuild/connect-web)
-
-
-### @bufbuild/protoc-gen-connect-web
-
-The code generator plugin that generates services from your Protocol Buffer
-schema. It works in tandem with [@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es), 
-the code generator plugin for all Protocol Buffer base types.
-
-[Source](cmd/protoc-gen-connect-web) | [npmjs.com](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web)
-
-
-## Compatibility and support
-
-`@bufbuild/connect-web` requires the [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
-and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).  
-The library and the generated code are compatible with ES2017 and TypeScript 4.1.   
-Connect-Web follows semantic versioning.
+- [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web):
+  Implements the Connect and gRPC-web protocols ([source code](packages/connect-web)).
+- [@bufbuild/protoc-gen-connect-web](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web):
+  Code generator plugin for the services in your schema ([source code](packages/protoc-gen-connect-web)).
 
 
 ## Ecosystem
 
+* [connect-web-integration](https://github.com/bufbuild/connect-web-integration):
+  Example projects using Connect-Web with various JS frameworks and tooling
 * [connect-go](https://github.com/bufbuild/connect-go):
   Go implementation of gRPC, gRPC-Web, and Connect
 * [connect-demo](https://github.com/bufbuild/connect-demo):
@@ -76,7 +75,7 @@ Connect-Web follows semantic versioning.
 ## Status
 
 This project is a beta: we rely on it in production, but we may make a few
-changes as we gather feedback from early adopters. We're planning to tag a
+changes as we gather feedback from early adopters. We're planning to release a
 stable v1 later this year.
 
 
