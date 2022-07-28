@@ -8,7 +8,8 @@ Learn more about Connect-Web at [github.com/bufbuild/connect-web](https://github
 
 `protoc-gen-connect-web` is a plugin for `protoc` and [`buf`](https://github.com/bufbuild/buf). 
 It generates services from your Protocol Buffer schema, and works in tandem with
-`@bufbuild/protoc-gen-es`, the code generator plugin for all Protocol Buffer base types.
+[@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es), 
+the code generator plugin for all Protocol Buffer base types.
 
 
 ## Installation
