@@ -28,14 +28,6 @@ Note that npm does not add the executable to your `$PATH`. You can do so with:
 PATH=$PATH:$(pwd)/node_modules/.bin
 ```
 
-Note that `protoc-gen-connect-web` is actually just a simple node script that selects the
-correct precompiled binary for your platform. For example, if you are on a 32-bit
-linux machine, the optional dependency `@bufbuild/protoc-gen-connect-web-linux-32` is
-automatically installed by `npm`, and our node script will run it. Note that this
-means you cannot move your `node_modules` directory to a different platform and
-run it. We recommend you run `npm ci` in CI or your docker images instead.
-
-
 ### With yarn
 
 ```shell
