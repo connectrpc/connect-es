@@ -35,7 +35,7 @@ console.log(answer);
 // {sentence: 'When you feel happy, what do you do?'}
 ```
 
-To get started, head over to the [docs](https://connect.build/docs/web/getting-started), 
+To get started, head over to the [docs](https://connect.build/docs/web/getting-started) 
 for a tutorial, or take a look at [our examples](https://github.com/bufbuild/connect-web-integration)
 for integration with various frameworks. 
 
