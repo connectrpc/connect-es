@@ -48,7 +48,7 @@ and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding
 The library and the generated code are compatible with ES2017 and TypeScript 4.1.
 
 Node.js is not supported. We are working on Connect for Node.js - if you are 
-interested, meet us on [Slack](https://join.slack.com/t/bufbuild/shared_invite/zt-f5k547ki-VDs_iC4TblNCu7ubhRD17w) 
+interested, let us know on [Slack](https://join.slack.com/t/bufbuild/shared_invite/zt-f5k547ki-VDs_iC4TblNCu7ubhRD17w) 
 or on [GitHub discussions](https://github.com/bufbuild/connect-web/discussions).
 
 
