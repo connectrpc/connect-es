@@ -164,21 +164,6 @@ describe("connectErrorFromJson()", () => {
       })
     ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
   });
-  it("ignores old protocol version details", () => {
-    const json = {
-      code: "permission_denied",
-      message: "Not permitted",
-      details: [
-        {
-          reason: "soirée 🎉",
-          domain: "example.com",
-          "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
-        },
-      ],
-    };
-    const error = connectErrorFromJson(json);
-    expect(error.details.length).toBe(0);
-  });
   describe("with details", () => {
     const json = {
       code: "permission_denied",
