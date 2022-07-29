@@ -466,6 +466,9 @@ function endStreamFromJson(data: Uint8Array): EndStreamResponse {
       }
     }
   }
-  const error = "error" in jsonValue ? connectErrorFromJson(jsonValue.error, metadata) : undefined;
+  const error =
+    "error" in jsonValue
+      ? connectErrorFromJson(jsonValue.error, metadata)
+      : undefined;
   return { metadata, error };
 }

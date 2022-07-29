@@ -10,7 +10,7 @@ TMP   = .tmp
 BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
-CROSSTEST_VERSION := e982fb10e5f9c3e74061b50716317003e3e736b3
+CROSSTEST_VERSION := 4f4e96d8fea3ed9473b90a964a5ba429e7ea5649
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
 LICENSE_HEADER_IGNORES := .tmp\/ node_module\/ packages\/connect-web-bench\/src\/gen\/ packages\/connect-web\/dist\/ scripts\/ packages\/connect-web-test\/src\/gen
 NODE18_VERSION ?= v18.2.0
@@ -142,7 +142,6 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 release: all ## Release @bufbuild/connect-web
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
 	npm publish \
-		--access restricted \
 		--workspace packages/connect-web \
 		--workspace packages/protoc-gen-connect-web
 

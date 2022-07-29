@@ -22,7 +22,7 @@ import {
   MessageType,
   proto3,
   protoBase64,
-  TypeRegistry
+  TypeRegistry,
 } from "@bufbuild/protobuf";
 
 /**
@@ -167,7 +167,13 @@ export function connectErrorFromJson(
   const error = new ConnectError(message ?? "", code, undefined, metadata);
   if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
     for (const detail of jsonValue.details) {
-      if (detail === null || typeof detail != "object" || Array.isArray(detail) || typeof detail.type != "string" || typeof detail.value != "string") {
+      if (
+        detail === null ||
+        typeof detail != "object" ||
+        Array.isArray(detail) ||
+        typeof detail.type != "string" ||
+        typeof detail.value != "string"
+      ) {
         throw newParseError(detail, `.details`);
       }
       try {
