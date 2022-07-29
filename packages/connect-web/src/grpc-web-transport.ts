@@ -408,7 +408,7 @@ function extractDetailsError(header: Headers): ConnectError | undefined {
       undefined,
       header
     );
-    error.rawDetails.push(...status.details);
+    error.details.push(...status.details);
     return error;
   } catch (e) {
     const ce = connectErrorFromReason(e, Code.Internal);

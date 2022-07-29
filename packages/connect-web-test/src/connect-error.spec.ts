@@ -20,7 +20,7 @@ import {
   connectErrorFromJson,
   connectErrorFromReason,
 } from "@bufbuild/connect-web";
-import { Any, TypeRegistry, Struct, BoolValue } from "@bufbuild/protobuf";
+import { Any, TypeRegistry, Struct, BoolValue, protoBase64 } from "@bufbuild/protobuf";
 import { ErrorDetail } from "./gen/grpc/testing/messages_pb.js";
 
 describe("ConnectError", () => {
@@ -58,35 +58,9 @@ describe("connectErrorDetails()", () => {
       expect(details.length).toBe(0);
     });
   });
-  describe("on error with JSON details", () => {
-    const err = new ConnectError("foo");
-    err.rawDetails.push({
-      reason: "soirée 🎉",
-      domain: "example.com",
-      "@type": "type.googleapis.com/grpc.testing.ErrorDetail",
-    });
-    it("with empty TypeRegistry produces no details", () => {
-      const details = connectErrorDetails(err, TypeRegistry.from());
-      expect(details.length).toBe(0);
-    });
-    it("with non-empty TypeRegistry produces detail", () => {
-      const details = connectErrorDetails(err, TypeRegistry.from(ErrorDetail));
-      expect(details.length).toBe(1);
-    });
-    it("with MessageType produces detail", () => {
-      const details = connectErrorDetails(err, ErrorDetail);
-      expect(details.length).toBe(1);
-      if (details[0] instanceof ErrorDetail) {
-        expect(details[0].domain).toBe("example.com");
-        expect(details[0].reason).toBe("soirée 🎉");
-      } else {
-        fail();
-      }
-    });
-  });
   describe("on error with Any details", () => {
     const err = new ConnectError("foo");
-    err.rawDetails.push(
+    err.details.push(
       Any.pack(
         new ErrorDetail({
           reason: "soirée 🎉",
@@ -154,7 +128,7 @@ describe("connectErrorFromJson()", () => {
     });
     expect(error.code).toBe(Code.PermissionDenied);
     expect(error.rawMessage).toBe("Not permitted");
-    expect(error.rawDetails.length).toBe(0);
+    expect(error.details.length).toBe(0);
   });
   it("does not require message", () => {
     const error = connectErrorFromJson({
@@ -190,7 +164,7 @@ describe("connectErrorFromJson()", () => {
       })
     ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
   });
-  describe("with details", () => {
+  it("ignores old protocol version details", () => {
     const json = {
       code: "permission_denied",
       message: "Not permitted",
@@ -202,9 +176,34 @@ describe("connectErrorFromJson()", () => {
         },
       ],
     };
+    const error = connectErrorFromJson(json);
+    expect(error.details.length).toBe(0);
+  });
+  describe("with details", () => {
+    const json = {
+      code: "permission_denied",
+      message: "Not permitted",
+      details: [
+        {
+          type: "grpc.testing.ErrorDetail",
+          value: protoBase64.enc(new ErrorDetail({
+            reason: "soirée 🎉",
+            domain: "example.com",
+          }).toBinary()),
+        },
+      ],
+    };
     it("adds to raw detail", () => {
       const error = connectErrorFromJson(json);
-      expect(error.rawDetails.length).toBe(1);
+      expect(error.details.length).toBe(1);
+      expect(error.details[0]?.typeUrl).toBe("type.googleapis.com/grpc.testing.ErrorDetail");
+    });
+    it("works with connectErrorDetails()", () => {
+      const error = connectErrorFromJson(json);
+      const details = connectErrorDetails(error, ErrorDetail);
+      expect(details.length).toBe(1);
+      expect(details[0]?.reason).toBe("soirée 🎉");
+      expect(details[0]?.domain).toBe("example.com");
     });
   });
 });
