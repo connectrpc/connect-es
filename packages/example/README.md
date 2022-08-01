@@ -3,7 +3,9 @@
 This directly contains a simple, framework-independent example for Connect-Web.
 It is a web interface for [ELIZA](https://en.wikipedia.org/wiki/ELIZA), a very
 simple natural language processor built in the 1960s to represent a 
-psychotherapist. The ELIZA service is provided by us at [demo.connect.build](https://demo.connect.build). 
+psychotherapist. The ELIZA service is provided by us at [demo.connect.build](https://demo.connect.build).
+You can find the protocol buffer schema [on the BSR](https://buf.build/bufbuild/eliza/tree/main:buf/connect/demo/eliza/v1/eliza.proto).
+
 
 ## Run the example
 
