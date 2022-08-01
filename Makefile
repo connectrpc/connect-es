@@ -50,7 +50,13 @@ $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tscon
 	@touch $(@)
 
 $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell find packages/connect-web-test/src -name '*.ts') tsconfig.base.json packages/connect-web-test/tsconfig.json
-	cd packages/connect-web-test && npm run clean && npm run build
+	npm run -w packages/connect-web-test clean
+	npm run -w packages/connect-web-test build
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(BUILD)/example: $(GEN)/example
+	npm run -w packages/example lint
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -68,6 +74,12 @@ $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-co
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
+	rm -rf packages/example/src/*_pb.ts packages/example/src/*_connectweb.ts
+	cd packages/example && buf generate
+	@mkdir -p $(@D)
+	@touch $(@)
+
 
 .PHONY: help
 help: ## Describe useful make targets
@@ -82,7 +94,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web ## Build
+build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
 
 .PHONY: test
 test: testnode testbrowser ## Run all tests

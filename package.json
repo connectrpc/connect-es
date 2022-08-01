@@ -4,7 +4,8 @@
     "./packages/connect-web",
     "./packages/connect-web-test",
     "./packages/connect-web-bench",
-    "./packages/protoc-gen-connect-web"
+    "./packages/protoc-gen-connect-web",
+    "./packages/example"
   ],
   "type": "module",
   "engineStrict": true,

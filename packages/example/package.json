@@ -1,0 +1,20 @@
+{
+  "name": "@bufbuild/example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "buf generate",
+    "start": "esbuild src/main.ts --servedir=www --outdir=www/js --bundle",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bufbuild/connect-web": "^0.1.0",
+    "@bufbuild/protobuf": "^0.0.10"
+  },
+  "devDependencies": {
+    "@bufbuild/protoc-gen-connect-web": "^0.1.0",
+    "@bufbuild/protoc-gen-es": "^0.0.10",
+    "esbuild": "^0.14.51",
+    "typescript": "^4.7.4"
+  }
+}
