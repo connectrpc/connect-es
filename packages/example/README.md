@@ -27,9 +27,12 @@ contains the plugin configuration. Of course you can use `protoc` as well:
 
 ```bash
 protoc -I . eliza.proto \
-  --plugin es=./node_modules/.bin/protoc-gen-es \
+  --plugin=protoc-gen-es=../../node_modules/.bin/protoc-gen-es \
   --es_out src \
-  --es_opt target=ts
+  --es_opt target=ts \
+  --plugin=protoc-gen-connect-web=../../node_modules/.bin/protoc-gen-connect-web \
+  --connect-web_out src \
+  --connect-web_opt target=ts
 ```
 
 ## More examples
