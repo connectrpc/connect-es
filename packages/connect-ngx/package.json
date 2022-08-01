@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "clean": "rm -rf ./dist ./coverage ./.angular",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -13,8 +14,8 @@
     "@angular/common": "8 - 14",
     "@angular/core": "8 - 14",
     "rxjs": "6 - 7",
-    "@bufbuild/protobuf": "^0.0.7",
-    "@bufbuild/connect-web": "^0.0.9"
+    "@bufbuild/protobuf": "0.0.10",
+    "@bufbuild/connect-web": "0.1.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^14.0.4",

@@ -16,14 +16,14 @@ import {
   createPromiseClient,
   createConnectTransport,
 } from "@bufbuild/connect-web";
-import { PluginService } from "./gen/connectweb/buf/alpha/registry/v1alpha1/plugin_connectweb.js";
+import { ElizaService } from "./gen/connectweb/buf/connect/demo/eliza/v1/eliza_connectweb.js";
 
-const pluginClient = createPromiseClient(
-  PluginService,
+const client = createPromiseClient(
+  ElizaService,
   createConnectTransport({
-    baseUrl: "https://localhost",
+    baseUrl: "https://demo.connect.build",
   })
 );
 
 // eslint-disable-next-line no-console -- log statement makes sure the variable is in use
-console.log(pluginClient);
+console.log(client);

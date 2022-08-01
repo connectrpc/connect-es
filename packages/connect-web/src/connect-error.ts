@@ -14,14 +14,16 @@
 
 import { Code, codeFromString, codeToString } from "./code.js";
 import {
+  Any,
   AnyMessage,
   IMessageTypeRegistry,
   JsonValue,
   Message,
   MessageType,
   proto3,
+  protoBase64,
+  TypeRegistry,
 } from "@bufbuild/protobuf";
-import { Any, TypeRegistry } from "@bufbuild/protobuf";
 
 /**
  * ConnectError captures three pieces of information: a Code, an error
@@ -51,7 +53,7 @@ export class ConnectError extends Error {
    * When an error is parsed from the wire, error details are stored in
    * this property. They can be retrieved using connectErrorDetails().
    */
-  readonly rawDetails: RawErrorDetail[];
+  readonly details: Pick<Any, "typeUrl" | "value">[];
 
   /**
    * The error message, but without a status code in front.
@@ -75,7 +77,7 @@ export class ConnectError extends Error {
     this.rawMessage = message;
     this.code = code;
     this.metadata = new Headers(metadata);
-    this.rawDetails = [];
+    this.details = [];
   }
 }
 
@@ -110,15 +112,16 @@ export function connectErrorDetails(
       ? TypeRegistry.from(typeOrRegistry, ...moreTypes)
       : typeOrRegistry;
   const details: AnyMessage[] = [];
-  for (const raw of error.rawDetails) {
+  for (const data of error.details) {
     try {
-      const any = "@type" in raw ? Any.fromJson(raw, { typeRegistry }) : raw;
+      const any = new Any(data);
       const name = any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1);
       const type = typeRegistry.findMessage(name);
       if (type) {
         const message = new type();
-        any.unpackTo(message);
-        details.push(message);
+        if (any.unpackTo(message)) {
+          details.push(message);
+        }
       }
     } catch (_) {
       //
@@ -126,18 +129,6 @@ export function connectErrorDetails(
   }
   return details;
 }
-
-/**
- * A raw error detail is a google.protobuf.Any, or it's JSON representation.
- * This type is used for error details that we could not unwrap because
- * we are missing type information.
- */
-export type RawErrorDetail =
-  | Any
-  | {
-      "@type": string;
-      [key: string]: JsonValue;
-    };
 
 /**
  * Create an error message, prefixing the given code.
@@ -175,7 +166,25 @@ export function connectErrorFromJson(
   }
   const error = new ConnectError(message ?? "", code, undefined, metadata);
   if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
-    error.rawDetails.push(...(jsonValue.details as RawErrorDetail[]));
+    for (const detail of jsonValue.details) {
+      if (
+        detail === null ||
+        typeof detail != "object" ||
+        Array.isArray(detail) ||
+        typeof detail.type != "string" ||
+        typeof detail.value != "string"
+      ) {
+        throw newParseError(detail, `.details`);
+      }
+      try {
+        error.details.push({
+          typeUrl: "type.googleapis.com/" + detail.type,
+          value: protoBase64.dec(detail.value),
+        });
+      } catch (e) {
+        throw newParseError(e, `.details`, false);
+      }
+    }
   }
   return error;
 }

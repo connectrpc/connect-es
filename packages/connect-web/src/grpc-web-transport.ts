@@ -34,6 +34,7 @@ import {
   UnaryRequest,
 } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
+import { assertFetchApi } from "./assert-fetch-api.js";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -85,6 +86,7 @@ export interface GrpcWebTransportOptions {
 export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
 ): Transport {
+  assertFetchApi();
   const transportOptions = options;
   return {
     async unary<
@@ -104,7 +106,9 @@ export function createGrpcWebTransport(
             stream: false,
             service,
             method,
-            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
+              method.name
+            }`,
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
@@ -203,7 +207,9 @@ export function createGrpcWebTransport(
             stream: false,
             service,
             method,
-            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
+              method.name
+            }`,
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
@@ -402,7 +408,7 @@ function extractDetailsError(header: Headers): ConnectError | undefined {
       undefined,
       header
     );
-    error.rawDetails.push(...status.details);
+    error.details.push(...status.details);
     return error;
   } catch (e) {
     const ce = connectErrorFromReason(e, Code.Internal);

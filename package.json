@@ -5,7 +5,7 @@
     "./packages/connect-web-test",
     "./packages/connect-web-bench",
     "./packages/connect-ngx",
-    "./packages/protoc-gen-connect-web*"
+    "./packages/protoc-gen-connect-web"
   ],
   "type": "module",
   "engineStrict": true,
@@ -14,9 +14,9 @@
     "npm": ">=8"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.30.4",
-    "@typescript-eslint/parser": "^5.30.4",
-    "eslint": "^8.19.0",
+    "@typescript-eslint/eslint-plugin": "^5.30.7",
+    "@typescript-eslint/parser": "^5.30.7",
+    "eslint": "^8.20.0",
     "eslint-plugin-node": "^11.1.0",
     "prettier": "^2.7.1"
   }

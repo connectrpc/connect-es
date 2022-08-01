@@ -74,6 +74,9 @@ export function createCallbackClient<T extends ServiceType>(
   }) as CallbackClient<T>;
 }
 
+/**
+ * UnaryFn is the method signature for a unary method of a CallbackClient.
+ */
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   callback: (error: ConnectError | undefined, response: O) => void,
@@ -116,6 +119,10 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   };
 }
 
+/**
+ * ServerStreamingFn is the method signature for a server-streaming method of
+ * a CallbackClient.
+ */
 type ServerStreamingFn<I extends Message, O extends Message> = (
   request: PartialMessage<I>,
   onResponse: (response: O) => void,
@@ -152,10 +159,12 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
     run().catch((reason) => {
       const err = connectErrorFromReason(reason, Code.Internal);
       if (err.code === Code.Canceled && abort.signal.aborted) {
-        // As documented, discard Canceled errors if canceled by the user.
-        return;
+        // As documented, discard Canceled errors if canceled by the user,
+        // but do invoke the close-callback.
+        onClose(undefined);
+      } else {
+        onClose(err);
       }
-      onClose(err);
     });
     return () => abort.abort();
   };
@@ -167,6 +176,9 @@ function wrapSignal(
 ): CallOptions {
   if (options?.signal) {
     options.signal.addEventListener("abort", () => abort.abort());
+    if (options.signal.aborted) {
+      abort.abort();
+    }
   }
   return { ...options, signal: abort.signal };
 }

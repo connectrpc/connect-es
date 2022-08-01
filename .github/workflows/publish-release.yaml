@@ -26,19 +26,20 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.18
-      # The follow step is custom per repo
-      - name: publish
-        id: publish
-        run: |
-          NEXT_VERSION=$(echo "${{ github.event.pull_request.title }}" | awk '{print $NF}')
-          make set-version SET_VERSION=$NEXT_VERSION
-          echo "::set-output name=nextVersion::$NEXT_VERSION"
-      - name: commit changes
+      - name: merge pr
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ github.event.pull_request.number }},
+              merge_method: "squash"
+            })
+      - name: create tag
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add .
-          git commit -m "Release ${{ steps.publish.outputs.nextVersion }}"
           git tag -a "${{ steps.publish.outputs.nextVersion }}" -m "Release ${{ steps.publish.outputs.nextVersion }}"
           git push
           git push --tags
@@ -50,14 +51,17 @@ jobs:
           make release
       - name: create release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v6
         with:
-          tag_name: ${{ steps.publish.outputs.nextVersion }}
-          release_name: ${{ steps.publish.outputs.nextVersion }}
-          body: ${{ github.event.pull_request.body }}
-          prerelease: true
+          script: |
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: "${{ steps.publish.outputs.nextVersion }}",
+              tag_name: "${{ steps.publish.outputs.nextVersion }}",
+              body: "${{ github.event.pull_request.body }}",
+              prerelease: true
+            })
       - name: close PR
         run: |
           gh pr close ${{ github.event.pull_request.number }} -d -c "Released!"

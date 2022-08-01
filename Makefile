@@ -10,7 +10,7 @@ TMP   = .tmp
 BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
-CROSSTEST_VERSION := e982fb10e5f9c3e74061b50716317003e3e736b3
+CROSSTEST_VERSION := 4f4e96d8fea3ed9473b90a964a5ba429e7ea5649
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
 LICENSE_HEADER_IGNORES := .tmp\/ node_module\/ packages\/connect-web-bench\/src\/gen\/ packages\/connect-web\/dist\/ scripts\/ packages\/connect-web-test\/src\/gen
 NODE18_VERSION ?= v18.2.0
@@ -18,21 +18,17 @@ NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
 
 node_modules: package-lock.json
-	npm ci --force
+	npm ci
 
 node_modules/.bin/protoc-gen-es: node_modules
 
-$(BIN)/licenseheader: Makefile
+$(BIN)/license-header: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@v1.1.0
 
 $(BIN)/git-ls-files-unstaged: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/git/cmd/git-ls-files-unstaged@v1.1.0
-
-$(BIN)/golangci-lint: Makefile
-	@mkdir -p $(@D)
-	GOBIN=$(abspath $(BIN)) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.0
 
 $(BIN)/node18: Makefile
 	@mkdir -p $(@D)
@@ -41,8 +37,11 @@ $(BIN)/node18: Makefile
 	rm -r $(TMP)/node-$(NODE18_VERSION)-$(NODE18_OS)-$(NODE18_ARCH)
 	@touch $(@)
 
-$(BIN)/protoc-gen-connect-web: go.mod cmd/protoc-gen-connect-web/main.go
-	go build -o $(@) ./cmd/protoc-gen-connect-web
+$(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc-gen-connect-web/tsconfig.json $(shell find packages/protoc-gen-connect-web/src -name '*.ts')
+	npm run -w packages/protoc-gen-connect-web clean
+	npm run -w packages/protoc-gen-connect-web build
+	@mkdir -p $(@D)
+	@touch $(@)
 
 $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
@@ -58,18 +57,16 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell 
 $(BUILD)/connect-ngx: $(BUILD)/connect-web
 	cd packages/connect-ngx && npm run build
 
-$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-connect-web
+$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
 	rm -rf packages/connect-web-test/src/gen/*
-	PATH=$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH) \
-		buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto \
+	buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto \
 		--template packages/connect-web-test/buf.gen.yaml --output packages/connect-web-test
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BIN)/protoc-gen-connect-web
+$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
 	rm -rf packages/connect-web-bench/src/gen/*
-	PATH=$(abspath node_modules/.bin):$(abspath $(BIN)):$(PATH) \
-		buf generate buf.build/bufbuild/buf:4505cba5e5a94a42af02ebc7ac3a0a04 \
+	buf generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568 \
 		--template packages/connect-web-bench/buf.gen.yaml --output packages/connect-web-bench
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -88,19 +85,15 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect-web $(BIN)/protoc-gen-connect-web ## Build
+build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web ## Build
 
 .PHONY: test
-test: testgo testnode testbrowser testngx ## Run all tests
-
-.PHONY: testgo
-testgo:
-	go test ./cmd/...
+test: testnode testbrowser testngx ## Run all tests
 
 .PHONY: testnode
 testnode: $(BIN)/node18 $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
-	cd packages/connect-web-test && PATH=$(abspath $(BIN)):$(PATH) NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
 
 .PHONY: testbrowser
@@ -120,13 +113,11 @@ testngx: $(BUILD)/connect-ngx
 	cd packages/connect-ngx; npm run test -- --browsers ChromeHeadless --watch false
 
 .PHONY: lint
-lint: $(BIN)/golangci-lint node_modules $(BUILD)/connect-web $(BUILD)/connect-ngx $(GEN)/connect-web-bench ## Lint all files
-	$(BIN)/golangci-lint run
+lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
 	npx eslint --max-warnings 0 .
 
 .PHONY: format
-format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/licenseheader ## Format all files, adding license headers
-	go fmt ./cmd/...
+format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/license-header ## Format all files, adding license headers
 	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --loglevel error
 	$(BIN)/git-ls-files-unstaged | \
 		grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))) | \
@@ -141,12 +132,10 @@ bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark c
 
 .PHONY: setversion
 setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
-	node make/scripts/update-go-version-file.js cmd/protoc-gen-connect-web/main.go $(SET_VERSION)
-	node make/scripts/set-workspace-version.js $(SET_VERSION)
-	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
+	node scripts/set-workspace-version.js $(SET_VERSION)
 	rm package-lock.json
 	rm -rf node_modules
-	npm i -f
+	npm i
 	$(MAKE) all
 
 # Release @bufbuild/connect-web.
@@ -159,24 +148,9 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 .PHONY: release
 release: all ## Release @bufbuild/connect-web
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
-	node make/scripts/go-build-npm.js packages/protoc-gen-connect-web ./cmd/protoc-gen-connect-web
 	npm publish \
-		--access restricted \
 		--workspace packages/connect-web \
-		--workspace packages/protoc-gen-connect-web \
-		--workspace packages/protoc-gen-connect-web-darwin-64 \
-		--workspace packages/protoc-gen-connect-web-darwin-arm64 \
-		--workspace packages/protoc-gen-connect-web-freebsd-64 \
-		--workspace packages/protoc-gen-connect-web-freebsd-arm64 \
-		--workspace packages/protoc-gen-connect-web-linux-32 \
-		--workspace packages/protoc-gen-connect-web-linux-64 \
-		--workspace packages/protoc-gen-connect-web-linux-arm \
-		--workspace packages/protoc-gen-connect-web-linux-arm64 \
-		--workspace packages/protoc-gen-connect-web-netbsd-64 \
-		--workspace packages/protoc-gen-connect-web-openbsd-64 \
-		--workspace packages/protoc-gen-connect-web-windows-32 \
-		--workspace packages/protoc-gen-connect-web-windows-64 \
-		--workspace packages/protoc-gen-connect-web-windows-arm64
+		--workspace packages/protoc-gen-connect-web
 
 .PHONY: crosstestserverstop
 crosstestserverstop:

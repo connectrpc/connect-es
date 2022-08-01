@@ -42,6 +42,7 @@ import type {
 import { runServerStream, runUnary } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { mergeHeaders } from "./http-headers.js";
+import { assertFetchApi } from "./assert-fetch-api.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -98,6 +99,7 @@ export interface ConnectTransportOptions {
 export function createConnectTransport(
   options: ConnectTransportOptions
 ): Transport {
+  assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
@@ -117,7 +119,9 @@ export function createConnectTransport(
             stream: false,
             service,
             method,
-            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
+              method.name
+            }`,
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
@@ -206,7 +210,9 @@ export function createConnectTransport(
             stream: false,
             service,
             method,
-            url: `${options.baseUrl}/${service.typeName}/${method.name}`,
+            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
+              method.name
+            }`,
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
@@ -460,22 +466,9 @@ function endStreamFromJson(data: Uint8Array): EndStreamResponse {
       }
     }
   }
-  let error: ConnectError | undefined;
-  if ("error" in jsonValue) {
-    if (
-      typeof jsonValue.error != "object" ||
-      jsonValue.error == null ||
-      Array.isArray(jsonValue.error)
-    ) {
-      throw newParseError(jsonValue, ".error");
-    }
-    if (Object.keys(jsonValue.error).length > 0) {
-      try {
-        error = connectErrorFromJson(jsonValue.error, metadata);
-      } catch (e) {
-        throw newParseError(e, ".error", false);
-      }
-    }
-  }
+  const error =
+    "error" in jsonValue
+      ? connectErrorFromJson(jsonValue.error, metadata)
+      : undefined;
   return { metadata, error };
 }

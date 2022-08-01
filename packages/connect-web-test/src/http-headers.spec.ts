@@ -22,15 +22,18 @@ const M = proto3.makeMessageType("handwritten.M", [
   { no: 3, name: "c", kind: "scalar", T: ScalarType.BOOL }
 ]);
 
-describe("encode / decode binary header", function () {
-  it("handles Uint8Array", () => {
+describe("encodeBinaryHeader()", function () {
+  it("accepts unicode string", () => {
+    const input = "👋";
+    const encoded = encodeBinaryHeader(input);
+    expect(encoded).toEqual("8J+Riw==");
+  });
+  it("accepts Uint8Array", () => {
     const input = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
     const encoded = encodeBinaryHeader(input);
     expect(encoded).toEqual("3q2+7w==");
-    const decoded = decodeBinaryHeader(encoded);
-    expect(decoded).toEqual(input);
   });
-  it("handles Message", () => {
+  it("accepts message", () => {
     const input = new M({
       a: "abc",
       b: 456,
@@ -38,12 +41,25 @@ describe("encode / decode binary header", function () {
     });
     const encoded = encodeBinaryHeader(input);
     expect(encoded).toEqual("CgNhYmMVyAEAABgB");
-    const decoded = decodeBinaryHeader(encoded, M);
-    expect(decoded).toEqual(input);
   });
 });
 
-describe("decodeBinaryHeader()", () => {
+describe("decodeBinaryHeader()", function () {
+  it("decodes Uint8Array", () => {
+    const decoded = decodeBinaryHeader("3q2+7w==");
+    expect(decoded).toBeInstanceOf(Uint8Array);
+    expect(decoded).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
+  });
+  it("decodes message", () => {
+    const decoded = decodeBinaryHeader("CgNhYmMVyAEAABgB", M);
+    expect(decoded).toEqual(
+      new M({
+        a: "abc",
+        b: 456,
+        c: true,
+      })
+    );
+  });
   it("throws error on invalid base64 input", () => {
     const encoded = "not-base-64-😞";
     expect(() => decodeBinaryHeader(encoded)).toThrowError(
