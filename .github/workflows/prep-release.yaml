@@ -62,7 +62,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.18
-      - uses: bufbuild/buf-setup-action@v1.6.0
+      - uses: bufbuild/buf-setup-action@v1.7.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: prepare version
