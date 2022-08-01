@@ -85,7 +85,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web ## Build
+build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web $(BUILD)/connect-ngx ## Build
 
 .PHONY: test
 test: testnode testbrowser testngx ## Run all tests
