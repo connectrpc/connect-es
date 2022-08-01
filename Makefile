@@ -55,7 +55,9 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell 
 	@touch $(@)
 
 $(BUILD)/connect-ngx: $(BUILD)/connect-web
-	cd packages/connect-ngx && npm run build
+	cd packages/connect-ngx && npm run clean && npm run build
+	@mkdir -p $(@D)
+	@touch $(@)
 
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
 	rm -rf packages/connect-web-test/src/gen/*

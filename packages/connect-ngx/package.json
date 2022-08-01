@@ -2,8 +2,6 @@
   "name": "@bufbuild/connect-ngx",
   "version": "0.0.1",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
     "clean": "rm -rf ./dist ./coverage ./.angular",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
@@ -19,7 +17,7 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^14.0.4",
-    "@angular/cli": "~14.0.4",
+    "@angular/cli": "~14.0.7",
     "@angular/compiler-cli": "^14.0.0",
     "@types/jasmine": "~4.0.0",
     "jasmine-core": "~4.1.0",
