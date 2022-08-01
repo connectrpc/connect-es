@@ -25,7 +25,9 @@ npm run start
 
 If you want to use [`buf`](https://github.com/bufbuild/buf) to generate the code, 
 simply run `buf generate` in this directory. [`buf.gen.yaml`](./buf.gen.yaml) 
-contains the plugin configuration. Of course you can use `protoc` as well:
+contains the plugin configuration. 
+
+Of course, you can use `protoc` as well:
 
 ```bash
 protoc -I . eliza.proto \
