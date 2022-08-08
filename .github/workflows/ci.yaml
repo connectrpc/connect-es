@@ -2,6 +2,8 @@ name: ci
 on:
   push:
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   ci:
     runs-on: ubuntu-20.04

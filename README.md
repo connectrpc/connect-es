@@ -68,6 +68,7 @@ or on [GitHub discussions](https://github.com/bufbuild/connect-web/discussions).
   Go implementation of gRPC, gRPC-Web, and Connect
 * [connect-demo](https://github.com/bufbuild/connect-demo):
   demonstration service powering demo.connect.build
+* [Buf Studio](https://studio.buf.build/): web UI for ad-hoc RPCs
 * [connect-crosstest](https://github.com/bufbuild/connect-crosstest):
   gRPC-Web and Connect interoperability tests
 

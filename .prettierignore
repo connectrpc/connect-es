@@ -1,5 +1,7 @@
 node_modules
 /packages/protobuf/src/google
+/packages/example/src/*_connectweb.ts
+/packages/example/src/*_pb.ts
 /packages/*/bin
 /packages/*/dist
 /packages/*/src/gen
