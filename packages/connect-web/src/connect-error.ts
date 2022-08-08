@@ -16,13 +16,13 @@ import { Code, codeFromString, codeToString } from "./code.js";
 import {
   Any,
   AnyMessage,
+  createRegistry,
   IMessageTypeRegistry,
   JsonValue,
   Message,
   MessageType,
   proto3,
   protoBase64,
-  TypeRegistry,
 } from "@bufbuild/protobuf";
 
 /**
@@ -109,7 +109,7 @@ export function connectErrorDetails(
 ): AnyMessage[] {
   const typeRegistry =
     "typeName" in typeOrRegistry
-      ? TypeRegistry.from(typeOrRegistry, ...moreTypes)
+      ? createRegistry(typeOrRegistry, ...moreTypes)
       : typeOrRegistry;
   const details: AnyMessage[] = [];
   for (const data of error.details) {

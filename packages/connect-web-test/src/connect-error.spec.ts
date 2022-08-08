@@ -22,10 +22,10 @@ import {
 } from "@bufbuild/connect-web";
 import {
   Any,
-  TypeRegistry,
   Struct,
   BoolValue,
   protoBase64,
+  createRegistry,
 } from "@bufbuild/protobuf";
 import { ErrorDetail } from "./gen/grpc/testing/messages_pb.js";
 
@@ -52,11 +52,11 @@ describe("connectErrorDetails()", () => {
   describe("on error without details", () => {
     const err = new ConnectError("foo");
     it("with empty TypeRegistry produces no details", () => {
-      const details = connectErrorDetails(err, TypeRegistry.from());
+      const details = connectErrorDetails(err, createRegistry());
       expect(details.length).toBe(0);
     });
     it("with non-empty TypeRegistry produces no details", () => {
-      const details = connectErrorDetails(err, TypeRegistry.from(ErrorDetail));
+      const details = connectErrorDetails(err, createRegistry(ErrorDetail));
       expect(details.length).toBe(0);
     });
     it("with MessageType produces no details", () => {
@@ -75,11 +75,11 @@ describe("connectErrorDetails()", () => {
       )
     );
     it("with empty TypeRegistry produces no details", () => {
-      const details = connectErrorDetails(err, TypeRegistry.from());
+      const details = connectErrorDetails(err, createRegistry());
       expect(details.length).toBe(0);
     });
     it("with non-empty TypeRegistry produces detail", () => {
-      const details = connectErrorDetails(err, TypeRegistry.from(ErrorDetail));
+      const details = connectErrorDetails(err, createRegistry(ErrorDetail));
       expect(details.length).toBe(1);
     });
     it("with MessageType produces detail", () => {
