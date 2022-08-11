@@ -76,7 +76,7 @@ export class ConnectError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
     this.rawMessage = message;
     this.code = code;
-    this.metadata = new Headers(metadata);
+    this.metadata = new Headers(metadata ?? {});
     this.details = [];
   }
 }

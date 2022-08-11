@@ -317,7 +317,7 @@ function createGrpcWebRequestHeaders(
   headers: HeadersInit | undefined,
   timeoutMs: number | undefined
 ): Headers {
-  const result = new Headers(headers);
+  const result = new Headers(headers ?? {});
   // We provide the most explicit description for our content type.
   // Note that we do not support the grpc-web-text format.
   // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2
