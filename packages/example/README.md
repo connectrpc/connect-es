@@ -9,12 +9,13 @@ You can find the protocol buffer schema [on the BSR](https://buf.build/bufbuild/
 
 ## Run the example
 
-To run this example in your browser, [download the source](https://github.com/bufbuild/connect-web/archive/refs/heads/main.zip),
-then run the following commands:
+To run this example in your browser, simply run the following commands:
 
 ```shell
-# in the project root:
-cd packages/example
+curl -L https://github.com/bufbuild/connect-web/archive/refs/heads/main.zip > connect-web-main.zip
+unzip connect-web-main.zip 'connect-web-main/packages/example/*'
+
+cd connect-web-main/packages/example
 npm install
 npm run start
 ```
@@ -38,6 +39,10 @@ protoc -I . eliza.proto \
   --connect-web_out src \
   --connect-web_opt target=ts
 ```
+
+If you prefer JavaScript output, simply remove the two lines with `target=ts`
+([explanation](https://github.com/bufbuild/connect-web/tree/main/packages/protoc-gen-connect-web#plugin-options)).
+
 
 ## More examples
 
