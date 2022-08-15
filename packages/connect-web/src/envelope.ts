@@ -62,14 +62,14 @@ export function createEnvelopeReadableStream(
           }
           header = { flags: buffer[0], length };
         }
+        if (header !== undefined && buffer.byteLength >= header.length + 5) {
+          break;
+        }
         const result = await reader.read();
         if (result.done) {
           break;
         }
         append(result.value);
-        if (header !== undefined && buffer.byteLength >= header.length + 5) {
-          break;
-        }
       }
       if (header === undefined) {
         if (buffer.byteLength == 0) {

@@ -70,6 +70,46 @@ describe("createEnvelopeReadableStream()", () => {
     const r = await reader.read();
     expect(r.done).toBeTrue();
   });
+  it("reads multiple messages arriving at once", async () => {
+    const input = [
+      {
+        data: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+        flags: 0b00000000,
+      },
+      {
+        data: new Uint8Array([0xde, 0xad, 0xbe, 0xe0]),
+        flags: 0b00000000,
+      },
+      {
+        data: new Uint8Array([0xde, 0xad, 0xbe, 0xe1]),
+        flags: 0b10000000,
+      },
+    ];
+    let sourceStreamPulls = 0;
+    const sourceStream = new ReadableStream<Uint8Array>({
+      pull(controller): Promise<void> {
+        if (sourceStreamPulls > 0) {
+          // This stream enqueues all envelopes at once, and our ReadableStream
+          // for envelopes should return them all with subsequent calls to read()
+          // without pulling from this underlying stream again.
+          throw new Error(
+            "expected only a single pull on the underlying stream"
+          );
+        }
+        sourceStreamPulls++;
+        controller.enqueue(envelopeMessages(...input));
+        return Promise.resolve();
+      },
+    });
+    const reader = createEnvelopeReadableStream(sourceStream).getReader();
+    for (const want of input) {
+      const r = await reader.read();
+      expect(r.done).toBeFalse();
+      expect(r.value).toBeDefined();
+      expect(r.value?.flags).toBe(want.flags);
+      expect(r.value?.data).toEqual(want.data);
+    }
+  });
   it("reads an EndStreamResponse out of usual order", async () => {
     const input = [
       {
