@@ -112,7 +112,7 @@ export function createGrpcTransport(
           method,
           url: `/${service.typeName}/${method.name}`,
           init: {},
-          header: new Headers(header),
+          header: new Headers(header ?? {}),
           message:
             message instanceof method.I ? message : new method.I(message),
           signal: abort.signal,
@@ -190,7 +190,7 @@ export function createGrpcTransport(
             method,
             url: `/${service.typeName}/${method.name}`,
             init: {},
-            header: new Headers(header),
+            header: new Headers(header ?? {}),
             message:
               message instanceof method.I ? message : new method.I(message),
             signal: signal ?? new AbortController().signal,

@@ -56,7 +56,7 @@ describe("custom stub transport", () => {
       url: "fake",
       init: {},
       signal,
-      header: new Headers(header),
+      header: new Headers(header ?? {}),
       message: new method.I(message),
     };
   }

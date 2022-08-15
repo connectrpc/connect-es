@@ -363,7 +363,7 @@ function createConnectRequestHeaders(
   methodKind: MethodKind,
   useBinaryFormat: boolean
 ): Headers {
-  const result = new Headers(headers);
+  const result = new Headers(headers ?? {});
   let type = "application/";
   if (methodKind != MethodKind.Unary) {
     type += "connect+";
