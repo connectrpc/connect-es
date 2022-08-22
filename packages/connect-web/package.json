@@ -18,10 +18,9 @@
   "types": "./dist/types/index.d.ts",
   "exports": {
     "import": "./dist/esm/index.js",
-    "require": "./dist/cjs/index.js",
-    "default": "./dist/esm/index.js"
+    "require": "./dist/cjs/index.js"
   },
-  "main": "./dist/esm/index.js",
+  "main": "./dist/cjs/index.js",
   "peerDependencies": {
     "@bufbuild/protobuf": "0.0.10"
   },
