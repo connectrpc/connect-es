@@ -88,8 +88,8 @@ PATH=$PATH:$(pwd)/node_modules/.bin \
 Note that we are adding `node_modules/.bin` to the `$PATH`, so that the protocol 
 buffer compiler can find them. This happens automatically with npm scripts.
 
-Since yarn does not use a `node_modules` directory, you need to change the variable
-a bit:
+Since yarn v2 and above does not use a `node_modules` directory, you need to 
+change the variable a bit:
 
 ```bash
 PATH=$(dirname $(yarn bin protoc-gen-es)):$(dirname $(yarn bin protoc-gen-connect-web)):$PATH
