@@ -6,45 +6,93 @@ to think about serialization again.
 
 Learn more about Connect-Web at [github.com/bufbuild/connect-web](https://github.com/bufbuild/connect-web).
 
-`protoc-gen-connect-web` is a plugin for `protoc` and [`buf`](https://github.com/bufbuild/buf). 
-It generates services from your Protocol Buffer schema, and works in tandem with
-[@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es), 
-the code generator plugin for all Protocol Buffer base types.
-
-
 ## Installation
 
-### With npm
+`protoc-gen-connect-web` is a code generator plugin for Protocol Buffer compilers, 
+like [buf](https://github.com/bufbuild/buf) and [protoc](https://github.com/protocolbuffers/protobuf/releases).
+It generates clients from your Protocol Buffer schema, and works in tandem with
+[@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es),
+the code generator plugin for all Protocol Buffer base types. The code those two 
+plugins generate requires the runtime libraries [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web), 
+and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
+
+To install the plugins and their runtime libraries, run:
 
 ```shell
-npm install @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-web
+npm install --save-dev @bufbuild/protoc-gen-connect-web @bufbuild/protoc-gen-es
+npm install @bufbuild/connect-web @bufbuild/protobuf
 ```
 
-This will install the code generator plugins in `node_modules/.bin/protoc-gen-es`
-and `node_modules/.bin/protoc-gen-connect-web`.
-Note that npm does not add the executable to your `$PATH`. You can do so with:
+We use peer dependencies to ensure that code generator and runtime library are
+compatible with each other. Note that yarn and pnpm only emit a warning in this case.
 
-```shell
-PATH=$PATH:$(pwd)/node_modules/.bin
+
+## Generating code
+
+### With buf
+
+Add a new configuration file `buf.gen.yaml`:
+
+```yaml
+# buf.gen.yaml defines a local generation template.
+# For details, see https://docs.buf.build/configuration/v1/buf-gen-yaml
+version: v1
+plugins:
+  # This will invoke protoc-gen-es and write output to src/gen
+  - name: es
+    out: src/gen
+    opt: target=ts
+  # This will invoke protoc-gen-connect-web
+  - name: connect-web
+    out: src/gen
+    opt: target=ts
 ```
 
-### With yarn
+Add the following script to your `package.json`:
 
-```shell
-yarn add @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-web
+```json
+{
+  "name": "your-package",
+  "version": "1.0.0",
+  "scripts": {
+    "generate": "buf generate"
+  },
+  // ...
+}
 ```
 
-Note that yarn v2 does not use a `node_modules` directory anymore. To find the path
-where yarn stores the executable, run `yarn bin protoc-gen-connect-web` (it is "unplugged"
-automatically).
+To generate code for all protobuf files within your project, simply run:
 
-Yarn supports installing dependencies for several platforms at the same time, by
-adding the configuration field [`supportedArchitectures`](https://yarnpkg.com/configuration/yarnrc#supportedArchitectures)
-in your `.yarnrc.yml`.
+```bash
+npm run generate
+```
 
-You can always confirm successful installation with:
-```shell
-protoc-gen-es --version
+Note that `buf` can generate from various [inputs](https://docs.buf.build/reference/inputs), 
+not just local protobuf files. For example, `npm run generate buf.build/bufbuild/eliza` 
+generates code for the module [bufbuild/eliza](https://buf.build/bufbuild/eliza) on the Buf Schema
+Registry.
+
+
+### With protoc
+
+```bash
+PATH=$PATH:$(pwd)/node_modules/.bin \
+  protoc -I . \
+  --es_out src/gen \
+  --os_opt target=ts \
+  --connect-web_out src/gen \
+  --connect-web_opt target=ts \
+  a.proto b.proto c.proto
+```
+
+Note that we are adding `node_modules/.bin` to the `$PATH`, so that the protocol 
+buffer compiler can find them. This happens automatically with npm scripts.
+
+Since yarn does not use a `node_modules` directory, you need to change the variable
+a bit:
+
+```bash
+PATH=$(dirname $(yarn bin protoc-gen-es)):$(dirname $(yarn bin protoc-gen-connect-web)):$PATH
 ```
 
 
@@ -66,7 +114,6 @@ Multiple values can be given by separating them with `+`, for example
 By default, we generate JavaScript and TypeScript declaration files, which
 produces the smallest code size. If you prefer to generate TypeScript, use
 `target=ts`.
-
 
 
 ## Example generated code
