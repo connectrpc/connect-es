@@ -7,7 +7,8 @@
     "build": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
     "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json",
     "karma": "../../node_modules/.bin/karma start karma.conf.cjs",
-    "karma-serve": "../../node_modules/.bin/karma start karma.serve.conf.cjs"
+    "karma-serve": "../../node_modules/.bin/karma start karma.serve.conf.cjs",
+    "karma-browserstack": "../../node_modules/.bin/karma start karma.browserstack.conf.cjs"
   },
   "type": "module",
   "types": "./dist/types/index.d.ts",
@@ -20,8 +21,10 @@
     "@grpc/grpc-js": "^1.6.7",
     "@types/jasmine": "^4.0.3",
     "@types/long": "^4.0.2",
+    "esbuild": "^0.15.5",
     "jasmine": "^4.3.0",
     "karma": "^6.3.20",
+    "karma-browserstack-launcher": "^1.6.0",
     "karma-chrome-launcher": "^3.1.1",
     "karma-esbuild": "^2.2.4",
     "karma-jasmine": "^5.1.0"

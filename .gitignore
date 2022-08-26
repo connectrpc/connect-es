@@ -1,7 +1,4 @@
-node_modules
-/packages/protobuf-test/descriptorset.bin
-/packages/*/dist
-/testdata/gen/**/*.js
-/testdata/gen/**/*.ts
-/testdata/gen/**/**.d.ts
 /.tmp
+/packages/*/dist
+/packages/connect-web-test/local.log
+node_modules

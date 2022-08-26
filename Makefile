@@ -64,6 +64,8 @@ $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-con
 	rm -rf packages/connect-web-test/src/gen/*
 	buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto \
 		--template packages/connect-web-test/buf.gen.yaml --output packages/connect-web-test
+	buf generate buf.build/bufbuild/eliza \
+		--template packages/connect-web-test/buf.gen.yaml --output packages/connect-web-test
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -97,7 +99,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
 
 .PHONY: test
-test: testnode testbrowser ## Run all tests
+test: testnode testbrowser ## Run all tests, except browserstack
 
 .PHONY: testnode
 testnode: $(BIN)/node18 $(BUILD)/connect-web-test
@@ -116,6 +118,10 @@ testlocalbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
 	npm run -w packages/connect-web-test karma-serve
 	$(MAKE) crosstestserverstop
+
+.PHONY: testbrowserstack
+testbrowserstack: $(BUILD)/connect-web-test
+	npm run -w packages/connect-web-test karma-browserstack
 
 .PHONY: lint
 lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
