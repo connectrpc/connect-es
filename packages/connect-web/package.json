@@ -22,7 +22,7 @@
   },
   "main": "./dist/cjs/index.js",
   "peerDependencies": {
-    "@bufbuild/protobuf": "0.0.10"
+    "@bufbuild/protobuf": "0.1.0"
   },
   "devDependencies": {
     "typescript": "^4.7.4"
