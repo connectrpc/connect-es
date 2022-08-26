@@ -20,11 +20,11 @@
   },
   "preferUnplugged": true,
   "dependencies": {
-    "@bufbuild/protoplugin": "0.0.10"
+    "@bufbuild/protoplugin": "0.1.0"
   },
   "peerDependencies": {
     "@bufbuild/connect-web": "0.1.0",
-    "@bufbuild/protoc-gen-es": "0.0.10"
+    "@bufbuild/protoc-gen-es": "0.1.0"
   },
   "peerDependenciesMeta": {
     "@bufbuild/connect-web": {
