@@ -1,18 +1,44 @@
 # Tests
 
-This package provides test coverage for @bufbuild/connect-web with Jasmine.
+This package provides test coverage for @bufbuild/connect-web with the test
+framework [Jasmine](https://jasmine.github.io/) and the [Karma](https://karma-runner.github.io/) 
+test runner.
 
-The test suite is run twice, once in a headless browser, once in Node.js.
-Note running in Node.js requires the fetch API implementation added in v18.
-You can conveniently run the suite with `make test-node test-browser` from 
-the project root. Files with a `.nodeonly` extension are excluded from 
-browser runs.
+The test suite is run multiple times:
 
-To run the test suite in local browsers, you can start the karma server
-with `npm run karma-serve` and open the printed karma server URL in the 
-browser you want to test. Alternatively, run `make test-local-browser` from
-the project root. If you encounter a CORS error in your local browser, this
-is most likely because you need to explicitly trust the self-signed 
-certificate of the test server. Open one of the failed requests from the 
-browsers network inspector, and trust the self-signed certificate in the 
-browser UI.
+1. In a headless browser (Chrome).
+2. In Node.js (v18 for the fetch API).
+3. In multiple old browsers on Browserstack.
+
+### Running tests in Node.js
+
+Running in Node.js requires the fetch API implementation added in v18.
+You can conveniently run the suite with `make testnode` from the project 
+root. Files in the `nodeonly` directory are ignored in web browsers.
+
+### Running tests in a headless browser
+
+Run `make testbrowser` to run tests in a headless Chrome. This can be 
+combined with Node.js by running `make testbrowser testnode` to get 
+decent coverage quickly. 
+
+### Running tests in a local browser
+
+To run the test suite in local browsers, start the karma server with 
+`make testlocalbrowser` from the project root. If you encounter a CORS 
+error in your local browser, this is most likely because you need to 
+explicitly trust the self-signed certificate of the test server. 
+Open one of the failed requests from the browsers network inspector, 
+and trust the self-signed certificate in the browser UI.
+
+### Running tests in Browserstack
+
+We are running a few select tests on old browsers. Thanks to Browserstack
+for the sponsorship!
+
+To run these tests locally, you need to sign up on [browserstack.com](https://www.browserstack.com/)
+and provide your username and access key:
+
+```bash
+BROWSERSTACK_USERNAME=<username> BROWSERSTACK_ACCESS_KEY=<key> make testbrowserstack
+```
