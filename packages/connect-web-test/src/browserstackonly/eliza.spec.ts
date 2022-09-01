@@ -37,7 +37,6 @@ describe("eliza", () => {
   it(
     "introduce()",
     async () => {
-      // We do not use for await because esbuild is unable to transpile down
       const client = createPromiseClient(ElizaService, transport);
       const request = new IntroduceRequest({
         name: "Browser",
