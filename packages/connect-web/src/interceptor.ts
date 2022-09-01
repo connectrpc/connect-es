@@ -201,7 +201,7 @@ export interface StreamResponse<O extends Message<O> = AnyMessage> {
    * `{value: undefined, done: true}`.
    * 3. If an error occurred, the response is rejected with this error.
    */
-  read(): Promise<ReadableStreamDefaultReadResult<O>>;
+  read(): Promise<ReadableStreamReadResult<O>>;
 
   /**
    * Trailers received from the response.

@@ -256,7 +256,7 @@ export function createGrpcWebTransport(
               method,
               header: response.headers,
               trailer: new Headers(),
-              async read(): Promise<ReadableStreamDefaultReadResult<O>> {
+              async read(): Promise<ReadableStreamReadResult<O>> {
                 const result = await reader.read();
                 if (result.done) {
                   if (messageReceived && !endStreamReceived) {
