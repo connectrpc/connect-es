@@ -20,7 +20,7 @@
     "@bufbuild/connect-web": "0.2.0",
     "@grpc/grpc-js": "^1.6.7",
     "@types/jasmine": "^4.0.3",
-    "@types/long": "^4.0.2",
+    "@types/long": "^5.0.0",
     "esbuild": "^0.15.5",
     "jasmine": "^4.3.0",
     "karma": "^6.3.20",
