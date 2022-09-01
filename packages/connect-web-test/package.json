@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@bufbuild/connect-web": "0.2.0",
-    "@grpc/grpc-js": "^1.6.7",
+    "@grpc/grpc-js": "^1.6.12",
     "@types/jasmine": "^4.0.3",
     "@types/long": "^4.0.2",
     "esbuild": "^0.15.5",
