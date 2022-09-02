@@ -19,16 +19,16 @@
 // here so that we can have better control with supporting various versions.
 // The suffix 'Like' has been added to the type name to differentiate it from
 // the actual type provided by TypeScript libs.
-export type ReadableStreamDefaultReadResultLike<T> =
-  | ReadableStreamDefaultReadValueResultLike<T>
-  | ReadableStreamDefaultReadDoneResultLike;
+export type ReadableStreamReadResultLike<T> =
+  | ReadableStreamReadValueResultLike<T>
+  | ReadableStreamReadDoneResultLike;
 
-interface ReadableStreamDefaultReadValueResultLike<T> {
+interface ReadableStreamReadValueResultLike<T> {
   done: false;
   value: T;
 }
 
-interface ReadableStreamDefaultReadDoneResultLike {
+interface ReadableStreamReadDoneResultLike {
   done: true;
   value?: undefined;
 }

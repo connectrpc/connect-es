@@ -17,7 +17,6 @@ import type {
   StreamResponse,
   UnaryRequest,
   UnaryResponse,
-  ReadableStreamDefaultReadResultLike,
 } from "@bufbuild/connect-web";
 import {
   Code,
@@ -261,7 +260,11 @@ export function createGrpcTransport(
               method,
               header,
               trailer,
-              async read(): Promise<ReadableStreamDefaultReadResultLike<O>> {
+              // Note this is using the TypeScript type ReadableStreamReadResult and not the custom type used by
+              // Connect-Web.  This mimics how users will interact with the library (using their own DOM lib) and tests
+              // compatibility with the two types in that the Connect Web custom type should always be assignable to
+              // the type in the user's DOM lib.
+              async read(): Promise<ReadableStreamReadResult<O>> {
                 const outcome = await new Promise<O | Error | null>(
                   (resolve) => {
                     if (callEnded) {
