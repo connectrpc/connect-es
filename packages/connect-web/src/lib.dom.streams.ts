@@ -17,6 +17,7 @@
 // type is meant to mimic the type provided by TypeScript, just defined here so that we can have better control with
 // supporting various versions.  The suffix 'Like' has been added to the type name to differentiate it from the actual
 // type provided by TypeScript libs.
+
 interface ReadableStreamDefaultReadValueResultLike<T> {
   done: false;
   value: T;
