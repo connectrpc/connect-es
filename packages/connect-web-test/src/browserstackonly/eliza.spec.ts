@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import {
-  createCallbackClient,
   createConnectTransport,
   createPromiseClient,
 } from "@bufbuild/connect-web";
 import { ElizaService } from "../gen/buf/connect/demo/eliza/v1/eliza_connectweb.js";
+import { IntroduceRequest } from "../gen/buf/connect/demo/eliza/v1/eliza_pb.js";
 
 const timeoutMs = 15000;
 
@@ -36,22 +36,17 @@ describe("eliza", () => {
   );
   it(
     "introduce()",
-    (done) => {
-      // We do not use for await because esbuild is unable to transpile down
-      const client = createCallbackClient(ElizaService, transport);
+    async () => {
+      const client = createPromiseClient(ElizaService, transport);
+      const request = new IntroduceRequest({
+        name: "Browser",
+      });
       let receivedMessages = 0;
-      client.introduce(
-        { name: "Browser" },
-        (res) => {
-          expect(res.sentence.length > 0).toBe(true);
-          receivedMessages++;
-        },
-        (err) => {
-          expect(err).toBeUndefined();
-          expect(receivedMessages > 3).toBe(true);
-          done();
-        }
-      );
+      for await (const response of client.introduce(request)) {
+        expect(response.sentence.length > 0).toBe(true);
+        receivedMessages++;
+      }
+      expect(receivedMessages > 3).toBe(true);
     },
     timeoutMs
   );
