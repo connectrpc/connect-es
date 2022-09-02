@@ -79,7 +79,7 @@ Registry.
 PATH=$PATH:$(pwd)/node_modules/.bin \
   protoc -I . \
   --es_out src/gen \
-  --os_opt target=ts \
+  --es_opt target=ts \
   --connect-web_out src/gen \
   --connect-web_opt target=ts \
   a.proto b.proto c.proto
