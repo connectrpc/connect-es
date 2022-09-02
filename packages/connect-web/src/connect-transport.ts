@@ -43,7 +43,7 @@ import { runServerStream, runUnary } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { mergeHeaders } from "./http-headers.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
-import type { ReadableStreamDefaultReadResult } from "./lib.dom.streams.js";
+import type { ReadableStreamDefaultReadResultLike } from "./lib.dom.streams.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -272,7 +272,7 @@ export function createConnectTransport(
               method,
               header: response.headers,
               trailer: new Headers(),
-              async read(): Promise<ReadableStreamDefaultReadResult<O>> {
+              async read(): Promise<ReadableStreamDefaultReadResultLike<O>> {
                 const result = await reader.read();
                 if (result.done) {
                   if (!endStreamReceived) {

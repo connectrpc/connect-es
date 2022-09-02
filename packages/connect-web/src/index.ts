@@ -52,4 +52,4 @@ export {
 
 export { createEnvelopeReadableStream } from "./envelope.js";
 
-export { ReadableStreamDefaultReadResult } from "./lib.dom.streams.js";
+export { ReadableStreamDefaultReadResultLike } from "./lib.dom.streams.js";
