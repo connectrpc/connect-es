@@ -6,7 +6,7 @@
     "clean": "rm -rf README.md src/gen"
   },
   "dependencies": {
-    "@bufbuild/connect-web": "0.2.0",
+    "@bufbuild/connect-web": "0.2.1",
     "@bufbuild/protobuf": "0.1.1",
     "@bufbuild/protoc-gen-es": "0.1.1",
     "esbuild": "^0.15.6",
