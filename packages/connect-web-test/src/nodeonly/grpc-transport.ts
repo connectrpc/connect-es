@@ -260,11 +260,7 @@ export function createGrpcTransport(
               method,
               header,
               trailer,
-              // Note this is using the TypeScript type ReadableStreamReadResult and not the custom type used by
-              // Connect-Web.  This mimics how users will interact with the library (using their own DOM lib) and tests
-              // compatibility with the two types in that the Connect Web custom type should always be assignable to
-              // the type in the user's DOM lib.
-              async read(): Promise<ReadableStreamReadResult<O>> {
+              async read() {
                 const outcome = await new Promise<O | Error | null>(
                   (resolve) => {
                     if (callEnded) {
