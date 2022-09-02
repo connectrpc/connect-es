@@ -17,6 +17,7 @@ import type {
   StreamResponse,
   UnaryRequest,
   UnaryResponse,
+  ReadableStreamDefaultReadResult,
 } from "@bufbuild/connect-web";
 import {
   Code,

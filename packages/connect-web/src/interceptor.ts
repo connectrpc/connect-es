@@ -21,6 +21,8 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 
+import type { ReadableStreamDefaultReadResult } from "./lib.dom.streams.js";
+
 /**
  * An interceptor can add logic to clients, similar to the decorators
  * or middleware you may have seen in other libraries. Interceptors may

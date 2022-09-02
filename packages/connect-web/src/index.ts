@@ -51,3 +51,5 @@ export {
 } from "./http-headers.js";
 
 export { createEnvelopeReadableStream } from "./envelope.js";
+
+export { ReadableStreamDefaultReadResult } from "./lib.dom.streams.js";

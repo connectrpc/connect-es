@@ -43,6 +43,7 @@ import { runServerStream, runUnary } from "./interceptor.js";
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { mergeHeaders } from "./http-headers.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
+import type { ReadableStreamDefaultReadResult } from "./lib.dom.streams.js";
 
 /**
  * Options used to configure the Connect transport.
