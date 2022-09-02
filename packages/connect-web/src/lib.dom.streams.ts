@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The name for the ReadableStreamDefaultReadResult type changed in TypeScript 4.8.2 to ReadableStreamReadResult.  This
-// makes supporting multiple versions of TypeScript difficult if we use the ambient type declaration.  Instead, this
-// type is meant to mimic the type provided by TypeScript, just defined here so that we can have better control with
-// supporting various versions.  The suffix 'Like' has been added to the type name to differentiate it from the actual
-// type provided by TypeScript libs.
+// The name for the ReadableStreamDefaultReadResult type changed in TypeScript
+// 4.8.2 to ReadableStreamReadResult.  This makes supporting multiple versions
+// of TypeScript difficult if we use the ambient type declaration.  Instead,
+// this type is meant to mimic the type provided by TypeScript, just defined
+// here so that we can have better control with supporting various versions.
+// The suffix 'Like' has been added to the type name to differentiate it from
+// the actual type provided by TypeScript libs.
 export type ReadableStreamDefaultReadResultLike<T> =
   | ReadableStreamDefaultReadValueResultLike<T>
   | ReadableStreamDefaultReadDoneResultLike;
