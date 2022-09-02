@@ -21,6 +21,8 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 
+import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
+
 /**
  * An interceptor can add logic to clients, similar to the decorators
  * or middleware you may have seen in other libraries. Interceptors may
@@ -201,7 +203,7 @@ export interface StreamResponse<O extends Message<O> = AnyMessage> {
    * `{value: undefined, done: true}`.
    * 3. If an error occurred, the response is rejected with this error.
    */
-  read(): Promise<ReadableStreamDefaultReadResult<O>>;
+  read(): Promise<ReadableStreamReadResultLike<O>>;
 
   /**
    * Trailers received from the response.

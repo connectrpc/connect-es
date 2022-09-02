@@ -260,7 +260,7 @@ export function createGrpcTransport(
               method,
               header,
               trailer,
-              async read(): Promise<ReadableStreamDefaultReadResult<O>> {
+              async read() {
                 const outcome = await new Promise<O | Error | null>(
                   (resolve) => {
                     if (callEnded) {
