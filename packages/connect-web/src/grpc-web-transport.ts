@@ -258,37 +258,41 @@ export function createGrpcWebTransport(
               header: response.headers,
               trailer: new Headers(),
               async read(): Promise<ReadableStreamReadResultLike<O>> {
-                const result = await reader.read();
-                if (result.done) {
-                  if (messageReceived && !endStreamReceived) {
-                    throw new ConnectError("missing trailers", Code.Internal);
+                try {
+                  const result = await reader.read();
+                  if (result.done) {
+                    if (messageReceived && !endStreamReceived) {
+                      throw new ConnectError("missing trailers", Code.Internal);
+                    }
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
                   }
+                  if ((result.value.flags & trailerFlag) === trailerFlag) {
+                    endStreamReceived = true;
+                    const trailer = parseGrpcWebTrailerAndExtractError(
+                      result.value.data
+                    );
+                    trailer.forEach((value, key) =>
+                      this.trailer.append(key, value)
+                    );
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
+                  }
+                  messageReceived = true;
                   return {
-                    done: true,
-                    value: undefined,
+                    done: false,
+                    value: method.O.fromBinary(
+                      result.value.data,
+                      options.binaryOptions
+                    ),
                   };
+                } catch (e) {
+                  throw connectErrorFromReason(e);
                 }
-                if ((result.value.flags & trailerFlag) === trailerFlag) {
-                  endStreamReceived = true;
-                  const trailer = parseGrpcWebTrailerAndExtractError(
-                    result.value.data
-                  );
-                  trailer.forEach((value, key) =>
-                    this.trailer.append(key, value)
-                  );
-                  return {
-                    done: true,
-                    value: undefined,
-                  };
-                }
-                messageReceived = true;
-                return {
-                  done: false,
-                  value: method.O.fromBinary(
-                    result.value.data,
-                    options.binaryOptions
-                  ),
-                };
               },
             };
           },

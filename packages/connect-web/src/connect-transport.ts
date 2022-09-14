@@ -273,45 +273,49 @@ export function createConnectTransport(
               header: response.headers,
               trailer: new Headers(),
               async read(): Promise<ReadableStreamReadResultLike<O>> {
-                const result = await reader.read();
-                if (result.done) {
-                  if (!endStreamReceived) {
-                    throw new ConnectError("missing EndStreamResponse");
+                try {
+                  const result = await reader.read();
+                  if (result.done) {
+                    if (!endStreamReceived) {
+                      throw new ConnectError("missing EndStreamResponse");
+                    }
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
+                  }
+                  if (
+                    (result.value.flags & endStreamResponseFlag) ===
+                    endStreamResponseFlag
+                  ) {
+                    endStreamReceived = true;
+                    const endStream = endStreamFromJson(result.value.data);
+                    endStream.metadata.forEach((value, key) =>
+                      this.trailer.append(key, value)
+                    );
+                    if (endStream.error) {
+                      throw endStream.error;
+                    }
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
                   }
                   return {
-                    done: true,
-                    value: undefined,
+                    done: false,
+                    value: useBinaryFormat
+                      ? method.O.fromBinary(
+                          result.value.data,
+                          options.binaryOptions
+                        )
+                      : method.O.fromJsonString(
+                          new TextDecoder().decode(result.value.data),
+                          options.jsonOptions
+                        ),
                   };
+                } catch (e) {
+                  throw connectErrorFromReason(e);
                 }
-                if (
-                  (result.value.flags & endStreamResponseFlag) ===
-                  endStreamResponseFlag
-                ) {
-                  endStreamReceived = true;
-                  const endStream = endStreamFromJson(result.value.data);
-                  endStream.metadata.forEach((value, key) =>
-                    this.trailer.append(key, value)
-                  );
-                  if (endStream.error) {
-                    throw endStream.error;
-                  }
-                  return {
-                    done: true,
-                    value: undefined,
-                  };
-                }
-                return {
-                  done: false,
-                  value: useBinaryFormat
-                    ? method.O.fromBinary(
-                        result.value.data,
-                        options.binaryOptions
-                      )
-                    : method.O.fromJsonString(
-                        new TextDecoder().decode(result.value.data),
-                        options.jsonOptions
-                      ),
-                };
               },
             };
           },
