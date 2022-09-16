@@ -24,7 +24,7 @@ const res = await fetch("https://demo.connect.build/buf.connect.demo.eliza.v1.El
   headers: {"content-type": "application/json"},
   body: `{"sentence": "I feel happy."}`
 });
-const answer = res.json();
+const answer = await res.json();
 console.log(answer);
 // {sentence: 'When you feel happy, what do you do?'}
 ```
