@@ -53,7 +53,7 @@ export class ConnectError extends Error {
    * When an error is parsed from the wire, error details are stored in
    * this property. They can be retrieved using connectErrorDetails().
    */
-  readonly details: Pick<Any, "typeUrl" | "value">[];
+  details: Pick<Any, "typeUrl" | "value">[];
 
   /**
    * The error message, but without a status code in front.
@@ -65,10 +65,26 @@ export class ConnectError extends Error {
 
   override name = "ConnectError";
 
+  /**
+   * Create a new ConnectError. If no code is provided, code "unknown" is
+   * used.
+   */
+  constructor(message: string, code?: Code, metadata?: HeadersInit);
+  /**
+   * @deprecated We do not support providing error details in the constructor.
+   * This signature was left here by accident, and will be removed in the next
+   * release.
+   */
+  constructor(
+    message: string,
+    code?: Code,
+    details?: AnyMessage[],
+    metadata?: HeadersInit
+  );
   constructor(
     message: string,
     code: Code = Code.Unknown,
-    details?: AnyMessage[],
+    detailsOrMetadata?: AnyMessage[] | HeadersInit,
     metadata?: HeadersInit
   ) {
     super(createMessage(message, code));
@@ -76,7 +92,12 @@ export class ConnectError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
     this.rawMessage = message;
     this.code = code;
-    this.metadata = new Headers(metadata ?? {});
+    // TODO once we remove the deprecated constructor, this can become `new Headers(metadata ?? {})`
+    const metadataInit =
+      metadata ??
+      (Array.isArray(detailsOrMetadata) ? undefined : detailsOrMetadata) ??
+      {};
+    this.metadata = new Headers(metadataInit);
     this.details = [];
   }
 }
