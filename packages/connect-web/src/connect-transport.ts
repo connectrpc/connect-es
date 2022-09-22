@@ -148,7 +148,8 @@ export function createConnectTransport(
                 unaryRequest.message,
                 method.kind,
                 useBinaryFormat,
-                options.jsonOptions
+                options.jsonOptions,
+                options.binaryOptions,
               ),
             });
 
@@ -239,7 +240,8 @@ export function createConnectTransport(
                 unaryRequest.message,
                 method.kind,
                 useBinaryFormat,
-                options.jsonOptions
+                options.jsonOptions,
+                options.binaryOptions,
               ),
             });
 
@@ -337,10 +339,11 @@ function createConnectRequestBody<T extends Message<T>>(
   message: T,
   methodKind: MethodKind,
   useBinaryFormat: boolean,
-  jsonOptions: Partial<JsonWriteOptions> | undefined
+  jsonOptions: Partial<JsonWriteOptions> | undefined,
+  binaryOptions: Partial<BinaryWriteOptions> | undefined
 ): BodyInit {
   const encoded = useBinaryFormat
-    ? message.toBinary()
+    ? message.toBinary(binaryOptions)
     : message.toJsonString(jsonOptions);
   if (methodKind == MethodKind.Unary) {
     return encoded;
