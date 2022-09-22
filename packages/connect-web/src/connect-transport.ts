@@ -149,7 +149,7 @@ export function createConnectTransport(
                 method.kind,
                 useBinaryFormat,
                 options.jsonOptions,
-                options.binaryOptions,
+                options.binaryOptions
               ),
             });
 
@@ -241,7 +241,7 @@ export function createConnectTransport(
                 method.kind,
                 useBinaryFormat,
                 options.jsonOptions,
-                options.binaryOptions,
+                options.binaryOptions
               ),
             });
 
