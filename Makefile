@@ -17,7 +17,7 @@ NODE18_VERSION ?= v18.2.0
 NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
 
-node_modules: package-lock.json
+node_modules: pnpm-lock.json
 	pnpm install
 
 node_modules/.bin/protoc-gen-es: node_modules
@@ -144,8 +144,6 @@ bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark c
 .PHONY: setversion
 setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
 	node scripts/set-workspace-version.js $(SET_VERSION)
-	rm package-lock.json
-	rm -rf node_modules
 	pnpm install
 	$(MAKE) all
 
