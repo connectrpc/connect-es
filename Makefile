@@ -38,25 +38,25 @@ $(BIN)/node18: Makefile
 	@touch $(@)
 
 $(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc-gen-connect-web/tsconfig.json $(shell find packages/protoc-gen-connect-web/src -name '*.ts')
-	pnpm run --filters=packages/protoc-gen-connect-web clean
-	pnpm run --filters=packages/protoc-gen-connect-web build
+	pnpm run --filter=./packages/protoc-gen-connect-web clean
+	pnpm run --filter=./packages/protoc-gen-connect-web build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
-	pnpm run --filters=packages/connect-web clean
-	pnpm run --filters=packages/connect-web build
+	pnpm run --filter=./packages/connect-web clean
+	pnpm run --filter=./packages/connect-web build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell find packages/connect-web-test/src -name '*.ts') tsconfig.base.json packages/connect-web-test/tsconfig.json
-	pnpm run --filters=packages/connect-web-test clean
-	pnpm run --filters=packages/connect-web-test build
+	pnpm run --filter=./packages/connect-web-test clean
+	pnpm run --filter=./packages/connect-web-test build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/example: $(GEN)/example
-	pnpm run --filters=packages/example lint
+	pnpm run --filter=./packages/example lint
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -110,18 +110,18 @@ testnode: $(BIN)/node18 $(BUILD)/connect-web-test
 .PHONY: testbrowser
 testbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
-	pnpm run --filters=packages/connect-web-test karma
+	pnpm run --filter=./packages/connect-web-test karma
 	$(MAKE) crosstestserverstop
 
 .PHONY: testlocalbrowser
 testlocalbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
-	pnpm run --filters=packages/connect-web-test karma-serve
+	pnpm run --filter=./packages/connect-web-test karma-serve
 	$(MAKE) crosstestserverstop
 
 .PHONY: testbrowserstack
 testbrowserstack: $(BUILD)/connect-web-test
-	pnpm run --filter="packages/connect-web-test" karma-browserstack
+	pnpm run --filter=./"packages/connect-web-test" karma-browserstack
 
 .PHONY: lint
 lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
@@ -139,7 +139,7 @@ format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/license-header ## Forma
 
 .PHONY: bench
 bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark code size
-	pnpm run --filters=packages/connect-web-bench report
+	pnpm run --filter=./packages/connect-web-bench report
 
 .PHONY: setversion
 setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
