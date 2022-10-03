@@ -18,7 +18,7 @@ NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
 
 node_modules: package-lock.json
-	npm ci
+	pnpm install
 
 node_modules/.bin/protoc-gen-es: node_modules
 
@@ -38,25 +38,25 @@ $(BIN)/node18: Makefile
 	@touch $(@)
 
 $(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc-gen-connect-web/tsconfig.json $(shell find packages/protoc-gen-connect-web/src -name '*.ts')
-	npm run -w packages/protoc-gen-connect-web clean
-	npm run -w packages/protoc-gen-connect-web build
+	pnpm run --filters=packages/protoc-gen-connect-web clean
+	pnpm run --filters=packages/protoc-gen-connect-web build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
-	npm run -w packages/connect-web clean
-	npm run -w packages/connect-web build
+	pnpm run --filters=packages/connect-web clean
+	pnpm run --filters=packages/connect-web build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell find packages/connect-web-test/src -name '*.ts') tsconfig.base.json packages/connect-web-test/tsconfig.json
-	npm run -w packages/connect-web-test clean
-	npm run -w packages/connect-web-test build
+	pnpm run --filters=packages/connect-web-test clean
+	pnpm run --filters=packages/connect-web-test build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/example: $(GEN)/example
-	npm run -w packages/example lint
+	pnpm run --filters=packages/example lint
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -110,18 +110,18 @@ testnode: $(BIN)/node18 $(BUILD)/connect-web-test
 .PHONY: testbrowser
 testbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
-	npm run -w packages/connect-web-test karma
+	pnpm run --filters=packages/connect-web-test karma
 	$(MAKE) crosstestserverstop
 
 .PHONY: testlocalbrowser
 testlocalbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
-	npm run -w packages/connect-web-test karma-serve
+	pnpm run --filters=packages/connect-web-test karma-serve
 	$(MAKE) crosstestserverstop
 
 .PHONY: testbrowserstack
 testbrowserstack: $(BUILD)/connect-web-test
-	npm run -w packages/connect-web-test karma-browserstack
+	pnpm run --filter="packages/connect-web-test" karma-browserstack
 
 .PHONY: lint
 lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
@@ -139,14 +139,14 @@ format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/license-header ## Forma
 
 .PHONY: bench
 bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark code size
-	npm run -w packages/connect-web-bench report
+	pnpm run --filters=packages/connect-web-bench report
 
 .PHONY: setversion
 setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
 	node scripts/set-workspace-version.js $(SET_VERSION)
 	rm package-lock.json
 	rm -rf node_modules
-	npm i
+	pnpm install
 	$(MAKE) all
 
 # Release @bufbuild/connect-web.
