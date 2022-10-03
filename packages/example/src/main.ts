@@ -25,10 +25,11 @@ void (async () => {
   const transport = createConnectTransport({
     baseUrl: "https://demo.connect.build",
   });
+  const x = "eliza";
 
   const client = createPromiseClient(ElizaService, transport);
 
-  print("What is your name?");
+  print(`What is your name ${x}?`);
   const name = await prompt();
   print(`> ${name}`);
 
