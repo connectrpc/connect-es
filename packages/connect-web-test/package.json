@@ -23,10 +23,10 @@
     "@types/long": "^5.0.0",
     "esbuild": "^0.15.10",
     "jasmine": "^4.3.0",
-    "karma": "^6.4.1",
+    "karma": "^6.3.20",
     "karma-browserstack-launcher": "^1.6.0",
     "karma-chrome-launcher": "^3.1.1",
-    "karma-esbuild": "^2.2.5",
+    "karma-esbuild": "^2.2.4",
     "karma-jasmine": "^5.1.0"
   }
 }
