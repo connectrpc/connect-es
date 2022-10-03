@@ -21,6 +21,7 @@ node_modules: pnpm-lock.yaml
 	pnpm install
 
 node_modules/.bin/protoc-gen-es: node_modules
+	touch packages/example/node_modules/.bin/protoc-gen-es
 
 $(BIN)/license-header: Makefile
 	@mkdir -p $(@D)
