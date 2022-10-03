@@ -1,2 +1,5 @@
 packages:
-  - packages/**
+  - './packages/connect-web'
+  - './packages/connect-web-bench'
+  - './packages/example'
+  - './packages/protoc-gen-connect-web'

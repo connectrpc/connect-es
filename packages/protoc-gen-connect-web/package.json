@@ -24,7 +24,8 @@
   },
   "peerDependencies": {
     "@bufbuild/connect-web": "0.2.1",
-    "@bufbuild/protoc-gen-es": "0.1.1"
+    "@bufbuild/protoc-gen-es": "0.1.1",
+    "@bufbuild/protobuf": "0.1.1"
   },
   "peerDependenciesMeta": {
     "@bufbuild/connect-web": {
@@ -33,5 +34,8 @@
     "@bufbuild/protoc-gen-es": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "@bufbuild/protobuf": "0.1.1"
   }
 }

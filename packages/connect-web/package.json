@@ -25,6 +25,9 @@
   "peerDependencies": {
     "@bufbuild/protobuf": "0.1.1"
   },
+  "devDependencies": {
+    "@bufbuild/protobuf": "0.1.1"
+  },
   "files": [
     "dist/**/"
   ]
