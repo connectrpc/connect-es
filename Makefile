@@ -17,7 +17,7 @@ NODE18_VERSION ?= v18.2.0
 NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
 
-node_modules: pnpm-lock.json
+node_modules: pnpm-lock.yaml
 	pnpm install
 
 node_modules/.bin/protoc-gen-es: node_modules
