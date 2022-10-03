@@ -47,7 +47,7 @@ module.exports = function(config) {
       "bstack_macos_safari_14_1",
       "bstack_macos_safari_13_1",
       "bstack_macos_safari_12_1",
-      "bstack_macos_safari_11_1",
+      // "bstack_macos_safari_11_1",
       "bstack_windows_chrome_60_0",
       "bstack_windows_ff_67_0",
     ],
@@ -94,20 +94,20 @@ module.exports = function(config) {
         browser: "safari",
       },
 
-      bstack_macos_safari_11_1: {
-        // fetch API and encoder API are available on mac os since Safari 10.1:
-        // https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API#browser_compatibility
-        // Unfortunately, jasmine-core/jasmine.js uses the object spread syntax
-        // (only available since Safari 11.1) and does not get transpiled, so we
-        // cannot test earlier versions.
-        base: "BrowserStack",
-        "browserstack.tunnel": false,
-        browser_version: "11.1",
-        os: "OS X",
-        os_version: "High Sierra",
-        resolution: "1024x768",
-        browser: "safari",
-      },
+      // bstack_macos_safari_11_1: {
+      //   // fetch API and encoder API are available on mac os since Safari 10.1:
+      //   // https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API#browser_compatibility
+      //   // Unfortunately, jasmine-core/jasmine.js uses the object spread syntax
+      //   // (only available since Safari 11.1) and does not get transpiled, so we
+      //   // cannot test earlier versions.
+      //   base: "BrowserStack",
+      //   "browserstack.tunnel": false,
+      //   browser_version: "11.1",
+      //   os: "OS X",
+      //   os_version: "High Sierra",
+      //   resolution: "1024x768",
+      //   browser: "safari",
+      // },
 
       bstack_windows_chrome_60_0: {
         // fetch API and encoder API are available since Chrome 42:
