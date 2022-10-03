@@ -125,11 +125,11 @@ testbrowserstack: $(BUILD)/connect-web-test
 
 .PHONY: lint
 lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
-	npx eslint --max-warnings 0 .
+	pnpm dlx eslint --max-warnings 0 .
 
 .PHONY: format
 format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/license-header ## Format all files, adding license headers
-	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --loglevel error
+	pnpm dlx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --loglevel error
 	$(BIN)/git-ls-files-unstaged | \
 		grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))) | \
 		xargs $(BIN)/license-header \

@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf ./dist/esm/*",
-    "build": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
-    "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json",
-    "karma": "../../node_modules/.bin/karma start karma.conf.cjs",
-    "karma-serve": "../../node_modules/.bin/karma start karma.serve.conf.cjs",
-    "karma-browserstack": "../../node_modules/.bin/karma start karma.browserstack.conf.cjs"
+    "build": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
+    "jasmine": "jasmine --config=jasmine.json",
+    "karma": "karma start karma.conf.cjs",
+    "karma-serve": "karma start karma.serve.conf.cjs",
+    "karma-browserstack": "karma start karma.browserstack.conf.cjs"
   },
   "type": "module",
   "types": "./dist/types/index.d.ts",
