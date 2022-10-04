@@ -31,7 +31,7 @@ module.exports = function(config) {
       define: {},
       plugins: [],
       tsconfig: "./tsconfig.json",
-      target: "safari11",
+      target: "es2016",
       singleBundle: true,
     },
 
