@@ -15,7 +15,7 @@
 /* eslint-disable */
 
 (function () {
-  if (typeof window.queueMicrotask === "function") {
+  if (typeof globalThis.queueMicrotask === "function") {
     return;
   }
 
