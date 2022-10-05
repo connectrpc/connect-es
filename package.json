@@ -14,10 +14,10 @@
     "npm": ">=8"
   },
   "devDependencies": {
-    "typescript": "^4.8.2",
-    "@typescript-eslint/eslint-plugin": "^5.36.1",
-    "@typescript-eslint/parser": "^5.36.1",
-    "eslint": "^8.21.0",
+    "typescript": "^4.8.4",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "@typescript-eslint/parser": "^5.39.0",
+    "eslint": "^8.24.0",
     "eslint-plugin-node": "^11.1.0",
     "prettier": "^2.7.1"
   }
