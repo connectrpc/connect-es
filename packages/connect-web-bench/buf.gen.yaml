@@ -8,9 +8,9 @@ plugins:
     path: packages/protoc-gen-connect-web/bin/protoc-gen-connect-web
     out: src/gen/connectweb
     opt: ts_nocheck=false,target=ts
-  - remote: buf.build/protocolbuffers/plugins/js:v3.19.3-1
+  - remote: buf.build/protocolbuffers/plugins/js:v3.20.1-1
     out: src/gen/grpcweb
     opt: import_style=commonjs
-  - remote: buf.build/grpc/plugins/web:v1.3.1-2
+  - remote: buf.build/grpc/plugins/web:v1.4.1-1
     out: src/gen/grpcweb
     opt: import_style=commonjs+dts,mode=grpcweb
