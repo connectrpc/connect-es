@@ -23,7 +23,7 @@
     "types": "./dist/types/index.d.ts"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "0.1.1"
+    "@bufbuild/protobuf": "0.2.0"
   },
   "files": [
     "dist/**/"
