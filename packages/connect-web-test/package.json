@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-web-test",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "clean": "rm -rf ./dist/esm/*",
@@ -17,7 +17,7 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@bufbuild/connect-web": "0.2.1",
+    "@bufbuild/connect-web": "0.3.0",
     "@grpc/grpc-js": "^1.7.1",
     "@types/jasmine": "^4.3.0",
     "@types/long": "^5.0.0",
