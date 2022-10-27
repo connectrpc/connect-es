@@ -2,6 +2,7 @@
   "name": "@bufbuild/connect-web-bench",
   "private": true,
   "scripts": {
+    "generate": "buf generate",
     "report": "node report.mjs > README.md",
     "clean": "rm -rf README.md src/gen"
   },

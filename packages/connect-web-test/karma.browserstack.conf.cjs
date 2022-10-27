@@ -21,12 +21,6 @@ module.exports = function(config) {
       "src/browserstackonly/*.ts",
       "src/gen/**/*.ts",
     ],
-    exclude: [
-      "src/nodeonly/**/*.ts",
-      "src/crosstest/**/*.ts",
-      "src/interceptor.spec.ts",
-      "src/cancellation.spec.ts"
-    ],
     esbuild: {
       define: {},
       plugins: [],

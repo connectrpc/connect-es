@@ -1,0 +1,39 @@
+{
+  "name": "@bufbuild/connect-core",
+  "version": "0.3.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufbuild/connect-web.git",
+    "directory": "packages/connect-core"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "clean": "rm -rf ./dist/cjs/* ./dist/esm/* ./dist/types/*",
+    "generate": "buf generate proto",
+    "build": "npm run build:cjs && npm run build:esm+types",
+    "build:cjs": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types",
+    "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json"
+  },
+  "main": "./dist/cjs/index.js",
+  "type": "module",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/index.js",
+    "types": "./dist/types/index.d.ts"
+  },
+  "peerDependencies": {
+    "@bufbuild/protobuf": "0.2.0"
+  },
+  "devDependencies": {
+    "@bufbuild/protoc-gen-es": "0.2.0",
+    "@types/jasmine": "^4.3.0",
+    "jasmine": "^4.4.0"
+  },
+  "dependencies": {
+    "undici": "^5.11.0"
+  }
+}

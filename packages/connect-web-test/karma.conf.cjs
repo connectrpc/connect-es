@@ -18,10 +18,7 @@ module.exports = function (config) {
     files: [
       "src/**/*.ts",
     ],
-    exclude: [
-      // We don't want node-specific files when running in a browser.
-      "src/nodeonly/**/*.ts",
-    ],
+    exclude: [],
     singleRun: true,
     reporters: ["progress"],
     browsers: ["ChromeCustom"],

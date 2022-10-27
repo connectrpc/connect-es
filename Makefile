@@ -43,15 +43,40 @@ $(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-core: node_modules tsconfig.base.json packages/connect-core/tsconfig.json $(shell find packages/connect-core/src -name '*.ts')
+	npm run -w packages/connect-core clean
+	npm run -w packages/connect-core build
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(BUILD)/connect-node: $(BUILD)/connect-core node_modules tsconfig.base.json packages/connect-node/tsconfig.json $(shell find packages/connect-node/src -name '*.ts')
+	npm run -w packages/connect-node clean
+	npm run -w packages/connect-node build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test $(shell find packages/connect-web-test/src -name '*.ts') tsconfig.base.json packages/connect-web-test/tsconfig.json
+# connect-web-next is temporary
+$(BUILD)/connect-web-next: $(BUILD)/connect-core node_modules tsconfig.base.json packages/connect-web-next/tsconfig.json $(shell find packages/connect-web-next/src -name '*.ts')
+	npm run -w packages/connect-web-next clean
+	npm run -w packages/connect-web-next build
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(BUILD)/connect-web-test: $(BUILD)/connect-web-next $(BUILD)/connect-web $(GEN)/connect-web-test $(shell find packages/connect-web-test/src -name '*.ts') tsconfig.base.json packages/connect-web-test/tsconfig.json
 	npm run -w packages/connect-web-test clean
 	npm run -w packages/connect-web-test build
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(BUILD)/connect-node-test: $(BUILD)/connect-node $(GEN)/connect-node-test $(shell find packages/connect-node-test/src -name '*.ts') tsconfig.base.json packages/connect-node-test/tsconfig.json
+	npm run -w packages/connect-node-test clean
+	npm run -w packages/connect-node-test build
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -60,25 +85,35 @@ $(BUILD)/example: $(GEN)/example
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(GEN)/connect-core: node_modules/.bin/protoc-gen-es $(shell find packages/connect-core/proto -name '*.proto')
+	rm -rf packages/connect-core/src/gen/*
+	npm run -w packages/connect-core generate
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
 	rm -rf packages/connect-web-test/src/gen/*
-	buf generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto \
-		--template packages/connect-web-test/buf.gen.yaml --output packages/connect-web-test
-	buf generate buf.build/bufbuild/eliza \
-		--template packages/connect-web-test/buf.gen.yaml --output packages/connect-web-test
+	npm run -w packages/connect-web-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
+	npm run -w packages/connect-web-test generate buf.build/bufbuild/eliza
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
+	rm -rf packages/connect-node-test/src/gen/*
+	npm run -w packages/connect-node-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
+	npm run -w packages/connect-node-test generate buf.build/bufbuild/eliza
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
 	rm -rf packages/connect-web-bench/src/gen/*
-	buf generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568 \
-		--template packages/connect-web-bench/buf.gen.yaml --output packages/connect-web-bench
+	npm run -w packages/connect-web-bench generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
 	rm -rf packages/example/src/*_pb.ts packages/example/src/*_connectweb.ts
-	cd packages/example && buf generate
+	npm run -w packages/example generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -99,28 +134,38 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
 
 .PHONY: test
-test: testnode testbrowser ## Run all tests, except browserstack
+test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack
+
+.PHONY: testcore
+testcore: $(BUILD)/connect-core
+	npm run -w packages/connect-core jasmine
 
 .PHONY: testnode
-testnode: $(BIN)/node18 $(BUILD)/connect-web-test
+testnode: $(BIN)/node18 $(BUILD)/connect-node-test
+	$(MAKE) crosstestserverrun
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	$(MAKE) crosstestserverstop
+
+.PHONY: testwebnode
+testwebnode: $(BIN)/node18 $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
 	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
 
-.PHONY: testbrowser
-testbrowser: $(BUILD)/connect-web-test
+.PHONY: testwebbrowser
+testwebbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
 	npm run -w packages/connect-web-test karma
 	$(MAKE) crosstestserverstop
 
-.PHONY: testlocalbrowser
-testlocalbrowser: $(BUILD)/connect-web-test
+.PHONY: testwebbrowserlocal
+testwebbrowserlocal: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
 	npm run -w packages/connect-web-test karma-serve
 	$(MAKE) crosstestserverstop
 
-.PHONY: testbrowserstack
-testbrowserstack: $(BUILD)/connect-web-test
+.PHONY: testwebbrowserstack
+testwebbrowserstack: $(BUILD)/connect-web-test
 	npm run -w packages/connect-web-test karma-browserstack
 
 .PHONY: lint
