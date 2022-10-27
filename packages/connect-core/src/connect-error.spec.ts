@@ -13,12 +13,6 @@
 // limitations under the License.
 
 import {
-  Code,
-  ConnectError,
-  connectErrorDetails,
-  connectErrorFromReason,
-} from "@bufbuild/connect-web";
-import {
   Any,
   BoolValue,
   createRegistry,
@@ -28,6 +22,12 @@ import {
   Struct,
 } from "@bufbuild/protobuf";
 import { Headers as UndiciHeaders } from "undici";
+import {
+  ConnectError,
+  connectErrorDetails,
+  connectErrorFromReason,
+} from "./connect-error.js";
+import { Code } from "./code.js";
 
 // TODO we need to replace all Headers ctor calls in our code or require Node.js >= v18
 if (typeof globalThis.Headers !== "function") {

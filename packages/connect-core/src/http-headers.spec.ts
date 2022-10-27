@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { decodeBinaryHeader, encodeBinaryHeader } from "@bufbuild/connect-web";
 import { proto3, ScalarType } from "@bufbuild/protobuf";
+import { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
 
 // prettier-ignore
 const M = proto3.makeMessageType("handwritten.M", [

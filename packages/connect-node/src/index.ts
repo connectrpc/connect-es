@@ -27,7 +27,7 @@ export {
   Interceptor,
   UnaryRequest,
   UnaryResponse,
-  StreamingInit,
+  StreamingRequest,
   StreamingConn,
   encodeBinaryHeader,
   decodeBinaryHeader,

@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Code,
-  codeToString,
-  connectErrorDetails,
-  connectErrorFromJson,
-} from "@bufbuild/connect-web";
 import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
+import { connectErrorFromJson } from "./connect-error-from-json.js";
+import { Code, codeToString } from "./code.js";
+import { connectErrorDetails } from "./connect-error.js";
 
 describe("connectErrorFromJson()", () => {
   it("parses code and message", () => {

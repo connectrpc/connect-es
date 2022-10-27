@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createEnvelopeReadableStream } from "@bufbuild/connect-web";
-import { encodeEnvelopes } from "./envelope.js";
+import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { ReadableStream as NodeReadableStream } from "stream/web";
 
 // node >= v16 has an implementation for WHATWG streams, but doesn't expose

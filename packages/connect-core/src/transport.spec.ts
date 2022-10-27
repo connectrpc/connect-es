@@ -22,7 +22,13 @@ import {
   Struct,
 } from "@bufbuild/protobuf";
 import { Empty } from "@bufbuild/protobuf";
-import type { Interceptor, StreamingConn, StreamingRequest, UnaryRequest, UnaryResponse } from "./interceptor.js";
+import type {
+  Interceptor,
+  StreamingConn,
+  StreamingRequest,
+  UnaryRequest,
+  UnaryResponse,
+} from "./interceptor.js";
 import type { Transport } from "./transport.js";
 import { runStreaming, runUnary } from "./interceptor.js";
 import { createPromiseClient } from "./promise-client.js";
@@ -70,12 +76,12 @@ describe("custom stub transport", () => {
     };
   }
 
-  function createStreamingInit<I extends Message<I>, O extends Message<O>>(
+  function createStreamingRequest<I extends Message<I>, O extends Message<O>>(
     service: ServiceType,
     method: MethodInfo<I, O>,
     signal: AbortSignal | undefined,
-    header: HeadersInit | undefined,
-  ): StreamingRequest<I,O> {
+    header: HeadersInit | undefined
+  ): StreamingRequest<I, O> {
     return {
       stream: true,
       service,
@@ -94,11 +100,12 @@ describe("custom stub transport", () => {
     service: ServiceType,
     method: MethodInfo<I, O>,
     signal: AbortSignal | undefined,
-    header: HeadersInit | undefined,
-  ): StreamingConn<I,O> {
+    header: HeadersInit | undefined
+  ): StreamingConn<I, O> {
     const responses = [new method.O(), new method.O(), new method.O()];
     return {
-      ...createStreamingInit(service, method, signal, header),
+      ...createStreamingRequest(service, method, signal, header),
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       send(message: PartialMessage<I>): Promise<void> {
         return Promise.resolve();
       },
@@ -129,8 +136,12 @@ describe("custom stub transport", () => {
       },
       stream(service, method, signal, timeoutMs, header) {
         return runStreaming(
-          createStreamingInit(service, method, signal, header),
-          (_req) => Promise.resolve(createStreamingConn(service, method, signal, header)), // eslint-disable-line @typescript-eslint/no-unused-vars
+          createStreamingRequest(service, method, signal, header),
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          (_req) =>
+            Promise.resolve(
+              createStreamingConn(service, method, signal, header)
+            ),
           interceptors
         );
       },

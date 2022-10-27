@@ -123,7 +123,7 @@ help: ## Describe useful make targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
 
 .PHONY: all
-all: build test format lint bench ## build, test, format, lint, and bench (default)
+all: format build test lint bench ## build, test, format, lint, and bench (default)
 
 .PHONY: clean
 clean: crosstestserverstop ## Delete build artifacts and installed dependencies
@@ -131,7 +131,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
+build: $(BUILD)/connect-core $(BUILD)/connect-web-next $(BUILD)/connect-node $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
 
 .PHONY: test
 test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack

@@ -14,7 +14,7 @@
 
 import type {
   StreamingConn,
-  StreamingInit,
+  StreamingRequest,
   Transport,
   UnaryResponse,
 } from "@bufbuild/connect-core";
@@ -197,7 +197,9 @@ export function createGrpcTransport(
             signal: abortSignal,
             requestHeader: new Headers(header ?? {}),
           },
-          async (init: StreamingInit<I, O>): Promise<StreamingConn<I, O>> => {
+          async (
+            init: StreamingRequest<I, O>
+          ): Promise<StreamingConn<I, O>> => {
             // We are missing support for cancellation here
 
             switch (method.kind) {
