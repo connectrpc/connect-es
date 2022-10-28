@@ -1,9 +1,9 @@
 {
   "name": "@bufbuild/connect-web-test",
-  "version": "0.3.0",
   "private": true,
   "scripts": {
     "clean": "rm -rf ./dist/esm/*",
+    "generate": "buf generate",
     "build": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
     "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json",
     "karma": "../../node_modules/.bin/karma start karma.conf.cjs",
@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@bufbuild/connect-web": "0.3.0",
-    "@grpc/grpc-js": "^1.7.1",
+    "@bufbuild/connect-core": "0.3.0",
+    "@bufbuild/connect-web-next": "0.3.0",
     "@types/jasmine": "^4.3.0",
-    "@types/long": "^5.0.0",
     "esbuild": "^0.15.10",
     "jasmine": "^4.4.0",
     "karma": "^6.4.1",

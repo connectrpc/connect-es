@@ -1,11 +1,9 @@
 version: v1
 plugins:
   - name: es
-    path: ./node_modules/.bin/protoc-gen-es
     out: src/gen/connectweb
     opt: ts_nocheck=false,target=ts
   - name: connect-web
-    path: packages/protoc-gen-connect-web/bin/protoc-gen-connect-web
     out: src/gen/connectweb
     opt: ts_nocheck=false,target=ts
   - remote: buf.build/protocolbuffers/plugins/js:v3.20.1-1

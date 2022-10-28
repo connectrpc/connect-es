@@ -7,19 +7,13 @@ test runner.
 The test suite is run multiple times:
 
 1. In a headless browser (Chrome).
-2. In Node.js (v18 for the fetch API).
-3. In multiple old browsers on Browserstack.
-
-### Running tests in Node.js
-
-Running in Node.js requires the fetch API implementation added in v18.
-You can conveniently run the suite with `make testnode` from the project 
-root. Files in the `nodeonly` directory are ignored in web browsers.
+2. In multiple old browsers on Browserstack.
+3. In Node.js (v18 for the fetch API).
 
 ### Running tests in a headless browser
 
-Run `make testbrowser` to run tests in a headless Chrome. This can be 
-combined with Node.js by running `make testbrowser testnode` to get 
+Run `make testwebbrowser` to run tests in a headless Chrome. This can be 
+combined with Node.js by running `make testwebbrowser testwebnode` to get 
 decent coverage quickly. 
 
 ### Running tests in a local browser
@@ -40,5 +34,12 @@ To run these tests locally, you need to sign up on [browserstack.com](https://ww
 and provide your username and access key:
 
 ```bash
-BROWSERSTACK_USERNAME=<username> BROWSERSTACK_ACCESS_KEY=<key> make testbrowserstack
+BROWSERSTACK_USERNAME=<username> BROWSERSTACK_ACCESS_KEY=<key> make testwebbrowserstack
 ```
+
+### Running tests in Node.js
+
+Running in Node.js requires the fetch API implementation added in v18.
+You can conveniently run the suite with `make testwebnode` from the project
+root. 
+

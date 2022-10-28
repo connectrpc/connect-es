@@ -1,0 +1,35 @@
+{
+  "name": "@bufbuild/connect-web-next",
+  "version": "0.3.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufbuild/connect-web.git",
+    "directory": "packages/connect-web-next"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "clean": "rm -rf ./dist/cjs/* ./dist/esm/* ./dist/types/*",
+    "build": "npm run build:cjs && npm run build:esm+types",
+    "build:cjs": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types"
+  },
+  "main": "./dist/cjs/index.js",
+  "type": "module",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/index.js",
+    "types": "./dist/types/index.d.ts"
+  },
+  "dependencies": {
+    "@bufbuild/connect-core": "0.3.0"
+  },
+  "peerDependencies": {
+    "@bufbuild/protobuf": "0.2.0"
+  },
+  "files": [
+    "dist/**/"
+  ]
+}
