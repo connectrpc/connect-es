@@ -12,7 +12,7 @@ BUILD = .tmp/build
 GEN   = .tmp/gen
 CROSSTEST_VERSION := 4f4e96d8fea3ed9473b90a964a5ba429e7ea5649
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
-LICENSE_HEADER_IGNORES := .tmp\/ node_module\/ packages\/connect-web-bench\/src\/gen\/ packages\/connect-web\/dist\/ scripts\/ packages\/connect-web-test\/src\/gen
+LICENSE_IGNORE := .tmp\/ node_module\/ packages\/connect-web-bench\/src\/gen\/ packages\/connect-web\/dist\/ scripts\/ packages\/connect-web-test\/src\/gen packages\/connect-node-test\/src\/gen
 NODE18_VERSION ?= v18.2.0
 NODE18_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE18_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
@@ -25,10 +25,6 @@ node_modules/.bin/protoc-gen-es: node_modules
 $(BIN)/license-header: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@v1.1.0
-
-$(BIN)/git-ls-files-unstaged: Makefile
-	@mkdir -p $(@D)
-	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/git/cmd/git-ls-files-unstaged@v1.1.0
 
 $(BIN)/node18: Makefile
 	@mkdir -p $(@D)
@@ -80,38 +76,38 @@ $(BUILD)/connect-node-test: $(BUILD)/connect-node $(GEN)/connect-node-test $(she
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/example: $(GEN)/example
+$(BUILD)/example: $(GEN)/example $(shell find packages/example/src -name '*.ts') tsconfig.base.json packages/example/tsconfig.json
 	npm run -w packages/example lint
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-core: node_modules/.bin/protoc-gen-es $(shell find packages/connect-core/proto -name '*.proto')
+$(GEN)/connect-core: node_modules/.bin/protoc-gen-es $(shell find packages/connect-core/proto -name '*.proto') Makefile
 	rm -rf packages/connect-core/src/gen/*
 	npm run -w packages/connect-core generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
+$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web Makefile
 	rm -rf packages/connect-web-test/src/gen/*
 	npm run -w packages/connect-web-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
 	npm run -w packages/connect-web-test generate buf.build/bufbuild/eliza
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
+$(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web Makefile
 	rm -rf packages/connect-node-test/src/gen/*
 	npm run -w packages/connect-node-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
 	npm run -w packages/connect-node-test generate buf.build/bufbuild/eliza
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
+$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web Makefile
 	rm -rf packages/connect-web-bench/src/gen/*
 	npm run -w packages/connect-web-bench generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web
+$(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web $(shell find packages/example -name '*.proto')
 	rm -rf packages/example/src/*_pb.ts packages/example/src/*_connectweb.ts
 	npm run -w packages/example generate
 	@mkdir -p $(@D)
@@ -123,7 +119,7 @@ help: ## Describe useful make targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
 
 .PHONY: all
-all: format build test lint bench ## build, test, format, lint, and bench (default)
+all: build test format lint bench ## build, test, format, lint, and bench (default)
 
 .PHONY: clean
 clean: crosstestserverstop ## Delete build artifacts and installed dependencies
@@ -173,10 +169,11 @@ lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all fil
 	npx eslint --max-warnings 0 .
 
 .PHONY: format
-format: node_modules $(BIN)/git-ls-files-unstaged $(BIN)/license-header ## Format all files, adding license headers
+format: node_modules $(BIN)/license-header ## Format all files, adding license headers
 	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --loglevel error
-	$(BIN)/git-ls-files-unstaged | \
-		grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))) | \
+	comm -23 \
+		<(git ls-files --cached --modified --others --no-empty-directory --exclude-standard | sort -u | grep -v $(LICENSE_IGNORE) ) \
+		<(git ls-files --deleted | sort -u) | \
 		xargs $(BIN)/license-header \
 			--license-type "apache" \
 			--copyright-holder "Buf Technologies, Inc." \
