@@ -39,13 +39,13 @@ $(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-core: node_modules tsconfig.base.json packages/connect-core/tsconfig.json $(shell find packages/connect-core/src -name '*.ts')
+$(BUILD)/connect-core: $(GEN)/connect-core node_modules tsconfig.base.json packages/connect-core/tsconfig.json $(shell find packages/connect-core/src -name '*.ts')
 	npm run -w packages/connect-core clean
 	npm run -w packages/connect-core build
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node: $(BUILD)/connect-core node_modules tsconfig.base.json packages/connect-node/tsconfig.json $(shell find packages/connect-node/src -name '*.ts')
+$(BUILD)/connect-node: $(BUILD)/connect-core packages/connect-node/tsconfig.json $(shell find packages/connect-node/src -name '*.ts')
 	npm run -w packages/connect-node clean
 	npm run -w packages/connect-node build
 	@mkdir -p $(@D)
@@ -58,25 +58,25 @@ $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tscon
 	@touch $(@)
 
 # connect-web-next is temporary
-$(BUILD)/connect-web-next: $(BUILD)/connect-core node_modules tsconfig.base.json packages/connect-web-next/tsconfig.json $(shell find packages/connect-web-next/src -name '*.ts')
+$(BUILD)/connect-web-next: $(BUILD)/connect-core packages/connect-web-next/tsconfig.json $(shell find packages/connect-web-next/src -name '*.ts')
 	npm run -w packages/connect-web-next clean
 	npm run -w packages/connect-web-next build
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-web-test: $(BUILD)/connect-web-next $(BUILD)/connect-web $(GEN)/connect-web-test $(shell find packages/connect-web-test/src -name '*.ts') tsconfig.base.json packages/connect-web-test/tsconfig.json
+$(BUILD)/connect-web-test: $(BUILD)/connect-web-next $(BUILD)/connect-web $(GEN)/connect-web-test packages/connect-web-test/tsconfig.json $(shell find packages/connect-web-test/src -name '*.ts')
 	npm run -w packages/connect-web-test clean
 	npm run -w packages/connect-web-test build
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node-test: $(BUILD)/connect-node $(GEN)/connect-node-test $(shell find packages/connect-node-test/src -name '*.ts') tsconfig.base.json packages/connect-node-test/tsconfig.json
+$(BUILD)/connect-node-test: $(BUILD)/connect-node $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
 	npm run -w packages/connect-node-test clean
 	npm run -w packages/connect-node-test build
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/example: $(GEN)/example $(shell find packages/example/src -name '*.ts') tsconfig.base.json packages/example/tsconfig.json
+$(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.json $(shell find packages/example/src -name '*.ts')
 	npm run -w packages/example lint
 	@mkdir -p $(@D)
 	@touch $(@)
