@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-node",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "Apache-2.0",
   "private": true,
   "repository": {
@@ -24,7 +24,7 @@
     "types": "./dist/types/index.d.ts"
   },
   "dependencies": {
-    "@bufbuild/connect-core": "0.3.0",
+    "@bufbuild/connect-core": "0.3.1",
     "@grpc/grpc-js": "^1.7.1"
   },
   "peerDependencies": {
