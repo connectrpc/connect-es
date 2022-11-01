@@ -28,7 +28,7 @@
     "@grpc/grpc-js": "^1.7.1"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "0.2.0"
+    "@bufbuild/protobuf": "0.2.1"
   },
   "files": [
     "dist/**/"
