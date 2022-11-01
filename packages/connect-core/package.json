@@ -29,7 +29,7 @@
     "@bufbuild/protobuf": "0.2.0"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "0.2.0",
+    "@bufbuild/protoc-gen-es": "0.2.1",
     "@types/jasmine": "^4.3.0",
     "jasmine": "^4.4.0"
   },

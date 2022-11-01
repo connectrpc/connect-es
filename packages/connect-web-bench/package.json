@@ -9,7 +9,7 @@
   "dependencies": {
     "@bufbuild/connect-web": "0.3.0",
     "@bufbuild/protobuf": "0.2.0",
-    "@bufbuild/protoc-gen-es": "0.2.0",
+    "@bufbuild/protoc-gen-es": "0.2.1",
     "esbuild": "^0.15.10",
     "google-protobuf": "^3.21.0",
     "grpc-web": "^1.4.1"
