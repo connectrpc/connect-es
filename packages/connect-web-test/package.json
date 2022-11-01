@@ -22,7 +22,7 @@
     "@bufbuild/connect-web-next": "0.3.0",
     "@types/jasmine": "^4.3.0",
     "esbuild": "^0.15.10",
-    "jasmine": "^4.4.0",
+    "jasmine": "^4.5.0",
     "karma": "^6.4.1",
     "karma-browserstack-launcher": "^1.6.0",
     "karma-chrome-launcher": "^3.1.1",
