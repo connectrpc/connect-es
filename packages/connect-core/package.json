@@ -34,6 +34,6 @@
     "jasmine": "^4.4.0"
   },
   "dependencies": {
-    "undici": "^5.11.0"
+    "undici": "^5.12.0"
   }
 }
