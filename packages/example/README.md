@@ -46,6 +46,7 @@ If you prefer JavaScript output, simply remove the two lines with `target=ts`
 
 ## More examples
 
-Head over to the [docs](https://connect.build/docs/web/getting-started) for a 
-tutorial, or take a look at [our examples](https://github.com/bufbuild/connect-web-integration)
-for integration with various frameworks.
+To get started, head over to the [docs](https://connect.build/docs/web/getting-started)
+for a tutorial. You will also find API documentation and best practices there.
+For using connect-web with your favorite framework, take a look at
+[connect-web-integration](https://github.com/bufbuild/connect-web-integration).
