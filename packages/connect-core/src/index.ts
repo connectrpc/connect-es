@@ -29,19 +29,28 @@ export {
   StreamingRequest,
   StreamingConn,
 } from "./interceptor.js";
-export { encodeBinaryHeader, decodeBinaryHeader } from "./http-headers.js";
+export {
+  encodeBinaryHeader,
+  decodeBinaryHeader,
+  appendHeaders,
+} from "./http-headers.js";
 
 // Symbols above should be relevant to end users.
 // Symbols below should only be relevant for other libraries.
 export { runUnary, runStreaming } from "./interceptor.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
 export { codeToString, codeFromString } from "./code.js";
-export { connectErrorFromJson } from "./connect-error-from-json.js";
+export { createMethodUrl } from "./create-method-url.js";
+export { createClientMethodSerializers } from "./create-client-method-serializers.js";
 export {
   createEnvelopeReadableStream,
   EnvelopedMessage,
+  encodeEnvelope,
   encodeEnvelopes,
 } from "./envelope.js";
+export { connectErrorFromJson } from "./connect-error-from-json.js";
+export { connectExpectContentType } from "./connect-expect-content-type.js";
+export { connectCreateRequestHeader } from "./connect-create-request-header.js";
 export {
   connectEndStreamFromJson,
   connectEndStreamFlag,
@@ -49,4 +58,6 @@ export {
 export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
 export { connectTrailerDemux } from "./connect-trailer-demux.js";
 export { grpcWebCodeFromHttpStatus } from "./grpcweb-code-from-http-status.js";
+export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";
+export { grpcWebExpectContentType } from "./grpc-web-expect-content-type.js";
 export { Status as GrpcStatus } from "./gen/grpc/status/status_pb.js";

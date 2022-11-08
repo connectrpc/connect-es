@@ -91,33 +91,37 @@ export function createEnvelopeReadableStream(
   });
 }
 
+/**
+ * Encode a single enveloped message.
+ */
+export function encodeEnvelope(flags: number, data: Uint8Array): Uint8Array {
+  const bytes = new Uint8Array(data.length + 5);
+  bytes.set(data, 5);
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  v.setUint8(0, flags); // first byte is flags
+  v.setUint32(1, data.length); // 4 bytes message length
+  return bytes;
+}
+
+/**
+ * Encode a set of enveloped messages.
+ */
 export function encodeEnvelopes(...envelopes: EnvelopedMessage[]): Uint8Array {
-  const target = new ArrayBuffer(
+  const buffer = new ArrayBuffer(
     envelopes.reduce(
       (previousValue, currentValue) =>
         previousValue + currentValue.data.length + 5,
       0
     )
   );
+  const bytes = new Uint8Array(buffer);
   let offset = 0;
-  for (const m of envelopes) {
-    offset += encodeEnvelope(m, target, offset);
+  for (const e of envelopes) {
+    const v = new DataView(buffer, offset);
+    v.setUint8(0, e.flags); // first byte is flags
+    v.setUint32(1, e.data.length); // 4 bytes message length
+    bytes.set(e.data, offset + 5);
+    offset += e.data.length + 5;
   }
-  return new Uint8Array(target);
-}
-
-function encodeEnvelope(
-  envelope: EnvelopedMessage,
-  target: ArrayBuffer,
-  byteOffset: number
-): number {
-  const len = envelope.data.length + 5;
-  const bytes = new Uint8Array(target, byteOffset, len);
-  bytes[0] = envelope.flags; // first byte is flags
-  for (let l = envelope.data.length, i = 4; i > 0; i--) {
-    bytes[i] = l % 256; // 4 bytes message length
-    l >>>= 8;
-  }
-  bytes.set(envelope.data, 5);
-  return len;
+  return new Uint8Array(buffer);
 }

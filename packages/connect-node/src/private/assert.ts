@@ -12,23 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from "./connect-http2-transport.js";
-export {
-  createCallbackClient,
-  CallbackClient,
-  createPromiseClient,
-  PromiseClient,
-  CallOptions,
-  Transport,
-  ConnectError,
-  connectErrorDetails,
-  connectErrorFromReason,
-  Code,
-  Interceptor,
-  UnaryRequest,
-  UnaryResponse,
-  StreamingRequest,
-  StreamingConn,
-  encodeBinaryHeader,
-  decodeBinaryHeader,
-} from "@bufbuild/connect-core";
+/**
+ * Assert that condition is truthy or throw error (with message)
+ */
+export function assert(condition: unknown, msg?: string): asserts condition {
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- we want the implicit conversion to boolean
+  if (!condition) {
+    throw new Error(msg);
+  }
+}

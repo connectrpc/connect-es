@@ -89,7 +89,7 @@ describe("custom stub transport", () => {
       url: "fake",
       init: {},
       signal: signal ?? new AbortController().signal,
-      requestHeader: new Headers(header),
+      header: new Headers(header),
     };
   }
 

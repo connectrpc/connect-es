@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
@@ -21,9 +21,9 @@ import {
   JsonWriteOptions,
   Message,
   MethodInfo,
-  MethodKind,
   PartialMessage,
   ServiceType,
+  MethodKind,
 } from "@bufbuild/protobuf";
 import type {
   Interceptor,
@@ -33,6 +33,7 @@ import type {
   UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
+  appendHeaders,
   Code,
   connectCodeFromHttpStatus,
   connectEndStreamFlag,
@@ -40,8 +41,12 @@ import {
   ConnectError,
   connectErrorFromJson,
   connectErrorFromReason,
+  connectExpectContentType,
+  connectCreateRequestHeader,
   connectTrailerDemux,
+  createClientMethodSerializers,
   createEnvelopeReadableStream,
+  createMethodUrl,
   encodeEnvelopes,
   EnvelopedMessage,
   runStreaming,
@@ -49,6 +54,7 @@ import {
 } from "@bufbuild/connect-core";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
+import { defer } from "./defer.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -119,77 +125,56 @@ export function createConnectTransport(
       header: HeadersInit | undefined,
       message: PartialMessage<I>
     ): Promise<UnaryResponse<O>> {
+      const { normalize, serialize, parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
+      );
+      const createRequestHeader = connectCreateRequestHeader.bind(
+        null,
+        method.kind,
+        useBinaryFormat
+      );
+      const validateResponse = validateFetchResponse.bind(
+        null,
+        method.kind,
+        useBinaryFormat
+      );
       try {
         return await runUnary<I, O>(
           {
             stream: false,
             service,
             method,
-            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
-              method.name
-            }`,
+            url: createMethodUrl(options.baseUrl, service, method).toString(),
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
               redirect: "error",
               mode: "cors",
             },
-            header: createConnectRequestHeaders(
-              header,
-              timeoutMs,
-              method.kind,
-              useBinaryFormat
-            ),
-            message:
-              message instanceof method.I ? message : new method.I(message),
+            header: createRequestHeader(timeoutMs, header),
+            message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
-          async (unaryRequest: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const response = await fetch(unaryRequest.url, {
-              ...unaryRequest.init,
-              headers: unaryRequest.header,
-              signal: unaryRequest.signal,
-              body: createConnectRequestBody(
-                unaryRequest.message,
-                method.kind,
-                useBinaryFormat,
-                options.jsonOptions,
-                options.binaryOptions
-              ),
+          async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+            const response = await fetch(req.url, {
+              ...req.init,
+              headers: req.header,
+              signal: req.signal,
+              body: serialize(req.message),
             });
-            const responseType = response.headers.get("Content-Type") ?? "";
-            if (response.status != 200) {
-              if (responseType == "application/json") {
-                throw connectErrorFromJson(
-                  (await response.json()) as JsonValue,
-                  mergeHeaders(...connectTrailerDemux(response.headers))
-                );
-              }
-              throw new ConnectError(
-                `HTTP ${response.status} ${response.statusText}`,
-                connectCodeFromHttpStatus(response.status)
-              );
-            }
-            expectContentType(responseType, false, useBinaryFormat);
-
+            await validateResponse(response);
             const [demuxedHeader, demuxedTrailer] = connectTrailerDemux(
               response.headers
             );
-
             return <UnaryResponse<O>>{
               stream: false,
               service,
               method,
               header: demuxedHeader,
-              message: useBinaryFormat
-                ? method.O.fromBinary(
-                    new Uint8Array(await response.arrayBuffer()),
-                    options.binaryOptions
-                  )
-                : method.O.fromJson(
-                    (await response.json()) as JsonValue,
-                    options.jsonOptions
-                  ),
+              message: parse(await response.arrayBuffer()),
               trailer: demuxedTrailer,
             };
           },
@@ -210,14 +195,28 @@ export function createConnectTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined
     ): Promise<StreamingConn<I, O>> {
+      const { normalize, serialize, parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
+      );
+      const createRequestHeader = connectCreateRequestHeader.bind(
+        null,
+        method.kind,
+        useBinaryFormat
+      );
+      const validateResponse = validateFetchResponse.bind(
+        null,
+        method.kind,
+        useBinaryFormat
+      );
       return runStreaming<I, O>(
         {
           stream: true,
           service,
           method,
-          url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
-            method.name
-          }`,
+          url: createMethodUrl(options.baseUrl, service, method).toString(),
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",
@@ -225,81 +224,62 @@ export function createConnectTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          requestHeader: createConnectRequestHeaders(
-            header,
-            timeoutMs,
-            method.kind,
-            useBinaryFormat
-          ),
+          header: createRequestHeader(timeoutMs, header),
         },
-        async (init) => {
-          const pendingSend: I[] = [];
+        async (req) => {
+          const pendingSend: EnvelopedMessage[] = [];
           const responseHeader = defer<Headers>();
           const responseReader =
             defer<ReadableStreamDefaultReader<EnvelopedMessage>>();
           const responseTrailer = defer<Headers>();
           let endStreamReceived = false;
           const conn: StreamingConn<I, O> = {
-            ...init,
+            stream: true,
+            service,
+            method,
             responseHeader,
             responseTrailer,
             closed: false,
             send(message: PartialMessage<I>): Promise<void> {
               if (this.closed) {
                 return Promise.reject(
-                  new ConnectError("cannot send, request stream already closed")
+                  new ConnectError("cannot send, stream is already closed")
                 );
               }
-              pendingSend.push(
-                message instanceof method.I ? message : new method.I(message)
-              );
+              pendingSend.push({
+                flags: 0b00000000,
+                data: serialize(normalize(message)),
+              });
               return Promise.resolve();
             },
             close(): Promise<void> {
               if (this.closed) {
                 return Promise.reject(
-                  new ConnectError("cannot send, request stream already closed")
+                  new ConnectError("cannot close, stream is already closed")
                 );
               }
               this.closed = true;
-              fetch(init.url, {
-                ...init.init,
-                headers: init.requestHeader,
-                signal: init.signal,
-                body: createStreamingConnectRequestBody(
-                  pendingSend,
-                  useBinaryFormat,
-                  options.jsonOptions,
-                  options.binaryOptions
-                ),
-              })
-                .then((response) => {
-                  if (response.status != 200) {
-                    throw new ConnectError(
-                      `HTTP ${response.status} ${response.statusText}`,
-                      connectCodeFromHttpStatus(response.status)
-                    );
-                  }
-                  expectContentType(
-                    response.headers.get("Content-Type"),
-                    true,
-                    useBinaryFormat
-                  );
-                  if (response.body === null) {
-                    throw "missing response body";
-                  }
-                  responseHeader.resolve(response.headers);
-                  const reader = createEnvelopeReadableStream(
-                    response.body
-                  ).getReader();
-                  responseReader.resolve(reader);
-                })
-                .catch((reason) => {
-                  const e = connectErrorFromReason(reason);
-                  responseHeader.reject(e);
-                  responseReader.reject(e);
-                  responseTrailer.reject(e);
+              (async () => {
+                const response = await fetch(req.url, {
+                  ...req.init,
+                  headers: req.header,
+                  signal: req.signal,
+                  body: encodeEnvelopes(...pendingSend),
                 });
+                await validateResponse(response);
+                responseHeader.resolve(response.headers);
+                if (response.body === null) {
+                  throw "missing response body";
+                }
+                responseReader.resolve(
+                  createEnvelopeReadableStream(response.body).getReader()
+                );
+              })().catch((reason) => {
+                const e = connectErrorFromReason(reason);
+                responseHeader.reject(e);
+                responseReader.reject(e);
+                responseTrailer.reject(e);
+              });
               return Promise.resolve();
             },
             async read(): Promise<ReadableStreamReadResultLike<O>> {
@@ -332,15 +312,7 @@ export function createConnectTransport(
                 }
                 return {
                   done: false,
-                  value: useBinaryFormat
-                    ? method.O.fromBinary(
-                        result.value.data,
-                        options.binaryOptions
-                      )
-                    : method.O.fromJsonString(
-                        new TextDecoder().decode(result.value.data),
-                        options.jsonOptions
-                      ),
+                  value: parse(result.value.data),
                 };
               } catch (e) {
                 throw connectErrorFromReason(e);
@@ -355,143 +327,23 @@ export function createConnectTransport(
   };
 }
 
-/**
- * Creates a body for a Connect request. Supports only requests with a single
- * message because of browser API limitations, but applies the enveloping
- * required for server-streaming requests.
- */
-function createConnectRequestBody<T extends Message<T>>(
-  message: T,
+async function validateFetchResponse(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
-  jsonOptions: Partial<JsonWriteOptions> | undefined,
-  binaryOptions: Partial<BinaryWriteOptions> | undefined
-): BodyInit {
-  const encoded = useBinaryFormat
-    ? message.toBinary(binaryOptions)
-    : message.toJsonString(jsonOptions);
-  if (methodKind == MethodKind.Unary) {
-    return encoded;
-  }
-  const data =
-    typeof encoded == "string" ? new TextEncoder().encode(encoded) : encoded;
-  return encodeEnvelopes(
-    {
-      data,
-      flags: 0b00000000,
-    },
-    {
-      data: new Uint8Array(0),
-      flags: connectEndStreamFlag,
+  response: Response
+): Promise<void> {
+  const responseType = response.headers.get("Content-Type") ?? "";
+  if (response.status != 200) {
+    if (responseType == "application/json") {
+      throw connectErrorFromJson(
+        (await response.json()) as JsonValue,
+        appendHeaders(...connectTrailerDemux(response.headers))
+      );
     }
-  );
-}
-
-/**
- * Creates a body for a Connect request. Supports only requests with a single
- * message because of browser API limitations, but applies the enveloping
- * required for server-streaming requests.
- */
-function createStreamingConnectRequestBody<T extends Message<T>>(
-  messages: T[],
-  useBinaryFormat: boolean,
-  jsonOptions: Partial<JsonWriteOptions> | undefined,
-  binaryOptions: Partial<BinaryWriteOptions> | undefined
-): BodyInit {
-  const textEncode = new TextEncoder();
-  const messageEnvelopes = messages
-    .map((m) =>
-      useBinaryFormat
-        ? m.toBinary(binaryOptions)
-        : textEncode.encode(m.toJsonString(jsonOptions))
-    )
-    .map((data) => ({
-      data,
-      flags: 0b00000000,
-    }));
-  return encodeEnvelopes(...messageEnvelopes, {
-    data: new Uint8Array(0),
-    flags: connectEndStreamFlag,
-  });
-}
-
-/**
- * Creates headers for a Connect request.
- */
-function createConnectRequestHeaders(
-  headers: HeadersInit | undefined,
-  timeoutMs: number | undefined,
-  methodKind: MethodKind,
-  useBinaryFormat: boolean
-): Headers {
-  const result = new Headers(headers ?? {});
-  let type = "application/";
-  if (methodKind != MethodKind.Unary) {
-    type += "connect+";
-  }
-  type += useBinaryFormat ? "proto" : "json";
-  result.set("Content-Type", type);
-  if (timeoutMs !== undefined) {
-    result.set("Connect-Timeout-Ms", `${timeoutMs}`);
-  }
-  return result;
-}
-
-/**
- * Asserts a valid Connect Content-Type response header. Raises a ConnectError
- * otherwise.
- */
-function expectContentType(
-  contentType: string | null,
-  stream: boolean,
-  binaryFormat: boolean
-): void {
-  const match = contentType?.match(/^application\/(connect\+)?(json|proto)$/);
-  const gotBinaryFormat = match && match[2] == "proto";
-  if (!match || stream !== !!match[1] || binaryFormat !== gotBinaryFormat) {
     throw new ConnectError(
-      `unexpected response content type ${String(contentType)}`,
-      Code.Internal
+      `HTTP ${response.status} ${response.statusText}`,
+      connectCodeFromHttpStatus(response.status)
     );
   }
+  connectExpectContentType(methodKind, useBinaryFormat, responseType);
 }
-
-/**
- * Create a union of several Headers objects, by appending all fields from all
- * inputs to a single Headers object.
- */
-function mergeHeaders(...headers: Headers[]): Headers {
-  const h = new Headers();
-  for (const e of headers) {
-    e.forEach((value, key) => {
-      h.append(key, value);
-    });
-  }
-  return h;
-}
-
-function defer<T>(): Promise<T> & Ctrl<T> {
-  let res: ((v: T | PromiseLike<T>) => void) | undefined = undefined;
-  let rej: ((reason?: unknown) => void) | undefined;
-  const p = new Promise<T>((resolve, reject) => {
-    res = resolve;
-    rej = reject;
-  });
-  void p.catch(() => {
-    //
-  });
-  const c: Ctrl<T> = {
-    resolve(v) {
-      res?.(v);
-    },
-    reject(reason) {
-      rej?.(reason);
-    },
-  };
-  return Object.assign(p, c);
-}
-
-type Ctrl<T> = {
-  resolve(v: T | PromiseLike<T>): void;
-  reject(reason?: unknown): void;
-};

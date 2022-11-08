@@ -49,9 +49,12 @@ import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
  * invocation. In an array of interceptors, the interceptor at the end of
  * the array is applied first.
  */
-export type Interceptor =
-  | ((next: UnaryFn) => UnaryFn)
-  | ((next: StreamingFn) => StreamingFn);
+export type Interceptor = (next: AnyFn) => AnyFn;
+
+// TODO update docs
+type AnyFn = (
+  req: UnaryRequest | StreamingRequest
+) => Promise<UnaryResponse | StreamingConn>;
 
 /**
  * UnaryFn represents the client-side invocation of a unary RPC - a method
@@ -197,50 +200,30 @@ export interface StreamingRequest<
   /**
    * Headers that will be sent along with the request.
    */
-  readonly requestHeader: Headers;
+  readonly header: Headers;
 }
 
 // TODO update docs
 export interface StreamingConn<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
-> extends StreamingRequest<I, O> {
-  // /**
-  //  * The `stream` property discriminates between UnaryRequest and
-  //  * other request types that may be added to this API in the future.
-  //  * TODO update docs
-  //  */
-  // readonly stream: true;
-  //
-  // /**
-  //  * Metadata related to the service that is being called.
-  //  */
-  // readonly service: ServiceType;
-  //
-  // /**
-  //  * Metadata related to the service method that is being called.
-  //  */
-  // readonly method: MethodInfo<I, AnyMessage>;
-  //
-  // /**
-  //  * The URL the request is going to hit.
-  //  */
-  // readonly url: string;
-  //
-  // /**
-  //  * Optional parameters to the fetch API.
-  //  */
-  // readonly init: Exclude<RequestInit, "body" | "headers" | "signal">;
-  //
-  // /**
-  //  * The AbortSignal for the current call.
-  //  */
-  // readonly signal: AbortSignal;
-  //
-  // /**
-  //  * Headers that will be sent along with the request.
-  //  */
-  // readonly requestHeader: Headers;
+> {
+  /**
+   * The `stream` property discriminates between UnaryRequest and
+   * other request types that may be added to this API in the future.
+   * TODO update docs
+   */
+  readonly stream: true;
+
+  /**
+   * Metadata related to the service that is being called.
+   */
+  readonly service: ServiceType;
+
+  /**
+   * Metadata related to the service method that is being called.
+   */
+  readonly method: MethodInfo<I, O>;
 
   // TODO update docs
   send(message: PartialMessage<I>): Promise<void>;
@@ -311,12 +294,12 @@ export function runUnary<I extends Message<I>, O extends Message<O>>(
  * function is only used when implementing a Transport.
  */
 export function runStreaming<I extends Message<I>, O extends Message<O>>(
-  init: StreamingRequest<I, O>,
+  req: StreamingRequest<I, O>,
   next: StreamingFn<I, O>,
   interceptors?: Interceptor[]
 ): Promise<StreamingConn<I, O>> {
   if (interceptors) {
     next = applyInterceptors(next, interceptors);
   }
-  return next(init);
+  return next(req);
 }
