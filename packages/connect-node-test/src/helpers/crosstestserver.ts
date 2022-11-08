@@ -13,9 +13,7 @@
 // limitations under the License.
 
 import type { Transport } from "@bufbuild/connect-core";
-import { createGrpcTransport } from "@bufbuild/connect-node";
-import * as tls from "tls";
-import * as grpc from "@grpc/grpc-js";
+import { createConnectHttp2Transport } from "@bufbuild/connect-node";
 
 // The following servers are available through crosstests:
 //
@@ -38,16 +36,17 @@ export const crosstestTransports: Record<
   //     ...options,
   //     baseUrl,
   //   }),
-  "gRPC transport": (options) =>
-    createGrpcTransport({
+  "connect Node.js HTTP2 transport with binary": (options) =>
+    createConnectHttp2Transport({
       ...options,
-      address: baseUrl.substring("https://".length),
-      channelCredentials: grpc.ChannelCredentials.createFromSecureContext(
-        tls.createSecureContext({
-          cert: clientCert,
-          key: clientKey,
-        })
-      ),
+      baseUrl,
+      useBinaryFormat: true,
+    }),
+  "connect Node.js HTTP2 transport with JSON": (options) =>
+    createConnectHttp2Transport({
+      ...options,
+      baseUrl,
+      useBinaryFormat: false,
     }),
 };
 
