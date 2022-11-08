@@ -60,4 +60,8 @@ export { connectTrailerDemux } from "./connect-trailer-demux.js";
 export { grpcWebCodeFromHttpStatus } from "./grpcweb-code-from-http-status.js";
 export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";
 export { grpcWebExpectContentType } from "./grpc-web-expect-content-type.js";
+export {
+  grpcWebTrailerParse,
+  grpcWebTrailerSerialize,
+} from "./grpc-web-trailer.js";
 export { Status as GrpcStatus } from "./gen/grpc/status/status_pb.js";
