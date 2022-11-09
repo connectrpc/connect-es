@@ -32,7 +32,7 @@ export interface Transport {
    * responds with a single output message.
    */
   unary<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
-    service: ServiceType,
+    service: Pick<ServiceType, 'typeName'>,
     method: MethodInfo<I, O>,
     signal: AbortSignal | undefined,
     timeoutMs: number | undefined,
@@ -48,7 +48,7 @@ export interface Transport {
     I extends Message<I> = AnyMessage,
     O extends Message<O> = AnyMessage
   >(
-    service: ServiceType,
+    service: Pick<ServiceType, 'typeName'>,
     method: MethodInfo<I, O>,
     signal: AbortSignal | undefined,
     timeoutMs: number | undefined,
