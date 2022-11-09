@@ -94,7 +94,7 @@ export function createGrpcWebTransport(
       I extends Message<I> = AnyMessage,
       O extends Message<O> = AnyMessage
     >(
-      service: Pick<ServiceType, 'typeName'>,
+      service: Pick<ServiceType, "typeName">,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
@@ -195,7 +195,7 @@ export function createGrpcWebTransport(
       I extends Message<I> = AnyMessage,
       O extends Message<O> = AnyMessage
     >(
-      service: ServiceType,
+      service: Pick<ServiceType, "typeName">,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,

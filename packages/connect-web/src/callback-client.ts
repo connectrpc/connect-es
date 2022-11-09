@@ -85,7 +85,7 @@ type UnaryFn<I extends Message<I>, O extends Message<O>> = (
 
 function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   transport: Transport,
-  service: ServiceType,
+  service: Pick<ServiceType, "typeName">,
   method: MethodInfo<I, O>
 ): UnaryFn<I, O> {
   return function (requestMessage, callback, options) {
@@ -132,7 +132,7 @@ type ServerStreamingFn<I extends Message, O extends Message> = (
 
 function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
   transport: Transport,
-  service: ServiceType,
+  service: Pick<ServiceType, "typeName">,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
   return function (requestMessage, onResponse, onClose, options) {

@@ -95,7 +95,7 @@ export interface UnaryRequest<I extends Message<I> = AnyMessage> {
   /**
    * Metadata related to the service that is being called.
    */
-  readonly service: Pick<ServiceType, 'typeName'>;
+  readonly service: Pick<ServiceType, "typeName">;
 
   /**
    * Metadata related to the service method that is being called.
@@ -142,7 +142,7 @@ export interface UnaryResponse<O extends Message<O> = AnyMessage> {
   /**
    * Metadata related to the service that is being called.
    */
-  readonly service: Pick<ServiceType, 'typeName'>;
+  readonly service: Pick<ServiceType, "typeName">;
 
   /**
    * Metadata related to the service method that is being called.
@@ -179,7 +179,7 @@ export interface StreamResponse<O extends Message<O> = AnyMessage> {
   /**
    * Metadata related to the service that is being called.
    */
-  readonly service: ServiceType;
+  readonly service: Pick<ServiceType, "typeName">;
 
   /**
    * Metadata related to the service method that is being called.
