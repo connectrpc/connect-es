@@ -42,6 +42,7 @@ import {
   grpcWebCodeFromHttpStatus,
   grpcWebCreateRequestHeader,
   grpcWebExpectContentType,
+  grpcWebTrailerParse,
   runStreaming,
   runUnary,
   StreamingConn,
@@ -160,7 +161,7 @@ export function createGrpcWebTransport(
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
               validateGrpcStatus(
-                parseGrpcWebTrailer(messageOrTrailerResult.value.data)
+                grpcWebTrailerParse(messageOrTrailerResult.value.data)
               );
               // At this point, we received trailers only, but the trailers did
               // not have an error status code.
@@ -174,7 +175,7 @@ export function createGrpcWebTransport(
             if (trailerResult.value.flags !== trailerFlag) {
               throw "missing trailer";
             }
-            const trailer = parseGrpcWebTrailer(trailerResult.value.data);
+            const trailer = grpcWebTrailerParse(trailerResult.value.data);
             validateGrpcStatus(trailer);
             const eofResult = await reader.read();
             if (!eofResult.done) {
@@ -304,7 +305,7 @@ export function createGrpcWebTransport(
                 }
                 if ((result.value.flags & trailerFlag) === trailerFlag) {
                   endStreamReceived = true;
-                  const trailer = parseGrpcWebTrailer(result.value.data);
+                  const trailer = grpcWebTrailerParse(result.value.data);
                   validateGrpcStatus(trailer);
                   responseTrailer.resolve(trailer);
                   return {
@@ -382,21 +383,4 @@ function validateGrpcStatus(headerOrTrailer: Headers) {
       headerOrTrailer
     );
   }
-}
-
-function parseGrpcWebTrailer(data: Uint8Array): Headers {
-  const headers = new Headers();
-  const lines = String.fromCharCode(...data).split("\r\n");
-  for (const line of lines) {
-    if (line === "") {
-      continue;
-    }
-    const i = line.indexOf(":");
-    if (i > 0) {
-      const name = line.substring(0, i).trim();
-      const value = line.substring(i + 1).trim();
-      headers.append(name, value);
-    }
-  }
-  return headers;
 }
