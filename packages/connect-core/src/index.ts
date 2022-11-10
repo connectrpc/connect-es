@@ -49,6 +49,7 @@ export {
   encodeEnvelopes,
 } from "./envelope.js";
 export { connectErrorFromJson } from "./connect-error-from-json.js";
+export { connectErrorToJson } from "./connect-error-to-json.js";
 export {
   connectExpectContentType,
   connectParseContentType,
@@ -59,6 +60,7 @@ export {
   connectEndStreamFlag,
 } from "./connect-end-stream.js";
 export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
+export { connectCodeToHttpStatus } from "./connect-code-to-http-status.js";
 export { connectTrailerDemux } from "./connect-trailer-demux.js";
 export { grpcWebCodeFromHttpStatus } from "./grpcweb-code-from-http-status.js";
 export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";

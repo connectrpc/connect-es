@@ -362,7 +362,10 @@ function validateGrpcStatus(headerOrTrailer: Headers) {
       status.code,
       headerOrTrailer
     );
-    error.details.push(...status.details);
+    error.details = status.details.map((any) => ({
+      type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
+      value: any.value,
+    }));
     throw error;
   }
   const grpcStatus = headerOrTrailer.get("grpc-status");
