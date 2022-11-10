@@ -42,7 +42,7 @@ export function connectErrorFromJson(
   if (message != null && typeof message !== "string") {
     throw newParseError(jsonValue.code, ".message");
   }
-  const error = new ConnectError(message ?? "", code, undefined, metadata);
+  const error = new ConnectError(message ?? "", code, metadata);
   if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
     for (const detail of jsonValue.details) {
       if (
@@ -50,14 +50,16 @@ export function connectErrorFromJson(
         typeof detail != "object" ||
         Array.isArray(detail) ||
         typeof detail.type != "string" ||
-        typeof detail.value != "string"
+        typeof detail.value != "string" ||
+        ("debug" in detail && typeof detail.debug != "object")
       ) {
         throw newParseError(detail, `.details`);
       }
       try {
         error.details.push({
-          typeUrl: "type.googleapis.com/" + detail.type,
+          type: detail.type,
           value: protoBase64.dec(detail.value),
+          debug: detail.debug,
         });
       } catch (e) {
         throw newParseError(e, `.details`, false);

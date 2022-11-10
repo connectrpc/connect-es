@@ -91,9 +91,6 @@ describe("connectErrorFromJson()", () => {
     it("adds to raw detail", () => {
       const error = connectErrorFromJson(json);
       expect(error.details.length).toBe(1);
-      expect(error.details[0]?.typeUrl).toBe(
-        "type.googleapis.com/handwritten.ErrorDetail"
-      );
     });
     it("works with connectErrorDetails()", () => {
       const error = connectErrorFromJson(json);

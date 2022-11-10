@@ -18,6 +18,7 @@ import {
   AnyMessage,
   createRegistry,
   IMessageTypeRegistry,
+  JsonValue,
   Message,
   MessageType,
 } from "@bufbuild/protobuf";
@@ -47,10 +48,13 @@ export class ConnectError extends Error {
   readonly metadata: Headers;
 
   /**
-   * When an error is parsed from the wire, error details are stored in
-   * this property. They can be retrieved using connectErrorDetails().
+   * When an error is parsed from the wire, incoming error details are stored
+   * in this property. They can be retrieved using connectErrorDetails().
+   *
+   * When an error is constructed to be sent over the wire, outgoing error
+   * details are stored in this property as well.
    */
-  details: Pick<Any, "typeUrl" | "value">[];
+  details: (Message | IncomingDetail)[];
 
   /**
    * The error message, but without a status code in front.
@@ -63,41 +67,34 @@ export class ConnectError extends Error {
   override name = "ConnectError";
 
   /**
-   * Create a new ConnectError. If no code is provided, code "unknown" is
-   * used.
+   * Create a new ConnectError.
+   * If no code is provided, code "unknown" is used.
+   * Outgoing details are only relevant for the server side - a service may
+   * raise an error with details, and it is up to the protocol implementation
+   * to encode and send the details along with error.
    */
-  constructor(message: string, code?: Code, metadata?: HeadersInit);
-  /**
-   * @deprecated We do not support providing error details in the constructor.
-   * This signature was left here by accident, and will be removed in the next
-   * release.
-   */
-  constructor(
-    message: string,
-    code?: Code,
-    details?: AnyMessage[],
-    metadata?: HeadersInit
-  );
   constructor(
     message: string,
     code: Code = Code.Unknown,
-    detailsOrMetadata?: AnyMessage[] | HeadersInit,
-    metadata?: HeadersInit
+    metadata?: HeadersInit,
+    outgoingDetails?: Message[]
   ) {
     super(createMessage(message, code));
     // see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html#example
     Object.setPrototypeOf(this, new.target.prototype);
     this.rawMessage = message;
     this.code = code;
-    // TODO once we remove the deprecated constructor, this can become `new Headers(metadata ?? {})`
-    const metadataInit =
-      metadata ??
-      (Array.isArray(detailsOrMetadata) ? undefined : detailsOrMetadata) ??
-      {};
-    this.metadata = new Headers(metadataInit);
-    this.details = [];
+    this.metadata = new Headers(metadata ?? {});
+    this.details = outgoingDetails ?? [];
   }
 }
+
+/**
+ * An incoming detail is basically a google.protobuf.Any, but it includes an
+ * optional JSON representation in the "debug" key, and stores a type name
+ * instead of a type URL.
+ */
+type IncomingDetail = { type: string; value: Uint8Array; debug?: JsonValue };
 
 /**
  * Retrieve error details from a ConnectError. On the wire, error details are
@@ -125,17 +122,25 @@ export function connectErrorDetails(
   typeOrRegistry: MessageType | IMessageTypeRegistry,
   ...moreTypes: MessageType[]
 ): AnyMessage[] {
-  const typeRegistry =
-    "typeName" in typeOrRegistry
-      ? createRegistry(typeOrRegistry, ...moreTypes)
-      : typeOrRegistry;
+  const types: MessageType[] =
+    "typeName" in typeOrRegistry ? [typeOrRegistry, ...moreTypes] : [];
+  const registry =
+    "typeName" in typeOrRegistry ? createRegistry(...types) : typeOrRegistry;
   const details: AnyMessage[] = [];
   for (const data of error.details) {
+    if (data instanceof Message) {
+      if (registry.findMessage(data.getType().typeName)) {
+        details.push(data);
+      }
+      continue;
+    }
     try {
-      const any = new Any(data);
-      const name = any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1);
-      const type = typeRegistry.findMessage(name);
+      const type = registry.findMessage(data.type);
       if (type) {
+        const any = new Any({
+          typeUrl: `type.googleapis.com/${data.type}`,
+          value: data.value,
+        });
         const message = new type();
         if (any.unpackTo(message)) {
           details.push(message);
