@@ -38,10 +38,10 @@ import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
 import {
   nodeHeaderToWebHeader,
-  webHeadersToNodeHeaders,
-} from "./web-headers-to-node-headers.js";
+  webHeaderToNodeHeaders,
+} from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
-import { defer } from "./defer.js";
+import { defer } from "./private/defer.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -134,8 +134,8 @@ export function createConnectHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            // We create a new session for every request - we should share a connection instead,
-            // and offer control over connection state via methods / properties on the transport.
+            // TODO We create a new session for every request - we should share a connection instead,
+            //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session = http2.connect(
               // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
               // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
@@ -144,7 +144,7 @@ export function createConnectHttp2Transport(
             );
             const stream = session.request(
               {
-                ...webHeadersToNodeHeaders(req.header),
+                ...webHeaderToNodeHeaders(req.header),
                 ":method": "POST",
                 ":path": new URL(req.url).pathname,
               },
@@ -224,8 +224,8 @@ export function createConnectHttp2Transport(
         },
         async (req) => {
           const url = createMethodUrl(options.baseUrl, service, method);
-          // We create a new session for every request - we should share a connection instead,
-          // and offer control over connection state via methods / properties on the transport.
+          // TODO We create a new session for every request - we should share a connection instead,
+          //      and offer control over connection state via methods / properties on the transport.
           const session: http2.ClientHttp2Session = http2.connect(
             // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
             // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
@@ -234,7 +234,7 @@ export function createConnectHttp2Transport(
           );
           const stream = session.request(
             {
-              ...webHeadersToNodeHeaders(req.header),
+              ...webHeaderToNodeHeaders(req.header),
               ":method": "POST",
               ":path": url.pathname,
             },

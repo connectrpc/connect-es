@@ -12,25 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from "./connect-http2-transport.js";
-export { createServiceHandlers } from "./create-service-handlers.js";
-export { mergeHandlers } from "./merge-handlers.js";
-export {
-  createCallbackClient,
-  CallbackClient,
-  createPromiseClient,
-  PromiseClient,
-  CallOptions,
-  Transport,
-  ConnectError,
-  connectErrorDetails,
-  connectErrorFromReason,
-  Code,
-  Interceptor,
-  UnaryRequest,
-  UnaryResponse,
-  StreamingRequest,
-  StreamingConn,
-  encodeBinaryHeader,
-  decodeBinaryHeader,
-} from "@bufbuild/connect-core";
+/**
+ * In unary RPCs, Connect transports trailing metadata as response header
+ * fields, prefixed with "trailer-".
+ *
+ * This function muxes a header and a trailer into a single Headers object.
+ */
+export function connectTrailerMux(header: Headers, trailer: Headers): Headers {
+  const h = new Headers(header);
+  trailer.forEach((value, key) => {
+    h.set(`trailer-${key}`, value);
+  });
+  return h;
+}

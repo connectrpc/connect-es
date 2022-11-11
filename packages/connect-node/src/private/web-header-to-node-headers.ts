@@ -28,7 +28,7 @@ export function nodeHeaderToWebHeader(
   return header;
 }
 
-export function webHeadersToNodeHeaders(
+export function webHeaderToNodeHeaders(
   headersInit: HeadersInit
 ): http.OutgoingHttpHeaders {
   const o = Object.create(null) as http.OutgoingHttpHeaders;
