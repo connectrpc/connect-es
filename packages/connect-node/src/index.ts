@@ -13,8 +13,8 @@
 // limitations under the License.
 
 export * from "./connect-http2-transport.js";
-export { createServiceHandlers } from "./create-service-handlers.js";
 export { mergeHandlers } from "./merge-handlers.js";
+export { createHandler, createHandlers } from "./create-handler.js";
 export {
   createCallbackClient,
   CallbackClient,

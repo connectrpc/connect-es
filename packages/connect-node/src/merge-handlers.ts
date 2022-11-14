@@ -2,17 +2,6 @@ import type * as http from "http";
 import type * as http2 from "http2";
 import type { Handler } from "./handler.js";
 
-type NodeHandler = (
-  request: http.IncomingMessage | http2.Http2ServerRequest,
-  response: http.ServerResponse | http2.Http2ServerResponse
-) => void;
-
-interface MergeHandlersOptions {
-  // e.g. "/something"
-  requestPathPrefix?: string;
-  fallback?: NodeHandler;
-}
-
 export function mergeHandlers(
   handlers: Handler[],
   options?: MergeHandlersOptions
@@ -35,4 +24,15 @@ export function mergeHandlers(
     }
     fallback(request, response);
   };
+}
+
+type NodeHandler = (
+  request: http.IncomingMessage | http2.Http2ServerRequest,
+  response: http.ServerResponse | http2.Http2ServerResponse
+) => void;
+
+interface MergeHandlersOptions {
+  // e.g. "/something"
+  requestPathPrefix?: string;
+  fallback?: NodeHandler;
 }

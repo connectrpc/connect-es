@@ -1,14 +1,14 @@
 import type {
+  AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
   JsonWriteOptions,
   Message,
+  MessageType,
+  MethodIdempotency,
   MethodInfo,
-  MethodInfoBiDiStreaming,
-  MethodInfoClientStreaming,
-  MethodInfoServerStreaming,
-  MethodInfoUnary,
+  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
@@ -22,6 +22,9 @@ export interface HandlerOptions {
 }
 
 // TODO document
+/**
+ * Handler handles a Node.js request for one specific RPC.
+ */
 export type Handler = ((
   req: http.IncomingMessage | http2.Http2ServerRequest,
   res: http.ServerResponse | http2.Http2ServerResponse
@@ -42,48 +45,49 @@ export interface HandlerContext {
 /**
  * TODO document
  */
-export type ServiceImplementation<T extends ServiceType> = {
-  [P in keyof T["methods"]]:
-  T["methods"][P] extends MethodInfoUnary<infer I, infer O> ? ServerUnaryFn<I, O>
-    : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? ServerServerStreamingFn<I, O>
-      : T["methods"][P] extends MethodInfoClientStreaming<infer I, infer O> ? ServerClientStreamingFn<I, O>
-        : T["methods"][P] extends MethodInfoBiDiStreaming<infer I, infer O> ? ServerBiDiStreamingFn<I, O>
-          : never;
+export type ServiceImpl<T extends ServiceType> = {
+  [P in keyof T["methods"]]: MethodImpl<T["methods"][P]>;
 };
 
 // prettier-ignore
-export type MethodImplementation<M extends MethodInfo> =
-  M extends MethodInfoUnary<infer I, infer O> ? ServerUnaryFn<I, O>
-    : M extends MethodInfoServerStreaming<infer I, infer O> ? ServerClientStreamingFn<I, O>
-      : M extends MethodInfoClientStreaming<infer I, infer O> ? ServerServerStreamingFn<I, O>
-        : M extends MethodInfoBiDiStreaming<infer I, infer O> ? ServerBiDiStreamingFn<I, O>
-          : never;
+/**
+ * TODO document
+ */
+export type MethodImpl<M extends MI> =
+    M extends MI<infer I, infer O, MethodKind.Unary>           ? UnaryImpl<I, O>
+  : M extends MI<infer I, infer O, MethodKind.ServerStreaming> ? ServerStreamingImpl<I, O>
+  : M extends MI<infer I, infer O, MethodKind.ClientStreaming> ? ClientStreamingImpl<I, O>
+  : M extends MI<infer I, infer O, MethodKind.BiDiStreaming>   ? BiDiStreamingImpl<I, O>
+  : never;
 
-export type ServerUnaryFn<I extends Message<I>, O extends Message<O>> = (
+interface MI<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage,
+  K extends MethodKind = MethodKind
+> {
+  readonly kind: K;
+  readonly name: string;
+  readonly I: MessageType<I>;
+  readonly O: MessageType<O>;
+  readonly idempotency?: MethodIdempotency;
+}
+
+export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
   context: HandlerContext
 ) => Promise<O> | Promise<PartialMessage<O>> | O | PartialMessage<O>;
 
-export type ServerClientStreamingFn<
-  I extends Message<I>,
-  O extends Message<O>
-> = (
+export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
   context: HandlerContext
 ) => Promise<O> | Promise<PartialMessage<O>>;
 
-export type ServerServerStreamingFn<
-  I extends Message<I>,
-  O extends Message<O>
-> = (
+export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
   context: HandlerContext
 ) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;
 
-export type ServerBiDiStreamingFn<
-  I extends Message<I>,
-  O extends Message<O>
-> = (
+export type BiDiStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
   context: HandlerContext
 ) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;

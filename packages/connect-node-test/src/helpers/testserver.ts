@@ -4,7 +4,8 @@ import * as http from "http";
 import {
   Code,
   ConnectError,
-  createServiceHandlers,
+  createConnectHttp2Transport,
+  createHandlers,
   mergeHandlers,
   Transport,
 } from "@bufbuild/connect-node";
@@ -14,7 +15,7 @@ import { interop } from "./interop.js";
 
 /* eslint-disable @typescript-eslint/require-await,require-yield */
 
-const handlers = createServiceHandlers(
+const handlers = createHandlers(
   TestService,
   {
     emptyCall(/*request*/) {
@@ -78,8 +79,9 @@ const handlers = createServiceHandlers(
 );
 
 export function createTestServers() {
-  let http2Server: http2.Http2Server | undefined;
-  let httpServer: http.Server | undefined;
+  // TODO http2 server with TLS and allow http1
+  let nodeH2cServer: http2.Http2Server | undefined;
+  let nodeHttpServer: http.Server | undefined;
 
   function getPort(
     server:
@@ -96,28 +98,30 @@ export function createTestServers() {
   }
 
   const transports: typeof crosstestTransports = {
-    // TODO need http/2 session management so we can shut down the server cleanly
-    // "connect Node.js HTTP2 transport with binary": (options) => createConnectHttp2Transport({
-    //   ...options,
-    //   baseUrl: getBaseUrl(),
-    //   useBinaryFormat: true,
-    // }),
-    // "connect Node.js HTTP2 transport with JSON": (options) => createConnectHttp2Transport({
-    //   ...options,
-    //   baseUrl: getBaseUrl(),
-    //   useBinaryFormat: false,
-    // }),
-    // TODO need to configure undici to accept the certificate - for a start, see https://stackoverflow.com/questions/71946885/accept-self-signed-certificates-for-undici-fetch
+    "connect Node.js http2 transport (binary) against Node.js (H2C)": (
+      options
+    ) =>
+      createConnectHttp2Transport({
+        ...options,
+        baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+        useBinaryFormat: true,
+      }),
+    "connect Node.js http2 transport (JSON) against Node.js (H2C)": (options) =>
+      createConnectHttp2Transport({
+        ...options,
+        baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+        useBinaryFormat: false,
+      }),
     "connect fetch transport (binary) against Node.js (http)": (options) =>
       createConnectTransport({
         ...options,
-        baseUrl: `http://localhost:${getPort(httpServer)}`,
+        baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
         useBinaryFormat: true,
       }),
     "connect fetch transport (JSON) against Node.js (http)": (options) =>
       createConnectTransport({
         ...options,
-        baseUrl: `http://localhost:${getPort(httpServer)}`,
+        baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
         useBinaryFormat: false,
       }),
   };
@@ -137,14 +141,13 @@ export function createTestServers() {
     },
     start(): Promise<void> {
       return Promise.all([
-        // TODO http2.createSecureServer() , https.createServer()
         new Promise<void>((resolve) => {
-          http2Server = http2
+          nodeH2cServer = http2
             .createServer({}, mergeHandlers(handlers))
             .listen(0, resolve);
         }),
         new Promise<void>((resolve) => {
-          httpServer = http
+          nodeHttpServer = http
             .createServer({}, mergeHandlers(handlers))
             .listen(0, resolve);
         }),
@@ -153,20 +156,20 @@ export function createTestServers() {
     stop(): Promise<void> {
       return Promise.all([
         new Promise<void>((resolve, reject) => {
-          if (!http2Server) {
+          if (!nodeH2cServer) {
             reject(new Error("http2Server not started"));
             return;
           }
-          http2Server.close((err) => (err ? reject(err) : resolve()));
+          nodeH2cServer.close((err) => (err ? reject(err) : resolve()));
           // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
           resolve();
         }),
         new Promise<void>((resolve, reject) => {
-          if (!httpServer) {
+          if (!nodeHttpServer) {
             reject(new Error("httpServer not started"));
             return;
           }
-          httpServer.close((err) => (err ? reject(err) : resolve()));
+          nodeHttpServer.close((err) => (err ? reject(err) : resolve()));
         }),
       ]).then();
     },
