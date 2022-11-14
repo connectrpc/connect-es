@@ -2,18 +2,17 @@ import {
   appendHeaders,
   Code,
   connectCodeFromHttpStatus,
+  connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
   connectErrorFromReason,
   connectExpectContentType,
-  connectCreateRequestHeader,
   connectTrailerDemux,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  EnvelopedMessage,
   Interceptor,
   runStreaming,
   runUnary,
@@ -27,7 +26,6 @@ import type {
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
-  JsonValue,
   JsonWriteOptions,
   Message,
   MethodInfo,
@@ -38,10 +36,11 @@ import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
 import {
   nodeHeaderToWebHeader,
-  webHeadersToNodeHeaders,
-} from "./web-headers-to-node-headers.js";
-import { assert } from "./private/assert.js";
-import { defer } from "./defer.js";
+  webHeaderToNodeHeaders,
+} from "./private/web-header-to-node-headers.js";
+import { defer } from "./private/defer.js";
+import { createEnvelopeReader } from "./private/create-envelope-reader.js";
+import { jsonParse, readToEnd, write } from "./private/client-io.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -134,8 +133,8 @@ export function createConnectHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            // We create a new session for every request - we should share a connection instead,
-            // and offer control over connection state via methods / properties on the transport.
+            // TODO We create a new session for every request - we should share a connection instead,
+            //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session = http2.connect(
               // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
               // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
@@ -144,7 +143,7 @@ export function createConnectHttp2Transport(
             );
             const stream = session.request(
               {
-                ...webHeadersToNodeHeaders(req.header),
+                ...webHeaderToNodeHeaders(req.header),
                 ":method": "POST",
                 ":path": new URL(req.url).pathname,
               },
@@ -223,20 +222,19 @@ export function createConnectHttp2Transport(
           header: createRequestHeader(timeoutMs, header),
         },
         async (req) => {
-          const url = createMethodUrl(options.baseUrl, service, method);
-          // We create a new session for every request - we should share a connection instead,
-          // and offer control over connection state via methods / properties on the transport.
+          // TODO We create a new session for every request - we should share a connection instead,
+          //      and offer control over connection state via methods / properties on the transport.
           const session: http2.ClientHttp2Session = http2.connect(
             // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
             // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
-            url,
+            req.url,
             options.http2Options
           );
           const stream = session.request(
             {
-              ...webHeadersToNodeHeaders(req.header),
+              ...webHeaderToNodeHeaders(req.header),
               ":method": "POST",
-              ":path": url.pathname,
+              ":path": new URL(req.url).pathname,
             },
             {
               signal: req.signal,
@@ -320,38 +318,6 @@ export function createConnectHttp2Transport(
   };
 }
 
-// TODO make this more universally usable
-function createEnvelopeReader(
-  stream: http2.ClientHttp2Stream
-): () => Promise<ReadableStreamReadResultLike<EnvelopedMessage>> {
-  return async function (): Promise<
-    ReadableStreamReadResultLike<EnvelopedMessage>
-  > {
-    const head = await read(stream, 5);
-    if (head.done) {
-      throw new ConnectError("premature end of stream", Code.DataLoss);
-    }
-    const v = new DataView(
-      head.value.buffer,
-      head.value.byteOffset,
-      head.value.byteLength
-    );
-    const flags = v.getUint8(0);
-    const len = v.getUint32(1, false);
-    const body = await read(stream, len);
-    if (body.done) {
-      throw new ConnectError("premature end of stream", Code.DataLoss);
-    }
-    return {
-      done: false,
-      value: {
-        flags,
-        data: body.value,
-      },
-    };
-  };
-}
-
 async function validateResponseHeader(
   status: number,
   headers: Headers,
@@ -369,21 +335,6 @@ async function validateResponseHeader(
   }
 }
 
-function write(
-  stream: http2.ClientHttp2Stream,
-  data: Uint8Array | string
-): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    stream.write(data, typeof data == "string" ? "utf8" : "binary", (error) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve();
-      }
-    });
-  });
-}
-
 function responseHeadersPromise(
   stream: http2.ClientHttp2Stream
 ): Promise<[number, Headers]> {
@@ -399,71 +350,5 @@ function responseHeadersPromise(
       resolve([headers[":status"] ?? 0, nodeHeaderToWebHeader(headers)]);
     }
     stream.once("response", parse);
-  });
-}
-
-function read(
-  stream: http2.ClientHttp2Stream,
-  size: number
-): Promise<ReadableStreamReadResultLike<Uint8Array>> {
-  return new Promise<ReadableStreamReadResultLike<Uint8Array>>(
-    (resolve, reject) => {
-      if (stream.readableEnded) {
-        return resolve({
-          done: true,
-        });
-      }
-      if (stream.errored) {
-        return reject(stream.errored);
-      }
-      stream.once("error", reject);
-      function read() {
-        const chunk = stream.read(size) as unknown;
-        assert(chunk instanceof Buffer || chunk === null);
-        if (chunk === null) {
-          stream.once("readable", read);
-          return;
-        }
-        stream.off("error", reject);
-        stream.off("readable", read);
-        if (chunk.length < size) {
-          throw new ConnectError("premature end of stream", Code.DataLoss);
-        }
-        resolve({
-          done: false,
-          value: chunk,
-        });
-      }
-      if (stream.readable) {
-        return read();
-      }
-      stream.once("readable", read);
-    }
-  );
-}
-
-function jsonParse(bytes: Uint8Array): JsonValue {
-  const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
-  const jsonString = buf.toString("utf8");
-  return JSON.parse(jsonString) as JsonValue;
-}
-
-function readToEnd(stream: http2.ClientHttp2Stream): Promise<Uint8Array> {
-  return new Promise<Uint8Array>((resolve, reject) => {
-    stream.once("error", reject);
-    const chunks: Uint8Array[] = [];
-    function read() {
-      let chunk: unknown;
-      while (null !== (chunk = stream.read() as unknown)) {
-        assert(chunk instanceof Buffer);
-        chunks.push(chunk);
-      }
-    }
-    stream.on("readable", read);
-    stream.once("end", () => {
-      stream.off("readable", read);
-      stream.off("error", reject);
-      return resolve(Buffer.concat(chunks));
-    });
   });
 }
