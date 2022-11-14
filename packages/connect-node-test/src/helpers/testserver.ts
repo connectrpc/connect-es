@@ -12,7 +12,6 @@ import {
   Transport,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import type { crosstestTransports } from "./crosstestserver.js";
 import { interop } from "./interop.js";
 
 /* eslint-disable @typescript-eslint/require-await,require-yield */
@@ -20,7 +19,7 @@ import { interop } from "./interop.js";
 const handlers = createHandlers(
   TestService,
   {
-    emptyCall(/*request*/) {
+    emptyCall() {
       return {};
     },
 
@@ -31,22 +30,11 @@ const handlers = createHandlers(
           request.responseStatus.code
         );
       }
-      const leadingMetadata = context.requestHeader.get(
-        interop.leadingMetadataKey
+      echoMetadata(
+        context.requestHeader,
+        context.responseHeader,
+        context.responseTrailer
       );
-      if (leadingMetadata !== null) {
-        context.responseHeader.set(interop.leadingMetadataKey, leadingMetadata);
-      }
-      const trailingMetadata = context.requestHeader.get(
-        interop.trailingMetadataKey
-      );
-      if (trailingMetadata !== null) {
-        const decodedTrailingMetadata = decodeBinaryHeader(trailingMetadata);
-        context.responseTrailer.set(
-          interop.trailingMetadataKey,
-          encodeBinaryHeader(decodedTrailingMetadata)
-        );
-      }
       return {
         payload: interop.makeServerPayload(
           request.responseType,
@@ -55,7 +43,7 @@ const handlers = createHandlers(
       };
     },
 
-    failUnaryCall(/*request*/) {
+    failUnaryCall() {
       throw new ConnectError(
         interop.nonASCIIErrMsg,
         Code.ResourceExhausted,
@@ -65,26 +53,15 @@ const handlers = createHandlers(
     },
 
     cacheableUnaryCall(/*request*/) {
-      return {};
+      throw new ConnectError("TODO", Code.Unimplemented);
     },
 
     async *streamingOutputCall(request, context) {
-      const leadingMetadata = context.requestHeader.get(
-        interop.leadingMetadataKey
+      echoMetadata(
+        context.requestHeader,
+        context.responseHeader,
+        context.responseTrailer
       );
-      if (leadingMetadata !== null) {
-        context.responseHeader.set(interop.leadingMetadataKey, leadingMetadata);
-      }
-      const trailingMetadata = context.requestHeader.get(
-        interop.trailingMetadataKey
-      );
-      if (trailingMetadata !== null) {
-        const decodedTrailingMetadata = decodeBinaryHeader(trailingMetadata);
-        context.responseTrailer.set(
-          interop.trailingMetadataKey,
-          encodeBinaryHeader(decodedTrailingMetadata)
-        );
-      }
       for (const param of request.responseParameters) {
         if (param.intervalUs > 0) {
           await new Promise<void>((resolve) => {
@@ -97,17 +74,49 @@ const handlers = createHandlers(
       }
     },
 
-    async *failStreamingOutputCall(/*request*/) {
-      yield {};
+    async *failStreamingOutputCall() {
+      throw new ConnectError(
+        interop.nonASCIIErrMsg,
+        Code.ResourceExhausted,
+        {},
+        [interop.errorDetail]
+      );
     },
 
-    async streamingInputCall(/*request*/) {
-      throw new ConnectError("TODO", Code.Unimplemented);
+    async streamingInputCall(requests) {
+      let total = 0;
+      for await (const req of requests) {
+        total += req.payload?.body.length ?? 0;
+      }
+      return {
+        aggregatedPayloadSize: total,
+      };
     },
 
-    async *fullDuplexCall(/*requests*/) {
-      yield {};
-      throw new ConnectError("TODO", Code.Unimplemented);
+    async *fullDuplexCall(requests, context) {
+      echoMetadata(
+        context.requestHeader,
+        context.responseHeader,
+        context.responseTrailer
+      );
+      for await (const req of requests) {
+        if (req.responseStatus?.code !== undefined) {
+          throw new ConnectError(
+            req.responseStatus.message,
+            req.responseStatus.code
+          );
+        }
+        for (const param of req.responseParameters) {
+          if (param.intervalUs > 0) {
+            await new Promise<void>((resolve) => {
+              setTimeout(resolve, param.intervalUs / 1000);
+            });
+          }
+          yield {
+            payload: interop.makeServerPayload(req.responseType, param.size),
+          };
+        }
+      }
     },
 
     async *halfDuplexCall(/*requests*/) {
@@ -125,6 +134,25 @@ const handlers = createHandlers(
   },
   {}
 );
+
+function echoMetadata(
+  requestHeader: Headers,
+  responseHeader: Headers,
+  responseTrailer: Headers
+): void {
+  const leadingMetadata = requestHeader.get(interop.leadingMetadataKey);
+  if (leadingMetadata !== null) {
+    responseHeader.set(interop.leadingMetadataKey, leadingMetadata);
+  }
+  const trailingMetadata = requestHeader.get(interop.trailingMetadataKey);
+  if (trailingMetadata !== null) {
+    const decodedTrailingMetadata = decodeBinaryHeader(trailingMetadata);
+    responseTrailer.set(
+      interop.trailingMetadataKey,
+      encodeBinaryHeader(decodedTrailingMetadata)
+    );
+  }
+}
 
 export function createTestServers() {
   // TODO http2 server with TLS and allow http1
@@ -145,45 +173,70 @@ export function createTestServers() {
     return address.port;
   }
 
-  const transports: typeof crosstestTransports = {
+  // Node's undici fetch does not support HTTP1.1 (as of Nov 2022), so we cannot
+  // run it against the H2C server
+  const transports = {
     "connect Node.js http2 transport (binary) against Node.js (H2C)": (
-      options
+      options?: Record<string, unknown>
     ) =>
       createConnectHttp2Transport({
         ...options,
         baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
         useBinaryFormat: true,
       }),
-    "connect Node.js http2 transport (JSON) against Node.js (H2C)": (options) =>
+    "connect Node.js http2 transport (JSON) against Node.js (H2C)": (
+      options?: Record<string, unknown>
+    ) =>
       createConnectHttp2Transport({
         ...options,
         baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
         useBinaryFormat: false,
       }),
-    "connect fetch transport (binary) against Node.js (http)": (options) =>
+    "connect fetch transport (binary) against Node.js (http)": (
+      options?: Record<string, unknown>
+    ) =>
       createConnectTransport({
         ...options,
         baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
         useBinaryFormat: true,
       }),
-    "connect fetch transport (JSON) against Node.js (http)": (options) =>
+    "connect fetch transport (JSON) against Node.js (http)": (
+      options?: Record<string, unknown>
+    ) =>
       createConnectTransport({
         ...options,
         baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
         useBinaryFormat: false,
       }),
-  };
+  } as const;
+
   return {
     transports,
     describeTransports(
       specDefinitions: (
         transport: () => Transport,
-        transportName: string
+        transportName: keyof typeof transports
       ) => void
     ) {
       for (const [name, transportFactory] of Object.entries(transports)) {
         describe(name, () => {
-          specDefinitions(transportFactory, name);
+          specDefinitions(transportFactory, name as keyof typeof transports);
+        });
+      }
+    },
+    describeTransportsExcluding(
+      exclude: Array<keyof typeof transports>,
+      specDefinitions: (
+        transport: () => Transport,
+        transportName: keyof typeof transports
+      ) => void
+    ) {
+      for (const [name, transportFactory] of Object.entries(transports)) {
+        if (exclude.includes(name as keyof typeof transports)) {
+          continue;
+        }
+        describe(name, () => {
+          specDefinitions(transportFactory, name as keyof typeof transports);
         });
       }
     },
