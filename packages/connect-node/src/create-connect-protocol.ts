@@ -259,9 +259,6 @@ async function endWithConnectEndStream(
   error: ConnectError | undefined,
   jsonWriteOptions: Partial<JsonWriteOptions> | undefined
 ) {
-  if (error !== undefined) {
-    metadata = appendHeaders(metadata, error.metadata);
-  }
   const endStreamJson = connectEndStreamToJson(
     metadata,
     error,

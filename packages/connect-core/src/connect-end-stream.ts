@@ -21,6 +21,7 @@ import type { ConnectError } from "./connect-error.js";
 import { connectErrorFromJson } from "./connect-error-from-json.js";
 import { newParseError } from "./private/new-parse-error.js";
 import { connectErrorToJson } from "./connect-error-to-json.js";
+import { appendHeaders } from "./http-headers.js";
 
 /**
  *
@@ -102,12 +103,13 @@ export function connectEndStreamToJson(
   const es: JsonObject = {};
   if (error !== undefined) {
     es.error = connectErrorToJson(error, jsonWriteOptions);
+    metadata = appendHeaders(metadata, error.metadata);
   }
   let hasMetadata = false;
   const md: JsonObject = {};
   metadata.forEach((value, key) => {
     hasMetadata = true;
-    md[key] = value;
+    md[key] = [value];
   });
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (hasMetadata) {
