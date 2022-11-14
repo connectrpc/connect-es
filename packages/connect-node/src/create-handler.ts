@@ -13,6 +13,11 @@ import { endWithHttpStatus } from "./private/handler-io.js";
 import { createConnectProtocol } from "./create-connect-protocol.js";
 import type { ImplSpec, Protocol } from "./protocol.js";
 
+
+/**
+ * createHandlers() takes a service definition and a service implementation,
+ * and returns an array of Handler functions, one for each RPC.
+ */
 export function createHandlers<T extends ServiceType>(
   service: T,
   implementation: ServiceImpl<T>,
@@ -24,6 +29,10 @@ export function createHandlers<T extends ServiceType>(
   });
 }
 
+/**
+ * createHandler takes an RPC definition and an RPC implementation, and
+ * returns a Handler function.
+ */
 export function createHandler<M extends MethodInfo>(
   service: ServiceType,
   method: M,
@@ -40,31 +49,30 @@ export function createHandler<M extends MethodInfo>(
   function handleAny(
     req: http.IncomingMessage | http2.Http2ServerRequest,
     res: http.ServerResponse | http2.Http2ServerResponse
-  ): boolean {
+  ): void {
     if (method.kind !== MethodKind.Unary && req.httpVersionMajor !== 2) {
       void endWithHttpStatus(res, 505, "Version Not Supported");
-      return true;
+      return;
     }
     if (req.method !== "POST") {
       // The gRPC-HTTP2, gRPC-Web, and Connect protocols are all POST-only.
       void endWithHttpStatus(res, 405, "Method Not Allowed");
-      return true;
+      return;
     }
     const handleProtocol = protocolHandlers.find((p) =>
       p.supportsMediaType(req.headers["content-type"] ?? "")
     );
     if (!handleProtocol) {
       void endWithHttpStatus(res, 415, "Unsupported Media Type");
-      return true;
+      return;
     }
     handleProtocol(req, res).catch((reason) => {
       // TODO need to handle rejections here, but it's unclear how exactly
       // eslint-disable-next-line no-console
       console.error("protocol handle failed", reason);
     });
-    return true;
+    return;
   }
-
   return Object.assign(handleAny, {
     service,
     method,

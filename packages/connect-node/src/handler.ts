@@ -21,18 +21,25 @@ export interface HandlerOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 }
 
-// TODO document
 /**
  * Handler handles a Node.js request for one specific RPC.
+ * Note that this function is compatible with http.RequestListener and its
+ * equivalent for http2.
  */
-export type Handler = ((
-  req: http.IncomingMessage | http2.Http2ServerRequest,
-  res: http.ServerResponse | http2.Http2ServerResponse
-) => boolean) & {
+export type Handler = NodeHandler & {
   service: ServiceType;
   method: MethodInfo;
   requestPath: string;
 };
+
+/**
+ * NodeHandler is compatible with http.RequestListener and its equivalent
+ * for http2.
+ */
+export type NodeHandler = (
+  request: http.IncomingMessage | http2.Http2ServerRequest,
+  response: http.ServerResponse | http2.Http2ServerResponse
+) => void;
 
 // TODO
 export interface HandlerContext {
@@ -43,7 +50,7 @@ export interface HandlerContext {
 
 // prettier-ignore
 /**
- * TODO document
+ * ServiceImpl is the interface of the implementation of a service.
  */
 export type ServiceImpl<T extends ServiceType> = {
   [P in keyof T["methods"]]: MethodImpl<T["methods"][P]>;
@@ -51,7 +58,7 @@ export type ServiceImpl<T extends ServiceType> = {
 
 // prettier-ignore
 /**
- * TODO document
+ * MethodImpl is the signature of the implementation of an RPC.
  */
 export type MethodImpl<M extends MI> =
     M extends MI<infer I, infer O, MethodKind.Unary>           ? UnaryImpl<I, O>
@@ -72,21 +79,36 @@ interface MI<
   readonly idempotency?: MethodIdempotency;
 }
 
+/**
+ * UnaryImp is the signature of the implementation of a unary RPC.
+ */
 export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
   context: HandlerContext
 ) => Promise<O> | Promise<PartialMessage<O>> | O | PartialMessage<O>;
 
+/**
+ * ClientStreamingImpl is the signature of the implementation of a
+ * client-streaming RPC.
+ */
 export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
   context: HandlerContext
 ) => Promise<O> | Promise<PartialMessage<O>>;
 
+/**
+ * ServerStreamingImpl is the signature of the implementation of a
+ * server-streaming RPC.
+ */
 export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
   context: HandlerContext
 ) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;
 
+/**
+ * BiDiStreamingImpl is the signature of the implementation of a bi-di
+ * streaming RPC.
+ */
 export type BiDiStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
   context: HandlerContext

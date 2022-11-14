@@ -1,7 +1,11 @@
-import type * as http from "http";
-import type * as http2 from "http2";
-import type { Handler } from "./handler.js";
+import type { Handler, NodeHandler } from "./handler.js";
 
+
+/**
+ * mergeHandlers takes an array of Handler functions, and merges them into a
+ * single handler function that invokes the correct handler by its request
+ * path. If no request path matches, it serves a 404.
+ */
 export function mergeHandlers(
   handlers: Handler[],
   options?: MergeHandlersOptions
@@ -13,26 +17,30 @@ export function mergeHandlers(
       response.writeHead(404);
       response.end();
     });
-  return function mergedHandlers(request, response) {
-    for (const handler of handlers) {
-      if (
-        request.url === prefix + handler.requestPath &&
-        handler(request, response)
-      ) {
-        return;
-      }
+  return function handleByRequestPath(request, response) {
+    const handler = handlers.find(
+      (h) => request.url === prefix + h.requestPath
+    );
+    if (!handler) {
+      return fallback(request, response);
     }
-    fallback(request, response);
+    handler(request, response);
   };
 }
 
-type NodeHandler = (
-  request: http.IncomingMessage | http2.Http2ServerRequest,
-  response: http.ServerResponse | http2.Http2ServerResponse
-) => void;
-
+/**
+ * Options to the function mergeHandlers().
+ */
 interface MergeHandlersOptions {
-  // e.g. "/something"
+  /**
+   * Serve all handlers under this prefix. For example, the prefix "/something"
+   * will serve the RPC foo.FooService.Bar under "/something/foo.FooService.Bar".
+   * Note that many gRPC client implementations do not allow for prefixes.
+   */
   requestPathPrefix?: string;
+  /**
+   * If none of the handler request paths match, a 404 is served. This option
+   * can provide a custom fallback for this case.
+   */
   fallback?: NodeHandler;
 }
