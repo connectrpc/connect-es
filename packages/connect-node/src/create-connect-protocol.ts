@@ -1,4 +1,5 @@
 import {
+  appendHeaders,
   Code,
   connectCodeToHttpStatus,
   connectEndStreamFlag,
@@ -101,6 +102,10 @@ export function createConnectProtocol(
               return await endWithConnectError(
                 res,
                 connectErrorFromReason(e),
+                connectTrailerMux(
+                  context.responseHeader,
+                  context.responseTrailer
+                ),
                 options.jsonOptions
               );
             }
@@ -157,10 +162,25 @@ export function createConnectProtocol(
 
             const inputResult = await readEnvelope();
             if (inputResult.done) {
-              throw "TODO";
+              return await endWithConnectEndStream(
+                res,
+                context.responseTrailer,
+                new ConnectError("Missing input message", Code.Internal),
+                options.jsonOptions
+              );
             }
             if (inputResult.value.flags !== 0b00000000) {
-              throw "TODO";
+              return await endWithConnectEndStream(
+                res,
+                context.responseTrailer,
+                new ConnectError(
+                  `Unexpected input flags ${inputResult.value.flags.toString(
+                    2
+                  )}`,
+                  Code.Internal
+                ),
+                options.jsonOptions
+              );
             }
             const input = parse(inputResult.value.data);
             try {
@@ -219,23 +239,6 @@ export function createConnectProtocol(
   };
 }
 
-async function endWithConnectEndStream(
-  res: http.ServerResponse | http2.Http2ServerResponse,
-  metadata: Headers,
-  error: ConnectError | undefined,
-  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
-) {
-  const endStreamJson = connectEndStreamToJson(
-    metadata,
-    error,
-    jsonWriteOptions
-  );
-  const endStreamJsonString = JSON.stringify(endStreamJson);
-  const endStreamBytes = new TextEncoder().encode(endStreamJsonString);
-  await write(res, encodeEnvelope(connectEndStreamFlag, endStreamBytes));
-  await end(res);
-}
-
 function connectCreateResponseHeader(
   methodKind: MethodKind,
   useBinaryFormat: boolean
@@ -250,15 +253,36 @@ function connectCreateResponseHeader(
   });
 }
 
+async function endWithConnectEndStream(
+  res: http.ServerResponse | http2.Http2ServerResponse,
+  metadata: Headers,
+  error: ConnectError | undefined,
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+) {
+  if (error !== undefined) {
+    metadata = appendHeaders(metadata, error.metadata);
+  }
+  const endStreamJson = connectEndStreamToJson(
+    metadata,
+    error,
+    jsonWriteOptions
+  );
+  const endStreamJsonString = JSON.stringify(endStreamJson);
+  const endStreamBytes = new TextEncoder().encode(endStreamJsonString);
+  await write(res, encodeEnvelope(connectEndStreamFlag, endStreamBytes));
+  await end(res);
+}
+
 async function endWithConnectError(
   res: http.ServerResponse | http2.Http2ServerResponse,
   error: ConnectError,
+  metadata: Headers,
   jsonWriteOptions: Partial<JsonWriteOptions> | undefined
 ): Promise<void> {
   const statusCode = connectCodeToHttpStatus(error.code);
-  res.writeHead(statusCode, {
-    "Content-Type": "application/json",
-  });
+  metadata = appendHeaders(metadata, error.metadata);
+  metadata.set("Content-Type", "application/json");
+  res.writeHead(statusCode, webHeaderToNodeHeaders(metadata));
   const json = connectErrorToJson(error, jsonWriteOptions);
   await write(res, JSON.stringify(json));
   await end(res);
