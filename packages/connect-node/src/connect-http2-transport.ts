@@ -39,8 +39,7 @@ import {
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { defer } from "./private/defer.js";
-import { createEnvelopeReader } from "./private/create-envelope-reader.js";
-import { jsonParse, readToEnd, write } from "./private/client-io.js";
+import { jsonParse, readEnvelope, readToEnd, write } from "./private/io.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -242,7 +241,6 @@ export function createConnectHttp2Transport(
           );
 
           const headersPromise = responseHeadersPromise(stream);
-          const readEnvelope = createEnvelopeReader(stream);
           let endStreamReceived = false;
           const responseTrailer = defer<Headers>();
           const conn: StreamingConn<I, O> = {
@@ -278,7 +276,7 @@ export function createConnectHttp2Transport(
               );
               validateContentType(responseHeader.get("Content-Type"));
               try {
-                const result = await readEnvelope();
+                const result = await readEnvelope(stream);
                 if (result.done) {
                   if (!endStreamReceived) {
                     throw new ConnectError("missing EndStreamResponse");

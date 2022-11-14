@@ -13,35 +13,42 @@
 // limitations under the License.
 
 import { createPromiseClient } from "@bufbuild/connect-node";
-import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
-import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
+import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import { PayloadType } from "./gen/grpc/testing/messages_pb.js";
+import { createTestServers } from "./helpers/testserver.js";
+import { interop } from "./helpers/interop.js";
 
-describe("client_streaming", function () {
-  describeTransports(crosstestTransports, (transport) => {
-    const sizes = [31415, 9, 2653, 58979];
+describe("client_streaming", () => {
+  const sizes = [31415, 9, 2653, 58979];
+  const servers = createTestServers();
+
+  beforeAll(async () => {
+    await servers.start();
+  });
+
+  servers.describeTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
-      const call = await client.streamingInputCall();
+      const client = createPromiseClient(TestService, transport());
+      const stream = await client.streamingInputCall();
       for (const size of sizes) {
-        await call.send({
-          payload: {
-            body: new Uint8Array(size),
-            type: PayloadType.COMPRESSABLE,
-          },
+        await stream.send({
+          payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
           expectCompressed: {
             value: false,
           },
         });
       }
-      call.close();
-      const res = await call.receive();
-      expect(res.aggregatedPayloadSize).toBe(sizes.reduce((p, c) => p + c, 0));
+      stream.close();
+      const { aggregatedPayloadSize } = await stream.receive();
+      expect(aggregatedPayloadSize).toBe(sizes.reduce((p, c) => p + c, 0));
     });
     it("with callback client", function (done) {
       // TODO(TCN-679, TCN-568) need callback clients
       done();
     });
+  });
+
+  afterAll(async () => {
+    await servers.stop();
   });
 });
