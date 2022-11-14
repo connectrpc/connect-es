@@ -26,7 +26,7 @@ describe("ping_pong", () => {
     await servers.start();
   });
 
-  servers.describeTransports2(
+  servers.describeTransportsExcluding(
     [
       // This test does full duplex, receiving before it closes the input.
       // In this case, your connect fetch transport never issues the request.

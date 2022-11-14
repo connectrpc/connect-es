@@ -224,7 +224,7 @@ export function createTestServers() {
         });
       }
     },
-    describeTransports2(
+    describeTransportsExcluding(
       exclude: Array<keyof typeof transports>,
       specDefinitions: (
         transport: () => Transport,
