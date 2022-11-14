@@ -27,8 +27,19 @@ export interface HandlerOptions {
  * equivalent for http2.
  */
 export type Handler = NodeHandler & {
+  /**
+   * The service the RPC belongs to.
+   */
   service: ServiceType;
+  /**
+   * The RPC.
+   */
   method: MethodInfo;
+  /**
+   * The request path of the procedure, without any prefixes.
+   * For example, "/something/foo.FooService/Bar" for the method
+   * "Bar" of the service "foo.FooService".
+   */
   requestPath: string;
 };
 

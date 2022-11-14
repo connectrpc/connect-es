@@ -33,7 +33,7 @@ export function mergeHandlers(
 interface MergeHandlersOptions {
   /**
    * Serve all handlers under this prefix. For example, the prefix "/something"
-   * will serve the RPC foo.FooService.Bar under "/something/foo.FooService.Bar".
+   * will serve the RPC foo.FooService/Bar under "/something/foo.FooService/Bar".
    * Note that many gRPC client implementations do not allow for prefixes.
    */
   requestPathPrefix?: string;
