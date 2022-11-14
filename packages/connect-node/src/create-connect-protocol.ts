@@ -1,10 +1,13 @@
 import {
   Code,
   connectCodeToHttpStatus,
+  connectEndStreamFlag,
+  connectEndStreamToJson,
   ConnectError,
   connectErrorFromReason,
   connectErrorToJson,
   connectParseContentType,
+  encodeEnvelope,
 } from "@bufbuild/connect-core";
 import {
   BinaryReadOptions,
@@ -22,7 +25,7 @@ import {
   readToEnd,
   write,
 } from "./private/handler-io.js";
-import { createServerMethodSerializers } from "./create-server-method-serializers.js";
+import { createServerMethodSerializers } from "./private/create-server-method-serializers.js";
 import type { HandlerContext } from "./handler.js";
 import {
   nodeHeaderToWebHeader,
@@ -31,6 +34,7 @@ import {
 import { connectTrailerMux } from "./private/connect-trailer-mux.js";
 import type * as http from "http";
 import type * as http2 from "http2";
+import { createEnvelopeReader } from "./private/create-envelope-reader.js";
 
 /**
  * Options for creating a Connect Protocol instance.
@@ -82,12 +86,12 @@ export function createConnectProtocol(
               );
 
             const context: HandlerContext = {
-              requestHeaders: nodeHeaderToWebHeader(req.headers),
-              responseHeaders: connectCreateResponseHeader(
+              requestHeader: nodeHeaderToWebHeader(req.headers),
+              responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
                 type.binary
               ),
-              responseTrailers: new Headers(),
+              responseTrailer: new Headers(),
             };
             const input = parse(await readToEnd(req));
             let output: O | PartialMessage<O>;
@@ -104,8 +108,8 @@ export function createConnectProtocol(
               200,
               webHeaderToNodeHeaders(
                 connectTrailerMux(
-                  context.responseHeaders,
-                  context.responseTrailers
+                  context.responseHeader,
+                  context.responseTrailer
                 )
               )
             );
@@ -124,7 +128,7 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (type.stream) {
+            if (!type.stream) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -133,12 +137,12 @@ export function createConnectProtocol(
             }
 
             const context: HandlerContext = {
-              requestHeaders: nodeHeaderToWebHeader(req.headers),
-              responseHeaders: connectCreateResponseHeader(
+              requestHeader: nodeHeaderToWebHeader(req.headers),
+              responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
                 type.binary
               ),
-              responseTrailers: new Headers(),
+              responseTrailer: new Headers(),
             };
 
             const { normalize, parse, serialize } =
@@ -149,48 +153,87 @@ export function createConnectProtocol(
                 type.binary
               );
 
-            const input = parse(await readToEnd(req));
+            const readEnvelope = createEnvelopeReader(req);
+
+            const inputResult = await readEnvelope();
+            if (inputResult.done) {
+              throw "TODO";
+            }
+            if (inputResult.value.flags !== 0b00000000) {
+              throw "TODO";
+            }
+            const input = parse(inputResult.value.data);
             try {
               for await (const output of spec.impl(input, context)) {
                 if (!res.headersSent) {
                   res.writeHead(
                     200,
-                    webHeaderToNodeHeaders(context.responseHeaders)
+                    webHeaderToNodeHeaders(context.responseHeader)
                   );
                 }
-                // TODO envelope
-                await write(res, serialize(normalize(output)));
+                await write(
+                  res,
+                  encodeEnvelope(0b00000000, serialize(normalize(output)))
+                );
               }
             } catch (e) {
-              // TODO end stream message
-              return await endWithConnectError(
+              return await endWithConnectEndStream(
                 res,
+                context.responseTrailer,
                 connectErrorFromReason(e),
                 options.jsonOptions
               );
             }
-            await end(res);
+            return await endWithConnectEndStream(
+              res,
+              context.responseTrailer,
+              undefined,
+              options.jsonOptions
+            );
           };
         }
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
-            await endWithConnectError(
+            return await endWithConnectEndStream(
               res,
-              new ConnectError("TODO", Code.Unimplemented)
+              new Headers(),
+              // TODO implement
+              new ConnectError("TODO", Code.Unimplemented),
+              options.jsonOptions
             );
           };
         }
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
-            await endWithConnectError(
+            return await endWithConnectEndStream(
               res,
-              new ConnectError("TODO", Code.Unimplemented)
+              new Headers(),
+              // TODO implement
+              new ConnectError("TODO", Code.Unimplemented),
+              options.jsonOptions
             );
           };
         }
       }
     },
   };
+}
+
+async function endWithConnectEndStream(
+  res: http.ServerResponse | http2.Http2ServerResponse,
+  metadata: Headers,
+  error: ConnectError | undefined,
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+) {
+  const endStreamJson = connectEndStreamToJson(
+    metadata,
+    error,
+    jsonWriteOptions
+  );
+  const endStreamJsonString = JSON.stringify(endStreamJson);
+  const endStreamBytes = new TextEncoder().encode(endStreamJsonString);
+  await write(res, encodeEnvelope(connectEndStreamFlag, endStreamBytes));
+  await end(res);
 }
 
 function connectCreateResponseHeader(
@@ -210,7 +253,7 @@ function connectCreateResponseHeader(
 async function endWithConnectError(
   res: http.ServerResponse | http2.Http2ServerResponse,
   error: ConnectError,
-  jsonWriteOptions?: Partial<JsonWriteOptions>
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
 ): Promise<void> {
   const statusCode = connectCodeToHttpStatus(error.code);
   res.writeHead(statusCode, {

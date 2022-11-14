@@ -13,7 +13,6 @@ import { endWithHttpStatus } from "./private/handler-io.js";
 import { createConnectProtocol } from "./create-connect-protocol.js";
 import type { ImplSpec, Protocol } from "./protocol.js";
 
-
 /**
  * createHandlers() takes a service definition and a service implementation,
  * and returns an array of Handler functions, one for each RPC.
@@ -50,7 +49,7 @@ export function createHandler<M extends MethodInfo>(
     req: http.IncomingMessage | http2.Http2ServerRequest,
     res: http.ServerResponse | http2.Http2ServerResponse
   ): void {
-    if (method.kind !== MethodKind.Unary && req.httpVersionMajor !== 2) {
+    if (method.kind == MethodKind.BiDiStreaming && req.httpVersionMajor !== 2) {
       void endWithHttpStatus(res, 505, "Version Not Supported");
       return;
     }

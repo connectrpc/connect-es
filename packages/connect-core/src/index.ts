@@ -57,6 +57,7 @@ export {
 export { connectCreateRequestHeader } from "./connect-create-request-header.js";
 export {
   connectEndStreamFromJson,
+  connectEndStreamToJson,
   connectEndStreamFlag,
 } from "./connect-end-stream.js";
 export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";

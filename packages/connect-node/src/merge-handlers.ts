@@ -1,6 +1,5 @@
 import type { Handler, NodeHandler } from "./handler.js";
 
-
 /**
  * mergeHandlers takes an array of Handler functions, and merges them into a
  * single handler function that invokes the correct handler by its request

@@ -20,7 +20,7 @@ import { codeToString } from "./code.js";
  */
 export function connectErrorToJson(
   error: ConnectError,
-  jsonWriteOptions?: Partial<JsonWriteOptions>
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
 ): JsonObject {
   const o: JsonObject = {
     code: codeToString(error.code),

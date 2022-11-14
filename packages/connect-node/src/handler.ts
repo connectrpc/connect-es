@@ -43,9 +43,9 @@ export type NodeHandler = (
 
 // TODO
 export interface HandlerContext {
-  requestHeaders: Headers;
-  responseHeaders: Headers;
-  responseTrailers: Headers;
+  requestHeader: Headers;
+  responseHeader: Headers;
+  responseTrailer: Headers;
 }
 
 // prettier-ignore

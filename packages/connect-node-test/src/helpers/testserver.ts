@@ -6,6 +6,8 @@ import {
   ConnectError,
   createConnectHttp2Transport,
   createHandlers,
+  decodeBinaryHeader,
+  encodeBinaryHeader,
   mergeHandlers,
   Transport,
 } from "@bufbuild/connect-node";
@@ -22,14 +24,35 @@ const handlers = createHandlers(
       return {};
     },
 
-    unaryCall(request) {
+    unaryCall(request, context) {
       if (request.responseStatus?.code !== undefined) {
         throw new ConnectError(
           request.responseStatus.message,
           request.responseStatus.code
         );
       }
-      throw new ConnectError("TODO", Code.Unimplemented);
+      const leadingMetadata = context.requestHeader.get(
+        interop.leadingMetadataKey
+      );
+      if (leadingMetadata !== null) {
+        context.responseHeader.set(interop.leadingMetadataKey, leadingMetadata);
+      }
+      const trailingMetadata = context.requestHeader.get(
+        interop.trailingMetadataKey
+      );
+      if (trailingMetadata !== null) {
+        const decodedTrailingMetadata = decodeBinaryHeader(trailingMetadata);
+        context.responseTrailer.set(
+          interop.trailingMetadataKey,
+          encodeBinaryHeader(decodedTrailingMetadata)
+        );
+      }
+      return {
+        payload: interop.makeServerPayload(
+          request.responseType,
+          request.responseSize
+        ),
+      };
     },
 
     failUnaryCall(/*request*/) {
@@ -45,8 +68,33 @@ const handlers = createHandlers(
       return {};
     },
 
-    async *streamingOutputCall(/*request*/) {
-      yield {};
+    async *streamingOutputCall(request, context) {
+      const leadingMetadata = context.requestHeader.get(
+        interop.leadingMetadataKey
+      );
+      if (leadingMetadata !== null) {
+        context.responseHeader.set(interop.leadingMetadataKey, leadingMetadata);
+      }
+      const trailingMetadata = context.requestHeader.get(
+        interop.trailingMetadataKey
+      );
+      if (trailingMetadata !== null) {
+        const decodedTrailingMetadata = decodeBinaryHeader(trailingMetadata);
+        context.responseTrailer.set(
+          interop.trailingMetadataKey,
+          encodeBinaryHeader(decodedTrailingMetadata)
+        );
+      }
+      for (const param of request.responseParameters) {
+        if (param.intervalUs > 0) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, param.intervalUs / 1000);
+          });
+        }
+        yield {
+          payload: interop.makeServerPayload(request.responseType, param.size),
+        };
+      }
     },
 
     async *failStreamingOutputCall(/*request*/) {

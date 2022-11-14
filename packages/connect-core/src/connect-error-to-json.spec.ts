@@ -6,14 +6,16 @@ import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
 describe("connectErrorToJson()", () => {
   it("serializes code and message", () => {
     const json = connectErrorToJson(
-      new ConnectError("Not permitted", Code.PermissionDenied)
+      new ConnectError("Not permitted", Code.PermissionDenied),
+      undefined
     );
     expect(json.code as unknown).toBe("permission_denied");
     expect(json.message as unknown).toBe("Not permitted");
   });
   it("does not serialize empty message", () => {
     const json = connectErrorToJson(
-      new ConnectError("", Code.PermissionDenied)
+      new ConnectError("", Code.PermissionDenied),
+      undefined
     );
     expect(json.code as unknown).toBe("permission_denied");
     expect(json.message as unknown).toBeUndefined();
@@ -34,7 +36,7 @@ describe("connectErrorToJson()", () => {
     err.details.push(
       new ErrorDetail({ reason: "soirée 🎉", domain: "example.com" })
     );
-    const got = connectErrorToJson(err);
+    const got = connectErrorToJson(err, undefined);
     const want = {
       code: "permission_denied",
       message: "Not permitted",

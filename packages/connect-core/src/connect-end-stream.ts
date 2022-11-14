@@ -12,10 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type {
+  JsonObject,
+  JsonValue,
+  JsonWriteOptions,
+} from "@bufbuild/protobuf";
 import type { ConnectError } from "./connect-error.js";
 import { connectErrorFromJson } from "./connect-error-from-json.js";
-import type { JsonValue } from "@bufbuild/protobuf";
 import { newParseError } from "./private/new-parse-error.js";
+import { connectErrorToJson } from "./connect-error-to-json.js";
 
 /**
  *
@@ -78,4 +83,35 @@ export function connectEndStreamFromJson(
       ? connectErrorFromJson(jsonValue.error, metadata)
       : undefined;
   return { metadata, error };
+}
+
+/**
+ * Serialize the given EndStreamResponse to JSON.
+ *
+ * The JSON serialization options are required to produce the optional
+ * human-readable representation of error details if the detail uses
+ * google.protobuf.Any.
+ *
+ * See https://connect.build/docs/protocol#error-end-stream
+ */
+export function connectEndStreamToJson(
+  metadata: Headers,
+  error: ConnectError | undefined,
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+): JsonObject {
+  const es: JsonObject = {};
+  if (error !== undefined) {
+    es.error = connectErrorToJson(error, jsonWriteOptions);
+  }
+  let hasMetadata = false;
+  const md: JsonObject = {};
+  metadata.forEach((value, key) => {
+    hasMetadata = true;
+    md[key] = value;
+  });
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (hasMetadata) {
+    es.metadata = md;
+  }
+  return es;
 }
