@@ -160,7 +160,7 @@ export function createConnectProtocol(
             if (inputResult.done) {
               return await endWithConnectEndStream(
                 res,
-                context.responseTrailer,
+                context,
                 new ConnectError("Missing input message", Code.Internal),
                 options.jsonOptions
               );
@@ -168,7 +168,7 @@ export function createConnectProtocol(
             if (inputResult.value.flags !== 0b00000000) {
               return await endWithConnectEndStream(
                 res,
-                context.responseTrailer,
+                context,
                 new ConnectError(
                   `Unexpected input flags ${inputResult.value.flags.toString(
                     2
@@ -195,14 +195,14 @@ export function createConnectProtocol(
             } catch (e) {
               return await endWithConnectEndStream(
                 res,
-                context.responseTrailer,
+                context,
                 connectErrorFromReason(e),
                 options.jsonOptions
               );
             }
             return await endWithConnectEndStream(
               res,
-              context.responseTrailer,
+              context,
               undefined,
               options.jsonOptions
             );
@@ -252,7 +252,7 @@ export function createConnectProtocol(
                 if (result.value.flags !== 0b00000000) {
                   return await endWithConnectEndStream(
                     res,
-                    context.responseTrailer,
+                    context,
                     new ConnectError(
                       `Unexpected input flags ${result.value.flags.toString(
                         2
@@ -286,7 +286,7 @@ export function createConnectProtocol(
             );
             return await endWithConnectEndStream(
               res,
-              context.responseTrailer,
+              context,
               undefined,
               options.jsonOptions
             );
@@ -336,7 +336,7 @@ export function createConnectProtocol(
                 if (result.value.flags !== 0b00000000) {
                   return await endWithConnectEndStream(
                     res,
-                    context.responseTrailer,
+                    context,
                     new ConnectError(
                       `Unexpected input flags ${result.value.flags.toString(
                         2
@@ -365,14 +365,14 @@ export function createConnectProtocol(
             } catch (e) {
               return await endWithConnectEndStream(
                 res,
-                context.responseTrailer,
+                context,
                 connectErrorFromReason(e),
                 options.jsonOptions
               );
             }
             return await endWithConnectEndStream(
               res,
-              context.responseTrailer,
+              context,
               undefined,
               options.jsonOptions
             );
@@ -399,12 +399,15 @@ function connectCreateResponseHeader(
 
 async function endWithConnectEndStream(
   res: http.ServerResponse | http2.Http2ServerResponse,
-  metadata: Headers,
+  context: HandlerContext,
   error: ConnectError | undefined,
   jsonWriteOptions: Partial<JsonWriteOptions> | undefined
 ) {
+  if (!res.headersSent) {
+    res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
+  }
   const endStreamJson = connectEndStreamToJson(
-    metadata,
+    context.responseTrailer,
     error,
     jsonWriteOptions
   );

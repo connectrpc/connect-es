@@ -12,15 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Transport } from "@bufbuild/connect-node";
-
-export function describeTransports(
-  transports: Record<string, () => Transport>,
-  specDefinitions: (transport: Transport, transportName: string) => void
-) {
-  for (const [name, transportFactory] of Object.entries(transports)) {
-    describe(name, () => {
-      specDefinitions(transportFactory(), name);
-    });
-  }
-}
+// TODO implement, see https://github.com/bufbuild/connect-crosstest#test-suite

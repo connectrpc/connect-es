@@ -13,19 +13,21 @@
 // limitations under the License.
 
 import {
+  Code,
   ConnectError,
+  connectErrorDetails,
   createCallbackClient,
   createPromiseClient,
-  connectErrorDetails,
-  Code,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
+import { createTestServers } from "../helpers/testserver.js";
 
 describe("fail_unary", () => {
-  function expectError(err: unknown, transportName: string) {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  function expectError(err: unknown) {
     const expectedErrorDetail = new ErrorDetail({
       reason: "soirée 🎉",
       domain: "connect-crosstest",
@@ -34,33 +36,32 @@ describe("fail_unary", () => {
     if (err instanceof ConnectError) {
       expect(err.code).toEqual(Code.ResourceExhausted);
       expect(err.rawMessage).toEqual("soirée 🎉");
-      // the experimental gRPC transport does not implement error details
-      if (transportName !== "gRPC transport") {
-        const details = connectErrorDetails(err, ErrorDetail);
-        expect(details.length).toEqual(1);
-        expect(details[0]).toBeInstanceOf(ErrorDetail);
-        if (details[0] instanceof ErrorDetail) {
-          expect(expectedErrorDetail.equals(details[0])).toBeTrue();
-        }
+      const details = connectErrorDetails(err, ErrorDetail);
+      expect(details.length).toEqual(1);
+      expect(details[0]).toBeInstanceOf(ErrorDetail);
+      if (details[0] instanceof ErrorDetail) {
+        expect(expectedErrorDetail.equals(details[0])).toBeTrue();
       }
     }
   }
-  describeTransports(crosstestTransports, (transport, transportName) => {
+  servers.describeTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         await client.failUnaryCall({});
         fail("expected to catch an error");
       } catch (e) {
-        expectError(e, transportName);
+        expectError(e);
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.failUnaryCall({}, (err: ConnectError | undefined) => {
-        expectError(err, transportName);
+        expectError(err);
         done();
       });
     });
   });
+
+  afterAll(async () => await servers.stop());
 });
