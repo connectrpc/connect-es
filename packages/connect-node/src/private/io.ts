@@ -36,6 +36,15 @@ export async function readEnvelope(
   const len = v.getUint32(1, false);
   const body = await read(stream, len);
   if (body.done) {
+    if (len == 0) {
+      return {
+        done: false,
+        value: {
+          flags,
+          data: new Uint8Array(0),
+        },
+      };
+    }
     throw new ConnectError("premature end of stream", Code.DataLoss);
   }
   return {
@@ -47,6 +56,7 @@ export async function readEnvelope(
   };
 }
 
+// Note: Will return {done: true} if size is 0
 export function read(
   stream: http2.ClientHttp2Stream | stream.Readable,
   size: number

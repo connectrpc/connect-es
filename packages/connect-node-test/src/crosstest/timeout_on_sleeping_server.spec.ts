@@ -12,19 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { CallOptions } from "@bufbuild/connect-node";
 import {
+  Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-  Code,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
-import type { CallOptions } from "@bufbuild/connect-node";
+import { createTestServers } from "../helpers/testserver.js";
 
-describe("timeout_on_sleeping_server", function () {
+// TODO support timeouts on the handler
+xdescribe("timeout_on_sleeping_server", function () {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
   const request = new StreamingOutputCallRequest({
     payload: {
       body: new Uint8Array(271828).fill(0),
@@ -50,9 +53,9 @@ describe("timeout_on_sleeping_server", function () {
       ).toBeTrue();
     }
   }
-  describeTransports(crosstestTransports, (transport) => {
+  servers.describeTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         for await (const response of client.streamingOutputCall(
           request,
@@ -68,7 +71,7 @@ describe("timeout_on_sleeping_server", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.streamingOutputCall(
         request,
         (response) => {
@@ -84,4 +87,6 @@ describe("timeout_on_sleeping_server", function () {
       );
     });
   });
+
+  afterAll(async () => await servers.stop());
 });

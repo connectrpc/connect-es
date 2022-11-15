@@ -13,36 +13,24 @@
 // limitations under the License.
 
 import {
+  Code,
   ConnectError,
+  connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
-  Code,
 } from "@bufbuild/connect-node";
 import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
+import { createTestServers } from "../helpers/testserver.js";
 
 describe("unimplemented_server_streaming_service", function () {
-  function expectError(err: unknown, transportName: string) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      switch (transportName) {
-        case "gRPC transport":
-          // @grpc/grpc-js appears to be unable to handle 404
-          expect(err.code).toEqual(Code.Internal);
-          expect(err.rawMessage).toEqual("Received RST_STREAM with code 0");
-          break;
-        default:
-          expect(err.code).toEqual(Code.Unimplemented);
-          break;
-      }
-    }
-  }
-  const request = new Empty();
-  describeTransports(crosstestTransports, (transport, transportName) => {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  servers.describeTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(UnimplementedService, transport);
+      const client = createPromiseClient(UnimplementedService, transport());
+      const request = new Empty();
       try {
         for await (const response of client.unimplementedStreamingOutputCall(
           request
@@ -51,21 +39,25 @@ describe("unimplemented_server_streaming_service", function () {
         }
         fail("expected to catch an error");
       } catch (e) {
-        expectError(e, transportName);
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(connectErrorFromReason(e).code).toBe(Code.Unimplemented);
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(UnimplementedService, transport);
+      const client = createCallbackClient(UnimplementedService, transport());
+      const request = new Empty();
       client.unimplementedStreamingOutputCall(
         request,
         (response) => {
           fail(`expecting no response, got: ${response.toJsonString()}`);
         },
         (err: ConnectError | undefined) => {
-          expectError(err, transportName);
+          expect(err?.code).toBe(Code.Unimplemented);
           done();
         }
       );
     });
   });
+
+  afterAll(async () => await servers.stop());
 });
