@@ -17,12 +17,14 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
+import { createTestServers } from "../helpers/testserver.js";
 
 describe("large_unary", function () {
-  describeTransports(crosstestTransports, (transport) => {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  servers.describeTransports((transport) => {
     const request = new SimpleRequest({
       responseSize: 314159,
       payload: {
@@ -30,13 +32,13 @@ describe("large_unary", function () {
       },
     });
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       const response = await client.unaryCall(request);
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.unaryCall(request, (err, response) => {
         expect(err).toBeUndefined();
         expect(response.payload).toBeDefined();
@@ -45,4 +47,6 @@ describe("large_unary", function () {
       });
     });
   });
+
+  afterAll(async () => await servers.stop());
 });

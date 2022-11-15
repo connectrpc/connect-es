@@ -17,15 +17,17 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
+import { createTestServers } from "../helpers/testserver.js";
 
 describe("empty_stream", function () {
-  describeTransports(crosstestTransports, (transport) => {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  servers.describeTransports((transport) => {
     const request = new StreamingOutputCallRequest();
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         for await (const response of client.streamingOutputCall(request)) {
           fail(
@@ -37,7 +39,7 @@ describe("empty_stream", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.streamingOutputCall(
         request,
         () => {
@@ -50,4 +52,6 @@ describe("empty_stream", function () {
       );
     });
   });
+
+  afterAll(async () => await servers.stop());
 });

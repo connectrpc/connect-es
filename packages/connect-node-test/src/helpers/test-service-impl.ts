@@ -1,0 +1,146 @@
+import {
+  Code,
+  ConnectError,
+  decodeBinaryHeader,
+  encodeBinaryHeader,
+  ServiceImpl,
+} from "@bufbuild/connect-node";
+import type { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { interop } from "./interop.js";
+
+export const testService: ServiceImpl<typeof TestService> = {
+  emptyCall() {
+    return {};
+  },
+
+  unaryCall(request, context) {
+    if (request.responseStatus?.code !== undefined) {
+      throw new ConnectError(
+        request.responseStatus.message,
+        request.responseStatus.code
+      );
+    }
+    echoMetadata(
+      context.requestHeader,
+      context.responseHeader,
+      context.responseTrailer
+    );
+    return {
+      payload: interop.makeServerPayload(
+        request.responseType,
+        request.responseSize
+      ),
+    };
+  },
+
+  failUnaryCall() {
+    throw new ConnectError(interop.nonASCIIErrMsg, Code.ResourceExhausted, {}, [
+      interop.errorDetail,
+    ]);
+  },
+
+  cacheableUnaryCall(/*request*/) {
+    throw new ConnectError("TODO", Code.Unimplemented);
+  },
+
+  async *streamingOutputCall(request, context) {
+    echoMetadata(
+      context.requestHeader,
+      context.responseHeader,
+      context.responseTrailer
+    );
+    for (const param of request.responseParameters) {
+      if (param.intervalUs > 0) {
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, param.intervalUs / 1000);
+        });
+      }
+      yield {
+        payload: interop.makeServerPayload(request.responseType, param.size),
+      };
+    }
+  },
+
+  // eslint-disable-next-line @typescript-eslint/require-await,require-yield
+  async *failStreamingOutputCall() {
+    throw new ConnectError(interop.nonASCIIErrMsg, Code.ResourceExhausted, {}, [
+      interop.errorDetail,
+    ]);
+  },
+
+  async streamingInputCall(requests) {
+    let total = 0;
+    for await (const req of requests) {
+      total += req.payload?.body.length ?? 0;
+    }
+    return {
+      aggregatedPayloadSize: total,
+    };
+  },
+
+  async *fullDuplexCall(requests, context) {
+    echoMetadata(
+      context.requestHeader,
+      context.responseHeader,
+      context.responseTrailer
+    );
+    for await (const req of requests) {
+      if (req.responseStatus?.code !== undefined) {
+        throw new ConnectError(
+          req.responseStatus.message,
+          req.responseStatus.code
+        );
+      }
+      for (const param of req.responseParameters) {
+        if (param.intervalUs > 0) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, param.intervalUs / 1000);
+          });
+        }
+        yield {
+          payload: interop.makeServerPayload(req.responseType, param.size),
+        };
+      }
+    }
+  },
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async *halfDuplexCall(/*requests*/) {
+    yield {};
+    throw new ConnectError("TODO", Code.Unimplemented);
+  },
+
+  unimplementedCall(/*request*/) {
+    throw new ConnectError(
+      "grpc.testing.TestService.UnimplementedCall is not implemented",
+      Code.Unimplemented
+    );
+  },
+
+  // eslint-disable-next-line @typescript-eslint/require-await,require-yield
+  async *unimplementedStreamingOutputCall(/*requests*/) {
+    throw new ConnectError(
+      "grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented",
+      Code.Unimplemented
+    );
+  },
+};
+
+function echoMetadata(
+  requestHeader: Headers,
+  responseHeader: Headers,
+  responseTrailer: Headers
+): void {
+  const leadingMetadata = requestHeader.get(interop.leadingMetadataKey);
+  if (leadingMetadata !== null) {
+    responseHeader.set(interop.leadingMetadataKey, leadingMetadata);
+  }
+  const trailingMetadata = requestHeader.get(interop.trailingMetadataKey);
+  if (trailingMetadata !== null) {
+    const decodedTrailingMetadata = decodeBinaryHeader(trailingMetadata);
+    responseTrailer.set(
+      interop.trailingMetadataKey,
+      encodeBinaryHeader(decodedTrailingMetadata)
+    );
+  }
+}

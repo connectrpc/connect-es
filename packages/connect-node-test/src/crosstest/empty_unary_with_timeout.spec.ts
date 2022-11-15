@@ -17,21 +17,23 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
+import { createTestServers } from "../helpers/testserver.js";
 
 describe("empty_unary_with_timeout", function () {
-  describeTransports(crosstestTransports, (transport) => {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  servers.describeTransports((transport) => {
     const empty = new Empty();
     const deadlineMs = 1000; // 1 second
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       const response = await client.emptyCall(empty, { timeoutMs: deadlineMs });
       expect(response).toEqual(empty);
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.emptyCall(
         empty,
         (err, response) => {
@@ -43,4 +45,6 @@ describe("empty_unary_with_timeout", function () {
       );
     });
   });
+
+  afterAll(async () => await servers.stop());
 });

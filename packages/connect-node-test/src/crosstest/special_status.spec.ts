@@ -13,18 +13,20 @@
 // limitations under the License.
 
 import {
+  Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-  Code,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
+import { createTestServers } from "../helpers/testserver.js";
 
 describe("special_status", function () {
-  describeTransports(crosstestTransports, (transport) => {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  servers.describeTransports((transport) => {
     const TEST_STATUS_MESSAGE = `\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n`;
     const request = new SimpleRequest({
       responseStatus: {
@@ -40,7 +42,7 @@ describe("special_status", function () {
       }
     }
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         await client.unaryCall(request);
         fail("expected to catch an error");
@@ -49,11 +51,13 @@ describe("special_status", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.unaryCall(request, (err: ConnectError | undefined) => {
         expectError(err);
         done();
       });
     });
   });
+
+  afterAll(async () => await servers.stop());
 });
