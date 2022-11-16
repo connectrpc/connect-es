@@ -13,19 +13,32 @@
 // limitations under the License.
 
 import { createMethodUrl } from "@bufbuild/connect-core";
-import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
 import type {
-  Handler,
-  HandlerOptions,
-  MethodImpl,
-  ServiceImpl,
-} from "./handler.js";
+  BinaryReadOptions,
+  BinaryWriteOptions,
+  JsonReadOptions,
+  JsonWriteOptions,
+  MethodInfo,
+  ServiceType,
+} from "@bufbuild/protobuf";
+import { MethodKind } from "@bufbuild/protobuf";
+import type { Handler, MethodImpl, ServiceImpl } from "./handler.js";
 import type * as http from "http";
 import type * as http2 from "http2";
 import { createConnectProtocol } from "./create-connect-protocol.js";
 import type { ImplSpec, Protocol } from "./protocol.js";
 import { endWithHttpStatus } from "./private/io.js";
+
+/**
+ * Options for creating a Handler. If you do not specify any protocols,
+ * all available protocols are enabled.
+ */
+type HandlerOptions =
+  | {
+      jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
+      binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+    }
+  | { protocols: Protocol[] };
 
 /**
  * createHandlers() takes a service definition and a service implementation,
@@ -52,9 +65,7 @@ export function createHandler<M extends MethodInfo>(
   impl: MethodImpl<M>,
   options?: HandlerOptions
 ): Handler {
-  // TODO
-  const protocols: Protocol[] = [createConnectProtocol(options ?? {})];
-
+  const protocols = normalizeHandlerOptions(options);
   const protocolHandlers = protocols.map((p) =>
     Object.assign(p.createHandler(createImplSpec(service, method, impl)), p)
   );
@@ -88,6 +99,15 @@ export function createHandler<M extends MethodInfo>(
     requestPath: createMethodUrl("https://example.com", service, method)
       .pathname,
   });
+}
+
+function normalizeHandlerOptions(init?: HandlerOptions): Protocol[] {
+  init = init ?? {};
+  if ("protocols" in init) {
+    return init.protocols;
+  } else {
+    return [createConnectProtocol(init)];
+  }
 }
 
 function createImplSpec<M extends MethodInfo>(

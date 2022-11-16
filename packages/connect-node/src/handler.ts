@@ -14,10 +14,6 @@
 
 import type {
   AnyMessage,
-  BinaryReadOptions,
-  BinaryWriteOptions,
-  JsonReadOptions,
-  JsonWriteOptions,
   Message,
   MessageType,
   MethodIdempotency,
@@ -28,12 +24,6 @@ import type {
 } from "@bufbuild/protobuf";
 import type * as http from "http";
 import type * as http2 from "http2";
-
-// TODO document
-export interface HandlerOptions {
-  jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
-  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
-}
 
 /**
  * Handler handles a Node.js request for one specific RPC.
@@ -66,7 +56,7 @@ export type NodeHandler = (
   response: http.ServerResponse | http2.Http2ServerResponse
 ) => void;
 
-// TODO
+// TODO document
 export interface HandlerContext {
   requestHeader: Headers;
   responseHeader: Headers;
