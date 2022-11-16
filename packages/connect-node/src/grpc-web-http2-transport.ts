@@ -21,6 +21,10 @@ import type {
 } from "@bufbuild/protobuf";
 import * as http2 from "http2";
 import { write, readToEnd } from "./private/client-io.js";
+import {
+  webHeaderToNodeHeaders,
+  nodeHeaderToWebHeader,
+} from "./private/web-header-to-node-headers.js";
 
 //TODO
 // check with Timo to see if thee options between connect and grpc web are shared so we can make a reusable interface
@@ -100,12 +104,11 @@ export function createGrpcWebHttp2Transport(
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
-          // Promise<UnaryResponse<O>>
-          async (req: UnaryRequest<I>) => {
+          async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
             const session = http2.connect(req.url);
             const stream = session.request(
               {
-                // todo, add headers
+                ...webHeaderToNodeHeaders(req.header),
                 ":method": "POST",
                 ":path": new URL(req.url).pathname,
               },
@@ -113,23 +116,22 @@ export function createGrpcWebHttp2Transport(
                 signal: req.signal,
               }
             );
-            // console.log("http2 request", stream);
+
             await write(stream, serialize(req.message));
             stream.end();
 
-            const message = parse(await readToEnd(stream));
-
-            console.log("message", message);
-            // return <UnaryResponse<O>>{
-            //   stream: false,
-            //   service,
-            //   method,
-            //   header,
-            //   message,
-            //   trailer: {},
-            // };
-            return Promise.reject();
-          }
+            const [, responseHeader] = await responseHeadersPromise(stream);
+            console.log("responseHeader", responseHeader);
+            return <UnaryResponse<O>>{
+              stream: false,
+              service,
+              method,
+              header,
+              message: parse(await readToEnd(stream)),
+              trailer: responseHeader,
+            };
+          },
+          options.interceptors
         );
       } catch (e) {
         throw connectErrorFromReason(e, Code.Internal);
@@ -140,4 +142,23 @@ export function createGrpcWebHttp2Transport(
     //   O extends Message<O> = AnyMessage
     // >(): Promise<StreamingConn<I, O>> {},
   };
+}
+
+// make this a util func
+function responseHeadersPromise(
+  stream: http2.ClientHttp2Stream
+): Promise<[number, Headers]> {
+  return new Promise<[number, Headers]>((resolve, reject) => {
+    if (stream.errored) {
+      return reject(stream.errored);
+    }
+    stream.once("error", reject);
+    function parse(
+      headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader
+    ) {
+      stream.off("error", reject);
+      resolve([headers[":status"] ?? 0, nodeHeaderToWebHeader(headers)]);
+    }
+    stream.once("response", parse);
+  });
 }
