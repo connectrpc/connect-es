@@ -1,12 +1,17 @@
+import type { StreamingConn } from "@bufbuild/connect-core";
 import {
   Code,
+  ConnectError,
   connectErrorFromReason,
   createClientMethodSerializers,
   createMethodUrl,
+  decodeBinaryHeader,
   encodeEnvelope,
+  GrpcStatus,
   grpcWebCreateRequestHeader,
   grpcWebTrailerParse,
   Interceptor,
+  runStreaming,
   runUnary,
   Transport,
   UnaryRequest,
@@ -16,19 +21,20 @@ import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
+  JsonReadOptions,
+  JsonWriteOptions,
   Message,
   MethodInfo,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as http2 from "http2";
-import { readEnvelope, write } from "./private/io.js";
+import { defer } from "./private/defer.js";
+import { end, readEnvelope, write } from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 
 const trailerFlag = 0b10000000;
 
-//TODO
-// check with Timo to see if thee options between connect and grpc web are shared so we can make a reusable interface
 export interface GrpcWebHttp2TransportOptions {
   /**
    * Base URI for all HTTP requests.
@@ -57,11 +63,9 @@ export interface GrpcWebHttp2TransportOptions {
   interceptors?: Interceptor[];
 
   /**
-   * Controls what the fetch client will do with credentials, such as
-   * Cookies. The default value is "same-origin". For reference, see
-   * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
+   * Options for the JSON format.
    */
-  credentials?: RequestCredentials;
+  jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
 
   /**
    * Options for the binary wire format.
@@ -75,8 +79,7 @@ export interface GrpcWebHttp2TransportOptions {
  */
 export function createGrpcWebHttp2Transport(
   options: GrpcWebHttp2TransportOptions
-  // TODO remove Partial
-): Partial<Transport> {
+): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
@@ -96,7 +99,6 @@ export function createGrpcWebHttp2Transport(
         undefined,
         options.binaryOptions
       );
-
       try {
         return await runUnary<I, O>(
           {
@@ -136,9 +138,9 @@ export function createGrpcWebHttp2Transport(
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              // validateGrpcStatus(
-              //   grpcWebTrailerParse(messageOrTrailerResult.value.data)
-              // );
+              validateGrpcStatus(
+                grpcWebTrailerParse(messageOrTrailerResult.value.data)
+              );
               // At this point, we received trailers only, but the trailers did
               // not have an error status code.
               throw "unexpected trailer";
@@ -163,9 +165,136 @@ export function createGrpcWebHttp2Transport(
         throw connectErrorFromReason(e, Code.Internal);
       }
     },
-    // async stream<
-    //   I extends Message<I> = AnyMessage,
-    //   O extends Message<O> = AnyMessage
-    // >(): Promise<StreamingConn<I, O>> {},
+    stream<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
+      service: ServiceType,
+      method: MethodInfo<I, O>,
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: HeadersInit | undefined
+    ): Promise<StreamingConn<I, O>> {
+      const { normalize, serialize, parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
+      );
+      return runStreaming<I, O>(
+        {
+          stream: true,
+          service,
+          method,
+          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          init: {
+            method: "POST",
+            redirect: "error",
+            mode: "cors",
+          },
+          signal: signal ?? new AbortController().signal,
+          header: grpcWebCreateRequestHeader(timeoutMs, header),
+        },
+        async (req) => {
+          // eslint-disable-next-line no-useless-catch
+          try {
+            const session: http2.ClientHttp2Session =
+              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
+                const s = http2.connect(req.url, options.http2Options, (s) =>
+                  resolve(s)
+                );
+                s.on("error", (err) => reject(err));
+              });
+            const stream = session.request(
+              {
+                ...webHeaderToNodeHeaders(req.header),
+                ":method": "POST",
+                ":path": new URL(req.url).pathname,
+              },
+              {
+                signal: req.signal,
+              }
+            );
+            let endStreamReceived = false;
+            const responseTrailer = defer<Headers>();
+            const conn: StreamingConn<I, O> = {
+              ...req,
+              // responseHeader: headersPromise.then(([, header]) => header),
+              responseTrailer,
+              closed: false,
+              async send(message: PartialMessage<I>): Promise<void> {
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot send, stream is already closed"
+                  );
+                }
+                const enveloped = encodeEnvelope(
+                  0b00000000,
+                  serialize(normalize(message))
+                );
+                await write(stream, enveloped);
+              },
+              async close(): Promise<void> {
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot close, stream is already closed"
+                  );
+                }
+                this.closed = true;
+                await end(stream);
+              },
+              async read(): Promise<void> {
+                return;
+              },
+            };
+            return conn;
+          } catch (e) {
+            // throw connectErrorFromNodeReason(e);
+            throw e;
+          }
+        },
+        options.interceptors
+      );
+    },
   };
+}
+
+function validateGrpcStatus(headerOrTrailer: Headers) {
+  // Prefer the protobuf-encoded data to the grpc-status header.
+  const grpcStatusDetailsBin = headerOrTrailer.get("grpc-status-details-bin");
+  if (grpcStatusDetailsBin != null) {
+    const status = decodeBinaryHeader(grpcStatusDetailsBin, GrpcStatus);
+    // Prefer the protobuf-encoded data to the headers.
+    if (status.code == 0) {
+      return;
+    }
+    const error = new ConnectError(
+      status.message,
+      status.code,
+      headerOrTrailer
+    );
+    error.details = status.details.map((any) => ({
+      type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
+      value: any.value,
+    }));
+    throw error;
+  }
+  const grpcStatus = headerOrTrailer.get("grpc-status");
+  if (grpcStatus != null) {
+    const code = parseInt(grpcStatus);
+    if (code === 0) {
+      return;
+    }
+    if (!(code in Code)) {
+      throw new ConnectError(
+        `invalid grpc-status: ${grpcStatus}`,
+        Code.Internal
+      );
+    }
+    throw new ConnectError(
+      decodeURIComponent(headerOrTrailer.get("grpc-message") ?? ""),
+      code,
+      headerOrTrailer
+    );
+  }
 }
