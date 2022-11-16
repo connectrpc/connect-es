@@ -1,3 +1,17 @@
+// Copyright 2021-2022 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import {
   appendHeaders,
   Code,
@@ -20,12 +34,6 @@ import {
   PartialMessage,
 } from "@bufbuild/protobuf";
 import type { ImplHandler, ImplSpec, Protocol } from "./protocol.js";
-import {
-  end,
-  endWithHttpStatus,
-  readToEnd,
-  write,
-} from "./private/handler-io.js";
 import { createServerMethodSerializers } from "./private/create-server-method-serializers.js";
 import type { HandlerContext } from "./handler.js";
 import {
@@ -35,7 +43,14 @@ import {
 import { connectTrailerMux } from "./private/connect-trailer-mux.js";
 import type * as http from "http";
 import type * as http2 from "http2";
-import { createEnvelopeReader } from "./private/create-envelope-reader.js";
+import {
+  end,
+  endWithHttpStatus,
+  jsonSerialize,
+  readEnvelope,
+  readToEnd,
+  write,
+} from "./private/io.js";
 
 /**
  * Options for creating a Connect Protocol instance.
@@ -77,15 +92,6 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-
-            const { normalize, parse, serialize } =
-              createServerMethodSerializers(
-                options.jsonOptions,
-                options.binaryOptions,
-                spec.method,
-                type.binary
-              );
-
             const context: HandlerContext = {
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
@@ -94,6 +100,14 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
+            const { normalize, parse, serialize } =
+              createServerMethodSerializers(
+                options.jsonOptions,
+                options.binaryOptions,
+                spec.method,
+                type.binary
+              );
+
             const input = parse(await readToEnd(req));
             let output: O | PartialMessage<O>;
             try {
@@ -140,7 +154,6 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-
             const context: HandlerContext = {
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
@@ -149,7 +162,6 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
-
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -158,13 +170,11 @@ export function createConnectProtocol(
                 type.binary
               );
 
-            const readEnvelope = createEnvelopeReader(req);
-
-            const inputResult = await readEnvelope();
+            const inputResult = await readEnvelope(req);
             if (inputResult.done) {
               return await endWithConnectEndStream(
                 res,
-                context.responseTrailer,
+                context,
                 new ConnectError("Missing input message", Code.Internal),
                 options.jsonOptions
               );
@@ -172,7 +182,7 @@ export function createConnectProtocol(
             if (inputResult.value.flags !== 0b00000000) {
               return await endWithConnectEndStream(
                 res,
-                context.responseTrailer,
+                context,
                 new ConnectError(
                   `Unexpected input flags ${inputResult.value.flags.toString(
                     2
@@ -199,14 +209,14 @@ export function createConnectProtocol(
             } catch (e) {
               return await endWithConnectEndStream(
                 res,
-                context.responseTrailer,
+                context,
                 connectErrorFromReason(e),
                 options.jsonOptions
               );
             }
             return await endWithConnectEndStream(
               res,
-              context.responseTrailer,
+              context,
               undefined,
               options.jsonOptions
             );
@@ -214,22 +224,170 @@ export function createConnectProtocol(
         }
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
+            const type = connectParseContentType(
+              req.headers["content-type"] ?? null
+            );
+            if (type === undefined) {
+              return await endWithHttpStatus(
+                res,
+                415,
+                "Unsupported Media Type"
+              );
+            }
+            if (!type.stream) {
+              return await endWithHttpStatus(
+                res,
+                415,
+                "Unsupported Media Type"
+              );
+            }
+            const context: HandlerContext = {
+              requestHeader: nodeHeaderToWebHeader(req.headers),
+              responseHeader: connectCreateResponseHeader(
+                spec.method.kind,
+                type.binary
+              ),
+              responseTrailer: new Headers(),
+            };
+            const { normalize, parse, serialize } =
+              createServerMethodSerializers(
+                options.jsonOptions,
+                options.binaryOptions,
+                spec.method,
+                type.binary
+              );
+
+            async function* input() {
+              for (;;) {
+                const result = await readEnvelope(req);
+                if (result.done) {
+                  break;
+                }
+                if (result.value.flags !== 0b00000000) {
+                  return await endWithConnectEndStream(
+                    res,
+                    context,
+                    new ConnectError(
+                      `Unexpected input flags ${result.value.flags.toString(
+                        2
+                      )}`,
+                      Code.Internal
+                    ),
+                    options.jsonOptions
+                  );
+                }
+                yield parse(result.value.data);
+              }
+            }
+            let output: O | PartialMessage<O>;
+            try {
+              output = await spec.impl(input(), context);
+            } catch (e) {
+              return await endWithConnectError(
+                res,
+                connectErrorFromReason(e),
+                connectTrailerMux(
+                  context.responseHeader,
+                  context.responseTrailer
+                ),
+                options.jsonOptions
+              );
+            }
+            res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
+            await write(
+              res,
+              encodeEnvelope(0b00000000, serialize(normalize(output)))
+            );
             return await endWithConnectEndStream(
               res,
-              new Headers(),
-              // TODO implement
-              new ConnectError("TODO", Code.Unimplemented),
+              context,
+              undefined,
               options.jsonOptions
             );
           };
         }
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
+            const type = connectParseContentType(
+              req.headers["content-type"] ?? null
+            );
+            if (type === undefined) {
+              return await endWithHttpStatus(
+                res,
+                415,
+                "Unsupported Media Type"
+              );
+            }
+            if (!type.stream) {
+              return await endWithHttpStatus(
+                res,
+                415,
+                "Unsupported Media Type"
+              );
+            }
+            const context: HandlerContext = {
+              requestHeader: nodeHeaderToWebHeader(req.headers),
+              responseHeader: connectCreateResponseHeader(
+                spec.method.kind,
+                type.binary
+              ),
+              responseTrailer: new Headers(),
+            };
+            const { normalize, parse, serialize } =
+              createServerMethodSerializers(
+                options.jsonOptions,
+                options.binaryOptions,
+                spec.method,
+                type.binary
+              );
+
+            async function* input() {
+              for (;;) {
+                const result = await readEnvelope(req);
+                if (result.done) {
+                  break;
+                }
+                if (result.value.flags !== 0b00000000) {
+                  return await endWithConnectEndStream(
+                    res,
+                    context,
+                    new ConnectError(
+                      `Unexpected input flags ${result.value.flags.toString(
+                        2
+                      )}`,
+                      Code.Internal
+                    ),
+                    options.jsonOptions
+                  );
+                }
+                yield parse(result.value.data);
+              }
+            }
+            try {
+              for await (const output of spec.impl(input(), context)) {
+                if (!res.headersSent) {
+                  res.writeHead(
+                    200,
+                    webHeaderToNodeHeaders(context.responseHeader)
+                  );
+                }
+                await write(
+                  res,
+                  encodeEnvelope(0b00000000, serialize(normalize(output)))
+                );
+              }
+            } catch (e) {
+              return await endWithConnectEndStream(
+                res,
+                context,
+                connectErrorFromReason(e),
+                options.jsonOptions
+              );
+            }
             return await endWithConnectEndStream(
               res,
-              new Headers(),
-              // TODO implement
-              new ConnectError("TODO", Code.Unimplemented),
+              context,
+              undefined,
               options.jsonOptions
             );
           };
@@ -255,18 +413,22 @@ function connectCreateResponseHeader(
 
 async function endWithConnectEndStream(
   res: http.ServerResponse | http2.Http2ServerResponse,
-  metadata: Headers,
+  context: HandlerContext,
   error: ConnectError | undefined,
   jsonWriteOptions: Partial<JsonWriteOptions> | undefined
 ) {
+  if (!res.headersSent) {
+    res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
+  }
   const endStreamJson = connectEndStreamToJson(
-    metadata,
+    context.responseTrailer,
     error,
     jsonWriteOptions
   );
-  const endStreamJsonString = JSON.stringify(endStreamJson);
-  const endStreamBytes = new TextEncoder().encode(endStreamJsonString);
-  await write(res, encodeEnvelope(connectEndStreamFlag, endStreamBytes));
+  await write(
+    res,
+    encodeEnvelope(connectEndStreamFlag, jsonSerialize(endStreamJson))
+  );
   await end(res);
 }
 
@@ -281,6 +443,6 @@ async function endWithConnectError(
   metadata.set("Content-Type", "application/json");
   res.writeHead(statusCode, webHeaderToNodeHeaders(metadata));
   const json = connectErrorToJson(error, jsonWriteOptions);
-  await write(res, JSON.stringify(json));
+  await write(res, jsonSerialize(json));
   await end(res);
 }

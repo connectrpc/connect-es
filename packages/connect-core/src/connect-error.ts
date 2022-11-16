@@ -168,7 +168,7 @@ function createMessage(message: string, code: Code) {
  * - If the value is already a ConnectError, return it as is.
  * - If the value is an AbortError from the fetch API, return the message
  *   of the AbortError with code Canceled.
- * - For other Errors, return the Errors message with code Unknown by default.
+ * - For other Errors, return the error message with code Unknown by default.
  * - For other values, return the values String representation as a message,
  *   with the code Unknown by default.
  */
@@ -186,7 +186,7 @@ export function connectErrorFromReason(
       // error object, and translate to the appropriate status code.
       return new ConnectError(reason.message, Code.Canceled);
     }
-    return new ConnectError(reason.message);
+    return new ConnectError(reason.message, code);
   }
   return new ConnectError(String(reason), code);
 }

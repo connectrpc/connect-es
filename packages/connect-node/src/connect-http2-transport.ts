@@ -1,3 +1,17 @@
+// Copyright 2021-2022 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import {
   appendHeaders,
   Code,
@@ -39,8 +53,13 @@ import {
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { defer } from "./private/defer.js";
-import { createEnvelopeReader } from "./private/create-envelope-reader.js";
-import { jsonParse, readToEnd, write } from "./private/client-io.js";
+import {
+  end,
+  jsonParse,
+  readEnvelope,
+  readToEnd,
+  write,
+} from "./private/io.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -135,12 +154,18 @@ export function createConnectHttp2Transport(
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
             // TODO We create a new session for every request - we should share a connection instead,
             //      and offer control over connection state via methods / properties on the transport.
-            const session: http2.ClientHttp2Session = http2.connect(
-              // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
-              // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
-              req.url,
-              options.http2Options
-            );
+            const session: http2.ClientHttp2Session =
+              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
+                const s = http2.connect(
+                  // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
+                  // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
+                  req.url,
+                  options.http2Options,
+                  (s) => resolve(s)
+                );
+                s.on("error", (err) => reject(err));
+              });
+
             const stream = session.request(
               {
                 ...webHeaderToNodeHeaders(req.header),
@@ -154,7 +179,7 @@ export function createConnectHttp2Transport(
             const headersPromise = responseHeadersPromise(stream);
 
             await write(stream, serialize(req.message));
-            stream.end();
+            await end(stream);
 
             const [responseStatus, responseHeader] = await headersPromise;
             await validateResponseHeader(
@@ -177,7 +202,7 @@ export function createConnectHttp2Transport(
           options.interceptors
         );
       } catch (e) {
-        throw connectErrorFromReason(e, Code.Internal);
+        throw connectErrorFromNodeReason(e);
       }
     },
 
@@ -222,100 +247,141 @@ export function createConnectHttp2Transport(
           header: createRequestHeader(timeoutMs, header),
         },
         async (req) => {
-          // TODO We create a new session for every request - we should share a connection instead,
-          //      and offer control over connection state via methods / properties on the transport.
-          const session: http2.ClientHttp2Session = http2.connect(
-            // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
-            // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
-            req.url,
-            options.http2Options
-          );
-          const stream = session.request(
-            {
-              ...webHeaderToNodeHeaders(req.header),
-              ":method": "POST",
-              ":path": new URL(req.url).pathname,
-            },
-            {
-              signal: req.signal,
-            }
-          );
-
-          const headersPromise = responseHeadersPromise(stream);
-          const readEnvelope = createEnvelopeReader(stream);
-          let endStreamReceived = false;
-          const responseTrailer = defer<Headers>();
-          const conn: StreamingConn<I, O> = {
-            ...req,
-            responseHeader: headersPromise.then(([, header]) => header),
-            responseTrailer,
-            closed: false,
-            async send(message: PartialMessage<I>): Promise<void> {
-              if (stream.writableEnded) {
-                throw new ConnectError("cannot send, stream is already closed");
-              }
-              const enveloped = encodeEnvelope(
-                0b00000000,
-                serialize(normalize(message))
-              );
-              await write(stream, enveloped);
-            },
-            async close(): Promise<void> {
-              if (stream.writableEnded) {
-                throw new ConnectError(
-                  "cannot close, stream is already closed"
+          try {
+            // TODO We create a new session for every request - we should share a connection instead,
+            //      and offer control over connection state via methods / properties on the transport.
+            const session: http2.ClientHttp2Session =
+              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
+                const s = http2.connect(
+                  // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
+                  // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
+                  req.url,
+                  options.http2Options,
+                  (s) => resolve(s)
                 );
+                s.on("error", (err) => reject(err));
+              });
+            const stream = session.request(
+              {
+                ...webHeaderToNodeHeaders(req.header),
+                ":method": "POST",
+                ":path": new URL(req.url).pathname,
+              },
+              {
+                signal: req.signal,
               }
-              this.closed = true;
-              return new Promise<void>((resolve) => stream.end(resolve));
-            },
-            async read(): Promise<ReadableStreamReadResultLike<O>> {
-              const [responseStatus, responseHeader] = await headersPromise;
-              await validateResponseHeader(
-                responseStatus,
-                responseHeader,
-                stream
-              );
-              validateContentType(responseHeader.get("Content-Type"));
-              try {
-                const result = await readEnvelope();
-                if (result.done) {
-                  if (!endStreamReceived) {
-                    throw new ConnectError("missing EndStreamResponse");
+            );
+
+            const headersPromise = responseHeadersPromise(stream);
+            let endStreamReceived = false;
+            const responseTrailer = defer<Headers>();
+            const conn: StreamingConn<I, O> = {
+              ...req,
+              responseHeader: headersPromise.then(([, header]) => header),
+              responseTrailer,
+              closed: false,
+              async send(message: PartialMessage<I>): Promise<void> {
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot send, stream is already closed"
+                  );
+                }
+                const enveloped = encodeEnvelope(
+                  0b00000000,
+                  serialize(normalize(message))
+                );
+                await write(stream, enveloped);
+              },
+              async close(): Promise<void> {
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot close, stream is already closed"
+                  );
+                }
+                this.closed = true;
+                await end(stream);
+              },
+              async read(): Promise<ReadableStreamReadResultLike<O>> {
+                const [responseStatus, responseHeader] = await headersPromise;
+                await validateResponseHeader(
+                  responseStatus,
+                  responseHeader,
+                  stream
+                );
+                validateContentType(responseHeader.get("Content-Type"));
+                try {
+                  const result = await readEnvelope(stream);
+                  if (result.done) {
+                    if (!endStreamReceived) {
+                      throw new ConnectError("missing EndStreamResponse");
+                    }
+                    return {
+                      done: true,
+                    };
+                  }
+                  if (
+                    (result.value.flags & connectEndStreamFlag) ===
+                    connectEndStreamFlag
+                  ) {
+                    endStreamReceived = true;
+                    const endStream = connectEndStreamFromJson(
+                      result.value.data
+                    );
+                    responseTrailer.resolve(endStream.metadata);
+                    if (endStream.error) {
+                      throw endStream.error;
+                    }
+                    return {
+                      done: true,
+                    };
                   }
                   return {
-                    done: true,
+                    done: false,
+                    value: parse(result.value.data),
                   };
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
                 }
-                if (
-                  (result.value.flags & connectEndStreamFlag) ===
-                  connectEndStreamFlag
-                ) {
-                  endStreamReceived = true;
-                  const endStream = connectEndStreamFromJson(result.value.data);
-                  responseTrailer.resolve(endStream.metadata);
-                  if (endStream.error) {
-                    throw endStream.error;
-                  }
-                  return {
-                    done: true,
-                  };
-                }
-                return {
-                  done: false,
-                  value: parse(result.value.data),
-                };
-              } catch (e) {
-                throw connectErrorFromReason(e);
-              }
-            },
-          };
-          return Promise.resolve(conn);
+              },
+            };
+            return conn;
+          } catch (e) {
+            throw connectErrorFromNodeReason(e);
+          }
         },
         options.interceptors
       );
     },
   };
+}
+
+function connectErrorFromNodeReason(reason: unknown): ConnectError {
+  if (isSyscallError(reason, "getaddrinfo", "ENOTFOUND")) {
+    return connectErrorFromReason(reason, Code.Unavailable);
+  }
+  return connectErrorFromReason(reason, Code.Internal);
+}
+
+function isSyscallError(
+  reason: unknown,
+  syscall: string,
+  code: string
+): boolean {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
+  const r = reason as any;
+  if (reason instanceof Error) {
+    if ("code" in r && "syscall" in r) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
+      if (syscall === r.syscall && code === r.code) {
+        return true;
+      }
+    }
+    if ("cause" in reason) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-member-access
+      return isSyscallError(r.cause, syscall, code);
+    }
+  }
+  return false;
 }
 
 async function validateResponseHeader(

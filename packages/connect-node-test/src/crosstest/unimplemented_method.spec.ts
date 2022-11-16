@@ -13,38 +13,38 @@
 // limitations under the License.
 
 import {
+  Code,
   ConnectError,
+  connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
-  Code,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
+import { createTestServers } from "../helpers/testserver.js";
 
 describe("unimplemented_method", function () {
-  function expectError(err: unknown) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      expect(err.code).toEqual(Code.Unimplemented);
-    }
-  }
-  describeTransports(crosstestTransports, (transport) => {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  servers.describeTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         await client.unimplementedCall({});
         fail("expected to catch an error");
       } catch (e) {
-        expectError(e);
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(connectErrorFromReason(e).code).toBe(Code.Unimplemented);
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.unimplementedCall({}, (err: ConnectError | undefined) => {
-        expectError(err);
+        expect(err?.code).toBe(Code.Unimplemented);
         done();
       });
     });
   });
+
+  afterAll(async () => await servers.stop());
 });

@@ -1,3 +1,17 @@
+// Copyright 2021-2022 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { createMethodUrl } from "@bufbuild/connect-core";
 import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { MethodKind } from "@bufbuild/protobuf";
@@ -9,9 +23,9 @@ import type {
 } from "./handler.js";
 import type * as http from "http";
 import type * as http2 from "http2";
-import { endWithHttpStatus } from "./private/handler-io.js";
 import { createConnectProtocol } from "./create-connect-protocol.js";
 import type { ImplSpec, Protocol } from "./protocol.js";
+import { endWithHttpStatus } from "./private/io.js";
 
 /**
  * createHandlers() takes a service definition and a service implementation,
@@ -50,27 +64,23 @@ export function createHandler<M extends MethodInfo>(
     res: http.ServerResponse | http2.Http2ServerResponse
   ): void {
     if (method.kind == MethodKind.BiDiStreaming && req.httpVersionMajor !== 2) {
-      void endWithHttpStatus(res, 505, "Version Not Supported");
-      return;
+      return void endWithHttpStatus(res, 505, "Version Not Supported");
     }
     if (req.method !== "POST") {
       // The gRPC-HTTP2, gRPC-Web, and Connect protocols are all POST-only.
-      void endWithHttpStatus(res, 405, "Method Not Allowed");
-      return;
+      return void endWithHttpStatus(res, 405, "Method Not Allowed");
     }
     const handleProtocol = protocolHandlers.find((p) =>
       p.supportsMediaType(req.headers["content-type"] ?? "")
     );
     if (!handleProtocol) {
-      void endWithHttpStatus(res, 415, "Unsupported Media Type");
-      return;
+      return void endWithHttpStatus(res, 415, "Unsupported Media Type");
     }
     handleProtocol(req, res).catch((reason) => {
       // TODO need to handle rejections here, but it's unclear how exactly
       // eslint-disable-next-line no-console
       console.error("protocol handle failed", reason);
     });
-    return;
   }
   return Object.assign(handleAny, {
     service,
