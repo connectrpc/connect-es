@@ -22,8 +22,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as http2 from "http2";
-import { write } from "./private/client-io.js";
-import { createEnvelopeReader } from "./private/create-envelope-reader.js";
+import { readEnvelope, write } from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 
 const trailerFlag = 0b10000000;
@@ -127,8 +126,7 @@ export function createGrpcWebHttp2Transport(
             await write(stream, envelope);
             stream.end();
 
-            const reader = createEnvelopeReader(stream);
-            const messageOrTrailerResult = await reader();
+            const messageOrTrailerResult = await readEnvelope(stream);
 
             if (messageOrTrailerResult.done) {
               throw "premature eof";
