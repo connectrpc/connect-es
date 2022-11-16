@@ -13,11 +13,20 @@
 // limitations under the License.
 
 export * from "./connect-http2-transport.js";
-export { mergeHandlers } from "./merge-handlers.js";
-export { createHandler, createHandlers } from "./create-handler.js";
-export { Handler, HandlerContext, ServiceImpl, MethodImpl } from "./handler.js";
+export {
+  Handler,
+  createHandler,
+  createHandlers,
+  mergeHandlers,
+} from "./handler.js";
+export {
+  ServiceImpl,
+  MethodImpl,
+  HandlerContext,
+  unimplementService,
+} from "./implementation.js";
 export { Protocol } from "./protocol.js";
-export { createConnectProtocol } from "./create-connect-protocol.js";
+export { createConnectProtocol } from "./connect-protocol.js";
 export {
   createCallbackClient,
   CallbackClient,

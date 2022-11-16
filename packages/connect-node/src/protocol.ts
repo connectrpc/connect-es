@@ -26,7 +26,7 @@ import type {
   ClientStreamingImpl,
   ServerStreamingImpl,
   UnaryImpl,
-} from "./handler.js";
+} from "./implementation";
 
 /**
  * A Protocol provides handlers that invoke the user-provided implementation.

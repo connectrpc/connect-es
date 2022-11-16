@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { createMethodUrl } from "@bufbuild/connect-core";
 import type {
-  AnyMessage,
-  Message,
-  MessageType,
-  MethodIdempotency,
+  BinaryReadOptions,
+  BinaryWriteOptions,
+  JsonReadOptions,
+  JsonWriteOptions,
   MethodInfo,
-  MethodKind,
-  PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
+import { MethodKind } from "@bufbuild/protobuf";
+import type { MethodImpl, ServiceImpl } from "./implementation.js";
 import type * as http from "http";
 import type * as http2 from "http2";
+import { createConnectProtocol } from "./connect-protocol.js";
+import type { ImplSpec, Protocol } from "./protocol.js";
+import { endWithHttpStatus } from "./private/io.js";
 
 /**
  * Handler handles a Node.js request for one specific RPC.
@@ -48,83 +52,148 @@ export type Handler = NodeHandler & {
 };
 
 /**
+ * Options for creating a Handler. If you do not specify any protocols,
+ * all available protocols are enabled.
+ */
+type HandlerOptions =
+  | {
+      jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
+      binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+    }
+  | { protocols: Protocol[] };
+
+/**
+ * createHandlers() takes a service definition and a service implementation,
+ * and returns an array of Handler functions, one for each RPC.
+ */
+export function createHandlers<T extends ServiceType>(
+  service: T,
+  implementation: ServiceImpl<T>,
+  options?: HandlerOptions
+): Handler[] {
+  return Object.entries(service.methods).map(([name, method]) => {
+    const i = implementation[name].bind(implementation);
+    return createHandler(service, method, i, options);
+  });
+}
+
+/**
+ * createHandler() takes an RPC definition and an RPC implementation, and
+ * returns a Handler function.
+ */
+export function createHandler<M extends MethodInfo>(
+  service: ServiceType,
+  method: M,
+  impl: MethodImpl<M>,
+  options?: HandlerOptions
+): Handler {
+  const protocols = normalizeHandlerOptions(options);
+  const protocolHandlers = protocols.map((p) =>
+    Object.assign(p.createHandler(createImplSpec(service, method, impl)), p)
+  );
+
+  function handleAny(
+    req: http.IncomingMessage | http2.Http2ServerRequest,
+    res: http.ServerResponse | http2.Http2ServerResponse
+  ): void {
+    if (method.kind == MethodKind.BiDiStreaming && req.httpVersionMajor !== 2) {
+      return void endWithHttpStatus(res, 505, "Version Not Supported");
+    }
+    if (req.method !== "POST") {
+      // The gRPC-HTTP2, gRPC-Web, and Connect protocols are all POST-only.
+      return void endWithHttpStatus(res, 405, "Method Not Allowed");
+    }
+    const handleProtocol = protocolHandlers.find((p) =>
+      p.supportsMediaType(req.headers["content-type"] ?? "")
+    );
+    if (!handleProtocol) {
+      return void endWithHttpStatus(res, 415, "Unsupported Media Type");
+    }
+    handleProtocol(req, res).catch((reason) => {
+      // TODO need to handle rejections here, but it's unclear how exactly
+      // eslint-disable-next-line no-console
+      console.error("protocol handle failed", reason);
+    });
+  }
+  return Object.assign(handleAny, {
+    service,
+    method,
+    requestPath: createMethodUrl("https://example.com", service, method)
+      .pathname,
+  });
+}
+
+/**
+ * mergeHandlers() takes an array of Handler functions, and merges them into a
+ * single handler function that invokes the correct handler by its request
+ * path. If no request path matches, it serves a 404.
+ */
+export function mergeHandlers(
+  handlers: Handler[],
+  options?: MergeHandlersOptions
+): NodeHandler {
+  const prefix = options?.requestPathPrefix ?? "";
+  const fallback =
+    options?.fallback ??
+    ((request, response) => {
+      response.writeHead(404);
+      response.end();
+    });
+  return function handleByRequestPath(request, response) {
+    const handler = handlers.find(
+      (h) => request.url === prefix + h.requestPath
+    );
+    if (!handler) {
+      return fallback(request, response);
+    }
+    handler(request, response);
+  };
+}
+
+/**
+ * Options to the function mergeHandlers().
+ */
+interface MergeHandlersOptions {
+  /**
+   * Serve all handlers under this prefix. For example, the prefix "/something"
+   * will serve the RPC foo.FooService/Bar under "/something/foo.FooService/Bar".
+   * Note that many gRPC client implementations do not allow for prefixes.
+   */
+  requestPathPrefix?: string;
+  /**
+   * If none of the handler request paths match, a 404 is served. This option
+   * can provide a custom fallback for this case.
+   */
+  fallback?: NodeHandler;
+}
+
+/**
  * NodeHandler is compatible with http.RequestListener and its equivalent
  * for http2.
  */
-export type NodeHandler = (
+type NodeHandler = (
   request: http.IncomingMessage | http2.Http2ServerRequest,
   response: http.ServerResponse | http2.Http2ServerResponse
 ) => void;
 
-// TODO document
-export interface HandlerContext {
-  requestHeader: Headers;
-  responseHeader: Headers;
-  responseTrailer: Headers;
+function normalizeHandlerOptions(init?: HandlerOptions): Protocol[] {
+  init = init ?? {};
+  if ("protocols" in init) {
+    return init.protocols;
+  } else {
+    return [createConnectProtocol(init)];
+  }
 }
 
-// prettier-ignore
-/**
- * ServiceImpl is the interface of the implementation of a service.
- */
-export type ServiceImpl<T extends ServiceType> = {
-  [P in keyof T["methods"]]: MethodImpl<T["methods"][P]>;
-};
-
-// prettier-ignore
-/**
- * MethodImpl is the signature of the implementation of an RPC.
- */
-export type MethodImpl<M extends MI> =
-    M extends MI<infer I, infer O, MethodKind.Unary>           ? UnaryImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.ServerStreaming> ? ServerStreamingImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.ClientStreaming> ? ClientStreamingImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.BiDiStreaming>   ? BiDiStreamingImpl<I, O>
-  : never;
-
-interface MI<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
-  K extends MethodKind = MethodKind
-> {
-  readonly kind: K;
-  readonly name: string;
-  readonly I: MessageType<I>;
-  readonly O: MessageType<O>;
-  readonly idempotency?: MethodIdempotency;
+function createImplSpec<M extends MethodInfo>(
+  service: ServiceType,
+  method: M,
+  impl: MethodImpl<M>
+): ImplSpec {
+  return {
+    kind: method.kind,
+    service,
+    method,
+    impl,
+  } as ImplSpec;
 }
-
-/**
- * UnaryImp is the signature of the implementation of a unary RPC.
- */
-export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
-  request: I,
-  context: HandlerContext
-) => Promise<O> | Promise<PartialMessage<O>> | O | PartialMessage<O>;
-
-/**
- * ClientStreamingImpl is the signature of the implementation of a
- * client-streaming RPC.
- */
-export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  requests: AsyncIterable<I>,
-  context: HandlerContext
-) => Promise<O> | Promise<PartialMessage<O>>;
-
-/**
- * ServerStreamingImpl is the signature of the implementation of a
- * server-streaming RPC.
- */
-export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  request: I,
-  context: HandlerContext
-) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;
-
-/**
- * BiDiStreamingImpl is the signature of the implementation of a bi-di
- * streaming RPC.
- */
-export type BiDiStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  requests: AsyncIterable<I>,
-  context: HandlerContext
-) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;
