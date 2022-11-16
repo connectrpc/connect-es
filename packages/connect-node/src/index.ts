@@ -27,6 +27,7 @@ export {
 } from "./implementation.js";
 export { Protocol } from "./protocol.js";
 export { createConnectProtocol } from "./connect-protocol.js";
+export { createGrpcWebProtocol } from "./grpc-web-protocol.js";
 export {
   createCallbackClient,
   CallbackClient,
