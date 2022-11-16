@@ -35,7 +35,7 @@ import {
 } from "@bufbuild/protobuf";
 import type { ImplHandler, ImplSpec, Protocol } from "./protocol.js";
 import { createServerMethodSerializers } from "./private/create-server-method-serializers.js";
-import type { HandlerContext } from "./handler.js";
+import type { HandlerContext } from "./implementation.js";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
