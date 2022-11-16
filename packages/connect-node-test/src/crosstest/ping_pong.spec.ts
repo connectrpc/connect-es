@@ -29,6 +29,7 @@ describe("ping_pong", () => {
       // In this case, your connect fetch transport never issues the request.
       "connect fetch transport (binary) against Node.js (http)",
       "connect fetch transport (JSON) against Node.js (http)",
+      "gRPC-web fetch transport (binary) against Node.js (http)",
     ],
     (transport) => {
       it("with promise client", async function () {
