@@ -3,7 +3,9 @@ import {
   connectErrorFromReason,
   createClientMethodSerializers,
   createMethodUrl,
+  encodeEnvelope,
   grpcWebCreateRequestHeader,
+  grpcWebTrailerParse,
   Interceptor,
   runUnary,
   Transport,
@@ -20,11 +22,11 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as http2 from "http2";
-import { write, readToEnd } from "./private/client-io.js";
-import {
-  webHeaderToNodeHeaders,
-  nodeHeaderToWebHeader,
-} from "./private/web-header-to-node-headers.js";
+import { write } from "./private/client-io.js";
+import { createEnvelopeReader } from "./private/create-envelope-reader.js";
+import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+
+const trailerFlag = 0b10000000;
 
 //TODO
 // check with Timo to see if thee options between connect and grpc web are shared so we can make a reusable interface
@@ -45,6 +47,9 @@ export interface GrpcWebHttp2TransportOptions {
    * By default, connect-node clients use the binary format.
    */
   useBinaryFormat?: boolean;
+
+  // TODO document
+  http2Options?: http2.ClientSessionOptions | http2.SecureClientSessionOptions;
 
   /**
    * Interceptors that should be applied to all calls running through
@@ -73,6 +78,7 @@ export function createGrpcWebHttp2Transport(
   options: GrpcWebHttp2TransportOptions
   // TODO remove Partial
 ): Partial<Transport> {
+  const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
@@ -87,7 +93,7 @@ export function createGrpcWebHttp2Transport(
     ): Promise<UnaryResponse<O>> {
       const { normalize, serialize, parse } = createClientMethodSerializers(
         method,
-        true,
+        useBinaryFormat,
         undefined,
         options.binaryOptions
       );
@@ -105,7 +111,7 @@ export function createGrpcWebHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const session = http2.connect(req.url);
+            const session = http2.connect(req.url, options.http2Options);
             const stream = session.request(
               {
                 ...webHeaderToNodeHeaders(req.header),
@@ -117,18 +123,40 @@ export function createGrpcWebHttp2Transport(
               }
             );
 
-            await write(stream, serialize(req.message));
+            const envelope = encodeEnvelope(0b00000000, serialize(req.message));
+            await write(stream, envelope);
             stream.end();
 
-            const [, responseHeader] = await responseHeadersPromise(stream);
-            console.log("responseHeader", responseHeader);
+            const reader = createEnvelopeReader(stream);
+            const messageOrTrailerResult = await reader();
+
+            if (messageOrTrailerResult.done) {
+              throw "premature eof";
+            }
+
+            if (messageOrTrailerResult.value.flags === trailerFlag) {
+              // Unary responses require exactly one response message, but in
+              // case of an error, it is perfectly valid to have a response body
+              // that only contains error trailers.
+              // validateGrpcStatus(
+              //   grpcWebTrailerParse(messageOrTrailerResult.value.data)
+              // );
+              // At this point, we received trailers only, but the trailers did
+              // not have an error status code.
+              throw "unexpected trailer";
+            }
+
+            const trailer = grpcWebTrailerParse(
+              messageOrTrailerResult.value.data
+            );
+
             return <UnaryResponse<O>>{
               stream: false,
               service,
               method,
               header,
-              message: parse(await readToEnd(stream)),
-              trailer: responseHeader,
+              message: parse(messageOrTrailerResult.value.data),
+              trailer,
             };
           },
           options.interceptors
@@ -142,23 +170,4 @@ export function createGrpcWebHttp2Transport(
     //   O extends Message<O> = AnyMessage
     // >(): Promise<StreamingConn<I, O>> {},
   };
-}
-
-// make this a util func
-function responseHeadersPromise(
-  stream: http2.ClientHttp2Stream
-): Promise<[number, Headers]> {
-  return new Promise<[number, Headers]>((resolve, reject) => {
-    if (stream.errored) {
-      return reject(stream.errored);
-    }
-    stream.once("error", reject);
-    function parse(
-      headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader
-    ) {
-      stream.off("error", reject);
-      resolve([headers[":status"] ?? 0, nodeHeaderToWebHeader(headers)]);
-    }
-    stream.once("response", parse);
-  });
 }
