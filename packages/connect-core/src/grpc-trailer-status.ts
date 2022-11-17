@@ -22,6 +22,13 @@ const fieldGrpcStatusDetailsBin = "grpc-status-details-bin",
   fieldGrpcStatus = "grpc-status",
   fieldGrpcMessage = "grpc-message";
 
+/**
+ * Sets the fields "grpc-status" and "grpc-message" in the given
+ * Headers object.
+ * If an error is given and contains error details, the function
+ * will also set the field "grpc-status-details-bin" with an encoded
+ * google.rpc.Status message including the error details.
+ */
 export function grpcSetTrailerStatus(
   target: Headers,
   error: ConnectError | undefined
@@ -49,6 +56,13 @@ export function grpcSetTrailerStatus(
   }
 }
 
+/**
+ * Find an error status in the given Headers object, which can be either
+ * a trailer, or a header (as allowed for so-called trailers-only responses).
+ * The field "grpc-status-details-bin" is inspected, and if not present,
+ * the fields "grpc-status" and "grpc-message" are used.
+ * Returns an error only if the gRPC status code is > 0.
+ */
 export function grpcFindTrailerError(
   headerOrTrailer: Headers
 ): ConnectError | undefined {
@@ -56,7 +70,6 @@ export function grpcFindTrailerError(
   const statusBytes = headerOrTrailer.get(fieldGrpcStatusDetailsBin);
   if (statusBytes != null) {
     const status = decodeBinaryHeader(statusBytes, Status);
-    // Prefer the protobuf-encoded data to the headers.
     if (status.code == 0) {
       return undefined;
     }

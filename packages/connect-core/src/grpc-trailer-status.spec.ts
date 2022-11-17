@@ -12,82 +12,102 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Any, Message } from "@bufbuild/protobuf";
-import { Status } from "./gen/grpc/status/status_pb.js";
+import {
+  grpcFindTrailerError,
+  grpcSetTrailerStatus,
+} from "./grpc-trailer-status.js";
 import { ConnectError } from "./connect-error.js";
-import { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
 import { Code } from "./code.js";
+import { Int32Value } from "@bufbuild/protobuf";
 
-const fieldGrpcStatusDetailsBin = "grpc-status-details-bin",
-  fieldGrpcStatus = "grpc-status",
-  fieldGrpcMessage = "grpc-message";
-
-export function grpcSetTrailerStatus(
-  target: Headers,
-  error: ConnectError | undefined
-): void {
-  if (error) {
-    target.set(fieldGrpcStatus, error.code.toString(10));
-    target.set(fieldGrpcMessage, encodeURIComponent(error.rawMessage));
-    if (error.details.length > 0) {
-      const status = new Status({
-        code: error.code,
-        message: error.rawMessage,
-        details: error.details.map((value) =>
-          value instanceof Message
-            ? Any.pack(value)
-            : new Any({
-                typeUrl: `type.googleapis.com/${value.type}`,
-                value: value.value,
-              })
-        ),
-      });
-      target.set(fieldGrpcStatusDetailsBin, encodeBinaryHeader(status));
-    }
-  } else {
-    target.set(fieldGrpcStatus, "0");
-  }
-}
-
-export function grpcFindTrailerError(
-  headerOrTrailer: Headers
-): ConnectError | undefined {
-  // Prefer the protobuf-encoded data to the grpc-status header.
-  const statusBytes = headerOrTrailer.get(fieldGrpcStatusDetailsBin);
-  if (statusBytes != null) {
-    const status = decodeBinaryHeader(statusBytes, Status);
-    // Prefer the protobuf-encoded data to the headers.
-    if (status.code == 0) {
-      return undefined;
-    }
-    const error = new ConnectError(
-      status.message,
-      status.code,
-      headerOrTrailer
+describe("grpcSetTrailerStatus()", function () {
+  it("should set grpc-status when called without error", function () {
+    const t = new Headers();
+    grpcSetTrailerStatus(t, undefined);
+    let count = 0;
+    t.forEach(() => count++);
+    expect(count).toBe(1);
+    expect(t.get("grpc-status")).toBe("0");
+  });
+  it("should keep existing fields", function () {
+    const t = new Headers({
+      foo: "bar",
+    });
+    grpcSetTrailerStatus(t, undefined);
+    let count = 0;
+    t.forEach(() => count++);
+    expect(count).toBe(2);
+    expect(t.get("grpc-status")).toBe("0");
+    expect(t.get("foo")).toBe("bar");
+  });
+  it("should set only grpc-status and grpc-message when called with an error", function () {
+    const t = new Headers();
+    grpcSetTrailerStatus(
+      t,
+      new ConnectError("soirée 🎉", Code.ResourceExhausted)
     );
-    error.details = status.details.map((any) => ({
-      type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
-      value: any.value,
-    }));
-    return error;
-  }
-  const grpcStatus = headerOrTrailer.get(fieldGrpcStatus);
-  if (grpcStatus != null) {
-    const code = parseInt(grpcStatus, 10);
-    if (code === 0) {
-      return undefined;
-    }
-    if (code in Code) {
-      return new ConnectError(
-        decodeURIComponent(headerOrTrailer.get(fieldGrpcMessage) ?? ""),
-        code,
-        headerOrTrailer
-      );
-    }
-    return new ConnectError(
-      `invalid grpc-status: ${grpcStatus}`,
-      Code.Internal
+    let count = 0;
+    t.forEach(() => count++);
+    expect(count).toBe(2);
+    expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
+    expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
+  });
+  it("should set all related fields when called with an error with details", function () {
+    const t = new Headers();
+    grpcSetTrailerStatus(
+      t,
+      new ConnectError("soirée 🎉", Code.ResourceExhausted, {}, [
+        new Int32Value({ value: 123 }),
+      ])
     );
-  }
-  return undefined;
-}
+    let count = 0;
+    t.forEach(() => count++);
+    expect(count).toBe(3);
+    expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
+    expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
+    expect(t.get("grpc-status-details-bin")).toBe(
+      "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew=="
+    );
+  });
+});
+
+describe("grpcFindTrailerError()", function () {
+  it("should not find an error on empty trailer", function () {
+    const t = new Headers();
+    expect(grpcFindTrailerError(t)).toBeUndefined();
+  });
+  it("should not find an error for grpc-status 0", function () {
+    const t = new Headers({
+      "grpc-status": "0",
+    });
+    expect(grpcFindTrailerError(t)).toBeUndefined();
+  });
+  it("should not find an error for grpc-status 0", function () {
+    const t = new Headers({
+      "grpc-status": "0",
+    });
+    expect(grpcFindTrailerError(t)).toBeUndefined();
+  });
+  it("should find an error for the grpc-status field", function () {
+    const t = new Headers({
+      "grpc-status": "8", // resource_exhausted
+    });
+    expect(grpcFindTrailerError(t)?.code).toBe(Code.ResourceExhausted);
+  });
+  it("should use the grpc-message field", function () {
+    const t = new Headers({
+      "grpc-status": "8", // resource_exhausted
+      "grpc-message": "soir%C3%A9e%20%F0%9F%8E%89",
+    });
+    expect(grpcFindTrailerError(t)?.code).toBe(Code.ResourceExhausted);
+    expect(grpcFindTrailerError(t)?.rawMessage).toBe("soirée 🎉");
+  });
+  it("should prefer the grpc-status-details-bin field", function () {
+    const t = new Headers({
+      "grpc-status": "9", // failed_precondition
+      "grpc-status-details-bin":
+        "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew==",
+    });
+    expect(grpcFindTrailerError(t)?.code).toBe(Code.ResourceExhausted);
+  });
+});
