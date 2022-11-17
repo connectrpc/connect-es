@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { grpcExpectContentType, grpcParseContentType } from "./grpc-expect-content-type.js";
+import {
+  grpcExpectContentType,
+  grpcParseContentType,
+} from "./grpc-expect-content-type.js";
 
 describe("grpcParseContentType()", function () {
   it("should parse", function () {
@@ -64,11 +67,7 @@ describe("grpcExpectContentType()", function () {
       "application/grpc+json",
       "application/grpc+json; charset=utf-8",
     ]);
-    itRejects([
-      null,
-      "application/json",
-      "application/grpc-web+json",
-    ]);
+    itRejects([null, "application/json", "application/grpc-web+json"]);
   });
 
   function makeIt(binary: boolean) {
