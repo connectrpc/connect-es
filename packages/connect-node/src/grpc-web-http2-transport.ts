@@ -31,6 +31,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as http2 from "http2";
+import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
 import { end, readEnvelope, write } from "./private/io.js";
 import {
@@ -84,7 +85,7 @@ export interface GrpcWebHttp2TransportOptions {
  */
 export function createGrpcWebHttp2Transport(
   options: GrpcWebHttp2TransportOptions
-): Partial<Transport> {
+): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
@@ -146,6 +147,7 @@ export function createGrpcWebHttp2Transport(
 
             const [responseCode, responseHeader] = await headersPromise;
             validateResponse(useBinaryFormat, responseCode, responseHeader);
+
             const messageOrTrailerResult = await readEnvelope(stream);
 
             if (messageOrTrailerResult.done) {
@@ -246,11 +248,13 @@ export function createGrpcWebHttp2Transport(
                 signal: req.signal,
               }
             );
-            // let endStreamReceived = false;
+            const headersPromise = responseHeadersPromise(stream);
+            let endStreamReceived = false;
+            let messageReceived = false;
             const responseTrailer = defer<Headers>();
             const conn: StreamingConn<I, O> = {
               ...req,
-              // responseHeader: headersPromise.then(([, header]) => header),
+              responseHeader: headersPromise.then(([, header]) => header),
               responseTrailer,
               closed: false,
               async send(message: PartialMessage<I>): Promise<void> {
@@ -274,11 +278,47 @@ export function createGrpcWebHttp2Transport(
                 this.closed = true;
                 await end(stream);
               },
-              async read(): Promise<void> {
-                return;
+              async read(): Promise<ReadableStreamReadResultLike<O>> {
+                const [responseStatus, responseHeader] = await headersPromise;
+                validateResponse(
+                  useBinaryFormat,
+                  responseStatus,
+                  responseHeader
+                );
+
+                // eslint-disable-next-line no-useless-catch
+                try {
+                  const result = await readEnvelope(stream);
+                  if (result.done) {
+                    if (messageReceived && !endStreamReceived) {
+                      throw new ConnectError("missing trailers");
+                    }
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
+                  }
+                  if ((result.value.flags & trailerFlag) === trailerFlag) {
+                    endStreamReceived = true;
+                    const trailer = grpcWebTrailerParse(result.value.data);
+                    validateGrpcStatus(trailer);
+                    responseTrailer.resolve(trailer);
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
+                  }
+                  messageReceived = true;
+                  return {
+                    done: false,
+                    value: parse(result.value.data),
+                  };
+                } catch (err) {
+                  throw err;
+                }
               },
             };
-            return conn;
+            return Promise.resolve(conn);
           } catch (e) {
             // throw connectErrorFromNodeReason(e);
             throw e;
@@ -320,10 +360,12 @@ function validateGrpcStatus(headerOrTrailer: Headers) {
       status.code,
       headerOrTrailer
     );
-    error.details = status.details.map((any) => ({
-      type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
-      value: any.value,
-    }));
+    error.details = status.details.map(
+      (any: { typeUrl: string; value: Uint8Array }) => ({
+        type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
+        value: any.value,
+      })
+    );
     throw error;
   }
   const grpcStatus = headerOrTrailer.get("grpc-status");
