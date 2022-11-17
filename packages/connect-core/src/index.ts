@@ -73,4 +73,7 @@ export {
   grpcWebTrailerParse,
   grpcWebTrailerSerialize,
 } from "./grpc-web-trailer.js";
-export { Status as GrpcStatus } from "./gen/grpc/status/status_pb.js";
+export {
+  grpcFindTrailerError,
+  grpcSetTrailerStatus,
+} from "./grpc-trailer-status.js";

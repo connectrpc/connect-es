@@ -16,14 +16,12 @@ import {
   Code,
   ConnectError,
   connectErrorFromReason,
-  encodeBinaryHeader,
   encodeEnvelope,
-  GrpcStatus,
+  grpcSetTrailerStatus,
   grpcWebParseContentType,
   grpcWebTrailerSerialize,
 } from "@bufbuild/connect-core";
 import {
-  Any,
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
@@ -365,29 +363,8 @@ async function endWithGrpcWebTrailer(
   if (!res.headersSent) {
     res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
   }
-  const trailer = new Headers(context.responseTrailer);
-  if (error) {
-    trailer.set("grpc-status", error.code.toString(10));
-    trailer.set("grpc-message", encodeURIComponent(error.rawMessage));
-    if (error.details.length > 0) {
-      const status = new GrpcStatus({
-        code: error.code,
-        message: error.rawMessage,
-        details: error.details.map((value) =>
-          value instanceof Message
-            ? Any.pack(value)
-            : new Any({
-                typeUrl: `type.googleapis.com/${value.type}`,
-                value: value.value,
-              })
-        ),
-      });
-      trailer.set("grpc-status-details-bin", encodeBinaryHeader(status));
-    }
-  } else {
-    trailer.set("grpc-status", "0");
-  }
-  const trailerBytes = grpcWebTrailerSerialize(trailer);
+  grpcSetTrailerStatus(context.responseTrailer, error);
+  const trailerBytes = grpcWebTrailerSerialize(context.responseTrailer);
   await write(res, encodeEnvelope(0b10000000, trailerBytes));
   await end(res);
 }
