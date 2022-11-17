@@ -116,7 +116,7 @@ export function createGrpcWebHttp2Transport(
       const { normalize, serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
-        undefined,
+        options.jsonOptions,
         options.binaryOptions
       );
       try {
@@ -127,7 +127,11 @@ export function createGrpcWebHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method).toString(),
             init: {},
-            header: grpcWebCreateRequestHeader(timeoutMs, header),
+            header: grpcWebCreateRequestHeader(
+              useBinaryFormat,
+              timeoutMs,
+              header
+            ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
@@ -240,7 +244,11 @@ export function createGrpcWebHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcWebCreateRequestHeader(timeoutMs, header),
+          header: grpcWebCreateRequestHeader(
+            useBinaryFormat,
+            timeoutMs,
+            header
+          ),
         },
         async (req) => {
           try {
