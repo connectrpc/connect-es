@@ -1,4 +1,4 @@
-import type { StreamingConn } from "@bufbuild/connect-core";
+// import type { StreamingConn } from "@bufbuild/connect-core";
 import {
   Code,
   ConnectError,
@@ -11,7 +11,7 @@ import {
   grpcWebCreateRequestHeader,
   grpcWebTrailerParse,
   Interceptor,
-  runStreaming,
+  // runStreaming,
   runUnary,
   Transport,
   UnaryRequest,
@@ -29,9 +29,12 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as http2 from "http2";
-import { defer } from "./private/defer.js";
+// import { defer } from "./private/defer.js";
 import { end, readEnvelope, write } from "./private/io.js";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./private/web-header-to-node-headers.js";
 
 const trailerFlag = 0b10000000;
 
@@ -79,7 +82,7 @@ export interface GrpcWebHttp2TransportOptions {
  */
 export function createGrpcWebHttp2Transport(
   options: GrpcWebHttp2TransportOptions
-): Transport {
+): Partial<Transport> {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
@@ -112,7 +115,17 @@ export function createGrpcWebHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const session = http2.connect(req.url, options.http2Options);
+            const session: http2.ClientHttp2Session =
+              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
+                const s = http2.connect(
+                  // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
+                  // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
+                  req.url,
+                  options.http2Options,
+                  (s) => resolve(s)
+                );
+                s.on("error", (err) => reject(err));
+              });
             const stream = session.request(
               {
                 ...webHeaderToNodeHeaders(req.header),
@@ -124,10 +137,12 @@ export function createGrpcWebHttp2Transport(
               }
             );
 
+            const headersPromise = responseHeadersPromise(stream);
             const envelope = encodeEnvelope(0b00000000, serialize(req.message));
             await write(stream, envelope);
-            stream.end();
+            await end(stream);
 
+            const [, responseHeader] = await headersPromise;
             const messageOrTrailerResult = await readEnvelope(stream);
 
             if (messageOrTrailerResult.done) {
@@ -146,15 +161,28 @@ export function createGrpcWebHttp2Transport(
               throw "unexpected trailer";
             }
 
-            const trailer = grpcWebTrailerParse(
-              messageOrTrailerResult.value.data
-            );
+            const trailerResult = await readEnvelope(stream);
+
+            if (trailerResult.done) {
+              throw "missing trailer";
+            }
+            if (trailerResult.value.flags !== trailerFlag) {
+              throw "missing trailer";
+            }
+
+            const trailer = grpcWebTrailerParse(trailerResult.value.data);
+            validateGrpcStatus(trailer);
+
+            const eofResult = await readEnvelope(stream);
+            if (!eofResult.done) {
+              throw "extraneous data";
+            }
 
             return <UnaryResponse<O>>{
               stream: false,
               service,
               method,
-              header,
+              header: responseHeader,
               message: parse(messageOrTrailerResult.value.data),
               trailer,
             };
@@ -165,97 +193,97 @@ export function createGrpcWebHttp2Transport(
         throw connectErrorFromReason(e, Code.Internal);
       }
     },
-    stream<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
-    >(
-      service: ServiceType,
-      method: MethodInfo<I, O>,
-      signal: AbortSignal | undefined,
-      timeoutMs: number | undefined,
-      header: HeadersInit | undefined
-    ): Promise<StreamingConn<I, O>> {
-      const { normalize, serialize, parse } = createClientMethodSerializers(
-        method,
-        useBinaryFormat,
-        options.jsonOptions,
-        options.binaryOptions
-      );
-      return runStreaming<I, O>(
-        {
-          stream: true,
-          service,
-          method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
-          init: {
-            method: "POST",
-            redirect: "error",
-            mode: "cors",
-          },
-          signal: signal ?? new AbortController().signal,
-          header: grpcWebCreateRequestHeader(timeoutMs, header),
-        },
-        async (req) => {
-          // eslint-disable-next-line no-useless-catch
-          try {
-            const session: http2.ClientHttp2Session =
-              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
-                const s = http2.connect(req.url, options.http2Options, (s) =>
-                  resolve(s)
-                );
-                s.on("error", (err) => reject(err));
-              });
-            const stream = session.request(
-              {
-                ...webHeaderToNodeHeaders(req.header),
-                ":method": "POST",
-                ":path": new URL(req.url).pathname,
-              },
-              {
-                signal: req.signal,
-              }
-            );
-            let endStreamReceived = false;
-            const responseTrailer = defer<Headers>();
-            const conn: StreamingConn<I, O> = {
-              ...req,
-              // responseHeader: headersPromise.then(([, header]) => header),
-              responseTrailer,
-              closed: false,
-              async send(message: PartialMessage<I>): Promise<void> {
-                if (stream.writableEnded) {
-                  throw new ConnectError(
-                    "cannot send, stream is already closed"
-                  );
-                }
-                const enveloped = encodeEnvelope(
-                  0b00000000,
-                  serialize(normalize(message))
-                );
-                await write(stream, enveloped);
-              },
-              async close(): Promise<void> {
-                if (stream.writableEnded) {
-                  throw new ConnectError(
-                    "cannot close, stream is already closed"
-                  );
-                }
-                this.closed = true;
-                await end(stream);
-              },
-              async read(): Promise<void> {
-                return;
-              },
-            };
-            return conn;
-          } catch (e) {
-            // throw connectErrorFromNodeReason(e);
-            throw e;
-          }
-        },
-        options.interceptors
-      );
-    },
+    // async stream<
+    //   I extends Message<I> = AnyMessage,
+    //   O extends Message<O> = AnyMessage
+    // >(
+    //   service: ServiceType,
+    //   method: MethodInfo<I, O>,
+    //   signal: AbortSignal | undefined,
+    //   timeoutMs: number | undefined,
+    //   header: HeadersInit | undefined
+    // ): Promise<StreamingConn<I, O>> {
+    //   const { normalize, serialize, parse } = createClientMethodSerializers(
+    //     method,
+    //     useBinaryFormat,
+    //     options.jsonOptions,
+    //     options.binaryOptions
+    //   );
+    //   return runStreaming<I, O>(
+    //     {
+    //       stream: true,
+    //       service,
+    //       method,
+    //       url: createMethodUrl(options.baseUrl, service, method).toString(),
+    //       init: {
+    //         method: "POST",
+    //         redirect: "error",
+    //         mode: "cors",
+    //       },
+    //       signal: signal ?? new AbortController().signal,
+    //       header: grpcWebCreateRequestHeader(timeoutMs, header),
+    //     },
+    //     async (req) => {
+    //       // eslint-disable-next-line no-useless-catch
+    //       try {
+    //         const session: http2.ClientHttp2Session =
+    //           await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
+    //             const s = http2.connect(req.url, options.http2Options, (s) =>
+    //               resolve(s)
+    //             );
+    //             s.on("error", (err) => reject(err));
+    //           });
+    //         const stream = session.request(
+    //           {
+    //             ...webHeaderToNodeHeaders(req.header),
+    //             ":method": "POST",
+    //             ":path": new URL(req.url).pathname,
+    //           },
+    //           {
+    //             signal: req.signal,
+    //           }
+    //         );
+    //         // let endStreamReceived = false;
+    //         const responseTrailer = defer<Headers>();
+    //         const conn: StreamingConn<I, O> = {
+    //           ...req,
+    //           // responseHeader: headersPromise.then(([, header]) => header),
+    //           responseTrailer,
+    //           closed: false,
+    //           async send(message: PartialMessage<I>): Promise<void> {
+    //             if (stream.writableEnded) {
+    //               throw new ConnectError(
+    //                 "cannot send, stream is already closed"
+    //               );
+    //             }
+    //             const enveloped = encodeEnvelope(
+    //               0b00000000,
+    //               serialize(normalize(message))
+    //             );
+    //             await write(stream, enveloped);
+    //           },
+    //           async close(): Promise<void> {
+    //             if (stream.writableEnded) {
+    //               throw new ConnectError(
+    //                 "cannot close, stream is already closed"
+    //               );
+    //             }
+    //             this.closed = true;
+    //             await end(stream);
+    //           },
+    //           async read(): Promise<void> {
+    //             return;
+    //           },
+    //         };
+    //         return conn;
+    //       } catch (e) {
+    //         // throw connectErrorFromNodeReason(e);
+    //         throw e;
+    //       }
+    //     },
+    //     options.interceptors
+    //   );
+    // },
   };
 }
 
@@ -297,4 +325,22 @@ function validateGrpcStatus(headerOrTrailer: Headers) {
       headerOrTrailer
     );
   }
+}
+
+function responseHeadersPromise(
+  stream: http2.ClientHttp2Stream
+): Promise<[number, Headers]> {
+  return new Promise<[number, Headers]>((resolve, reject) => {
+    if (stream.errored) {
+      return reject(stream.errored);
+    }
+    stream.once("error", reject);
+    function parse(
+      headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader
+    ) {
+      stream.off("error", reject);
+      resolve([headers[":status"] ?? 0, nodeHeaderToWebHeader(headers)]);
+    }
+    stream.once("response", parse);
+  });
 }
