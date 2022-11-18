@@ -130,21 +130,22 @@ export function createTestServers() {
           baseUrl: `https://127.0.0.1:8080`,
           useBinaryFormat: false,
         }),
-    // "grpc-web Node.js http2 transport (binary) against Node.js (H2C)": (
-    //   options?: Record<string, unknown>
-    // ) =>
-    //   createGrpcWebHttp2Transport({
-    //     ...options,
-    //     baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
-    //     useBinaryFormat: true,
-    //   }),
-    // "grpc-web Node.js http2 transport (JSON) against Node.js (H2C)":
-    //   (options?: Record<string, unknown>) =>
-    //     createGrpcWebHttp2Transport({
-    //       ...options,
-    //       baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
-    //       useBinaryFormat: false,
-    //     }),
+    "grpc-web Node.js http2 transport (binary) against Node.js (H2C)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcWebHttp2Transport({
+        ...options,
+        baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+        useBinaryFormat: true,
+      }),
+    "grpc-web Node.js http2 transport (JSON) against Node.js (H2C)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcWebHttp2Transport({
+        ...options,
+        baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+        useBinaryFormat: false,
+      }),
   } as const;
 
   return {
