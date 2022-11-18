@@ -34,11 +34,10 @@ import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
-  decodeBinaryHeader,
   encodeEnvelope,
   encodeEnvelopes,
   EnvelopedMessage,
-  GrpcStatus,
+  grpcFindTrailerError,
   grpcWebCodeFromHttpStatus,
   grpcWebCreateRequestHeader,
   grpcWebExpectContentType,
@@ -349,41 +348,8 @@ function validateFetchResponse(
 }
 
 function validateGrpcStatus(headerOrTrailer: Headers) {
-  // Prefer the protobuf-encoded data to the grpc-status header.
-  const grpcStatusDetailsBin = headerOrTrailer.get("grpc-status-details-bin");
-  if (grpcStatusDetailsBin != null) {
-    const status = decodeBinaryHeader(grpcStatusDetailsBin, GrpcStatus);
-    // Prefer the protobuf-encoded data to the headers.
-    if (status.code == 0) {
-      return;
-    }
-    const error = new ConnectError(
-      status.message,
-      status.code,
-      headerOrTrailer
-    );
-    error.details = status.details.map((any) => ({
-      type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
-      value: any.value,
-    }));
-    throw error;
-  }
-  const grpcStatus = headerOrTrailer.get("grpc-status");
-  if (grpcStatus != null) {
-    const code = parseInt(grpcStatus);
-    if (code === 0) {
-      return;
-    }
-    if (!(code in Code)) {
-      throw new ConnectError(
-        `invalid grpc-status: ${grpcStatus}`,
-        Code.Internal
-      );
-    }
-    throw new ConnectError(
-      decodeURIComponent(headerOrTrailer.get("grpc-message") ?? ""),
-      code,
-      headerOrTrailer
-    );
+  const err = grpcFindTrailerError(headerOrTrailer);
+  if (err) {
+    throw err;
   }
 }

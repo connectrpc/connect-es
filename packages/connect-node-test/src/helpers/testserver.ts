@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createConnectTransport } from "@bufbuild/connect-web-next";
+import {
+  createConnectTransport,
+  createGrpcWebTransport,
+} from "@bufbuild/connect-web-next";
 import * as http2 from "http2";
 import * as http from "http";
 import {
@@ -39,7 +42,7 @@ export function createTestServers() {
   ): number {
     const address = server?.address();
     if (address == null || typeof address == "string") {
-      throw new Error();
+      throw new Error("cannot get server port");
     }
     return address.port;
   }
@@ -88,6 +91,14 @@ export function createTestServers() {
         ...options,
         baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
         useBinaryFormat: false,
+      }),
+    "gRPC-web fetch transport (binary) against Node.js (http)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcWebTransport({
+        ...options,
+        baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
+        // useBinaryFormat: true,
       }),
     "connect fetch transport (binary) against Node.js (http)": (
       options?: Record<string, unknown>

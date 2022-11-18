@@ -13,16 +13,13 @@
 // limitations under the License.
 
 import {
-  appendHeaders,
   Code,
-  connectCodeToHttpStatus,
-  connectEndStreamFlag,
-  connectEndStreamToJson,
   ConnectError,
   connectErrorFromReason,
-  connectErrorToJson,
-  connectParseContentType,
   encodeEnvelope,
+  grpcSetTrailerStatus,
+  grpcWebParseContentType,
+  grpcWebTrailerSerialize,
 } from "@bufbuild/connect-core";
 import {
   BinaryReadOptions,
@@ -35,39 +32,31 @@ import {
 } from "@bufbuild/protobuf";
 import type { ImplHandler, ImplSpec, Protocol } from "./protocol.js";
 import { createServerMethodSerializers } from "./private/create-server-method-serializers.js";
-import type { HandlerContext } from "./handler.js";
+import type { HandlerContext } from "./implementation";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
-import { connectTrailerMux } from "./private/connect-trailer-mux.js";
 import type * as http from "http";
 import type * as http2 from "http2";
-import {
-  end,
-  endWithHttpStatus,
-  jsonSerialize,
-  readEnvelope,
-  readToEnd,
-  write,
-} from "./private/io.js";
+import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 
 /**
- * Options for creating a Connect Protocol instance.
+ * Options for creating a gRPC-web Protocol instance.
  */
-interface CreateConnectProtocolOptions {
+interface CreateGrpcWebProtocolOptions {
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 }
 
 /**
- * Create a Connect Protocol instance.
+ * Create a gRPC-web Protocol instance.
  */
-export function createConnectProtocol(
-  options: CreateConnectProtocolOptions
+export function createGrpcWebProtocol(
+  options: CreateGrpcWebProtocolOptions
 ): Protocol {
   return {
-    supportsMediaType: (type) => !!connectParseContentType(type),
+    supportsMediaType: (type) => !!grpcWebParseContentType(type),
 
     createHandler<I extends Message<I>, O extends Message<O>>(
       spec: ImplSpec<I, O>
@@ -75,7 +64,7 @@ export function createConnectProtocol(
       switch (spec.kind) {
         case MethodKind.Unary:
           return async (req, res) => {
-            const type = connectParseContentType(
+            const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
             if (type === undefined) {
@@ -85,7 +74,7 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (type.stream) {
+            if (type.text) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -94,10 +83,7 @@ export function createConnectProtocol(
             }
             const context: HandlerContext = {
               requestHeader: nodeHeaderToWebHeader(req.headers),
-              responseHeader: connectCreateResponseHeader(
-                spec.method.kind,
-                type.binary
-              ),
+              responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
             const { normalize, parse, serialize } =
@@ -107,37 +93,35 @@ export function createConnectProtocol(
                 spec.method,
                 type.binary
               );
-
-            const input = parse(await readToEnd(req));
+            const inputResult = await readEnvelope(req);
+            if (inputResult.done) {
+              return await endWithGrpcWebTrailer(
+                res,
+                context,
+                new ConnectError("Missing input message", Code.Internal)
+              );
+            }
+            const input = parse(inputResult.value.data);
             let output: O | PartialMessage<O>;
             try {
               output = await spec.impl(input, context);
             } catch (e) {
-              return await endWithConnectError(
+              return await endWithGrpcWebTrailer(
                 res,
-                connectErrorFromReason(e),
-                connectTrailerMux(
-                  context.responseHeader,
-                  context.responseTrailer
-                ),
-                options.jsonOptions
+                context,
+                connectErrorFromReason(e)
               );
             }
-            res.writeHead(
-              200,
-              webHeaderToNodeHeaders(
-                connectTrailerMux(
-                  context.responseHeader,
-                  context.responseTrailer
-                )
-              )
+            res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
+            await write(
+              res,
+              encodeEnvelope(0b00000000, serialize(normalize(output)))
             );
-            await write(res, serialize(normalize(output)));
-            await end(res);
+            return await endWithGrpcWebTrailer(res, context, undefined);
           };
         case MethodKind.ServerStreaming: {
           return async (req, res) => {
-            const type = connectParseContentType(
+            const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
             if (type === undefined) {
@@ -147,7 +131,7 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (!type.stream) {
+            if (type.text) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -156,10 +140,7 @@ export function createConnectProtocol(
             }
             const context: HandlerContext = {
               requestHeader: nodeHeaderToWebHeader(req.headers),
-              responseHeader: connectCreateResponseHeader(
-                spec.method.kind,
-                type.binary
-              ),
+              responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
             const { normalize, parse, serialize } =
@@ -172,15 +153,14 @@ export function createConnectProtocol(
 
             const inputResult = await readEnvelope(req);
             if (inputResult.done) {
-              return await endWithConnectEndStream(
+              return await endWithGrpcWebTrailer(
                 res,
                 context,
-                new ConnectError("Missing input message", Code.Internal),
-                options.jsonOptions
+                new ConnectError("Missing input message", Code.Internal)
               );
             }
             if (inputResult.value.flags !== 0b00000000) {
-              return await endWithConnectEndStream(
+              return await endWithGrpcWebTrailer(
                 res,
                 context,
                 new ConnectError(
@@ -188,8 +168,7 @@ export function createConnectProtocol(
                     2
                   )}`,
                   Code.Internal
-                ),
-                options.jsonOptions
+                )
               );
             }
             const input = parse(inputResult.value.data);
@@ -207,24 +186,18 @@ export function createConnectProtocol(
                 );
               }
             } catch (e) {
-              return await endWithConnectEndStream(
+              return await endWithGrpcWebTrailer(
                 res,
                 context,
-                connectErrorFromReason(e),
-                options.jsonOptions
+                connectErrorFromReason(e)
               );
             }
-            return await endWithConnectEndStream(
-              res,
-              context,
-              undefined,
-              options.jsonOptions
-            );
+            return await endWithGrpcWebTrailer(res, context, undefined);
           };
         }
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
-            const type = connectParseContentType(
+            const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
             if (type === undefined) {
@@ -234,7 +207,7 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (!type.stream) {
+            if (type.text) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -243,10 +216,7 @@ export function createConnectProtocol(
             }
             const context: HandlerContext = {
               requestHeader: nodeHeaderToWebHeader(req.headers),
-              responseHeader: connectCreateResponseHeader(
-                spec.method.kind,
-                type.binary
-              ),
+              responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
             const { normalize, parse, serialize } =
@@ -264,7 +234,7 @@ export function createConnectProtocol(
                   break;
                 }
                 if (result.value.flags !== 0b00000000) {
-                  return await endWithConnectEndStream(
+                  return await endWithGrpcWebTrailer(
                     res,
                     context,
                     new ConnectError(
@@ -272,8 +242,7 @@ export function createConnectProtocol(
                         2
                       )}`,
                       Code.Internal
-                    ),
-                    options.jsonOptions
+                    )
                   );
                 }
                 yield parse(result.value.data);
@@ -283,14 +252,10 @@ export function createConnectProtocol(
             try {
               output = await spec.impl(input(), context);
             } catch (e) {
-              return await endWithConnectError(
+              return await endWithGrpcWebTrailer(
                 res,
-                connectErrorFromReason(e),
-                connectTrailerMux(
-                  context.responseHeader,
-                  context.responseTrailer
-                ),
-                options.jsonOptions
+                context,
+                connectErrorFromReason(e)
               );
             }
             res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
@@ -298,17 +263,12 @@ export function createConnectProtocol(
               res,
               encodeEnvelope(0b00000000, serialize(normalize(output)))
             );
-            return await endWithConnectEndStream(
-              res,
-              context,
-              undefined,
-              options.jsonOptions
-            );
+            return await endWithGrpcWebTrailer(res, context, undefined);
           };
         }
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
-            const type = connectParseContentType(
+            const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
             if (type === undefined) {
@@ -318,7 +278,7 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (!type.stream) {
+            if (type.text) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -327,10 +287,7 @@ export function createConnectProtocol(
             }
             const context: HandlerContext = {
               requestHeader: nodeHeaderToWebHeader(req.headers),
-              responseHeader: connectCreateResponseHeader(
-                spec.method.kind,
-                type.binary
-              ),
+              responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
             const { normalize, parse, serialize } =
@@ -348,7 +305,7 @@ export function createConnectProtocol(
                   break;
                 }
                 if (result.value.flags !== 0b00000000) {
-                  return await endWithConnectEndStream(
+                  return await endWithGrpcWebTrailer(
                     res,
                     context,
                     new ConnectError(
@@ -356,8 +313,7 @@ export function createConnectProtocol(
                         2
                       )}`,
                       Code.Internal
-                    ),
-                    options.jsonOptions
+                    )
                   );
                 }
                 yield parse(result.value.data);
@@ -377,19 +333,13 @@ export function createConnectProtocol(
                 );
               }
             } catch (e) {
-              return await endWithConnectEndStream(
+              return await endWithGrpcWebTrailer(
                 res,
                 context,
-                connectErrorFromReason(e),
-                options.jsonOptions
+                connectErrorFromReason(e)
               );
             }
-            return await endWithConnectEndStream(
-              res,
-              context,
-              undefined,
-              options.jsonOptions
-            );
+            return await endWithGrpcWebTrailer(res, context, undefined);
           };
         }
       }
@@ -397,52 +347,24 @@ export function createConnectProtocol(
   };
 }
 
-function connectCreateResponseHeader(
-  methodKind: MethodKind,
-  useBinaryFormat: boolean
-): Headers {
-  let type = "application/";
-  if (methodKind != MethodKind.Unary) {
-    type += "connect+";
-  }
+function grpcWebCreateResponseHeader(useBinaryFormat: boolean): Headers {
+  let type = "application/grpc-web+";
   type += useBinaryFormat ? "proto" : "json";
   return new Headers({
     "Content-Type": type,
   });
 }
 
-async function endWithConnectEndStream(
+async function endWithGrpcWebTrailer(
   res: http.ServerResponse | http2.Http2ServerResponse,
   context: HandlerContext,
-  error: ConnectError | undefined,
-  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+  error: ConnectError | undefined
 ) {
   if (!res.headersSent) {
     res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
   }
-  const endStreamJson = connectEndStreamToJson(
-    context.responseTrailer,
-    error,
-    jsonWriteOptions
-  );
-  await write(
-    res,
-    encodeEnvelope(connectEndStreamFlag, jsonSerialize(endStreamJson))
-  );
-  await end(res);
-}
-
-async function endWithConnectError(
-  res: http.ServerResponse | http2.Http2ServerResponse,
-  error: ConnectError,
-  metadata: Headers,
-  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
-): Promise<void> {
-  const statusCode = connectCodeToHttpStatus(error.code);
-  metadata = appendHeaders(metadata, error.metadata);
-  metadata.set("Content-Type", "application/json");
-  res.writeHead(statusCode, webHeaderToNodeHeaders(metadata));
-  const json = connectErrorToJson(error, jsonWriteOptions);
-  await write(res, jsonSerialize(json));
+  grpcSetTrailerStatus(context.responseTrailer, error);
+  const trailerBytes = grpcWebTrailerSerialize(context.responseTrailer);
+  await write(res, encodeEnvelope(0b10000000, trailerBytes));
   await end(res);
 }
