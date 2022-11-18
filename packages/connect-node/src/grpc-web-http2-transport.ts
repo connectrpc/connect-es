@@ -45,11 +45,9 @@ import * as http2 from "http2";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
 import { end, readEnvelope, write } from "./private/io.js";
-import {
-  nodeHeaderToWebHeader,
-  webHeaderToNodeHeaders,
-} from "./private/web-header-to-node-headers.js";
+import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import { responseHeadersPromise } from "./private/response-headers-promise.js";
 
 const trailerFlag = 0b10000000;
 
@@ -367,23 +365,4 @@ function validateGrpcStatus(headerOrTrailer: Headers) {
   if (err) {
     throw err;
   }
-}
-
-// make a util?
-function responseHeadersPromise(
-  stream: http2.ClientHttp2Stream
-): Promise<[number, Headers]> {
-  return new Promise<[number, Headers]>((resolve, reject) => {
-    if (stream.errored) {
-      return reject(stream.errored);
-    }
-    stream.once("error", reject);
-    function parse(
-      headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader
-    ) {
-      stream.off("error", reject);
-      resolve([headers[":status"] ?? 0, nodeHeaderToWebHeader(headers)]);
-    }
-    stream.once("response", parse);
-  });
 }

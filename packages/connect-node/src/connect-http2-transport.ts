@@ -48,10 +48,7 @@ import type {
 } from "@bufbuild/protobuf";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
-import {
-  nodeHeaderToWebHeader,
-  webHeaderToNodeHeaders,
-} from "./private/web-header-to-node-headers.js";
+import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { defer } from "./private/defer.js";
 import {
   end,
@@ -60,6 +57,7 @@ import {
   readToEnd,
   write,
 } from "./private/io.js";
+import { responseHeadersPromise } from "./private/response-headers-promise.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -399,22 +397,4 @@ async function validateResponseHeader(
     }
     throw new ConnectError(`HTTP ${status}`, connectCodeFromHttpStatus(status));
   }
-}
-
-function responseHeadersPromise(
-  stream: http2.ClientHttp2Stream
-): Promise<[number, Headers]> {
-  return new Promise<[number, Headers]>((resolve, reject) => {
-    if (stream.errored) {
-      return reject(stream.errored);
-    }
-    stream.once("error", reject);
-    function parse(
-      headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader
-    ) {
-      stream.off("error", reject);
-      resolve([headers[":status"] ?? 0, nodeHeaderToWebHeader(headers)]);
-    }
-    stream.once("response", parse);
-  });
 }
