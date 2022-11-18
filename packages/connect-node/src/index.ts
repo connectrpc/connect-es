@@ -13,6 +13,7 @@
 // limitations under the License.
 
 export * from "./connect-http2-transport.js";
+export * from "./grpc-web-http2-transport.js";
 export {
   Handler,
   createHandler,
