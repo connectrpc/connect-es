@@ -15,7 +15,7 @@
 import {
   createPromiseClient,
   createConnectTransport,
-} from "@bufbuild/connect-web";
+} from "@bufbuild/connect-web-next";
 import { ElizaService } from "./gen/connectweb/buf/connect/demo/eliza/v1/eliza_connectweb.js";
 
 const client = createPromiseClient(

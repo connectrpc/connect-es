@@ -23,49 +23,31 @@ describe("ping_pong", () => {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
-  servers.describeTransportsExcluding(
-    [
-      // This test does full duplex, receiving before it closes the input.
-      // In this case, your connect fetch transport never issues the request.
-      "@bufbuild/connect-web (Connect, binary) against connect-go (h1)",
-      "@bufbuild/connect-web (Connect, binary) against connect-go (h2)",
-      "@bufbuild/connect-web (Connect, binary) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-web (Connect, JSON) against connect-go (h1)",
-      "@bufbuild/connect-web (Connect, JSON) against connect-go (h2)",
-      "@bufbuild/connect-web (gRPC-web, binary) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-web (gRPC-web, binary) against connect-go (h1)",
-      "@bufbuild/connect-web (gRPC-web, binary) against connect-go (h2)",
-      "@bufbuild/connect-web (gRPC-web, JSON) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-web (gRPC-web, JSON) against connect-go (h1)",
-      "@bufbuild/connect-web (gRPC-web, JSON) against connect-go (h2)",
-    ],
-    (transport) => {
-      it("with promise client", async function () {
-        const client = createPromiseClient(TestService, transport());
-        const stream = await client.fullDuplexCall();
-        for (const size of sizes) {
-          await stream.send({
-            payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
-            responseParameters: [
-              {
-                size,
-                intervalUs: 0,
-              },
-            ],
-          });
-          const res = await stream.receive();
-          expect(res?.payload?.body.length).toBe(size);
-          expect(res?.payload?.type).toBe(PayloadType.COMPRESSABLE);
-        }
-        stream.close();
-      });
-      it("with callback client", function (done) {
-        // TODO(TCN-679, TCN-568) need callback clients
-        done();
-      });
-    }
-  );
+  servers.describeTransports((transport) => {
+    it("with promise client", async function () {
+      const client = createPromiseClient(TestService, transport());
+      const stream = await client.fullDuplexCall();
+      for (const size of sizes) {
+        await stream.send({
+          payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
+          responseParameters: [
+            {
+              size,
+              intervalUs: 0,
+            },
+          ],
+        });
+        const res = await stream.receive();
+        expect(res?.payload?.body.length).toBe(size);
+        expect(res?.payload?.type).toBe(PayloadType.COMPRESSABLE);
+      }
+      stream.close();
+    });
+    it("with callback client", function (done) {
+      // TODO(TCN-679, TCN-568) need callback clients
+      done();
+    });
+  });
 
   afterAll(async () => await servers.stop());
 });
