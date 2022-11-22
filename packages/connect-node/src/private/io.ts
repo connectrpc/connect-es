@@ -77,7 +77,7 @@ export function read(
 ): Promise<ReadableStreamReadResultLike<Uint8Array>> {
   return new Promise<ReadableStreamReadResultLike<Uint8Array>>(
     (resolve, reject) => {
-      if (stream.readableEnded) {
+      if (stream.readableEnded || size === 0) {
         return resolve({
           done: true,
         });

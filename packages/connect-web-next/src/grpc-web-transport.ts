@@ -133,7 +133,7 @@ export function createGrpcWebTransport(
               redirect: "error",
               mode: "cors",
             },
-            header: grpcWebCreateRequestHeader(timeoutMs, header),
+            header: grpcWebCreateRequestHeader(true, timeoutMs, header),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
@@ -224,7 +224,7 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcWebCreateRequestHeader(timeoutMs, header),
+          header: grpcWebCreateRequestHeader(true, timeoutMs, header),
         },
         async (req) => {
           const pendingSend: EnvelopedMessage[] = [];

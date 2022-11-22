@@ -13,20 +13,15 @@
 // limitations under the License.
 
 import {
-  appendHeaders,
-  Code,
-  connectCodeFromHttpStatus,
-  connectCreateRequestHeader,
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
   ConnectError,
-  connectErrorFromJson,
-  connectErrorFromReason,
-  connectExpectContentType,
-  connectTrailerDemux,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
+  grpcFindTrailerError,
+  grpcWebCodeFromHttpStatus,
+  grpcWebCreateRequestHeader,
+  grpcWebExpectContentType,
+  grpcWebTrailerParse,
   Interceptor,
   runStreaming,
   runUnary,
@@ -46,23 +41,17 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
-import {
-  end,
-  jsonParse,
-  readEnvelope,
-  readToEnd,
-  write,
-} from "./private/io.js";
+import { end, readEnvelope, write } from "./private/io.js";
+import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 import { responseHeadersPromise } from "./private/response-headers-promise.js";
 
-/**
- * Options used to configure the Connect transport.
- */
-export interface ConnectHttp2TransportOptions {
+const trailerFlag = 0b10000000;
+
+export interface GrpcWebHttp2TransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
@@ -101,12 +90,11 @@ export interface ConnectHttp2TransportOptions {
 }
 
 /**
- * Create a Transport for the Connect protocol, which makes unary and
- * server-streaming methods available to web browsers. It uses the fetch
- * API to make HTTP requests.
+ * Create a Transport for the gRPC-web protocol.
+ *
  */
-export function createConnectHttp2Transport(
-  options: ConnectHttp2TransportOptions
+export function createGrpcWebHttp2Transport(
+  options: GrpcWebHttp2TransportOptions
 ): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
@@ -127,16 +115,6 @@ export function createConnectHttp2Transport(
         options.jsonOptions,
         options.binaryOptions
       );
-      const validateContentType = connectExpectContentType.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
-      const createRequestHeader = connectCreateRequestHeader.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
       try {
         return await runUnary<I, O>(
           {
@@ -145,13 +123,15 @@ export function createConnectHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method).toString(),
             init: {},
-            header: createRequestHeader(timeoutMs, header),
+            header: grpcWebCreateRequestHeader(
+              useBinaryFormat,
+              timeoutMs,
+              header
+            ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            // TODO We create a new session for every request - we should share a connection instead,
-            //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
                 const s = http2.connect(
@@ -163,7 +143,6 @@ export function createConnectHttp2Transport(
                 );
                 s.on("error", (err) => reject(err));
               });
-
             const stream = session.request(
               {
                 ...webHeaderToNodeHeaders(req.header),
@@ -174,26 +153,56 @@ export function createConnectHttp2Transport(
                 signal: req.signal,
               }
             );
-            const headersPromise = responseHeadersPromise(stream);
 
-            await write(stream, serialize(req.message));
+            const headersPromise = responseHeadersPromise(stream);
+            const envelope = encodeEnvelope(0b00000000, serialize(req.message));
+            await write(stream, envelope);
             await end(stream);
 
-            const [responseStatus, responseHeader] = await headersPromise;
-            await validateResponseHeader(
-              responseStatus,
-              responseHeader,
-              stream
-            );
-            validateContentType(responseHeader.get("Content-Type"));
+            const [responseCode, responseHeader] = await headersPromise;
+            validateResponse(useBinaryFormat, responseCode, responseHeader);
 
-            const [header, trailer] = connectTrailerDemux(responseHeader);
+            const messageOrTrailerResult = await readEnvelope(stream);
+
+            if (messageOrTrailerResult.done) {
+              throw "premature eof";
+            }
+
+            if (messageOrTrailerResult.value.flags === trailerFlag) {
+              // Unary responses require exactly one response message, but in
+              // case of an error, it is perfectly valid to have a response body
+              // that only contains error trailers.
+              validateGrpcStatus(
+                grpcWebTrailerParse(messageOrTrailerResult.value.data)
+              );
+              // At this point, we received trailers only, but the trailers did
+              // not have an error status code.
+              throw "unexpected trailer";
+            }
+
+            const trailerResult = await readEnvelope(stream);
+
+            if (trailerResult.done) {
+              throw "missing trailer";
+            }
+            if (trailerResult.value.flags !== trailerFlag) {
+              throw "missing trailer";
+            }
+
+            const trailer = grpcWebTrailerParse(trailerResult.value.data);
+            validateGrpcStatus(trailer);
+
+            const eofResult = await readEnvelope(stream);
+            if (!eofResult.done) {
+              throw "extraneous data";
+            }
+
             return <UnaryResponse<O>>{
               stream: false,
               service,
               method,
-              header,
-              message: parse(await readToEnd(stream)),
+              header: responseHeader,
+              message: parse(messageOrTrailerResult.value.data),
               trailer,
             };
           },
@@ -203,7 +212,6 @@ export function createConnectHttp2Transport(
         throw connectErrorFromNodeReason(e);
       }
     },
-
     async stream<
       I extends Message<I> = AnyMessage,
       O extends Message<O> = AnyMessage
@@ -220,16 +228,6 @@ export function createConnectHttp2Transport(
         options.jsonOptions,
         options.binaryOptions
       );
-      const validateContentType = connectExpectContentType.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
-      const createRequestHeader = connectCreateRequestHeader.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
       return runStreaming<I, O>(
         {
           stream: true,
@@ -242,20 +240,18 @@ export function createConnectHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeader(timeoutMs, header),
+          header: grpcWebCreateRequestHeader(
+            useBinaryFormat,
+            timeoutMs,
+            header
+          ),
         },
         async (req) => {
           try {
-            // TODO We create a new session for every request - we should share a connection instead,
-            //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
-                const s = http2.connect(
-                  // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
-                  // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
-                  req.url,
-                  options.http2Options,
-                  (s) => resolve(s)
+                const s = http2.connect(req.url, options.http2Options, (s) =>
+                  resolve(s)
                 );
                 s.on("error", (err) => reject(err));
               });
@@ -269,9 +265,9 @@ export function createConnectHttp2Transport(
                 signal: req.signal,
               }
             );
-
             const headersPromise = responseHeadersPromise(stream);
             let endStreamReceived = false;
+            let messageReceived = false;
             const responseTrailer = defer<Headers>();
             const conn: StreamingConn<I, O> = {
               ...req,
@@ -301,38 +297,33 @@ export function createConnectHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headersPromise;
-                await validateResponseHeader(
+                validateResponse(
+                  useBinaryFormat,
                   responseStatus,
-                  responseHeader,
-                  stream
+                  responseHeader
                 );
-                validateContentType(responseHeader.get("Content-Type"));
                 try {
                   const result = await readEnvelope(stream);
                   if (result.done) {
-                    if (!endStreamReceived) {
-                      throw new ConnectError("missing EndStreamResponse");
+                    if (messageReceived && !endStreamReceived) {
+                      throw new ConnectError("missing trailers");
                     }
                     return {
                       done: true,
+                      value: undefined,
                     };
                   }
-                  if (
-                    (result.value.flags & connectEndStreamFlag) ===
-                    connectEndStreamFlag
-                  ) {
+                  if ((result.value.flags & trailerFlag) === trailerFlag) {
                     endStreamReceived = true;
-                    const endStream = connectEndStreamFromJson(
-                      result.value.data
-                    );
-                    responseTrailer.resolve(endStream.metadata);
-                    if (endStream.error) {
-                      throw endStream.error;
-                    }
+                    const trailer = grpcWebTrailerParse(result.value.data);
+                    validateGrpcStatus(trailer);
+                    responseTrailer.resolve(trailer);
                     return {
                       done: true,
+                      value: undefined,
                     };
                   }
+                  messageReceived = true;
                   return {
                     done: false,
                     value: parse(result.value.data),
@@ -342,7 +333,7 @@ export function createConnectHttp2Transport(
                 }
               },
             };
-            return conn;
+            return Promise.resolve(conn);
           } catch (e) {
             throw connectErrorFromNodeReason(e);
           }
@@ -353,48 +344,25 @@ export function createConnectHttp2Transport(
   };
 }
 
-function connectErrorFromNodeReason(reason: unknown): ConnectError {
-  if (isSyscallError(reason, "getaddrinfo", "ENOTFOUND")) {
-    return connectErrorFromReason(reason, Code.Unavailable);
-  }
-  return connectErrorFromReason(reason, Code.Internal);
-}
-
-function isSyscallError(
-  reason: unknown,
-  syscall: string,
-  code: string
-): boolean {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
-  const r = reason as any;
-  if (reason instanceof Error) {
-    if ("code" in r && "syscall" in r) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      if (syscall === r.syscall && code === r.code) {
-        return true;
-      }
-    }
-    if ("cause" in reason) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-member-access
-      return isSyscallError(r.cause, syscall, code);
-    }
-  }
-  return false;
-}
-
-async function validateResponseHeader(
+function validateResponse(
+  binaryFormat: boolean,
   status: number,
-  headers: Headers,
-  stream: http2.ClientHttp2Stream
+  headers: Headers
 ) {
-  const type = headers.get("Content-Type") ?? "";
-  if (status != 200) {
-    if (type == "application/json") {
-      throw connectErrorFromJson(
-        jsonParse(await readToEnd(stream)),
-        appendHeaders(...connectTrailerDemux(headers))
-      );
-    }
-    throw new ConnectError(`HTTP ${status}`, connectCodeFromHttpStatus(status));
+  const code = grpcWebCodeFromHttpStatus(status);
+  if (code != null) {
+    throw new ConnectError(
+      decodeURIComponent(headers.get("grpc-message") ?? ""),
+      code
+    );
+  }
+  grpcWebExpectContentType(binaryFormat, headers.get("Content-Type"));
+  validateGrpcStatus(headers);
+}
+
+function validateGrpcStatus(headerOrTrailer: Headers) {
+  const err = grpcFindTrailerError(headerOrTrailer);
+  if (err) {
+    throw err;
   }
 }
