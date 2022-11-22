@@ -47,105 +47,170 @@ export function createTestServers() {
     return address.port;
   }
 
-  // Node's undici fetch does not support HTTP1.1 (as of Nov 2022), so we cannot
-  // run it against the H2C server
+  // The following servers are available through crosstests:
+  // Source: // https://github.com/bufbuild/connect-web/pull/87
+  const crosstestConnectGoH1Url = "https://127.0.0.1:8080";
+  const crosstestConnectGoH2Url = "https://127.0.0.1:8081";
+  // const crosstestGrpcGoUrl = "https://127.0.0.1:8083";
+
   const transports = {
-    // TODO add gRPC-web transport once implemented
     // TODO add gRPC transport once implemented
     // TODO add http1.1 transports once implemented
-    // The following servers are available through crosstests:
-    //
-    // | server        | port |
-    // | ------------- | --- |
-    // | connect-go h1 | 8080 |
-    // | connect-go h2 | 8081 |
-    // | grpc-go       | 8083 |
-    //
-    // Source: // https://github.com/bufbuild/connect-web/pull/87
-    "connect Node.js http2 transport (binary) against crosstest (connect-go h1)":
-      (options?: Record<string, unknown>) =>
-        createConnectHttp2Transport({
-          ...options,
-          baseUrl: `https://127.0.0.1:8080`,
-          useBinaryFormat: true,
-        }),
-    "connect Node.js http2 transport (JSON) against crosstest (connect-go h1)":
-      (options?: Record<string, unknown>) =>
-        createConnectHttp2Transport({
-          ...options,
-          baseUrl: `https://127.0.0.1:8080`,
-          useBinaryFormat: false,
-        }),
-    "connect Node.js http2 transport (binary) against Node.js (H2C)": (
+    "@bufbuild/connect-node (Connect, binary, http2) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
       createConnectHttp2Transport({
         ...options,
-        baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+        baseUrl: crosstestConnectGoH1Url,
         useBinaryFormat: true,
       }),
-    "connect Node.js http2 transport (JSON) against Node.js (H2C)": (
+    "@bufbuild/connect-node (Connect, JSON, http2) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
       createConnectHttp2Transport({
         ...options,
-        baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+        baseUrl: crosstestConnectGoH1Url,
         useBinaryFormat: false,
       }),
-    "gRPC-web fetch transport (binary) against Node.js (http)": (
+    "@bufbuild/connect-node (Connect, binary, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttp2Transport({
+          ...options,
+          baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+          useBinaryFormat: true,
+        }),
+    "@bufbuild/connect-node (Connect, JSON, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttp2Transport({
+          ...options,
+          baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+          useBinaryFormat: false,
+        }),
+    "@bufbuild/connect-node (gRPC-web, binary, http2) against connect-go (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebHttp2Transport({
+          ...options,
+          baseUrl: crosstestConnectGoH1Url,
+          useBinaryFormat: true,
+        }),
+    "@bufbuild/connect-node (gRPC-web, JSON, http2) against connect-go (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcWebHttp2Transport({
+        ...options,
+        baseUrl: crosstestConnectGoH1Url,
+        useBinaryFormat: false,
+      }),
+    "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebHttp2Transport({
+          ...options,
+          baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+          useBinaryFormat: true,
+        }),
+    "@bufbuild/connect-node (gRPC-web, JSON, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebHttp2Transport({
+          ...options,
+          baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+          useBinaryFormat: false,
+        }),
+    // The following transports from @bufbuild/connect-web use the fetch API.
+    // Node's undici fetch implementation only supports HTTP1.1 (as of Nov 2022),
+    // so we cannot run it against servers which do not provide a fallback to
+    // HTTP1.1.
+    "@bufbuild/connect-web (gRPC-web, binary) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
       createGrpcWebTransport({
         ...options,
-        baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
-        // useBinaryFormat: true,
-      }),
-    "connect fetch transport (binary) against Node.js (http)": (
-      options?: Record<string, unknown>
-    ) =>
-      createConnectTransport({
-        ...options,
-        baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
+        baseUrl: crosstestConnectGoH1Url,
         useBinaryFormat: true,
       }),
-    "connect fetch transport (JSON) against Node.js (http)": (
+    "@bufbuild/connect-web (gRPC-web, binary) against connect-go (h2)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcWebTransport({
+        ...options,
+        baseUrl: crosstestConnectGoH2Url,
+        useBinaryFormat: true,
+      }),
+    "@bufbuild/connect-web (gRPC-web, JSON) against connect-go (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcWebTransport({
+        ...options,
+        baseUrl: crosstestConnectGoH1Url,
+        useBinaryFormat: false,
+      }),
+    "@bufbuild/connect-web (gRPC-web, JSON) against connect-go (h2)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcWebTransport({
+        ...options,
+        baseUrl: crosstestConnectGoH2Url,
+        useBinaryFormat: false,
+      }),
+    "@bufbuild/connect-web (Connect, binary) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
       createConnectTransport({
         ...options,
-        baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
+        baseUrl: crosstestConnectGoH1Url,
+        useBinaryFormat: true,
+      }),
+    "@bufbuild/connect-web (Connect, binary) against connect-go (h2)": (
+      options?: Record<string, unknown>
+    ) =>
+      createConnectTransport({
+        ...options,
+        baseUrl: crosstestConnectGoH2Url,
+        useBinaryFormat: true,
+      }),
+    "@bufbuild/connect-web (Connect, JSON) against connect-go (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      createConnectTransport({
+        ...options,
+        baseUrl: crosstestConnectGoH1Url,
         useBinaryFormat: false,
       }),
-    "grpc-web Node.js http2 transport (binary) against crosstest (connect-go h1)":
+    "@bufbuild/connect-web (Connect, JSON) against connect-go (h2)": (
+      options?: Record<string, unknown>
+    ) =>
+      createConnectTransport({
+        ...options,
+        baseUrl: crosstestConnectGoH2Url,
+        useBinaryFormat: false,
+      }),
+    "@bufbuild/connect-web (gRPC-web, binary) against @bufbuild/connect-node (h1)":
       (options?: Record<string, unknown>) =>
-        createGrpcWebHttp2Transport({
+        createGrpcWebTransport({
           ...options,
-          baseUrl: `https://127.0.0.1:8080`,
+          baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
           useBinaryFormat: true,
         }),
-    "grpc-web Node.js http2 transport (JSON) against crosstest (connect-go h1)":
+    "@bufbuild/connect-web (gRPC-web, JSON) against @bufbuild/connect-node (h1)":
       (options?: Record<string, unknown>) =>
-        createGrpcWebHttp2Transport({
+        createGrpcWebTransport({
           ...options,
-          baseUrl: `https://127.0.0.1:8080`,
+          baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
           useBinaryFormat: false,
         }),
-    "grpc-web Node.js http2 transport (binary) against Node.js (H2C)": (
-      options?: Record<string, unknown>
-    ) =>
-      createGrpcWebHttp2Transport({
-        ...options,
-        baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
-        useBinaryFormat: true,
-      }),
-    "grpc-web Node.js http2 transport (JSON) against Node.js (H2C)": (
-      options?: Record<string, unknown>
-    ) =>
-      createGrpcWebHttp2Transport({
-        ...options,
-        baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
-        useBinaryFormat: false,
-      }),
+    "@bufbuild/connect-web (Connect, binary) against @bufbuild/connect-node (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectTransport({
+          ...options,
+          baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
+          useBinaryFormat: true,
+        }),
+    "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectTransport({
+          ...options,
+          baseUrl: `http://localhost:${getPort(nodeHttpServer)}`,
+          useBinaryFormat: false,
+        }),
   } as const;
 
   return {
@@ -176,6 +241,21 @@ export function createTestServers() {
         describe(name, () => {
           specDefinitions(transportFactory, name as keyof typeof transports);
         });
+      }
+    },
+    describeTransportsOnly(
+      only: Array<keyof typeof transports>,
+      specDefinitions: (
+        transport: () => Transport,
+        transportName: keyof typeof transports
+      ) => void
+    ) {
+      for (const [name, transportFactory] of Object.entries(transports)) {
+        if (only.includes(name as keyof typeof transports)) {
+          describe(name, () => {
+            specDefinitions(transportFactory, name as keyof typeof transports);
+          });
+        }
       }
     },
     start(): Promise<void> {
