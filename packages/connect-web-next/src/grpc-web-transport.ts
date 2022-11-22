@@ -16,6 +16,8 @@ import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
+  JsonReadOptions,
+  JsonWriteOptions,
   Message,
   MethodInfo,
   PartialMessage,
@@ -50,6 +52,9 @@ import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
 import { defer } from "./defer.js";
 
+const trailerFlag = 0b10000000;
+const messageFlag = 0b00000000;
+
 /**
  * Options used to configure the gRPC-web transport.
  *
@@ -69,6 +74,12 @@ export interface GrpcWebTransportOptions {
   baseUrl: string;
 
   /**
+   * By default, clients use the binary format for gRPC-web, because
+   * not all gRPC-web implementations support JSON.
+   */
+  useBinaryFormat?: boolean;
+
+  /**
    * Interceptors that should be applied to all calls running through
    * this transport. See the Interceptor type for details.
    */
@@ -80,6 +91,11 @@ export interface GrpcWebTransportOptions {
    * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
    */
   credentials?: RequestCredentials;
+
+  /**
+   * Options for the JSON format.
+   */
+  jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
 
   /**
    * Options for the binary wire format.
@@ -101,6 +117,7 @@ export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
 ): Transport {
   assertFetchApi();
+  const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
@@ -115,11 +132,14 @@ export function createGrpcWebTransport(
     ): Promise<UnaryResponse<O>> {
       const { normalize, serialize, parse } = createClientMethodSerializers(
         method,
-        true,
-        undefined,
+        useBinaryFormat,
+        options.jsonOptions,
         options.binaryOptions
       );
-      const validateResponse = validateFetchResponse.bind(null, true);
+      const validateResponse = validateFetchResponse.bind(
+        null,
+        useBinaryFormat
+      );
       try {
         return await runUnary<I, O>(
           {
@@ -133,7 +153,11 @@ export function createGrpcWebTransport(
               redirect: "error",
               mode: "cors",
             },
-            header: grpcWebCreateRequestHeader(true, timeoutMs, header),
+            header: grpcWebCreateRequestHeader(
+              useBinaryFormat,
+              timeoutMs,
+              header
+            ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
@@ -142,7 +166,7 @@ export function createGrpcWebTransport(
               ...req.init,
               headers: req.header,
               signal: req.signal,
-              body: encodeEnvelope(0b00000000, serialize(req.message)),
+              body: encodeEnvelope(messageFlag, serialize(req.message)),
             });
             validateResponse(response);
             if (!response.body) {
@@ -206,11 +230,14 @@ export function createGrpcWebTransport(
     ): Promise<StreamingConn<I, O>> {
       const { normalize, serialize, parse } = createClientMethodSerializers(
         method,
-        true,
-        undefined,
+        useBinaryFormat,
+        options.jsonOptions,
         options.binaryOptions
       );
-      const validateResponse = validateFetchResponse.bind(null, true);
+      const validateResponse = validateFetchResponse.bind(
+        null,
+        useBinaryFormat
+      );
       return runStreaming<I, O>(
         {
           stream: true,
@@ -224,7 +251,11 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcWebCreateRequestHeader(true, timeoutMs, header),
+          header: grpcWebCreateRequestHeader(
+            useBinaryFormat,
+            timeoutMs,
+            header
+          ),
         },
         async (req) => {
           const pendingSend: EnvelopedMessage[] = [];
@@ -246,7 +277,7 @@ export function createGrpcWebTransport(
                 );
               }
               pendingSend.push({
-                flags: 0b00000000,
+                flags: messageFlag,
                 data: serialize(normalize(message)),
               });
               return Promise.resolve();
@@ -329,8 +360,6 @@ export function createGrpcWebTransport(
     },
   };
 }
-
-const trailerFlag = 0b10000000;
 
 function validateFetchResponse(
   binaryFormat: boolean,

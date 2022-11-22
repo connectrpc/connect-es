@@ -50,7 +50,13 @@ import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js
 import { responseHeadersPromise } from "./private/response-headers-promise.js";
 
 const trailerFlag = 0b10000000;
+const messageFlag = 0b00000000;
 
+/**
+ * Options used to configure the gRPC-web transport.
+ *
+ * See createGrpcWebHttp2Transport().
+ */
 export interface GrpcWebHttp2TransportOptions {
   /**
    * Base URI for all HTTP requests.
@@ -65,7 +71,8 @@ export interface GrpcWebHttp2TransportOptions {
   baseUrl: string;
 
   /**
-   * By default, connect-node clients use the binary format.
+   * By default, clients use the binary format for gRPC-web, because
+   * not all gRPC-web implementations support JSON.
    */
   useBinaryFormat?: boolean;
 
@@ -155,7 +162,10 @@ export function createGrpcWebHttp2Transport(
             );
 
             const headersPromise = responseHeadersPromise(stream);
-            const envelope = encodeEnvelope(0b00000000, serialize(req.message));
+            const envelope = encodeEnvelope(
+              messageFlag,
+              serialize(req.message)
+            );
             await write(stream, envelope);
             await end(stream);
 
@@ -281,7 +291,7 @@ export function createGrpcWebHttp2Transport(
                   );
                 }
                 const enveloped = encodeEnvelope(
-                  0b00000000,
+                  messageFlag,
                   serialize(normalize(message))
                 );
                 await write(stream, enveloped);

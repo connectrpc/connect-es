@@ -27,9 +27,18 @@ describe("ping_pong", () => {
     [
       // This test does full duplex, receiving before it closes the input.
       // In this case, your connect fetch transport never issues the request.
-      "connect fetch transport (binary) against Node.js (http)",
-      "connect fetch transport (JSON) against Node.js (http)",
-      "gRPC-web fetch transport (binary) against Node.js (http)",
+      "@bufbuild/connect-web (Connect, binary) against connect-go (h1)",
+      "@bufbuild/connect-web (Connect, binary) against connect-go (h2)",
+      "@bufbuild/connect-web (Connect, binary) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-web (Connect, JSON) against connect-go (h1)",
+      "@bufbuild/connect-web (Connect, JSON) against connect-go (h2)",
+      "@bufbuild/connect-web (gRPC-web, binary) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-web (gRPC-web, binary) against connect-go (h1)",
+      "@bufbuild/connect-web (gRPC-web, binary) against connect-go (h2)",
+      "@bufbuild/connect-web (gRPC-web, JSON) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-web (gRPC-web, JSON) against connect-go (h1)",
+      "@bufbuild/connect-web (gRPC-web, JSON) against connect-go (h2)",
     ],
     (transport) => {
       it("with promise client", async function () {
