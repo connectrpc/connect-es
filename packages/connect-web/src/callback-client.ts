@@ -123,7 +123,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
  * ServerStreamingFn is the method signature for a server-streaming method of
  * a CallbackClient.
  */
-type ServerStreamingFn<I extends Message, O extends Message> = (
+type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   onResponse: (response: O) => void,
   onClose: (error: ConnectError | undefined) => void,
