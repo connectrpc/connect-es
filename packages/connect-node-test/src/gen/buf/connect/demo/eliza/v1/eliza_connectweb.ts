@@ -16,8 +16,8 @@
 // @generated from file buf/connect/demo/eliza/v1/eliza.proto (package buf.connect.demo.eliza.v1, syntax proto3)
 /* eslint-disable */
 
-import {ConverseRequest, ConverseResponse, IntroduceRequest, IntroduceResponse, SayRequest, SayResponse} from "./eliza_pb.js";
-import {MethodKind} from "@bufbuild/protobuf";
+import { ConverseRequest, ConverseResponse, IntroduceRequest, IntroduceResponse, SayRequest, SayResponse } from "./eliza_pb.js";
+import { MethodKind } from "@bufbuild/protobuf";
 
 /**
  * ElizaService provides a way to talk to the ELIZA, which is a port of

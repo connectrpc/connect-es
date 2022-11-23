@@ -33,9 +33,9 @@
 // @generated from file grpc/testing/test.proto (package grpc.testing, syntax proto3)
 /* eslint-disable */
 
-import {Empty} from "./empty_pb.js";
-import {MethodKind} from "@bufbuild/protobuf";
-import {ClientConfigureRequest, ClientConfigureResponse, LoadBalancerAccumulatedStatsRequest, LoadBalancerAccumulatedStatsResponse, LoadBalancerStatsRequest, LoadBalancerStatsResponse, ReconnectInfo, ReconnectParams, SimpleRequest, SimpleResponse, StreamingInputCallRequest, StreamingInputCallResponse, StreamingOutputCallRequest, StreamingOutputCallResponse} from "./messages_pb.js";
+import { Empty } from "./empty_pb.js";
+import { MethodKind } from "@bufbuild/protobuf";
+import { ClientConfigureRequest, ClientConfigureResponse, LoadBalancerAccumulatedStatsRequest, LoadBalancerAccumulatedStatsResponse, LoadBalancerStatsRequest, LoadBalancerStatsResponse, ReconnectInfo, ReconnectParams, SimpleRequest, SimpleResponse, StreamingInputCallRequest, StreamingInputCallResponse, StreamingOutputCallRequest, StreamingOutputCallResponse } from "./messages_pb.js";
 
 /**
  * A simple service to test the various types of RPCs and experiment with
