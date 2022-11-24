@@ -17,11 +17,10 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcFindTrailerError,
   grpcCodeFromHttpStatus,
-  grpcWebCreateRequestHeader,
-  grpcWebExpectContentType,
-  grpcWebTrailerParse,
+  grpcCreateRequestHeader,
+  grpcExpectContentType,
+  grpcFindTrailerError,
   Interceptor,
   runStreaming,
   runUnary,
@@ -44,19 +43,24 @@ import type {
 import * as http2 from "http2";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
-import { end, readEnvelope, readResponseHeader, write } from "./private/io.js";
+import {
+  end,
+  readEnvelope,
+  readResponseHeader,
+  readResponseTrailer,
+  write,
+} from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 
-const trailerFlag = 0b10000000;
 const messageFlag = 0b00000000;
 
 /**
  * Options used to configure the gRPC-web transport.
  *
- * See createGrpcWebHttp2Transport().
+ * See createGrpcHttp2Transport().
  */
-export interface GrpcWebHttp2TransportOptions {
+export interface GrpcHttp2TransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
@@ -96,11 +100,11 @@ export interface GrpcWebHttp2TransportOptions {
 }
 
 /**
- * Create a Transport for the gRPC-web protocol.
+ * Create a Transport for the gRPC protocol.
  *
  */
-export function createGrpcWebHttp2Transport(
-  options: GrpcWebHttp2TransportOptions
+export function createGrpcHttp2Transport(
+  options: GrpcHttp2TransportOptions
 ): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
@@ -129,11 +133,7 @@ export function createGrpcWebHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method).toString(),
             init: {},
-            header: grpcWebCreateRequestHeader(
-              useBinaryFormat,
-              timeoutMs,
-              header
-            ),
+            header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
@@ -161,6 +161,7 @@ export function createGrpcWebHttp2Transport(
             );
 
             const headersPromise = readResponseHeader(stream);
+            const trailerPromise = readResponseTrailer(stream);
             const envelope = encodeEnvelope(
               messageFlag,
               serialize(req.message)
@@ -171,36 +172,12 @@ export function createGrpcWebHttp2Transport(
             const [responseCode, responseHeader] = await headersPromise;
             validateResponse(useBinaryFormat, responseCode, responseHeader);
 
-            const messageOrTrailerResult = await readEnvelope(stream);
-
-            if (messageOrTrailerResult.done) {
+            const messageResult = await readEnvelope(stream);
+            const trailer = await trailerPromise;
+            validateGrpcStatus(trailer);
+            if (messageResult.done) {
               throw "premature eof";
             }
-
-            if (messageOrTrailerResult.value.flags === trailerFlag) {
-              // Unary responses require exactly one response message, but in
-              // case of an error, it is perfectly valid to have a response body
-              // that only contains error trailers.
-              validateGrpcStatus(
-                grpcWebTrailerParse(messageOrTrailerResult.value.data)
-              );
-              // At this point, we received trailers only, but the trailers did
-              // not have an error status code.
-              throw "unexpected trailer";
-            }
-
-            const trailerResult = await readEnvelope(stream);
-
-            if (trailerResult.done) {
-              throw "missing trailer";
-            }
-            if (trailerResult.value.flags !== trailerFlag) {
-              throw "missing trailer";
-            }
-
-            const trailer = grpcWebTrailerParse(trailerResult.value.data);
-            validateGrpcStatus(trailer);
-
             const eofResult = await readEnvelope(stream);
             if (!eofResult.done) {
               throw "extraneous data";
@@ -211,7 +188,7 @@ export function createGrpcWebHttp2Transport(
               service,
               method,
               header: responseHeader,
-              message: parse(messageOrTrailerResult.value.data),
+              message: parse(messageResult.value.data),
               trailer,
             };
           },
@@ -249,11 +226,7 @@ export function createGrpcWebHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcWebCreateRequestHeader(
-            useBinaryFormat,
-            timeoutMs,
-            header
-          ),
+          header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
         },
         async (req) => {
           try {
@@ -275,8 +248,7 @@ export function createGrpcWebHttp2Transport(
               }
             );
             const headerPromise = readResponseHeader(stream);
-            let endStreamReceived = false;
-            let messageReceived = false;
+            const trailerPromise = readResponseTrailer(stream);
             const responseTrailer = defer<Headers>();
             const conn: StreamingConn<I, O> = {
               ...req,
@@ -314,17 +286,7 @@ export function createGrpcWebHttp2Transport(
                 try {
                   const result = await readEnvelope(stream);
                   if (result.done) {
-                    if (messageReceived && !endStreamReceived) {
-                      throw new ConnectError("missing trailers");
-                    }
-                    return {
-                      done: true,
-                      value: undefined,
-                    };
-                  }
-                  if ((result.value.flags & trailerFlag) === trailerFlag) {
-                    endStreamReceived = true;
-                    const trailer = grpcWebTrailerParse(result.value.data);
+                    const trailer = await trailerPromise;
                     validateGrpcStatus(trailer);
                     responseTrailer.resolve(trailer);
                     return {
@@ -332,7 +294,6 @@ export function createGrpcWebHttp2Transport(
                       value: undefined,
                     };
                   }
-                  messageReceived = true;
                   return {
                     done: false,
                     value: parse(result.value.data),
@@ -365,7 +326,7 @@ function validateResponse(
       code
     );
   }
-  grpcWebExpectContentType(binaryFormat, headers.get("Content-Type"));
+  grpcExpectContentType(binaryFormat, headers.get("Content-Type"));
   validateGrpcStatus(headers);
 }
 

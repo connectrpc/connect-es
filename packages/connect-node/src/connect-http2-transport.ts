@@ -54,10 +54,10 @@ import {
   end,
   jsonParse,
   readEnvelope,
+  readResponseHeader,
   readToEnd,
   write,
 } from "./private/io.js";
-import { responseHeadersPromise } from "./private/response-headers-promise.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -174,12 +174,12 @@ export function createConnectHttp2Transport(
                 signal: req.signal,
               }
             );
-            const headersPromise = responseHeadersPromise(stream);
+            const headerPromise = readResponseHeader(stream);
 
             await write(stream, serialize(req.message));
             await end(stream);
 
-            const [responseStatus, responseHeader] = await headersPromise;
+            const [responseStatus, responseHeader] = await headerPromise;
             await validateResponseHeader(
               responseStatus,
               responseHeader,
@@ -270,7 +270,7 @@ export function createConnectHttp2Transport(
               }
             );
 
-            const headersPromise = responseHeadersPromise(stream);
+            const headersPromise = readResponseHeader(stream);
             let endStreamReceived = false;
             const responseTrailer = defer<Headers>();
             const conn: StreamingConn<I, O> = {

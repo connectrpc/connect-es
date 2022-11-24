@@ -19,6 +19,7 @@ import { assert } from "./assert.js";
 import type { ReadableStreamReadResultLike } from "../lib.dom.streams.js";
 import { Code, ConnectError, EnvelopedMessage } from "@bufbuild/connect-core";
 import type { JsonValue } from "@bufbuild/protobuf";
+import { nodeHeaderToWebHeader } from "./web-header-to-node-headers.js";
 
 export function jsonParse(bytes: Uint8Array): JsonValue {
   const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
@@ -179,4 +180,62 @@ export async function endWithHttpStatus(
 ): Promise<void> {
   res.writeHead(statusCode, statusMessage);
   await end(res);
+}
+
+/**
+ * Returns a promise for the response status code and response headers
+ * as a tuple.
+ */
+export function readResponseHeader(
+  stream: http2.ClientHttp2Stream
+): Promise<[number, Headers]> {
+  return new Promise<[number, Headers]>((resolve, reject) => {
+    if (stream.errored) {
+      return reject(stream.errored);
+    }
+    stream.once("error", error);
+    stream.once("response", parse);
+
+    function error(err: Error) {
+      stream.off("error", error);
+      stream.off('"response"', parse);
+      reject(err);
+    }
+
+    function parse(
+      headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader
+    ) {
+      stream.off("error", error);
+      resolve([headers[":status"] ?? 0, nodeHeaderToWebHeader(headers)]);
+    }
+  });
+}
+
+/**
+ * Returns a promise for HTTP/2 response trailers.
+ */
+export function readResponseTrailer(
+  stream: http2.ClientHttp2Stream
+): Promise<Headers> {
+  return new Promise<Headers>((resolve, reject) => {
+    if (stream.errored) {
+      return reject(stream.errored);
+    }
+    stream.once("error", error);
+    stream.once("trailers", parse);
+
+    function error(err: Error) {
+      stream.off("error", error);
+      stream.off("trailers", parse);
+      reject(err);
+    }
+
+    function parse(
+      headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader,
+      _flags: number // eslint-disable-line @typescript-eslint/no-unused-vars
+    ) {
+      stream.off("error", error);
+      resolve(nodeHeaderToWebHeader(headers));
+    }
+  });
 }
