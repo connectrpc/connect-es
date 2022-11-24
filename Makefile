@@ -10,7 +10,7 @@ TMP   = .tmp
 BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
-CROSSTEST_VERSION := 4f4e96d8fea3ed9473b90a964a5ba429e7ea5649
+CROSSTEST_VERSION := 2c228a09c52e3a95263034c1fb79119d33ab3258
 LICENSE_HEADER_YEAR_RANGE := 2021-2022
 LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
 NODE18_VERSION ?= v18.2.0
@@ -147,8 +147,8 @@ testcore: $(BUILD)/connect-core
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node18 $(BUILD)/connect-node-test
 	$(MAKE) crosstestserverrun
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node16 ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
 
 .PHONY: testwebnode
