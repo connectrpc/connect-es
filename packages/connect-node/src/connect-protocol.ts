@@ -108,9 +108,9 @@ export function createConnectProtocol(
                 type.binary
               );
 
-            const input = parse(await readToEnd(req));
             let output: O | PartialMessage<O>;
             try {
+              const input = parse(await readToEnd(req));
               output = await spec.impl(input, context);
             } catch (e) {
               return await endWithConnectUnaryError(
@@ -189,8 +189,8 @@ export function createConnectProtocol(
                 options.jsonOptions
               );
             }
-            const input = parse(inputResult.value.data);
             try {
+              const input = parse(inputResult.value.data);
               for await (const output of spec.impl(input, context)) {
                 if (!res.headersSent) {
                   res.writeHead(
