@@ -12,11 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ReadableStream as NodeReadableStream } from "stream/web";
+import {
+  createPromiseClient,
+  createConnectTransport,
+} from "@bufbuild/connect-web";
+import { ElizaService } from "./gen/connectweb/buf/connect/demo/eliza/v1/eliza_connectweb.js";
 
-// node >= v16 has an implementation for WHATWG streams, but doesn't expose
-// them in the global scope, nor globalThis.
-if (typeof globalThis.ReadableStream !== "function") {
-  globalThis.ReadableStream =
-    NodeReadableStream as unknown as typeof ReadableStream;
-}
+const client = createPromiseClient(
+  ElizaService,
+  createConnectTransport({
+    baseUrl: "https://demo.connect.build",
+  })
+);
+
+// eslint-disable-next-line no-console -- log statement makes sure the variable is in use
+console.log(client);

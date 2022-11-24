@@ -27,6 +27,7 @@ import type {
   Interceptor,
   Transport,
   UnaryResponse,
+  StreamingConn,
 } from "@bufbuild/connect-core";
 import {
   Code,
@@ -45,7 +46,6 @@ import {
   grpcWebTrailerParse,
   runStreaming,
   runUnary,
-  StreamingConn,
 } from "@bufbuild/connect-core";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";

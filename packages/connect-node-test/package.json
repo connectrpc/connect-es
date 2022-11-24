@@ -21,6 +21,7 @@
     "@types/jasmine": "^4.3.0",
     "@types/long": "^5.0.0",
     "esbuild": "^0.15.10",
+    "headers-polyfill": "^3.1.2",
     "jasmine": "^4.5.0",
     "karma": "^6.4.1",
     "karma-browserstack-launcher": "^1.6.0",

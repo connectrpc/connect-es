@@ -25,6 +25,13 @@ explicitly trust the self-signed certificate of the test server.
 Open one of the failed requests from the browsers network inspector, 
 and trust the self-signed certificate in the browser UI.
 
+### Running tests in Node.js
+
+@bufbuild/connect-web requires the fetch API. It is available since Node.js 
+v18, and you can run this suite of tests on it with `make testwebnode`.
+Note that client-streaming and bidi-streaming are not fully supported because
+of limitations in browser APIs.
+
 ### Running tests in Browserstack
 
 We are running a few select tests on old browsers. Thanks to Browserstack
