@@ -29,6 +29,7 @@ import { createConnectProtocol } from "./connect-protocol.js";
 import type { ImplSpec, Protocol } from "./protocol.js";
 import { endWithHttpStatus } from "./private/io.js";
 import { createGrpcWebProtocol } from "./grpc-web-protocol.js";
+import { createGrpcProtocol } from "./grpc-protocol.js";
 
 /**
  * Handler handles a Node.js request for one specific RPC.
@@ -182,7 +183,11 @@ function normalizeHandlerOptions(init?: HandlerOptions): Protocol[] {
   if ("protocols" in init) {
     return init.protocols;
   } else {
-    return [createConnectProtocol(init), createGrpcWebProtocol(init)];
+    return [
+      createConnectProtocol(init),
+      createGrpcWebProtocol(init),
+      createGrpcProtocol(init),
+    ];
   }
 }
 

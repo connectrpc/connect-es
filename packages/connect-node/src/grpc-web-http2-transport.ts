@@ -48,8 +48,8 @@ import { end, readEnvelope, readResponseHeader, write } from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 
-const trailerFlag = 0b10000000;
 const messageFlag = 0b00000000;
+const trailerFlag = 0b10000000;
 
 /**
  * Options used to configure the gRPC-web transport.

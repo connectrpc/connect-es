@@ -135,7 +135,20 @@ export function createTestServers() {
 
   const transports = {
     // TODO add http1.1 transports once implemented
-    // TODO run gRPC transport against @bufbuild/connect-node server
+    "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          useBinaryFormat: true,
+        }),
+    "@bufbuild/connect-node (gRPC, JSON, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          useBinaryFormat: false,
+        }),
     "@bufbuild/connect-node (gRPC, binary, http2) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
