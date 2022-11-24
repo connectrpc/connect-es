@@ -62,7 +62,7 @@ mSUY3aAJ51Yn2IhfNCWRJyxbjPyoNoCJGbpQqW1tXNvV2zvT1QtDMrHi/2eLfysW
 eny6TtdUBIsngV//KbYrTABi
 -----END PRIVATE KEY-----
 `,
-      cert: `-----BEGIN CERTIFICATE-----
+    cert: `-----BEGIN CERTIFICATE-----
 MIICpDCCAYwCCQDWU4MUt2KG2DANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
 b2NhbGhvc3QwHhcNMjIxMTI0MjIwNDQ0WhcNMjIxMjI0MjIwNDQ0WjAUMRIwEAYD
 VQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDT
@@ -140,7 +140,7 @@ vKy9wyvtUtg=
               {
                 allowHTTP1: true,
                 cert: certLocalhost.cert,
-                key: certLocalhost.key
+                key: certLocalhost.key,
               },
               mergeHandlers(createHandlers(TestService, testService, {}))
             )
@@ -231,14 +231,14 @@ vKy9wyvtUtg=
           useBinaryFormat: true,
           http2Options: {
             ca: certLocalhost.cert,
-          }
+          },
         }),
     "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
         createGrpcHttp2Transport({
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
-          useBinaryFormat: true
+          useBinaryFormat: true,
         }),
     "@bufbuild/connect-node (gRPC, JSON, http2) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
@@ -268,6 +268,17 @@ vKy9wyvtUtg=
           rejectUnauthorized: false, // TODO set up cert for go server correctly
         },
         useBinaryFormat: false,
+      }),
+    "@bufbuild/connect-node (gRPC, binary, http2) against grpc-go (h2)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcHttp2Transport({
+        ...options,
+        baseUrl: servers["grpc-go (h2)"].getUrl(),
+        http2Options: {
+          rejectUnauthorized: false, // TODO set up cert for go server correctly
+        },
+        useBinaryFormat: true,
       }),
 
     // Connect

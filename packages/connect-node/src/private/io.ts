@@ -221,12 +221,24 @@ export function readResponseTrailer(
     if (stream.errored) {
       return reject(stream.errored);
     }
+    if (stream.readableEnded) {
+      return resolve(new Headers());
+    }
     stream.once("error", error);
     stream.once("trailers", parse);
+    stream.once("end", end);
+
+    function end() {
+      stream.off("error", error);
+      stream.off("trailers", parse);
+      stream.off("end", end);
+      resolve(new Headers());
+    }
 
     function error(err: Error) {
       stream.off("error", error);
       stream.off("trailers", parse);
+      stream.off("end", end);
       reject(err);
     }
 
@@ -235,6 +247,7 @@ export function readResponseTrailer(
       _flags: number // eslint-disable-line @typescript-eslint/no-unused-vars
     ) {
       stream.off("error", error);
+      stream.off("end", end);
       resolve(nodeHeaderToWebHeader(headers));
     }
   });

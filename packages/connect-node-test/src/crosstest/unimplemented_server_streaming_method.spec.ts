@@ -27,7 +27,7 @@ describe("unimplemented_server_streaming_method", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
-  servers.describeTransports((transport) => {
+  servers.describeTransports((transport, transportName) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       const request = new Empty();
@@ -41,9 +41,15 @@ describe("unimplemented_server_streaming_method", function () {
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(connectErrorFromReason(e).code).toBe(Code.Unimplemented);
-        expect(connectErrorFromReason(e).message).toBe(
-          "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented"
-        );
+        if (transportName.includes("against grpc-go")) {
+          expect(connectErrorFromReason(e).message).toBe(
+            "[unimplemented] method UnimplementedStreamingOutputCall not implemented"
+          );
+        } else {
+          expect(connectErrorFromReason(e).message).toBe(
+            "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented"
+          );
+        }
       }
     });
     it("with callback client", function (done) {
@@ -56,9 +62,15 @@ describe("unimplemented_server_streaming_method", function () {
         },
         (err: ConnectError | undefined) => {
           expect(err?.code).toBe(Code.Unimplemented);
-          expect(err?.message).toBe(
-            "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented"
-          );
+          if (transportName.includes("against grpc-go")) {
+            expect(err?.message).toBe(
+              "[unimplemented] method UnimplementedStreamingOutputCall not implemented"
+            );
+          } else {
+            expect(err?.message).toBe(
+              "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented"
+            );
+          }
           done();
         }
       );
