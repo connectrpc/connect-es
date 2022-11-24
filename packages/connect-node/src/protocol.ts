@@ -33,8 +33,12 @@ import type {
  */
 export interface Protocol {
   supportsMediaType(type: string): boolean;
-
-  createHandler(spec: ImplSpec): ImplHandler;
+  createHandler<
+    I extends Message<I> = AnyMessage,
+    O extends Message<O> = AnyMessage
+  >(
+    spec: ImplSpec<I, O>
+  ): ImplHandler;
 }
 
 // prettier-ignore
