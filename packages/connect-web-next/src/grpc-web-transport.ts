@@ -30,7 +30,6 @@ import type {
 } from "@bufbuild/connect-core";
 import {
   Code,
-  connectCodeFromHttpStatus,
   ConnectError,
   connectErrorFromReason,
   createClientMethodSerializers,
@@ -296,12 +295,6 @@ export function createGrpcWebTransport(
                 body: encodeEnvelopes(...pendingSend),
               })
                 .then((response) => {
-                  if (response.status != 200) {
-                    throw new ConnectError(
-                      `HTTP ${response.status} ${response.statusText}`,
-                      connectCodeFromHttpStatus(response.status)
-                    );
-                  }
                   validateResponse(response);
                   if (!response.body) {
                     throw "missing response body";
@@ -368,7 +361,10 @@ function validateFetchResponse(
   const code = grpcWebCodeFromHttpStatus(response.status);
   if (code != null) {
     throw new ConnectError(
-      decodeURIComponent(response.headers.get("grpc-message") ?? ""),
+      decodeURIComponent(
+        response.headers.get("grpc-message") ??
+          `HTTP ${response.status} ${response.statusText}`
+      ),
       code
     );
   }

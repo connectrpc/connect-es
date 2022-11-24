@@ -362,7 +362,7 @@ function validateResponse(
   const code = grpcWebCodeFromHttpStatus(status);
   if (code != null) {
     throw new ConnectError(
-      decodeURIComponent(headers.get("grpc-message") ?? ""),
+      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
       code
     );
   }
