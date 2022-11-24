@@ -101,9 +101,9 @@ export function createGrpcWebProtocol(
                 new ConnectError("Missing input message", Code.Internal)
               );
             }
-            const input = parse(inputResult.value.data);
             let output: O | PartialMessage<O>;
             try {
+              const input = parse(inputResult.value.data);
               output = await spec.impl(input, context);
             } catch (e) {
               return await endWithGrpcWebTrailer(
@@ -171,8 +171,8 @@ export function createGrpcWebProtocol(
                 )
               );
             }
-            const input = parse(inputResult.value.data);
             try {
+              const input = parse(inputResult.value.data);
               for await (const output of spec.impl(input, context)) {
                 if (!res.headersSent) {
                   res.writeHead(
