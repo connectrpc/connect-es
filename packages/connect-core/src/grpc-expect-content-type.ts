@@ -39,9 +39,7 @@ export function grpcParseContentType(
 ): { binary: boolean } | undefined {
   const match = contentType
     ?.toLowerCase()
-    ?.match(
-      /^application\/grpc?(?:\+(?:(json)(?:; ?charset=utf-?8)?|proto))?$/
-    );
+    ?.match(/^application\/grpc(?:\+(?:(json)(?:; ?charset=utf-?8)?|proto))?$/);
   if (!match) {
     return undefined;
   }

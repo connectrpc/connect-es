@@ -14,6 +14,7 @@
 
 export * from "./connect-http2-transport.js";
 export * from "./grpc-web-http2-transport.js";
+export * from "./grpc-http2-transport.js";
 export {
   Handler,
   createHandler,
@@ -29,6 +30,7 @@ export {
 export { Protocol } from "./protocol.js";
 export { createConnectProtocol } from "./connect-protocol.js";
 export { createGrpcWebProtocol } from "./grpc-web-protocol.js";
+export { createGrpcProtocol } from "./grpc-protocol.js";
 export {
   createCallbackClient,
   CallbackClient,

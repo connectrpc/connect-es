@@ -18,7 +18,8 @@ import { Code } from "./code.js";
  * Determine the gRPC-web error code for the given HTTP status code.
  * See https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md.
  */
-export function grpcWebCodeFromHttpStatus(httpStatus: number): Code | null {
+export function grpcCodeFromHttpStatus(httpStatus: number): Code | null {
+  // TODO we should treat HTTP 200 as unknown if the field grpc-status is not present
   switch (httpStatus) {
     case 200: // Ok
       return null;

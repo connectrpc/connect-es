@@ -40,7 +40,7 @@ import {
   encodeEnvelopes,
   EnvelopedMessage,
   grpcFindTrailerError,
-  grpcWebCodeFromHttpStatus,
+  grpcCodeFromHttpStatus,
   grpcWebCreateRequestHeader,
   grpcWebExpectContentType,
   grpcWebTrailerParse,
@@ -358,7 +358,7 @@ function validateFetchResponse(
   binaryFormat: boolean,
   response: Response
 ): void {
-  const code = grpcWebCodeFromHttpStatus(response.status);
+  const code = grpcCodeFromHttpStatus(response.status);
   if (code != null) {
     throw new ConnectError(
       decodeURIComponent(

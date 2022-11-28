@@ -17,9 +17,8 @@ import {
   ConnectError,
   connectErrorFromReason,
   encodeEnvelope,
+  grpcParseContentType,
   grpcSetTrailerStatus,
-  grpcWebParseContentType,
-  grpcWebTrailerSerialize,
 } from "@bufbuild/connect-core";
 import {
   BinaryReadOptions,
@@ -42,24 +41,23 @@ import type * as http2 from "http2";
 import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 
 const messageFlag = 0b00000000;
-const trailerFlag = 0b10000000;
 
 /**
- * Options for creating a gRPC-web Protocol instance.
+ * Options for creating a gRPC Protocol instance.
  */
-interface CreateGrpcWebProtocolOptions {
+interface CreateGrpcProtocolOptions {
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 }
 
 /**
- * Create a gRPC-web Protocol instance.
+ * Create a gRPC Protocol instance.
  */
-export function createGrpcWebProtocol(
-  options: CreateGrpcWebProtocolOptions
+export function createGrpcProtocol(
+  options: CreateGrpcProtocolOptions
 ): Protocol {
   return {
-    supportsMediaType: (type) => !!grpcWebParseContentType(type),
+    supportsMediaType: (type) => !!grpcParseContentType(type),
 
     createHandler<I extends Message<I>, O extends Message<O>>(
       spec: ImplSpec<I, O>
@@ -67,17 +65,10 @@ export function createGrpcWebProtocol(
       switch (spec.kind) {
         case MethodKind.Unary:
           return async (req, res) => {
-            const type = grpcWebParseContentType(
+            const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
             if (type === undefined) {
-              return await endWithHttpStatus(
-                res,
-                415,
-                "Unsupported Media Type"
-              );
-            }
-            if (type.text) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -88,7 +79,7 @@ export function createGrpcWebProtocol(
               method: spec.method,
               service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
-              responseHeader: grpcWebCreateResponseHeader(type.binary),
+              responseHeader: grpcCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
             const { normalize, parse, serialize } =
@@ -100,7 +91,7 @@ export function createGrpcWebProtocol(
               );
             const inputResult = await readEnvelope(req);
             if (inputResult.done) {
-              return await endWithGrpcWebTrailer(
+              return await endWithGrpcTrailer(
                 res,
                 context,
                 new ConnectError("Missing input message", Code.Internal)
@@ -111,7 +102,7 @@ export function createGrpcWebProtocol(
             try {
               output = await spec.impl(input, context);
             } catch (e) {
-              return await endWithGrpcWebTrailer(
+              return await endWithGrpcTrailer(
                 res,
                 context,
                 connectErrorFromReason(e)
@@ -122,21 +113,14 @@ export function createGrpcWebProtocol(
               res,
               encodeEnvelope(messageFlag, serialize(normalize(output)))
             );
-            return await endWithGrpcWebTrailer(res, context, undefined);
+            return await endWithGrpcTrailer(res, context, undefined);
           };
         case MethodKind.ServerStreaming: {
           return async (req, res) => {
-            const type = grpcWebParseContentType(
+            const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
             if (type === undefined) {
-              return await endWithHttpStatus(
-                res,
-                415,
-                "Unsupported Media Type"
-              );
-            }
-            if (type.text) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -147,7 +131,7 @@ export function createGrpcWebProtocol(
               method: spec.method,
               service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
-              responseHeader: grpcWebCreateResponseHeader(type.binary),
+              responseHeader: grpcCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
             const { normalize, parse, serialize } =
@@ -160,14 +144,14 @@ export function createGrpcWebProtocol(
 
             const inputResult = await readEnvelope(req);
             if (inputResult.done) {
-              return await endWithGrpcWebTrailer(
+              return await endWithGrpcTrailer(
                 res,
                 context,
                 new ConnectError("Missing input message", Code.Internal)
               );
             }
             if (inputResult.value.flags !== messageFlag) {
-              return await endWithGrpcWebTrailer(
+              return await endWithGrpcTrailer(
                 res,
                 context,
                 new ConnectError(
@@ -193,28 +177,21 @@ export function createGrpcWebProtocol(
                 );
               }
             } catch (e) {
-              return await endWithGrpcWebTrailer(
+              return await endWithGrpcTrailer(
                 res,
                 context,
                 connectErrorFromReason(e)
               );
             }
-            return await endWithGrpcWebTrailer(res, context, undefined);
+            return await endWithGrpcTrailer(res, context, undefined);
           };
         }
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
-            const type = grpcWebParseContentType(
+            const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
             if (type === undefined) {
-              return await endWithHttpStatus(
-                res,
-                415,
-                "Unsupported Media Type"
-              );
-            }
-            if (type.text) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -225,7 +202,7 @@ export function createGrpcWebProtocol(
               method: spec.method,
               service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
-              responseHeader: grpcWebCreateResponseHeader(type.binary),
+              responseHeader: grpcCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
             const { normalize, parse, serialize } =
@@ -243,7 +220,7 @@ export function createGrpcWebProtocol(
                   break;
                 }
                 if (result.value.flags !== messageFlag) {
-                  return await endWithGrpcWebTrailer(
+                  return await endWithGrpcTrailer(
                     res,
                     context,
                     new ConnectError(
@@ -261,7 +238,7 @@ export function createGrpcWebProtocol(
             try {
               output = await spec.impl(input(), context);
             } catch (e) {
-              return await endWithGrpcWebTrailer(
+              return await endWithGrpcTrailer(
                 res,
                 context,
                 connectErrorFromReason(e)
@@ -272,22 +249,15 @@ export function createGrpcWebProtocol(
               res,
               encodeEnvelope(messageFlag, serialize(normalize(output)))
             );
-            return await endWithGrpcWebTrailer(res, context, undefined);
+            return await endWithGrpcTrailer(res, context, undefined);
           };
         }
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
-            const type = grpcWebParseContentType(
+            const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
             if (type === undefined) {
-              return await endWithHttpStatus(
-                res,
-                415,
-                "Unsupported Media Type"
-              );
-            }
-            if (type.text) {
               return await endWithHttpStatus(
                 res,
                 415,
@@ -298,7 +268,7 @@ export function createGrpcWebProtocol(
               method: spec.method,
               service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
-              responseHeader: grpcWebCreateResponseHeader(type.binary),
+              responseHeader: grpcCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
             const { normalize, parse, serialize } =
@@ -316,7 +286,7 @@ export function createGrpcWebProtocol(
                   break;
                 }
                 if (result.value.flags !== messageFlag) {
-                  return await endWithGrpcWebTrailer(
+                  return await endWithGrpcTrailer(
                     res,
                     context,
                     new ConnectError(
@@ -344,13 +314,13 @@ export function createGrpcWebProtocol(
                 );
               }
             } catch (e) {
-              return await endWithGrpcWebTrailer(
+              return await endWithGrpcTrailer(
                 res,
                 context,
                 connectErrorFromReason(e)
               );
             }
-            return await endWithGrpcWebTrailer(res, context, undefined);
+            return await endWithGrpcTrailer(res, context, undefined);
           };
         }
       }
@@ -358,15 +328,15 @@ export function createGrpcWebProtocol(
   };
 }
 
-function grpcWebCreateResponseHeader(useBinaryFormat: boolean): Headers {
-  let type = "application/grpc-web+";
+function grpcCreateResponseHeader(useBinaryFormat: boolean): Headers {
+  let type = "application/grpc+";
   type += useBinaryFormat ? "proto" : "json";
   return new Headers({
     "Content-Type": type,
   });
 }
 
-async function endWithGrpcWebTrailer(
+async function endWithGrpcTrailer(
   res: http.ServerResponse | http2.Http2ServerResponse,
   context: HandlerContext,
   error: ConnectError | undefined
@@ -375,7 +345,6 @@ async function endWithGrpcWebTrailer(
     res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
   }
   grpcSetTrailerStatus(context.responseTrailer, error);
-  const trailerBytes = grpcWebTrailerSerialize(context.responseTrailer);
-  await write(res, encodeEnvelope(trailerFlag, trailerBytes));
+  res.addTrailers(webHeaderToNodeHeaders(context.responseTrailer));
   await end(res);
 }

@@ -63,7 +63,6 @@ export {
 export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
 export { connectCodeToHttpStatus } from "./connect-code-to-http-status.js";
 export { connectTrailerDemux } from "./connect-trailer-demux.js";
-export { grpcWebCodeFromHttpStatus } from "./grpcweb-code-from-http-status.js";
 export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";
 export {
   grpcWebExpectContentType,
@@ -77,3 +76,9 @@ export {
   grpcFindTrailerError,
   grpcSetTrailerStatus,
 } from "./grpc-trailer-status.js";
+export { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
+export { grpcCreateRequestHeader } from "./grpc-create-request-header.js";
+export {
+  grpcExpectContentType,
+  grpcParseContentType,
+} from "./grpc-expect-content-type.js";

@@ -23,41 +23,288 @@ import {
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { testService } from "./test-service-impl.js";
+import { createGrpcHttp2Transport } from "@bufbuild/connect-node";
 
 export function createTestServers() {
   // TODO http2 server with TLS and allow http1
+  let nodeH2SecureServer: http2.Http2SecureServer | undefined;
   let nodeH2cServer: http2.Http2Server | undefined;
   let nodeHttpServer: http.Server | undefined;
 
-  function getPort(
-    server:
-      | http2.Http2Server
-      | http2.Http2SecureServer
-      | http.Server
-      | undefined
-  ): number {
-    const address = server?.address();
-    if (address == null || typeof address == "string") {
-      throw new Error("cannot get server port");
-    }
-    return address.port;
-  }
+  // openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -keyout localhost-privkey.pem -out localhost-cert.pem
+  const certLocalhost = {
+    key: `-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDTzbyj/B3AMygL
+SbnHs/T+SYzIdn0yMo3O7BHHqsBSQkGJ/fc9nujbtBd0TeNGnDCvhiyvXGCGwoA0
++foTFm5MzhogYZwpGmBunAd3SoARmsQ+7xBaNj0LdArcCKi1oWszhU3Jo/GWJ1r9
+yjHszouCg8d2qRgmBKYG4LF+QyzLFns5enoOR8k0zQhIxVmPkm1dnEpSmpxOgy9T
+iLkYxguCadgIzefpKqntOX9RkJYi7vI3pEAngp0DYDDaWjAC7JzBr41WNqvw1ldm
+4xvmm1oTGrES090/NFTIc7JNv5DnmH87MAa9syuU1QJ+Ho9aMQVwn1tFQeVj996V
+3lryzza1AgMBAAECggEAbpH4Cc+jJGRQYlwxrUyH+HwjD7+zqhH0L/LTcV31mrvW
+BRjdCoE75P5GREQpAwKk8+zixQU/qvo8/esGHxLVsCjkQMVURazsbLHtv9vXsdkO
+3B/ndIDeK22AAdBPasqC8VmE+2AnzZBsExOMLqjA8fijl5G89pP0rKB+aIDfEIGP
+Teunp/FBrflImwegJFLb5p/Uj/szFhJJLMy1ByqWYKlw/hSUEyd+bnpKn1Pcv/vQ
+N0OPZDemEMQrgQIxcLvKte8ybapm6xldIaQjPmhBoEnn7ksyCNoBdkFIZmG0y6xs
+Tsd0CONivLyZ4ZCo3dWGETHo+Ogj0ShKcTuRqGGdYQKBgQD5a+udU/8vpVeNtvPg
+SvhELReE5MvqwRSDnO1cCDP973CavOk/wmFkrIbs5ZnWEoivvUNfM1O+CRow01Hl
+dsycctZ60Z7BqoBjTwxC8Gf3sU3JXE/w0qJMkgApPIIDqizJXBsK/EX1qIlTsglf
+mBqX8NE/Ean6wPf086KK/08n6QKBgQDZY9KY6LLLeYNNW5cw4d7AalppQq4KDcrc
+efJk6jP0wK+N07v+3l2wkUWFTsVXrSWaAhdCuOnjLBckd1FNa9Qh6Bkz0uCBnsji
+Lg2JyPFOR6UcghtQsnyo3F0NkCiN7OwHUTrWxjos0Ny0Zn7tMJgheKbobHt4UuQM
++EZ19Yak7QKBgE+HsuRCoU7u+MDuQksVfJ44hpRQZBkhocnpouHCl9lznMMqU3GK
+KIXyYT9uYqQY2s62maHkeuJQgrJo32c8fzevgmY9KtLz6+Y+kVlS0MPxHC2FqtPO
+RgQGVdjQO2CxxYAbR2A0WpZfPBKc5VI+7NPf7MigeEPFfgr0GLMbf4DpAoGBAI8I
+6Dtl+KZ66FLQ7dTi+P6fu6dAkWTaGF0i+8M8ej0TPy9RXoPe6cRQgW6qGpyKt4/y
+yj1Dj9jCXOPIgj0vsp8wqMx5dvCyejif1paPGX7JEzGDxdc96VntzGgtLxHbDp3t
+64n/Wa29K0qjmeYUsDRtv1x0bHUKDTUfcrUQfKwtAoGBAOiKdYLuPGB6eV8lgnlK
++qUTNDyDAT/ZX/0BAoPPuglAI4fd6kBHY5AdnlT2aEewkgaS0mqiPRGkL8uwKmdQ
+mSUY3aAJ51Yn2IhfNCWRJyxbjPyoNoCJGbpQqW1tXNvV2zvT1QtDMrHi/2eLfysW
+eny6TtdUBIsngV//KbYrTABi
+-----END PRIVATE KEY-----
+`,
+    cert: `-----BEGIN CERTIFICATE-----
+MIICpDCCAYwCCQDWU4MUt2KG2DANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
+b2NhbGhvc3QwHhcNMjIxMTI0MjIwNDQ0WhcNMjIxMjI0MjIwNDQ0WjAUMRIwEAYD
+VQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDT
+zbyj/B3AMygLSbnHs/T+SYzIdn0yMo3O7BHHqsBSQkGJ/fc9nujbtBd0TeNGnDCv
+hiyvXGCGwoA0+foTFm5MzhogYZwpGmBunAd3SoARmsQ+7xBaNj0LdArcCKi1oWsz
+hU3Jo/GWJ1r9yjHszouCg8d2qRgmBKYG4LF+QyzLFns5enoOR8k0zQhIxVmPkm1d
+nEpSmpxOgy9TiLkYxguCadgIzefpKqntOX9RkJYi7vI3pEAngp0DYDDaWjAC7JzB
+r41WNqvw1ldm4xvmm1oTGrES090/NFTIc7JNv5DnmH87MAa9syuU1QJ+Ho9aMQVw
+n1tFQeVj996V3lryzza1AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAJXdbfZNMVXx
+cqIHOCfgr2nHOir383E2jwnrmlj1BXtaw++SiHwbqFkEhuLu0PPy65e26mhDFH3L
+3+AlIT6vozna1vaHctQwtCz4XAFqt6B8CLQk1qdq1LSD+y8agSbvHCHZjivl1K37
+eg2LYOrreTfhSEMBuHuvSc18CA0VBH5A4YL5HlKaxdMlTpUq8wA3Hr/wAcyUfabt
+UTKCiG3QXKmdlVV1xgmw0aYQGaFY/h7bzJmFIQ8yhtLQWT1zKKLNmDl1ZcBOKYtc
+TXWfm6G6gP8vMBfICXjzI8+MeNF5+CbMyRKDGIejsova7dCKI5WMRykCp64cmnKC
+vKy9wyvtUtg=
+-----END CERTIFICATE-----
+`,
+  };
 
   // The following servers are available through crosstests:
+  //
+  // | server        | port |
+  // | ------------- | --- |
+  // | connect-go h1 | 8080 |
+  // | connect-go h2 | 8081 |
+  // | grpc-go       | 8083 |
+  //
   // Source: https://github.com/bufbuild/connect-web/pull/87
-  const crosstestConnectGoH1Url = "https://127.0.0.1:8080";
-  // const crosstestConnectGoH2Url = "https://127.0.0.1:8081";
-  // const crosstestGrpcGoUrl = "https://127.0.0.1:8083";
+  const servers = {
+    "connect-go (h1)": {
+      getUrl() {
+        return `https://127.0.0.1:8080`;
+      },
+      start() {
+        return Promise.resolve();
+      },
+      stop() {
+        return Promise.resolve();
+      },
+    },
+    "connect-go (h2)": {
+      getUrl() {
+        return `https://127.0.0.1:8081`;
+      },
+      start() {
+        return Promise.resolve();
+      },
+      stop() {
+        return Promise.resolve();
+      },
+    },
+    "grpc-go (h2)": {
+      getUrl() {
+        return `https://127.0.0.1:8083`;
+      },
+      start() {
+        return Promise.resolve();
+      },
+      stop() {
+        return Promise.resolve();
+      },
+    },
+    "@bufbuild/connect-node (h2)": {
+      getUrl() {
+        const address = nodeH2SecureServer?.address();
+        if (address == null || typeof address == "string") {
+          throw new Error("cannot get server port");
+        }
+        return `https://localhost:${address.port}`;
+      },
+      start() {
+        return new Promise<void>((resolve) => {
+          nodeH2SecureServer = http2
+            .createSecureServer(
+              {
+                allowHTTP1: true,
+                cert: certLocalhost.cert,
+                key: certLocalhost.key,
+              },
+              mergeHandlers(createHandlers(TestService, testService, {}))
+            )
+            .listen(0, resolve);
+        });
+      },
+      stop() {
+        return new Promise<void>((resolve, reject) => {
+          if (!nodeH2SecureServer) {
+            reject(new Error("http2Server not started"));
+            return;
+          }
+          nodeH2SecureServer.close((err) => (err ? reject(err) : resolve()));
+          // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
+          resolve();
+        });
+      },
+    },
+    "@bufbuild/connect-node (h2c)": {
+      getUrl() {
+        const address = nodeH2cServer?.address();
+        if (address == null || typeof address == "string") {
+          throw new Error("cannot get server port");
+        }
+        return `http://localhost:${address.port}`;
+      },
+      start() {
+        return new Promise<void>((resolve) => {
+          nodeH2cServer = http2
+            .createServer(
+              {},
+              mergeHandlers(createHandlers(TestService, testService, {}))
+            )
+            .listen(0, resolve);
+        });
+      },
+      stop() {
+        return new Promise<void>((resolve, reject) => {
+          if (!nodeH2cServer) {
+            reject(new Error("http2Server not started"));
+            return;
+          }
+          nodeH2cServer.close((err) => (err ? reject(err) : resolve()));
+          // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
+          resolve();
+        });
+      },
+    },
+    "@bufbuild/connect-node (h1)": {
+      getUrl() {
+        const address = nodeHttpServer?.address();
+        if (address == null || typeof address == "string") {
+          throw new Error("cannot get server port");
+        }
+        return `http://localhost:${address.port}`;
+      },
+      start() {
+        return new Promise<void>((resolve) => {
+          nodeHttpServer = http
+            .createServer(
+              {},
+              mergeHandlers(createHandlers(TestService, testService, {}))
+            )
+            .listen(0, resolve);
+        });
+      },
+      stop() {
+        return new Promise<void>((resolve, reject) => {
+          if (!nodeHttpServer) {
+            reject(new Error("httpServer not started"));
+            return;
+          }
+          nodeHttpServer.close((err) => (err ? reject(err) : resolve()));
+        });
+      },
+    },
+  };
 
   const transports = {
-    // TODO add gRPC transport once implemented
     // TODO add http1.1 transports once implemented
+
+    // gRPC
+    "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2)"].getUrl(),
+          useBinaryFormat: true,
+          http2Options: {
+            ca: certLocalhost.cert,
+          },
+        }),
+    "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          useBinaryFormat: true,
+        }),
+    "@bufbuild/connect-node (gRPC, JSON, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          useBinaryFormat: false,
+        }),
+    "@bufbuild/connect-node (gRPC, binary, http2) against connect-go (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcHttp2Transport({
+        ...options,
+        baseUrl: servers["connect-go (h1)"].getUrl(),
+        http2Options: {
+          rejectUnauthorized: false, // TODO set up cert for go server correctly
+        },
+        useBinaryFormat: true,
+      }),
+    "@bufbuild/connect-node (gRPC, JSON, http2) against connect-go (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcHttp2Transport({
+        ...options,
+        baseUrl: servers["connect-go (h1)"].getUrl(),
+        http2Options: {
+          rejectUnauthorized: false, // TODO set up cert for go server correctly
+        },
+        useBinaryFormat: false,
+      }),
+    "@bufbuild/connect-node (gRPC, binary, http2) against grpc-go (h2)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcHttp2Transport({
+        ...options,
+        baseUrl: servers["grpc-go (h2)"].getUrl(),
+        http2Options: {
+          rejectUnauthorized: false, // TODO set up cert for go server correctly
+        },
+        useBinaryFormat: true,
+      }),
+
+    // Connect
+    "@bufbuild/connect-node (Connect, binary, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          useBinaryFormat: true,
+        }),
+    "@bufbuild/connect-node (Connect, JSON, http2) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          useBinaryFormat: false,
+        }),
     "@bufbuild/connect-node (Connect, binary, http2) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
       createConnectHttp2Transport({
         ...options,
-        baseUrl: crosstestConnectGoH1Url,
+        baseUrl: servers["connect-go (h1)"].getUrl(),
+        http2Options: {
+          rejectUnauthorized: false, // TODO set up cert for go server correctly
+        },
         useBinaryFormat: true,
       }),
     "@bufbuild/connect-node (Connect, JSON, http2) against connect-go (h1)": (
@@ -65,28 +312,36 @@ export function createTestServers() {
     ) =>
       createConnectHttp2Transport({
         ...options,
-        baseUrl: crosstestConnectGoH1Url,
+        baseUrl: servers["connect-go (h1)"].getUrl(),
+        http2Options: {
+          rejectUnauthorized: false, // TODO set up cert for go server correctly
+        },
         useBinaryFormat: false,
       }),
-    "@bufbuild/connect-node (Connect, binary, http2) against @bufbuild/connect-node (h2c)":
+
+    // gRPC-web
+    "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
-        createConnectHttp2Transport({
+        createGrpcWebHttp2Transport({
           ...options,
-          baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           useBinaryFormat: true,
         }),
-    "@bufbuild/connect-node (Connect, JSON, http2) against @bufbuild/connect-node (h2c)":
+    "@bufbuild/connect-node (gRPC-web, JSON, http2) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
-        createConnectHttp2Transport({
+        createGrpcWebHttp2Transport({
           ...options,
-          baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           useBinaryFormat: false,
         }),
     "@bufbuild/connect-node (gRPC-web, binary, http2) against connect-go (h1)":
       (options?: Record<string, unknown>) =>
         createGrpcWebHttp2Transport({
           ...options,
-          baseUrl: crosstestConnectGoH1Url,
+          baseUrl: servers["connect-go (h1)"].getUrl(),
+          http2Options: {
+            rejectUnauthorized: false, // TODO set up cert for go server correctly
+          },
           useBinaryFormat: true,
         }),
     "@bufbuild/connect-node (gRPC-web, JSON, http2) against connect-go (h1)": (
@@ -94,27 +349,23 @@ export function createTestServers() {
     ) =>
       createGrpcWebHttp2Transport({
         ...options,
-        baseUrl: crosstestConnectGoH1Url,
+        baseUrl: servers["connect-go (h1)"].getUrl(),
+        http2Options: {
+          rejectUnauthorized: false, // TODO set up cert for go server correctly
+        },
         useBinaryFormat: false,
       }),
-    "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
-      (options?: Record<string, unknown>) =>
-        createGrpcWebHttp2Transport({
-          ...options,
-          baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
-          useBinaryFormat: true,
-        }),
-    "@bufbuild/connect-node (gRPC-web, JSON, http2) against @bufbuild/connect-node (h2c)":
-      (options?: Record<string, unknown>) =>
-        createGrpcWebHttp2Transport({
-          ...options,
-          baseUrl: `http://localhost:${getPort(nodeH2cServer)}`,
-          useBinaryFormat: false,
-        }),
   } as const;
 
   return {
+    servers,
     transports,
+    start(): Promise<void> {
+      return Promise.all(Object.values(servers).map((s) => s.start())).then();
+    },
+    stop(): Promise<void> {
+      return Promise.all(Object.values(servers).map((s) => s.stop())).then();
+    },
     describeTransports(
       specDefinitions: (
         transport: () => Transport,
@@ -157,46 +408,6 @@ export function createTestServers() {
           });
         }
       }
-    },
-    start(): Promise<void> {
-      return Promise.all([
-        new Promise<void>((resolve) => {
-          nodeH2cServer = http2
-            .createServer(
-              {},
-              mergeHandlers(createHandlers(TestService, testService, {}))
-            )
-            .listen(0, resolve);
-        }),
-        new Promise<void>((resolve) => {
-          nodeHttpServer = http
-            .createServer(
-              {},
-              mergeHandlers(createHandlers(TestService, testService, {}))
-            )
-            .listen(0, resolve);
-        }),
-      ]).then();
-    },
-    stop(): Promise<void> {
-      return Promise.all([
-        new Promise<void>((resolve, reject) => {
-          if (!nodeH2cServer) {
-            reject(new Error("http2Server not started"));
-            return;
-          }
-          nodeH2cServer.close((err) => (err ? reject(err) : resolve()));
-          // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
-          resolve();
-        }),
-        new Promise<void>((resolve, reject) => {
-          if (!nodeHttpServer) {
-            reject(new Error("httpServer not started"));
-            return;
-          }
-          nodeHttpServer.close((err) => (err ? reject(err) : resolve()));
-        }),
-      ]).then();
     },
   };
 }
