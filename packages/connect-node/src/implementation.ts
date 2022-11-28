@@ -93,7 +93,7 @@ export interface HandlerContext {
 export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
   context: HandlerContext
-) => Promise<O> | Promise<PartialMessage<O>> | O | PartialMessage<O>;
+) => Promise<O | PartialMessage<O>> | O | PartialMessage<O>;
 
 /**
  * ClientStreamingImpl is the signature of the implementation of a
@@ -102,7 +102,7 @@ export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
 export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
   context: HandlerContext
-) => Promise<O> | Promise<PartialMessage<O>>;
+) => Promise<O | PartialMessage<O>>;
 
 /**
  * ServerStreamingImpl is the signature of the implementation of a
@@ -111,7 +111,7 @@ export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
 export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
   context: HandlerContext
-) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;
+) => AsyncIterable<O | PartialMessage<O>>;
 
 /**
  * BiDiStreamingImpl is the signature of the implementation of a bi-di
@@ -120,4 +120,4 @@ export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
 export type BiDiStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
   context: HandlerContext
-) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;
+) => AsyncIterable<O | PartialMessage<O>>;
