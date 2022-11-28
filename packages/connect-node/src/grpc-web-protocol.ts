@@ -82,6 +82,8 @@ export function createGrpcWebProtocol(
               );
             }
             const context: HandlerContext = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
@@ -139,6 +141,8 @@ export function createGrpcWebProtocol(
               );
             }
             const context: HandlerContext = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
@@ -215,6 +219,8 @@ export function createGrpcWebProtocol(
               );
             }
             const context: HandlerContext = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
@@ -286,6 +292,8 @@ export function createGrpcWebProtocol(
               );
             }
             const context: HandlerContext = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),

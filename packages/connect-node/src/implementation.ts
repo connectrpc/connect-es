@@ -80,6 +80,8 @@ interface MI<
 
 // TODO document
 export interface HandlerContext {
+  method: MethodInfo;
+  service: ServiceType;
   requestHeader: Headers;
   responseHeader: Headers;
   responseTrailer: Headers;

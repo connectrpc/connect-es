@@ -93,6 +93,8 @@ export function createConnectProtocol(
               );
             }
             const context: HandlerContext = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
@@ -152,6 +154,8 @@ export function createConnectProtocol(
               );
             }
             const context: HandlerContext = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
@@ -239,6 +243,8 @@ export function createConnectProtocol(
               );
             }
             const context: HandlerContext = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
@@ -320,6 +326,8 @@ export function createConnectProtocol(
               );
             }
             const context: HandlerContext = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
