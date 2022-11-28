@@ -81,7 +81,7 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            const context: HandlerContext<I, O> = {
+            const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
@@ -140,7 +140,7 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            const context: HandlerContext<I, O> = {
+            const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
@@ -218,7 +218,7 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            const context: HandlerContext<I, O> = {
+            const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
@@ -291,7 +291,7 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            const context: HandlerContext<I, O> = {
+            const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
