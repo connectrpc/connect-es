@@ -79,7 +79,12 @@ interface MI<
 }
 
 // TODO document
-export interface HandlerContext {
+export interface HandlerContext<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
+> {
+  method: MethodInfo<I, O>;
+  service: ServiceType;
   requestHeader: Headers;
   responseHeader: Headers;
   responseTrailer: Headers;
@@ -90,7 +95,7 @@ export interface HandlerContext {
  */
 export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
-  context: HandlerContext
+  context: HandlerContext<I, O>
 ) => Promise<O> | Promise<PartialMessage<O>> | O | PartialMessage<O>;
 
 /**
@@ -99,7 +104,7 @@ export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
  */
 export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
-  context: HandlerContext
+  context: HandlerContext<I, O>
 ) => Promise<O> | Promise<PartialMessage<O>>;
 
 /**
@@ -108,7 +113,7 @@ export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
  */
 export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
-  context: HandlerContext
+  context: HandlerContext<I, O>
 ) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;
 
 /**
@@ -117,5 +122,5 @@ export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
  */
 export type BiDiStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
-  context: HandlerContext
+  context: HandlerContext<I, O>
 ) => AsyncIterable<O> | AsyncIterable<PartialMessage<O>>;

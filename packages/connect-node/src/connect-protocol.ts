@@ -92,7 +92,9 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            const context: HandlerContext = {
+            const context: HandlerContext<I, O> = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
@@ -151,7 +153,9 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            const context: HandlerContext = {
+            const context: HandlerContext<I, O> = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
@@ -238,7 +242,9 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            const context: HandlerContext = {
+            const context: HandlerContext<I, O> = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
@@ -319,7 +325,9 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
-            const context: HandlerContext = {
+            const context: HandlerContext<I, O> = {
+              method: spec.method,
+              service: spec.service,
               requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
