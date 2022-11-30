@@ -30,7 +30,7 @@ describe("unavailable", () => {
       baseUrl: "https://host.invalid",
     });
     const client = createPromiseClient(TestService, transport);
-    fit("should raise code unavailable", async function () {
+    it("should raise code unavailable", async function () {
       try {
         await client.unaryCall({});
         fail("expected an error");
