@@ -19,7 +19,10 @@ import { assert } from "./assert.js";
 import type { ReadableStreamReadResultLike } from "../lib.dom.streams.js";
 import { Code, ConnectError, EnvelopedMessage } from "@bufbuild/connect-core";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { nodeHeaderToWebHeader } from "./web-header-to-node-headers.js";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./web-header-to-node-headers.js";
 
 export function jsonParse(bytes: Uint8Array): JsonValue {
   const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
@@ -197,13 +200,17 @@ export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
 export async function endWithHttpStatus(
   res: http.ServerResponse | http2.Http2ServerResponse,
   statusCode: number,
-  statusMessage: string
+  statusMessage: string,
+  header?: HeadersInit
 ): Promise<void> {
+  const headers: http.OutgoingHttpHeaders | undefined = header
+    ? webHeaderToNodeHeaders(header)
+    : undefined;
   if ("createPushResponse" in res) {
     // this is a HTTP/2 response, which does not support status messages
-    res.writeHead(statusCode);
+    res.writeHead(statusCode, headers);
   } else {
-    res.writeHead(statusCode, statusMessage);
+    res.writeHead(statusCode, statusMessage, headers);
   }
   await end(res);
 }
