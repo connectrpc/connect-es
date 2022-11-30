@@ -37,6 +37,11 @@ function isSyscallError(
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
   const r = reason as any;
   if (reason instanceof Error) {
+    if ("code" in r) {
+      // TODO
+      // eslint-disable-next-line no-console
+      console.error(r);
+    }
     if ("code" in r && "syscall" in r) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
       if (syscall === r.syscall && code === r.code) {
