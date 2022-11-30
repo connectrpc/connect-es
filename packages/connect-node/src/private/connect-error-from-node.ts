@@ -77,7 +77,7 @@ function isSyscallError(
       return isSyscallError(r.cause, syscall, code);
     } else {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-member-access,no-console
-      console.log(`isSyscallError ${syscall} ${code} NO, and cause also NO`, reason)
+      console.log(`isSyscallError ${syscall} ${code} NO`, reason)
     }
   }
   return false;

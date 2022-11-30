@@ -24,13 +24,13 @@ import {
   createGrpcWebHttp2Transport,
 } from "@bufbuild/connect-node";
 
-fdescribe("unavailable", () => {
+describe("unavailable", () => {
   describe("Connect http2 client with an unresolvable domain", function () {
     const transport = createConnectHttp2Transport({
       baseUrl: "https://host.invalid",
     });
     const client = createPromiseClient(TestService, transport);
-    it("should raise code unavailable", async function () {
+    fit("should raise code unavailable", async function () {
       try {
         await client.unaryCall({});
         fail("expected an error");
