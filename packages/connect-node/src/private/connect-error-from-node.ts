@@ -52,6 +52,7 @@ function isSyscallError(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,no-console
         console.log("r.syscall", r.syscall)
       }
+      // eslint-disable-next-line no-console
       console.log("code in r", "code" in r)
       if ("code" in r) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,no-console
