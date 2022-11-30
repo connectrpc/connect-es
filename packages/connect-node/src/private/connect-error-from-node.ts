@@ -44,6 +44,21 @@ function isSyscallError(
       // TODO
       // eslint-disable-next-line no-console
       console.error(r);
+      // eslint-disable-next-line no-console
+      console.error("want syscall", syscall, "want code", code);
+      // eslint-disable-next-line no-console
+      console.log("syscall in r", "syscall" in r)
+      if ("syscall" in r) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,no-console
+        console.log("r.syscall", r.syscall)
+      }
+      console.log("code in r", "code" in r)
+      if ("code" in r) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,no-console
+        console.log("r.code", r.code)
+      }
+      // eslint-disable-next-line no-console
+      console.log("syscall = " + syscall, "syscall" in r)
     }
     if ("code" in r && "syscall" in r) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
