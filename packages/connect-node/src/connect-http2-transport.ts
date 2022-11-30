@@ -14,14 +14,12 @@
 
 import {
   appendHeaders,
-  Code,
   connectCodeFromHttpStatus,
   connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
-  connectErrorFromReason,
   connectExpectContentType,
   connectTrailerDemux,
   createClientMethodSerializers,
@@ -33,7 +31,7 @@ import {
   StreamingConn,
   Transport,
   UnaryRequest,
-  UnaryResponse,
+  UnaryResponse
 } from "@bufbuild/connect-core";
 import type {
   AnyMessage,
@@ -44,20 +42,14 @@ import type {
   Message,
   MethodInfo,
   PartialMessage,
-  ServiceType,
+  ServiceType
 } from "@bufbuild/protobuf";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { defer } from "./private/defer.js";
-import {
-  end,
-  jsonParse,
-  readEnvelope,
-  readResponseHeader,
-  readToEnd,
-  write,
-} from "./private/io.js";
+import { end, jsonParse, readEnvelope, readResponseHeader, readToEnd, write } from "./private/io.js";
+import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -351,35 +343,6 @@ export function createConnectHttp2Transport(
       );
     },
   };
-}
-
-function connectErrorFromNodeReason(reason: unknown): ConnectError {
-  if (isSyscallError(reason, "getaddrinfo", "ENOTFOUND")) {
-    return connectErrorFromReason(reason, Code.Unavailable);
-  }
-  return connectErrorFromReason(reason, Code.Internal);
-}
-
-function isSyscallError(
-  reason: unknown,
-  syscall: string,
-  code: string
-): boolean {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
-  const r = reason as any;
-  if (reason instanceof Error) {
-    if ("code" in r && "syscall" in r) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-      if (syscall === r.syscall && code === r.code) {
-        return true;
-      }
-    }
-    if ("cause" in reason) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-member-access
-      return isSyscallError(r.cause, syscall, code);
-    }
-  }
-  return false;
 }
 
 async function validateResponseHeader(
