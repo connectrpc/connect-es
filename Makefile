@@ -105,7 +105,6 @@ $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-con
 $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web packages/connect-node-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-node-test/src/gen/*
 	npm run -w packages/connect-node-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
-	npm run -w packages/connect-node-test generate buf.build/bufbuild/eliza
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -147,8 +146,8 @@ testcore: $(BUILD)/connect-core
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node18 $(BUILD)/connect-node-test
 	$(MAKE) crosstestserverrun
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
 
 .PHONY: testwebnode
