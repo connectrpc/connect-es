@@ -36,13 +36,15 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import * as http from "http";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+// import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
+// import { readToEnd } from "./private/io.js";
 // import * as stream from "stream";
 // import { readResponseHeader } from "./private/io.js";
+import { nodeRequest } from "./private/node-http-request.js";
+import { readToEnd } from "./private/io.js";
 
 export interface ConnectHttpTransportOptions {
   /**
@@ -124,60 +126,22 @@ export function createConnectHttpTransport(
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
-          (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            return new Promise<UnaryResponse<O>>((resolve, reject) => {
-              const endpoint = new URL(req.url);
-
-              if (endpoint.protocol.includes("https")) {
-                throw new Error("Invalid protocol, must use https not http");
-              }
-
-              let responseBody: string;
-              const encoding = useBinaryFormat ? "binary" : "utf8";
-              const request = http.request(
-                req.url,
-                {
-                  host: endpoint.hostname,
-                  port: +endpoint.port,
-                  headers: webHeaderToNodeHeaders(req.header),
-                  method: "POST",
-                  path: endpoint.pathname,
-                  signal: req.signal,
-                  protocol: endpoint.protocol,
-                },
-                (res) => {
-                  res.setEncoding(encoding);
-                  res.on("data", (chunk) => {
-                    responseBody += chunk;
-                  });
-                  res.on("end", () => {
-                    const buff = Buffer.from(responseBody, encoding);
-                    // const stream = Readable.from(buff);
-
-                    console.log("buff", buff);
-                    resolve({
-                      stream: false,
-                      service,
-                      method,
-                      header: {} as Headers,
-                      message: parse([] as unknown as Uint8Array),
-                      trailer: {} as Headers,
-                    });
-                  });
-                }
-              );
-
-              const body = useBinaryFormat
-                ? req.message.toBinary()
-                : req.message.toJsonString();
-
-              request.write(body, encoding);
-              request.end();
-
-              request.on("error", (err) => {
-                reject(err);
-              });
+          async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+            const response = await nodeRequest({
+              req,
+              useBinaryFormat,
+              jsonOptions: options.jsonOptions,
+              binaryOptions: options.binaryOptions,
             });
+
+            return {
+              stream: false,
+              service,
+              method,
+              header: {} as Headers,
+              message: parse(await readToEnd(response)),
+              trailer: {} as Headers,
+            };
           },
           options.interceptors
         );
