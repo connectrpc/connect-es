@@ -15,6 +15,7 @@
 export * from "./connect-http2-transport.js";
 export * from "./grpc-web-http2-transport.js";
 export * from "./grpc-http2-transport.js";
+export * from "./grpc-web-http-transport.js";
 export {
   Handler,
   createHandler,
