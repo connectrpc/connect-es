@@ -20,7 +20,7 @@ import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-fdescribe("empty_unary", function () {
+describe("empty_unary", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 

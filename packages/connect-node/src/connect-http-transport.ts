@@ -17,10 +17,13 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   Interceptor,
+  runStreaming,
   runUnary,
+  StreamingConn,
+  Transport,
   // Transport,
   UnaryRequest,
-  //   UnaryResponse,
+  UnaryResponse,
 } from "@bufbuild/connect-core";
 import type {
   AnyMessage,
@@ -36,6 +39,10 @@ import type {
 import * as http from "http";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
+import { defer } from "./private/defer.js";
+// import * as stream from "stream";
+// import { readResponseHeader } from "./private/io.js";
 
 export interface ConnectHttpTransportOptions {
   /**
@@ -73,14 +80,13 @@ export interface ConnectHttpTransportOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 }
 
-//Partial<Transport>
 /**
- * Create a Transport for the gRPC-web protocol on Http.
+ * Create a Transport for the connect protocol on Http.
  *
  */
 export function createConnectHttpTransport(
   options: ConnectHttpTransportOptions
-): any {
+): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
@@ -93,10 +99,9 @@ export function createConnectHttpTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>
-      //Promise<UnaryResponse<O>>
-    ): Promise<any> {
+    ): Promise<UnaryResponse<O>> {
       try {
-        const { normalize } = createClientMethodSerializers(
+        const { normalize, parse } = createClientMethodSerializers(
           method,
           useBinaryFormat,
           options.jsonOptions,
@@ -119,74 +124,136 @@ export function createConnectHttpTransport(
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
+          (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+            return new Promise<UnaryResponse<O>>((resolve, reject) => {
+              const endpoint = new URL(req.url);
 
-          //Promise<UnaryResponse<O>>
-          async (req: UnaryRequest<I>): Promise<any> => {
-            const endpoint = new URL(req.url);
-
-            if (endpoint.protocol.includes("https")) {
-              throw new Error("Invalid protocol, must use https not http");
-            }
-            const encoding = useBinaryFormat ? "binary" : "utf8";
-            const request = http.request(
-              req.url,
-              {
-                host: endpoint.hostname,
-                port: +endpoint.port,
-                headers: webHeaderToNodeHeaders(req.header),
-                method: "POST",
-                path: endpoint.pathname,
-                signal: req.signal,
-                protocol: endpoint.protocol,
-              },
-              (res) => {
-                res.setEncoding(encoding);
-                res.on("data", (chunk) => {
-                  console.log("chunk", chunk);
-                });
-                res.on("end", () => {
-                  console.log("No more data in response.");
-                });
+              if (endpoint.protocol.includes("https")) {
+                throw new Error("Invalid protocol, must use https not http");
               }
-            );
 
-            const body = useBinaryFormat
-              ? req.message.toBinary()
-              : req.message.toJsonString();
+              let responseBody: string;
+              const encoding = useBinaryFormat ? "binary" : "utf8";
+              const request = http.request(
+                req.url,
+                {
+                  host: endpoint.hostname,
+                  port: +endpoint.port,
+                  headers: webHeaderToNodeHeaders(req.header),
+                  method: "POST",
+                  path: endpoint.pathname,
+                  signal: req.signal,
+                  protocol: endpoint.protocol,
+                },
+                (res) => {
+                  res.setEncoding(encoding);
+                  res.on("data", (chunk) => {
+                    responseBody += chunk;
+                  });
+                  res.on("end", () => {
+                    const buff = Buffer.from(responseBody, encoding);
+                    // const stream = Readable.from(buff);
 
-            request.write(body, encoding);
-            await end(request);
+                    console.log("buff", buff);
+                    resolve({
+                      stream: false,
+                      service,
+                      method,
+                      header: {} as Headers,
+                      message: parse([] as unknown as Uint8Array),
+                      trailer: {} as Headers,
+                    });
+                  });
+                }
+              );
 
-            request.on("error", (err) => {
-              throw err;
+              const body = useBinaryFormat
+                ? req.message.toBinary()
+                : req.message.toJsonString();
+
+              request.write(body, encoding);
+              request.end();
+
+              request.on("error", (err) => {
+                reject(err);
+              });
             });
-            // return <UnaryResponse<O>>{
-            //   stream: false,
-            //   service,
-            //   method,
-            //   header: {} as Headers,
-            //   message: parse([] as unknown as Uint8Array),
-            //   trailer: {} as Headers,
-            // };
-          }
+          },
+          options.interceptors
         );
       } catch (e) {
         throw connectErrorFromNodeReason(e);
       }
     },
+    async stream<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
+      service: ServiceType,
+      method: MethodInfo<I, O>,
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: HeadersInit | undefined
+    ): Promise<StreamingConn<I, O>> {
+      const { parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
+      );
+
+      const createRequestHeader = connectCreateRequestHeader.bind(
+        null,
+        method.kind,
+        useBinaryFormat
+      );
+      return runStreaming<I, O>(
+        {
+          stream: true,
+          service,
+          method,
+          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          init: {
+            method: "POST",
+            redirect: "error",
+            mode: "cors",
+          },
+          signal: signal ?? new AbortController().signal,
+          header: createRequestHeader(timeoutMs, header),
+        },
+        async (req) => {
+          try {
+            // remove
+            await Promise.resolve();
+
+            // let endStreamReceived = false;
+            const responseTrailer = defer<Headers>();
+            const conn: StreamingConn<I, O> = {
+              ...req,
+              responseHeader: Promise.resolve({} as Headers),
+              responseTrailer,
+              closed: false,
+              async send(message: PartialMessage<I>) {
+                console.log(message);
+                void (await Promise.resolve());
+              },
+              async close() {
+                void (await Promise.resolve());
+              },
+              async read(): Promise<ReadableStreamReadResultLike<O>> {
+                return await Promise.resolve({
+                  done: false,
+                  value: parse([] as unknown as Uint8Array),
+                });
+              },
+            };
+            return conn;
+          } catch (e) {
+            throw connectErrorFromNodeReason(e);
+          }
+        },
+        options.interceptors
+      );
+    },
   };
-}
-
-function end(request: http.ClientRequest): Promise<void> {
-  return new Promise<void>((resolve) => {
-    request.end(resolve);
-  });
-}
-
-export function toBuffer(ab: Uint8Array): Buffer {
-  const buf = Buffer.alloc(ab.byteLength);
-  for (let i = 0; i < buf.length; i++) {
-    buf[i] = ab[i];
-  }
-  return buf;
 }
