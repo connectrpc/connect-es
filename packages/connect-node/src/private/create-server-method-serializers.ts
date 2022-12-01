@@ -21,6 +21,7 @@ import type {
   MethodInfo,
   PartialMessage,
 } from "@bufbuild/protobuf";
+import { Code, ConnectError } from "@bufbuild/connect-core";
 
 /**
  * Returns functions to normalize and serialize the output message
@@ -42,16 +43,28 @@ export function createServerMethodSerializers<
   }
 
   function serialize(message: O): Uint8Array {
-    return useBinaryFormat
-      ? message.toBinary(binaryOptions)
-      : new TextEncoder().encode(message.toJsonString(jsonOptions));
+    try {
+      return useBinaryFormat
+        ? message.toBinary(binaryOptions)
+        : new TextEncoder().encode(message.toJsonString(jsonOptions));
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      const format = useBinaryFormat ? "binary format" : "json format";
+      throw new ConnectError(`${format}: ${m}`, Code.Internal);
+    }
   }
 
   function parse(data: Uint8Array | ArrayBuffer): I {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-    return useBinaryFormat
-      ? method.I.fromBinary(bytes, binaryOptions)
-      : method.I.fromJsonString(new TextDecoder().decode(bytes), jsonOptions);
+    try {
+      return useBinaryFormat
+        ? method.I.fromBinary(bytes, binaryOptions)
+        : method.I.fromJsonString(new TextDecoder().decode(bytes), jsonOptions);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      const format = useBinaryFormat ? "binary format" : "json format";
+      throw new ConnectError(`${format}: ${m}`, Code.InvalidArgument);
+    }
   }
 
   return { normalize, parse, serialize };

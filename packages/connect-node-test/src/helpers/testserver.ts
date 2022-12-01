@@ -94,7 +94,7 @@ vKy9wyvtUtg=
   const servers = {
     "connect-go (h1)": {
       getUrl() {
-        return `https://127.0.0.1:8080`;
+        return `https://localhost:8080`;
       },
       start() {
         return Promise.resolve();
@@ -105,7 +105,7 @@ vKy9wyvtUtg=
     },
     "connect-go (h2)": {
       getUrl() {
-        return `https://127.0.0.1:8081`;
+        return `https://localhost:8081`;
       },
       start() {
         return Promise.resolve();
@@ -116,7 +116,7 @@ vKy9wyvtUtg=
     },
     "grpc-go (h2)": {
       getUrl() {
-        return `https://127.0.0.1:8083`;
+        return `https://localhost:8083`;
       },
       start() {
         return Promise.resolve();
@@ -405,6 +405,21 @@ vKy9wyvtUtg=
         if (only.includes(name as keyof typeof transports)) {
           describe(name, () => {
             specDefinitions(transportFactory, name as keyof typeof transports);
+          });
+        }
+      }
+    },
+    describeServers(
+      only: Array<keyof typeof servers>,
+      specDefinitions: (
+        server: typeof servers[keyof typeof servers],
+        serverName: keyof typeof servers
+      ) => void
+    ) {
+      for (const [name, server] of Object.entries(servers)) {
+        if (only.includes(name as keyof typeof servers)) {
+          describe(name, () => {
+            specDefinitions(server, name as keyof typeof servers);
           });
         }
       }
