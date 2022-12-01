@@ -10,7 +10,7 @@
     "@bufbuild/connect-web": "0.3.2",
     "@bufbuild/protobuf": "0.3.0",
     "@bufbuild/protoc-gen-es": "0.3.0",
-    "esbuild": "^0.15.10",
+    "esbuild": "^0.15.16",
     "google-protobuf": "^3.21.0",
     "grpc-web": "^1.4.2"
   }
