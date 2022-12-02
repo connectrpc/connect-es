@@ -13,7 +13,13 @@
 // limitations under the License.
 
 import {
+  appendHeaders,
+  connectCodeFromHttpStatus,
   connectCreateRequestHeader,
+  ConnectError,
+  connectErrorFromJson,
+  connectExpectContentType,
+  connectTrailerDemux,
   createClientMethodSerializers,
   createMethodUrl,
   Interceptor,
@@ -21,7 +27,6 @@ import {
   runUnary,
   StreamingConn,
   Transport,
-  // Transport,
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
@@ -36,15 +41,12 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-// import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
-// import { readToEnd } from "./private/io.js";
-// import * as stream from "stream";
-// import { readResponseHeader } from "./private/io.js";
 import { nodeRequest } from "./private/node-http-request.js";
-import { readToEnd } from "./private/io.js";
+import { jsonParse, readToEnd } from "./private/io.js";
+import type * as http from "http";
 
 export interface ConnectHttpTransportOptions {
   /**
@@ -115,6 +117,12 @@ export function createConnectHttpTransport(
           useBinaryFormat
         );
 
+        const validateContentType = connectExpectContentType.bind(
+          null,
+          method.kind,
+          useBinaryFormat
+        );
+
         return await runUnary<I, O>(
           {
             stream: false,
@@ -134,13 +142,26 @@ export function createConnectHttpTransport(
               binaryOptions: options.binaryOptions,
             });
 
+            const responseHeaders = new Headers();
+            Object.keys(response.headers).forEach((key: string) => {
+              responseHeaders.append(key, response.headers[key] as string);
+            });
+
+            await validateResponseHeader(
+              response.statusCode as number,
+              responseHeaders,
+              response
+            );
+            validateContentType(response.headers["content-type"] ?? "");
+
+            const [header, trailer] = connectTrailerDemux(responseHeaders);
             return {
               stream: false,
               service,
               method,
-              header: {} as Headers,
+              header,
               message: parse(await readToEnd(response)),
-              trailer: {} as Headers,
+              trailer,
             };
           },
           options.interceptors
@@ -221,3 +242,20 @@ export function createConnectHttpTransport(
     },
   };
 }
+
+const validateResponseHeader = async (
+  status: number,
+  headers: Headers,
+  stream: http.IncomingMessage
+) => {
+  const type = headers.get("content-type") ?? "";
+  if (status !== 200) {
+    if (type === "application/json") {
+      throw connectErrorFromJson(
+        jsonParse(await readToEnd(stream)),
+        appendHeaders(...connectTrailerDemux(headers))
+      );
+    }
+    throw new ConnectError(`HTTP ${status}`, connectCodeFromHttpStatus(status));
+  }
+};

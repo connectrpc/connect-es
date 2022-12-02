@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import {
-  //   connectExpectContentType,
   createClientMethodSerializers,
   UnaryRequest,
 } from "@bufbuild/connect-core";
@@ -21,13 +20,11 @@ import type {
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
-  //   JsonValue,
   JsonWriteOptions,
   Message,
 } from "@bufbuild/protobuf";
 import * as http from "http";
 import { webHeaderToNodeHeaders } from "./web-header-to-node-headers.js";
-// import { readResponseHeader } from "./io";
 
 interface NodeRequestOptions<
   I extends Message<I> = AnyMessage,

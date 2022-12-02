@@ -328,6 +328,15 @@ vKy9wyvtUtg=
         baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
         useBinaryFormat: false,
       }) as Transport,
+    "@bufbuild/connect-node (Connect, binary, http) against connect-go (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      createConnectHttpTransport({
+        ...options,
+        baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
+        useBinaryFormat: true,
+      }) as Transport,
 
     // gRPC-web
     // "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
