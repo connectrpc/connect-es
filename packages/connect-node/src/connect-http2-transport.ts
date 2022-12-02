@@ -100,6 +100,8 @@ export interface ConnectHttp2TransportOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 }
 
+const messageFlag = 0b00000000;
+
 /**
  * Create a Transport for the Connect protocol, which makes unary and
  * server-streaming methods available to web browsers. It uses the fetch
@@ -285,7 +287,7 @@ export function createConnectHttp2Transport(
                   );
                 }
                 const enveloped = encodeEnvelope(
-                  0b00000000,
+                  messageFlag,
                   serialize(normalize(message))
                 );
                 await write(stream, enveloped);
@@ -333,6 +335,7 @@ export function createConnectHttp2Transport(
                       done: true,
                     };
                   }
+                  console.log("http2Parsed", parse(result.value.data));
                   return {
                     done: false,
                     value: parse(result.value.data),

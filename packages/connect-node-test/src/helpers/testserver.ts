@@ -222,7 +222,6 @@ vKy9wyvtUtg=
 
   const transports = {
     // TODO add http1.1 transports once implemented
-
     // gRPC
     // "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2)":
     //   (options?: Record<string, unknown>) =>
@@ -281,7 +280,6 @@ vKy9wyvtUtg=
     //     },
     //     useBinaryFormat: true,
     //   }),
-
     // // Connect
     // "@bufbuild/connect-node (Connect, binary, http2) against @bufbuild/connect-node (h2c)":
     //   (options?: Record<string, unknown>) =>
@@ -319,25 +317,22 @@ vKy9wyvtUtg=
     //     },
     //     useBinaryFormat: false,
     //   }),
-    "@bufbuild/connect-node (Connect, JSON, http) against connect-go (h1)": (
-      options?: Record<string, unknown>
-    ) =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      createConnectHttpTransport({
-        ...options,
-        baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
-        useBinaryFormat: false,
-      }) as Transport,
+    // "@bufbuild/connect-node (Connect, JSON, http) against connect-go (h1)": (
+    //   options?: Record<string, unknown>
+    // ) =>
+    // createConnectHttpTransport({
+    //   ...options,
+    //   baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
+    //   useBinaryFormat: false,
+    // }),
     "@bufbuild/connect-node (Connect, binary, http) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       createConnectHttpTransport({
         ...options,
         baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
         useBinaryFormat: true,
-      }) as Transport,
-
+      }),
     // gRPC-web
     // "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
     //   (options?: Record<string, unknown>) =>

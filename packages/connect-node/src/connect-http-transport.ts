@@ -16,12 +16,15 @@ import {
   appendHeaders,
   connectCodeFromHttpStatus,
   connectCreateRequestHeader,
+  connectEndStreamFlag,
+  connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
   connectExpectContentType,
   connectTrailerDemux,
   createClientMethodSerializers,
   createMethodUrl,
+  encodeEnvelope,
   Interceptor,
   runStreaming,
   runUnary,
@@ -44,9 +47,21 @@ import type {
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
-import { nodeRequest } from "./private/node-http-request.js";
-import { jsonParse, readToEnd } from "./private/io.js";
-import type * as http from "http";
+import {
+  nodeRequest,
+  resolveNodeRequest,
+} from "./private/node-http-request.js";
+import {
+  end,
+  jsonParse,
+  readEnvelope,
+  readToEnd,
+  write,
+} from "./private/io.js";
+import * as http from "http";
+import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+
+const messageFlag = 0b00000000;
 
 export interface ConnectHttpTransportOptions {
   /**
@@ -152,7 +167,7 @@ export function createConnectHttpTransport(
               responseHeaders,
               response
             );
-            validateContentType(response.headers["content-type"] ?? "");
+            validateContentType(responseHeaders.get("Content-Type"));
 
             const [header, trailer] = connectTrailerDemux(responseHeaders);
             return {
@@ -180,11 +195,17 @@ export function createConnectHttpTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined
     ): Promise<StreamingConn<I, O>> {
-      const { parse } = createClientMethodSerializers(
+      const { normalize, serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
         options.binaryOptions
+      );
+
+      const validateContentType = connectExpectContentType.bind(
+        null,
+        method.kind,
+        useBinaryFormat
       );
 
       const createRequestHeader = connectCreateRequestHeader.bind(
@@ -206,33 +227,104 @@ export function createConnectHttpTransport(
           signal: signal ?? new AbortController().signal,
           header: createRequestHeader(timeoutMs, header),
         },
-        async (req) => {
+        (req) => {
           try {
-            // remove
-            await Promise.resolve();
+            const endpoint = new URL(req.url);
+            const stream = http.request(req.url, {
+              host: endpoint.hostname,
+              port: +endpoint.port,
+              headers: webHeaderToNodeHeaders(req.header),
+              method: "POST",
+              path: endpoint.pathname,
+              signal: req.signal,
+              protocol: endpoint.protocol,
+            });
 
-            // let endStreamReceived = false;
+            let endStreamReceived = false;
             const responseTrailer = defer<Headers>();
+            const responseHeader = defer<Headers>();
             const conn: StreamingConn<I, O> = {
               ...req,
-              responseHeader: Promise.resolve({} as Headers),
+              responseHeader,
               responseTrailer,
               closed: false,
               async send(message: PartialMessage<I>) {
-                console.log(message);
-                void (await Promise.resolve());
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot send, stream is already closed"
+                  );
+                }
+                const enveloped = encodeEnvelope(
+                  messageFlag,
+                  serialize(normalize(message))
+                );
+                await write(stream, enveloped);
               },
               async close() {
-                void (await Promise.resolve());
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot close, stream is already closed"
+                  );
+                }
+                this.closed = true;
+                await end(stream);
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
-                return await Promise.resolve({
-                  done: false,
-                  value: parse([] as unknown as Uint8Array),
+                const response = await resolveNodeRequest(stream);
+                const responseHeaders = new Headers();
+                Object.keys(response.headers).forEach((key: string) => {
+                  responseHeaders.append(key, response.headers[key] as string);
                 });
+
+                await validateResponseHeader(
+                  response.statusCode as number,
+                  responseHeaders,
+                  response
+                );
+                validateContentType(responseHeaders.get("Content-Type"));
+
+                try {
+                  const result = await readEnvelope(response);
+
+                  if (result.done) {
+                    if (!endStreamReceived) {
+                      throw new ConnectError("missing EndStreamResponse");
+                    }
+                    return {
+                      done: true,
+                    };
+                  }
+
+                  if (
+                    (result.value.flags & connectEndStreamFlag) ===
+                    connectEndStreamFlag
+                  ) {
+                    endStreamReceived = true;
+                    const endStream = connectEndStreamFromJson(
+                      result.value.data
+                    );
+
+                    responseHeader.resolve(responseHeaders);
+                    responseTrailer.resolve(endStream.metadata);
+
+                    if (endStream.error) {
+                      throw endStream.error;
+                    }
+                    return {
+                      done: true,
+                    };
+                  }
+                  console.log("parsed", parse(result.value.data));
+                  return {
+                    done: false,
+                    value: parse(result.value.data),
+                  };
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
               },
             };
-            return conn;
+            return Promise.resolve(conn);
           } catch (e) {
             throw connectErrorFromNodeReason(e);
           }
