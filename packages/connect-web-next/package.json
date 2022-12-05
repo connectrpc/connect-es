@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-web-next",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "license": "Apache-2.0",
   "repository": {
@@ -24,7 +24,7 @@
     "types": "./dist/types/index.d.ts"
   },
   "dependencies": {
-    "@bufbuild/connect-core": "0.3.2"
+    "@bufbuild/connect-core": "0.3.3"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "0.4.0"
