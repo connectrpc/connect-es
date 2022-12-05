@@ -83,12 +83,3 @@ export async function nodeRequest(options: NodeRequestOptions) {
     request.end();
   });
 }
-
-export async function resolveNodeRequest(request: http.ClientRequest) {
-  return new Promise<http.IncomingMessage>((resolve) => {
-    request.on("response", (res) => {
-      return resolve(res);
-    });
-    request.end();
-  });
-}

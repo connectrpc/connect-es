@@ -335,7 +335,7 @@ export function createConnectHttp2Transport(
                       done: true,
                     };
                   }
-                  console.log("http2Parsed", parse(result.value.data));
+
                   return {
                     done: false,
                     value: parse(result.value.data),

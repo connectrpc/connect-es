@@ -47,10 +47,7 @@ import type {
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
-import {
-  nodeRequest,
-  resolveNodeRequest,
-} from "./private/node-http-request.js";
+import { nodeRequest } from "./private/node-http-request.js";
 import {
   end,
   jsonParse,
@@ -59,7 +56,10 @@ import {
   write,
 } from "./private/io.js";
 import * as http from "http";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./private/web-header-to-node-headers.js";
 
 const messageFlag = 0b00000000;
 
@@ -157,11 +157,7 @@ export function createConnectHttpTransport(
               binaryOptions: options.binaryOptions,
             });
 
-            const responseHeaders = new Headers();
-            Object.keys(response.headers).forEach((key: string) => {
-              responseHeaders.append(key, response.headers[key] as string);
-            });
-
+            const responseHeaders = nodeHeaderToWebHeader(response.headers);
             await validateResponseHeader(
               response.statusCode as number,
               responseHeaders,
@@ -227,7 +223,7 @@ export function createConnectHttpTransport(
           signal: signal ?? new AbortController().signal,
           header: createRequestHeader(timeoutMs, header),
         },
-        (req) => {
+        async (req) => {
           try {
             const endpoint = new URL(req.url);
             const stream = http.request(req.url, {
@@ -240,9 +236,19 @@ export function createConnectHttpTransport(
               protocol: endpoint.protocol,
             });
 
+            const responsePromise = new Promise<http.IncomingMessage>(
+              (resolve) => {
+                stream.on("response", (res) => {
+                  resolve(res);
+                });
+              }
+            );
+
             let endStreamReceived = false;
             const responseTrailer = defer<Headers>();
-            const responseHeader = defer<Headers>();
+            const responseHeader = responsePromise.then((res) =>
+              nodeHeaderToWebHeader(res.headers)
+            );
             const conn: StreamingConn<I, O> = {
               ...req,
               responseHeader,
@@ -270,18 +276,13 @@ export function createConnectHttpTransport(
                 await end(stream);
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
-                const response = await resolveNodeRequest(stream);
-                const responseHeaders = new Headers();
-                Object.keys(response.headers).forEach((key: string) => {
-                  responseHeaders.append(key, response.headers[key] as string);
-                });
-
+                const response = await responsePromise;
                 await validateResponseHeader(
                   response.statusCode as number,
-                  responseHeaders,
+                  await responseHeader,
                   response
                 );
-                validateContentType(responseHeaders.get("Content-Type"));
+                validateContentType((await responseHeader).get("Content-Type"));
 
                 try {
                   const result = await readEnvelope(response);
@@ -304,7 +305,6 @@ export function createConnectHttpTransport(
                       result.value.data
                     );
 
-                    responseHeader.resolve(responseHeaders);
                     responseTrailer.resolve(endStream.metadata);
 
                     if (endStream.error) {
@@ -314,7 +314,7 @@ export function createConnectHttpTransport(
                       done: true,
                     };
                   }
-                  console.log("parsed", parse(result.value.data));
+
                   return {
                     done: false,
                     value: parse(result.value.data),

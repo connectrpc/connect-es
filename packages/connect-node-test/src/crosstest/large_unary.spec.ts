@@ -20,7 +20,7 @@ import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-fdescribe("large_unary", function () {
+describe("large_unary", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 

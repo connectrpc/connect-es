@@ -23,31 +23,37 @@ describe("ping_pong", () => {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
-  servers.describeTransports((transport) => {
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
-      const stream = await client.fullDuplexCall();
-      for (const size of sizes) {
-        await stream.send({
-          payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
-          responseParameters: [
-            {
-              size,
-              intervalUs: 0,
-            },
-          ],
-        });
-        const res = await stream.receive();
-        expect(res?.payload?.body.length).toBe(size);
-        expect(res?.payload?.type).toBe(PayloadType.COMPRESSABLE);
-      }
-      stream.close();
-    });
-    it("with callback client", function (done) {
-      // TODO(TCN-679, TCN-568) need callback clients
-      done();
-    });
-  });
+  servers.describeTransportsExcluding(
+    [
+      "@bufbuild/connect-node (Connect, binary, http) against connect-go (h1)",
+      "@bufbuild/connect-node (Connect, JSON, http) against connect-go (h1)",
+    ],
+    (transport) => {
+      it("with promise client", async function () {
+        const client = createPromiseClient(TestService, transport());
+        const stream = await client.fullDuplexCall();
+        for (const size of sizes) {
+          await stream.send({
+            payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
+            responseParameters: [
+              {
+                size,
+                intervalUs: 0,
+              },
+            ],
+          });
+          const res = await stream.receive();
+          expect(res?.payload?.body.length).toBe(size);
+          expect(res?.payload?.type).toBe(PayloadType.COMPRESSABLE);
+        }
+        stream.close();
+      });
+      it("with callback client", function (done) {
+        // TODO(TCN-679, TCN-568) need callback clients
+        done();
+      });
+    }
+  );
 
   afterAll(async () => await servers.stop());
 });
