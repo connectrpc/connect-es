@@ -23,7 +23,7 @@ import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-// TODO support timeouts on the handler
+// TODO(TCN-761) support timeouts on the handler
 xdescribe("timeout_on_sleeping_server", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
