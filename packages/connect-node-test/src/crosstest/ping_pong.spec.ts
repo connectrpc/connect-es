@@ -25,8 +25,8 @@ describe("ping_pong", () => {
 
   servers.describeTransportsExcluding(
     [
-      "@bufbuild/connect-node (Connect, binary, http) against connect-go (h1)",
-      "@bufbuild/connect-node (Connect, JSON, http) against connect-go (h1)",
+      "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (Connect, binary, http) against @bufbuild/connect-node (h1)",
     ],
     (transport) => {
       it("with promise client", async function () {

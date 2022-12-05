@@ -317,22 +317,20 @@ vKy9wyvtUtg=
         },
         useBinaryFormat: false,
       }),
-    "@bufbuild/connect-node (Connect, JSON, http) against connect-go (h1)": (
-      options?: Record<string, unknown>
-    ) =>
-      createConnectHttpTransport({
-        ...options,
-        baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
-        useBinaryFormat: false,
-      }),
-    "@bufbuild/connect-node (Connect, binary, http) against connect-go (h1)": (
-      options?: Record<string, unknown>
-    ) =>
-      createConnectHttpTransport({
-        ...options,
-        baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
-        useBinaryFormat: true,
-      }),
+    "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttpTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
+          useBinaryFormat: false,
+        }),
+    "@bufbuild/connect-node (Connect, binary, http) against @bufbuild/connect-node (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttpTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
+          useBinaryFormat: true,
+        }),
     //gRPC-web
     "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>

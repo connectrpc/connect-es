@@ -47,7 +47,6 @@ import type {
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
-import { nodeRequest } from "./private/node-http-request.js";
 import {
   end,
   jsonParse,
@@ -56,10 +55,12 @@ import {
   write,
 } from "./private/io.js";
 import * as http from "http";
+import * as https from "https";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
+import { assert } from "./private/assert.js";
 
 const messageFlag = 0b00000000;
 
@@ -97,6 +98,25 @@ export interface ConnectHttpTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Options for the http request.
+   */
+  httpOptions?: http.RequestOptions | https.RequestOptions;
+}
+
+interface NodeRequestOptions<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
+> extends Pick<ConnectHttpTransportOptions, "httpOptions"> {
+  // Unary Request
+  req: UnaryRequest<I>;
+
+  // Payload encoding
+  encoding: "utf8" | "binary";
+
+  // Request body
+  payload: Uint8Array;
 }
 
 /**
@@ -120,7 +140,7 @@ export function createConnectHttpTransport(
       message: PartialMessage<I>
     ): Promise<UnaryResponse<O>> {
       try {
-        const { normalize, parse } = createClientMethodSerializers(
+        const { normalize, parse, serialize } = createClientMethodSerializers(
           method,
           useBinaryFormat,
           options.jsonOptions,
@@ -150,16 +170,22 @@ export function createConnectHttpTransport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const response = await nodeRequest({
+            const encoding = useBinaryFormat ? "binary" : "utf8";
+            const response = await makeNodeRequest({
               req,
-              useBinaryFormat,
-              jsonOptions: options.jsonOptions,
-              binaryOptions: options.binaryOptions,
+              encoding,
+              payload: serialize(req.message),
+              httpOptions: options.httpOptions,
             });
 
             const responseHeaders = nodeHeaderToWebHeader(response.headers);
+            assert(
+              typeof response.statusCode == "number",
+              "http1 client response is missing status code"
+            );
+
             await validateResponseHeader(
-              response.statusCode as number,
+              response.statusCode,
               responseHeaders,
               response
             );
@@ -223,17 +249,15 @@ export function createConnectHttpTransport(
           signal: signal ?? new AbortController().signal,
           header: createRequestHeader(timeoutMs, header),
         },
-        async (req) => {
+        (req) => {
           try {
             const endpoint = new URL(req.url);
-            const stream = http.request(req.url, {
-              host: endpoint.hostname,
-              port: +endpoint.port,
+            const nodeRequestFn = nodeRequest(endpoint.protocol);
+            const stream = nodeRequestFn(req.url, {
               headers: webHeaderToNodeHeaders(req.header),
               method: "POST",
               path: endpoint.pathname,
               signal: req.signal,
-              protocol: endpoint.protocol,
             });
 
             const responsePromise = new Promise<http.IncomingMessage>(
@@ -277,8 +301,12 @@ export function createConnectHttpTransport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const response = await responsePromise;
+                assert(
+                  typeof response.statusCode == "number",
+                  "http1 client response is missing status code"
+                );
                 await validateResponseHeader(
-                  response.statusCode as number,
+                  response.statusCode,
                   await responseHeader,
                   response
                 );
@@ -351,3 +379,35 @@ const validateResponseHeader = async (
     throw new ConnectError(`HTTP ${status}`, connectCodeFromHttpStatus(status));
   }
 };
+
+function makeNodeRequest(options: NodeRequestOptions) {
+  return new Promise<http.IncomingMessage>((resolve, reject) => {
+    const endpoint = new URL(options.req.url);
+    const nodeRequestFn = nodeRequest(endpoint.protocol);
+    const request = nodeRequestFn(options.req.url, {
+      headers: webHeaderToNodeHeaders(options.req.header),
+      method: "POST",
+      path: endpoint.pathname,
+      signal: options.req.signal,
+      ...options.httpOptions,
+    });
+
+    request.on("error", (err) => {
+      reject(`request failed ${String(err)}`);
+    });
+
+    request.on("response", (res) => {
+      return resolve(res);
+    });
+
+    request.write(options.payload, options.encoding);
+    request.end();
+  });
+}
+
+function nodeRequest(protocol: string) {
+  if (protocol.startsWith("http") || protocol.startsWith("https")) {
+    return protocol.includes("https") ? https.request : http.request;
+  }
+  throw new Error("Unsupported protocol");
+}
