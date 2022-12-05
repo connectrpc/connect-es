@@ -258,13 +258,15 @@ export function createConnectHttpTransport(
               method: "POST",
               path: endpoint.pathname,
               signal: req.signal,
+              ...options.httpOptions,
             });
 
             const responsePromise = new Promise<http.IncomingMessage>(
-              (resolve) => {
+              (resolve, reject) => {
                 stream.on("response", (res) => {
                   resolve(res);
                 });
+                stream.on("error", reject);
               }
             );
 
