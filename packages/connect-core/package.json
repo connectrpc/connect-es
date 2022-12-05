@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-core",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "license": "Apache-2.0",
   "private": true,
   "repository": {
@@ -26,14 +26,14 @@
     "types": "./dist/types/index.d.ts"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "0.3.0"
+    "@bufbuild/protobuf": "0.4.0"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "0.3.0",
+    "@bufbuild/protoc-gen-es": "0.4.0",
     "@types/jasmine": "^4.3.0",
     "jasmine": "^4.5.0"
   },
   "dependencies": {
-    "undici": "^5.12.0"
+    "undici": "^5.13.0"
   }
 }

@@ -22,11 +22,14 @@ import {
  * Returns connect error with reason and appropriate error code from Node
  */
 export function connectErrorFromNodeReason(reason: unknown): ConnectError {
-  const errorCode = isSyscallError(reason, "getaddrinfo", "ENOTFOUND")
-    ? Code.Unavailable
-    : Code.Internal;
-
-  return connectErrorFromReason(reason, errorCode);
+  let code = Code.Internal;
+  if (
+    isSyscallError(reason, "getaddrinfo", "ENOTFOUND") ||
+    isSyscallError(reason, "getaddrinfo", "EAI_AGAIN")
+  ) {
+    code = Code.Unavailable;
+  }
+  return connectErrorFromReason(reason, code);
 }
 
 function isSyscallError(
@@ -44,7 +47,7 @@ function isSyscallError(
       }
     }
     if ("cause" in reason) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       return isSyscallError(r.cause, syscall, code);
     }
   }

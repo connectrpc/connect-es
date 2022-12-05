@@ -99,7 +99,12 @@ export function createHandler<M extends MethodInfo>(
     res: http.ServerResponse | http2.Http2ServerResponse
   ): void {
     if (method.kind == MethodKind.BiDiStreaming && req.httpVersionMajor !== 2) {
-      return void endWithHttpStatus(res, 505, "Version Not Supported");
+      // Clients coded to expect full-duplex connections may hang if they've
+      // mistakenly negotiated HTTP/1.1. To unblock them, we must close the
+      // underlying TCP connection.
+      return void endWithHttpStatus(res, 505, "Version Not Supported", {
+        Connection: "close",
+      });
     }
     if (req.method !== "POST") {
       // The gRPC-HTTP2, gRPC-Web, and Connect protocols are all POST-only.

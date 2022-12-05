@@ -19,7 +19,10 @@ import { assert } from "./assert.js";
 import type { ReadableStreamReadResultLike } from "../lib.dom.streams.js";
 import { Code, ConnectError, EnvelopedMessage } from "@bufbuild/connect-core";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { nodeHeaderToWebHeader } from "./web-header-to-node-headers.js";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./web-header-to-node-headers.js";
 
 export function jsonParse(bytes: Uint8Array): JsonValue {
   const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
@@ -36,7 +39,15 @@ export function jsonSerialize(json: JsonValue): Uint8Array {
 export async function readEnvelope(
   stream: http2.ClientHttp2Stream | stream.Readable
 ): Promise<ReadableStreamReadResultLike<EnvelopedMessage>> {
-  const head = await read(stream, 5);
+  const head = await read(stream, 5).catch((e) => {
+    if (e instanceof ConnectError && e.code == Code.DataLoss) {
+      throw new ConnectError(
+        "protocol error: incomplete envelope",
+        Code.InvalidArgument
+      );
+    }
+    return Promise.reject(e);
+  });
   if (head.done) {
     return {
       done: true,
@@ -49,7 +60,15 @@ export async function readEnvelope(
   );
   const flags = v.getUint8(0);
   const len = v.getUint32(1, false);
-  const body = await read(stream, len);
+  const body = await read(stream, len).catch((e) => {
+    if (e instanceof ConnectError && e.code == Code.DataLoss) {
+      throw new ConnectError(
+        `protocol error: promised ${len} bytes in enveloped message, got less bytes`,
+        Code.InvalidArgument
+      );
+    }
+    return Promise.reject(e);
+  });
   if (body.done) {
     if (len == 0) {
       return {
@@ -60,7 +79,10 @@ export async function readEnvelope(
         },
       };
     }
-    throw new ConnectError("premature end of stream", Code.DataLoss);
+    throw new ConnectError(
+      `protocol error: promised ${len} bytes in enveloped message, got ${0} bytes`,
+      Code.InvalidArgument
+    );
   }
   return {
     done: false,
@@ -112,12 +134,14 @@ export function read(
           stream.once("readable", read);
           return;
         }
+        if (chunk.length < size) {
+          return error(
+            new ConnectError("premature end of stream", Code.DataLoss)
+          );
+        }
         stream.off("error", error);
         stream.off("readable", read);
         stream.off("end", end);
-        if (chunk.length < size) {
-          throw new ConnectError("premature end of stream", Code.DataLoss);
-        }
         resolve({
           done: false,
           value: chunk,
@@ -176,9 +200,18 @@ export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
 export async function endWithHttpStatus(
   res: http.ServerResponse | http2.Http2ServerResponse,
   statusCode: number,
-  statusMessage: string
+  statusMessage: string,
+  header?: HeadersInit
 ): Promise<void> {
-  res.writeHead(statusCode, statusMessage);
+  const headers: http.OutgoingHttpHeaders | undefined = header
+    ? webHeaderToNodeHeaders(header)
+    : undefined;
+  if ("createPushResponse" in res) {
+    // this is a HTTP/2 response, which does not support status messages
+    res.writeHead(statusCode, headers);
+  } else {
+    res.writeHead(statusCode, statusMessage, headers);
+  }
   await end(res);
 }
 

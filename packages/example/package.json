@@ -8,12 +8,12 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@bufbuild/connect-web": "^0.3.2",
-    "@bufbuild/protobuf": "^0.3.0"
+    "@bufbuild/connect-web": "^0.3.3",
+    "@bufbuild/protobuf": "^0.4.0"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-connect-web": "^0.3.2",
-    "@bufbuild/protoc-gen-es": "^0.3.0",
+    "@bufbuild/protoc-gen-connect-web": "^0.3.3",
+    "@bufbuild/protoc-gen-es": "^0.4.0",
     "esbuild": "^0.15.10",
     "typescript": "^4.8.4"
   }
