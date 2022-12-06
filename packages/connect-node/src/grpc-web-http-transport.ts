@@ -86,10 +86,23 @@ export interface GrpcWebHttpTransportOptions {
   httpOptions?: http.RequestOptions | https.RequestOptions;
 }
 
+interface NodeRequestOptions<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
+> extends Pick<GrpcWebHttpTransportOptions, "httpOptions"> {
+  // Unary Request
+  req: UnaryRequest<I>;
+
+  // Payload encoding
+  encoding: "utf8" | "binary";
+
+  // Request body
+  payload: Uint8Array;
+}
+
 const messageFlag = 0b00000000;
 const trailerFlag = 0b10000000;
 
-//Partial<Transport>
 /**
  * Create a Transport for the gRPC-web protocol on Http and Https.
  *
@@ -135,12 +148,6 @@ export function createGrpcWebHttpTransport(
           },
 
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const endpoint = new URL(req.url);
-
-            if (endpoint.protocol.includes("https")) {
-              throw new Error("Invalid protocol, must use https not http");
-            }
-
             const envelope = encodeEnvelope(
               messageFlag,
               serialize(req.message)
@@ -174,7 +181,6 @@ export function createGrpcWebHttpTransport(
             }
 
             const trailerResult = await readEnvelope(response);
-
             if (trailerResult.done) {
               throw "missing trailer";
             }
@@ -207,7 +213,7 @@ export function createGrpcWebHttpTransport(
   };
 }
 
-function makeNodeRequest(options: any) {
+function makeNodeRequest(options: NodeRequestOptions) {
   return new Promise<http.IncomingMessage>((resolve, reject) => {
     const endpoint = new URL(options.req.url);
     const nodeRequestFn = nodeRequest(endpoint.protocol);
