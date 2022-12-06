@@ -13,14 +13,14 @@
 // limitations under the License.
 
 import {
-  // createCallbackClient,
+  createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-fdescribe("large_unary", function () {
+describe("large_unary", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
@@ -37,15 +37,15 @@ fdescribe("large_unary", function () {
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
     });
-    // it("with callback client", function (done) {
-    //   const client = createCallbackClient(TestService, transport());
-    //   client.unaryCall(request, (err, response) => {
-    //     expect(err).toBeUndefined();
-    //     expect(response.payload).toBeDefined();
-    //     expect(response.payload?.body.length).toEqual(request.responseSize);
-    //     done();
-    //   });
-    // });
+    it("with callback client", function (done) {
+      const client = createCallbackClient(TestService, transport());
+      client.unaryCall(request, (err, response) => {
+        expect(err).toBeUndefined();
+        expect(response.payload).toBeDefined();
+        expect(response.payload?.body.length).toEqual(request.responseSize);
+        done();
+      });
+    });
   });
 
   afterAll(async () => await servers.stop());

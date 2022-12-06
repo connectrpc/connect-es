@@ -13,15 +13,20 @@
 // limitations under the License.
 
 import {
+  ConnectError,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
+  grpcCodeFromHttpStatus,
   grpcFindTrailerError,
   grpcWebCreateRequestHeader,
+  grpcWebExpectContentType,
   grpcWebTrailerParse,
   Interceptor,
+  runStreaming,
   runUnary,
-  // Transport,
+  StreamingConn,
+  Transport,
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
@@ -43,7 +48,10 @@ import {
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
-import { readEnvelope } from "./private/io.js";
+import { end, readEnvelope, write } from "./private/io.js";
+import { assert } from "./private/assert.js";
+import { defer } from "./private/defer.js";
+import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 
 export interface GrpcWebHttpTransportOptions {
   /**
@@ -104,12 +112,13 @@ const messageFlag = 0b00000000;
 const trailerFlag = 0b10000000;
 
 /**
- * Create a Transport for the gRPC-web protocol on Http and Https.
+ * Create a Transport for the gRPC-web protocol using the
+ * Node.js `http` or `https package.
  *
  */
 export function createGrpcWebHttpTransport(
   options: GrpcWebHttpTransportOptions
-): any {
+): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
@@ -122,8 +131,7 @@ export function createGrpcWebHttpTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>
-      //Promise<UnaryResponse<O>>
-    ): Promise<any> {
+    ): Promise<UnaryResponse<O>> {
       try {
         const { normalize, serialize, parse } = createClientMethodSerializers(
           method,
@@ -161,7 +169,15 @@ export function createGrpcWebHttpTransport(
             });
 
             const responseHeaders = nodeHeaderToWebHeader(response.headers);
-            // validateResponse(useBinaryFormat, responseCode, responseHeader);
+            assert(
+              typeof response.statusCode == "number",
+              "http1 client response is missing status code"
+            );
+            validateResponse(
+              useBinaryFormat,
+              response.statusCode,
+              responseHeaders
+            );
             const messageOrTrailerResult = await readEnvelope(response);
 
             if (messageOrTrailerResult.done) {
@@ -210,6 +226,142 @@ export function createGrpcWebHttpTransport(
         throw connectErrorFromNodeReason(e);
       }
     },
+    async stream<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
+      service: ServiceType,
+      method: MethodInfo<I, O>,
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: HeadersInit | undefined
+    ): Promise<StreamingConn<I, O>> {
+      const { normalize, serialize, parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
+      );
+      return runStreaming<I, O>(
+        {
+          stream: true,
+          service,
+          method,
+          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          init: {
+            method: "POST",
+            redirect: "error",
+            mode: "cors",
+          },
+          signal: signal ?? new AbortController().signal,
+          header: grpcWebCreateRequestHeader(
+            useBinaryFormat,
+            timeoutMs,
+            header
+          ),
+        },
+        async (req) => {
+          try {
+            const endpoint = new URL(req.url);
+            const nodeRequestFn = nodeRequest(endpoint.protocol);
+            const stream = nodeRequestFn(req.url, {
+              headers: webHeaderToNodeHeaders(req.header),
+              method: "POST",
+              path: endpoint.pathname,
+              signal: req.signal,
+              ...options.httpOptions,
+            });
+
+            const responsePromise = new Promise<http.IncomingMessage>(
+              (resolve, reject) => {
+                stream.on("response", (res) => {
+                  resolve(res);
+                });
+                stream.on("error", reject);
+              }
+            );
+            let endStreamReceived = false;
+            let messageReceived = false;
+            const responseTrailer = defer<Headers>();
+            const responseHeader = responsePromise.then((res) =>
+              nodeHeaderToWebHeader(res.headers)
+            );
+            const conn: StreamingConn<I, O> = {
+              ...req,
+              responseHeader,
+              responseTrailer,
+              closed: false,
+              async send(message: PartialMessage<I>) {
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot send, stream is already closed"
+                  );
+                }
+                const enveloped = encodeEnvelope(
+                  messageFlag,
+                  serialize(normalize(message))
+                );
+                await write(stream, enveloped);
+              },
+              async close(): Promise<void> {
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot close, stream is already closed"
+                  );
+                }
+                this.closed = true;
+                await end(stream);
+              },
+              async read(): Promise<ReadableStreamReadResultLike<O>> {
+                const response = await responsePromise;
+                const responseHeader = nodeHeaderToWebHeader(response.headers);
+                assert(
+                  typeof response.statusCode == "number",
+                  "http1 client response is missing status code"
+                );
+                validateResponse(
+                  useBinaryFormat,
+                  response.statusCode,
+                  responseHeader
+                );
+                try {
+                  const result = await readEnvelope(response);
+                  if (result.done) {
+                    if (messageReceived && !endStreamReceived) {
+                      throw new ConnectError("missing trailers");
+                    }
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
+                  }
+                  if ((result.value.flags & trailerFlag) === trailerFlag) {
+                    endStreamReceived = true;
+                    const trailer = grpcWebTrailerParse(result.value.data);
+                    validateGrpcStatus(trailer);
+                    responseTrailer.resolve(trailer);
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
+                  }
+                  messageReceived = true;
+                  return {
+                    done: false,
+                    value: parse(result.value.data),
+                  };
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
+              },
+            };
+            return Promise.resolve(conn);
+          } catch (e) {
+            throw connectErrorFromNodeReason(e);
+          }
+        }
+      );
+    },
   };
 }
 
@@ -243,6 +395,22 @@ function nodeRequest(protocol: string) {
     return protocol.includes("https") ? https.request : http.request;
   }
   throw new Error("Unsupported protocol");
+}
+
+function validateResponse(
+  binaryFormat: boolean,
+  status: number,
+  headers: Headers
+) {
+  const code = grpcCodeFromHttpStatus(status);
+  if (code != null) {
+    throw new ConnectError(
+      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
+      code
+    );
+  }
+  grpcWebExpectContentType(binaryFormat, headers.get("Content-Type"));
+  validateGrpcStatus(headers);
 }
 
 function validateGrpcStatus(headerOrTrailer: Headers) {
