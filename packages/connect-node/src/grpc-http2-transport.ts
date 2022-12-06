@@ -100,8 +100,7 @@ export interface GrpcHttp2TransportOptions {
 }
 
 /**
- * Create a Transport for the gRPC protocol.
- *
+ * Create a Transport for the gRPC protocol using the Node.js `http2` package.
  */
 export function createGrpcHttp2Transport(
   options: GrpcHttp2TransportOptions

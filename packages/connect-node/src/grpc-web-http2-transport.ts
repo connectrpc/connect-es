@@ -49,6 +49,10 @@ import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js"
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 
 const messageFlag = 0b00000000;
+/**
+ * trailerFlag indicates that the data in a EnvelopedMessage
+ * is a set of trailers of the gRPC-web protocol.
+ */
 const trailerFlag = 0b10000000;
 
 /**
@@ -96,8 +100,8 @@ export interface GrpcWebHttp2TransportOptions {
 }
 
 /**
- * Create a Transport for the gRPC-web protocol.
- *
+ * Create a Transport for the gRPC-web protocol using the Node.js `http2`
+ * package.
  */
 export function createGrpcWebHttp2Transport(
   options: GrpcWebHttp2TransportOptions
