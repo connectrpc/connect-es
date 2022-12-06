@@ -32,6 +32,8 @@ export { Protocol } from "./protocol.js";
 export { createConnectProtocol } from "./connect-protocol.js";
 export { createGrpcWebProtocol } from "./grpc-web-protocol.js";
 export { createGrpcProtocol } from "./grpc-protocol.js";
+export { createConnectHttpTransport } from "./connect-http-transport.js";
+export { createGrpcWebHttpTransport } from "./grpc-web-http-transport.js";
 export {
   createCallbackClient,
   CallbackClient,

@@ -44,30 +44,33 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
+import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import * as http2 from "http2";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { defer } from "./private/defer.js";
 import {
   end,
   jsonParse,
   readEnvelope,
-  readResponseHeader,
   readToEnd,
   write,
 } from "./private/io.js";
-import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import * as http from "http";
+import * as https from "https";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./private/web-header-to-node-headers.js";
+import { assert } from "./private/assert.js";
 
-/**
- * Options used to configure the Connect transport.
- */
-export interface ConnectHttp2TransportOptions {
+const messageFlag = 0b00000000;
+
+export interface ConnectHttpTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
    * Requests will be made to <baseUrl>/<package>.<service>/method
    *
-   * Example: `baseUrl: "https://example.com/my-api"`
+   * Example: `baseUrl: "http://example.com/my-api"`
    *
    * This will make a `POST /my-api/my_package.MyService/Foo` to
    * `example.com` via HTTPS.
@@ -75,12 +78,10 @@ export interface ConnectHttp2TransportOptions {
   baseUrl: string;
 
   /**
-   * By default, connect-node clients use the binary format.
+   * By default, clients use the binary format for gRPC-web, because
+   * not all gRPC-web implementations support JSON.
    */
   useBinaryFormat?: boolean;
-
-  // TODO document
-  http2Options?: http2.ClientSessionOptions | http2.SecureClientSessionOptions;
 
   /**
    * Interceptors that should be applied to all calls running through
@@ -97,17 +98,34 @@ export interface ConnectHttp2TransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Options for the http request.
+   */
+  httpOptions?: http.RequestOptions | https.RequestOptions;
 }
 
-const messageFlag = 0b00000000;
+interface NodeRequestOptions<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
+> extends Pick<ConnectHttpTransportOptions, "httpOptions"> {
+  // Unary Request
+  req: UnaryRequest<I>;
+
+  // Payload encoding
+  encoding: "utf8" | "binary";
+
+  // Request body
+  payload: Uint8Array;
+}
 
 /**
- * Create a Transport for the Connect protocol, which makes unary and
- * server-streaming methods available to web browsers. It uses the fetch
- * API to make HTTP requests.
+ * Create a Transport for the Connect protocol using the Node.js
+ * `http` or `https` package.
+ *
  */
-export function createConnectHttp2Transport(
-  options: ConnectHttp2TransportOptions
+export function createConnectHttpTransport(
+  options: ConnectHttpTransportOptions
 ): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
@@ -122,23 +140,25 @@ export function createConnectHttp2Transport(
       header: HeadersInit | undefined,
       message: PartialMessage<I>
     ): Promise<UnaryResponse<O>> {
-      const { normalize, serialize, parse } = createClientMethodSerializers(
-        method,
-        useBinaryFormat,
-        options.jsonOptions,
-        options.binaryOptions
-      );
-      const validateContentType = connectExpectContentType.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
-      const createRequestHeader = connectCreateRequestHeader.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
       try {
+        const { normalize, parse, serialize } = createClientMethodSerializers(
+          method,
+          useBinaryFormat,
+          options.jsonOptions,
+          options.binaryOptions
+        );
+        const createRequestHeader = connectCreateRequestHeader.bind(
+          null,
+          method.kind,
+          useBinaryFormat
+        );
+
+        const validateContentType = connectExpectContentType.bind(
+          null,
+          method.kind,
+          useBinaryFormat
+        );
+
         return await runUnary<I, O>(
           {
             stream: false,
@@ -151,50 +171,34 @@ export function createConnectHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            // TODO We create a new session for every request - we should share a connection instead,
-            //      and offer control over connection state via methods / properties on the transport.
-            const session: http2.ClientHttp2Session =
-              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
-                const s = http2.connect(
-                  // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
-                  // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
-                  req.url,
-                  options.http2Options,
-                  (s) => resolve(s)
-                );
-                s.on("error", (err) => reject(err));
-              });
+            const encoding = useBinaryFormat ? "binary" : "utf8";
+            const response = await makeNodeRequest({
+              req,
+              encoding,
+              payload: serialize(req.message),
+              httpOptions: options.httpOptions,
+            });
 
-            const stream = session.request(
-              {
-                ...webHeaderToNodeHeaders(req.header),
-                ":method": "POST",
-                ":path": new URL(req.url).pathname,
-              },
-              {
-                signal: req.signal,
-              }
+            const responseHeaders = nodeHeaderToWebHeader(response.headers);
+            assert(
+              typeof response.statusCode == "number",
+              "http1 client response is missing status code"
             );
-            const headerPromise = readResponseHeader(stream);
 
-            await write(stream, serialize(req.message));
-            await end(stream);
-
-            const [responseStatus, responseHeader] = await headerPromise;
             await validateResponseHeader(
-              responseStatus,
-              responseHeader,
-              stream
+              response.statusCode,
+              responseHeaders,
+              response
             );
-            validateContentType(responseHeader.get("Content-Type"));
+            validateContentType(responseHeaders.get("Content-Type"));
 
-            const [header, trailer] = connectTrailerDemux(responseHeader);
-            return <UnaryResponse<O>>{
+            const [header, trailer] = connectTrailerDemux(responseHeaders);
+            return {
               stream: false,
               service,
               method,
               header,
-              message: parse(await readToEnd(stream)),
+              message: parse(await readToEnd(response)),
               trailer,
             };
           },
@@ -204,7 +208,6 @@ export function createConnectHttp2Transport(
         throw connectErrorFromNodeReason(e);
       }
     },
-
     async stream<
       I extends Message<I> = AnyMessage,
       O extends Message<O> = AnyMessage
@@ -221,11 +224,13 @@ export function createConnectHttp2Transport(
         options.jsonOptions,
         options.binaryOptions
       );
+
       const validateContentType = connectExpectContentType.bind(
         null,
         method.kind,
         useBinaryFormat
       );
+
       const createRequestHeader = connectCreateRequestHeader.bind(
         null,
         method.kind,
@@ -245,41 +250,38 @@ export function createConnectHttp2Transport(
           signal: signal ?? new AbortController().signal,
           header: createRequestHeader(timeoutMs, header),
         },
-        async (req) => {
+        (req) => {
           try {
-            // TODO We create a new session for every request - we should share a connection instead,
-            //      and offer control over connection state via methods / properties on the transport.
-            const session: http2.ClientHttp2Session =
-              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
-                const s = http2.connect(
-                  // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
-                  // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
-                  req.url,
-                  options.http2Options,
-                  (s) => resolve(s)
-                );
-                s.on("error", (err) => reject(err));
-              });
-            const stream = session.request(
-              {
-                ...webHeaderToNodeHeaders(req.header),
-                ":method": "POST",
-                ":path": new URL(req.url).pathname,
-              },
-              {
-                signal: req.signal,
+            const endpoint = new URL(req.url);
+            const nodeRequestFn = nodeRequest(endpoint.protocol);
+            const stream = nodeRequestFn(req.url, {
+              headers: webHeaderToNodeHeaders(req.header),
+              method: "POST",
+              path: endpoint.pathname,
+              signal: req.signal,
+              ...options.httpOptions,
+            });
+
+            const responsePromise = new Promise<http.IncomingMessage>(
+              (resolve, reject) => {
+                stream.on("response", (res) => {
+                  resolve(res);
+                });
+                stream.on("error", reject);
               }
             );
 
-            const headersPromise = readResponseHeader(stream);
             let endStreamReceived = false;
             const responseTrailer = defer<Headers>();
+            const responseHeader = responsePromise.then((res) =>
+              nodeHeaderToWebHeader(res.headers)
+            );
             const conn: StreamingConn<I, O> = {
               ...req,
-              responseHeader: headersPromise.then(([, header]) => header),
+              responseHeader,
               responseTrailer,
               closed: false,
-              async send(message: PartialMessage<I>): Promise<void> {
+              async send(message: PartialMessage<I>) {
                 if (stream.writableEnded) {
                   throw new ConnectError(
                     "cannot send, stream is already closed"
@@ -291,7 +293,7 @@ export function createConnectHttp2Transport(
                 );
                 await write(stream, enveloped);
               },
-              async close(): Promise<void> {
+              async close() {
                 if (stream.writableEnded) {
                   throw new ConnectError(
                     "cannot close, stream is already closed"
@@ -301,15 +303,21 @@ export function createConnectHttp2Transport(
                 await end(stream);
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
-                const [responseStatus, responseHeader] = await headersPromise;
-                await validateResponseHeader(
-                  responseStatus,
-                  responseHeader,
-                  stream
+                const response = await responsePromise;
+                assert(
+                  typeof response.statusCode == "number",
+                  "http1 client response is missing status code"
                 );
-                validateContentType(responseHeader.get("Content-Type"));
+                await validateResponseHeader(
+                  response.statusCode,
+                  await responseHeader,
+                  response
+                );
+                validateContentType((await responseHeader).get("Content-Type"));
+
                 try {
-                  const result = await readEnvelope(stream);
+                  const result = await readEnvelope(response);
+
                   if (result.done) {
                     if (!endStreamReceived) {
                       throw new ConnectError("missing EndStreamResponse");
@@ -318,6 +326,7 @@ export function createConnectHttp2Transport(
                       done: true,
                     };
                   }
+
                   if (
                     (result.value.flags & connectEndStreamFlag) ===
                     connectEndStreamFlag
@@ -326,7 +335,9 @@ export function createConnectHttp2Transport(
                     const endStream = connectEndStreamFromJson(
                       result.value.data
                     );
+
                     responseTrailer.resolve(endStream.metadata);
+
                     if (endStream.error) {
                       throw endStream.error;
                     }
@@ -344,7 +355,7 @@ export function createConnectHttp2Transport(
                 }
               },
             };
-            return conn;
+            return Promise.resolve(conn);
           } catch (e) {
             throw connectErrorFromNodeReason(e);
           }
@@ -355,14 +366,14 @@ export function createConnectHttp2Transport(
   };
 }
 
-async function validateResponseHeader(
+const validateResponseHeader = async (
   status: number,
   headers: Headers,
-  stream: http2.ClientHttp2Stream
-) {
-  const type = headers.get("Content-Type") ?? "";
-  if (status != 200) {
-    if (type == "application/json") {
+  stream: http.IncomingMessage
+) => {
+  const type = headers.get("content-type") ?? "";
+  if (status !== 200) {
+    if (type === "application/json") {
       throw connectErrorFromJson(
         jsonParse(await readToEnd(stream)),
         appendHeaders(...connectTrailerDemux(headers))
@@ -370,4 +381,36 @@ async function validateResponseHeader(
     }
     throw new ConnectError(`HTTP ${status}`, connectCodeFromHttpStatus(status));
   }
+};
+
+function makeNodeRequest(options: NodeRequestOptions) {
+  return new Promise<http.IncomingMessage>((resolve, reject) => {
+    const endpoint = new URL(options.req.url);
+    const nodeRequestFn = nodeRequest(endpoint.protocol);
+    const request = nodeRequestFn(options.req.url, {
+      headers: webHeaderToNodeHeaders(options.req.header),
+      method: "POST",
+      path: endpoint.pathname,
+      signal: options.req.signal,
+      ...options.httpOptions,
+    });
+
+    request.on("error", (err) => {
+      reject(`request failed ${String(err)}`);
+    });
+
+    request.on("response", (res) => {
+      return resolve(res);
+    });
+
+    request.write(options.payload, options.encoding);
+    request.end();
+  });
+}
+
+function nodeRequest(protocol: string) {
+  if (protocol.startsWith("http") || protocol.startsWith("https")) {
+    return protocol.includes("https") ? https.request : http.request;
+  }
+  throw new Error("Unsupported protocol");
 }
