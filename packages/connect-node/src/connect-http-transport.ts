@@ -120,7 +120,8 @@ interface NodeRequestOptions<
 }
 
 /**
- * Create a Transport for the connect protocol on Http.
+ * Create a Transport for the Connect protocol using the Node.js
+ * `http` or `https` package.
  *
  */
 export function createConnectHttpTransport(
