@@ -356,16 +356,14 @@ vKy9wyvtUtg=
     //     },
     //     useBinaryFormat: false,
     //   }),
-    "@bufbuild/connect-node (gRPC-web, JSON, http) against connect-go (h1)": (
-      options?: Record<string, unknown>
-    ) =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      createGrpcWebHttpTransport({
-        ...options,
-        baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
-        // baseUrl: servers["connect-go (h1)"].getUrl(),
-        useBinaryFormat: true,
-      }) as Transport,
+    "@bufbuild/connect-node (gRPC-web, JSON, http) against @bufbuild/connect-node (h1)":
+      (options?: Record<string, unknown>) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        createGrpcWebHttpTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
+          useBinaryFormat: true,
+        }) as Transport,
   } as const;
 
   return {

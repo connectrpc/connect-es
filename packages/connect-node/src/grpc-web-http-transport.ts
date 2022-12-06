@@ -16,7 +16,9 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
+  grpcFindTrailerError,
   grpcWebCreateRequestHeader,
+  grpcWebTrailerParse,
   Interceptor,
   runUnary,
   // Transport,
@@ -35,8 +37,13 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import * as http from "http";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+import * as https from "https";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import { readEnvelope } from "./private/io.js";
 
 export interface GrpcWebHttpTransportOptions {
   /**
@@ -72,13 +79,19 @@ export interface GrpcWebHttpTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Options for the http request.
+   */
+  httpOptions?: http.RequestOptions | https.RequestOptions;
 }
 
 const messageFlag = 0b00000000;
+const trailerFlag = 0b10000000;
 
 //Partial<Transport>
 /**
- * Create a Transport for the gRPC-web protocol on Http.
+ * Create a Transport for the gRPC-web protocol on Http and Https.
  *
  */
 export function createGrpcWebHttpTransport(
@@ -132,46 +145,58 @@ export function createGrpcWebHttpTransport(
               messageFlag,
               serialize(req.message)
             );
-
-            const request = http.request(
-              req.url,
-              {
-                host: endpoint.hostname,
-                port: +endpoint.port,
-                headers: {
-                  ...webHeaderToNodeHeaders(req.header),
-                  "Content-Length": envelope.byteLength,
-                },
-                method: "POST",
-                path: endpoint.pathname,
-                signal: req.signal,
-              },
-              (res) => {
-                console.log("CALLBACK");
-                res.setEncoding("binary");
-                res.on("data", (chunk) => {
-                  console.log("chunk", chunk);
-                });
-                res.on("end", () => {
-                  console.log("No more data in response.");
-                });
-              }
-            );
-
-            await writeHttpRequest(request, envelope);
-
-            request.on("error", (err) => {
-              console.log("errrrr", err);
+            const encoding = useBinaryFormat ? "binary" : "utf8";
+            const response = await makeNodeRequest({
+              req,
+              payload: envelope,
+              encoding,
+              httpOptions: options.httpOptions,
             });
-            await end(request);
+
+            const responseHeaders = nodeHeaderToWebHeader(response.headers);
+            // validateResponse(useBinaryFormat, responseCode, responseHeader);
+            const messageOrTrailerResult = await readEnvelope(response);
+
+            if (messageOrTrailerResult.done) {
+              throw "premature eof";
+            }
+
+            if (messageOrTrailerResult.value.flags === trailerFlag) {
+              // Unary responses require exactly one response message, but in
+              // case of an error, it is perfectly valid to have a response body
+              // that only contains error trailers.
+              validateGrpcStatus(
+                grpcWebTrailerParse(messageOrTrailerResult.value.data)
+              );
+              // At this point, we received trailers only, but the trailers did
+              // not have an error status code.
+              throw "unexpected trailer";
+            }
+
+            const trailerResult = await readEnvelope(response);
+
+            if (trailerResult.done) {
+              throw "missing trailer";
+            }
+            if (trailerResult.value.flags !== trailerFlag) {
+              throw "missing trailer";
+            }
+
+            const trailer = grpcWebTrailerParse(trailerResult.value.data);
+            validateGrpcStatus(trailer);
+
+            const eofResult = await readEnvelope(response);
+            if (!eofResult.done) {
+              throw "extraneous data";
+            }
 
             return <UnaryResponse<O>>{
               stream: false,
               service,
               method,
-              header: {} as Headers,
-              message: parse([] as unknown as Uint8Array),
-              trailer: {} as Headers,
+              header: responseHeaders,
+              message: parse(messageOrTrailerResult.value.data),
+              trailer,
             };
           }
         );
@@ -182,29 +207,41 @@ export function createGrpcWebHttpTransport(
   };
 }
 
-export function writeHttpRequest(
-  request: http.ClientRequest,
-  data: Uint8Array | string
-): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const encoding = typeof data == "string" ? "utf8" : "binary";
-    const cb = (error: Error | null | undefined) => {
-      if (error) {
-        reject(error);
-      }
-    };
-    const flushed = request.write(data, encoding, cb);
+function makeNodeRequest(options: any) {
+  return new Promise<http.IncomingMessage>((resolve, reject) => {
+    const endpoint = new URL(options.req.url);
+    const nodeRequestFn = nodeRequest(endpoint.protocol);
+    const request = nodeRequestFn(options.req.url, {
+      headers: webHeaderToNodeHeaders(options.req.header),
+      method: "POST",
+      path: endpoint.pathname,
+      signal: options.req.signal,
+      ...options.httpOptions,
+    });
 
-    if (flushed) {
-      resolve();
-    } else {
-      request.once("drain", resolve);
-    }
+    request.on("error", (err) => {
+      reject(`request failed ${String(err)}`);
+    });
+
+    request.on("response", (res) => {
+      return resolve(res);
+    });
+
+    request.write(options.payload, options.encoding);
+    request.end();
   });
 }
 
-function end(request: http.ClientRequest): Promise<void> {
-  return new Promise<void>((resolve) => {
-    request.end(resolve);
-  });
+function nodeRequest(protocol: string) {
+  if (protocol.startsWith("http") || protocol.startsWith("https")) {
+    return protocol.includes("https") ? https.request : http.request;
+  }
+  throw new Error("Unsupported protocol");
+}
+
+function validateGrpcStatus(headerOrTrailer: Headers) {
+  const err = grpcFindTrailerError(headerOrTrailer);
+  if (err) {
+    throw err;
+  }
 }
