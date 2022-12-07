@@ -24,7 +24,10 @@ import {
   grpcExpectContentType,
   grpcFindTrailerError,
   Interceptor,
+  runStreaming,
   runUnary,
+  StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -46,7 +49,9 @@ import {
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
-import { readEnvelope } from "./private/io.js";
+import { end, readEnvelope, write } from "./private/io.js";
+import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
+import { defer } from "./private/defer.js";
 
 export interface GrpcHttpTransportOptions {
   /**
@@ -107,7 +112,7 @@ const messageFlag = 0b00000000;
 
 export function createGrpcHttpTransport(
   options: GrpcHttpTransportOptions
-): Partial<Transport> {
+): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
@@ -164,7 +169,7 @@ export function createGrpcHttpTransport(
             );
 
             const messageResult = await readEnvelope(response);
-            const trailer = mapResponseTrailers(response.trailers);
+            let trailer = mapResponseTrailers(response.trailers);
             validateGrpcStatus(trailer);
 
             if (messageResult.done) {
@@ -172,6 +177,9 @@ export function createGrpcHttpTransport(
             }
 
             const eofResult = await readEnvelope(response);
+            trailer = mapResponseTrailers(response.trailers);
+            validateGrpcStatus(trailer);
+
             if (!eofResult.done) {
               throw "extraneous data";
             }
@@ -190,6 +198,125 @@ export function createGrpcHttpTransport(
       } catch (e) {
         throw connectErrorFromNodeReason(e);
       }
+    },
+    async stream<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
+      service: ServiceType,
+      method: MethodInfo<I, O>,
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: HeadersInit | undefined
+    ): Promise<StreamingConn<I, O>> {
+      const { normalize, serialize, parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
+      );
+
+      return runStreaming<I, O>(
+        {
+          stream: true,
+          service,
+          method,
+          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          init: {
+            method: "POST",
+            redirect: "error",
+            mode: "cors",
+          },
+          signal: signal ?? new AbortController().signal,
+          header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
+        },
+        (req: StreamingRequest<I, O>) => {
+          try {
+            const endpoint = new URL(req.url);
+            const nodeRequestFn = nodeRequest(endpoint.protocol);
+            const stream = nodeRequestFn(req.url, {
+              headers: webHeaderToNodeHeaders(req.header),
+              method: "POST",
+              path: endpoint.pathname,
+              signal: req.signal,
+              ...options.httpOptions,
+            });
+
+            const responsePromise = new Promise<http.IncomingMessage>(
+              (resolve, reject) => {
+                stream.on("response", (res) => {
+                  resolve(res);
+                });
+                stream.on("error", reject);
+              }
+            );
+            const responseTrailer = defer<Headers>();
+            const responseHeader = responsePromise.then((res) =>
+              nodeHeaderToWebHeader(res.headers)
+            );
+            const conn: StreamingConn<I, O> = {
+              ...req,
+              responseHeader,
+              responseTrailer,
+              closed: false,
+              async send(message: PartialMessage<I>) {
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot send, stream is already closed"
+                  );
+                }
+                const enveloped = encodeEnvelope(
+                  messageFlag,
+                  serialize(normalize(message))
+                );
+                await write(stream, enveloped);
+              },
+              async close() {
+                if (stream.writableEnded) {
+                  throw new ConnectError(
+                    "cannot close, stream is already closed"
+                  );
+                }
+                this.closed = true;
+                await end(stream);
+              },
+              async read(): Promise<ReadableStreamReadResultLike<O>> {
+                const response = await responsePromise;
+                assert(
+                  typeof response.statusCode == "number",
+                  "http1 client response is missing status code"
+                );
+                validateResponse(
+                  useBinaryFormat,
+                  response.statusCode,
+                  await responseHeader
+                );
+                try {
+                  const result = await readEnvelope(response);
+                  if (result.done) {
+                    const trailer = mapResponseTrailers(response.trailers);
+                    validateGrpcStatus(trailer);
+                    responseTrailer.resolve(trailer);
+                    return {
+                      done: true,
+                      value: undefined,
+                    };
+                  }
+                  return {
+                    done: false,
+                    value: parse(result.value.data),
+                  };
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
+              },
+            };
+            return Promise.resolve(conn);
+          } catch (e) {
+            throw connectErrorFromNodeReason(e);
+          }
+        }
+      );
     },
   };
 }

@@ -29,6 +29,7 @@ import {
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -250,7 +251,7 @@ export function createConnectHttpTransport(
           signal: signal ?? new AbortController().signal,
           header: createRequestHeader(timeoutMs, header),
         },
-        (req) => {
+        (req: StreamingRequest<I, O>) => {
           try {
             const endpoint = new URL(req.url);
             const nodeRequestFn = nodeRequest(endpoint.protocol);
