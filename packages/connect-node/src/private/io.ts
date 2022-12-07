@@ -216,8 +216,7 @@ export async function endWithHttpStatus(
 }
 
 /**
- * Returns a promise for the response status code and response headers
- * as a tuple.
+ * Returns a promise for the status code and headers of a HTTP/2 response.
  */
 export function readResponseHeader(
   stream: http2.ClientHttp2Stream
@@ -231,7 +230,7 @@ export function readResponseHeader(
 
     function error(err: Error) {
       stream.off("error", error);
-      stream.off('"response"', parse);
+      stream.off("response", parse);
       reject(err);
     }
 
