@@ -15,6 +15,7 @@
 import * as zlib from "zlib";
 import { promisify } from "util";
 import { Code, ConnectError } from "@bufbuild/connect-core";
+import { getNodeErrorProps } from "./private/node-error.js";
 
 export interface Compression {
   name: string;
@@ -62,7 +63,7 @@ function wrapZLibErrors<T>(
   readMaxBytes: number
 ): Promise<T> {
   return promise.catch((e) => {
-    const code = getNodeErrorCode(e);
+    const { code } = getNodeErrorProps(e);
     // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (code) {
       case "ERR_BUFFER_TOO_LARGE":
@@ -83,14 +84,4 @@ function wrapZLibErrors<T>(
     }
     return Promise.reject(e);
   });
-}
-
-function getNodeErrorCode(e: unknown): string | undefined {
-  if (e instanceof Error && "code" in e) {
-    const eWithCode = e as { code: unknown };
-    if (typeof eWithCode.code == "string") {
-      return eWithCode.code;
-    }
-  }
-  return undefined;
 }
