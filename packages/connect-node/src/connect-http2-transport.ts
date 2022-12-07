@@ -333,6 +333,7 @@ export function createConnectHttp2Transport(
                   flags = flags | compressedFlag;
                   body = await options.sendCompression.compress(body);
                 }
+                await new Promise<void>(resolve => setTimeout(resolve, 50));
                 const enveloped = encodeEnvelope(flags, body);
                 await write(stream, enveloped);
               },
