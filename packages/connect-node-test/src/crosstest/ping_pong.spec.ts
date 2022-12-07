@@ -31,6 +31,12 @@ describe("ping_pong", () => {
       "@bufbuild/connect-node (Connect, JSON, https) against @bufbuild/connect-node (h1 + tls)",
       "@bufbuild/connect-node (Connect, binary, http) against connect-go (h1)",
       "@bufbuild/connect-node (Connect, JSON, http) against connect-go (h1)",
+      "@bufbuild/connect-node (gRPC-web, binary, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC-web, JSON, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC-web, JSON, https) against @bufbuild/connect-node (h1 + tls)",
+      "@bufbuild/connect-node (gRPC-web, binary, https) against @bufbuild/connect-node (h1 + tls)",
+      "@bufbuild/connect-node (gRPC-web, binary, https) against connect-go (h1)",
+      "@bufbuild/connect-node (gRPC-web, JSON, https) against connect-go (h1)",
     ],
     (transport) => {
       it("with promise client", async function () {
