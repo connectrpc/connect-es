@@ -356,6 +356,22 @@ vKy9wyvtUtg=
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
+
+
+    "@bufbuild/connect-node (Connect, JSON, http2) against connect-go (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttp2Transport({
+          ...options,
+          baseUrl: servers["connect-go (h1)"].getUrl(),
+          http2Options: {
+            rejectUnauthorized: false, // TODO set up cert for go server correctly
+          },
+          useBinaryFormat: false,
+          sendCompression: undefined,
+        }),
+
+
+
     "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)":
       (options?: Record<string, unknown>) =>
         createConnectHttpTransport({
