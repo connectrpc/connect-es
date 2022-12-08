@@ -12,19 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import * as http from "http";
+import * as https from "https";
 import {
-  appendHeaders,
-  connectCodeFromHttpStatus,
-  connectCreateRequestHeader,
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
   ConnectError,
-  connectErrorFromJson,
-  connectExpectContentType,
-  connectTrailerDemux,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
+  grpcCodeFromHttpStatus,
+  grpcCreateRequestHeader,
+  grpcExpectContentType,
+  grpcFindTrailerError,
   Interceptor,
   runStreaming,
   runUnary,
@@ -46,26 +44,20 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { defer } from "./private/defer.js";
-import {
-  end,
-  jsonParse,
-  readEnvelope,
-  readToEnd,
-  write,
-} from "./private/io.js";
-import * as http from "http";
-import * as https from "https";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
+import {
+  end,
+  readEnvelope,
+  readHttp1ResponseTrailer,
+  write,
+} from "./private/io.js";
+import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 
-const messageFlag = 0b00000000;
-
-export interface ConnectHttpTransportOptions {
+export interface GrpcHttpTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
@@ -109,7 +101,7 @@ export interface ConnectHttpTransportOptions {
 interface NodeRequestOptions<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
-> extends Pick<ConnectHttpTransportOptions, "httpOptions"> {
+> extends Pick<GrpcHttpTransportOptions, "httpOptions"> {
   // Unary Request
   req: UnaryRequest<I>;
 
@@ -120,13 +112,15 @@ interface NodeRequestOptions<
   payload: Uint8Array;
 }
 
+const messageFlag = 0b00000000;
+
 /**
- * Create a Transport for the Connect protocol using the Node.js
- * `http` or `https` package.
+ * Create a Transport for the gRPC protocol using the
+ * Node.js `http` or `https package.
  *
  */
-export function createConnectHttpTransport(
-  options: ConnectHttpTransportOptions
+export function createGrpcHttpTransport(
+  options: GrpcHttpTransportOptions
 ): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
@@ -141,25 +135,13 @@ export function createConnectHttpTransport(
       header: HeadersInit | undefined,
       message: PartialMessage<I>
     ): Promise<UnaryResponse<O>> {
+      const { normalize, serialize, parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
+      );
       try {
-        const { normalize, parse, serialize } = createClientMethodSerializers(
-          method,
-          useBinaryFormat,
-          options.jsonOptions,
-          options.binaryOptions
-        );
-        const createRequestHeader = connectCreateRequestHeader.bind(
-          null,
-          method.kind,
-          useBinaryFormat
-        );
-
-        const validateContentType = connectExpectContentType.bind(
-          null,
-          method.kind,
-          useBinaryFormat
-        );
-
         return await runUnary<I, O>(
           {
             stream: false,
@@ -167,39 +149,55 @@ export function createConnectHttpTransport(
             method,
             url: createMethodUrl(options.baseUrl, service, method).toString(),
             init: {},
-            header: createRequestHeader(timeoutMs, header),
+            header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+            const envelope = encodeEnvelope(
+              messageFlag,
+              serialize(req.message)
+            );
             const encoding = useBinaryFormat ? "binary" : "utf8";
             const response = await makeNodeRequest({
               req,
+              payload: envelope,
               encoding,
-              payload: serialize(req.message),
               httpOptions: options.httpOptions,
             });
 
             const responseHeaders = nodeHeaderToWebHeader(response.headers);
+            const trailerPromise = readHttp1ResponseTrailer(response);
             assert(
               typeof response.statusCode == "number",
               "http1 client response is missing status code"
             );
-
-            await validateResponseHeader(
+            validateResponse(
+              useBinaryFormat,
               response.statusCode,
-              responseHeaders,
-              response
+              responseHeaders
             );
-            validateContentType(responseHeaders.get("Content-Type"));
 
-            const [header, trailer] = connectTrailerDemux(responseHeaders);
-            return {
+            const messageResult = await readEnvelope(response);
+            const eofResult = await readEnvelope(response);
+
+            if (!eofResult.done) {
+              throw "extraneous data";
+            }
+
+            const trailer = await trailerPromise;
+            validateGrpcStatus(trailer);
+
+            if (messageResult.done) {
+              throw "premature eof";
+            }
+
+            return <UnaryResponse<O>>{
               stream: false,
               service,
               method,
-              header,
-              message: parse(await readToEnd(response)),
+              header: responseHeaders,
+              message: parse(messageResult.value.data),
               trailer,
             };
           },
@@ -226,17 +224,6 @@ export function createConnectHttpTransport(
         options.binaryOptions
       );
 
-      const validateContentType = connectExpectContentType.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
-
-      const createRequestHeader = connectCreateRequestHeader.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
       return runStreaming<I, O>(
         {
           stream: true,
@@ -249,7 +236,7 @@ export function createConnectHttpTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeader(timeoutMs, header),
+          header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
         },
         (req: StreamingRequest<I, O>) => {
           try {
@@ -271,9 +258,9 @@ export function createConnectHttpTransport(
                 stream.on("error", reject);
               }
             );
-
-            let endStreamReceived = false;
-            const responseTrailer = defer<Headers>();
+            const responseTrailer = responsePromise.then((res) =>
+              readHttp1ResponseTrailer(res)
+            );
             const responseHeader = responsePromise.then((res) =>
               nodeHeaderToWebHeader(res.headers)
             );
@@ -309,44 +296,21 @@ export function createConnectHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
-                await validateResponseHeader(
+                validateResponse(
+                  useBinaryFormat,
                   response.statusCode,
-                  await responseHeader,
-                  response
+                  await responseHeader
                 );
-                validateContentType((await responseHeader).get("Content-Type"));
-
                 try {
                   const result = await readEnvelope(response);
-
                   if (result.done) {
-                    if (!endStreamReceived) {
-                      throw new ConnectError("missing EndStreamResponse");
-                    }
+                    const trailer = await responseTrailer;
+                    validateGrpcStatus(trailer);
                     return {
                       done: true,
+                      value: undefined,
                     };
                   }
-
-                  if (
-                    (result.value.flags & connectEndStreamFlag) ===
-                    connectEndStreamFlag
-                  ) {
-                    endStreamReceived = true;
-                    const endStream = connectEndStreamFromJson(
-                      result.value.data
-                    );
-
-                    responseTrailer.resolve(endStream.metadata);
-
-                    if (endStream.error) {
-                      throw endStream.error;
-                    }
-                    return {
-                      done: true,
-                    };
-                  }
-
                   return {
                     done: false,
                     value: parse(result.value.data),
@@ -366,23 +330,6 @@ export function createConnectHttpTransport(
     },
   };
 }
-
-const validateResponseHeader = async (
-  status: number,
-  headers: Headers,
-  stream: http.IncomingMessage
-) => {
-  const type = headers.get("content-type") ?? "";
-  if (status !== 200) {
-    if (type === "application/json") {
-      throw connectErrorFromJson(
-        jsonParse(await readToEnd(stream)),
-        appendHeaders(...connectTrailerDemux(headers))
-      );
-    }
-    throw new ConnectError(`HTTP ${status}`, connectCodeFromHttpStatus(status));
-  }
-};
 
 function makeNodeRequest(options: NodeRequestOptions) {
   return new Promise<http.IncomingMessage>((resolve, reject) => {
@@ -414,4 +361,27 @@ function nodeRequest(protocol: string) {
     return protocol.includes("https") ? https.request : http.request;
   }
   throw new Error("Unsupported protocol");
+}
+
+function validateGrpcStatus(headerOrTrailer: Headers) {
+  const err = grpcFindTrailerError(headerOrTrailer);
+  if (err) {
+    throw err;
+  }
+}
+
+function validateResponse(
+  binaryFormat: boolean,
+  status: number,
+  headers: Headers
+) {
+  const code = grpcCodeFromHttpStatus(status);
+  if (code != null) {
+    throw new ConnectError(
+      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
+      code
+    );
+  }
+  grpcExpectContentType(binaryFormat, headers.get("Content-Type"));
+  validateGrpcStatus(headers);
 }

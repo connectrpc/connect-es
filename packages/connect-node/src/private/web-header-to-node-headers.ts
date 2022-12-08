@@ -20,6 +20,7 @@ export function nodeHeaderToWebHeader(
     | http.OutgoingHttpHeaders
     | http.IncomingHttpHeaders
     | http2.IncomingHttpHeaders
+    | http.IncomingMessage["trailers"]
 ): Headers {
   const header = new Headers();
   for (const [k, v] of Object.entries(nodeHeaders)) {
