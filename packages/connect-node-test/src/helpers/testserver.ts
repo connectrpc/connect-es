@@ -20,6 +20,7 @@ import {
   createConnectHttpTransport,
   createGrpcWebHttp2Transport,
   createGrpcHttp2Transport,
+  createGrpcHttpTransport,
   createGrpcWebHttpTransport,
   createHandlers,
   mergeHandlers,
@@ -315,6 +316,62 @@ vKy9wyvtUtg=
           rejectUnauthorized: false, // TODO set up cert for go server correctly
         },
         useBinaryFormat: true,
+      }),
+    "@bufbuild/connect-node (gRPC, binary, http) against @bufbuild/connect-node (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttpTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
+          useBinaryFormat: true,
+        }),
+    "@bufbuild/connect-node (gRPC, JSON, http) against @bufbuild/connect-node (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttpTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
+          useBinaryFormat: false,
+        }),
+    "@bufbuild/connect-node (gRPC, JSON, https) against @bufbuild/connect-node (h1 + tls)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttpTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h1 + tls)"].getUrl(),
+          useBinaryFormat: false,
+          httpOptions: {
+            rejectUnauthorized: false,
+          },
+        }),
+    "@bufbuild/connect-node (gRPC, binary, https) against @bufbuild/connect-node (h1 + tls)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttpTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h1 + tls)"].getUrl(),
+          useBinaryFormat: true,
+          httpOptions: {
+            rejectUnauthorized: false,
+          },
+        }),
+    "@bufbuild/connect-node (gRPC, binary, https) against connect-go (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcHttpTransport({
+        ...options,
+        baseUrl: servers["connect-go (h1)"].getUrl(),
+        useBinaryFormat: true,
+        httpOptions: {
+          rejectUnauthorized: false,
+        },
+      }),
+    "@bufbuild/connect-node (gRPC, JSON, https) against connect-go (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      createGrpcHttpTransport({
+        ...options,
+        baseUrl: servers["connect-go (h1)"].getUrl(),
+        useBinaryFormat: false,
+        httpOptions: {
+          rejectUnauthorized: false,
+        },
       }),
     // Connect
     "@bufbuild/connect-node (Connect, binary, http2) against @bufbuild/connect-node (h2c)":
