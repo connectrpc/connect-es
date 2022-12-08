@@ -110,6 +110,11 @@ interface NodeRequestOptions<
 
 const messageFlag = 0b00000000;
 
+/**
+ * Create a Transport for the gRPC protocol using the
+ * Node.js `http` or `https package.
+ *
+ */
 export function createGrpcHttpTransport(
   options: GrpcHttpTransportOptions
 ): Transport {
