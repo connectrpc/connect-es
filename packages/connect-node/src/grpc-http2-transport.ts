@@ -173,14 +173,14 @@ export function createGrpcHttp2Transport(
             validateResponse(useBinaryFormat, responseCode, responseHeader);
 
             const messageResult = await readEnvelope(stream);
+            const eofResult = await readEnvelope(stream);
+            if (!eofResult.done) {
+              throw "extraneous data";
+            }
             const trailer = await trailerPromise;
             validateGrpcStatus(trailer);
             if (messageResult.done) {
               throw "premature eof";
-            }
-            const eofResult = await readEnvelope(stream);
-            if (!eofResult.done) {
-              throw "extraneous data";
             }
 
             return <UnaryResponse<O>>{
