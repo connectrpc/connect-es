@@ -16,6 +16,7 @@ import {
   appendHeaders,
   Code,
   connectCodeFromHttpStatus,
+  connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
@@ -158,13 +159,13 @@ export function createConnectHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method).toString(),
             init: {},
-            header: connectCreateRequestHeader(
+            header: connectCreateRequestHeaderWithCompression(
               method.kind,
               useBinaryFormat,
-              acceptCompression.map((c) => c.name),
-              options.sendCompression?.name,
               timeoutMs,
-              header
+              header,
+              acceptCompression.map((c) => c.name),
+              options.sendCompression?.name
             ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
@@ -276,13 +277,13 @@ export function createConnectHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: connectCreateRequestHeader(
+          header: connectCreateRequestHeaderWithCompression(
             method.kind,
             useBinaryFormat,
-            acceptCompression.map((c) => c.name),
-            options.sendCompression?.name,
             timeoutMs,
-            header
+            header,
+            acceptCompression.map((c) => c.name),
+            options.sendCompression?.name
           ),
         },
         async (req) => {
@@ -407,29 +408,26 @@ export function createConnectHttp2Transport(
   };
 }
 
-// TODO
-function connectCreateRequestHeader(
+function connectCreateRequestHeaderWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
-  acceptCompression: string[],
-  sendCompression: string | undefined,
   timeoutMs: number | undefined,
-  userProvidedHeaders: HeadersInit | undefined
+  userProvidedHeaders: HeadersInit | undefined,
+  acceptCompression: string[],
+  sendCompression: string | undefined
 ): Headers {
-  const result = new Headers(userProvidedHeaders ?? {});
+  const result = connectCreateRequestHeader(
+    methodKind,
+    useBinaryFormat,
+    timeoutMs,
+    userProvidedHeaders
+  );
   let acceptEncodingField = "Accept-Encoding";
-  let contentTypeValue = "application/";
   if (methodKind != MethodKind.Unary) {
-    contentTypeValue += "connect+";
     acceptEncodingField = "Connect-" + acceptEncodingField;
     if (sendCompression != undefined) {
       result.set("Connect-Content-Encoding", sendCompression);
     }
-  }
-  contentTypeValue += useBinaryFormat ? "proto" : "json";
-  result.set("Content-Type", contentTypeValue);
-  if (timeoutMs !== undefined) {
-    result.set("Connect-Timeout-Ms", `${timeoutMs}`);
   }
   if (acceptCompression.length > 0) {
     result.set(acceptEncodingField, acceptCompression.join(","));
