@@ -281,7 +281,7 @@ function applyInterceptors<T>(next: T, interceptors: Interceptor[]): T {
 export function runUnary<I extends Message<I>, O extends Message<O>>(
   req: UnaryRequest<I>,
   next: UnaryFn<I, O>,
-  interceptors?: Interceptor[]
+  interceptors: Interceptor[] | undefined
 ): Promise<UnaryResponse<O>> {
   if (interceptors) {
     next = applyInterceptors(next, interceptors);
@@ -296,7 +296,7 @@ export function runUnary<I extends Message<I>, O extends Message<O>>(
 export function runStreaming<I extends Message<I>, O extends Message<O>>(
   req: StreamingRequest<I, O>,
   next: StreamingFn<I, O>,
-  interceptors?: Interceptor[]
+  interceptors: Interceptor[] | undefined
 ): Promise<StreamingConn<I, O>> {
   if (interceptors) {
     next = applyInterceptors(next, interceptors);

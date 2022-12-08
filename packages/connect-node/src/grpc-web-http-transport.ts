@@ -220,7 +220,8 @@ export function createGrpcWebHttpTransport(
               message: parse(messageOrTrailerResult.value.data),
               trailer,
             };
-          }
+          },
+          options.interceptors
         );
       } catch (e) {
         throw connectErrorFromNodeReason(e);
@@ -359,7 +360,8 @@ export function createGrpcWebHttpTransport(
           } catch (e) {
             throw connectErrorFromNodeReason(e);
           }
-        }
+        },
+        options.interceptors
       );
     },
   };
