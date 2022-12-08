@@ -382,7 +382,7 @@ function createConnectRequestHeaders(
   if (timeoutMs !== undefined) {
     result.set("Connect-Timeout-Ms", `${timeoutMs}`);
   }
-  result.set("connect-protocol-version", protocolVersion);
+  result.set("Connect-Protocol-Version", protocolVersion);
   return result;
 }
 
