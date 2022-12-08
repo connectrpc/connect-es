@@ -371,6 +371,7 @@ function createConnectRequestHeaders(
   methodKind: MethodKind,
   useBinaryFormat: boolean
 ): Headers {
+  const protocolVersion = "1";
   const result = new Headers(headers ?? {});
   let type = "application/";
   if (methodKind != MethodKind.Unary) {
@@ -381,6 +382,7 @@ function createConnectRequestHeaders(
   if (timeoutMs !== undefined) {
     result.set("Connect-Timeout-Ms", `${timeoutMs}`);
   }
+  result.set("connect-protocol-version", protocolVersion);
   return result;
 }
 

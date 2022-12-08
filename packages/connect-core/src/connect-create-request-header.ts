@@ -14,6 +14,8 @@
 
 import { MethodKind } from "@bufbuild/protobuf";
 
+const protocolVersion = "1";
+
 /**
  * Creates headers for a Connect request.
  */
@@ -33,5 +35,6 @@ export function connectCreateRequestHeader(
   if (timeoutMs !== undefined) {
     result.set("Connect-Timeout-Ms", `${timeoutMs}`);
   }
+  result.set("connect-protocol-version", protocolVersion);
   return result;
 }
