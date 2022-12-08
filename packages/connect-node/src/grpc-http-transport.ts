@@ -49,9 +49,13 @@ import {
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
-import { end, readEnvelope, write } from "./private/io.js";
+import {
+  end,
+  readEnvelope,
+  readHttp1ResponseTrailer,
+  write,
+} from "./private/io.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { defer } from "./private/defer.js";
 
 export interface GrpcHttpTransportOptions {
   /**
@@ -163,6 +167,7 @@ export function createGrpcHttpTransport(
             });
 
             const responseHeaders = nodeHeaderToWebHeader(response.headers);
+            const trailerPromise = readHttp1ResponseTrailer(response);
             assert(
               typeof response.statusCode == "number",
               "http1 client response is missing status code"
@@ -174,24 +179,17 @@ export function createGrpcHttpTransport(
             );
 
             const messageResult = await readEnvelope(response);
-
-            let trailer = mapResponseTrailers(response.trailers);
-            if (receivedTrailers(trailer)) {
-              validateGrpcStatus(trailer);
-            }
-
-            if (messageResult.done) {
-              throw "premature eof";
-            }
-
             const eofResult = await readEnvelope(response);
-            trailer = mapResponseTrailers(response.trailers);
-            if (receivedTrailers(trailer)) {
-              validateGrpcStatus(trailer);
-            }
 
             if (!eofResult.done) {
               throw "extraneous data";
+            }
+
+            const trailer = await trailerPromise;
+            validateGrpcStatus(trailer);
+
+            if (messageResult.done) {
+              throw "premature eof";
             }
 
             return <UnaryResponse<O>>{
@@ -260,7 +258,9 @@ export function createGrpcHttpTransport(
                 stream.on("error", reject);
               }
             );
-            const responseTrailer = defer<Headers>();
+            const responseTrailer = responsePromise.then((res) =>
+              readHttp1ResponseTrailer(res)
+            );
             const responseHeader = responsePromise.then((res) =>
               nodeHeaderToWebHeader(res.headers)
             );
@@ -304,9 +304,8 @@ export function createGrpcHttpTransport(
                 try {
                   const result = await readEnvelope(response);
                   if (result.done) {
-                    const trailer = mapResponseTrailers(response.trailers);
+                    const trailer = await responseTrailer;
                     validateGrpcStatus(trailer);
-                    responseTrailer.resolve(trailer);
                     return {
                       done: true,
                       value: undefined,
@@ -325,7 +324,8 @@ export function createGrpcHttpTransport(
           } catch (e) {
             throw connectErrorFromNodeReason(e);
           }
-        }
+        },
+        options.interceptors
       );
     },
   };
@@ -384,25 +384,4 @@ function validateResponse(
   }
   grpcExpectContentType(binaryFormat, headers.get("Content-Type"));
   validateGrpcStatus(headers);
-}
-
-function mapResponseTrailers(
-  trailers: http.IncomingMessage["trailers"]
-): Headers {
-  const t = new Headers();
-  Object.keys(trailers).forEach((key: string) => {
-    t.set(key, trailers[key] ?? "");
-  });
-
-  return t;
-}
-
-function receivedTrailers(trailers: Headers): boolean {
-  let hasKey = false;
-  trailers.forEach((key) => {
-    if (key.length > 0) {
-      hasKey = true;
-    }
-  });
-  return hasKey;
 }

@@ -359,7 +359,8 @@ export function createGrpcWebHttpTransport(
           } catch (e) {
             throw connectErrorFromNodeReason(e);
           }
-        }
+        },
+        options.interceptors
       );
     },
   };

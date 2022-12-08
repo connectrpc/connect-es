@@ -285,3 +285,33 @@ export function readResponseTrailer(
     }
   });
 }
+
+/**
+ * Returns a promise for HTTP/1 response trailers.
+ */
+export function readHttp1ResponseTrailer(
+  response: http.IncomingMessage
+): Promise<Headers> {
+  return new Promise<Headers>((resolve, reject) => {
+    if (response.errored) {
+      return reject(response.errored);
+    }
+    if (response.readableEnded) {
+      return resolve(nodeHeaderToWebHeader(response.trailers));
+    }
+    response.once("error", error);
+    response.once("end", end);
+
+    function end() {
+      response.off("error", error);
+      response.off("end", end);
+      resolve(nodeHeaderToWebHeader(response.trailers));
+    }
+
+    function error(err: Error) {
+      response.off("error", error);
+      response.off("end", end);
+      reject(err);
+    }
+  });
+}
