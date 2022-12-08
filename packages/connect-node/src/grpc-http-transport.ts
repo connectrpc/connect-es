@@ -169,8 +169,11 @@ export function createGrpcHttpTransport(
             );
 
             const messageResult = await readEnvelope(response);
+
             let trailer = mapResponseTrailers(response.trailers);
-            validateGrpcStatus(trailer);
+            if (receivedTrailers(trailer)) {
+              validateGrpcStatus(trailer);
+            }
 
             if (messageResult.done) {
               throw "premature eof";
@@ -178,7 +181,9 @@ export function createGrpcHttpTransport(
 
             const eofResult = await readEnvelope(response);
             trailer = mapResponseTrailers(response.trailers);
-            validateGrpcStatus(trailer);
+            if (receivedTrailers(trailer)) {
+              validateGrpcStatus(trailer);
+            }
 
             if (!eofResult.done) {
               throw "extraneous data";
@@ -385,4 +390,14 @@ function mapResponseTrailers(
   });
 
   return t;
+}
+
+function receivedTrailers(trailers: Headers): boolean {
+  let hasKey = false;
+  trailers.forEach((key) => {
+    if (key.length > 0) {
+      hasKey = true;
+    }
+  });
+  return hasKey;
 }
