@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import * as http from "http";
+import * as https from "https";
 import {
   ConnectError,
   createClientMethodSerializers,
@@ -25,6 +27,7 @@ import {
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -40,33 +43,27 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import * as http2 from "http2";
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { defer } from "./private/defer.js";
+import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./private/web-header-to-node-headers.js";
+import { assert } from "./private/assert.js";
 import {
   end,
   readEnvelope,
-  readResponseHeader,
-  readResponseTrailer,
+  readHttp1ResponseTrailer,
   write,
 } from "./private/io.js";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
-import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 
-const messageFlag = 0b00000000;
-
-/**
- * Options used to configure the gRPC-web transport.
- *
- * See createGrpcHttp2Transport().
- */
-export interface GrpcHttp2TransportOptions {
+export interface GrpcHttpTransportOptions {
   /**
    * Base URI for all HTTP requests.
    *
    * Requests will be made to <baseUrl>/<package>.<service>/method
    *
-   * Example: `baseUrl: "https://example.com/my-api"`
+   * Example: `baseUrl: "http://example.com/my-api"`
    *
    * This will make a `POST /my-api/my_package.MyService/Foo` to
    * `example.com` via HTTPS.
@@ -78,9 +75,6 @@ export interface GrpcHttp2TransportOptions {
    * not all gRPC-web implementations support JSON.
    */
   useBinaryFormat?: boolean;
-
-  // TODO document
-  http2Options?: http2.ClientSessionOptions | http2.SecureClientSessionOptions;
 
   /**
    * Interceptors that should be applied to all calls running through
@@ -97,14 +91,36 @@ export interface GrpcHttp2TransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Options for the http request.
+   */
+  httpOptions?: http.RequestOptions | https.RequestOptions;
 }
 
+interface NodeRequestOptions<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
+> extends Pick<GrpcHttpTransportOptions, "httpOptions"> {
+  // Unary Request
+  req: UnaryRequest<I>;
+
+  // Payload encoding
+  encoding: "utf8" | "binary";
+
+  // Request body
+  payload: Uint8Array;
+}
+
+const messageFlag = 0b00000000;
+
 /**
- * Create a Transport for the gRPC protocol.
+ * Create a Transport for the gRPC protocol using the
+ * Node.js `http` or `https package.
  *
  */
-export function createGrpcHttp2Transport(
-  options: GrpcHttp2TransportOptions
+export function createGrpcHttpTransport(
+  options: GrpcHttpTransportOptions
 ): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
@@ -138,47 +154,40 @@ export function createGrpcHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const session: http2.ClientHttp2Session =
-              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
-                const s = http2.connect(
-                  // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
-                  // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
-                  req.url,
-                  options.http2Options,
-                  (s) => resolve(s)
-                );
-                s.on("error", (err) => reject(err));
-              });
-            const stream = session.request(
-              {
-                ...webHeaderToNodeHeaders(req.header),
-                ":method": "POST",
-                ":path": new URL(req.url).pathname,
-              },
-              {
-                signal: req.signal,
-              }
-            );
-
-            const headersPromise = readResponseHeader(stream);
-            const trailerPromise = readResponseTrailer(stream);
             const envelope = encodeEnvelope(
               messageFlag,
               serialize(req.message)
             );
-            await write(stream, envelope);
-            await end(stream);
+            const encoding = useBinaryFormat ? "binary" : "utf8";
+            const response = await makeNodeRequest({
+              req,
+              payload: envelope,
+              encoding,
+              httpOptions: options.httpOptions,
+            });
 
-            const [responseCode, responseHeader] = await headersPromise;
-            validateResponse(useBinaryFormat, responseCode, responseHeader);
+            const responseHeaders = nodeHeaderToWebHeader(response.headers);
+            const trailerPromise = readHttp1ResponseTrailer(response);
+            assert(
+              typeof response.statusCode == "number",
+              "http1 client response is missing status code"
+            );
+            validateResponse(
+              useBinaryFormat,
+              response.statusCode,
+              responseHeaders
+            );
 
-            const messageResult = await readEnvelope(stream);
-            const eofResult = await readEnvelope(stream);
+            const messageResult = await readEnvelope(response);
+            const eofResult = await readEnvelope(response);
+
             if (!eofResult.done) {
               throw "extraneous data";
             }
+
             const trailer = await trailerPromise;
             validateGrpcStatus(trailer);
+
             if (messageResult.done) {
               throw "premature eof";
             }
@@ -187,7 +196,7 @@ export function createGrpcHttp2Transport(
               stream: false,
               service,
               method,
-              header: responseHeader,
+              header: responseHeaders,
               message: parse(messageResult.value.data),
               trailer,
             };
@@ -214,6 +223,7 @@ export function createGrpcHttp2Transport(
         options.jsonOptions,
         options.binaryOptions
       );
+
       return runStreaming<I, O>(
         {
           stream: true,
@@ -228,34 +238,38 @@ export function createGrpcHttp2Transport(
           signal: signal ?? new AbortController().signal,
           header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
         },
-        async (req) => {
+        (req: StreamingRequest<I, O>) => {
           try {
-            const session: http2.ClientHttp2Session =
-              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
-                const s = http2.connect(req.url, options.http2Options, (s) =>
-                  resolve(s)
-                );
-                s.on("error", (err) => reject(err));
-              });
-            const stream = session.request(
-              {
-                ...webHeaderToNodeHeaders(req.header),
-                ":method": "POST",
-                ":path": new URL(req.url).pathname,
-              },
-              {
-                signal: req.signal,
+            const endpoint = new URL(req.url);
+            const nodeRequestFn = nodeRequest(endpoint.protocol);
+            const stream = nodeRequestFn(req.url, {
+              headers: webHeaderToNodeHeaders(req.header),
+              method: "POST",
+              path: endpoint.pathname,
+              signal: req.signal,
+              ...options.httpOptions,
+            });
+
+            const responsePromise = new Promise<http.IncomingMessage>(
+              (resolve, reject) => {
+                stream.on("response", (res) => {
+                  resolve(res);
+                });
+                stream.on("error", reject);
               }
             );
-            const headerPromise = readResponseHeader(stream);
-            const trailerPromise = readResponseTrailer(stream);
-            const responseTrailer = defer<Headers>();
+            const responseTrailer = responsePromise.then((res) =>
+              readHttp1ResponseTrailer(res)
+            );
+            const responseHeader = responsePromise.then((res) =>
+              nodeHeaderToWebHeader(res.headers)
+            );
             const conn: StreamingConn<I, O> = {
               ...req,
-              responseHeader: headerPromise.then(([, header]) => header),
+              responseHeader,
               responseTrailer,
               closed: false,
-              async send(message: PartialMessage<I>): Promise<void> {
+              async send(message: PartialMessage<I>) {
                 if (stream.writableEnded) {
                   throw new ConnectError(
                     "cannot send, stream is already closed"
@@ -267,7 +281,7 @@ export function createGrpcHttp2Transport(
                 );
                 await write(stream, enveloped);
               },
-              async close(): Promise<void> {
+              async close() {
                 if (stream.writableEnded) {
                   throw new ConnectError(
                     "cannot close, stream is already closed"
@@ -277,18 +291,21 @@ export function createGrpcHttp2Transport(
                 await end(stream);
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
-                const [responseStatus, responseHeader] = await headerPromise;
+                const response = await responsePromise;
+                assert(
+                  typeof response.statusCode == "number",
+                  "http1 client response is missing status code"
+                );
                 validateResponse(
                   useBinaryFormat,
-                  responseStatus,
-                  responseHeader
+                  response.statusCode,
+                  await responseHeader
                 );
                 try {
-                  const result = await readEnvelope(stream);
+                  const result = await readEnvelope(response);
                   if (result.done) {
-                    const trailer = await trailerPromise;
+                    const trailer = await responseTrailer;
                     validateGrpcStatus(trailer);
-                    responseTrailer.resolve(trailer);
                     return {
                       done: true,
                       value: undefined,
@@ -314,6 +331,45 @@ export function createGrpcHttp2Transport(
   };
 }
 
+function makeNodeRequest(options: NodeRequestOptions) {
+  return new Promise<http.IncomingMessage>((resolve, reject) => {
+    const endpoint = new URL(options.req.url);
+    const nodeRequestFn = nodeRequest(endpoint.protocol);
+    const request = nodeRequestFn(options.req.url, {
+      headers: webHeaderToNodeHeaders(options.req.header),
+      method: "POST",
+      path: endpoint.pathname,
+      signal: options.req.signal,
+      ...options.httpOptions,
+    });
+
+    request.on("error", (err) => {
+      reject(`request failed ${String(err)}`);
+    });
+
+    request.on("response", (res) => {
+      return resolve(res);
+    });
+
+    request.write(options.payload, options.encoding);
+    request.end();
+  });
+}
+
+function nodeRequest(protocol: string) {
+  if (protocol.startsWith("http") || protocol.startsWith("https")) {
+    return protocol.includes("https") ? https.request : http.request;
+  }
+  throw new Error("Unsupported protocol");
+}
+
+function validateGrpcStatus(headerOrTrailer: Headers) {
+  const err = grpcFindTrailerError(headerOrTrailer);
+  if (err) {
+    throw err;
+  }
+}
+
 function validateResponse(
   binaryFormat: boolean,
   status: number,
@@ -328,11 +384,4 @@ function validateResponse(
   }
   grpcExpectContentType(binaryFormat, headers.get("Content-Type"));
   validateGrpcStatus(headers);
-}
-
-function validateGrpcStatus(headerOrTrailer: Headers) {
-  const err = grpcFindTrailerError(headerOrTrailer);
-  if (err) {
-    throw err;
-  }
 }
