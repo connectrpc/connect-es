@@ -58,7 +58,10 @@ import {
 interface CreateConnectProtocolOptions {
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+  rejectIfNoConnectHeader?: boolean;
 }
+
+const connectProtocolVersionHeader = "connect-protocol-version";
 
 /**
  * Create a Connect Protocol instance.
@@ -66,6 +69,7 @@ interface CreateConnectProtocolOptions {
 export function createConnectProtocol(
   options: CreateConnectProtocolOptions
 ): Protocol {
+  const shouldReject = options.rejectIfNoConnectHeader ?? false;
   return {
     supportsMediaType: (type) => !!connectParseContentType(type),
 
@@ -92,6 +96,18 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldReject &&
+              (req.headers[connectProtocolVersionHeader] ?? "").length === 0
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                "Missing Connect Protocol Version in header"
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -139,6 +155,8 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
+            const shouldReject = options.rejectIfNoConnectHeader ?? false;
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -163,6 +181,18 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
+
+            if (
+              shouldReject &&
+              (req.headers[connectProtocolVersionHeader] ?? "").length === 0
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                "Missing Connect Protocol Version in header"
+              );
+            }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -228,6 +258,8 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
+            const shouldReject = options.rejectIfNoConnectHeader ?? false;
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -242,6 +274,18 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldReject &&
+              (req.headers[connectProtocolVersionHeader] ?? "").length === 0
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                "Missing Connect Protocol Version in header"
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -311,6 +355,8 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
+            const shouldReject = options.rejectIfNoConnectHeader ?? false;
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -325,6 +371,18 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldReject &&
+              (req.headers[connectProtocolVersionHeader] ?? "").length === 0
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                "Missing Connect Protocol Version in header"
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,

@@ -61,6 +61,7 @@ type HandlerOptions =
   | {
       jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
       binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+      rejectIfNoConnectHeader?: boolean;
     }
   | { protocols: Protocol[] };
 
