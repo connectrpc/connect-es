@@ -19,7 +19,10 @@ import { assert } from "./assert.js";
 import type { ReadableStreamReadResultLike } from "../lib.dom.streams.js";
 import { Code, ConnectError, EnvelopedMessage } from "@bufbuild/connect-core";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { nodeHeaderToWebHeader, webHeaderToNodeHeaders } from "./web-header-to-node-headers.js";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./web-header-to-node-headers.js";
 
 export function jsonParse(bytes: Uint8Array): JsonValue {
   const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
@@ -168,7 +171,7 @@ export function write(
     // flushed == false: the stream wishes for the calling code to wait for
     // the 'drain' event to be emitted before continuing to write additional
     // data.
-    const flushed = stream.write(data, encoding, function(err) {
+    const flushed = stream.write(data, encoding, function (err) {
       if (err && !flushed) {
         // We are never getting a "drain" nor an "error" event if the stream
         // has already ended (ERR_STREAM_WRITE_AFTER_END), so we have to
