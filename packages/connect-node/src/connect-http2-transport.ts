@@ -15,14 +15,13 @@
 import {
   appendHeaders,
   Code,
-  connectCodeFromHttpStatus,
   connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
-  connectParseContentType,
   connectTrailerDemux,
+  connectValidateResponse,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
@@ -214,13 +213,14 @@ export function createConnectHttp2Transport(
             await write(stream, requestBody);
             await end(stream);
             const [responseStatus, responseHeader] = await headerPromise;
-            const { compression, isConnectUnaryError } = validateResponse(
-              method.kind,
-              useBinaryFormat,
-              acceptCompression,
-              responseStatus,
-              responseHeader
-            );
+            const { compression, isConnectUnaryError } =
+              connectValidateResponseWithCompression(
+                method.kind,
+                useBinaryFormat,
+                acceptCompression,
+                responseStatus,
+                responseHeader
+              );
             let responseBody = await readToEnd(stream); // TODO(TCN-785) honor readMaxBytes
             if (compression) {
               responseBody = await compression.decompress(
@@ -346,7 +346,7 @@ export function createConnectHttp2Transport(
                     getNodeErrorProps(e).code == "ERR_STREAM_WRITE_AFTER_END"
                   ) {
                     const [status, header] = await headersPromise;
-                    validateResponse(
+                    connectValidateResponseWithCompression(
                       method.kind,
                       useBinaryFormat,
                       acceptCompression,
@@ -368,7 +368,7 @@ export function createConnectHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headersPromise;
-                const { compression } = validateResponse(
+                const { compression } = connectValidateResponseWithCompression(
                   method.kind,
                   useBinaryFormat,
                   acceptCompression,
@@ -454,20 +454,18 @@ function connectCreateRequestHeaderWithCompression(
   return result;
 }
 
-function validateResponse(
+export function connectValidateResponseWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   acceptCompression: Compression[],
   status: number,
   headers: Headers
 ): { compression: Compression | undefined; isConnectUnaryError: boolean } {
-  const isStream = methodKind != MethodKind.Unary;
-  const mimeType = headers.get("Content-Type");
-  const parsedType = connectParseContentType(mimeType);
   let compression: Compression | undefined;
-  const encodingField = isStream
-    ? "Connect-Content-Encoding"
-    : "Content-Encoding";
+  const encodingField =
+    methodKind == MethodKind.Unary
+      ? "Content-Encoding"
+      : "Connect-Content-Encoding";
   const encoding = headers.get(encodingField);
   if (encoding != null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);
@@ -478,30 +476,11 @@ function validateResponse(
       );
     }
   }
-  if (status !== 200) {
-    if (!parsedType) {
-      throw new ConnectError(
-        `HTTP ${status}`,
-        connectCodeFromHttpStatus(status)
-      );
-    }
-    if (
-      methodKind == MethodKind.Unary &&
-      !parsedType.stream &&
-      !parsedType.binary
-    ) {
-      return { compression, isConnectUnaryError: true };
-    }
-  }
-  if (
-    !parsedType ||
-    parsedType.binary != useBinaryFormat ||
-    parsedType.stream != isStream
-  ) {
-    throw new ConnectError(
-      `unexpected response content type "${mimeType ?? "?"}"`,
-      Code.Internal
-    );
-  }
-  return { compression, isConnectUnaryError: false };
+  const v = connectValidateResponse(
+    methodKind,
+    useBinaryFormat,
+    status,
+    headers
+  );
+  return { compression, isConnectUnaryError: v.isConnectUnaryError };
 }

@@ -25,9 +25,9 @@ import type {
 } from "@bufbuild/protobuf";
 import type {
   Interceptor,
+  StreamingConn,
   Transport,
   UnaryResponse,
-  StreamingConn,
 } from "@bufbuild/connect-core";
 import {
   Code,
@@ -39,20 +39,17 @@ import {
   encodeEnvelope,
   encodeEnvelopes,
   EnvelopedMessage,
-  grpcFindTrailerError,
-  grpcCodeFromHttpStatus,
+  grpcValidateTrailer,
   grpcWebCreateRequestHeader,
-  grpcWebExpectContentType,
   grpcWebTrailerParse,
+  grpcWebTrailerFlag,
+  grpcWebValidateResponse,
   runStreaming,
   runUnary,
 } from "@bufbuild/connect-core";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
 import { defer } from "./defer.js";
-
-const trailerFlag = 0b10000000;
-const messageFlag = 0b00000000;
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -135,10 +132,6 @@ export function createGrpcWebTransport(
         options.jsonOptions,
         options.binaryOptions
       );
-      const validateResponse = validateFetchResponse.bind(
-        null,
-        useBinaryFormat
-      );
       try {
         return await runUnary<I, O>(
           {
@@ -165,9 +158,13 @@ export function createGrpcWebTransport(
               ...req.init,
               headers: req.header,
               signal: req.signal,
-              body: encodeEnvelope(messageFlag, serialize(req.message)),
+              body: encodeEnvelope(0, serialize(req.message)),
             });
-            validateResponse(response);
+            grpcWebValidateResponse(
+              useBinaryFormat,
+              response.status,
+              response.headers
+            );
             if (!response.body) {
               throw "missing response body";
             }
@@ -178,11 +175,11 @@ export function createGrpcWebTransport(
             if (messageOrTrailerResult.done) {
               throw "premature eof";
             }
-            if (messageOrTrailerResult.value.flags === trailerFlag) {
+            if (messageOrTrailerResult.value.flags === grpcWebTrailerFlag) {
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              validateGrpcStatus(
+              grpcValidateTrailer(
                 grpcWebTrailerParse(messageOrTrailerResult.value.data)
               );
               // At this point, we received trailers only, but the trailers did
@@ -194,11 +191,11 @@ export function createGrpcWebTransport(
             if (trailerResult.done) {
               throw "missing trailer";
             }
-            if (trailerResult.value.flags !== trailerFlag) {
+            if (trailerResult.value.flags !== grpcWebTrailerFlag) {
               throw "missing trailer";
             }
             const trailer = grpcWebTrailerParse(trailerResult.value.data);
-            validateGrpcStatus(trailer);
+            grpcValidateTrailer(trailer);
             const eofResult = await reader.read();
             if (!eofResult.done) {
               throw "extraneous data";
@@ -232,10 +229,6 @@ export function createGrpcWebTransport(
         useBinaryFormat,
         options.jsonOptions,
         options.binaryOptions
-      );
-      const validateResponse = validateFetchResponse.bind(
-        null,
-        useBinaryFormat
       );
       return runStreaming<I, O>(
         {
@@ -276,7 +269,7 @@ export function createGrpcWebTransport(
                 );
               }
               pendingSend.push({
-                flags: messageFlag,
+                flags: 0,
                 data: serialize(normalize(message)),
               });
               return Promise.resolve();
@@ -295,7 +288,11 @@ export function createGrpcWebTransport(
                 body: encodeEnvelopes(...pendingSend),
               })
                 .then((response) => {
-                  validateResponse(response);
+                  grpcWebValidateResponse(
+                    useBinaryFormat,
+                    response.status,
+                    response.headers
+                  );
                   if (!response.body) {
                     throw "missing response body";
                   }
@@ -326,10 +323,13 @@ export function createGrpcWebTransport(
                     value: undefined,
                   };
                 }
-                if ((result.value.flags & trailerFlag) === trailerFlag) {
+                if (
+                  (result.value.flags & grpcWebTrailerFlag) ===
+                  grpcWebTrailerFlag
+                ) {
                   endStreamReceived = true;
                   const trailer = grpcWebTrailerParse(result.value.data);
-                  validateGrpcStatus(trailer);
+                  grpcValidateTrailer(trailer);
                   responseTrailer.resolve(trailer);
                   return {
                     done: true,
@@ -352,29 +352,4 @@ export function createGrpcWebTransport(
       );
     },
   };
-}
-
-function validateFetchResponse(
-  binaryFormat: boolean,
-  response: Response
-): void {
-  const code = grpcCodeFromHttpStatus(response.status);
-  if (code != null) {
-    throw new ConnectError(
-      decodeURIComponent(
-        response.headers.get("grpc-message") ??
-          `HTTP ${response.status} ${response.statusText}`
-      ),
-      code
-    );
-  }
-  grpcWebExpectContentType(binaryFormat, response.headers.get("Content-Type"));
-  validateGrpcStatus(response.headers);
-}
-
-function validateGrpcStatus(headerOrTrailer: Headers) {
-  const err = grpcFindTrailerError(headerOrTrailer);
-  if (err) {
-    throw err;
-  }
 }

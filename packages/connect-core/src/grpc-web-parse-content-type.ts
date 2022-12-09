@@ -12,28 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "./connect-error.js";
-import { Code } from "./code.js";
-
-/**
- * Asserts a valid gRPC-web Content-Type header. Raises a ConnectError otherwise.
- */
-export function grpcWebExpectContentType(
-  binaryFormat: boolean,
-  contentType: string | null
-): void {
-  const t = grpcWebParseContentType(contentType);
-  if (t && t.text) {
-    throw new ConnectError("grpc-web-text is not supported", Code.Internal);
-  }
-  if (!t || t.binary != binaryFormat) {
-    throw new ConnectError(
-      `unexpected response content type ${String(contentType)}`,
-      Code.Internal
-    );
-  }
-}
-
 /**
  * Parse a gRPC-web Content-Type header.
  */
