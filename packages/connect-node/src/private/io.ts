@@ -19,10 +19,7 @@ import { assert } from "./assert.js";
 import type { ReadableStreamReadResultLike } from "../lib.dom.streams.js";
 import { Code, ConnectError, EnvelopedMessage } from "@bufbuild/connect-core";
 import type { JsonValue } from "@bufbuild/protobuf";
-import {
-  nodeHeaderToWebHeader,
-  webHeaderToNodeHeaders,
-} from "./web-header-to-node-headers.js";
+import { nodeHeaderToWebHeader, webHeaderToNodeHeaders } from "./web-header-to-node-headers.js";
 
 export function jsonParse(bytes: Uint8Array): JsonValue {
   const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
@@ -163,19 +160,43 @@ export function write(
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     if (stream.errored) {
-      return reject(stream.errored);
+      return error(stream.errored);
     }
+    stream.once("error", error);
+    stream.once("drain", drain);
     const encoding = typeof data == "string" ? "utf8" : "binary";
-    const flushed = stream.write(data, encoding, cb);
-    if (flushed) {
-      resolve();
-    } else {
-      stream.once("drain", resolve);
-    }
-    function cb(error: Error | null | undefined) {
-      if (error) {
-        reject(error);
+    // flushed == false: the stream wishes for the calling code to wait for
+    // the 'drain' event to be emitted before continuing to write additional
+    // data.
+    const flushed = stream.write(data, encoding, function(err) {
+      if (err && !flushed) {
+        // We are never getting a "drain" nor an "error" event if the stream
+        // has already ended (ERR_STREAM_WRITE_AFTER_END), so we have to
+        // resolve our promise in this callback.
+        error(err);
+        // However, once we do that (and remove our event listeners), we _do_
+        // get an "error" event, which ends up as an uncaught exception.
+        // We silence this error specifically with the following listener.
+        // All of this seems very fragile.
+        stream.once("error", () => {
+          //
+        });
       }
+    });
+    if (flushed) {
+      drain();
+    }
+
+    function error(err: Error) {
+      stream.off("error", error);
+      stream.off("drain", drain);
+      reject(err);
+    }
+
+    function drain() {
+      stream.off("error", error);
+      stream.off("drain", drain);
+      resolve();
     }
   });
 }
