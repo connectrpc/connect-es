@@ -23,14 +23,12 @@ import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-fdescribe("unimplemented_server_streaming_service", function () {
+describe("unimplemented_server_streaming_service", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
-  servers.describeTransportsOnly([
-    "@bufbuild/connect-node (Connect, JSON, http2, gzip) against connect-go (h1)"
-  ], (transport) => {
-    fit("with promise client", async function () {
+  servers.describeTransports((transport) => {
+    it("with promise client", async function () {
       const client = createPromiseClient(UnimplementedService, transport());
       const request = new Empty();
       try {
