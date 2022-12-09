@@ -58,10 +58,11 @@ import {
 interface CreateConnectProtocolOptions {
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
-  rejectIfNoConnectHeader?: boolean;
+  requireConnectProtocolHeader?: boolean;
 }
 
-const connectProtocolVersionHeader = "connect-protocol-version";
+const connectProtocolVersionHeader = "Connect-Protocol-Version";
+const connectProtocolVersion = "1";
 
 /**
  * Create a Connect Protocol instance.
@@ -69,7 +70,7 @@ const connectProtocolVersionHeader = "connect-protocol-version";
 export function createConnectProtocol(
   options: CreateConnectProtocolOptions
 ): Protocol {
-  const shouldReject = options.rejectIfNoConnectHeader ?? false;
+  const shouldRequireHeader = options.requireConnectProtocolHeader ?? false;
   return {
     supportsMediaType: (type) => !!connectParseContentType(type),
 
@@ -98,13 +99,14 @@ export function createConnectProtocol(
             }
 
             if (
-              shouldReject &&
-              (req.headers[connectProtocolVersionHeader] ?? "").length === 0
+              shouldRequireHeader &&
+              (req.headers[connectProtocolVersionHeader] ?? "") !==
+                connectProtocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
                 400,
-                "Missing Connect Protocol Version in header"
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
               );
             }
 
@@ -155,7 +157,8 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
-            const shouldReject = options.rejectIfNoConnectHeader ?? false;
+            const shouldRequireHeader =
+              options.requireConnectProtocolHeader ?? false;
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -183,13 +186,14 @@ export function createConnectProtocol(
             };
 
             if (
-              shouldReject &&
-              (req.headers[connectProtocolVersionHeader] ?? "").length === 0
+              shouldRequireHeader &&
+              (req.headers[connectProtocolVersionHeader] ?? "") !==
+                connectProtocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
                 400,
-                "Missing Connect Protocol Version in header"
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
               );
             }
 
@@ -258,7 +262,8 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
-            const shouldReject = options.rejectIfNoConnectHeader ?? false;
+            const shouldRequireHeader =
+              options.requireConnectProtocolHeader ?? false;
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -276,13 +281,14 @@ export function createConnectProtocol(
             }
 
             if (
-              shouldReject &&
-              (req.headers[connectProtocolVersionHeader] ?? "").length === 0
+              shouldRequireHeader &&
+              (req.headers[connectProtocolVersionHeader] ?? "") !==
+                connectProtocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
                 400,
-                "Missing Connect Protocol Version in header"
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
               );
             }
 
@@ -355,7 +361,8 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
-            const shouldReject = options.rejectIfNoConnectHeader ?? false;
+            const shouldRequireHeader =
+              options.requireConnectProtocolHeader ?? false;
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -373,13 +380,14 @@ export function createConnectProtocol(
             }
 
             if (
-              shouldReject &&
-              (req.headers[connectProtocolVersionHeader] ?? "").length === 0
+              shouldRequireHeader &&
+              (req.headers[connectProtocolVersionHeader] ?? "") !==
+                connectProtocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
                 400,
-                "Missing Connect Protocol Version in header"
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
               );
             }
 
