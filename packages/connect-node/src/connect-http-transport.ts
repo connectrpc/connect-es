@@ -45,7 +45,7 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import { connectErrorFromNodeReason } from "./private/node-error.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
 import {

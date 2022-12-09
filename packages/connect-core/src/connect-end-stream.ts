@@ -24,7 +24,8 @@ import { connectErrorToJson } from "./connect-error-to-json.js";
 import { appendHeaders } from "./http-headers.js";
 
 /**
- *
+ * connectEndStreamFlag indicates that the data in a EnvelopedMessage
+ * is a EndStreamResponse of the Connect protocol.
  */
 export const connectEndStreamFlag = 0b00000010;
 

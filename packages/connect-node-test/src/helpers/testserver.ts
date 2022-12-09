@@ -16,6 +16,7 @@ import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";
 import {
+  compressionGzip,
   createConnectHttp2Transport,
   createConnectHttpTransport,
   createGrpcWebHttp2Transport,
@@ -374,42 +375,44 @@ vKy9wyvtUtg=
         },
       }),
     // Connect
-    "@bufbuild/connect-node (Connect, binary, http2) against @bufbuild/connect-node (h2c)":
+    "@bufbuild/connect-node (Connect, binary, http2, gzip) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
         createConnectHttp2Transport({
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           useBinaryFormat: true,
+          sendCompression: compressionGzip,
         }),
-    "@bufbuild/connect-node (Connect, JSON, http2) against @bufbuild/connect-node (h2c)":
+    "@bufbuild/connect-node (Connect, JSON, http2, gzip) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
         createConnectHttp2Transport({
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           useBinaryFormat: false,
+          sendCompression: compressionGzip,
         }),
-    "@bufbuild/connect-node (Connect, binary, http2) against connect-go (h1)": (
-      options?: Record<string, unknown>
-    ) =>
-      createConnectHttp2Transport({
-        ...options,
-        baseUrl: servers["connect-go (h1)"].getUrl(),
-        http2Options: {
-          rejectUnauthorized: false, // TODO set up cert for go server correctly
-        },
-        useBinaryFormat: true,
-      }),
-    "@bufbuild/connect-node (Connect, JSON, http2) against connect-go (h1)": (
-      options?: Record<string, unknown>
-    ) =>
-      createConnectHttp2Transport({
-        ...options,
-        baseUrl: servers["connect-go (h1)"].getUrl(),
-        http2Options: {
-          rejectUnauthorized: false, // TODO set up cert for go server correctly
-        },
-        useBinaryFormat: false,
-      }),
+    "@bufbuild/connect-node (Connect, binary, http2, gzip) against connect-go (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttp2Transport({
+          ...options,
+          baseUrl: servers["connect-go (h1)"].getUrl(),
+          http2Options: {
+            rejectUnauthorized: false, // TODO set up cert for go server correctly
+          },
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (Connect, JSON, http2, gzip) against connect-go (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectHttp2Transport({
+          ...options,
+          baseUrl: servers["connect-go (h1)"].getUrl(),
+          http2Options: {
+            rejectUnauthorized: false, // TODO set up cert for go server correctly
+          },
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
     "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)":
       (options?: Record<string, unknown>) =>
         createConnectHttpTransport({

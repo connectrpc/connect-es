@@ -47,7 +47,7 @@ import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
-import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { end, readEnvelope, write } from "./private/io.js";
 import { assert } from "./private/assert.js";
 import { defer } from "./private/defer.js";

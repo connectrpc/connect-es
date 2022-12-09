@@ -162,24 +162,74 @@ export function write(
   data: Uint8Array | string
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
+    if (stream.errored) {
+      return error(stream.errored);
+    }
+    stream.once("error", error);
+    stream.once("drain", drain);
     const encoding = typeof data == "string" ? "utf8" : "binary";
-    const cb = (error: Error | null | undefined) => {
-      if (error) {
-        reject(error);
+    // flushed == false: the stream wishes for the calling code to wait for
+    // the 'drain' event to be emitted before continuing to write additional
+    // data.
+    const flushed = stream.write(data, encoding, function (err) {
+      if (err && !flushed) {
+        // We are never getting a "drain" nor an "error" event if the stream
+        // has already ended (ERR_STREAM_WRITE_AFTER_END), so we have to
+        // resolve our promise in this callback.
+        error(err);
+        // However, once we do that (and remove our event listeners), we _do_
+        // get an "error" event, which ends up as an uncaught exception.
+        // We silence this error specifically with the following listener.
+        // All of this seems very fragile.
+        stream.once("error", () => {
+          //
+        });
       }
-    };
-    const flushed = stream.write(data, encoding, cb);
+    });
     if (flushed) {
+      drain();
+    }
+
+    function error(err: Error) {
+      stream.off("error", error);
+      stream.off("drain", drain);
+      reject(err);
+    }
+
+    function drain() {
+      stream.off("error", error);
+      stream.off("drain", drain);
       resolve();
-    } else {
-      stream.once("drain", resolve);
     }
   });
 }
 
 export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
   return new Promise<Uint8Array>((resolve, reject) => {
-    stream.once("error", reject);
+    if (stream.errored) {
+      return error(stream.errored);
+    }
+    if (stream.readableEnded) {
+      return aborted();
+    }
+
+    stream.once("error", error);
+    stream.once("aborted", aborted);
+
+    function aborted() {
+      stream.off("readable", read);
+      stream.off("error", error);
+      stream.off("aborted", aborted);
+      reject(new ConnectError("http stream aborted", Code.Aborted));
+    }
+
+    function error(err: Error) {
+      stream.off("readable", read);
+      stream.off("error", error);
+      stream.off("aborted", aborted);
+      reject(err);
+    }
+
     const chunks: Uint8Array[] = [];
     function read() {
       let chunk: unknown;
@@ -216,22 +266,34 @@ export async function endWithHttpStatus(
 }
 
 /**
- * Returns a promise for the response status code and response headers
- * as a tuple.
+ * Returns a promise for the status code and headers of a HTTP/2 response.
  */
 export function readResponseHeader(
   stream: http2.ClientHttp2Stream
 ): Promise<[number, Headers]> {
   return new Promise<[number, Headers]>((resolve, reject) => {
     if (stream.errored) {
-      return reject(stream.errored);
+      return error(stream.errored);
     }
+    if (stream.aborted) {
+      return aborted();
+    }
+
     stream.once("error", error);
     stream.once("response", parse);
+    stream.once("aborted", aborted);
+
+    function aborted() {
+      stream.off("error", error);
+      stream.off("response", parse);
+      stream.off("aborted", aborted);
+      reject(new ConnectError("http stream aborted", Code.Aborted));
+    }
 
     function error(err: Error) {
       stream.off("error", error);
-      stream.off('"response"', parse);
+      stream.off("response", parse);
+      stream.off("aborted", aborted);
       reject(err);
     }
 
@@ -252,14 +314,18 @@ export function readResponseTrailer(
 ): Promise<Headers> {
   return new Promise<Headers>((resolve, reject) => {
     if (stream.errored) {
-      return reject(stream.errored);
+      return error(stream.errored);
+    }
+    if (stream.aborted) {
+      return aborted();
     }
     if (stream.readableEnded) {
       return resolve(new Headers());
     }
+    stream.once("end", end);
+    stream.once("aborted", aborted);
     stream.once("error", error);
     stream.once("trailers", parse);
-    stream.once("end", end);
 
     function end() {
       stream.off("error", error);
@@ -268,10 +334,18 @@ export function readResponseTrailer(
       resolve(new Headers());
     }
 
+    function aborted() {
+      stream.off("error", error);
+      stream.off("response", parse);
+      stream.off("aborted", aborted);
+      reject(new ConnectError("http stream aborted", Code.Aborted));
+    }
+
     function error(err: Error) {
+      stream.off("end", end);
+      stream.off("aborted", aborted);
       stream.off("error", error);
       stream.off("trailers", parse);
-      stream.off("end", end);
       reject(err);
     }
 
@@ -279,8 +353,10 @@ export function readResponseTrailer(
       headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader,
       _flags: number // eslint-disable-line @typescript-eslint/no-unused-vars
     ) {
-      stream.off("error", error);
       stream.off("end", end);
+      stream.off("aborted", aborted);
+      stream.off("error", error);
+      stream.off("trailers", parse);
       resolve(nodeHeaderToWebHeader(headers));
     }
   });
@@ -294,23 +370,36 @@ export function readHttp1ResponseTrailer(
 ): Promise<Headers> {
   return new Promise<Headers>((resolve, reject) => {
     if (response.errored) {
-      return reject(response.errored);
+      return error(response.errored);
+    }
+    if (response.aborted) {
+      return aborted();
     }
     if (response.readableEnded) {
       return resolve(nodeHeaderToWebHeader(response.trailers));
     }
-    response.once("error", error);
     response.once("end", end);
+    response.once("aborted", aborted);
+    response.once("error", error);
 
     function end() {
-      response.off("error", error);
       response.off("end", end);
+      response.off("aborted", aborted);
+      response.off("error", error);
       resolve(nodeHeaderToWebHeader(response.trailers));
     }
 
-    function error(err: Error) {
-      response.off("error", error);
+    function aborted() {
       response.off("end", end);
+      response.off("aborted", aborted);
+      response.off("error", error);
+      reject(new ConnectError("http stream aborted", Code.Aborted));
+    }
+
+    function error(err: Error) {
+      response.off("end", end);
+      response.off("aborted", aborted);
+      response.off("error", error);
       reject(err);
     }
   });
