@@ -58,7 +58,10 @@ import {
   readToEnd,
   write,
 } from "./private/io.js";
-import { connectErrorFromNodeReason } from "./private/node-error.js";
+import {
+  connectErrorFromNodeReason,
+  getNodeErrorProps,
+} from "./private/node-error.js";
 import type { Compression } from "./compression.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
@@ -334,9 +337,25 @@ export function createConnectHttp2Transport(
                   flags = flags | compressedFlag;
                   body = await options.sendCompression.compress(body);
                 }
-                await new Promise<void>(resolve => setTimeout(resolve, 50));
                 const enveloped = encodeEnvelope(flags, body);
-                await write(stream, enveloped);
+                try {
+                  await write(stream, enveloped);
+                } catch (e) {
+                  // TODO(TCN-870) sensibly handle write errors on closed stream - the workaround we apply here is insufficient
+                  if (
+                    getNodeErrorProps(e).code == "ERR_STREAM_WRITE_AFTER_END"
+                  ) {
+                    const [status, header] = await headersPromise;
+                    validateResponse(
+                      method.kind,
+                      useBinaryFormat,
+                      acceptCompression,
+                      status,
+                      header
+                    );
+                  }
+                  throw e;
+                }
               },
               async close(): Promise<void> {
                 if (stream.writableEnded) {

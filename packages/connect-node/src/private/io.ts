@@ -162,24 +162,50 @@ export function write(
   data: Uint8Array | string
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
+    if (stream.errored) {
+      return reject(stream.errored);
+    }
     const encoding = typeof data == "string" ? "utf8" : "binary";
-    const cb = (error: Error | null | undefined) => {
-      if (error) {
-        reject(error);
-      }
-    };
     const flushed = stream.write(data, encoding, cb);
     if (flushed) {
       resolve();
     } else {
       stream.once("drain", resolve);
     }
+    function cb(error: Error | null | undefined) {
+      if (error) {
+        reject(error);
+      }
+    }
   });
 }
 
 export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
   return new Promise<Uint8Array>((resolve, reject) => {
-    stream.once("error", reject);
+    if (stream.errored) {
+      return error(stream.errored);
+    }
+    if (stream.readableEnded) {
+      return aborted();
+    }
+
+    stream.once("error", error);
+    stream.once("aborted", aborted);
+
+    function aborted() {
+      stream.off("readable", read);
+      stream.off("error", error);
+      stream.off("aborted", aborted);
+      reject(new ConnectError("http stream aborted", Code.Aborted));
+    }
+
+    function error(err: Error) {
+      stream.off("readable", read);
+      stream.off("error", error);
+      stream.off("aborted", aborted);
+      reject(err);
+    }
+
     const chunks: Uint8Array[] = [];
     function read() {
       let chunk: unknown;
@@ -223,14 +249,27 @@ export function readResponseHeader(
 ): Promise<[number, Headers]> {
   return new Promise<[number, Headers]>((resolve, reject) => {
     if (stream.errored) {
-      return reject(stream.errored);
+      return error(stream.errored);
     }
+    if (stream.aborted) {
+      return aborted();
+    }
+
     stream.once("error", error);
     stream.once("response", parse);
+    stream.once("aborted", aborted);
+
+    function aborted() {
+      stream.off("error", error);
+      stream.off("response", parse);
+      stream.off("aborted", aborted);
+      reject(new ConnectError("http stream aborted", Code.Aborted));
+    }
 
     function error(err: Error) {
       stream.off("error", error);
       stream.off("response", parse);
+      stream.off("aborted", aborted);
       reject(err);
     }
 
@@ -251,14 +290,18 @@ export function readResponseTrailer(
 ): Promise<Headers> {
   return new Promise<Headers>((resolve, reject) => {
     if (stream.errored) {
-      return reject(stream.errored);
+      return error(stream.errored);
+    }
+    if (stream.aborted) {
+      return aborted();
     }
     if (stream.readableEnded) {
       return resolve(new Headers());
     }
+    stream.once("end", end);
+    stream.once("aborted", aborted);
     stream.once("error", error);
     stream.once("trailers", parse);
-    stream.once("end", end);
 
     function end() {
       stream.off("error", error);
@@ -267,10 +310,18 @@ export function readResponseTrailer(
       resolve(new Headers());
     }
 
+    function aborted() {
+      stream.off("error", error);
+      stream.off("response", parse);
+      stream.off("aborted", aborted);
+      reject(new ConnectError("http stream aborted", Code.Aborted));
+    }
+
     function error(err: Error) {
+      stream.off("end", end);
+      stream.off("aborted", aborted);
       stream.off("error", error);
       stream.off("trailers", parse);
-      stream.off("end", end);
       reject(err);
     }
 
@@ -278,8 +329,10 @@ export function readResponseTrailer(
       headers: http2.IncomingHttpHeaders & http2.IncomingHttpStatusHeader,
       _flags: number // eslint-disable-line @typescript-eslint/no-unused-vars
     ) {
-      stream.off("error", error);
       stream.off("end", end);
+      stream.off("aborted", aborted);
+      stream.off("error", error);
+      stream.off("trailers", parse);
       resolve(nodeHeaderToWebHeader(headers));
     }
   });
@@ -293,23 +346,36 @@ export function readHttp1ResponseTrailer(
 ): Promise<Headers> {
   return new Promise<Headers>((resolve, reject) => {
     if (response.errored) {
-      return reject(response.errored);
+      return error(response.errored);
+    }
+    if (response.aborted) {
+      return aborted();
     }
     if (response.readableEnded) {
       return resolve(nodeHeaderToWebHeader(response.trailers));
     }
-    response.once("error", error);
     response.once("end", end);
+    response.once("aborted", aborted);
+    response.once("error", error);
 
     function end() {
-      response.off("error", error);
       response.off("end", end);
+      response.off("aborted", aborted);
+      response.off("error", error);
       resolve(nodeHeaderToWebHeader(response.trailers));
     }
 
-    function error(err: Error) {
-      response.off("error", error);
+    function aborted() {
       response.off("end", end);
+      response.off("aborted", aborted);
+      response.off("error", error);
+      reject(new ConnectError("http stream aborted", Code.Aborted));
+    }
+
+    function error(err: Error) {
+      response.off("end", end);
+      response.off("aborted", aborted);
+      response.off("error", error);
       reject(err);
     }
   });
