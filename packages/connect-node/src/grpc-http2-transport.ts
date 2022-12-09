@@ -51,7 +51,7 @@ import {
   write,
 } from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
-import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import { connectErrorFromNodeReason } from "./private/node-error.js";
 
 const messageFlag = 0b00000000;
 
@@ -100,8 +100,7 @@ export interface GrpcHttp2TransportOptions {
 }
 
 /**
- * Create a Transport for the gRPC protocol.
- *
+ * Create a Transport for the gRPC protocol using the Node.js `http2` package.
  */
 export function createGrpcHttp2Transport(
   options: GrpcHttp2TransportOptions

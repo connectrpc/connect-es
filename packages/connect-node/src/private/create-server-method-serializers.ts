@@ -49,8 +49,8 @@ export function createServerMethodSerializers<
         : new TextEncoder().encode(message.toJsonString(jsonOptions));
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
-      const format = useBinaryFormat ? "binary format" : "json format";
-      throw new ConnectError(`${format}: ${m}`, Code.Internal);
+      const format = useBinaryFormat ? "proto" : "json";
+      throw new ConnectError(`serialize ${format}: ${m}`, Code.Internal);
     }
   }
 
@@ -62,8 +62,8 @@ export function createServerMethodSerializers<
         : method.I.fromJsonString(new TextDecoder().decode(bytes), jsonOptions);
     } catch (e) {
       const m = e instanceof Error ? e.message : String(e);
-      const format = useBinaryFormat ? "binary format" : "json format";
-      throw new ConnectError(`${format}: ${m}`, Code.InvalidArgument);
+      const format = useBinaryFormat ? "proto" : "json";
+      throw new ConnectError(`parse ${format}: ${m}`, Code.InvalidArgument);
     }
   }
 

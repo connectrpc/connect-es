@@ -43,7 +43,7 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { connectErrorFromNodeReason } from "./private/connect-error-from-node.js";
+import { connectErrorFromNodeReason } from "./private/node-error.js";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
