@@ -100,7 +100,7 @@ export function createConnectProtocol(
 
             if (
               shouldRequireHeader &&
-              (req.headers[connectProtocolVersionHeader] ?? "") !==
+              req.headers[connectProtocolVersionHeader] !==
                 connectProtocolVersion
             ) {
               return await endWithHttpStatus(
@@ -157,8 +157,6 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
-            const shouldRequireHeader =
-              options.requireConnectProtocolHeader ?? false;
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -187,7 +185,7 @@ export function createConnectProtocol(
 
             if (
               shouldRequireHeader &&
-              (req.headers[connectProtocolVersionHeader] ?? "") !==
+              req.headers[connectProtocolVersionHeader] !==
                 connectProtocolVersion
             ) {
               return await endWithHttpStatus(
@@ -262,8 +260,6 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
-            const shouldRequireHeader =
-              options.requireConnectProtocolHeader ?? false;
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -282,7 +278,7 @@ export function createConnectProtocol(
 
             if (
               shouldRequireHeader &&
-              (req.headers[connectProtocolVersionHeader] ?? "") !==
+              req.headers[connectProtocolVersionHeader] !==
                 connectProtocolVersion
             ) {
               return await endWithHttpStatus(
@@ -361,8 +357,6 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               req.headers["content-type"] ?? null
             );
-            const shouldRequireHeader =
-              options.requireConnectProtocolHeader ?? false;
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -381,7 +375,7 @@ export function createConnectProtocol(
 
             if (
               shouldRequireHeader &&
-              (req.headers[connectProtocolVersionHeader] ?? "") !==
+              req.headers[connectProtocolVersionHeader] !==
                 connectProtocolVersion
             ) {
               return await endWithHttpStatus(
