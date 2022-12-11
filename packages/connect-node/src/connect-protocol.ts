@@ -80,7 +80,11 @@ interface CreateConnectProtocolOptions {
   sendMaxBytes?: number;
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+  requireConnectProtocolHeader?: boolean;
 }
+
+const connectProtocolVersionHeader = "Connect-Protocol-Version";
+const connectProtocolVersion = "1";
 
 /**
  * Create a Connect Protocol instance.
@@ -88,6 +92,7 @@ interface CreateConnectProtocolOptions {
 export function createConnectProtocol(
   options: CreateConnectProtocolOptions
 ): Protocol {
+  const shouldRequireHeader = options.requireConnectProtocolHeader ?? false;
   const readMaxBytes = validateReadMaxBytesOption(options.readMaxBytes);
   const compressMinBytes = options.compressMinBytes ?? 0;
   const acceptCompression = options.acceptCompression ?? [
@@ -121,6 +126,19 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldRequireHeader &&
+              req.headers[connectProtocolVersionHeader] !==
+                connectProtocolVersion
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -226,6 +244,7 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType) ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -250,6 +269,19 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
+
+            if (
+              shouldRequireHeader &&
+              req.headers[connectProtocolVersionHeader] !==
+                connectProtocolVersion
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+              );
+            }
+
             const {
               requestCompression,
               responseCompression,
@@ -352,6 +384,7 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType) ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -366,6 +399,19 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldRequireHeader &&
+              req.headers[connectProtocolVersionHeader] !==
+                connectProtocolVersion
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -473,6 +519,7 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType) ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -487,6 +534,19 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldRequireHeader &&
+              req.headers[connectProtocolVersionHeader] !==
+                connectProtocolVersion
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
