@@ -17,11 +17,10 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcFindTrailerError,
-  grpcCodeFromHttpStatus,
+  grpcValidateTrailer,
   grpcWebCreateRequestHeader,
-  grpcWebExpectContentType,
   grpcWebTrailerParse,
+  grpcWebTrailerFlag,
   Interceptor,
   runStreaming,
   runUnary,
@@ -47,13 +46,7 @@ import { defer } from "./private/defer.js";
 import { end, readEnvelope, readResponseHeader, write } from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
-
-const messageFlag = 0b00000000;
-/**
- * trailerFlag indicates that the data in a EnvelopedMessage
- * is a set of trailers of the gRPC-web protocol.
- */
-const trailerFlag = 0b10000000;
+import { grpcWebValidateResponse } from "@bufbuild/connect-core";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -165,15 +158,16 @@ export function createGrpcWebHttp2Transport(
             );
 
             const headersPromise = readResponseHeader(stream);
-            const envelope = encodeEnvelope(
-              messageFlag,
-              serialize(req.message)
-            );
+            const envelope = encodeEnvelope(0, serialize(req.message));
             await write(stream, envelope);
             await end(stream);
 
             const [responseCode, responseHeader] = await headersPromise;
-            validateResponse(useBinaryFormat, responseCode, responseHeader);
+            grpcWebValidateResponse(
+              useBinaryFormat,
+              responseCode,
+              responseHeader
+            );
 
             const messageOrTrailerResult = await readEnvelope(stream);
 
@@ -181,11 +175,11 @@ export function createGrpcWebHttp2Transport(
               throw "premature eof";
             }
 
-            if (messageOrTrailerResult.value.flags === trailerFlag) {
+            if (messageOrTrailerResult.value.flags === grpcWebTrailerFlag) {
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              validateGrpcStatus(
+              grpcValidateTrailer(
                 grpcWebTrailerParse(messageOrTrailerResult.value.data)
               );
               // At this point, we received trailers only, but the trailers did
@@ -198,12 +192,12 @@ export function createGrpcWebHttp2Transport(
             if (trailerResult.done) {
               throw "missing trailer";
             }
-            if (trailerResult.value.flags !== trailerFlag) {
+            if (trailerResult.value.flags !== grpcWebTrailerFlag) {
               throw "missing trailer";
             }
 
             const trailer = grpcWebTrailerParse(trailerResult.value.data);
-            validateGrpcStatus(trailer);
+            grpcValidateTrailer(trailer);
 
             const eofResult = await readEnvelope(stream);
             if (!eofResult.done) {
@@ -294,7 +288,7 @@ export function createGrpcWebHttp2Transport(
                   );
                 }
                 const enveloped = encodeEnvelope(
-                  messageFlag,
+                  0,
                   serialize(normalize(message))
                 );
                 await write(stream, enveloped);
@@ -310,7 +304,7 @@ export function createGrpcWebHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headerPromise;
-                validateResponse(
+                grpcWebValidateResponse(
                   useBinaryFormat,
                   responseStatus,
                   responseHeader
@@ -326,10 +320,13 @@ export function createGrpcWebHttp2Transport(
                       value: undefined,
                     };
                   }
-                  if ((result.value.flags & trailerFlag) === trailerFlag) {
+                  if (
+                    (result.value.flags & grpcWebTrailerFlag) ===
+                    grpcWebTrailerFlag
+                  ) {
                     endStreamReceived = true;
                     const trailer = grpcWebTrailerParse(result.value.data);
-                    validateGrpcStatus(trailer);
+                    grpcValidateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
                       done: true,
@@ -355,27 +352,4 @@ export function createGrpcWebHttp2Transport(
       );
     },
   };
-}
-
-function validateResponse(
-  binaryFormat: boolean,
-  status: number,
-  headers: Headers
-) {
-  const code = grpcCodeFromHttpStatus(status);
-  if (code != null) {
-    throw new ConnectError(
-      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
-      code
-    );
-  }
-  grpcWebExpectContentType(binaryFormat, headers.get("Content-Type"));
-  validateGrpcStatus(headers);
-}
-
-function validateGrpcStatus(headerOrTrailer: Headers) {
-  const err = grpcFindTrailerError(headerOrTrailer);
-  if (err) {
-    throw err;
-  }
 }

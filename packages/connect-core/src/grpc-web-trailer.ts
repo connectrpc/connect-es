@@ -13,6 +13,12 @@
 // limitations under the License.
 
 /**
+ * grpcWebTrailerFlag indicates that the data in a EnvelopedMessage
+ * is a set of trailers of the gRPC-web protocol.
+ */
+export const grpcWebTrailerFlag = 0b10000000;
+
+/**
  * Parse a gRPC-web trailer, a set of header fields separated by CRLF.
  */
 export function grpcWebTrailerParse(data: Uint8Array): Headers {

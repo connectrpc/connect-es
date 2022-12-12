@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  grpcExpectContentType,
-  grpcParseContentType,
-} from "./grpc-expect-content-type.js";
+import { grpcParseContentType } from "./grpc-parse-content-type.js";
 
 describe("grpcParseContentType()", function () {
   it("should parse", function () {
@@ -43,50 +40,4 @@ describe("grpcParseContentType()", function () {
     ).toBeUndefined();
     expect(grpcParseContentType("application/grpc-web+thrift")).toBeUndefined();
   });
-});
-
-describe("grpcExpectContentType()", function () {
-  describe("binary", () => {
-    const [itAccepts, itRejects] = makeIt(true);
-    itAccepts([
-      "application/grpc",
-      "application/GRPC",
-      "application/grpc+proto",
-    ]);
-    itRejects([
-      null,
-      undefined as unknown as null,
-      "application/json",
-      "application/grpc+json",
-    ]);
-  });
-
-  describe("json", () => {
-    const [itAccepts, itRejects] = makeIt(false);
-    itAccepts([
-      "application/grpc+json",
-      "application/grpc+json; charset=utf-8",
-    ]);
-    itRejects([null, "application/json", "application/grpc-web+json"]);
-  });
-
-  function makeIt(binary: boolean) {
-    function itAccepts(types: (string | null)[]) {
-      for (const t of types) {
-        it(`accepts ${String(t)}`, () => {
-          expect(() => grpcExpectContentType(binary, t)).not.toThrowError();
-        });
-      }
-    }
-    function itRejects(types: (string | null)[]) {
-      for (const t of types) {
-        it(`rejects ${String(t)}`, () => {
-          expect(() => grpcExpectContentType(binary, t)).toThrowError(
-            `[internal] unexpected response content type ${String(t)}`
-          );
-        });
-      }
-    }
-    return [itAccepts, itRejects];
-  }
 });

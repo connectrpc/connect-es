@@ -12,32 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "./connect-error.js";
-import { Code } from "./code.js";
-import { MethodKind } from "@bufbuild/protobuf";
-
-/**
- * Asserts a valid Connect Content-Type response header. Raises a ConnectError
- * otherwise.
- */
-export function connectExpectContentType(
-  methodKind: MethodKind,
-  binaryFormat: boolean,
-  contentType: string | null
-): void {
-  const t = connectParseContentType(contentType);
-  if (
-    !t ||
-    t.binary != binaryFormat ||
-    t.stream != (methodKind != MethodKind.Unary)
-  ) {
-    throw new ConnectError(
-      `unexpected response content type ${String(contentType)}`,
-      Code.Internal
-    );
-  }
-}
-
 /**
  * Parse a Connect Content-Type header.
  */

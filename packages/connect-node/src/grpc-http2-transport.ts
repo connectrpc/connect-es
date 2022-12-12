@@ -17,10 +17,9 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcCodeFromHttpStatus,
   grpcCreateRequestHeader,
-  grpcExpectContentType,
-  grpcFindTrailerError,
+  grpcValidateResponse,
+  grpcValidateTrailer,
   Interceptor,
   runStreaming,
   runUnary,
@@ -169,7 +168,7 @@ export function createGrpcHttp2Transport(
             await end(stream);
 
             const [responseCode, responseHeader] = await headersPromise;
-            validateResponse(useBinaryFormat, responseCode, responseHeader);
+            grpcValidateResponse(useBinaryFormat, responseCode, responseHeader);
 
             const messageResult = await readEnvelope(stream);
             const eofResult = await readEnvelope(stream);
@@ -177,7 +176,7 @@ export function createGrpcHttp2Transport(
               throw "extraneous data";
             }
             const trailer = await trailerPromise;
-            validateGrpcStatus(trailer);
+            grpcValidateTrailer(trailer);
             if (messageResult.done) {
               throw "premature eof";
             }
@@ -277,7 +276,7 @@ export function createGrpcHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headerPromise;
-                validateResponse(
+                grpcValidateResponse(
                   useBinaryFormat,
                   responseStatus,
                   responseHeader
@@ -286,7 +285,7 @@ export function createGrpcHttp2Transport(
                   const result = await readEnvelope(stream);
                   if (result.done) {
                     const trailer = await trailerPromise;
-                    validateGrpcStatus(trailer);
+                    grpcValidateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
                       done: true,
@@ -311,27 +310,4 @@ export function createGrpcHttp2Transport(
       );
     },
   };
-}
-
-function validateResponse(
-  binaryFormat: boolean,
-  status: number,
-  headers: Headers
-) {
-  const code = grpcCodeFromHttpStatus(status);
-  if (code != null) {
-    throw new ConnectError(
-      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
-      code
-    );
-  }
-  grpcExpectContentType(binaryFormat, headers.get("Content-Type"));
-  validateGrpcStatus(headers);
-}
-
-function validateGrpcStatus(headerOrTrailer: Headers) {
-  const err = grpcFindTrailerError(headerOrTrailer);
-  if (err) {
-    throw err;
-  }
 }

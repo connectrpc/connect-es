@@ -110,7 +110,7 @@ export function createConnectProtocol(
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = connectParseContentType(
-              requestHeader.get(headerContentType) ?? null
+              requestHeader.get(headerContentType)
             );
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -242,7 +242,7 @@ export function createConnectProtocol(
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = connectParseContentType(
-              requestHeader.get(headerContentType) ?? null
+              requestHeader.get(headerContentType)
             );
 
             if (type === undefined) {
@@ -382,7 +382,7 @@ export function createConnectProtocol(
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = connectParseContentType(
-              requestHeader.get(headerContentType) ?? null
+              requestHeader.get(headerContentType)
             );
 
             if (type === undefined) {
@@ -517,7 +517,7 @@ export function createConnectProtocol(
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = connectParseContentType(
-              requestHeader.get(headerContentType) ?? null
+              requestHeader.get(headerContentType)
             );
 
             if (type === undefined) {

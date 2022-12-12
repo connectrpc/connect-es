@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  grpcWebExpectContentType,
-  grpcWebParseContentType,
-} from "./grpc-web-expect-content-type.js";
+import { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
 
 describe("grpcWebParseContentType()", function () {
   it("should parse", function () {
@@ -67,64 +64,4 @@ describe("grpcWebParseContentType()", function () {
       grpcWebParseContentType("application/grpc-web+thrift")
     ).toBeUndefined();
   });
-});
-
-describe("grpcWebExpectContentType()", function () {
-  describe("binary", () => {
-    const [itAccepts, itRejects, itDoesNotSupport] = makeIt(true);
-    itAccepts([
-      "application/grpc-web",
-      "application/grpc-WEB",
-      "application/grpc-web+proto",
-    ]);
-    itRejects([
-      null,
-      undefined as unknown as null,
-      "application/json",
-      "application/grpc-web+json",
-    ]);
-    itDoesNotSupport([
-      "application/grpc-web-text",
-      "application/grpc-web-text+proto",
-    ]);
-  });
-
-  describe("json", () => {
-    const [itAccepts, itRejects, itDoesNotSupport] = makeIt(false);
-    itAccepts([
-      "application/grpc-web+json",
-      "application/grpc-web+json; charset=utf-8",
-    ]);
-    itRejects([null, "application/proto", "application/json"]);
-    itDoesNotSupport(["application/grpc-web-text+json"]);
-  });
-
-  function makeIt(binary: boolean) {
-    function itAccepts(types: (string | null)[]) {
-      for (const t of types) {
-        it(`accepts ${String(t)}`, () => {
-          expect(() => grpcWebExpectContentType(binary, t)).not.toThrowError();
-        });
-      }
-    }
-    function itRejects(types: (string | null)[]) {
-      for (const t of types) {
-        it(`rejects ${String(t)}`, () => {
-          expect(() => grpcWebExpectContentType(binary, t)).toThrowError(
-            `[internal] unexpected response content type ${String(t)}`
-          );
-        });
-      }
-    }
-    function itDoesNotSupport(types: (string | null)[]) {
-      for (const t of types) {
-        it(`rejects ${String(t)}`, () => {
-          expect(() => grpcWebExpectContentType(binary, t)).toThrowError(
-            `[internal] grpc-web-text is not supported`
-          );
-        });
-      }
-    }
-    return [itAccepts, itRejects, itDoesNotSupport];
-  }
 });

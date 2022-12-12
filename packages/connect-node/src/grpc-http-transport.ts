@@ -19,10 +19,8 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcCodeFromHttpStatus,
   grpcCreateRequestHeader,
-  grpcExpectContentType,
-  grpcFindTrailerError,
+  grpcValidateResponse,
   Interceptor,
   runStreaming,
   runUnary,
@@ -56,6 +54,7 @@ import {
   write,
 } from "./private/io.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
+import { grpcValidateTrailer } from "@bufbuild/connect-core";
 
 export interface GrpcHttpTransportOptions {
   /**
@@ -172,7 +171,7 @@ export function createGrpcHttpTransport(
               typeof response.statusCode == "number",
               "http1 client response is missing status code"
             );
-            validateResponse(
+            grpcValidateResponse(
               useBinaryFormat,
               response.statusCode,
               responseHeaders
@@ -186,7 +185,7 @@ export function createGrpcHttpTransport(
             }
 
             const trailer = await trailerPromise;
-            validateGrpcStatus(trailer);
+            grpcValidateTrailer(trailer);
 
             if (messageResult.done) {
               throw "premature eof";
@@ -296,7 +295,7 @@ export function createGrpcHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
-                validateResponse(
+                grpcValidateResponse(
                   useBinaryFormat,
                   response.statusCode,
                   await responseHeader
@@ -305,7 +304,7 @@ export function createGrpcHttpTransport(
                   const result = await readEnvelope(response);
                   if (result.done) {
                     const trailer = await responseTrailer;
-                    validateGrpcStatus(trailer);
+                    grpcValidateTrailer(trailer);
                     return {
                       done: true,
                       value: undefined,
@@ -361,27 +360,4 @@ function nodeRequest(protocol: string) {
     return protocol.includes("https") ? https.request : http.request;
   }
   throw new Error("Unsupported protocol");
-}
-
-function validateGrpcStatus(headerOrTrailer: Headers) {
-  const err = grpcFindTrailerError(headerOrTrailer);
-  if (err) {
-    throw err;
-  }
-}
-
-function validateResponse(
-  binaryFormat: boolean,
-  status: number,
-  headers: Headers
-) {
-  const code = grpcCodeFromHttpStatus(status);
-  if (code != null) {
-    throw new ConnectError(
-      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
-      code
-    );
-  }
-  grpcExpectContentType(binaryFormat, headers.get("Content-Type"));
-  validateGrpcStatus(headers);
 }

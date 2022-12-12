@@ -12,25 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "./connect-error.js";
-import { Code } from "./code.js";
-
-/**
- * Asserts a valid gRPC Content-Type header. Raises a ConnectError otherwise.
- */
-export function grpcExpectContentType(
-  binaryFormat: boolean,
-  contentType: string | null
-): void {
-  const t = grpcParseContentType(contentType);
-  if (!t || t.binary != binaryFormat) {
-    throw new ConnectError(
-      `unexpected response content type ${String(contentType)}`,
-      Code.Internal
-    );
-  }
-}
-
 /**
  * Parse a gRPC Content-Type header.
  */
