@@ -51,14 +51,40 @@ import {
   readToEnd,
   write,
 } from "./private/io.js";
+import type { Compression } from "./compression.js";
+import { compressionBrotli, compressionGzip } from "./compression.js";
+import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
+import { connectErrorFromNodeReason } from "./private/node-error.js";
+import { compressionNegotiate } from "./private/compression-negotiate.js";
+
+/**
+ * compressedFlag indicates that the data in a EnvelopedMessage is
+ * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
+ * and Connect protocols.
+ */
+const compressedFlag = 0b00000001;
+const headerUnaryEncoding = "Content-Encoding";
+const headerStreamEncoding = "Connect-Content-Encoding";
+const headerUnaryAcceptEncoding = "Accept-Encoding";
+const headerStreamAcceptEncoding = "Connect-Accept-Encoding";
+const headerContentType = "Content-Type";
 
 /**
  * Options for creating a Connect Protocol instance.
  */
 interface CreateConnectProtocolOptions {
+  // TODO document
+  acceptCompression?: Compression[];
+  compressMinBytes?: number;
+  readMaxBytes?: number;
+  sendMaxBytes?: number;
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+  requireConnectProtocolHeader?: boolean;
 }
+
+const connectProtocolVersionHeader = "Connect-Protocol-Version";
+const connectProtocolVersion = "1";
 
 /**
  * Create a Connect Protocol instance.
@@ -66,6 +92,13 @@ interface CreateConnectProtocolOptions {
 export function createConnectProtocol(
   options: CreateConnectProtocolOptions
 ): Protocol {
+  const shouldRequireHeader = options.requireConnectProtocolHeader ?? false;
+  const readMaxBytes = validateReadMaxBytesOption(options.readMaxBytes);
+  const compressMinBytes = options.compressMinBytes ?? 0;
+  const acceptCompression = options.acceptCompression ?? [
+    compressionGzip,
+    compressionBrotli,
+  ];
   return {
     supportsMediaType: (type) => !!connectParseContentType(type),
 
@@ -75,8 +108,9 @@ export function createConnectProtocol(
       switch (spec.kind) {
         case MethodKind.Unary:
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = connectParseContentType(
-              req.headers["content-type"] ?? null
+              requestHeader.get(headerContentType) ?? null
             );
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -92,16 +126,53 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldRequireHeader &&
+              req.headers[connectProtocolVersionHeader] !==
+                connectProtocolVersion
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader: requestHeader,
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
                 type.binary
               ),
               responseTrailer: new Headers(),
             };
+            const {
+              requestCompression,
+              responseCompression,
+              unsupportedError,
+              supportedNames,
+            } = compressionNegotiate(
+              acceptCompression,
+              requestHeader.get(headerUnaryEncoding),
+              requestHeader.get(headerUnaryAcceptEncoding)
+            );
+            if (unsupportedError) {
+              unsupportedError.metadata.set(
+                headerUnaryAcceptEncoding,
+                supportedNames
+              );
+              return await endWithConnectUnaryError(
+                res,
+                context,
+                unsupportedError,
+                options.jsonOptions,
+                undefined,
+                compressMinBytes
+              );
+            }
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -109,17 +180,50 @@ export function createConnectProtocol(
                 spec.method,
                 type.binary
               );
-
-            const input = parse(await readToEnd(req));
+            let requestBody = await readToEnd(req); // TODO(TCN-785) honor readMaxBytes
+            if (requestCompression) {
+              requestBody = await requestCompression.decompress(
+                requestBody,
+                readMaxBytes
+              );
+            }
             let output: O | PartialMessage<O>;
+            const input = parse(requestBody);
             try {
               output = await spec.impl(input, context);
             } catch (e) {
+              let ce: ConnectError;
+              if (e instanceof ConnectError) {
+                ce = e;
+                context.responseHeader = appendHeaders(
+                  context.responseHeader,
+                  e.metadata
+                );
+              } else if (connectErrorFromNodeReason(e).code == Code.Canceled) {
+                ce = new ConnectError("operation canceled", Code.Canceled);
+              } else {
+                // TODO(TCN-785) We want to elide the error message for the client, but still
+                //    make it available for logging. We may have to add a "cause" property.
+                ce = new ConnectError("internal error", Code.Internal);
+              }
               return await endWithConnectUnaryError(
                 res,
                 context,
-                connectErrorFromReason(e),
-                options.jsonOptions
+                ce,
+                options.jsonOptions,
+                responseCompression,
+                compressMinBytes
+              );
+            }
+            let responseBody = serialize(normalize(output));
+            if (
+              responseCompression &&
+              responseBody.length >= compressMinBytes
+            ) {
+              responseBody = await responseCompression.compress(responseBody);
+              context.responseHeader.set(
+                headerUnaryEncoding,
+                responseCompression.name
               );
             }
             res.writeHead(
@@ -131,14 +235,16 @@ export function createConnectProtocol(
                 )
               )
             );
-            await write(res, serialize(normalize(output)));
+            await write(res, responseBody);
             await end(res);
           };
         case MethodKind.ServerStreaming: {
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = connectParseContentType(
-              req.headers["content-type"] ?? null
+              requestHeader.get(headerContentType) ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -156,13 +262,56 @@ export function createConnectProtocol(
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
                 type.binary
               ),
               responseTrailer: new Headers(),
             };
+
+            if (
+              shouldRequireHeader &&
+              req.headers[connectProtocolVersionHeader] !==
+                connectProtocolVersion
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+              );
+            }
+
+            const {
+              requestCompression,
+              responseCompression,
+              unsupportedError,
+              supportedNames,
+            } = compressionNegotiate(
+              acceptCompression,
+              requestHeader.get(headerStreamEncoding),
+              requestHeader.get(headerStreamAcceptEncoding)
+            );
+            if (unsupportedError) {
+              unsupportedError.metadata.set(
+                headerStreamAcceptEncoding,
+                supportedNames
+              );
+              return await endWithConnectEndStream(
+                res,
+                context,
+                unsupportedError,
+                options.jsonOptions,
+                undefined,
+                compressMinBytes
+              );
+            }
+            if (responseCompression) {
+              context.responseHeader.set(
+                headerStreamEncoding,
+                responseCompression.name
+              );
+            }
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -170,30 +319,29 @@ export function createConnectProtocol(
                 spec.method,
                 type.binary
               );
-
             const inputResult = await readEnvelope(req);
             if (inputResult.done) {
               return await endWithConnectEndStream(
                 res,
                 context,
                 new ConnectError("Missing input message", Code.Internal),
-                options.jsonOptions
+                options.jsonOptions,
+                responseCompression,
+                compressMinBytes
               );
             }
-            if (inputResult.value.flags !== 0b00000000) {
-              return await endWithConnectEndStream(
-                res,
-                context,
-                new ConnectError(
-                  `Unexpected input flags ${inputResult.value.flags.toString(
-                    2
-                  )}`,
-                  Code.Internal
-                ),
-                options.jsonOptions
-              );
+            const flags = inputResult.value.flags;
+            let data = inputResult.value.data;
+            if ((flags & compressedFlag) === compressedFlag) {
+              if (!requestCompression) {
+                throw new ConnectError(
+                  `received compressed envelope, but no content-encoding`,
+                  Code.InvalidArgument
+                );
+              }
+              data = await requestCompression.decompress(data, readMaxBytes);
             }
-            const input = parse(inputResult.value.data);
+            const input = parse(data);
             try {
               for await (const output of spec.impl(input, context)) {
                 if (!res.headersSent) {
@@ -202,32 +350,41 @@ export function createConnectProtocol(
                     webHeaderToNodeHeaders(context.responseHeader)
                   );
                 }
-                await write(
-                  res,
-                  encodeEnvelope(0b00000000, serialize(normalize(output)))
-                );
+                let data = serialize(normalize(output));
+                let flags = 0;
+                if (responseCompression && data.length >= compressMinBytes) {
+                  data = await responseCompression.compress(data);
+                  flags = flags | compressedFlag;
+                }
+                await write(res, encodeEnvelope(flags, data));
               }
             } catch (e) {
               return await endWithConnectEndStream(
                 res,
                 context,
                 connectErrorFromReason(e),
-                options.jsonOptions
+                options.jsonOptions,
+                responseCompression,
+                compressMinBytes
               );
             }
             return await endWithConnectEndStream(
               res,
               context,
               undefined,
-              options.jsonOptions
+              options.jsonOptions,
+              responseCompression,
+              compressMinBytes
             );
           };
         }
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = connectParseContentType(
-              req.headers["content-type"] ?? null
+              requestHeader.get(headerContentType) ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -242,6 +399,19 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldRequireHeader &&
+              req.headers[connectProtocolVersionHeader] !==
+                connectProtocolVersion
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -252,6 +422,36 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
+            const {
+              requestCompression,
+              responseCompression,
+              unsupportedError,
+              supportedNames,
+            } = compressionNegotiate(
+              acceptCompression,
+              requestHeader.get(headerStreamEncoding),
+              requestHeader.get(headerStreamAcceptEncoding)
+            );
+            if (unsupportedError) {
+              unsupportedError.metadata.set(
+                headerStreamAcceptEncoding,
+                supportedNames
+              );
+              return await endWithConnectEndStream(
+                res,
+                context,
+                unsupportedError,
+                options.jsonOptions,
+                undefined,
+                compressMinBytes
+              );
+            }
+            if (responseCompression) {
+              context.responseHeader.set(
+                headerStreamEncoding,
+                responseCompression.name
+              );
+            }
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -259,27 +459,27 @@ export function createConnectProtocol(
                 spec.method,
                 type.binary
               );
-
             async function* input() {
               for (;;) {
                 const result = await readEnvelope(req);
                 if (result.done) {
                   break;
                 }
-                if (result.value.flags !== 0b00000000) {
-                  return await endWithConnectEndStream(
-                    res,
-                    context,
-                    new ConnectError(
-                      `Unexpected input flags ${result.value.flags.toString(
-                        2
-                      )}`,
-                      Code.Internal
-                    ),
-                    options.jsonOptions
+                const flags = result.value.flags;
+                let data = result.value.data;
+                if ((flags & compressedFlag) === compressedFlag) {
+                  if (!requestCompression) {
+                    throw new ConnectError(
+                      `received compressed envelope, but no content-encoding`,
+                      Code.InvalidArgument
+                    );
+                  }
+                  data = await requestCompression.decompress(
+                    data,
+                    readMaxBytes
                   );
                 }
-                yield parse(result.value.data);
+                yield parse(data);
               }
             }
             let output: O | PartialMessage<O>;
@@ -290,27 +490,36 @@ export function createConnectProtocol(
                 res,
                 context,
                 connectErrorFromReason(e),
-                options.jsonOptions
+                options.jsonOptions,
+                responseCompression,
+                compressMinBytes
               );
             }
             res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
-            await write(
-              res,
-              encodeEnvelope(0b00000000, serialize(normalize(output)))
-            );
+            let data = serialize(normalize(output));
+            let flags = 0;
+            if (responseCompression && data.length >= compressMinBytes) {
+              data = await responseCompression.compress(data);
+              flags = flags | compressedFlag;
+            }
+            await write(res, encodeEnvelope(flags, data));
             return await endWithConnectEndStream(
               res,
               context,
               undefined,
-              options.jsonOptions
+              options.jsonOptions,
+              responseCompression,
+              compressMinBytes
             );
           };
         }
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = connectParseContentType(
-              req.headers["content-type"] ?? null
+              requestHeader.get(headerContentType) ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -325,6 +534,19 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (
+              shouldRequireHeader &&
+              req.headers[connectProtocolVersionHeader] !==
+                connectProtocolVersion
+            ) {
+              return await endWithHttpStatus(
+                res,
+                400,
+                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+              );
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -335,6 +557,36 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
+            const {
+              requestCompression,
+              responseCompression,
+              unsupportedError,
+              supportedNames,
+            } = compressionNegotiate(
+              acceptCompression,
+              requestHeader.get(headerStreamEncoding),
+              requestHeader.get(headerStreamAcceptEncoding)
+            );
+            if (unsupportedError) {
+              unsupportedError.metadata.set(
+                headerUnaryAcceptEncoding,
+                supportedNames
+              );
+              return await endWithConnectUnaryError(
+                res,
+                context,
+                unsupportedError,
+                options.jsonOptions,
+                undefined,
+                compressMinBytes
+              );
+            }
+            if (responseCompression) {
+              context.responseHeader.set(
+                headerStreamEncoding,
+                responseCompression.name
+              );
+            }
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -342,27 +594,27 @@ export function createConnectProtocol(
                 spec.method,
                 type.binary
               );
-
             async function* input() {
               for (;;) {
                 const result = await readEnvelope(req);
                 if (result.done) {
                   break;
                 }
-                if (result.value.flags !== 0b00000000) {
-                  return await endWithConnectEndStream(
-                    res,
-                    context,
-                    new ConnectError(
-                      `Unexpected input flags ${result.value.flags.toString(
-                        2
-                      )}`,
-                      Code.Internal
-                    ),
-                    options.jsonOptions
+                const flags = result.value.flags;
+                let data = result.value.data;
+                if ((flags & compressedFlag) === compressedFlag) {
+                  if (!requestCompression) {
+                    throw new ConnectError(
+                      `received compressed envelope, but no content-encoding ON THE SERVER`,
+                      Code.InvalidArgument
+                    );
+                  }
+                  data = await requestCompression.decompress(
+                    data,
+                    readMaxBytes
                   );
                 }
-                yield parse(result.value.data);
+                yield parse(data);
               }
             }
             try {
@@ -373,24 +625,31 @@ export function createConnectProtocol(
                     webHeaderToNodeHeaders(context.responseHeader)
                   );
                 }
-                await write(
-                  res,
-                  encodeEnvelope(0b00000000, serialize(normalize(output)))
-                );
+                let data = serialize(normalize(output));
+                let flags = 0;
+                if (responseCompression && data.length >= compressMinBytes) {
+                  data = await responseCompression.compress(data);
+                  flags = flags | compressedFlag;
+                }
+                await write(res, encodeEnvelope(flags, data));
               }
             } catch (e) {
               return await endWithConnectEndStream(
                 res,
                 context,
                 connectErrorFromReason(e),
-                options.jsonOptions
+                options.jsonOptions,
+                responseCompression,
+                compressMinBytes
               );
             }
             return await endWithConnectEndStream(
               res,
               context,
               undefined,
-              options.jsonOptions
+              options.jsonOptions,
+              responseCompression,
+              compressMinBytes
             );
           };
         }
@@ -403,21 +662,23 @@ function connectCreateResponseHeader(
   methodKind: MethodKind,
   useBinaryFormat: boolean
 ): Headers {
-  let type = "application/";
+  let contentTypeValue = "application/";
   if (methodKind != MethodKind.Unary) {
-    type += "connect+";
+    contentTypeValue += "connect+";
   }
-  type += useBinaryFormat ? "proto" : "json";
-  return new Headers({
-    "Content-Type": type,
-  });
+  contentTypeValue += useBinaryFormat ? "proto" : "json";
+  const result = new Headers();
+  result.set(headerContentType, contentTypeValue);
+  return result;
 }
 
 async function endWithConnectEndStream(
   res: http.ServerResponse | http2.Http2ServerResponse,
   context: HandlerContext,
   error: ConnectError | undefined,
-  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined,
+  responseCompression: Compression | undefined,
+  compressMinBytes: number
 ) {
   if (!res.headersSent) {
     res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
@@ -427,10 +688,13 @@ async function endWithConnectEndStream(
     error,
     jsonWriteOptions
   );
-  await write(
-    res,
-    encodeEnvelope(connectEndStreamFlag, jsonSerialize(endStreamJson))
-  );
+  let data = jsonSerialize(endStreamJson);
+  let flags = connectEndStreamFlag;
+  if (responseCompression && data.length >= compressMinBytes) {
+    data = await responseCompression.compress(data);
+    flags = flags | compressedFlag;
+  }
+  await write(res, encodeEnvelope(flags, data));
   await end(res);
 }
 
@@ -438,16 +702,23 @@ async function endWithConnectUnaryError(
   res: http.ServerResponse | http2.Http2ServerResponse,
   context: HandlerContext,
   error: ConnectError,
-  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined,
+  responseCompression: Compression | undefined,
+  compressMinBytes: number
 ): Promise<void> {
-  const statusCode = connectCodeToHttpStatus(error.code);
   const header = appendHeaders(
     connectTrailerMux(context.responseHeader, context.responseTrailer),
     error.metadata
   );
-  header.set("Content-Type", "application/json");
-  res.writeHead(statusCode, webHeaderToNodeHeaders(header));
+  header.set(headerContentType, "application/json");
   const json = connectErrorToJson(error, jsonWriteOptions);
-  await write(res, jsonSerialize(json));
+  let body = jsonSerialize(json);
+  if (responseCompression && body.length >= compressMinBytes) {
+    body = await responseCompression.compress(body);
+    header.set(headerUnaryEncoding, responseCompression.name);
+  }
+  const statusCode = connectCodeToHttpStatus(error.code);
+  res.writeHead(statusCode, webHeaderToNodeHeaders(header));
+  await write(res, body);
   await end(res);
 }
