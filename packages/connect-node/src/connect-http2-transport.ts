@@ -476,11 +476,8 @@ export function connectValidateResponseWithCompression(
       );
     }
   }
-  const v = connectValidateResponse(
-    methodKind,
-    useBinaryFormat,
-    status,
-    headers
-  );
-  return { compression, isConnectUnaryError: v.isConnectUnaryError };
+  return {
+    compression,
+    ...connectValidateResponse(methodKind, useBinaryFormat, status, headers),
+  };
 }
