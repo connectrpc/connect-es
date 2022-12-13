@@ -85,6 +85,7 @@ interface CreateConnectProtocolOptions {
 
 const connectProtocolVersionHeader = "Connect-Protocol-Version";
 const connectProtocolVersion = "1";
+const timeoutHeader = "Connect-Timeout-Ms";
 
 /**
  * Create a Connect Protocol instance.
@@ -112,6 +113,21 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
+            const timeout = requestHeader.get(timeoutHeader);
+
+            if (timeout !== null && timeout.length > 0) {
+              req.setTimeout(parseInt(timeout), () => {
+                return void endWithConnectUnaryError(
+                  res,
+                  context,
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  undefined,
+                  compressMinBytes
+                );
+              });
+            }
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -244,6 +260,21 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
+
+            const timeout = requestHeader.get(timeoutHeader);
+
+            if (timeout !== null && timeout.length > 0) {
+              req.setTimeout(parseInt(timeout), () => {
+                return void endWithConnectEndStream(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  undefined,
+                  compressMinBytes
+                );
+              });
+            }
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -385,6 +416,21 @@ export function createConnectProtocol(
               requestHeader.get(headerContentType)
             );
 
+            const timeout = requestHeader.get(timeoutHeader);
+
+            if (timeout !== null && timeout.length > 0) {
+              req.setTimeout(parseInt(timeout), () => {
+                return void endWithConnectEndStream(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  undefined,
+                  compressMinBytes
+                );
+              });
+            }
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -519,6 +565,21 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
+
+            const timeout = requestHeader.get(timeoutHeader);
+
+            if (timeout !== null && timeout.length > 0) {
+              req.setTimeout(parseInt(timeout), () => {
+                return void endWithConnectEndStream(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  undefined,
+                  compressMinBytes
+                );
+              });
+            }
 
             if (type === undefined) {
               return await endWithHttpStatus(
