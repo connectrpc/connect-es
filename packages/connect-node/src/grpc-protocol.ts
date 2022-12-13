@@ -41,6 +41,7 @@ import type * as http2 from "http2";
 import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 
 const messageFlag = 0b00000000;
+const grpcTimeoutHeader = "Grpc-Timeout";
 
 /**
  * Options for creating a gRPC Protocol instance.
@@ -65,9 +66,12 @@ export function createGrpcProtocol(
       switch (spec.kind) {
         case MethodKind.Unary:
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
+            const timeout = requestHeader.get(grpcTimeoutHeader);
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -75,10 +79,20 @@ export function createGrpcProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (timeout !== null && timeout.length > 0) {
+              req.setTimeout(parseInt(timeout), () => {
+                return void endWithGrpcTrailer(
+                  res,
+                  context,
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
+                );
+              });
+            }
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: grpcCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
@@ -117,9 +131,21 @@ export function createGrpcProtocol(
           };
         case MethodKind.ServerStreaming: {
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
+            const timeout = requestHeader.get(grpcTimeoutHeader);
+
+            if (timeout !== null && timeout.length > 0) {
+              req.setTimeout(parseInt(timeout), () => {
+                return void endWithGrpcTrailer(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded)
+                );
+              });
+            }
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -130,7 +156,7 @@ export function createGrpcProtocol(
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: grpcCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
@@ -188,9 +214,11 @@ export function createGrpcProtocol(
         }
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
+            const timeout = requestHeader.get(grpcTimeoutHeader);
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -198,10 +226,21 @@ export function createGrpcProtocol(
                 "Unsupported Media Type"
               );
             }
+
+            if (timeout !== null && timeout.length > 0) {
+              req.setTimeout(parseInt(timeout), () => {
+                return void endWithGrpcTrailer(
+                  res,
+                  context,
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
+                );
+              });
+            }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: grpcCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
@@ -254,15 +293,28 @@ export function createGrpcProtocol(
         }
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
+            console.log("BIID");
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
+            const timeout = requestHeader.get(grpcTimeoutHeader);
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
                 415,
                 "Unsupported Media Type"
               );
+            }
+            if (timeout !== null && timeout.length > 0) {
+              req.setTimeout(parseInt(timeout), () => {
+                return void endWithGrpcTrailer(
+                  res,
+                  context,
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
+                );
+              });
             }
             const context: HandlerContext = {
               method: spec.method,

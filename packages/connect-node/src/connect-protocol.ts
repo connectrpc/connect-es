@@ -85,7 +85,7 @@ interface CreateConnectProtocolOptions {
 
 const connectProtocolVersionHeader = "Connect-Protocol-Version";
 const connectProtocolVersion = "1";
-const timeoutHeader = "Connect-Timeout-Ms";
+const connectTimeoutHeader = "Connect-Timeout-Ms";
 
 /**
  * Create a Connect Protocol instance.
@@ -113,7 +113,7 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
-            const timeout = requestHeader.get(timeoutHeader);
+            const timeout = requestHeader.get(connectTimeoutHeader);
 
             if (timeout !== null && timeout.length > 0) {
               req.setTimeout(parseInt(timeout), () => {
@@ -261,7 +261,7 @@ export function createConnectProtocol(
               requestHeader.get(headerContentType)
             );
 
-            const timeout = requestHeader.get(timeoutHeader);
+            const timeout = requestHeader.get(connectTimeoutHeader);
 
             if (timeout !== null && timeout.length > 0) {
               req.setTimeout(parseInt(timeout), () => {
@@ -416,7 +416,7 @@ export function createConnectProtocol(
               requestHeader.get(headerContentType)
             );
 
-            const timeout = requestHeader.get(timeoutHeader);
+            const timeout = requestHeader.get(connectTimeoutHeader);
 
             if (timeout !== null && timeout.length > 0) {
               req.setTimeout(parseInt(timeout), () => {
@@ -566,7 +566,7 @@ export function createConnectProtocol(
               requestHeader.get(headerContentType)
             );
 
-            const timeout = requestHeader.get(timeoutHeader);
+            const timeout = requestHeader.get(connectTimeoutHeader);
 
             if (timeout !== null && timeout.length > 0) {
               req.setTimeout(parseInt(timeout), () => {
