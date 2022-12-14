@@ -142,7 +142,7 @@ export function createGrpcProtocol(
                 return void endWithGrpcTrailer(
                   res,
                   context,
-                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded)
+                  new ConnectError("Stream Ended", Code.DeadlineExceeded)
                 );
               });
             }
@@ -167,6 +167,7 @@ export function createGrpcProtocol(
                 spec.method,
                 type.binary
               );
+
             const inputResult = await readEnvelope(req);
             if (inputResult.done) {
               return await endWithGrpcTrailer(

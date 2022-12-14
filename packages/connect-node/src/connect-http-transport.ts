@@ -259,10 +259,15 @@ export function createConnectHttpTransport(
                 stream.on("response", (res) => {
                   resolve(res);
                 });
-                stream.on("error", reject);
+                stream.on("error", (err: Error & { code: string }) => {
+                  if (err.code === "ECONNRESET") {
+                    throw connectErrorFromNodeReason(err);
+                  } else {
+                    reject(err);
+                  }
+                });
               }
             );
-
             let endStreamReceived = false;
             const responseTrailer = defer<Headers>();
             const responseHeader = responsePromise.then((res) =>

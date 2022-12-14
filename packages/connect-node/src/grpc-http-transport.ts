@@ -222,7 +222,6 @@ export function createGrpcHttpTransport(
         options.jsonOptions,
         options.binaryOptions
       );
-
       return runStreaming<I, O>(
         {
           stream: true,
@@ -247,6 +246,7 @@ export function createGrpcHttpTransport(
               path: endpoint.pathname,
               signal: req.signal,
               ...options.httpOptions,
+              timeout: 1,
             });
 
             const responsePromise = new Promise<http.IncomingMessage>(
@@ -254,7 +254,13 @@ export function createGrpcHttpTransport(
                 stream.on("response", (res) => {
                   resolve(res);
                 });
-                stream.on("error", reject);
+                stream.on("error", (err: Error & { code: string }) => {
+                  if (err.code === "ECONNRESET") {
+                    throw connectErrorFromNodeReason(err);
+                  } else {
+                    reject(err);
+                  }
+                });
               }
             );
             const responseTrailer = responsePromise.then((res) =>

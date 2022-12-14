@@ -29,6 +29,7 @@ import {
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -289,7 +290,7 @@ export function createConnectHttp2Transport(
             options.sendCompression?.name
           ),
         },
-        async (req) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
             // TODO We create a new session for every request - we should share a connection instead,
             //      and offer control over connection state via methods / properties on the transport.

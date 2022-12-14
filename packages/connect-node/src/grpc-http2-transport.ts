@@ -24,6 +24,7 @@ import {
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -226,7 +227,7 @@ export function createGrpcHttp2Transport(
           signal: signal ?? new AbortController().signal,
           header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
         },
-        async (req) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
