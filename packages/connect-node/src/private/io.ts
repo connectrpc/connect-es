@@ -108,12 +108,14 @@ export function read(
       if (stream.errored) {
         return reject(stream.errored);
       }
+      stream.on("timeout", timeout);
       stream.once("error", error);
       stream.once("end", end);
       if (stream.readable) {
         return read();
       }
       stream.once("readable", read);
+
       function error(err: Error) {
         stream.off("end", end);
         stream.off("error", error);
@@ -123,6 +125,7 @@ export function read(
       function end() {
         stream.off("error", error);
         stream.off("readable", read);
+        stream.off("timeout", timeout);
         resolve({
           done: true,
         });
@@ -142,10 +145,15 @@ export function read(
         stream.off("error", error);
         stream.off("readable", read);
         stream.off("end", end);
+        stream.off("timeout", timeout);
         resolve({
           done: false,
           value: chunk,
         });
+      }
+
+      function timeout() {
+        return error(new ConnectError("Timed out", Code.DeadlineExceeded));
       }
     }
   );
@@ -165,7 +173,9 @@ export function write(
     if (stream.errored) {
       return error(stream.errored);
     }
+    stream.on("timeout", timeout);
     stream.once("error", error);
+
     stream.once("drain", drain);
     const encoding = typeof data == "string" ? "utf8" : "binary";
     // flushed == false: the stream wishes for the calling code to wait for
@@ -201,6 +211,10 @@ export function write(
       stream.off("drain", drain);
       resolve();
     }
+
+    function timeout() {
+      return error(new ConnectError("Timed Out", Code.DeadlineExceeded));
+    }
   });
 }
 
@@ -213,6 +227,7 @@ export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
       return aborted();
     }
 
+    stream.on("timeout", timeout);
     stream.once("error", error);
     stream.once("aborted", aborted);
 
@@ -227,7 +242,12 @@ export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
       stream.off("readable", read);
       stream.off("error", error);
       stream.off("aborted", aborted);
+      stream.off("timeout", timeout);
       reject(err);
+    }
+
+    function timeout() {
+      return error(new ConnectError("Timed out", Code.DeadlineExceeded));
     }
 
     const chunks: Uint8Array[] = [];
@@ -242,6 +262,7 @@ export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
     stream.once("end", () => {
       stream.off("readable", read);
       stream.off("error", reject);
+      stream.off("timeout", timeout);
       return resolve(Buffer.concat(chunks));
     });
   });
@@ -279,6 +300,7 @@ export function readResponseHeader(
       return aborted();
     }
 
+    stream.on("timeout", timeout);
     stream.once("error", error);
     stream.once("response", parse);
     stream.once("aborted", aborted);
@@ -294,6 +316,7 @@ export function readResponseHeader(
       stream.off("error", error);
       stream.off("response", parse);
       stream.off("aborted", aborted);
+      stream.off("timeout", timeout);
       reject(err);
     }
 
@@ -302,6 +325,10 @@ export function readResponseHeader(
     ) {
       stream.off("error", error);
       resolve([headers[":status"] ?? 0, nodeHeaderToWebHeader(headers)]);
+    }
+
+    function timeout() {
+      return error(new ConnectError("Timed out", Code.DeadlineExceeded));
     }
   });
 }
@@ -322,6 +349,8 @@ export function readResponseTrailer(
     if (stream.readableEnded) {
       return resolve(new Headers());
     }
+
+    stream.on("timeout", timeout);
     stream.once("end", end);
     stream.once("aborted", aborted);
     stream.once("error", error);
@@ -331,6 +360,7 @@ export function readResponseTrailer(
       stream.off("error", error);
       stream.off("trailers", parse);
       stream.off("end", end);
+      stream.off("timeout", timeout);
       resolve(new Headers());
     }
 
@@ -338,6 +368,7 @@ export function readResponseTrailer(
       stream.off("error", error);
       stream.off("response", parse);
       stream.off("aborted", aborted);
+      stream.off("timeout", timeout);
       reject(new ConnectError("http stream aborted", Code.Aborted));
     }
 
@@ -346,6 +377,7 @@ export function readResponseTrailer(
       stream.off("aborted", aborted);
       stream.off("error", error);
       stream.off("trailers", parse);
+      stream.off("timeout", timeout);
       reject(err);
     }
 
@@ -357,7 +389,12 @@ export function readResponseTrailer(
       stream.off("aborted", aborted);
       stream.off("error", error);
       stream.off("trailers", parse);
+      stream.off("timeout", timeout);
       resolve(nodeHeaderToWebHeader(headers));
+    }
+
+    function timeout() {
+      return error(new ConnectError("Timed Out", Code.DeadlineExceeded));
     }
   });
 }

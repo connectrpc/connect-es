@@ -260,7 +260,6 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
-
             const timeout = requestHeader.get(connectTimeoutHeader);
 
             if (timeout !== null && timeout.length > 0) {
@@ -415,7 +414,6 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
-
             const timeout = requestHeader.get(connectTimeoutHeader);
 
             if (timeout !== null && timeout.length > 0) {
@@ -565,7 +563,6 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
-
             const timeout = requestHeader.get(connectTimeoutHeader);
 
             if (timeout !== null && timeout.length > 0) {
