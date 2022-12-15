@@ -71,7 +71,10 @@ export function createGrpcWebProtocol(
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = requestHeader.get(grpcWebTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(grpcWebTimeoutHeader) ?? ""
+            );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -86,8 +89,8 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
                   res,
                   context,
@@ -138,7 +141,10 @@ export function createGrpcWebProtocol(
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = requestHeader.get(grpcWebTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(grpcWebTimeoutHeader) ?? ""
+            );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -153,8 +159,8 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
                   res,
                   context,
@@ -227,7 +233,10 @@ export function createGrpcWebProtocol(
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = requestHeader.get(grpcWebTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(grpcWebTimeoutHeader) ?? ""
+            );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -242,8 +251,8 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
                   res,
                   context,
@@ -309,7 +318,10 @@ export function createGrpcWebProtocol(
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = requestHeader.get(grpcWebTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(grpcWebTimeoutHeader) ?? ""
+            );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -324,8 +336,8 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
                   res,
                   context,

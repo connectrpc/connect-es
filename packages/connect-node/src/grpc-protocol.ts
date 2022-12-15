@@ -70,7 +70,9 @@ export function createGrpcProtocol(
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = requestHeader.get(grpcTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(grpcTimeoutHeader) ?? ""
+            );
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -80,8 +82,8 @@ export function createGrpcProtocol(
               );
             }
 
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
                   context,
@@ -135,23 +137,25 @@ export function createGrpcProtocol(
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = requestHeader.get(grpcTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(grpcTimeoutHeader) ?? ""
+            );
 
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
-                return void endWithGrpcTrailer(
-                  res,
-                  context,
-                  new ConnectError("Stream Ended", Code.DeadlineExceeded)
-                );
-              });
-            }
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
                 415,
                 "Unsupported Media Type"
               );
+            }
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
+                return void endWithGrpcTrailer(
+                  res,
+                  context,
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
+                );
+              });
             }
             const context: HandlerContext = {
               method: spec.method,
@@ -218,7 +222,10 @@ export function createGrpcProtocol(
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = requestHeader.get(grpcTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(grpcTimeoutHeader) ?? ""
+            );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -227,12 +234,12 @@ export function createGrpcProtocol(
               );
             }
 
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
                   context,
-                  new ConnectError("Stream Ended", Code.DeadlineExceeded)
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
                 );
               });
             }
@@ -297,7 +304,9 @@ export function createGrpcProtocol(
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = requestHeader.get(grpcTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(grpcTimeoutHeader) ?? ""
+            );
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -306,12 +315,12 @@ export function createGrpcProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
                   context,
-                  new ConnectError("Stream Ended", Code.DeadlineExceeded)
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
                 );
               });
             }

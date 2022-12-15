@@ -260,26 +260,27 @@ export function createGrpcWebHttpTransport(
           try {
             const endpoint = new URL(req.url);
             const nodeRequestFn = nodeRequest(endpoint.protocol);
-            const stream = nodeRequestFn(req.url, {
-              headers: webHeaderToNodeHeaders(req.header),
+            const headers = webHeaderToNodeHeaders(req.header);
+            const timeout = parseInt(headers["grpc-timeout"] as string);
+            const requestConfig: Record<string, unknown> = {
+              headers,
               method: "POST",
               path: endpoint.pathname,
               signal: req.signal,
               ...options.httpOptions,
-            });
+            };
 
+            if (Number.isInteger(timeout)) {
+              requestConfig["timeout"] = timeout;
+            }
+
+            const stream = nodeRequestFn(req.url, requestConfig);
             const responsePromise = new Promise<http.IncomingMessage>(
               (resolve, reject) => {
                 stream.on("response", (res) => {
                   resolve(res);
                 });
-                stream.on("error", (err: Error & { code: string }) => {
-                  if (err.code === "ECONNRESET") {
-                    throw connectErrorFromNodeReason(err);
-                  } else {
-                    reject(err);
-                  }
-                });
+                stream.on("error", reject);
               }
             );
             let endStreamReceived = false;

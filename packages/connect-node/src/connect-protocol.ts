@@ -113,10 +113,12 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
-            const timeout = requestHeader.get(connectTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(connectTimeoutHeader) ?? ""
+            );
 
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
                 return void endWithConnectUnaryError(
                   res,
                   context,
@@ -260,11 +262,13 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
-            const timeout = requestHeader.get(connectTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(connectTimeoutHeader) ?? ""
+            );
 
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
-                return void endWithConnectEndStream(
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
+                return void endWithConnectUnaryError(
                   res,
                   context,
                   new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
@@ -414,11 +418,13 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
-            const timeout = requestHeader.get(connectTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(connectTimeoutHeader) ?? ""
+            );
 
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
-                return void endWithConnectEndStream(
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
+                return void endWithConnectUnaryError(
                   res,
                   context,
                   new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
@@ -563,11 +569,13 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
-            const timeout = requestHeader.get(connectTimeoutHeader);
+            const timeout = parseInt(
+              requestHeader.get(connectTimeoutHeader) ?? ""
+            );
 
-            if (timeout !== null && timeout.length > 0) {
-              req.setTimeout(parseInt(timeout), () => {
-                return void endWithConnectEndStream(
+            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
+              req.setTimeout(timeout, () => {
+                return void endWithConnectUnaryError(
                   res,
                   context,
                   new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
