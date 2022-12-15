@@ -27,7 +27,7 @@
     "@bufbuild/connect-core": "0.3.3"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "0.4.0"
+    "@bufbuild/protobuf": "0.5.0"
   },
   "files": [
     "dist/**/"
