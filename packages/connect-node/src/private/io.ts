@@ -109,12 +109,6 @@ export function read(
         return reject(stream.errored);
       }
 
-      if (stream.destroyed) {
-        return error(
-          new ConnectError("Request Timed Out", Code.DeadlineExceeded)
-        );
-      }
-
       stream.once("error", error);
       stream.once("end", end);
       if (stream.readable) {
@@ -180,12 +174,6 @@ export function write(
       return error(stream.errored);
     }
 
-    if (stream.destroyed) {
-      return error(
-        new ConnectError("Request Timed Out", Code.DeadlineExceeded)
-      );
-    }
-
     stream.once("error", error);
 
     stream.once("drain", drain);
@@ -233,12 +221,6 @@ export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
     }
     if (stream.readableEnded) {
       return aborted();
-    }
-
-    if (stream.destroyed) {
-      return error(
-        new ConnectError("Request Timed Out", Code.DeadlineExceeded)
-      );
     }
 
     stream.once("error", error);

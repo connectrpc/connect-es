@@ -61,7 +61,7 @@ import {
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
-import { Code } from "@bufbuild/connect-core";
+// import { Code } from "@bufbuild/connect-core";
 
 const messageFlag = 0b00000000;
 
@@ -260,18 +260,7 @@ export function createConnectHttpTransport(
                 stream.on("response", (res) => {
                   resolve(res);
                 });
-
-                // detecting when request timed out on server
-                stream.on("close", () => {
-                  if (stream.destroyed) {
-                    reject(
-                      new ConnectError(
-                        "Stream Timed Out",
-                        Code.DeadlineExceeded
-                      )
-                    );
-                  }
-                });
+                stream.on("error", reject);
               }
             );
             let endStreamReceived = false;

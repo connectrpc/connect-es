@@ -82,8 +82,8 @@ export function createGrpcProtocol(
               );
             }
 
-            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
-              req.setTimeout(timeout, () => {
+            if (Number.isInteger(timeout)) {
+              res.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
                   context,
@@ -148,12 +148,12 @@ export function createGrpcProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
-              req.setTimeout(timeout, () => {
+            if (Number.isInteger(timeout)) {
+              res.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
                   context,
-                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded)
                 );
               });
             }
@@ -234,12 +234,12 @@ export function createGrpcProtocol(
               );
             }
 
-            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
-              req.setTimeout(timeout, () => {
+            if (Number.isInteger(timeout)) {
+              res.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
                   context,
-                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded)
                 );
               });
             }
@@ -315,12 +315,12 @@ export function createGrpcProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
-              req.setTimeout(timeout, () => {
+            if (Number.isInteger(timeout)) {
+              res.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
                   context,
-                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded)
                 );
               });
             }

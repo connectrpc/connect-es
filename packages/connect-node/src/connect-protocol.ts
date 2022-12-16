@@ -117,8 +117,8 @@ export function createConnectProtocol(
               requestHeader.get(connectTimeoutHeader) ?? ""
             );
 
-            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
-              req.setTimeout(timeout, () => {
+            if (Number.isInteger(timeout)) {
+              res.setTimeout(timeout, () => {
                 return void endWithConnectUnaryError(
                   res,
                   context,
@@ -267,23 +267,16 @@ export function createConnectProtocol(
             );
 
             if (Number.isInteger(timeout)) {
-              if (req.httpVersionMajor === 2) {
-                req.setTimeout(timeout, () => {
-                  return void endWithConnectEndStream(
-                    res,
-                    context,
-                    new ConnectError("Stream time out", Code.DeadlineExceeded),
-                    options.jsonOptions,
-                    responseCompression,
-                    compressMinBytes
-                  );
-                });
-              } else {
-                req.socket.setTimeout(timeout, () => {
-                  req.destroy();
-                  req.socket.destroy();
-                });
-              }
+              res.setTimeout(timeout, () => {
+                return void endWithConnectEndStream(
+                  res,
+                  context,
+                  new ConnectError("Streamzz time out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  responseCompression,
+                  compressMinBytes
+                );
+              });
             }
 
             if (type === undefined) {
@@ -361,20 +354,7 @@ export function createConnectProtocol(
                 type.binary
               );
 
-            let inputResult;
-            try {
-              inputResult = await readEnvelope(req);
-            } catch (err) {
-              return await endWithConnectUnaryError(
-                res,
-                context,
-                new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
-                options.jsonOptions,
-                undefined,
-                compressMinBytes
-              );
-            }
-
+            const inputResult = await readEnvelope(req);
             if (inputResult.done) {
               return await endWithConnectEndStream(
                 res,
@@ -443,8 +423,8 @@ export function createConnectProtocol(
               requestHeader.get(connectTimeoutHeader) ?? ""
             );
 
-            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
-              req.setTimeout(timeout, () => {
+            if (Number.isInteger(timeout)) {
+              res.setTimeout(timeout, () => {
                 return void endWithConnectEndStream(
                   res,
                   context,
@@ -594,8 +574,8 @@ export function createConnectProtocol(
               requestHeader.get(connectTimeoutHeader) ?? ""
             );
 
-            if (req.httpVersionMajor === 2 && Number.isInteger(timeout)) {
-              req.setTimeout(timeout, () => {
+            if (Number.isInteger(timeout)) {
+              res.setTimeout(timeout, () => {
                 return void endWithConnectEndStream(
                   res,
                   context,
