@@ -61,6 +61,7 @@ import {
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
+import { Code } from "@bufbuild/connect-core";
 
 const messageFlag = 0b00000000;
 
@@ -247,26 +248,30 @@ export function createConnectHttpTransport(
             const endpoint = new URL(req.url);
             const nodeRequestFn = nodeRequest(endpoint.protocol);
             const headers = webHeaderToNodeHeaders(req.header);
-            const timeout = parseInt(headers["connect-timeout-ms"] as string);
-            const requestConfig: Record<string, unknown> = {
+            const stream = nodeRequestFn(req.url, {
               headers,
               method: "POST",
               path: endpoint.pathname,
               signal: req.signal,
               ...options.httpOptions,
-            };
-
-            if (Number.isInteger(timeout)) {
-              requestConfig["timeout"] = timeout;
-            }
-
-            const stream = nodeRequestFn(req.url, requestConfig);
+            });
             const responsePromise = new Promise<http.IncomingMessage>(
               (resolve, reject) => {
                 stream.on("response", (res) => {
                   resolve(res);
                 });
-                stream.on("err", reject);
+
+                // detecting when request timed out on server
+                stream.on("close", () => {
+                  if (stream.destroyed) {
+                    reject(
+                      new ConnectError(
+                        "Stream Timed Out",
+                        Code.DeadlineExceeded
+                      )
+                    );
+                  }
+                });
               }
             );
             let endStreamReceived = false;
