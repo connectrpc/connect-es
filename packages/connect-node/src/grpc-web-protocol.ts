@@ -141,7 +141,7 @@ export function createGrpcWebProtocol(
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = parseInt(
+            const timeout = parseTimeout(
               requestHeader.get(grpcWebTimeoutHeader) ?? ""
             );
 
@@ -159,7 +159,7 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (Number.isInteger(timeout)) {
+            if (timeout !== null && Number.isInteger(timeout)) {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
                   res,
@@ -430,4 +430,44 @@ async function endWithGrpcWebTrailer(
   const trailerBytes = grpcWebTrailerSerialize(context.responseTrailer);
   await write(res, encodeEnvelope(grpcWebTrailerFlag, trailerBytes));
   await end(res);
+}
+
+enum TimeoutUnit {
+  Hour = "H",
+  Minute = "M",
+  Second = "S",
+  Millisecond = "m",
+  Microsecond = "u",
+  Nanosecond = "n",
+}
+
+function parseTimeout(value: string): number | null {
+  if (value.length === 0) {
+    return null;
+  }
+
+  const result = value.match(/[a-z]+|[^a-z]+/gi); // splits number from character
+  const [duration, unit] = result ?? [];
+  const timeout = parseInt(duration ?? "");
+
+  if (!Number.isInteger(timeout)) {
+    return null;
+  }
+
+  switch (unit) {
+    case TimeoutUnit.Hour:
+      return timeout * 60 * 60 * 1000;
+    case TimeoutUnit.Minute:
+      return timeout * 60 * 60 * 1000;
+    case TimeoutUnit.Second:
+      return timeout * 1000;
+    case TimeoutUnit.Millisecond:
+      return timeout;
+    case TimeoutUnit.Microsecond:
+      return timeout / 1000;
+    case TimeoutUnit.Nanosecond:
+      return timeout / 1000 / 1000;
+    default:
+      return null;
+  }
 }
