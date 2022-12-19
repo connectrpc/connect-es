@@ -13,3 +13,56 @@
 // limitations under the License.
 
 // TODO(TCN-761) implement, see https://github.com/bufbuild/connect-crosstest#test-suite
+import {
+  Code,
+  ConnectError,
+  //   createCallbackClient,
+  createPromiseClient,
+} from "@bufbuild/connect-node";
+import { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
+import { createTestServers } from "../helpers/testserver.js";
+
+xdescribe("cancel_after_begin", function () {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  function expectError(err: unknown) {
+    expect(err).toBeInstanceOf(ConnectError);
+    if (err instanceof ConnectError) {
+      expect(err.code === Code.Canceled).toBeTrue();
+    }
+  }
+
+  servers.describeTransports((transport) => {
+    const sizes = [31415, 9, 2653, 58979];
+    const servers = createTestServers();
+    beforeAll(async () => await servers.start());
+
+    it("with promise client", async function () {
+      const client = createPromiseClient(TestService, transport());
+      const stream = await client.streamingInputCall();
+      try {
+        for (const size of sizes) {
+          console.log("meep");
+          await stream.send({
+            payload: {
+              body: new Uint8Array(size),
+              type: PayloadType.COMPRESSABLE,
+            },
+          });
+        }
+        stream.close();
+        const res = await stream.receive();
+        console.log("got res", res);
+      } catch (e) {
+        expectError(e);
+      }
+    });
+    it("with callback client", function (done) {
+      // TODO(TCN-679, TCN-568) need callback clients
+      done();
+    });
+  });
+  afterAll(async () => await servers.stop());
+});

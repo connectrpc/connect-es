@@ -52,40 +52,43 @@ fdescribe("timeout_on_sleeping_server", function () {
       ).toBeTrue();
     }
   }
-  servers.describeTransports((transport) => {
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
-      try {
-        for await (const response of client.streamingOutputCall(
-          request,
-          options
-        )) {
-          fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`
-          );
+  servers.describeTransportsExcluding(
+    ["@bufbuild/connect-node (gRPC, binary, http2) against grpc-go (h2)"],
+    (transport) => {
+      it("with promise client", async function () {
+        const client = createPromiseClient(TestService, transport());
+        try {
+          for await (const response of client.streamingOutputCall(
+            request,
+            options
+          )) {
+            fail(
+              `expecting no response from sleeping server, got: ${response.toJsonString()}`
+            );
+          }
+          fail("expected to catch an error");
+        } catch (e) {
+          expectError(e);
         }
-        fail("expected to catch an error");
-      } catch (e) {
-        expectError(e);
-      }
-    });
-    it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport());
-      client.streamingOutputCall(
-        request,
-        (response) => {
-          fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`
-          );
-        },
-        (err: ConnectError | undefined) => {
-          expectError(err);
-          done();
-        },
-        options
-      );
-    });
-  });
+      });
+      it("with callback client", function (done) {
+        const client = createCallbackClient(TestService, transport());
+        client.streamingOutputCall(
+          request,
+          (response) => {
+            fail(
+              `expecting no response from sleeping server, got: ${response.toJsonString()}`
+            );
+          },
+          (err: ConnectError | undefined) => {
+            expectError(err);
+            done();
+          },
+          options
+        );
+      });
+    }
+  );
 
   afterAll(async () => await servers.stop());
 });
