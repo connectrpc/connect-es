@@ -15,6 +15,15 @@
 import type * as http from "http";
 import type * as http2 from "http2";
 
+enum TimeoutUnit {
+  Hour = "H",
+  Minute = "M",
+  Second = "S",
+  Millisecond = "m",
+  Microsecond = "u",
+  Nanosecond = "n",
+}
+
 export function nodeHeaderToWebHeader(
   nodeHeaders:
     | http.OutgoingHttpHeaders
@@ -66,4 +75,35 @@ export function webHeaderToNodeHeaders(
     }
   }
   return o;
+}
+
+export function parseGrpcTimeoutFromHeader(value: string): number | null {
+  if (value.length === 0) {
+    return null;
+  }
+
+  const result = value.match(/[a-z]+|[^a-z]+/gi); // splits number from character
+  const [duration, unit] = result ?? [];
+  const timeout = parseInt(duration ?? "");
+
+  if (!Number.isInteger(timeout)) {
+    return null;
+  }
+
+  switch (unit) {
+    case TimeoutUnit.Hour:
+      return timeout * 60 * 60 * 1000;
+    case TimeoutUnit.Minute:
+      return timeout * 60 * 60 * 1000;
+    case TimeoutUnit.Second:
+      return timeout * 1000;
+    case TimeoutUnit.Millisecond:
+      return timeout;
+    case TimeoutUnit.Microsecond:
+      return timeout / 1000;
+    case TimeoutUnit.Nanosecond:
+      return timeout / 1000 / 1000;
+    default:
+      return null;
+  }
 }

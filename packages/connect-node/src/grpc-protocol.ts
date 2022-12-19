@@ -34,6 +34,7 @@ import { createServerMethodSerializers } from "./private/create-server-method-se
 import type { HandlerContext } from "./implementation";
 import {
   nodeHeaderToWebHeader,
+  parseGrpcTimeoutFromHeader,
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import type * as http from "http";
@@ -70,7 +71,7 @@ export function createGrpcProtocol(
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = parseInt(
+            const timeout = parseGrpcTimeoutFromHeader(
               requestHeader.get(grpcTimeoutHeader) ?? ""
             );
 
@@ -82,7 +83,7 @@ export function createGrpcProtocol(
               );
             }
 
-            if (Number.isInteger(timeout)) {
+            if (timeout !== null && Number.isInteger(timeout)) {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
@@ -137,7 +138,7 @@ export function createGrpcProtocol(
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = parseInt(
+            const timeout = parseGrpcTimeoutFromHeader(
               requestHeader.get(grpcTimeoutHeader) ?? ""
             );
 
@@ -148,7 +149,7 @@ export function createGrpcProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (Number.isInteger(timeout)) {
+            if (timeout !== null && Number.isInteger(timeout)) {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
@@ -222,7 +223,7 @@ export function createGrpcProtocol(
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = parseInt(
+            const timeout = parseGrpcTimeoutFromHeader(
               requestHeader.get(grpcTimeoutHeader) ?? ""
             );
 
@@ -234,7 +235,7 @@ export function createGrpcProtocol(
               );
             }
 
-            if (Number.isInteger(timeout)) {
+            if (timeout !== null && Number.isInteger(timeout)) {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
@@ -304,7 +305,7 @@ export function createGrpcProtocol(
             const type = grpcParseContentType(
               req.headers["content-type"] ?? null
             );
-            const timeout = parseInt(
+            const timeout = parseGrpcTimeoutFromHeader(
               requestHeader.get(grpcTimeoutHeader) ?? ""
             );
 
@@ -315,7 +316,7 @@ export function createGrpcProtocol(
                 "Unsupported Media Type"
               );
             }
-            if (Number.isInteger(timeout)) {
+            if (timeout !== null && Number.isInteger(timeout)) {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcTrailer(
                   res,
