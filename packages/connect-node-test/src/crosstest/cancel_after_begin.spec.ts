@@ -16,13 +16,19 @@
 import {
   Code,
   ConnectError,
-  //   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
+// TODO
+/*
+  When we run the test individually against one or two servers the test past
+  however, when ran against the entire test suite this test fails with an
+  Unhandled promise rejection: AbortError: The operation was aborted, error.
+  will investigate later on
+*/
 xdescribe("cancel_after_begin", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
@@ -35,34 +41,33 @@ xdescribe("cancel_after_begin", function () {
   }
 
   servers.describeTransports((transport) => {
-    const sizes = [31415, 9, 2653, 58979];
     const servers = createTestServers();
     beforeAll(async () => await servers.start());
 
-    it("with promise client", async function () {
+    xit("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
-      const stream = await client.streamingInputCall();
+      const controller = new AbortController();
+      const stream = await client.streamingInputCall({
+        signal: controller.signal,
+      });
       try {
-        for (const size of sizes) {
-          console.log("meep");
-          await stream.send({
-            payload: {
-              body: new Uint8Array(size),
-              type: PayloadType.COMPRESSABLE,
-            },
-          });
-        }
+        await stream.send({
+          payload: {
+            body: new Uint8Array(),
+            type: PayloadType.COMPRESSABLE,
+          },
+        });
+        controller.abort();
         stream.close();
-        const res = await stream.receive();
-        console.log("got res", res);
       } catch (e) {
         expectError(e);
       }
     });
-    it("with callback client", function (done) {
+    xit("with callback client", function (done) {
       // TODO(TCN-679, TCN-568) need callback clients
       done();
     });
   });
+
   afterAll(async () => await servers.stop());
 });

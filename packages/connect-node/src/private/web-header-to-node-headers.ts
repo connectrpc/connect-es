@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Code, ConnectError } from "@bufbuild/connect-core";
 import type * as http from "http";
 import type * as http2 from "http2";
 
@@ -87,7 +88,17 @@ export function parseGrpcTimeoutFromHeader(value: string): number | null {
   const timeout = parseInt(duration ?? "");
 
   if (!Number.isInteger(timeout)) {
-    return null;
+    throw new ConnectError(
+      `protocol error: timeout value must be an integer: ${timeout}`,
+      Code.InvalidArgument
+    );
+  }
+
+  if (timeout > 99999999) {
+    throw new ConnectError(
+      `protocol error: invalid grpc timeout: ${timeout}`,
+      Code.InvalidArgument
+    );
   }
 
   switch (unit) {
@@ -104,6 +115,9 @@ export function parseGrpcTimeoutFromHeader(value: string): number | null {
     case TimeoutUnit.Nanosecond:
       return timeout / 1000 / 1000;
     default:
-      return null;
+      throw new ConnectError(
+        `protocol error: invalid grpc timeout unit: ${unit}`,
+        Code.InvalidArgument
+      );
   }
 }
