@@ -78,3 +78,5 @@ export { grpcCreateRequestHeader } from "./grpc-create-request-header.js";
 export { grpcValidateResponse } from "./grpc-validate-response.js";
 export { grpcValidateTrailer } from "./grpc-validate-trailer.js";
 export { grpcParseContentType } from "./grpc-parse-content-type.js";
+export { grpcParseTimeout } from "./grpc-parse-timeout.js";
+export { connectParseTimeout } from "./connect-parse-timeout.js";

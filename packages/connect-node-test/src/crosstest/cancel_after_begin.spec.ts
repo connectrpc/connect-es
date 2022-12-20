@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO(TCN-761) implement, see https://github.com/bufbuild/connect-crosstest#test-suite
 import {
   Code,
   ConnectError,
@@ -22,7 +21,7 @@ import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-// TODO
+// TODO(TCN-919)
 /*
   When we run the test individually against one or two servers the test past
   however, when ran against the entire test suite this test fails with an

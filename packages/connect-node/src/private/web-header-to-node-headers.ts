@@ -12,18 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code, ConnectError } from "@bufbuild/connect-core";
 import type * as http from "http";
 import type * as http2 from "http2";
-
-enum TimeoutUnit {
-  Hour = "H",
-  Minute = "M",
-  Second = "S",
-  Millisecond = "m",
-  Microsecond = "u",
-  Nanosecond = "n",
-}
 
 export function nodeHeaderToWebHeader(
   nodeHeaders:
@@ -76,48 +66,4 @@ export function webHeaderToNodeHeaders(
     }
   }
   return o;
-}
-
-export function parseGrpcTimeoutFromHeader(value: string): number | null {
-  if (value.length === 0) {
-    return null;
-  }
-
-  const result = value.match(/[a-z]+|[^a-z]+/gi); // splits number from character
-  const [duration, unit] = result ?? [];
-  const timeout = parseInt(duration ?? "");
-
-  if (!Number.isInteger(timeout)) {
-    throw new ConnectError(
-      `protocol error: timeout value must be an integer: ${timeout}`,
-      Code.InvalidArgument
-    );
-  }
-
-  if (timeout > 99999999) {
-    throw new ConnectError(
-      `protocol error: invalid grpc timeout: ${timeout}`,
-      Code.InvalidArgument
-    );
-  }
-
-  switch (unit) {
-    case TimeoutUnit.Hour:
-      return timeout * 60 * 60 * 1000;
-    case TimeoutUnit.Minute:
-      return timeout * 60 * 60 * 1000;
-    case TimeoutUnit.Second:
-      return timeout * 1000;
-    case TimeoutUnit.Millisecond:
-      return timeout;
-    case TimeoutUnit.Microsecond:
-      return timeout / 1000;
-    case TimeoutUnit.Nanosecond:
-      return timeout / 1000 / 1000;
-    default:
-      throw new ConnectError(
-        `protocol error: invalid grpc timeout unit: ${unit}`,
-        Code.InvalidArgument
-      );
-  }
 }

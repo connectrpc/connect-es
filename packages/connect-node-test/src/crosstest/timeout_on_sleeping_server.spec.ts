@@ -47,12 +47,11 @@ describe("timeout_on_sleeping_server", function () {
       // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
       // and will return an HTTP status code 408 when stream max duration time reached, which
       // cannot be translated to a connect error code, so connect-web client throws an Unknown.
-      expect(
-        err.code === Code.Unknown || err.code === Code.DeadlineExceeded
-      ).toBeTrue();
+      expect(err.code === Code.DeadlineExceeded).toBeTrue();
     }
   }
   servers.describeTransportsExcluding(
+    // TODO(TCN-918)
     ["@bufbuild/connect-node (gRPC, binary, http2) against grpc-go (h2)"],
     (transport) => {
       it("with promise client", async function () {
