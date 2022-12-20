@@ -146,7 +146,7 @@ export function createGrpcHttpTransport(
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
             message: normalize(message),
@@ -228,7 +228,7 @@ export function createGrpcHttpTransport(
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             redirect: "error",
