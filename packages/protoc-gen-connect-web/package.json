@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/protoc-gen-connect-web",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Code generator for connect-web",
   "license": "Apache-2.0",
   "repository": {
@@ -20,11 +20,11 @@
   },
   "preferUnplugged": true,
   "dependencies": {
-    "@bufbuild/protoplugin": "0.5.0"
+    "@bufbuild/protoplugin": "^1.0.0"
   },
   "peerDependencies": {
-    "@bufbuild/connect-web": "0.4.0",
-    "@bufbuild/protoc-gen-es": "0.5.0"
+    "@bufbuild/connect-web": "0.5.0",
+    "@bufbuild/protoc-gen-es": "^1.0.0"
   },
   "peerDependenciesMeta": {
     "@bufbuild/connect-web": {

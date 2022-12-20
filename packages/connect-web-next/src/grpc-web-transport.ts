@@ -66,6 +66,9 @@ export interface GrpcWebTransportOptions {
    *
    * This will make a `POST /my-api/my_package.MyService/Foo` to
    * `example.com` via HTTPS.
+   *
+   * If your API is served from the same domain as your site, use
+   * `baseUrl: window.location.origin` or simply "/".
    */
   baseUrl: string;
 
@@ -138,7 +141,7 @@ export function createGrpcWebTransport(
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
@@ -235,7 +238,7 @@ export function createGrpcWebTransport(
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",

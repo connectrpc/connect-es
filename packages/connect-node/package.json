@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-node",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "private": true,
   "repository": {
@@ -24,10 +24,10 @@
     "types": "./dist/types/index.d.ts"
   },
   "dependencies": {
-    "@bufbuild/connect-core": "0.4.0"
+    "@bufbuild/connect-core": "0.5.0"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "0.5.0"
+    "@bufbuild/protobuf": "^1.0.0"
   },
   "files": [
     "dist/**/"

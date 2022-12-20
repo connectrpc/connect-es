@@ -160,7 +160,7 @@ export function createConnectHttp2Transport(
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: connectCreateRequestHeaderWithCompression(
               method.kind,
@@ -274,7 +274,7 @@ export function createConnectHttp2Transport(
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             redirect: "error",

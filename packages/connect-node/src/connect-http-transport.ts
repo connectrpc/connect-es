@@ -157,7 +157,7 @@ export function createConnectHttpTransport(
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: createRequestHeader(timeoutMs, header),
             message: normalize(message),
@@ -233,7 +233,7 @@ export function createConnectHttpTransport(
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             redirect: "error",
