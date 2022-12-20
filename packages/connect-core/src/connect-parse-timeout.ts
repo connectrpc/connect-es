@@ -25,7 +25,7 @@ export function connectParseTimeout(
     return undefined;
   }
 
-  const regex = /(\d{1,8})([m])/gm;
+  const regex = /(\d{1,8})([HMSmun])?/gm;
   const results = regex.exec(value);
 
   if (results === null) {
@@ -35,8 +35,17 @@ export function connectParseTimeout(
     );
   }
 
-  const [, duration] = results;
+  const [, duration, unit] = results;
   const timeout = parseInt(duration);
+
+  // unit can be undefined as indicated in the regex statement
+  // however type wise its always a string so added the cast so we can check if its undefined or not
+  if (((unit as string | undefined) ?? "").length > 0) {
+    return new ConnectError(
+      `protocol error: connect timeout value should only be an integer: ${timeout}`,
+      Code.InvalidArgument
+    );
+  }
 
   if (!Number.isInteger(timeout)) {
     return new ConnectError(
@@ -45,5 +54,5 @@ export function connectParseTimeout(
     );
   }
 
-  return timeout * 1000;
+  return timeout;
 }

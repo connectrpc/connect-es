@@ -17,13 +17,13 @@ import { connectParseTimeout } from "./connect-parse-timeout.js";
 
 describe("connectParseTimeout()", function () {
   it("should parse proper timeout", () => {
-    expect(connectParseTimeout("1m")).toEqual(1000);
+    expect(connectParseTimeout("1")).toEqual(1);
   });
   it("should should return undefined for null value", () => {
     expect(connectParseTimeout(null)).toEqual(undefined);
   });
   it("should should return a ConnectError for an incorrect value", () => {
-    const result = connectParseTimeout("1H");
+    const result = connectParseTimeout("100m");
     expect(result).toBeInstanceOf(ConnectError);
   });
 });
