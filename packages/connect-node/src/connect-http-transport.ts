@@ -61,7 +61,6 @@ import {
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
-// import { Code } from "@bufbuild/connect-core";
 
 const messageFlag = 0b00000000;
 
@@ -247,9 +246,8 @@ export function createConnectHttpTransport(
           try {
             const endpoint = new URL(req.url);
             const nodeRequestFn = nodeRequest(endpoint.protocol);
-            const headers = webHeaderToNodeHeaders(req.header);
             const stream = nodeRequestFn(req.url, {
-              headers,
+              headers: webHeaderToNodeHeaders(req.header),
               method: "POST",
               path: endpoint.pathname,
               signal: req.signal,

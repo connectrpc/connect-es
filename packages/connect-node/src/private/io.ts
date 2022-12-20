@@ -125,7 +125,6 @@ export function read(
       function end() {
         stream.off("error", error);
         stream.off("readable", read);
-        stream.off("timeout", timeout);
         resolve({
           done: true,
         });
@@ -145,15 +144,10 @@ export function read(
         stream.off("error", error);
         stream.off("readable", read);
         stream.off("end", end);
-        stream.off("timeout", timeout);
         resolve({
           done: false,
           value: chunk,
         });
-      }
-
-      function timeout() {
-        return error(new ConnectError("Timed out", Code.DeadlineExceeded));
       }
     }
   );
