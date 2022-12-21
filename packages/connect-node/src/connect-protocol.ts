@@ -22,6 +22,7 @@ import {
   connectErrorFromReason,
   connectErrorToJson,
   connectParseContentType,
+  connectParseTimeout,
   encodeEnvelope,
 } from "@bufbuild/connect-core";
 import {
@@ -85,6 +86,7 @@ interface CreateConnectProtocolOptions {
 
 const connectProtocolVersionHeader = "Connect-Protocol-Version";
 const connectProtocolVersion = "1";
+const connectTimeoutHeader = "Connect-Timeout-Ms";
 
 /**
  * Create a Connect Protocol instance.
@@ -112,6 +114,7 @@ export function createConnectProtocol(
             const type = connectParseContentType(
               requestHeader.get(headerContentType)
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -149,6 +152,35 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
+
+            const timeout = connectParseTimeout(
+              requestHeader.get(connectTimeoutHeader)
+            );
+
+            if (timeout instanceof ConnectError) {
+              return await endWithConnectUnaryError(
+                res,
+                context,
+                timeout,
+                options.jsonOptions,
+                undefined,
+                compressMinBytes
+              );
+            }
+
+            if (typeof timeout === "number") {
+              res.setTimeout(timeout, () => {
+                return void endWithConnectUnaryError(
+                  res,
+                  context,
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  undefined,
+                  compressMinBytes
+                );
+              });
+            }
+
             const {
               requestCompression,
               responseCompression,
@@ -159,6 +191,7 @@ export function createConnectProtocol(
               requestHeader.get(headerUnaryEncoding),
               requestHeader.get(headerUnaryAcceptEncoding)
             );
+
             if (unsupportedError) {
               unsupportedError.metadata.set(
                 headerUnaryAcceptEncoding,
@@ -173,6 +206,7 @@ export function createConnectProtocol(
                 compressMinBytes
               );
             }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -259,6 +293,7 @@ export function createConnectProtocol(
                 "Unsupported Media Type"
               );
             }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -280,6 +315,34 @@ export function createConnectProtocol(
                 400,
                 `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
               );
+            }
+
+            const timeout = connectParseTimeout(
+              requestHeader.get(connectTimeoutHeader)
+            );
+
+            if (timeout instanceof ConnectError) {
+              return await endWithConnectEndStream(
+                res,
+                context,
+                timeout,
+                options.jsonOptions,
+                undefined,
+                compressMinBytes
+              );
+            }
+
+            if (typeof timeout === "number") {
+              res.setTimeout(timeout, () => {
+                return void endWithConnectEndStream(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  responseCompression,
+                  compressMinBytes
+                );
+              });
             }
 
             const {
@@ -312,6 +375,7 @@ export function createConnectProtocol(
                 responseCompression.name
               );
             }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -319,6 +383,7 @@ export function createConnectProtocol(
                 spec.method,
                 type.binary
               );
+
             const inputResult = await readEnvelope(req);
             if (inputResult.done) {
               return await endWithConnectEndStream(
@@ -422,6 +487,35 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
+
+            const timeout = connectParseTimeout(
+              requestHeader.get(connectTimeoutHeader)
+            );
+
+            if (timeout instanceof ConnectError) {
+              return await endWithConnectEndStream(
+                res,
+                context,
+                timeout,
+                options.jsonOptions,
+                undefined,
+                compressMinBytes
+              );
+            }
+
+            if (typeof timeout === "number") {
+              res.setTimeout(timeout, () => {
+                return void endWithConnectEndStream(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  responseCompression,
+                  compressMinBytes
+                );
+              });
+            }
+
             const {
               requestCompression,
               responseCompression,
@@ -452,6 +546,7 @@ export function createConnectProtocol(
                 responseCompression.name
               );
             }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -557,6 +652,35 @@ export function createConnectProtocol(
               ),
               responseTrailer: new Headers(),
             };
+
+            const timeout = connectParseTimeout(
+              requestHeader.get(connectTimeoutHeader)
+            );
+
+            if (timeout instanceof ConnectError) {
+              return await endWithConnectEndStream(
+                res,
+                context,
+                timeout,
+                options.jsonOptions,
+                undefined,
+                compressMinBytes
+              );
+            }
+
+            if (typeof timeout === "number") {
+              res.setTimeout(timeout, () => {
+                return void endWithConnectEndStream(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded),
+                  options.jsonOptions,
+                  responseCompression,
+                  compressMinBytes
+                );
+              });
+            }
+
             const {
               requestCompression,
               responseCompression,
@@ -587,6 +711,7 @@ export function createConnectProtocol(
                 responseCompression.name
               );
             }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,

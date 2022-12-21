@@ -253,7 +253,6 @@ export function createConnectHttpTransport(
               signal: req.signal,
               ...options.httpOptions,
             });
-
             const responsePromise = new Promise<http.IncomingMessage>(
               (resolve, reject) => {
                 stream.on("response", (res) => {
@@ -262,7 +261,6 @@ export function createConnectHttpTransport(
                 stream.on("error", reject);
               }
             );
-
             let endStreamReceived = false;
             const responseTrailer = defer<Headers>();
             const responseHeader = responsePromise.then((res) =>

@@ -90,7 +90,7 @@ describe("unresolvable_host", function () {
               fail("expected to catch an error");
               await s.send({});
               await s.send({});
-              s.close();
+              await s.close();
               const res = await s.receive();
               expect(res).toBeUndefined();
             } catch (e) {
@@ -107,7 +107,7 @@ describe("unresolvable_host", function () {
               fail("expected to catch an error");
               await s.send({});
               await s.send({});
-              s.close();
+              await s.close();
               for await (const res of s.receiveAll()) {
                 expect(res).toBeDefined(); // only to satisfy type checks
               }

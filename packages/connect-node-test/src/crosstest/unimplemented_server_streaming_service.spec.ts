@@ -23,7 +23,8 @@ import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-describe("unimplemented_server_streaming_service", function () {
+// TODO fix flaky test (TCN-933)
+xdescribe("unimplemented_server_streaming_service", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 

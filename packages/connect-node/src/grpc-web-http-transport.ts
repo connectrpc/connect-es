@@ -21,10 +21,12 @@ import {
   grpcWebCreateRequestHeader,
   grpcWebTrailerParse,
   grpcWebTrailerFlag,
+  grpcWebValidateResponse,
   Interceptor,
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -51,7 +53,6 @@ import { end, readEnvelope, write } from "./private/io.js";
 import { assert } from "./private/assert.js";
 import { defer } from "./private/defer.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { grpcWebValidateResponse } from "@bufbuild/connect-core";
 
 export interface GrpcWebHttpTransportOptions {
   /**
@@ -255,7 +256,7 @@ export function createGrpcWebHttpTransport(
             header
           ),
         },
-        async (req) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
             const endpoint = new URL(req.url);
             const nodeRequestFn = nodeRequest(endpoint.protocol);
@@ -266,7 +267,6 @@ export function createGrpcWebHttpTransport(
               signal: req.signal,
               ...options.httpOptions,
             });
-
             const responsePromise = new Promise<http.IncomingMessage>(
               (resolve, reject) => {
                 stream.on("response", (res) => {

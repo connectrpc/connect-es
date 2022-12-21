@@ -222,7 +222,6 @@ export function createGrpcHttpTransport(
         options.jsonOptions,
         options.binaryOptions
       );
-
       return runStreaming<I, O>(
         {
           stream: true,
@@ -248,7 +247,6 @@ export function createGrpcHttpTransport(
               signal: req.signal,
               ...options.httpOptions,
             });
-
             const responsePromise = new Promise<http.IncomingMessage>(
               (resolve, reject) => {
                 stream.on("response", (res) => {

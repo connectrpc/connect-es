@@ -25,6 +25,7 @@ import {
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -255,7 +256,7 @@ export function createGrpcWebHttp2Transport(
             header
           ),
         },
-        async (req) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
             // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
             //      and offer control over connection state via methods / properties on the transport.
