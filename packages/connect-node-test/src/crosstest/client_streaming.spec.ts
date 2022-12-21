@@ -35,7 +35,7 @@ describe("client_streaming", () => {
           },
         });
       }
-      stream.close();
+      await stream.close();
       const { aggregatedPayloadSize } = await stream.receive();
       expect(aggregatedPayloadSize).toBe(sizes.reduce((p, c) => p + c, 0));
     });

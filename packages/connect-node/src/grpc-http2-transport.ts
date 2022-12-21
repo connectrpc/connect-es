@@ -137,6 +137,8 @@ export function createGrpcHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+            // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
+            //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
                 const s = http2.connect(
@@ -229,6 +231,8 @@ export function createGrpcHttp2Transport(
         },
         async (req: StreamingRequest<I, O>) => {
           try {
+            // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
+            //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
                 const s = http2.connect(req.url, options.http2Options, (s) =>
@@ -264,7 +268,11 @@ export function createGrpcHttp2Transport(
                   messageFlag,
                   serialize(normalize(message))
                 );
-                await write(stream, enveloped);
+                try {
+                  await write(stream, enveloped);
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
               },
               async close(): Promise<void> {
                 if (stream.writableEnded) {

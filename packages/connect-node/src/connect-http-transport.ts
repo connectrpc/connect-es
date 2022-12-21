@@ -281,7 +281,11 @@ export function createConnectHttpTransport(
                   messageFlag,
                   serialize(normalize(message))
                 );
-                await write(stream, enveloped);
+                try {
+                  await write(stream, enveloped);
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
               },
               async close() {
                 if (stream.writableEnded) {

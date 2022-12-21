@@ -58,10 +58,7 @@ import {
   readToEnd,
   write,
 } from "./private/io.js";
-import {
-  connectErrorFromNodeReason,
-  getNodeErrorProps,
-} from "./private/node-error.js";
+import { connectErrorFromNodeReason } from "./private/node-error.js";
 import type { Compression } from "./compression.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
@@ -174,7 +171,7 @@ export function createConnectHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            // TODO We create a new session for every request - we should share a connection instead,
+            // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
             //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
@@ -292,7 +289,7 @@ export function createConnectHttp2Transport(
         },
         async (req: StreamingRequest<I, O>) => {
           try {
-            // TODO We create a new session for every request - we should share a connection instead,
+            // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
             //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
@@ -342,20 +339,7 @@ export function createConnectHttp2Transport(
                 try {
                   await write(stream, enveloped);
                 } catch (e) {
-                  // TODO(TCN-870) sensibly handle write errors on closed stream - the workaround we apply here is insufficient
-                  if (
-                    getNodeErrorProps(e).code == "ERR_STREAM_WRITE_AFTER_END"
-                  ) {
-                    const [status, header] = await headersPromise;
-                    connectValidateResponseWithCompression(
-                      method.kind,
-                      useBinaryFormat,
-                      acceptCompression,
-                      status,
-                      header
-                    );
-                  }
-                  throw e;
+                  throw connectErrorFromNodeReason(e);
                 }
               },
               async close(): Promise<void> {

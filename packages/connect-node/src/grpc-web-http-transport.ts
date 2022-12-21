@@ -296,7 +296,11 @@ export function createGrpcWebHttpTransport(
                   0,
                   serialize(normalize(message))
                 );
-                await write(stream, enveloped);
+                try {
+                  await write(stream, enveloped);
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
               },
               async close(): Promise<void> {
                 if (stream.writableEnded) {

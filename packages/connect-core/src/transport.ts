@@ -40,7 +40,10 @@ export interface Transport {
     input: PartialMessage<I>
   ): Promise<UnaryResponse<O>>;
 
-  // TODO update docs
+  /**
+   * Call a streaming RPC - a method that takes zero or more input messages,
+   * and responds with zero or more output messages.
+   */
   stream<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
     service: ServiceType,
     method: MethodInfo<I, O>,
