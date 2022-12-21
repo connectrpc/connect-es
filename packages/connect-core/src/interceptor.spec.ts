@@ -15,8 +15,6 @@
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import { stubTransport } from "./transport-stub.js";
 import type { Interceptor } from "./interceptor.js";
-import { createPromiseClient } from "./promise-client.js";
-import type { CallOptions } from "./call-options.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
@@ -53,6 +51,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
     }
     return res;
   };
+
   /**
    * Return all keys of a Headers object, without needing
    * DOM.iterable for Headers.keys().
@@ -93,27 +92,29 @@ describe("unary interceptors", () => {
   ] as const;
   it("promise client", async () => {
     const log: string[] = [];
-    const options: CallOptions = {
-      headers: {
+    const transport = stubTransport({
+      interceptors: [
+        makeLoggingInterceptor("outer", log),
+        makeLoggingInterceptor("inner", log),
+      ],
+      unaryResponseHeader: new Headers({
+        "unary-response-header": "foo",
+      }),
+      unaryResponseTrailer: new Headers({
+        "unary-response-trailer": "foo",
+      }),
+    });
+
+    await transport.unary(
+      TestService,
+      TestService.methods.unary,
+      undefined,
+      undefined,
+      {
         "unary-request-header": "foo",
       },
-    };
-    const client = createPromiseClient(
-      TestService,
-      stubTransport({
-        interceptors: [
-          makeLoggingInterceptor("outer", log),
-          makeLoggingInterceptor("inner", log),
-        ],
-        unaryResponseHeader: new Headers({
-          "unary-response-header": "foo",
-        }),
-        unaryResponseTrailer: new Headers({
-          "unary-response-trailer": "foo",
-        }),
-      })
+      {}
     );
-    await client.unary({}, options);
     expect(log).toEqual(wantLog);
   });
 });
@@ -131,29 +132,32 @@ describe("stream interceptors", () => {
   ] as const;
   it("promise client", async () => {
     const log: string[] = [];
-    const options: CallOptions = {
-      headers: {
-        "stream-request-header": "foo",
-      },
-    };
-    const client = createPromiseClient(
+    const transport = stubTransport({
+      interceptors: [
+        makeLoggingInterceptor("outer", log),
+        makeLoggingInterceptor("inner", log),
+      ],
+      streamResponseHeader: new Headers({
+        "stream-response-header": "foo",
+      }),
+      streamResponseTrailer: new Headers({
+        "stream-response-trailer": "foo",
+      }),
+    });
+    const conn = await transport.stream(
       TestService,
-      stubTransport({
-        interceptors: [
-          makeLoggingInterceptor("outer", log),
-          makeLoggingInterceptor("inner", log),
-        ],
-        streamResponseHeader: new Headers({
-          "stream-response-header": "foo",
-        }),
-        streamResponseTrailer: new Headers({
-          "stream-response-trailer": "foo",
-        }),
-      })
+      TestService.methods.serverStream,
+      undefined,
+      undefined,
+      {
+        "stream-request-header": "foo",
+      }
     );
-    for await (const res of client.serverStream({}, options)) {
-      expect(res).toBeDefined(); // only to satisfy type checks
-    }
+    await conn.send({});
+    let res = await conn.read();
+    expect(res.done).toBeFalse();
+    res = await conn.read();
+    expect(res.done).toBeTrue();
     expect(log).toEqual(wantLog);
   });
 });
