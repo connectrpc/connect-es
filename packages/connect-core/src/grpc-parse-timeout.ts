@@ -30,10 +30,19 @@ enum TimeoutUnit {
 export function grpcParseTimeout(
   value: string | null
 ): number | undefined | ConnectError {
-  if (value === null || value.length === 0) {
+  if (value === null) {
     return undefined;
   }
-  const regex = /(\d{1,8})([HMSmun])/gm;
+  const timevalueScheme = /^\d+[HMSmun]$/;
+
+  if (!timevalueScheme.test(value)) {
+    return new ConnectError(
+      `protocol error: invalid grpc timeout format: ${value}`,
+      Code.InvalidArgument
+    );
+  }
+
+  const regex = /(\d{1,9})([HMSmun])$/gm;
   const results = regex.exec(value);
 
   if (results === null) {
@@ -44,6 +53,14 @@ export function grpcParseTimeout(
   }
 
   const [, duration, unit] = results;
+
+  if (duration.length > 8) {
+    return new ConnectError(
+      `protocol error: invalid grpc timeout value: ${duration}`,
+      Code.InvalidArgument
+    );
+  }
+
   const timeout = parseInt(duration);
 
   if (!Number.isInteger(timeout)) {

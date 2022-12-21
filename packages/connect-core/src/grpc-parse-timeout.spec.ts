@@ -18,13 +18,17 @@ import { grpcParseTimeout } from "./grpc-parse-timeout.js";
 describe("grpcParseTimeout()", function () {
   it("should parse proper timeout", () => {
     expect(grpcParseTimeout("1H")).toEqual(3600000);
+    expect(grpcParseTimeout("12345678m")).toEqual(12345678);
   });
   it("should should return undefined for null value", () => {
     expect(grpcParseTimeout(null)).toEqual(undefined);
   });
   it("should should return a ConnectError for an incorrect value", () => {
-    const result = grpcParseTimeout("HH");
-    expect(result).toBeInstanceOf(ConnectError);
+    expect(grpcParseTimeout("HH")).toBeInstanceOf(ConnectError);
+    expect(grpcParseTimeout("123456789m")).toBeInstanceOf(ConnectError);
+    expect(grpcParseTimeout("12345678")).toBeInstanceOf(ConnectError);
+    expect(grpcParseTimeout("1H1H")).toBeInstanceOf(ConnectError);
+    expect(grpcParseTimeout("foo")).toBeInstanceOf(ConnectError);
   });
   it("should should return a Connect Error for an incorrect timeout unit", () => {
     const result = grpcParseTimeout("1X");

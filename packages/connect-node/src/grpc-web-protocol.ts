@@ -96,7 +96,7 @@ export function createGrpcWebProtocol(
               responseTrailer: new Headers(),
             };
             const timeout = grpcParseTimeout(
-              requestHeader.get(grpcWebTimeoutHeader) ?? ""
+              requestHeader.get(grpcWebTimeoutHeader)
             );
 
             if (timeout instanceof ConnectError) {
@@ -172,7 +172,7 @@ export function createGrpcWebProtocol(
               responseTrailer: new Headers(),
             };
             const timeout = grpcParseTimeout(
-              requestHeader.get(grpcWebTimeoutHeader) ?? ""
+              requestHeader.get(grpcWebTimeoutHeader)
             );
 
             if (timeout instanceof ConnectError) {
@@ -271,7 +271,7 @@ export function createGrpcWebProtocol(
               responseTrailer: new Headers(),
             };
             const timeout = grpcParseTimeout(
-              requestHeader.get(grpcWebTimeoutHeader) ?? ""
+              requestHeader.get(grpcWebTimeoutHeader)
             );
 
             if (timeout instanceof ConnectError) {
@@ -363,7 +363,7 @@ export function createGrpcWebProtocol(
               responseTrailer: new Headers(),
             };
             const timeout = grpcParseTimeout(
-              requestHeader.get(grpcWebTimeoutHeader) ?? ""
+              requestHeader.get(grpcWebTimeoutHeader)
             );
 
             if (timeout instanceof ConnectError) {

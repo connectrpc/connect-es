@@ -18,12 +18,18 @@ import { connectParseTimeout } from "./connect-parse-timeout.js";
 describe("connectParseTimeout()", function () {
   it("should parse proper timeout", () => {
     expect(connectParseTimeout("1")).toEqual(1);
+    expect(connectParseTimeout("1234567890")).toEqual(1234567890);
   });
   it("should should return undefined for null value", () => {
     expect(connectParseTimeout(null)).toEqual(undefined);
   });
   it("should should return a ConnectError for an incorrect value", () => {
-    const result = connectParseTimeout("100m");
-    expect(result).toBeInstanceOf(ConnectError);
+    expect(connectParseTimeout("100m")).toBeInstanceOf(ConnectError);
+    expect(connectParseTimeout("1H")).toBeInstanceOf(ConnectError);
+    expect(connectParseTimeout("-1")).toBeInstanceOf(ConnectError);
+    expect(connectParseTimeout("1e+10")).toBeInstanceOf(ConnectError);
+    expect(connectParseTimeout("")).toBeInstanceOf(ConnectError);
+    expect(connectParseTimeout("12345678901")).toBeInstanceOf(ConnectError);
+    expect(connectParseTimeout("foo")).toBeInstanceOf(ConnectError);
   });
 });

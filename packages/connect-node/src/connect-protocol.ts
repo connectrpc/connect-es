@@ -154,7 +154,7 @@ export function createConnectProtocol(
             };
 
             const timeout = connectParseTimeout(
-              requestHeader.get(connectTimeoutHeader) ?? ""
+              requestHeader.get(connectTimeoutHeader)
             );
 
             if (timeout instanceof ConnectError) {
@@ -318,7 +318,7 @@ export function createConnectProtocol(
             }
 
             const timeout = connectParseTimeout(
-              requestHeader.get(connectTimeoutHeader) ?? ""
+              requestHeader.get(connectTimeoutHeader)
             );
 
             if (timeout instanceof ConnectError) {
@@ -489,7 +489,7 @@ export function createConnectProtocol(
             };
 
             const timeout = connectParseTimeout(
-              requestHeader.get(connectTimeoutHeader) ?? ""
+              requestHeader.get(connectTimeoutHeader)
             );
 
             if (timeout instanceof ConnectError) {
@@ -654,7 +654,7 @@ export function createConnectProtocol(
             };
 
             const timeout = connectParseTimeout(
-              requestHeader.get(connectTimeoutHeader) ?? ""
+              requestHeader.get(connectTimeoutHeader)
             );
 
             if (timeout instanceof ConnectError) {

@@ -22,6 +22,7 @@ import {
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
+import { connectErrorFromReason } from "@bufbuild/connect-core";
 
 describe("timeout_on_sleeping_server", function () {
   const servers = createTestServers();
@@ -67,7 +68,7 @@ describe("timeout_on_sleeping_server", function () {
           }
           fail("expected to catch an error");
         } catch (e) {
-          expectError(e);
+          expect(connectErrorFromReason(e).code).toBe(Code.DeadlineExceeded);
         }
       });
       it("with callback client", function (done) {
