@@ -43,7 +43,7 @@ xdescribe("cancel_after_begin", function () {
     const servers = createTestServers();
     beforeAll(async () => await servers.start());
 
-    xit("with promise client", async function () {
+    it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       const controller = new AbortController();
       const stream = await client.streamingInputCall({
@@ -57,7 +57,7 @@ xdescribe("cancel_after_begin", function () {
           },
         });
         controller.abort();
-        stream.close();
+        await stream.close();
       } catch (e) {
         expectError(e);
       }
