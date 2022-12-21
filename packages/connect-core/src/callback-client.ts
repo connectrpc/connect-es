@@ -49,7 +49,7 @@ export type CallbackClient<T extends ServiceType> = {
   [P in keyof T["methods"]]:
     T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: CallOptions) => CancelFn
   : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
-  // TODO figure out shapes for client-streaming and bidi-streaming
+  // TODO(TCN-568, TCN-679) add methods for client-streaming and bidi-streaming
   : never;
 };
 
@@ -147,8 +147,23 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
         options.timeoutMs,
         options.headers
       );
-      await conn.send(requestMessage);
-      await conn.close();
+      try {
+        await conn.send(requestMessage);
+        await conn.close();
+      } catch (e) {
+        if (connectErrorFromReason(e).code == Code.Aborted) {
+          // We do not want intentional errors from the server to be shadowed
+          // by client-side errors.
+          // This can occur if the server has written a response with an error
+          // and has ended the connection. This response may already sit in a
+          // buffer on the client, while it is still writing to the request
+          // body.
+          // We rely on the Transport to raise a code "aborted" in this case,
+          // and ignore this error.
+        } else {
+          throw e;
+        }
+      }
       options.onHeader?.(await conn.responseHeader);
       let result = await conn.read();
       while (!result.done) {

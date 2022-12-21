@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type {
   AnyMessage,
   Message,
@@ -24,7 +22,6 @@ import type {
 
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 
-// TODO update docs
 /**
  * An interceptor can add logic to clients, similar to the decorators
  * or middleware you may have seen in other libraries. Interceptors may
@@ -51,7 +48,11 @@ import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
  */
 export type Interceptor = (next: AnyFn) => AnyFn;
 
-// TODO update docs
+/**
+ * AnyFn represents the client-side invocation of an RPC. Interceptors can wrap
+ * this invocation, add request headers, and wrap parts of the request or
+ * response to inspect and log.
+ */
 type AnyFn = (
   req: UnaryRequest | StreamingRequest
 ) => Promise<UnaryResponse | StreamingConn>;
@@ -68,7 +69,13 @@ type UnaryFn<
   O extends Message<O> = AnyMessage
 > = (req: UnaryRequest<I>) => Promise<UnaryResponse<O>>;
 
-// TODO update docs
+/**
+ * StreamingFn represents the client-side invocation of a streaming RPC - a
+ * method that takes zero or more input messages, and responds with zero or
+ * more output messages.
+ * A Transport implements such a function, and makes it available to
+ * interceptors.
+ */
 type StreamingFn<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
@@ -81,9 +88,7 @@ type StreamingFn<
 export interface UnaryRequest<I extends Message<I> = AnyMessage> {
   /**
    * The `stream` property discriminates between UnaryRequest and
-   * other request types that may be added to this API in the future.
-   *
-   * TODO
+   * StreamingRequest.
    */
   readonly stream: false;
 
@@ -130,7 +135,7 @@ export interface UnaryRequest<I extends Message<I> = AnyMessage> {
 export interface UnaryResponse<O extends Message<O> = AnyMessage> {
   /**
    * The `stream` property discriminates between UnaryResponse and
-   * StreamResponse.
+   * StreamingConn.
    */
   readonly stream: false;
 
@@ -160,15 +165,17 @@ export interface UnaryResponse<O extends Message<O> = AnyMessage> {
   readonly trailer: Headers;
 }
 
-// TODO update docs
+/**
+ * StreamingRequest is used in interceptors to represent a request that has
+ * zero or more input messages, and zero or more output messages.
+ */
 export interface StreamingRequest<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
 > {
   /**
    * The `stream` property discriminates between UnaryRequest and
-   * other request types that may be added to this API in the future.
-   * TODO update docs
+   * StreamingRequest.
    */
   readonly stream: true;
 
@@ -203,15 +210,17 @@ export interface StreamingRequest<
   readonly header: Headers;
 }
 
-// TODO update docs
+/**
+ * StreamingConn is used in interceptors to represent an ongoing call that has
+ * zero or more input messages, and zero or more output messages.
+ */
 export interface StreamingConn<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
 > {
   /**
-   * The `stream` property discriminates between UnaryRequest and
-   * other request types that may be added to this API in the future.
-   * TODO update docs
+   * The `stream` property discriminates between UnaryResponse and
+   * StreamingConn.
    */
   readonly stream: true;
 
@@ -225,10 +234,23 @@ export interface StreamingConn<
    */
   readonly method: MethodInfo<I, O>;
 
-  // TODO update docs
+  /**
+   * Transmits a single input message. It is up to clients to honor streaming
+   * method semantics - for example, a server-streaming method only accepts a
+   * single input message by definition.
+   *
+   * The Transport must raise a ConnectError with code "aborted" if send()
+   * fails because the server has already ended the connection.
+   */
   send(message: PartialMessage<I>): Promise<void>;
 
-  // TODO update docs
+  /**
+   * Close the stream of input messages, signalling to the server that the
+   * client is not going to send any more messages.
+   *
+   * The Transport must raise a ConnectError with code "aborted" if close()
+   * fails because the server has already ended the connection.
+   */
   close(): Promise<void>;
 
   // TODO make it a function to avoid the need for a getter?
@@ -270,7 +292,7 @@ function applyInterceptors<T>(next: T, interceptors: Interceptor[]): T {
     .reduce(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       (n, i) => i(n),
-      next as any
+      next as any // eslint-disable-line @typescript-eslint/no-explicit-any
     ) as T;
 }
 

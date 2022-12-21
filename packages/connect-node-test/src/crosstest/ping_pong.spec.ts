@@ -24,6 +24,7 @@ describe("ping_pong", () => {
   beforeAll(async () => await servers.start());
 
   servers.describeTransportsExcluding(
+    // All following Transports run against an HTTP/1 server, which cannot support full-duplex.
     [
       "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)",
       "@bufbuild/connect-node (Connect, binary, http) against @bufbuild/connect-node (h1)",
@@ -62,7 +63,7 @@ describe("ping_pong", () => {
           expect(res?.payload?.body.length).toBe(size);
           expect(res?.payload?.type).toBe(PayloadType.COMPRESSABLE);
         }
-        stream.close();
+        await stream.close();
       });
       it("with callback client", function (done) {
         // TODO(TCN-679, TCN-568) need callback clients

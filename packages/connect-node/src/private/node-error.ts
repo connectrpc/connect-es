@@ -25,14 +25,29 @@ import {
  */
 export function connectErrorFromNodeReason(reason: unknown): ConnectError {
   let code = Code.Internal;
-  const dnsResolveFailed = unwrapNodeErrorChain(reason)
-    .map((e) => getNodeErrorProps(e))
-    .some(
+  const chain = unwrapNodeErrorChain(reason).map(getNodeErrorProps);
+  if (chain.some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END")) {
+    // We do not want intentional errors from the server to be shadowed
+    // by client-side errors.
+    // This can occur if the server has written a response with an error
+    // and has ended the connection. This response may already sit in a
+    // buffer on the client, while it is still writing to the request
+    // body.
+    // To avoid this problem, we wrap ERR_STREAM_WRITE_AFTER_END as a
+    // ConnectError with Code.Aborted. The special meaning of this code
+    // in this situation is documented in StreamingConn.send() and in
+    // createServerStreamingFn().
+    code = Code.Aborted;
+  } else if (
+    chain.some(
       (p) =>
         p.syscall === "getaddrinfo" &&
         (p.code == "ENOTFOUND" || p.code == "EAI_AGAIN")
-    );
-  if (dnsResolveFailed) {
+    )
+  ) {
+    // Calling an unresolvable host should raise a ConnectError with
+    // Code.Aborted.
+    // This behavior is covered by the crosstest "unresolvable_host".
     code = Code.Unavailable;
   }
   return connectErrorFromReason(reason, code);
