@@ -63,6 +63,11 @@ import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-op
 
 const messageFlag = 0b00000000;
 
+/**
+ * compressedFlag indicates that the data in a EnvelopedMessage is
+ * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
+ * and Connect protocols.
+ */
 const compressedFlag = 0b00000001;
 
 /**
@@ -181,16 +186,14 @@ export function createGrpcHttp2Transport(
                 s.on("error", (err) => reject(err));
               });
 
-            let requestBody = encodeEnvelope(
-              compressedFlag,
-              // TODO(TCN-785) honor sendMaxBytes
-              serialize(req.message)
-            );
+            let flag = messageFlag;
+            let requestBody = serialize(req.message);
             if (
               options.sendCompression !== undefined &&
               requestBody.length >= compressMinBytes
             ) {
               requestBody = await options.sendCompression.compress(requestBody);
+              flag = compressedFlag;
               req.header.set("Content-Encoding", options.sendCompression.name);
             } else {
               req.header.delete("Content-Encoding");
@@ -209,7 +212,8 @@ export function createGrpcHttp2Transport(
 
             const headersPromise = readResponseHeader(stream);
             const trailerPromise = readResponseTrailer(stream);
-            await write(stream, requestBody);
+            const enveloped = encodeEnvelope(flag, requestBody);
+            await write(stream, enveloped);
             await end(stream);
 
             const [responseCode, responseHeader] = await headersPromise;
@@ -395,12 +399,13 @@ function grpcCreateRequestHeaderWithCompression(
   if (methodKind != MethodKind.Unary) {
     acceptEncodingField = "GRPC-" + acceptEncodingField;
     if (sendCompression != undefined) {
-      result.set("GRPC-Content-Encoding", sendCompression);
+      result.set("GRPC-Encoding", sendCompression);
     }
   }
   if (acceptCompression.length > 0) {
     result.set(acceptEncodingField, acceptCompression.join(","));
   }
+  result.set("grpc-encoding", "gzip");
   return result;
 }
 
