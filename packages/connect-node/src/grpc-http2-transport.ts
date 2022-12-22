@@ -194,9 +194,9 @@ export function createGrpcHttp2Transport(
             ) {
               requestBody = await options.sendCompression.compress(requestBody);
               flag = compressedFlag;
-              req.header.set("Content-Encoding", options.sendCompression.name);
+              req.header.set("Grpc-Encoding", options.sendCompression.name);
             } else {
-              req.header.delete("Content-Encoding");
+              req.header.delete("Grpc-Encoding");
             }
 
             const stream = session.request(
@@ -399,13 +399,12 @@ function grpcCreateRequestHeaderWithCompression(
   if (methodKind != MethodKind.Unary) {
     acceptEncodingField = "GRPC-" + acceptEncodingField;
     if (sendCompression != undefined) {
-      result.set("GRPC-Encoding", sendCompression);
+      result.set("Grpc-Content-Coding", sendCompression);
     }
   }
   if (acceptCompression.length > 0) {
     result.set(acceptEncodingField, acceptCompression.join(","));
   }
-  result.set("grpc-encoding", "gzip");
   return result;
 }
 
@@ -420,9 +419,7 @@ export function grpcValidateResponseWithCompression(
 
   let compression: Compression | undefined;
   const encodingField =
-    methodKind === MethodKind.Unary
-      ? "grpc-accept-encoding"
-      : "grpc-Content-Encoding";
+    methodKind === MethodKind.Unary ? "Grpc-Encoding" : "Grpc-Content-Encoding";
   const encoding = headers.get(encodingField);
   if (encoding !== null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);

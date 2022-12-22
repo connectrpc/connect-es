@@ -296,6 +296,17 @@ vKy9wyvtUtg=
         },
         useBinaryFormat: true,
       }),
+    "@bufbuild/connect-node (gRPC, binary, http2, gzip) against connect-go (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttp2Transport({
+          ...options,
+          baseUrl: servers["connect-go (h1)"].getUrl(),
+          http2Options: {
+            rejectUnauthorized: false, // TODO set up cert for go server correctly
+          },
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
     "@bufbuild/connect-node (gRPC, JSON, http2) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
@@ -391,17 +402,6 @@ vKy9wyvtUtg=
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
-    "@bufbuild/connect-node (Connect, binary, http2, gzip) against connect-go (h1)":
-      (options?: Record<string, unknown>) =>
-        createConnectHttp2Transport({
-          ...options,
-          baseUrl: servers["connect-go (h1)"].getUrl(),
-          http2Options: {
-            rejectUnauthorized: false, // TODO set up cert for go server correctly
-          },
-          useBinaryFormat: true,
-          sendCompression: compressionGzip,
-        }),
     "@bufbuild/connect-node (Connect, JSON, http2, gzip) against connect-go (h1)":
       (options?: Record<string, unknown>) =>
         createConnectHttp2Transport({
@@ -413,6 +413,17 @@ vKy9wyvtUtg=
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
+    "@bufbuild/connect-node (Connect, JSON, http2) against connect-goz (h1)": (
+      options?: Record<string, unknown>
+    ) =>
+      createConnectHttp2Transport({
+        ...options,
+        baseUrl: servers["connect-go (h1)"].getUrl(),
+        http2Options: {
+          rejectUnauthorized: false, // TODO set up cert for go server correctly
+        },
+        useBinaryFormat: false,
+      }),
     "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)":
       (options?: Record<string, unknown>) =>
         createConnectHttpTransport({
