@@ -15,7 +15,7 @@
 import { MethodKind } from "@bufbuild/protobuf";
 import { Code } from "./code.js";
 import { connectParseContentType } from "./connect-parse-content-type.js";
-import { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
+import { connectCodeFromHttpStatus } from "./protocol-connect/connect-code-from-http-status.js";
 import { ConnectError } from "./connect-error.js";
 
 /**

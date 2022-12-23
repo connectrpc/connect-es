@@ -58,7 +58,6 @@ export {
   connectEndStreamToJson,
   connectEndStreamFlag,
 } from "./connect-end-stream.js";
-export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
 export { connectCodeToHttpStatus } from "./connect-code-to-http-status.js";
 export { connectTrailerDemux } from "./connect-trailer-demux.js";
 export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";
@@ -73,7 +72,6 @@ export {
   grpcFindTrailerError,
   grpcSetTrailerStatus,
 } from "./grpc-trailer-status.js";
-export { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
 export { grpcCreateRequestHeader } from "./grpc-create-request-header.js";
 export { grpcValidateResponse } from "./grpc-validate-response.js";
 export { grpcValidateTrailer } from "./grpc-validate-trailer.js";

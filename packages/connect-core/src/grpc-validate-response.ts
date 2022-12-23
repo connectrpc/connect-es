@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
+import { grpcCodeFromHttpStatus } from "./protocol-grpc/grpc-code-from-http-status.js";
 import { grpcParseContentType } from "./grpc-parse-content-type.js";
 import { ConnectError } from "./connect-error.js";
 import { grpcFindTrailerError } from "./grpc-trailer-status.js";
