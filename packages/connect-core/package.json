@@ -19,19 +19,29 @@
   },
   "main": "./dist/cjs/index.js",
   "type": "module",
-  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
-    "./protocol-connect.js": {
+    "./protocol-connect": {
       "import": "./dist/esm/protocol-connect/index.js",
       "require": "./dist/cjs/protocol-connect/index.js"
     },
-    "./protocol-grpc.js": {
+    "./protocol-grpc": {
       "import": "./dist/esm/protocol-grpc/index.js",
       "require": "./dist/cjs/protocol-grpc/index.js"
+    }
+  },
+  "types": "./dist/types/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "protocol-connect": [
+        "./dist/types/protocol-connect/index.d.ts"
+      ],
+      "protocol-grpc": [
+        "./dist/types/protocol-grpc/index.d.ts"
+      ]
     }
   },
   "peerDependencies": {
