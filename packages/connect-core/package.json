@@ -21,9 +21,18 @@
   "type": "module",
   "types": "./dist/types/index.d.ts",
   "exports": {
-    "import": "./dist/esm/index.js",
-    "require": "./dist/cjs/index.js",
-    "types": "./dist/types/index.d.ts"
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./protocol-connect.js": {
+      "import": "./dist/esm/protocol-connect/index.js",
+      "require": "./dist/cjs/protocol-connect/index.js"
+    },
+    "./protocol-grpc.js": {
+      "import": "./dist/esm/protocol-grpc/index.js",
+      "require": "./dist/cjs/protocol-grpc/index.js"
+    }
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"

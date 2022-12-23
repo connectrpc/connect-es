@@ -1,5 +1,9 @@
 {
-  "files": ["src/index.ts"],
+  "files": [
+    "src/index.ts",
+    "src/protocol-connect/index.ts",
+    "src/protocol-grpc/index.ts"
+  ],
   "include": ["src/**/*.spec.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
