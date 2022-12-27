@@ -285,6 +285,22 @@ vKy9wyvtUtg=
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           useBinaryFormat: false,
         }),
+    "@bufbuild/connect-node (gRPC, binary, http2, gzip) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC, JSON, http2, gzip) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
     "@bufbuild/connect-node (gRPC, binary, http2) against connect-go (h1)": (
       options?: Record<string, unknown>
     ) =>
@@ -525,6 +541,39 @@ vKy9wyvtUtg=
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
           useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC-web, JSON, http2, gzip) against connect-go (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebHttp2Transport({
+          ...options,
+          baseUrl: servers["connect-go (h1)"].getUrl(),
+          http2Options: {
+            rejectUnauthorized: false, // TODO set up cert for go server correctly
+          },
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC-web, binary, http2, gzip) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          http2Options: {
+            rejectUnauthorized: false, // TODO set up cert for go server correctly
+          },
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC-web, JSON, http2, gzip) against @bufbuild/connect-node (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebHttp2Transport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
+          http2Options: {
+            rejectUnauthorized: false, // TODO set up cert for go server correctly
+          },
+          useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
     "@bufbuild/connect-node (gRPC-web, JSON, http2) against connect-go (h1)": (
