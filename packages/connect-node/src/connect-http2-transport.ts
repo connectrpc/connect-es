@@ -439,7 +439,7 @@ function connectCreateRequestHeaderWithCompression(
   return result;
 }
 
-export function connectValidateResponseWithCompression(
+function connectValidateResponseWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   acceptCompression: Compression[],
