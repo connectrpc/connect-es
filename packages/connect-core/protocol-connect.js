@@ -14,6 +14,7 @@
 
 // workaround for bundlers that do not support subpath exports.
 // // it's unclear whether we should point to cjs or esm here.
+//       - sma - pointing to esm works for both
 // // it's also unclear whether we have to use the subpath export "./protocol-connect.js", or if it should remain "./protocol-connect"
 // // it's also unclear whether this works for type declarations.
 export * from "./dist/esm/protocol-connect/index.js";
