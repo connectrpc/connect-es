@@ -17,39 +17,36 @@ import {
   ConnectError,
   connectErrorFromReason,
   createPromiseClient,
-  createConnectHttp2Transport,
-  createGrpcWebHttp2Transport,
-  createGrpcHttp2Transport,
+  // createConnectHttp2Transport,
+  // createGrpcWebHttp2Transport,
+  // createGrpcHttp2Transport,
   createCallbackClient,
-  // createConnectHttpTransport,
+  createConnectHttpTransport,
   // createGrpcWebHttpTransport,
   // createGrpcHttpTransport,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 
-describe("unresolvable_host", function () {
+fdescribe("unresolvable_host", function () {
   const options = { baseUrl: "https://unresolvable-host.some.domain" };
   const transports = [
-    [
-      "@bufbuild/connect-node (gRPC-web, http2)",
-      createGrpcWebHttp2Transport(options),
-    ],
-    // TODO(TCN-921)
+    // [
+    //   "@bufbuild/connect-node (gRPC-web, http2)",
+    //   createGrpcWebHttp2Transport(options),
+    // ],
     // [
     //   "@bufbuild/connect-node (gRPC-web, http)",
     //   createGrpcWebHttpTransport(options),
     // ],
-    [
-      "@bufbuild/connect-node (Connect, http2)",
-      createConnectHttp2Transport(options),
-    ],
-    // TODO(TCN-921)
     // [
-    //   "@bufbuild/connect-node (Connect, http)",
-    //   createConnectHttpTransport(options),
+    //   "@bufbuild/connect-node (Connect, http2)",
+    //   createConnectHttp2Transport(options),
     // ],
-    ["@bufbuild/connect-node (gRPC, http2)", createGrpcHttp2Transport(options)],
-    // TODO(TCN-921)
+    [
+      "@bufbuild/connect-node (Connect, http)",
+      createConnectHttpTransport(options),
+    ],
+    // ["@bufbuild/connect-node (gRPC, http2)", createGrpcHttp2Transport(options)],
     // ["@bufbuild/connect-node (gRPC, http)", createGrpcHttpTransport(options)],
   ] as const;
   for (const [name, transport] of transports) {
@@ -84,7 +81,7 @@ describe("unresolvable_host", function () {
           });
         });
         describe("for client-streaming", function () {
-          it("should raise code unavailable", async function () {
+          fit("should raise code unavailable", async function () {
             try {
               const s = await client.streamingInputCall();
               fail("expected to catch an error");

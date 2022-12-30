@@ -258,7 +258,9 @@ export function createConnectHttpTransport(
                 stream.on("response", (res) => {
                   resolve(res);
                 });
-                stream.on("error", reject);
+                stream.on("error", (err) => {
+                  reject(err);
+                });
               }
             );
             let endStreamReceived = false;
@@ -302,11 +304,20 @@ export function createConnectHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
+
+                let header;
+                try {
+                  header = await responseHeader;
+                } catch (e) {
+                  console.log("inside catch e ");
+                  throw connectErrorFromNodeReason(e);
+                }
+                console.log("header", header);
                 connectValidateResponse(
                   method.kind,
                   useBinaryFormat,
                   response.statusCode,
-                  await responseHeader
+                  header
                 );
                 try {
                   const result = await readEnvelope(response);
@@ -344,12 +355,14 @@ export function createConnectHttpTransport(
                     value: parse(result.value.data),
                   };
                 } catch (e) {
+                  console.log("err", e);
                   throw connectErrorFromNodeReason(e);
                 }
               },
             };
             return Promise.resolve(conn);
           } catch (e) {
+            console.log("err2", e);
             throw connectErrorFromNodeReason(e);
           }
         },
@@ -372,7 +385,7 @@ function makeNodeRequest(options: NodeRequestOptions) {
     });
 
     request.on("error", (err) => {
-      reject(`request failed ${String(err)}`);
+      reject(err);
     });
 
     request.on("response", (res) => {

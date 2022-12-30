@@ -219,6 +219,7 @@ export function createGrpcWebHttp2Transport(
           options.interceptors
         );
       } catch (e) {
+        console.log("errr", e);
         throw connectErrorFromNodeReason(e);
       }
     },
