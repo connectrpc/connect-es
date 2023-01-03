@@ -22,22 +22,22 @@ import {
   createGrpcHttp2Transport,
   createCallbackClient,
   createConnectHttpTransport,
-  // createGrpcWebHttpTransport,
-  // createGrpcHttpTransport,
+  createGrpcWebHttpTransport,
+  createGrpcHttpTransport,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 
-fdescribe("unresolvable_host", function () {
+describe("unresolvable_host", function () {
   const options = { baseUrl: "https://unresolvable-host.some.domain" };
   const transports = [
     [
       "@bufbuild/connect-node (gRPC-web, http2)",
       createGrpcWebHttp2Transport(options),
     ],
-    // [
-    //   "@bufbuild/connect-node (gRPC-web, http)",
-    //   createGrpcWebHttpTransport(options),
-    // ],
+    [
+      "@bufbuild/connect-node (gRPC-web, http)",
+      createGrpcWebHttpTransport(options),
+    ],
     [
       "@bufbuild/connect-node (Connect, http2)",
       createConnectHttp2Transport(options),
@@ -47,7 +47,7 @@ fdescribe("unresolvable_host", function () {
       createConnectHttpTransport(options),
     ],
     ["@bufbuild/connect-node (gRPC, http2)", createGrpcHttp2Transport(options)],
-    // ["@bufbuild/connect-node (gRPC, http)", createGrpcHttpTransport(options)],
+    ["@bufbuild/connect-node (gRPC, http)", createGrpcHttpTransport(options)],
   ] as const;
   for (const [name, transport] of transports) {
     describe(`${name} against unresolvable domain`, function () {
@@ -81,7 +81,7 @@ fdescribe("unresolvable_host", function () {
           });
         });
         describe("for client-streaming", function () {
-          fit("should raise code unavailable", async function () {
+          it("should raise code unavailable", async function () {
             try {
               const s = await client.streamingInputCall();
               fail("expected to catch an error");

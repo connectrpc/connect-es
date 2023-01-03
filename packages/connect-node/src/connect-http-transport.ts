@@ -251,11 +251,7 @@ export function createConnectHttpTransport(
             );
             const responsePromise = new Promise<http.IncomingMessage>(
               (resolve) => {
-                stream.on("response", resolveResponse);
-
-                function resolveResponse(res: http.IncomingMessage) {
-                  resolve(res);
-                }
+                stream.on("response", (res) => resolve(res));
               }
             );
             let endStreamReceived = false;
@@ -358,11 +354,18 @@ export function createConnectHttpTransport(
   };
 }
 
+function nodeRequestProtocol(protocol: string) {
+  if (protocol.startsWith("http") || protocol.startsWith("https")) {
+    return protocol.includes("https") ? https : http;
+  }
+  throw new Error("Unsupported protocol");
+}
+
 function makeNodeRequest(options: NodeRequestOptions) {
   return new Promise<http.IncomingMessage>((resolve, reject) => {
     const endpoint = new URL(options.req.url);
-    const nodeRequestFn = nodeRequest(endpoint.protocol);
-    const request = nodeRequestFn(options.req.url, {
+    const nodeProtocol = nodeRequestProtocol(endpoint.protocol);
+    const request = nodeProtocol.request(options.req.url, {
       headers: webHeaderToNodeHeaders(options.req.header),
       method: "POST",
       path: endpoint.pathname,
@@ -383,20 +386,13 @@ function makeNodeRequest(options: NodeRequestOptions) {
   });
 }
 
-function nodeRequest(protocol: string) {
-  if (protocol.startsWith("http") || protocol.startsWith("https")) {
-    return protocol.includes("https") ? https.request : http.request;
-  }
-  throw new Error("Unsupported protocol");
-}
-
 function getNodeRequest(
   req: StreamingRequest,
   httpOptions: http.RequestOptions | https.RequestOptions | undefined
 ) {
   return new Promise<http.ClientRequest>((resolve, reject) => {
     const endpoint = new URL(req.url);
-    const nodeProtocol = endpoint.protocol.includes("https") ? https : http;
+    const nodeProtocol = nodeRequestProtocol(endpoint.protocol);
     /**
      * Using protocol(http or https) .get allows us to ping the host to see if its
      * available or not. If it is we create the node request, if not it'll error and
@@ -405,14 +401,14 @@ function getNodeRequest(
      */
     nodeProtocol
       .get(req.url, { ...httpOptions }, () => {
-        const nodeRequestFn = nodeRequest(endpoint.protocol);
-        const request = nodeRequestFn(req.url, {
+        const request = nodeProtocol.request(req.url, {
           headers: webHeaderToNodeHeaders(req.header),
           method: "POST",
           path: endpoint.pathname,
           signal: req.signal,
           ...httpOptions,
         });
+
         resolve(request);
       })
       .on("error", reject);
