@@ -353,7 +353,7 @@ export function createGrpcWebHttp2Transport(
                 }
               },
             };
-            return Promise.resolve(conn);
+            return conn;
           } catch (e) {
             throw connectErrorFromNodeReason(e);
           }

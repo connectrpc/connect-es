@@ -242,25 +242,20 @@ export function createConnectHttpTransport(
           signal: signal ?? new AbortController().signal,
           header: createRequestHeader(timeoutMs, header),
         },
-        (req: StreamingRequest<I, O>) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
-            const endpoint = new URL(req.url);
-            const nodeRequestFn = nodeRequest(endpoint.protocol);
-            const stream = nodeRequestFn(req.url, {
-              headers: webHeaderToNodeHeaders(req.header),
-              method: "POST",
-              path: endpoint.pathname,
-              signal: req.signal,
-              ...options.httpOptions,
-            });
+            const stream = await getNodeRequest(req, options.httpOptions).catch(
+              (err) => {
+                throw err;
+              }
+            );
             const responsePromise = new Promise<http.IncomingMessage>(
-              (resolve, reject) => {
-                stream.on("response", (res) => {
+              (resolve) => {
+                stream.on("response", resolveResponse);
+
+                function resolveResponse(res: http.IncomingMessage) {
                   resolve(res);
-                });
-                stream.on("error", (err) => {
-                  reject(err);
-                });
+                }
               }
             );
             let endStreamReceived = false;
@@ -268,6 +263,7 @@ export function createConnectHttpTransport(
             const responseHeader = responsePromise.then((res) =>
               nodeHeaderToWebHeader(res.headers)
             );
+
             const conn: StreamingConn<I, O> = {
               ...req,
               responseHeader,
@@ -305,14 +301,7 @@ export function createConnectHttpTransport(
                   "http1 client response is missing status code"
                 );
 
-                let header;
-                try {
-                  header = await responseHeader;
-                } catch (e) {
-                  console.log("inside catch e ");
-                  throw connectErrorFromNodeReason(e);
-                }
-                console.log("header", header);
+                const header = await responseHeader;
                 connectValidateResponse(
                   method.kind,
                   useBinaryFormat,
@@ -349,20 +338,17 @@ export function createConnectHttpTransport(
                       done: true,
                     };
                   }
-
                   return {
                     done: false,
                     value: parse(result.value.data),
                   };
                 } catch (e) {
-                  console.log("err", e);
                   throw connectErrorFromNodeReason(e);
                 }
               },
             };
-            return Promise.resolve(conn);
+            return conn;
           } catch (e) {
-            console.log("err2", e);
             throw connectErrorFromNodeReason(e);
           }
         },
@@ -402,4 +388,33 @@ function nodeRequest(protocol: string) {
     return protocol.includes("https") ? https.request : http.request;
   }
   throw new Error("Unsupported protocol");
+}
+
+function getNodeRequest(
+  req: StreamingRequest,
+  httpOptions: http.RequestOptions | https.RequestOptions | undefined
+) {
+  return new Promise<http.ClientRequest>((resolve, reject) => {
+    const endpoint = new URL(req.url);
+    const nodeProtocol = endpoint.protocol.includes("https") ? https : http;
+    /**
+     * Using protocol(http or https) .get allows us to ping the host to see if its
+     * available or not. If it is we create the node request, if not it'll error and
+     * we can reject properly. The reason why we have to do this is the rejected error from
+     * responsePromise does not bubble up properly
+     */
+    nodeProtocol
+      .get(req.url, { ...httpOptions }, () => {
+        const nodeRequestFn = nodeRequest(endpoint.protocol);
+        const request = nodeRequestFn(req.url, {
+          headers: webHeaderToNodeHeaders(req.header),
+          method: "POST",
+          path: endpoint.pathname,
+          signal: req.signal,
+          ...httpOptions,
+        });
+        resolve(request);
+      })
+      .on("error", reject);
+  });
 }

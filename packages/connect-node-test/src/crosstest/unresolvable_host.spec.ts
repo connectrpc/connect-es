@@ -17,9 +17,9 @@ import {
   ConnectError,
   connectErrorFromReason,
   createPromiseClient,
-  // createConnectHttp2Transport,
-  // createGrpcWebHttp2Transport,
-  // createGrpcHttp2Transport,
+  createConnectHttp2Transport,
+  createGrpcWebHttp2Transport,
+  createGrpcHttp2Transport,
   createCallbackClient,
   createConnectHttpTransport,
   // createGrpcWebHttpTransport,
@@ -30,23 +30,23 @@ import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 fdescribe("unresolvable_host", function () {
   const options = { baseUrl: "https://unresolvable-host.some.domain" };
   const transports = [
-    // [
-    //   "@bufbuild/connect-node (gRPC-web, http2)",
-    //   createGrpcWebHttp2Transport(options),
-    // ],
+    [
+      "@bufbuild/connect-node (gRPC-web, http2)",
+      createGrpcWebHttp2Transport(options),
+    ],
     // [
     //   "@bufbuild/connect-node (gRPC-web, http)",
     //   createGrpcWebHttpTransport(options),
     // ],
-    // [
-    //   "@bufbuild/connect-node (Connect, http2)",
-    //   createConnectHttp2Transport(options),
-    // ],
+    [
+      "@bufbuild/connect-node (Connect, http2)",
+      createConnectHttp2Transport(options),
+    ],
     [
       "@bufbuild/connect-node (Connect, http)",
       createConnectHttpTransport(options),
     ],
-    // ["@bufbuild/connect-node (gRPC, http2)", createGrpcHttp2Transport(options)],
+    ["@bufbuild/connect-node (gRPC, http2)", createGrpcHttp2Transport(options)],
     // ["@bufbuild/connect-node (gRPC, http)", createGrpcHttpTransport(options)],
   ] as const;
   for (const [name, transport] of transports) {
@@ -89,6 +89,7 @@ fdescribe("unresolvable_host", function () {
               await s.send({});
               await s.close();
               const res = await s.receive();
+
               expect(res).toBeUndefined();
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
