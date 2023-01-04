@@ -17,14 +17,14 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcCodeFromHttpStatus,
   grpcCreateRequestHeader,
-  grpcExpectContentType,
-  grpcFindTrailerError,
+  grpcValidateResponse,
+  grpcValidateTrailer,
   Interceptor,
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -130,13 +130,15 @@ export function createGrpcHttp2Transport(
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+            // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
+            //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
                 const s = http2.connect(
@@ -169,7 +171,7 @@ export function createGrpcHttp2Transport(
             await end(stream);
 
             const [responseCode, responseHeader] = await headersPromise;
-            validateResponse(useBinaryFormat, responseCode, responseHeader);
+            grpcValidateResponse(useBinaryFormat, responseCode, responseHeader);
 
             const messageResult = await readEnvelope(stream);
             const eofResult = await readEnvelope(stream);
@@ -177,7 +179,7 @@ export function createGrpcHttp2Transport(
               throw "extraneous data";
             }
             const trailer = await trailerPromise;
-            validateGrpcStatus(trailer);
+            grpcValidateTrailer(trailer);
             if (messageResult.done) {
               throw "premature eof";
             }
@@ -218,7 +220,7 @@ export function createGrpcHttp2Transport(
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             redirect: "error",
@@ -227,8 +229,10 @@ export function createGrpcHttp2Transport(
           signal: signal ?? new AbortController().signal,
           header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
         },
-        async (req) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
+            // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
+            //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
                 const s = http2.connect(req.url, options.http2Options, (s) =>
@@ -264,7 +268,11 @@ export function createGrpcHttp2Transport(
                   messageFlag,
                   serialize(normalize(message))
                 );
-                await write(stream, enveloped);
+                try {
+                  await write(stream, enveloped);
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
               },
               async close(): Promise<void> {
                 if (stream.writableEnded) {
@@ -277,7 +285,7 @@ export function createGrpcHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headerPromise;
-                validateResponse(
+                grpcValidateResponse(
                   useBinaryFormat,
                   responseStatus,
                   responseHeader
@@ -286,7 +294,7 @@ export function createGrpcHttp2Transport(
                   const result = await readEnvelope(stream);
                   if (result.done) {
                     const trailer = await trailerPromise;
-                    validateGrpcStatus(trailer);
+                    grpcValidateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
                       done: true,
@@ -311,27 +319,4 @@ export function createGrpcHttp2Transport(
       );
     },
   };
-}
-
-function validateResponse(
-  binaryFormat: boolean,
-  status: number,
-  headers: Headers
-) {
-  const code = grpcCodeFromHttpStatus(status);
-  if (code != null) {
-    throw new ConnectError(
-      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
-      code
-    );
-  }
-  grpcExpectContentType(binaryFormat, headers.get("Content-Type"));
-  validateGrpcStatus(headers);
-}
-
-function validateGrpcStatus(headerOrTrailer: Headers) {
-  const err = grpcFindTrailerError(headerOrTrailer);
-  if (err) {
-    throw err;
-  }
 }

@@ -14,14 +14,13 @@
 
 import {
   appendHeaders,
-  connectCodeFromHttpStatus,
   connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
-  connectExpectContentType,
   connectTrailerDemux,
+  connectValidateResponse,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
@@ -153,19 +152,12 @@ export function createConnectHttpTransport(
           method.kind,
           useBinaryFormat
         );
-
-        const validateContentType = connectExpectContentType.bind(
-          null,
-          method.kind,
-          useBinaryFormat
-        );
-
         return await runUnary<I, O>(
           {
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: createRequestHeader(timeoutMs, header),
             message: normalize(message),
@@ -186,12 +178,18 @@ export function createConnectHttpTransport(
               "http1 client response is missing status code"
             );
 
-            await validateResponseHeader(
+            const { isConnectUnaryError } = connectValidateResponse(
+              method.kind,
+              useBinaryFormat,
               response.statusCode,
-              responseHeaders,
-              response
+              responseHeaders
             );
-            validateContentType(responseHeaders.get("Content-Type"));
+            if (isConnectUnaryError) {
+              throw connectErrorFromJson(
+                jsonParse(await readToEnd(response)),
+                appendHeaders(...connectTrailerDemux(responseHeaders))
+              );
+            }
 
             const [header, trailer] = connectTrailerDemux(responseHeaders);
             return {
@@ -225,13 +223,6 @@ export function createConnectHttpTransport(
         options.jsonOptions,
         options.binaryOptions
       );
-
-      const validateContentType = connectExpectContentType.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
-
       const createRequestHeader = connectCreateRequestHeader.bind(
         null,
         method.kind,
@@ -242,7 +233,7 @@ export function createConnectHttpTransport(
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             redirect: "error",
@@ -262,7 +253,6 @@ export function createConnectHttpTransport(
               signal: req.signal,
               ...options.httpOptions,
             });
-
             const responsePromise = new Promise<http.IncomingMessage>(
               (resolve, reject) => {
                 stream.on("response", (res) => {
@@ -271,7 +261,6 @@ export function createConnectHttpTransport(
                 stream.on("error", reject);
               }
             );
-
             let endStreamReceived = false;
             const responseTrailer = defer<Headers>();
             const responseHeader = responsePromise.then((res) =>
@@ -292,7 +281,11 @@ export function createConnectHttpTransport(
                   messageFlag,
                   serialize(normalize(message))
                 );
-                await write(stream, enveloped);
+                try {
+                  await write(stream, enveloped);
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
               },
               async close() {
                 if (stream.writableEnded) {
@@ -309,13 +302,12 @@ export function createConnectHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
-                await validateResponseHeader(
+                connectValidateResponse(
+                  method.kind,
+                  useBinaryFormat,
                   response.statusCode,
-                  await responseHeader,
-                  response
+                  await responseHeader
                 );
-                validateContentType((await responseHeader).get("Content-Type"));
-
                 try {
                   const result = await readEnvelope(response);
 
@@ -366,23 +358,6 @@ export function createConnectHttpTransport(
     },
   };
 }
-
-const validateResponseHeader = async (
-  status: number,
-  headers: Headers,
-  stream: http.IncomingMessage
-) => {
-  const type = headers.get("content-type") ?? "";
-  if (status !== 200) {
-    if (type === "application/json") {
-      throw connectErrorFromJson(
-        jsonParse(await readToEnd(stream)),
-        appendHeaders(...connectTrailerDemux(headers))
-      );
-    }
-    throw new ConnectError(`HTTP ${status}`, connectCodeFromHttpStatus(status));
-  }
-};
 
 function makeNodeRequest(options: NodeRequestOptions) {
   return new Promise<http.IncomingMessage>((resolve, reject) => {

@@ -25,6 +25,18 @@ describe("createMethodUrl()", function () {
       "https://example.com/example.Service/Method"
     );
   });
+  it("should accept empty string as baseUrl", function () {
+    const url = createMethodUrl("", "example.Service", "Method");
+    expect(url.toString()).toEqual("/example.Service/Method");
+  });
+  it("should accept '/' as baseUrl", function () {
+    const url = createMethodUrl("/", "example.Service", "Method");
+    expect(url.toString()).toEqual("/example.Service/Method");
+  });
+  it("should handle protocol-relative baseUrl", function () {
+    const url = createMethodUrl("//example.com", "example.Service", "Method");
+    expect(url.toString()).toEqual("//example.com/example.Service/Method");
+  });
   it("should not duplicating slashes", function () {
     const url = createMethodUrl(
       "https://example.com/",

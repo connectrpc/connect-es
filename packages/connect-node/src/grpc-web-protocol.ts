@@ -17,8 +17,10 @@ import {
   ConnectError,
   connectErrorFromReason,
   encodeEnvelope,
+  grpcParseTimeout,
   grpcSetTrailerStatus,
   grpcWebParseContentType,
+  grpcWebTrailerFlag,
   grpcWebTrailerSerialize,
 } from "@bufbuild/connect-core";
 import {
@@ -41,9 +43,6 @@ import type * as http from "http";
 import type * as http2 from "http2";
 import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 
-const messageFlag = 0b00000000;
-const trailerFlag = 0b10000000;
-
 /**
  * Options for creating a gRPC-web Protocol instance.
  */
@@ -51,6 +50,8 @@ interface CreateGrpcWebProtocolOptions {
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 }
+
+const grpcWebTimeoutHeader = "Grpc-Timeout";
 
 /**
  * Create a gRPC-web Protocol instance.
@@ -67,9 +68,11 @@ export function createGrpcWebProtocol(
       switch (spec.kind) {
         case MethodKind.Unary:
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -84,6 +87,7 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -91,6 +95,23 @@ export function createGrpcWebProtocol(
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
+            const timeout = grpcParseTimeout(
+              requestHeader.get(grpcWebTimeoutHeader)
+            );
+
+            if (timeout instanceof ConnectError) {
+              return await endWithGrpcWebTrailer(res, context, timeout);
+            }
+
+            if (typeof timeout === "number") {
+              res.setTimeout(timeout, () => {
+                return void endWithGrpcWebTrailer(
+                  res,
+                  context,
+                  new ConnectError("Request Timed Out", Code.DeadlineExceeded)
+                );
+              });
+            }
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -118,17 +139,16 @@ export function createGrpcWebProtocol(
               );
             }
             res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
-            await write(
-              res,
-              encodeEnvelope(messageFlag, serialize(normalize(output)))
-            );
+            await write(res, encodeEnvelope(0, serialize(normalize(output))));
             return await endWithGrpcWebTrailer(res, context, undefined);
           };
         case MethodKind.ServerStreaming: {
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -143,13 +163,32 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
+            const timeout = grpcParseTimeout(
+              requestHeader.get(grpcWebTimeoutHeader)
+            );
+
+            if (timeout instanceof ConnectError) {
+              return await endWithGrpcWebTrailer(res, context, timeout);
+            }
+
+            if (typeof timeout === "number") {
+              res.setTimeout(timeout, () => {
+                return void endWithGrpcWebTrailer(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded)
+                );
+              });
+            }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -166,7 +205,7 @@ export function createGrpcWebProtocol(
                 new ConnectError("Missing input message", Code.Internal)
               );
             }
-            if (inputResult.value.flags !== messageFlag) {
+            if (inputResult.value.flags !== 0) {
               return await endWithGrpcWebTrailer(
                 res,
                 context,
@@ -189,7 +228,7 @@ export function createGrpcWebProtocol(
                 }
                 await write(
                   res,
-                  encodeEnvelope(messageFlag, serialize(normalize(output)))
+                  encodeEnvelope(0, serialize(normalize(output)))
                 );
               }
             } catch (e) {
@@ -204,9 +243,11 @@ export function createGrpcWebProtocol(
         }
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -221,6 +262,7 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
@@ -228,6 +270,24 @@ export function createGrpcWebProtocol(
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
+            const timeout = grpcParseTimeout(
+              requestHeader.get(grpcWebTimeoutHeader)
+            );
+
+            if (timeout instanceof ConnectError) {
+              return await endWithGrpcWebTrailer(res, context, timeout);
+            }
+
+            if (typeof timeout === "number") {
+              res.setTimeout(timeout, () => {
+                return void endWithGrpcWebTrailer(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded)
+                );
+              });
+            }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -242,7 +302,7 @@ export function createGrpcWebProtocol(
                 if (result.done) {
                   break;
                 }
-                if (result.value.flags !== messageFlag) {
+                if (result.value.flags !== 0) {
                   return await endWithGrpcWebTrailer(
                     res,
                     context,
@@ -257,6 +317,7 @@ export function createGrpcWebProtocol(
                 yield parse(result.value.data);
               }
             }
+
             let output: O | PartialMessage<O>;
             try {
               output = await spec.impl(input(), context);
@@ -268,18 +329,17 @@ export function createGrpcWebProtocol(
               );
             }
             res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
-            await write(
-              res,
-              encodeEnvelope(messageFlag, serialize(normalize(output)))
-            );
+            await write(res, encodeEnvelope(0, serialize(normalize(output))));
             return await endWithGrpcWebTrailer(res, context, undefined);
           };
         }
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
+            const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = grpcWebParseContentType(
               req.headers["content-type"] ?? null
             );
+
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -294,13 +354,32 @@ export function createGrpcWebProtocol(
                 "Unsupported Media Type"
               );
             }
+
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
+            const timeout = grpcParseTimeout(
+              requestHeader.get(grpcWebTimeoutHeader)
+            );
+
+            if (timeout instanceof ConnectError) {
+              return await endWithGrpcWebTrailer(res, context, timeout);
+            }
+
+            if (typeof timeout === "number") {
+              res.setTimeout(timeout, () => {
+                return void endWithGrpcWebTrailer(
+                  res,
+                  context,
+                  new ConnectError("Stream Timed Out", Code.DeadlineExceeded)
+                );
+              });
+            }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -315,7 +394,7 @@ export function createGrpcWebProtocol(
                 if (result.done) {
                   break;
                 }
-                if (result.value.flags !== messageFlag) {
+                if (result.value.flags !== 0) {
                   return await endWithGrpcWebTrailer(
                     res,
                     context,
@@ -330,6 +409,7 @@ export function createGrpcWebProtocol(
                 yield parse(result.value.data);
               }
             }
+
             try {
               for await (const output of spec.impl(input(), context)) {
                 if (!res.headersSent) {
@@ -340,7 +420,7 @@ export function createGrpcWebProtocol(
                 }
                 await write(
                   res,
-                  encodeEnvelope(messageFlag, serialize(normalize(output)))
+                  encodeEnvelope(0, serialize(normalize(output)))
                 );
               }
             } catch (e) {
@@ -376,6 +456,6 @@ async function endWithGrpcWebTrailer(
   }
   grpcSetTrailerStatus(context.responseTrailer, error);
   const trailerBytes = grpcWebTrailerSerialize(context.responseTrailer);
-  await write(res, encodeEnvelope(trailerFlag, trailerBytes));
+  await write(res, encodeEnvelope(grpcWebTrailerFlag, trailerBytes));
   await end(res);
 }

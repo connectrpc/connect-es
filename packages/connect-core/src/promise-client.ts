@@ -26,7 +26,8 @@ import type { Transport } from "./transport.js";
 import { makeAnyClient } from "./any-client.js";
 import type { StreamingConn } from "./interceptor.js";
 import type { CallOptions } from "./call-options.js";
-import { ConnectError } from "./connect-error.js";
+import { ConnectError, connectErrorFromReason } from "./connect-error.js";
+import { Code } from "./code.js";
 
 // prettier-ignore
 /**
@@ -43,28 +44,92 @@ export type PromiseClient<T extends ServiceType> = {
   : never;
 };
 
-// TODO update docs
+/**
+ * ClientStreamCall represents an ongoing client-streaming RPC.
+ *
+ * Messages can be transmitted by calling send(). When all messages are
+ * transmitted, call close(), then receive() to receive the single server
+ * response message.
+ */
 export interface ClientStreamCall<I, O> {
-  send(input: I): Promise<void>;
+  /**
+   * Transmit a message to the server.
+   *
+   * Resolves to `false` if it was not possible to transmit the message, for
+   * example because the server has terminated the connection.
+   */
+  send(input: I): Promise<boolean>;
 
-  close(): void;
+  /**
+   * Close the input stream, signalling to the server that the client is not
+   * going to send any more messages.
+   *
+   * Resolves to `false` if it was not possible to close the input stream, for
+   * example because the server has terminated the connection.
+   */
+  close(): Promise<boolean>;
 
-  closed: boolean;
+  /**
+   * If send() or close() failed and resolved to `false`, this property
+   * contains the underlying error.
+   */
+  sendError: ConnectError | undefined;
 
+  /**
+   * Receive the single response message from the server. If the server sends
+   * an error instead of a message, the error will be raised when calling this
+   * method.
+   */
   receive(): Promise<O>;
 }
 
-// TODO update docs
+/**
+ * ClientBiDiCall represents an ongoing bi-directional streaming RPC.
+ *
+ * Messages can be transmitted by calling send(). When all messages are
+ * transmitted, call close(). Response messages can be received with
+ * receiveAll() - or individually with receive().
+ *
+ * If the protocol and the connection permits, sending and receiving messages
+ * can be interleaved.
+ */
 export interface ClientBiDiCall<I, O> {
-  send(input: I): Promise<void>;
+  /**
+   * Transmit a message to the server.
+   *
+   * Resolves to `false` if it was not possible to transmit the message, for
+   * example because the server has terminated the connection.
+   */
+  send(input: I): Promise<boolean>;
 
-  close(): void;
+  /**
+   * Close the input stream, signalling to the server that the client is not
+   * going to send any more messages.
+   *
+   * Resolves to `false` if it was not possible to close the input stream, for
+   * example because the server has terminated the connection.
+   */
+  close(): Promise<boolean>;
 
-  closed: boolean;
+  /**
+   * If send() or close() failed and resolved to `false`, this property
+   * contains the underlying error.
+   */
+  sendError: ConnectError | undefined;
 
-  receiveAll(): AsyncIterable<O>;
-
+  /**
+   * Receive a single response message from the server. If the server sends an
+   * error instead of a message, the error will be raised when calling this
+   * method. If the server has stopped sending messages, `null` is returned.
+   */
   receive(): Promise<O | null>;
+
+  /**
+   * Receive all response messages from the server as an async iterable. A
+   * `for await` loop can be used to iterate over the response messages,
+   * similar to the result of a server-streaming call.
+   */
+  receiveAll(): AsyncIterable<O>;
 }
 
 /**
@@ -128,7 +193,10 @@ type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   options?: CallOptions
 ) => AsyncIterable<O>;
 
-function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
+export function createServerStreamingFn<
+  I extends Message<I>,
+  O extends Message<O>
+>(
   transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
@@ -147,8 +215,23 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
                 options?.timeoutMs,
                 options?.headers
               );
-              await conn.send(input);
-              await conn.close();
+              try {
+                await conn.send(input);
+                await conn.close();
+              } catch (e) {
+                if (connectErrorFromReason(e).code == Code.Aborted) {
+                  // We do not want intentional errors from the server to be shadowed
+                  // by client-side errors.
+                  // This can occur if the server has written a response with an error
+                  // and has ended the connection. This response may already sit in a
+                  // buffer on the client, while it is still writing to the request
+                  // body.
+                  // We rely on the Transport to raise a code "aborted" in this case,
+                  // and ignore this error.
+                } else {
+                  throw e;
+                }
+              }
               options?.onHeader?.(await conn.responseHeader);
             }
             const result = await conn.read();
@@ -171,13 +254,17 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
 }
 
 /**
- * ClientStreamFn is the method signature for a client streaming method of a PromiseClient.
+ * ClientStreamFn is the method signature for a client streaming method of a
+ * PromiseClient.
  */
 type ClientStreamingFn<I extends Message<I>, O extends Message<O>> = (
   options?: CallOptions
 ) => Promise<ClientStreamCall<PartialMessage<I>, O>>;
 
-function createClientStreamingFn<I extends Message<I>, O extends Message<O>>(
+export function createClientStreamingFn<
+  I extends Message<I>,
+  O extends Message<O>
+>(
   transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
@@ -194,21 +281,33 @@ function createClientStreamingFn<I extends Message<I>, O extends Message<O>>(
     );
     void conn.responseHeader.then((value) => options?.onHeader?.(value));
     void conn.responseTrailer.then((value) => options?.onTrailer?.(value));
-    return {
-      send(input) {
-        return conn.send(input);
+    return <ClientStreamCall<PartialMessage<I>, O>>{
+      async send(input): Promise<boolean> {
+        try {
+          await conn.send(input);
+          return true;
+        } catch (e) {
+          this.sendError = connectErrorFromReason(e);
+          return false;
+        }
       },
-      close() {
-        return conn.close();
+      async close(): Promise<boolean> {
+        try {
+          await conn.close();
+          return true;
+        } catch (e) {
+          this.sendError = connectErrorFromReason(e);
+          return false;
+        }
       },
-      get closed() {
-        return conn.closed;
-      },
+      sendError: undefined,
       async receive(): Promise<O> {
         const r = await conn.read();
         if (r.done) {
-          // TODO better error message
-          throw new ConnectError("missing response message from transport");
+          throw new ConnectError(
+            "protocol error: missing response message",
+            Code.Internal
+          );
         }
         return r.value;
       },
@@ -217,13 +316,17 @@ function createClientStreamingFn<I extends Message<I>, O extends Message<O>>(
 }
 
 /**
- * BiDiStreamFn is the method signature for a bi-directional streaming method of a PromiseClient.
+ * BiDiStreamFn is the method signature for a bi-directional streaming method
+ * of a PromiseClient.
  */
 type BiDiStreamingFn<I extends Message<I>, O extends Message<O>> = (
   options?: CallOptions
 ) => Promise<ClientBiDiCall<PartialMessage<I>, O>>;
 
-function createBiDiStreamingFn<I extends Message<I>, O extends Message<O>>(
+export function createBiDiStreamingFn<
+  I extends Message<I>,
+  O extends Message<O>
+>(
   transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>
@@ -240,16 +343,26 @@ function createBiDiStreamingFn<I extends Message<I>, O extends Message<O>>(
     );
     void conn.responseHeader.then((value) => options?.onHeader?.(value));
     void conn.responseTrailer.then((value) => options?.onTrailer?.(value));
-    return {
-      send(input) {
-        return conn.send(input);
+    return <ClientBiDiCall<PartialMessage<I>, O>>{
+      async send(input) {
+        try {
+          await conn.send(input);
+          return true;
+        } catch (e) {
+          this.sendError = connectErrorFromReason(e);
+          return false;
+        }
       },
-      close() {
-        return conn.close();
+      async close(): Promise<boolean> {
+        try {
+          await conn.close();
+          return true;
+        } catch (e) {
+          this.sendError = connectErrorFromReason(e);
+          return false;
+        }
       },
-      get closed() {
-        return conn.closed;
-      },
+      sendError: undefined,
       receiveAll(): AsyncIterable<O> {
         return {
           [Symbol.asyncIterator](): AsyncIterator<O> {

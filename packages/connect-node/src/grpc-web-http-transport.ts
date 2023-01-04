@@ -17,15 +17,16 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcCodeFromHttpStatus,
-  grpcFindTrailerError,
+  grpcValidateTrailer,
   grpcWebCreateRequestHeader,
-  grpcWebExpectContentType,
   grpcWebTrailerParse,
+  grpcWebTrailerFlag,
+  grpcWebValidateResponse,
   Interceptor,
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -108,9 +109,6 @@ interface NodeRequestOptions<
   payload: Uint8Array;
 }
 
-const messageFlag = 0b00000000;
-const trailerFlag = 0b10000000;
-
 /**
  * Create a Transport for the gRPC-web protocol using the
  * Node.js `http` or `https package.
@@ -144,7 +142,7 @@ export function createGrpcWebHttpTransport(
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: grpcWebCreateRequestHeader(
               useBinaryFormat,
@@ -156,10 +154,7 @@ export function createGrpcWebHttpTransport(
           },
 
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const envelope = encodeEnvelope(
-              messageFlag,
-              serialize(req.message)
-            );
+            const envelope = encodeEnvelope(0, serialize(req.message));
             const encoding = useBinaryFormat ? "binary" : "utf8";
             const response = await makeNodeRequest({
               req,
@@ -173,7 +168,7 @@ export function createGrpcWebHttpTransport(
               typeof response.statusCode == "number",
               "http1 client response is missing status code"
             );
-            validateResponse(
+            grpcWebValidateResponse(
               useBinaryFormat,
               response.statusCode,
               responseHeaders
@@ -184,11 +179,11 @@ export function createGrpcWebHttpTransport(
               throw "premature eof";
             }
 
-            if (messageOrTrailerResult.value.flags === trailerFlag) {
+            if (messageOrTrailerResult.value.flags === grpcWebTrailerFlag) {
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              validateGrpcStatus(
+              grpcValidateTrailer(
                 grpcWebTrailerParse(messageOrTrailerResult.value.data)
               );
               // At this point, we received trailers only, but the trailers did
@@ -200,12 +195,12 @@ export function createGrpcWebHttpTransport(
             if (trailerResult.done) {
               throw "missing trailer";
             }
-            if (trailerResult.value.flags !== trailerFlag) {
+            if (trailerResult.value.flags !== grpcWebTrailerFlag) {
               throw "missing trailer";
             }
 
             const trailer = grpcWebTrailerParse(trailerResult.value.data);
-            validateGrpcStatus(trailer);
+            grpcValidateTrailer(trailer);
 
             const eofResult = await readEnvelope(response);
             if (!eofResult.done) {
@@ -248,7 +243,7 @@ export function createGrpcWebHttpTransport(
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             redirect: "error",
@@ -261,7 +256,7 @@ export function createGrpcWebHttpTransport(
             header
           ),
         },
-        async (req) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
             const endpoint = new URL(req.url);
             const nodeRequestFn = nodeRequest(endpoint.protocol);
@@ -272,7 +267,6 @@ export function createGrpcWebHttpTransport(
               signal: req.signal,
               ...options.httpOptions,
             });
-
             const responsePromise = new Promise<http.IncomingMessage>(
               (resolve, reject) => {
                 stream.on("response", (res) => {
@@ -299,10 +293,14 @@ export function createGrpcWebHttpTransport(
                   );
                 }
                 const enveloped = encodeEnvelope(
-                  messageFlag,
+                  0,
                   serialize(normalize(message))
                 );
-                await write(stream, enveloped);
+                try {
+                  await write(stream, enveloped);
+                } catch (e) {
+                  throw connectErrorFromNodeReason(e);
+                }
               },
               async close(): Promise<void> {
                 if (stream.writableEnded) {
@@ -320,7 +318,7 @@ export function createGrpcWebHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
-                validateResponse(
+                grpcWebValidateResponse(
                   useBinaryFormat,
                   response.statusCode,
                   responseHeader
@@ -336,10 +334,13 @@ export function createGrpcWebHttpTransport(
                       value: undefined,
                     };
                   }
-                  if ((result.value.flags & trailerFlag) === trailerFlag) {
+                  if (
+                    (result.value.flags & grpcWebTrailerFlag) ===
+                    grpcWebTrailerFlag
+                  ) {
                     endStreamReceived = true;
                     const trailer = grpcWebTrailerParse(result.value.data);
-                    validateGrpcStatus(trailer);
+                    grpcValidateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
                       done: true,
@@ -397,27 +398,4 @@ function nodeRequest(protocol: string) {
     return protocol.includes("https") ? https.request : http.request;
   }
   throw new Error("Unsupported protocol");
-}
-
-function validateResponse(
-  binaryFormat: boolean,
-  status: number,
-  headers: Headers
-) {
-  const code = grpcCodeFromHttpStatus(status);
-  if (code != null) {
-    throw new ConnectError(
-      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
-      code
-    );
-  }
-  grpcWebExpectContentType(binaryFormat, headers.get("Content-Type"));
-  validateGrpcStatus(headers);
-}
-
-function validateGrpcStatus(headerOrTrailer: Headers) {
-  const err = grpcFindTrailerError(headerOrTrailer);
-  if (err) {
-    throw err;
-  }
 }

@@ -23,7 +23,6 @@ import type {
   MethodInfo,
   PartialMessage,
   ServiceType,
-  MethodKind,
 } from "@bufbuild/protobuf";
 import type {
   Interceptor,
@@ -35,15 +34,14 @@ import type {
 import {
   appendHeaders,
   Code,
-  connectCodeFromHttpStatus,
+  connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
   connectErrorFromReason,
-  connectExpectContentType,
-  connectCreateRequestHeader,
   connectTrailerDemux,
+  connectValidateResponse,
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
@@ -71,6 +69,9 @@ export interface ConnectTransportOptions {
    *
    * This will make a `POST /my-api/my_package.MyService/Foo` to
    * `example.com` via HTTPS.
+   *
+   * If your API is served from the same domain as your site, use
+   * `baseUrl: window.location.origin` or simply "/".
    */
   baseUrl: string;
 
@@ -136,18 +137,13 @@ export function createConnectTransport(
         method.kind,
         useBinaryFormat
       );
-      const validateResponse = validateFetchResponse.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
       try {
         return await runUnary<I, O>(
           {
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
@@ -165,7 +161,18 @@ export function createConnectTransport(
               signal: req.signal,
               body: serialize(req.message),
             });
-            await validateResponse(response);
+            const { isConnectUnaryError } = connectValidateResponse(
+              method.kind,
+              useBinaryFormat,
+              response.status,
+              response.headers
+            );
+            if (isConnectUnaryError) {
+              throw connectErrorFromJson(
+                (await response.json()) as JsonValue,
+                appendHeaders(...connectTrailerDemux(response.headers))
+              );
+            }
             const [demuxedHeader, demuxedTrailer] = connectTrailerDemux(
               response.headers
             );
@@ -206,17 +213,12 @@ export function createConnectTransport(
         method.kind,
         useBinaryFormat
       );
-      const validateResponse = validateFetchResponse.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
       return runStreaming<I, O>(
         {
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",
@@ -266,7 +268,12 @@ export function createConnectTransport(
                   signal: req.signal,
                   body: encodeEnvelopes(...pendingSend),
                 });
-                await validateResponse(response);
+                connectValidateResponse(
+                  method.kind,
+                  useBinaryFormat,
+                  response.status,
+                  response.headers
+                );
                 responseHeader.resolve(response.headers);
                 if (response.body === null) {
                   throw "missing response body";
@@ -325,25 +332,4 @@ export function createConnectTransport(
       );
     },
   };
-}
-
-async function validateFetchResponse(
-  methodKind: MethodKind,
-  useBinaryFormat: boolean,
-  response: Response
-): Promise<void> {
-  const responseType = response.headers.get("Content-Type") ?? "";
-  if (response.status != 200) {
-    if (responseType == "application/json") {
-      throw connectErrorFromJson(
-        (await response.json()) as JsonValue,
-        appendHeaders(...connectTrailerDemux(response.headers))
-      );
-    }
-    throw new ConnectError(
-      `HTTP ${response.status} ${response.statusText}`,
-      connectCodeFromHttpStatus(response.status)
-    );
-  }
-  connectExpectContentType(methodKind, useBinaryFormat, responseType);
 }

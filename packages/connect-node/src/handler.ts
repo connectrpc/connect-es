@@ -126,8 +126,7 @@ export function createHandler<M extends MethodInfo>(
   return Object.assign(handleAny, {
     service,
     method,
-    requestPath: createMethodUrl("https://example.com", service, method)
-      .pathname,
+    requestPath: createMethodUrl("/", service, method),
   });
 }
 

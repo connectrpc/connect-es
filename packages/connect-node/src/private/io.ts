@@ -108,12 +108,14 @@ export function read(
       if (stream.errored) {
         return reject(stream.errored);
       }
+
       stream.once("error", error);
       stream.once("end", end);
       if (stream.readable) {
         return read();
       }
       stream.once("readable", read);
+
       function error(err: Error) {
         stream.off("end", end);
         stream.off("error", error);
@@ -165,7 +167,9 @@ export function write(
     if (stream.errored) {
       return error(stream.errored);
     }
+
     stream.once("error", error);
+
     stream.once("drain", drain);
     const encoding = typeof data == "string" ? "utf8" : "binary";
     // flushed == false: the stream wishes for the calling code to wait for
@@ -322,6 +326,7 @@ export function readResponseTrailer(
     if (stream.readableEnded) {
       return resolve(new Headers());
     }
+
     stream.once("end", end);
     stream.once("aborted", aborted);
     stream.once("error", error);

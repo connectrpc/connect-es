@@ -15,14 +15,13 @@
 import {
   appendHeaders,
   Code,
-  connectCodeFromHttpStatus,
   connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
-  connectParseContentType,
   connectTrailerDemux,
+  connectValidateResponse,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
@@ -30,6 +29,7 @@ import {
   runStreaming,
   runUnary,
   StreamingConn,
+  StreamingRequest,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -58,10 +58,7 @@ import {
   readToEnd,
   write,
 } from "./private/io.js";
-import {
-  connectErrorFromNodeReason,
-  getNodeErrorProps,
-} from "./private/node-error.js";
+import { connectErrorFromNodeReason } from "./private/node-error.js";
 import type { Compression } from "./compression.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
@@ -160,7 +157,7 @@ export function createConnectHttp2Transport(
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method).toString(),
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: connectCreateRequestHeaderWithCompression(
               method.kind,
@@ -174,7 +171,7 @@ export function createConnectHttp2Transport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            // TODO We create a new session for every request - we should share a connection instead,
+            // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
             //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
@@ -214,13 +211,14 @@ export function createConnectHttp2Transport(
             await write(stream, requestBody);
             await end(stream);
             const [responseStatus, responseHeader] = await headerPromise;
-            const { compression, isConnectUnaryError } = validateResponse(
-              method.kind,
-              useBinaryFormat,
-              acceptCompression,
-              responseStatus,
-              responseHeader
-            );
+            const { compression, isConnectUnaryError } =
+              connectValidateResponseWithCompression(
+                method.kind,
+                useBinaryFormat,
+                acceptCompression,
+                responseStatus,
+                responseHeader
+              );
             let responseBody = await readToEnd(stream); // TODO(TCN-785) honor readMaxBytes
             if (compression) {
               responseBody = await compression.decompress(
@@ -273,7 +271,7 @@ export function createConnectHttp2Transport(
           stream: true,
           service,
           method,
-          url: createMethodUrl(options.baseUrl, service, method).toString(),
+          url: createMethodUrl(options.baseUrl, service, method),
           init: {
             method: "POST",
             redirect: "error",
@@ -289,9 +287,9 @@ export function createConnectHttp2Transport(
             options.sendCompression?.name
           ),
         },
-        async (req) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
-            // TODO We create a new session for every request - we should share a connection instead,
+            // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
             //      and offer control over connection state via methods / properties on the transport.
             const session: http2.ClientHttp2Session =
               await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
@@ -341,20 +339,7 @@ export function createConnectHttp2Transport(
                 try {
                   await write(stream, enveloped);
                 } catch (e) {
-                  // TODO(TCN-870) sensibly handle write errors on closed stream - the workaround we apply here is insufficient
-                  if (
-                    getNodeErrorProps(e).code == "ERR_STREAM_WRITE_AFTER_END"
-                  ) {
-                    const [status, header] = await headersPromise;
-                    validateResponse(
-                      method.kind,
-                      useBinaryFormat,
-                      acceptCompression,
-                      status,
-                      header
-                    );
-                  }
-                  throw e;
+                  throw connectErrorFromNodeReason(e);
                 }
               },
               async close(): Promise<void> {
@@ -368,7 +353,7 @@ export function createConnectHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headersPromise;
-                const { compression } = validateResponse(
+                const { compression } = connectValidateResponseWithCompression(
                   method.kind,
                   useBinaryFormat,
                   acceptCompression,
@@ -454,20 +439,18 @@ function connectCreateRequestHeaderWithCompression(
   return result;
 }
 
-function validateResponse(
+export function connectValidateResponseWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   acceptCompression: Compression[],
   status: number,
   headers: Headers
 ): { compression: Compression | undefined; isConnectUnaryError: boolean } {
-  const isStream = methodKind != MethodKind.Unary;
-  const mimeType = headers.get("Content-Type");
-  const parsedType = connectParseContentType(mimeType);
   let compression: Compression | undefined;
-  const encodingField = isStream
-    ? "Connect-Content-Encoding"
-    : "Content-Encoding";
+  const encodingField =
+    methodKind == MethodKind.Unary
+      ? "Content-Encoding"
+      : "Connect-Content-Encoding";
   const encoding = headers.get(encodingField);
   if (encoding != null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);
@@ -478,30 +461,8 @@ function validateResponse(
       );
     }
   }
-  if (status !== 200) {
-    if (!parsedType) {
-      throw new ConnectError(
-        `HTTP ${status}`,
-        connectCodeFromHttpStatus(status)
-      );
-    }
-    if (
-      methodKind == MethodKind.Unary &&
-      !parsedType.stream &&
-      !parsedType.binary
-    ) {
-      return { compression, isConnectUnaryError: true };
-    }
-  }
-  if (
-    !parsedType ||
-    parsedType.binary != useBinaryFormat ||
-    parsedType.stream != isStream
-  ) {
-    throw new ConnectError(
-      `unexpected response content type "${mimeType ?? "?"}"`,
-      Code.Internal
-    );
-  }
-  return { compression, isConnectUnaryError: false };
+  return {
+    compression,
+    ...connectValidateResponse(methodKind, useBinaryFormat, status, headers),
+  };
 }
