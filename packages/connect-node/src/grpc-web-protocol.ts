@@ -206,13 +206,13 @@ export function createGrpcWebProtocol(
               );
             }
             res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
-            const response = serialize(normalize(output));
+            let response = serialize(normalize(output));
             let envelopeFlag = 0;
             if (responseCompression && data.length >= compressMinBytes) {
-              data = await responseCompression.compress(response);
+              response = await responseCompression.compress(response);
               envelopeFlag = flags | compressedFlag;
             }
-            await write(res, encodeEnvelope(envelopeFlag, data));
+            await write(res, encodeEnvelope(envelopeFlag, response));
             return await endWithGrpcWebTrailer(res, context, undefined);
           };
         case MethodKind.ServerStreaming: {
