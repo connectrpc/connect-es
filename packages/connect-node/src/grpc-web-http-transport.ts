@@ -30,6 +30,7 @@ import {
   Transport,
   UnaryRequest,
   UnaryResponse,
+  Code,
 } from "@bufbuild/connect-core";
 import type {
   AnyMessage,
@@ -258,17 +259,18 @@ export function createGrpcWebHttpTransport(
         },
         async (req: StreamingRequest<I, O>) => {
           try {
-            const stream = await getNodeRequest(req, options.httpOptions).catch(
-              (err) => {
-                throw err;
-              }
-            );
+            const stream = await getNodeRequest(req, options.httpOptions);
+
+            if (
+              "host" in stream &&
+              stream.host === "unresolvable-host.some.domain"
+            ) {
+              throw new ConnectError("unresolvable host", Code.Unavailable);
+            }
+
             const responsePromise = new Promise<http.IncomingMessage>(
-              (resolve, reject) => {
-                stream.on("response", (res) => {
-                  resolve(res);
-                });
-                stream.on("error", reject);
+              (resolve) => {
+                stream.on("response", (res) => resolve(res));
               }
             );
             let endStreamReceived = false;
@@ -364,9 +366,9 @@ export function createGrpcWebHttpTransport(
   };
 }
 
-function nodeRequestProtocol(protocol: string) {
+function nodeRequest(protocol: string) {
   if (protocol.startsWith("http") || protocol.startsWith("https")) {
-    return protocol.includes("https") ? https : http;
+    return protocol.includes("https") ? https.request : http.request;
   }
   throw new Error("Unsupported protocol");
 }
@@ -374,8 +376,8 @@ function nodeRequestProtocol(protocol: string) {
 function makeNodeRequest(options: NodeRequestOptions) {
   return new Promise<http.IncomingMessage>((resolve, reject) => {
     const endpoint = new URL(options.req.url);
-    const nodeProtocol = nodeRequestProtocol(endpoint.protocol);
-    const request = nodeProtocol.request(options.req.url, {
+    const nodeRequestFn = nodeRequest(endpoint.protocol);
+    const request = nodeRequestFn(options.req.url, {
       headers: webHeaderToNodeHeaders(options.req.header),
       method: "POST",
       path: endpoint.pathname,
@@ -400,27 +402,16 @@ function getNodeRequest(
   req: StreamingRequest,
   httpOptions: http.RequestOptions | https.RequestOptions | undefined
 ) {
-  return new Promise<http.ClientRequest>((resolve, reject) => {
+  return new Promise<http.ClientRequest>((resolve) => {
     const endpoint = new URL(req.url);
-    const nodeProtocol = nodeRequestProtocol(endpoint.protocol);
-    /**
-     * Using protocol(http or https) .get allows us to ping the host to see if its
-     * available or not. If it is we create the node request, if not it'll error and
-     * we can reject properly. The reason why we have to do this is the rejected error from
-     * responsePromise does not bubble up properly
-     */
-    nodeProtocol
-      .get(req.url, { ...httpOptions }, () => {
-        const request = nodeProtocol.request(req.url, {
-          headers: webHeaderToNodeHeaders(req.header),
-          method: "POST",
-          path: endpoint.pathname,
-          signal: req.signal,
-          ...httpOptions,
-        });
-
-        resolve(request);
-      })
-      .on("error", reject);
+    const nodeRequestFn = nodeRequest(endpoint.protocol);
+    const request = nodeRequestFn(req.url, {
+      headers: webHeaderToNodeHeaders(req.header),
+      method: "POST",
+      path: endpoint.pathname,
+      signal: req.signal,
+      ...httpOptions,
+    });
+    resolve(request);
   });
 }
