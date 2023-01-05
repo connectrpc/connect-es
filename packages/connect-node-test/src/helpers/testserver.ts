@@ -435,28 +435,6 @@ J4aliShXnxA=
           rejectUnauthorized: false,
         },
       }),
-    "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-node (h1 + tls)":
-      (options?: Record<string, unknown>) =>
-        createGrpcHttpTransport({
-          ...options,
-          baseUrl: servers["@bufbuild/connect-node (h1 + tls)"].getUrl(),
-          useBinaryFormat: false,
-          sendCompression: compressionGzip,
-          httpOptions: {
-            rejectUnauthorized: false,
-          },
-        }),
-    "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-node (h1 + tls)":
-      (options?: Record<string, unknown>) =>
-        createGrpcHttpTransport({
-          ...options,
-          baseUrl: servers["@bufbuild/connect-node (h1 + tls)"].getUrl(),
-          useBinaryFormat: true,
-          sendCompression: compressionGzip,
-          httpOptions: {
-            rejectUnauthorized: false,
-          },
-        }),
     "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-node (h1)":
       (options?: Record<string, unknown>) =>
         createGrpcHttpTransport({
@@ -590,22 +568,22 @@ J4aliShXnxA=
           },
           sendCompression: compressionGzip,
         }),
-    "@bufbuild/connect-node (Connect, JSON, https, gzip) against @bufbuild/connect-node (h1 + tls)":
+    "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-node (h1)":
       (options?: Record<string, unknown>) =>
         createConnectHttpTransport({
           ...options,
-          baseUrl: servers["@bufbuild/connect-node (h1 + tls)"].getUrl(),
+          baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
           useBinaryFormat: false,
           httpOptions: {
             rejectUnauthorized: false,
           },
           sendCompression: compressionGzip,
         }),
-    "@bufbuild/connect-node (Connect, binary, https, gzip) against @bufbuild/connect-node (h1 + tls)":
+    "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-node (h1)":
       (options?: Record<string, unknown>) =>
         createConnectHttpTransport({
           ...options,
-          baseUrl: servers["@bufbuild/connect-node (h1 + tls)"].getUrl(),
+          baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
           useBinaryFormat: true,
           httpOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
@@ -775,28 +753,6 @@ J4aliShXnxA=
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h1)"].getUrl(),
           useBinaryFormat: false,
-          sendCompression: compressionGzip,
-          httpOptions: {
-            rejectUnauthorized: false,
-          },
-        }),
-    "@bufbuild/connect-node (gRPC-web, JSON, https, gzip) against @bufbuild/connect-node (h1 + tls)":
-      (options?: Record<string, unknown>) =>
-        createGrpcWebHttpTransport({
-          ...options,
-          baseUrl: servers["@bufbuild/connect-node (h1 + tls)"].getUrl(),
-          useBinaryFormat: false,
-          sendCompression: compressionGzip,
-          httpOptions: {
-            rejectUnauthorized: false,
-          },
-        }),
-    "@bufbuild/connect-node (gRPC-web, binary, https, gzip) against @bufbuild/connect-node (h1 + tls)":
-      (options?: Record<string, unknown>) =>
-        createGrpcWebHttpTransport({
-          ...options,
-          baseUrl: servers["@bufbuild/connect-node (h1 + tls)"].getUrl(),
-          useBinaryFormat: true,
           sendCompression: compressionGzip,
           httpOptions: {
             rejectUnauthorized: false,

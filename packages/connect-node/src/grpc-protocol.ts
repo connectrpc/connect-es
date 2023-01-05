@@ -176,7 +176,7 @@ export function createGrpcProtocol(
             if ((flags & compressedFlag) === compressedFlag) {
               if (!requestCompression) {
                 throw new ConnectError(
-                  `received compressed envelope, but no content-encoding ON THE SERVER`,
+                  `received compressed envelope, but no grpc-encoding`,
                   Code.InvalidArgument
                 );
               }
@@ -307,7 +307,7 @@ export function createGrpcProtocol(
             if ((flags & compressedFlag) === compressedFlag) {
               if (!requestCompression) {
                 throw new ConnectError(
-                  `received compressed envelope, but no content-encoding`,
+                  `received compressed envelope, but no grpc-encoding`,
                   Code.InvalidArgument
                 );
               }
@@ -439,7 +439,7 @@ export function createGrpcProtocol(
                 if ((flags & compressedFlag) === compressedFlag) {
                   if (!requestCompression) {
                     throw new ConnectError(
-                      `received compressed envelope, but no content-encoding`,
+                      `received compressed envelope, but no grpc-encoding`,
                       Code.InvalidArgument
                     );
                   }
@@ -571,7 +571,7 @@ export function createGrpcProtocol(
                 if ((flags & compressedFlag) === compressedFlag) {
                   if (!requestCompression) {
                     throw new ConnectError(
-                      `received compressed envelope, but no content-encoding`,
+                      `received compressed envelope, but no grpc-encoding`,
                       Code.InvalidArgument
                     );
                   }

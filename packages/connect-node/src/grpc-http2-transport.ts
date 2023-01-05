@@ -55,6 +55,7 @@ import {
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
 import {
+  compressedFlag,
   Compression,
   compressionBrotli,
   compressionGzip,
@@ -62,13 +63,6 @@ import {
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 
 const messageFlag = 0b00000000;
-
-/**
- * compressedFlag indicates that the data in a EnvelopedMessage is
- * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
- * and Connect protocols.
- */
-const compressedFlag = 0b00000001;
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -225,21 +219,29 @@ export function createGrpcHttp2Transport(
             );
             const messageResult = await readEnvelope(stream);
             const eofResult = await readEnvelope(stream);
-
             if (!eofResult.done) {
               throw "extraneous data";
             }
+
             const trailer = await trailerPromise;
             grpcValidateTrailer(trailer);
 
             if (messageResult.done) {
               throw "premature eof";
             }
-
-            let responseBody = messageResult.value.data;
-            if (compression) {
-              responseBody = await compression.decompress(
-                responseBody,
+            let messageData = messageResult.value.data;
+            if (
+              (messageResult.value.flags & compressedFlag) ===
+              compressedFlag
+            ) {
+              if (!compression) {
+                throw new ConnectError(
+                  `received compressed envelope, but no grpc-encoding`,
+                  Code.InvalidArgument
+                );
+              }
+              messageData = await compression.decompress(
+                messageData,
                 readMaxBytes
               );
             }
@@ -249,7 +251,7 @@ export function createGrpcHttp2Transport(
               service,
               method,
               header: responseHeader,
-              message: parse(responseBody),
+              message: parse(messageData),
               trailer,
             };
           },
@@ -332,19 +334,17 @@ export function createGrpcHttp2Transport(
                   );
                 }
                 let flags = messageFlag;
-                let requestBody = serialize(normalize(message));
+                let body = serialize(normalize(message));
 
                 if (
                   options.sendCompression &&
-                  requestBody.length >= compressMinBytes
+                  body.length >= compressMinBytes
                 ) {
                   flags = flags | compressedFlag;
-                  requestBody = await options.sendCompression.compress(
-                    requestBody
-                  );
+                  body = await options.sendCompression.compress(body);
                 }
 
-                const enveloped = encodeEnvelope(flags, requestBody);
+                const enveloped = encodeEnvelope(flags, body);
                 try {
                   await write(stream, enveloped);
                 } catch (e) {
@@ -412,7 +412,7 @@ export function createGrpcHttp2Transport(
   };
 }
 
-function grpcCreateRequestHeaderWithCompression(
+export function grpcCreateRequestHeaderWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,

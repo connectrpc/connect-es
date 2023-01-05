@@ -15,13 +15,11 @@
 import {
   appendHeaders,
   Code,
-  connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
   connectTrailerDemux,
-  connectValidateResponse,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
@@ -34,7 +32,7 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
-import {
+import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
@@ -42,7 +40,6 @@ import {
   JsonWriteOptions,
   Message,
   MethodInfo,
-  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
@@ -64,14 +61,18 @@ import {
 } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
 import {
+  compressedFlag,
   Compression,
   compressionBrotli,
   compressionGzip,
 } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
+import {
+  connectCreateRequestHeaderWithCompression,
+  connectValidateResponseWithCompression,
+} from "./connect-http2-transport.js";
 
 const messageFlag = 0b00000000;
-const compressedFlag = 0b00000001;
 
 export interface ConnectHttpTransportOptions {
   /**
@@ -373,7 +374,6 @@ export function createConnectHttpTransport(
                 );
                 try {
                   const result = await readEnvelope(response);
-
                   if (result.done) {
                     if (!endStreamReceived) {
                       throw new ConnectError("missing EndStreamResponse");
@@ -382,7 +382,6 @@ export function createConnectHttpTransport(
                       done: true,
                     };
                   }
-
                   const flags = result.value.flags;
                   let data = result.value.data;
                   if ((flags & compressedFlag) === compressedFlag) {
@@ -394,32 +393,10 @@ export function createConnectHttpTransport(
                     }
                     data = await compression.decompress(data, readMaxBytes);
                   }
-
-                  if (
-                    (result.value.flags & connectEndStreamFlag) ===
-                    connectEndStreamFlag
-                  ) {
+                  if ((flags & connectEndStreamFlag) === connectEndStreamFlag) {
                     endStreamReceived = true;
-                    let endStream;
-
-                    if ((flags & compressedFlag) === compressedFlag) {
-                      if (!compression) {
-                        throw new ConnectError(
-                          `received compressed envelope, but no grpc-encoding`,
-                          Code.InvalidArgument
-                        );
-                      }
-                      const decompressedTrailer = await compression.decompress(
-                        result.value.data,
-                        readMaxBytes
-                      );
-                      endStream = connectEndStreamFromJson(decompressedTrailer);
-                    } else {
-                      endStream = connectEndStreamFromJson(result.value.data);
-                    }
-
+                    const endStream = connectEndStreamFromJson(data);
                     responseTrailer.resolve(endStream.metadata);
-
                     if (endStream.error) {
                       throw endStream.error;
                     }
@@ -427,7 +404,6 @@ export function createConnectHttpTransport(
                       done: true,
                     };
                   }
-
                   return {
                     done: false,
                     value: parse(data),
@@ -478,59 +454,4 @@ function nodeRequest(protocol: string) {
     return protocol.includes("https") ? https.request : http.request;
   }
   throw new Error("Unsupported protocol");
-}
-
-function connectCreateRequestHeaderWithCompression(
-  methodKind: MethodKind,
-  useBinaryFormat: boolean,
-  timeoutMs: number | undefined,
-  userProvidedHeaders: HeadersInit | undefined,
-  acceptCompression: string[],
-  sendCompression: string | undefined
-): Headers {
-  const result = connectCreateRequestHeader(
-    methodKind,
-    useBinaryFormat,
-    timeoutMs,
-    userProvidedHeaders
-  );
-  let acceptEncodingField = "Accept-Encoding";
-  if (methodKind != MethodKind.Unary) {
-    acceptEncodingField = "Connect-" + acceptEncodingField;
-    if (sendCompression != undefined) {
-      result.set("Connect-Content-Encoding", sendCompression);
-    }
-  }
-  if (acceptCompression.length > 0) {
-    result.set(acceptEncodingField, acceptCompression.join(","));
-  }
-  return result;
-}
-
-function connectValidateResponseWithCompression(
-  methodKind: MethodKind,
-  useBinaryFormat: boolean,
-  acceptCompression: Compression[],
-  status: number,
-  headers: Headers
-): { compression: Compression | undefined; isConnectUnaryError: boolean } {
-  let compression: Compression | undefined;
-  const encodingField =
-    methodKind == MethodKind.Unary
-      ? "Content-Encoding"
-      : "Connect-Content-Encoding";
-  const encoding = headers.get(encodingField);
-  if (encoding != null && encoding.toLowerCase() !== "identity") {
-    compression = acceptCompression.find((c) => c.name === encoding);
-    if (!compression) {
-      throw new ConnectError(
-        `unsupported response encoding "${encoding}"`,
-        Code.InvalidArgument
-      );
-    }
-  }
-  return {
-    compression,
-    ...connectValidateResponse(methodKind, useBinaryFormat, status, headers),
-  };
 }

@@ -54,10 +54,9 @@ import {
   type Compression,
   compressionBrotli,
   compressionGzip,
+  compressedFlag,
 } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
-
-const compressedFlag = 0b00000001;
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -214,12 +213,30 @@ export function createGrpcWebHttp2Transport(
             );
 
             const messageOrTrailerResult = await readEnvelope(stream);
-
             if (messageOrTrailerResult.done) {
               throw "premature eof";
             }
+            let messageOrTrailerData = messageOrTrailerResult.value.data;
+            if (
+              (messageOrTrailerResult.value.flags & compressedFlag) ===
+              compressedFlag
+            ) {
+              if (!compression) {
+                throw new ConnectError(
+                  `received compressed envelope, but no grpc-encoding`,
+                  Code.InvalidArgument
+                );
+              }
+              messageOrTrailerData = await compression.decompress(
+                messageOrTrailerData,
+                readMaxBytes
+              );
+            }
 
-            if (messageOrTrailerResult.value.flags === grpcWebTrailerFlag) {
+            if (
+              (messageOrTrailerResult.value.flags & grpcWebTrailerFlag) ===
+              grpcWebTrailerFlag
+            ) {
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
@@ -232,11 +249,10 @@ export function createGrpcWebHttp2Transport(
             }
 
             const trailerResult = await readEnvelope(stream);
-            let trailer;
-
             if (trailerResult.done) {
               throw "missing trailer";
             }
+            let trailerResultData = trailerResult.value.data;
             if (
               (trailerResult.value.flags & compressedFlag) ===
               compressedFlag
@@ -247,21 +263,17 @@ export function createGrpcWebHttp2Transport(
                   Code.InvalidArgument
                 );
               }
-              const decompressedTrailer = await compression.decompress(
-                trailerResult.value.data,
+              trailerResultData = await compression.decompress(
+                trailerResultData,
                 readMaxBytes
               );
-              trailer = grpcWebTrailerParse(decompressedTrailer);
-            } else {
-              if (
-                options.sendCompression === undefined &&
-                trailerResult.value.flags !== grpcWebTrailerFlag
-              ) {
-                throw "missing trailer";
-              }
-              trailer = grpcWebTrailerParse(trailerResult.value.data);
-            }
 
+              if (trailerResult.value.flags === grpcWebTrailerFlag) {
+                grpcValidateTrailer(grpcWebTrailerParse(trailerResultData));
+                throw "unexpected trailer";
+              }
+            }
+            const trailer = grpcWebTrailerParse(trailerResultData);
             grpcValidateTrailer(trailer);
 
             const eofResult = await readEnvelope(stream);
@@ -269,20 +281,12 @@ export function createGrpcWebHttp2Transport(
               throw "extraneous data";
             }
 
-            let responseBody = messageOrTrailerResult.value.data;
-            if (compression) {
-              responseBody = await compression.decompress(
-                responseBody,
-                readMaxBytes
-              );
-            }
-
             return <UnaryResponse<O>>{
               stream: false,
               service,
               method,
               header: responseHeader,
-              message: parse(responseBody),
+              message: parse(messageOrTrailerData),
               trailer,
             };
           },
@@ -474,7 +478,7 @@ export function createGrpcWebHttp2Transport(
   };
 }
 
-function grpcWebCreateRequestHeaderWithCompression(
+export function grpcWebCreateRequestHeaderWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
