@@ -1,4 +1,4 @@
-// Copyright 2021-2022 Buf Technologies, Inc.
+// Copyright 2021-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,3 +13,8 @@
 // limitations under the License.
 
 export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
+export { connectCodeToHttpStatus } from "./connect-code-to-http-status.js";
+export { connectCreateRequestHeader } from "./connect-create-request-header.js";
+export { connectParseContentType } from "./connect-parse-content-type.js";
+export { connectParseTimeout } from "./connect-parse-timeout.js";
+export { connectValidateResponse } from "./connect-validate-response.js";

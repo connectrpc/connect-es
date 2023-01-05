@@ -34,14 +34,12 @@ import type {
 import {
   appendHeaders,
   Code,
-  connectCreateRequestHeader,
   connectEndStreamFlag,
   connectEndStreamFromJson,
   ConnectError,
   connectErrorFromJson,
   connectErrorFromReason,
   connectTrailerDemux,
-  connectValidateResponse,
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
@@ -50,6 +48,10 @@ import {
   runStreaming,
   runUnary,
 } from "@bufbuild/connect-core";
+import {
+  connectCreateRequestHeader,
+  connectValidateResponse,
+} from "@bufbuild/connect-core/protocol-connect";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
 import { defer } from "./defer.js";

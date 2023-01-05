@@ -1,4 +1,4 @@
-// Copyright 2021-2022 Buf Technologies, Inc.
+// Copyright 2021-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,4 @@
 // limitations under the License.
 
 // workaround for bundlers that do not support subpath exports.
-// // it's unclear whether we should point to cjs or esm here.
-// // it's also unclear whether we have to use the subpath export "./protocol-connect.js", or if it should remain "./protocol-connect"
-// // it's also unclear whether this works for type declarations.
 export * from "./dist/esm/protocol-grpc/index.js";

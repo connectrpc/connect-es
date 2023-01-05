@@ -1,4 +1,4 @@
-// Copyright 2021-2022 Buf Technologies, Inc.
+// Copyright 2021-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,3 +13,7 @@
 // limitations under the License.
 
 export { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
+export { grpcCreateRequestHeader } from "./grpc-create-request-header.js";
+export { grpcParseContentType } from "./grpc-parse-content-type.js";
+export { grpcParseTimeout } from "./grpc-parse-timeout.js";
+export { grpcValidateResponse } from "./grpc-validate-response.js";

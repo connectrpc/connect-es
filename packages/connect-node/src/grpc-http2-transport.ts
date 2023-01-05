@@ -17,8 +17,6 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcCreateRequestHeader,
-  grpcValidateResponse,
   grpcValidateTrailer,
   Interceptor,
   runStreaming,
@@ -29,6 +27,10 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
+import {
+  grpcCreateRequestHeader,
+  grpcValidateResponse,
+} from "@bufbuild/connect-core/protocol-grpc";
 import type {
   AnyMessage,
   BinaryReadOptions,
