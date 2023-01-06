@@ -19,8 +19,6 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcCreateRequestHeader,
-  grpcValidateResponse,
   Interceptor,
   runStreaming,
   runUnary,
@@ -30,6 +28,11 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
+import {
+  grpcCreateRequestHeader,
+  grpcValidateResponse,
+  grpcValidateTrailer,
+} from "@bufbuild/connect-core/protocol-grpc";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -54,7 +57,6 @@ import {
   write,
 } from "./private/io.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { grpcValidateTrailer } from "@bufbuild/connect-core";
 
 export interface GrpcHttpTransportOptions {
   /**

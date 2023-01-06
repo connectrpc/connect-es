@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code } from "./code.js";
+import { Code } from "../code.js";
 
 /**
  * Determine the gRPC-web error code for the given HTTP status code.

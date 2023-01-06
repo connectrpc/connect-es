@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "./connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import { connectParseTimeout } from "./connect-parse-timeout.js";
 
 describe("connectParseTimeout()", function () {

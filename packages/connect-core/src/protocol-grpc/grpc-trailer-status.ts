@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { Any, Message } from "@bufbuild/protobuf";
-import { Status } from "./gen/grpc/status/status_pb.js";
-import { ConnectError } from "./connect-error.js";
-import { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
-import { Code } from "./code.js";
+import { Status } from "../gen/grpc/status/status_pb.js";
+import { ConnectError } from "../connect-error.js";
+import { decodeBinaryHeader, encodeBinaryHeader } from "../http-headers.js";
+import { Code } from "../code.js";
 
 const fieldGrpcStatusDetailsBin = "grpc-status-details-bin",
   fieldGrpcStatus = "grpc-status",

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "./connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import { grpcParseTimeout } from "./grpc-parse-timeout.js";
 
 describe("grpcParseTimeout()", function () {

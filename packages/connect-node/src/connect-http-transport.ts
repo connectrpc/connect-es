@@ -14,13 +14,7 @@
 
 import {
   appendHeaders,
-  connectCreateRequestHeader,
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
   ConnectError,
-  connectErrorFromJson,
-  connectTrailerDemux,
-  connectValidateResponse,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
@@ -33,6 +27,14 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
+import {
+  connectCreateRequestHeader,
+  connectEndStreamFlag,
+  connectEndStreamFromJson,
+  connectErrorFromJson,
+  connectTrailerDemux,
+  connectValidateResponse,
+} from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
   BinaryReadOptions,
