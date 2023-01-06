@@ -15,11 +15,7 @@
 import {
   appendHeaders,
   Code,
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
   ConnectError,
-  connectErrorFromJson,
-  connectTrailerDemux,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
@@ -34,6 +30,10 @@ import {
 } from "@bufbuild/connect-core";
 import {
   connectCreateRequestHeader,
+  connectEndStreamFlag,
+  connectEndStreamFromJson,
+  connectErrorFromJson,
+  connectTrailerDemux,
   connectValidateResponse,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {

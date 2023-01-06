@@ -14,12 +14,11 @@
 
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { createTestServers } from "../helpers/testserver.js";
+import { Code, createMethodUrl } from "@bufbuild/connect-core";
 import {
-  Code,
   connectEndStreamFromJson,
   connectErrorFromJson,
-  createMethodUrl,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect-core/protocol-connect";
 import { http2Request } from "../helpers/http2-request.js";
 import type { MethodInfo } from "@bufbuild/protobuf";
 import type * as http2 from "http2";

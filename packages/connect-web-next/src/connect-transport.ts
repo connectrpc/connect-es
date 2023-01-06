@@ -34,12 +34,8 @@ import type {
 import {
   appendHeaders,
   Code,
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
   ConnectError,
-  connectErrorFromJson,
   connectErrorFromReason,
-  connectTrailerDemux,
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
@@ -50,6 +46,10 @@ import {
 } from "@bufbuild/connect-core";
 import {
   connectCreateRequestHeader,
+  connectEndStreamFlag,
+  connectEndStreamFromJson,
+  connectErrorFromJson,
+  connectTrailerDemux,
   connectValidateResponse,
 } from "@bufbuild/connect-core/protocol-connect";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";

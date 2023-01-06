@@ -15,7 +15,7 @@
 import { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
 import { grpcParseContentType } from "./grpc-parse-content-type.js";
 import { ConnectError } from "../connect-error.js";
-import { grpcFindTrailerError } from "../grpc-trailer-status.js";
+import { grpcFindTrailerError } from "./grpc-trailer-status.js";
 import { Code } from "../code.js";
 
 /**

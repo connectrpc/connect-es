@@ -15,6 +15,14 @@
 export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
 export { connectCodeToHttpStatus } from "./connect-code-to-http-status.js";
 export { connectCreateRequestHeader } from "./connect-create-request-header.js";
+export {
+  connectEndStreamToJson,
+  connectEndStreamFromJson,
+  connectEndStreamFlag,
+} from "./connect-end-stream.js";
+export { connectErrorFromJson } from "./connect-error-from-json.js";
+export { connectErrorToJson } from "./connect-error-to-json.js";
 export { connectParseContentType } from "./connect-parse-content-type.js";
 export { connectParseTimeout } from "./connect-parse-timeout.js";
+export { connectTrailerDemux } from "./connect-trailer-demux.js";
 export { connectValidateResponse } from "./connect-validate-response.js";

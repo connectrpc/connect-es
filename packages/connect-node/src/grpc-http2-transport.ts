@@ -17,7 +17,6 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcValidateTrailer,
   Interceptor,
   runStreaming,
   runUnary,
@@ -30,6 +29,7 @@ import {
 import {
   grpcCreateRequestHeader,
   grpcValidateResponse,
+  grpcValidateTrailer,
 } from "@bufbuild/connect-core/protocol-grpc";
 import type {
   AnyMessage,

@@ -17,11 +17,11 @@ import {
   ConnectError,
   connectErrorFromReason,
   encodeEnvelope,
-  grpcSetTrailerStatus,
 } from "@bufbuild/connect-core";
 import {
   grpcParseContentType,
   grpcParseTimeout,
+  grpcSetTrailerStatus,
 } from "@bufbuild/connect-core/protocol-grpc";
 import {
   BinaryReadOptions,

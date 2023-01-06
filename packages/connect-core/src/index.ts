@@ -48,14 +48,6 @@ export {
   encodeEnvelope,
   encodeEnvelopes,
 } from "./envelope.js";
-export { connectErrorFromJson } from "./connect-error-from-json.js";
-export { connectErrorToJson } from "./connect-error-to-json.js";
-export {
-  connectEndStreamFromJson,
-  connectEndStreamToJson,
-  connectEndStreamFlag,
-} from "./connect-end-stream.js";
-export { connectTrailerDemux } from "./connect-trailer-demux.js";
 export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";
 export { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
 export { grpcWebValidateResponse } from "./grpc-web-validate-response.js";
@@ -64,8 +56,3 @@ export {
   grpcWebTrailerParse,
   grpcWebTrailerSerialize,
 } from "./grpc-web-trailer.js";
-export {
-  grpcFindTrailerError,
-  grpcSetTrailerStatus,
-} from "./grpc-trailer-status.js";
-export { grpcValidateTrailer } from "./grpc-validate-trailer.js";

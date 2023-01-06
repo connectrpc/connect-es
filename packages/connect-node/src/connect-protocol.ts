@@ -15,15 +15,15 @@
 import {
   appendHeaders,
   Code,
-  connectEndStreamFlag,
-  connectEndStreamToJson,
   ConnectError,
-  connectErrorFromReason,
-  connectErrorToJson,
   encodeEnvelope,
+  connectErrorFromReason,
 } from "@bufbuild/connect-core";
 import {
   connectCodeToHttpStatus,
+  connectEndStreamFlag,
+  connectEndStreamToJson,
+  connectErrorToJson,
   connectParseContentType,
   connectParseTimeout,
 } from "@bufbuild/connect-core/protocol-connect";

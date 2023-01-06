@@ -16,4 +16,9 @@ export { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
 export { grpcCreateRequestHeader } from "./grpc-create-request-header.js";
 export { grpcParseContentType } from "./grpc-parse-content-type.js";
 export { grpcParseTimeout } from "./grpc-parse-timeout.js";
+export {
+  grpcFindTrailerError,
+  grpcSetTrailerStatus,
+} from "./grpc-trailer-status.js";
 export { grpcValidateResponse } from "./grpc-validate-response.js";
+export { grpcValidateTrailer } from "./grpc-validate-trailer.js";
