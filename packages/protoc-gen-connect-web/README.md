@@ -175,18 +175,6 @@ export const ElizaService = {
       O: SayResponse,
       kind: MethodKind.Unary,
     },
-    /**
-     * Converse is a bi-directional request demo. This method should allow for
-     * many requests and many responses.
-     *
-     * @generated from rpc buf.connect.demo.eliza.v1.ElizaService.Converse
-     */
-    converse: {
-      name: "Converse",
-      I: ConverseRequest,
-      O: ConverseResponse,
-      kind: MethodKind.BiDiStreaming,
-    },
   }
 } as const;
 ```
