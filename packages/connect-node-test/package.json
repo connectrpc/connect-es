@@ -14,9 +14,9 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@bufbuild/connect-core": "0.5.0",
-    "@bufbuild/connect-node": "0.5.0",
-    "@bufbuild/connect-web-next": "0.5.0",
+    "@bufbuild/connect-core": "0.6.0",
+    "@bufbuild/connect-node": "0.6.0",
+    "@bufbuild/connect-web-next": "0.6.0",
     "@grpc/grpc-js": "^1.7.1",
     "@types/jasmine": "^4.3.0",
     "@types/long": "^5.0.0",
