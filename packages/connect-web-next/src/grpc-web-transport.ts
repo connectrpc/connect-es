@@ -50,6 +50,7 @@ import {
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
 import { defer } from "./defer.js";
+import type { UnaryRequest } from "@bufbuild/connect-core";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -156,7 +157,7 @@ export function createGrpcWebTransport(
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
-          async (req) => {
+          async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
             const response = await fetch(req.url, {
               ...req.init,
               headers: req.header,

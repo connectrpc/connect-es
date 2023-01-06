@@ -176,12 +176,12 @@ export function createGrpcWebHttp2Transport(
               });
 
             let flag = 0;
-            let requestBody = serialize(req.message);
+            let body = serialize(req.message);
             if (
               options.sendCompression !== undefined &&
-              requestBody.length >= compressMinBytes
+              body.length >= compressMinBytes
             ) {
-              requestBody = await options.sendCompression.compress(requestBody);
+              body = await options.sendCompression.compress(body);
               flag = compressedFlag;
               req.header.set("Grpc-Encoding", options.sendCompression.name);
             } else {
@@ -200,7 +200,7 @@ export function createGrpcWebHttp2Transport(
             );
 
             const headersPromise = readResponseHeader(stream);
-            const envelope = encodeEnvelope(flag, requestBody);
+            const envelope = encodeEnvelope(flag, body);
             await write(stream, envelope);
             await end(stream);
 
@@ -240,9 +240,7 @@ export function createGrpcWebHttp2Transport(
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              grpcValidateTrailer(
-                grpcWebTrailerParse(messageOrTrailerResult.value.data)
-              );
+              grpcValidateTrailer(grpcWebTrailerParse(messageOrTrailerData));
               // At this point, we received trailers only, but the trailers did
               // not have an error status code.
               throw "unexpected trailer";
@@ -267,11 +265,6 @@ export function createGrpcWebHttp2Transport(
                 trailerResultData,
                 readMaxBytes
               );
-
-              if (trailerResult.value.flags === grpcWebTrailerFlag) {
-                grpcValidateTrailer(grpcWebTrailerParse(trailerResultData));
-                throw "unexpected trailer";
-              }
             }
             const trailer = grpcWebTrailerParse(trailerResultData);
             grpcValidateTrailer(trailer);
@@ -370,18 +363,16 @@ export function createGrpcWebHttp2Transport(
                   );
                 }
                 let flags = 0;
-                let requestBody = serialize(normalize(message));
+                let body = serialize(normalize(message));
                 if (
                   options.sendCompression &&
-                  requestBody.length >= compressMinBytes
+                  body.length >= compressMinBytes
                 ) {
                   flags = flags | compressedFlag;
-                  requestBody = await options.sendCompression.compress(
-                    requestBody
-                  );
+                  body = await options.sendCompression.compress(body);
                 }
 
-                const enveloped = encodeEnvelope(flags, requestBody);
+                const enveloped = encodeEnvelope(flags, body);
                 try {
                   await write(stream, enveloped);
                 } catch (e) {
@@ -432,23 +423,7 @@ export function createGrpcWebHttp2Transport(
                   }
                   if ((flags & grpcWebTrailerFlag) === grpcWebTrailerFlag) {
                     endStreamReceived = true;
-                    let trailer;
-
-                    if ((flags & compressedFlag) === compressedFlag) {
-                      if (!compression) {
-                        throw new ConnectError(
-                          `received compressed envelope, but no grpc-encoding`,
-                          Code.InvalidArgument
-                        );
-                      }
-                      const decompressedTrailer = await compression.decompress(
-                        result.value.data,
-                        readMaxBytes
-                      );
-                      trailer = grpcWebTrailerParse(decompressedTrailer);
-                    } else {
-                      trailer = grpcWebTrailerParse(result.value.data);
-                    }
+                    const trailer = grpcWebTrailerParse(data);
                     grpcValidateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
@@ -456,7 +431,6 @@ export function createGrpcWebHttp2Transport(
                       value: undefined,
                     };
                   }
-
                   messageReceived = true;
                   return {
                     done: false,

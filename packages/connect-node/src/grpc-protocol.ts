@@ -42,17 +42,13 @@ import type * as http2 from "http2";
 import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 import { compressionNegotiate } from "./private/compression-negotiate.js";
 import {
+  compressedFlag,
   Compression,
   compressionBrotli,
   compressionGzip,
 } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
-/**
- * compressedFlag indicates that the data in a EnvelopedMessage is
- * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
- * and Connect protocols.
- */
-const compressedFlag = 0b00000001;
+
 const messageFlag = 0b00000000;
 const headerEncoding = "Grpc-Encoding";
 const headerAcceptEncoding = "Grpc-Accept-Encoding";

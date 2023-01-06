@@ -43,18 +43,14 @@ import type * as http from "http";
 import type * as http2 from "http2";
 import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 import {
+  compressedFlag,
   Compression,
   compressionBrotli,
   compressionGzip,
 } from "./compression.js";
 import { compressionNegotiate } from "./private/compression-negotiate.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
-/**
- * compressedFlag indicates that the data in a EnvelopedMessage is
- * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
- * and Connect protocols.
- */
-const compressedFlag = 0b00000001;
+
 const headerEncoding = "Grpc-Encoding";
 const headerAcceptEncoding = "Grpc-Accept-Encoding";
 const grpcWebTimeoutHeader = "Grpc-Timeout";
@@ -188,7 +184,7 @@ export function createGrpcWebProtocol(
             if ((flags & compressedFlag) === compressedFlag) {
               if (!requestCompression) {
                 throw new ConnectError(
-                  `received compressed envelope, but no content-encoding ON THE SERVER`,
+                  `received compressed envelope, but no content-encoding`,
                   Code.InvalidArgument
                 );
               }
@@ -327,7 +323,7 @@ export function createGrpcWebProtocol(
             if ((flags & compressedFlag) === compressedFlag) {
               if (!requestCompression) {
                 throw new ConnectError(
-                  `received compressed envelope, but no content-encoding on server`,
+                  `received compressed envelope, but no content-encoding`,
                   Code.InvalidArgument
                 );
               }

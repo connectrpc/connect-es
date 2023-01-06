@@ -181,12 +181,12 @@ export function createGrpcHttp2Transport(
               });
 
             let flag = messageFlag;
-            let requestBody = serialize(req.message);
+            let body = serialize(req.message);
             if (
               options.sendCompression !== undefined &&
-              requestBody.length >= compressMinBytes
+              body.length >= compressMinBytes
             ) {
-              requestBody = await options.sendCompression.compress(requestBody);
+              body = await options.sendCompression.compress(body);
               flag = compressedFlag;
               req.header.set("Grpc-Encoding", options.sendCompression.name);
             } else {
@@ -206,7 +206,7 @@ export function createGrpcHttp2Transport(
 
             const headersPromise = readResponseHeader(stream);
             const trailerPromise = readResponseTrailer(stream);
-            const enveloped = encodeEnvelope(flag, requestBody);
+            const enveloped = encodeEnvelope(flag, body);
             await write(stream, enveloped);
             await end(stream);
 

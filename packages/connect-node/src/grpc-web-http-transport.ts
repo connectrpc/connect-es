@@ -119,9 +119,6 @@ interface NodeRequestOptions<
   // Unary Request
   req: UnaryRequest<I>;
 
-  // Payload encoding
-  encoding: "utf8" | "binary";
-
   // Request body
   payload: Uint8Array;
 }
@@ -180,26 +177,24 @@ export function createGrpcWebHttpTransport(
           },
 
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const encoding = useBinaryFormat ? "binary" : "utf8";
             let flag = 0;
-            let requestBody = serialize(req.message);
+            let body = serialize(req.message);
 
             if (
               options.sendCompression !== undefined &&
-              requestBody.length >= compressMinBytes
+              body.length >= compressMinBytes
             ) {
-              requestBody = await options.sendCompression.compress(requestBody);
+              body = await options.sendCompression.compress(body);
               flag = compressedFlag;
               req.header.set("Grpc-Encoding", options.sendCompression.name);
             } else {
               req.header.delete("Grpc-Encoding");
             }
 
-            const envelope = encodeEnvelope(flag, requestBody);
+            const envelope = encodeEnvelope(flag, body);
             const response = await makeNodeRequest({
               req,
               payload: envelope,
-              encoding,
               httpOptions: options.httpOptions,
             });
 
@@ -268,11 +263,6 @@ export function createGrpcWebHttpTransport(
                 trailerResultData,
                 readMaxBytes
               );
-
-              if (trailerResult.value.flags === grpcWebTrailerFlag) {
-                grpcValidateTrailer(grpcWebTrailerParse(trailerResultData));
-                throw "unexpected trailer";
-              }
             }
 
             const trailer = grpcWebTrailerParse(trailerResultData);
@@ -437,27 +427,9 @@ export function createGrpcWebHttpTransport(
                     data = await compression.decompress(data, readMaxBytes);
                   }
 
-                  if (
-                    (result.value.flags & grpcWebTrailerFlag) ===
-                    grpcWebTrailerFlag
-                  ) {
+                  if ((flags & grpcWebTrailerFlag) === grpcWebTrailerFlag) {
                     endStreamReceived = true;
-                    let trailer;
-                    if ((flags & compressedFlag) === compressedFlag) {
-                      if (!compression) {
-                        throw new ConnectError(
-                          `received compressed envelope, but no grpc-encoding`,
-                          Code.InvalidArgument
-                        );
-                      }
-                      const decompressedTrailer = await compression.decompress(
-                        result.value.data,
-                        readMaxBytes
-                      );
-                      trailer = grpcWebTrailerParse(decompressedTrailer);
-                    } else {
-                      trailer = grpcWebTrailerParse(result.value.data);
-                    }
+                    const trailer = grpcWebTrailerParse(data);
                     grpcValidateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
@@ -506,7 +478,7 @@ function makeNodeRequest(options: NodeRequestOptions) {
       return resolve(res);
     });
 
-    request.write(options.payload, options.encoding);
+    request.write(options.payload);
     request.end();
   });
 }

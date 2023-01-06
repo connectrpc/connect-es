@@ -129,9 +129,6 @@ interface NodeRequestOptions<
   // Unary Request
   req: UnaryRequest<I>;
 
-  // Payload encoding
-  encoding: "utf8" | "binary";
-
   // Request body
   payload: Uint8Array;
 }
@@ -190,7 +187,6 @@ export function createConnectHttpTransport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const encoding = useBinaryFormat ? "binary" : "utf8";
             let requestBody = serialize(req.message);
             if (
               options.sendCompression !== undefined &&
@@ -204,7 +200,6 @@ export function createConnectHttpTransport(
 
             const response = await makeNodeRequest({
               req,
-              encoding,
               payload: requestBody,
               httpOptions: options.httpOptions,
             });
@@ -444,7 +439,7 @@ function makeNodeRequest(options: NodeRequestOptions) {
       return resolve(res);
     });
 
-    request.write(options.payload, options.encoding);
+    request.write(options.payload);
     request.end();
   });
 }

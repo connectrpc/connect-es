@@ -121,9 +121,6 @@ interface NodeRequestOptions<
   // Unary Request
   req: UnaryRequest<I>;
 
-  // Payload encoding
-  encoding: "utf8" | "binary";
-
   // Request body
   payload: Uint8Array;
 }
@@ -183,26 +180,24 @@ export function createGrpcHttpTransport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const encoding = useBinaryFormat ? "binary" : "utf8";
             let flag = messageFlag;
-            let requestBody = serialize(req.message);
+            let body = serialize(req.message);
 
             if (
               options.sendCompression !== undefined &&
-              requestBody.length >= compressMinBytes
+              body.length >= compressMinBytes
             ) {
-              requestBody = await options.sendCompression.compress(requestBody);
+              body = await options.sendCompression.compress(body);
               flag = compressedFlag;
               req.header.set("Grpc-Encoding", options.sendCompression.name);
             } else {
               req.header.delete("Grpc-Encoding");
             }
 
-            const envelope = encodeEnvelope(flag, requestBody);
+            const envelope = encodeEnvelope(flag, body);
             const response = await makeNodeRequest({
               req,
               payload: envelope,
-              encoding,
               httpOptions: options.httpOptions,
             });
 
@@ -437,7 +432,7 @@ function makeNodeRequest(options: NodeRequestOptions) {
       return resolve(res);
     });
 
-    request.write(options.payload, options.encoding);
+    request.write(options.payload);
     request.end();
   });
 }
