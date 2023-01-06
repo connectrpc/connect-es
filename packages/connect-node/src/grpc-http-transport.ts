@@ -20,8 +20,6 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcCreateRequestHeader,
-  grpcValidateResponse,
   Interceptor,
   runStreaming,
   runUnary,
@@ -31,6 +29,7 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
+import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -55,7 +54,17 @@ import {
   write,
 } from "./private/io.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { grpcValidateTrailer } from "@bufbuild/connect-core";
+import {
+  compressionGzip,
+  compressionBrotli,
+  Compression,
+  compressedFlag,
+} from "./compression.js";
+import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
+import {
+  grpcCreateRequestHeaderWithCompression,
+  grpcValidateResponseWithCompression,
+} from "./grpc-http2-transport.js";
 
 export interface GrpcHttpTransportOptions {
   /**
@@ -96,6 +105,13 @@ export interface GrpcHttpTransportOptions {
    * Options for the http request.
    */
   httpOptions?: http.RequestOptions | https.RequestOptions;
+
+  // TODO document
+  acceptCompression?: Compression[];
+  sendCompression?: Compression;
+  compressMinBytes?: number;
+  readMaxBytes?: number;
+  sendMaxBytes?: number;
 }
 
 interface NodeRequestOptions<
@@ -104,9 +120,6 @@ interface NodeRequestOptions<
 > extends Pick<GrpcHttpTransportOptions, "httpOptions"> {
   // Unary Request
   req: UnaryRequest<I>;
-
-  // Payload encoding
-  encoding: "utf8" | "binary";
 
   // Request body
   payload: Uint8Array;
@@ -123,6 +136,12 @@ export function createGrpcHttpTransport(
   options: GrpcHttpTransportOptions
 ): Transport {
   const useBinaryFormat = options.useBinaryFormat ?? false;
+  const readMaxBytes = validateReadMaxBytesOption(options.readMaxBytes);
+  const compressMinBytes = options.compressMinBytes ?? 0;
+  const acceptCompression = options.acceptCompression ?? [
+    compressionGzip,
+    compressionBrotli,
+  ];
   return {
     async unary<
       I extends Message<I> = AnyMessage,
@@ -149,20 +168,36 @@ export function createGrpcHttpTransport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
+            header: grpcCreateRequestHeaderWithCompression(
+              method.kind,
+              useBinaryFormat,
+              timeoutMs,
+              header,
+              acceptCompression.map((c) => c.name),
+              options.sendCompression?.name
+            ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            const envelope = encodeEnvelope(
-              messageFlag,
-              serialize(req.message)
-            );
-            const encoding = useBinaryFormat ? "binary" : "utf8";
+            let flag = messageFlag;
+            let body = serialize(req.message);
+
+            if (
+              options.sendCompression !== undefined &&
+              body.length >= compressMinBytes
+            ) {
+              body = await options.sendCompression.compress(body);
+              flag = compressedFlag;
+              req.header.set("Grpc-Encoding", options.sendCompression.name);
+            } else {
+              req.header.delete("Grpc-Encoding");
+            }
+
+            const envelope = encodeEnvelope(flag, body);
             const response = await makeNodeRequest({
               req,
               payload: envelope,
-              encoding,
               httpOptions: options.httpOptions,
             });
 
@@ -172,15 +207,15 @@ export function createGrpcHttpTransport(
               typeof response.statusCode == "number",
               "http1 client response is missing status code"
             );
-            grpcValidateResponse(
+            const { compression } = grpcValidateResponseWithCompression(
               useBinaryFormat,
+              acceptCompression,
               response.statusCode,
               responseHeaders
             );
 
             const messageResult = await readEnvelope(response);
             const eofResult = await readEnvelope(response);
-
             if (!eofResult.done) {
               throw "extraneous data";
             }
@@ -191,13 +226,29 @@ export function createGrpcHttpTransport(
             if (messageResult.done) {
               throw "premature eof";
             }
+            let messageData = messageResult.value.data;
+            if (
+              (messageResult.value.flags & compressedFlag) ===
+              compressedFlag
+            ) {
+              if (!compression) {
+                throw new ConnectError(
+                  `received compressed envelope, but no grpc-encoding`,
+                  Code.InvalidArgument
+                );
+              }
+              messageData = await compression.decompress(
+                messageData,
+                readMaxBytes
+              );
+            }
 
             return <UnaryResponse<O>>{
               stream: false,
               service,
               method,
               header: responseHeaders,
-              message: parse(messageResult.value.data),
+              message: parse(messageData),
               trailer,
             };
           },
@@ -235,7 +286,14 @@ export function createGrpcHttpTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcCreateRequestHeader(useBinaryFormat, timeoutMs, header),
+          header: grpcCreateRequestHeaderWithCompression(
+            method.kind,
+            useBinaryFormat,
+            timeoutMs,
+            header,
+            acceptCompression.map((c) => c.name),
+            options.sendCompression?.name
+          ),
         },
         async (req: StreamingRequest<I, O>) => {
           try {
@@ -270,10 +328,16 @@ export function createGrpcHttpTransport(
                     "cannot send, stream is already closed"
                   );
                 }
-                const enveloped = encodeEnvelope(
-                  messageFlag,
-                  serialize(normalize(message))
-                );
+                let flags = messageFlag;
+                let body = serialize(normalize(message));
+                if (
+                  options.sendCompression &&
+                  body.length >= compressMinBytes
+                ) {
+                  flags = flags | compressedFlag;
+                  body = await options.sendCompression.compress(body);
+                }
+                const enveloped = encodeEnvelope(flags, body);
                 try {
                   await write(stream, enveloped);
                 } catch (e) {
@@ -295,11 +359,13 @@ export function createGrpcHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
-                grpcValidateResponse(
+                const { compression } = grpcValidateResponseWithCompression(
                   useBinaryFormat,
+                  acceptCompression,
                   response.statusCode,
                   await responseHeader
                 );
+
                 try {
                   const result = await readEnvelope(response);
                   if (result.done) {
@@ -310,9 +376,22 @@ export function createGrpcHttpTransport(
                       value: undefined,
                     };
                   }
+
+                  const flags = result.value.flags;
+                  let data = result.value.data;
+                  if ((flags & compressedFlag) === compressedFlag) {
+                    if (!compression) {
+                      throw new ConnectError(
+                        `received compressed envelope, but no grpc-encoding`,
+                        Code.InvalidArgument
+                      );
+                    }
+                    data = await compression.decompress(data, readMaxBytes);
+                  }
+
                   return {
                     done: false,
-                    value: parse(result.value.data),
+                    value: parse(data),
                   };
                 } catch (e) {
                   throw connectErrorFromNodeReason(e);
@@ -357,7 +436,7 @@ function makeNodeRequest(options: NodeRequestOptions) {
       return resolve(res);
     });
 
-    request.write(options.payload, options.encoding);
+    request.write(options.payload);
     request.end();
   });
 }

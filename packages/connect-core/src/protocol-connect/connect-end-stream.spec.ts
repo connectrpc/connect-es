@@ -17,8 +17,8 @@ import {
   connectEndStreamFromJson,
   connectEndStreamToJson,
 } from "./connect-end-stream.js";
-import { ConnectError } from "./connect-error.js";
-import { Code } from "./code.js";
+import { ConnectError } from "../connect-error.js";
+import { Code } from "../code.js";
 import { connectErrorToJson } from "./connect-error-to-json.js";
 import { Headers as UndiciHeaders } from "undici";
 

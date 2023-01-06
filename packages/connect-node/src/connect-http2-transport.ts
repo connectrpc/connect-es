@@ -15,13 +15,7 @@
 import {
   appendHeaders,
   Code,
-  connectCreateRequestHeader,
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
   ConnectError,
-  connectErrorFromJson,
-  connectTrailerDemux,
-  connectValidateResponse,
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
@@ -34,6 +28,14 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
+import {
+  connectCreateRequestHeader,
+  connectEndStreamFlag,
+  connectEndStreamFromJson,
+  connectErrorFromJson,
+  connectTrailerDemux,
+  connectValidateResponse,
+} from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -59,17 +61,11 @@ import {
   write,
 } from "./private/io.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
-import type { Compression } from "./compression.js";
+import { compressedFlag, Compression } from "./compression.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 
 const messageFlag = 0b00000000;
-/**
- * compressedFlag indicates that the data in a EnvelopedMessage is
- * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
- * and Connect protocols.
- */
-const compressedFlag = 0b00000001;
 
 /**
  * Options used to configure the Connect transport.
@@ -412,7 +408,7 @@ export function createConnectHttp2Transport(
   };
 }
 
-function connectCreateRequestHeaderWithCompression(
+export function connectCreateRequestHeaderWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,

@@ -39,17 +39,20 @@ import {
   encodeEnvelope,
   encodeEnvelopes,
   EnvelopedMessage,
-  grpcValidateTrailer,
+  runStreaming,
+  runUnary,
+} from "@bufbuild/connect-core";
+import {
   grpcWebCreateRequestHeader,
   grpcWebTrailerParse,
   grpcWebTrailerFlag,
   grpcWebValidateResponse,
-  runStreaming,
-  runUnary,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect-core/protocol-grpc-web";
+import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
 import { defer } from "./defer.js";
+import type { UnaryRequest } from "@bufbuild/connect-core";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -156,7 +159,7 @@ export function createGrpcWebTransport(
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
-          async (req) => {
+          async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
             const response = await fetch(req.url, {
               ...req.init,
               headers: req.header,

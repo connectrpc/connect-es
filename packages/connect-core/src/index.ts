@@ -48,35 +48,3 @@ export {
   encodeEnvelope,
   encodeEnvelopes,
 } from "./envelope.js";
-export { connectErrorFromJson } from "./connect-error-from-json.js";
-export { connectErrorToJson } from "./connect-error-to-json.js";
-export { connectParseContentType } from "./connect-parse-content-type.js";
-export { connectValidateResponse } from "./connect-validate-response.js";
-export { connectCreateRequestHeader } from "./connect-create-request-header.js";
-export {
-  connectEndStreamFromJson,
-  connectEndStreamToJson,
-  connectEndStreamFlag,
-} from "./connect-end-stream.js";
-export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
-export { connectCodeToHttpStatus } from "./connect-code-to-http-status.js";
-export { connectTrailerDemux } from "./connect-trailer-demux.js";
-export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";
-export { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
-export { grpcWebValidateResponse } from "./grpc-web-validate-response.js";
-export {
-  grpcWebTrailerFlag,
-  grpcWebTrailerParse,
-  grpcWebTrailerSerialize,
-} from "./grpc-web-trailer.js";
-export {
-  grpcFindTrailerError,
-  grpcSetTrailerStatus,
-} from "./grpc-trailer-status.js";
-export { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
-export { grpcCreateRequestHeader } from "./grpc-create-request-header.js";
-export { grpcValidateResponse } from "./grpc-validate-response.js";
-export { grpcValidateTrailer } from "./grpc-validate-trailer.js";
-export { grpcParseContentType } from "./grpc-parse-content-type.js";
-export { grpcParseTimeout } from "./grpc-parse-timeout.js";
-export { connectParseTimeout } from "./connect-parse-timeout.js";

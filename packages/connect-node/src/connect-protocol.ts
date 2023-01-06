@@ -15,16 +15,18 @@
 import {
   appendHeaders,
   Code,
+  ConnectError,
+  encodeEnvelope,
+  connectErrorFromReason,
+} from "@bufbuild/connect-core";
+import {
   connectCodeToHttpStatus,
   connectEndStreamFlag,
   connectEndStreamToJson,
-  ConnectError,
-  connectErrorFromReason,
   connectErrorToJson,
   connectParseContentType,
   connectParseTimeout,
-  encodeEnvelope,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect-core/protocol-connect";
 import {
   BinaryReadOptions,
   BinaryWriteOptions,
@@ -52,18 +54,12 @@ import {
   readToEnd,
   write,
 } from "./private/io.js";
-import type { Compression } from "./compression.js";
+import { compressedFlag, Compression } from "./compression.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionNegotiate } from "./private/compression-negotiate.js";
 
-/**
- * compressedFlag indicates that the data in a EnvelopedMessage is
- * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
- * and Connect protocols.
- */
-const compressedFlag = 0b00000001;
 const headerUnaryEncoding = "Content-Encoding";
 const headerStreamEncoding = "Connect-Content-Encoding";
 const headerUnaryAcceptEncoding = "Accept-Encoding";
@@ -730,7 +726,7 @@ export function createConnectProtocol(
                 if ((flags & compressedFlag) === compressedFlag) {
                   if (!requestCompression) {
                     throw new ConnectError(
-                      `received compressed envelope, but no content-encoding ON THE SERVER`,
+                      `received compressed envelope, but no content-encoding`,
                       Code.InvalidArgument
                     );
                   }
