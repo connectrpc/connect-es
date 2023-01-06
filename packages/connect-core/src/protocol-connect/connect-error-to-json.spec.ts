@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "./connect-error.js";
-import { Code } from "./code.js";
+import { ConnectError } from "../connect-error.js";
+import { Code } from "../code.js";
 import { connectErrorToJson } from "./connect-error-to-json.js";
 import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
 

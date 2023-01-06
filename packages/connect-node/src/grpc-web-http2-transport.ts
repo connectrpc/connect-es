@@ -17,10 +17,6 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcValidateTrailer,
-  grpcWebCreateRequestHeader,
-  grpcWebTrailerParse,
-  grpcWebTrailerFlag,
   Interceptor,
   runStreaming,
   runUnary,
@@ -30,6 +26,13 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
+import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
+import {
+  grpcWebCreateRequestHeader,
+  grpcWebTrailerParse,
+  grpcWebTrailerFlag,
+  grpcWebValidateResponse,
+} from "@bufbuild/connect-core/protocol-grpc-web";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -47,7 +50,6 @@ import { defer } from "./private/defer.js";
 import { end, readEnvelope, readResponseHeader, write } from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
-import { grpcWebValidateResponse } from "@bufbuild/connect-core";
 
 /**
  * Options used to configure the gRPC-web transport.

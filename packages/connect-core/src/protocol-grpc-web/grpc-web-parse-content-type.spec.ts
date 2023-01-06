@@ -63,5 +63,8 @@ describe("grpcWebParseContentType()", function () {
     expect(
       grpcWebParseContentType("application/grpc-web+thrift")
     ).toBeUndefined();
+    expect(
+      grpcWebParseContentType("application/connect+thrift")
+    ).toBeUndefined();
   });
 });

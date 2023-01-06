@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { connectParseContentType } from "./connect-parse-content-type.js";
-import { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
 
 describe("connectParseContentType()", function () {
   it("should parse", function () {
@@ -44,12 +43,5 @@ describe("connectParseContentType()", function () {
       stream: true,
       binary: true,
     });
-    expect(grpcWebParseContentType("application/octet-stream")).toBeUndefined();
-    expect(
-      grpcWebParseContentType("application/json;charset=iso-8859-1")
-    ).toBeUndefined();
-    expect(
-      grpcWebParseContentType("application/connect+thrift")
-    ).toBeUndefined();
   });
 });

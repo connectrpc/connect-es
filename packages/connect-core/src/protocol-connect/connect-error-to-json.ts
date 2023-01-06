@@ -19,8 +19,8 @@ import {
   Message,
   protoBase64,
 } from "@bufbuild/protobuf";
-import type { ConnectError } from "./connect-error.js";
-import { codeToString } from "./code.js";
+import type { ConnectError } from "../connect-error.js";
+import { codeToString } from "../code.js";
 
 /**
  * Serialize the given error to JSON.

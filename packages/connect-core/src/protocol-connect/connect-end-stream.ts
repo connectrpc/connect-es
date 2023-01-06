@@ -17,11 +17,11 @@ import type {
   JsonValue,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import type { ConnectError } from "./connect-error.js";
+import type { ConnectError } from "../connect-error.js";
 import { connectErrorFromJson } from "./connect-error-from-json.js";
-import { newParseError } from "./private/new-parse-error.js";
+import { newParseError } from "../private/new-parse-error.js";
 import { connectErrorToJson } from "./connect-error-to-json.js";
-import { appendHeaders } from "./http-headers.js";
+import { appendHeaders } from "../http-headers.js";
 
 /**
  * connectEndStreamFlag indicates that the data in a EnvelopedMessage

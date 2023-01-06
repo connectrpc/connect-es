@@ -39,14 +39,16 @@ import {
   encodeEnvelope,
   encodeEnvelopes,
   EnvelopedMessage,
-  grpcValidateTrailer,
+  runStreaming,
+  runUnary,
+} from "@bufbuild/connect-core";
+import {
   grpcWebCreateRequestHeader,
   grpcWebTrailerParse,
   grpcWebTrailerFlag,
   grpcWebValidateResponse,
-  runStreaming,
-  runUnary,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect-core/protocol-grpc-web";
+import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
 import { defer } from "./defer.js";

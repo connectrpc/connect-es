@@ -14,8 +14,8 @@
 
 import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
 import { connectErrorFromJson } from "./connect-error-from-json.js";
-import { Code, codeToString } from "./code.js";
-import { connectErrorDetails } from "./connect-error.js";
+import { Code, codeToString } from "../code.js";
+import { connectErrorDetails } from "../connect-error.js";
 
 describe("connectErrorFromJson()", () => {
   it("parses code and message", () => {

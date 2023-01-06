@@ -19,11 +19,37 @@
   },
   "main": "./dist/cjs/index.js",
   "type": "module",
-  "types": "./dist/types/index.d.ts",
   "exports": {
-    "import": "./dist/esm/index.js",
-    "require": "./dist/cjs/index.js",
-    "types": "./dist/types/index.d.ts"
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./protocol-connect": {
+      "import": "./dist/esm/protocol-connect/index.js",
+      "require": "./dist/cjs/protocol-connect/index.js"
+    },
+    "./protocol-grpc": {
+      "import": "./dist/esm/protocol-grpc/index.js",
+      "require": "./dist/cjs/protocol-grpc/index.js"
+    },
+    "./protocol-grpc-web": {
+      "import": "./dist/esm/protocol-grpc-web/index.js",
+      "require": "./dist/cjs/protocol-grpc-web/index.js"
+    }
+  },
+  "types": "./dist/types/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "protocol-connect": [
+        "./dist/types/protocol-connect/index.d.ts"
+      ],
+      "protocol-grpc": [
+        "./dist/types/protocol-grpc/index.d.ts"
+      ],
+      "protocol-grpc-web": [
+        "./dist/types/protocol-grpc-web/index.d.ts"
+      ]
+    }
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"
