@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code } from "./code.js";
+import { Code } from "../code.js";
 
 /**
  * Returns a HTTP status code for the given Connect code.

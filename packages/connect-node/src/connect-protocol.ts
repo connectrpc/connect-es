@@ -15,16 +15,18 @@
 import {
   appendHeaders,
   Code,
+  ConnectError,
+  encodeEnvelope,
+  connectErrorFromReason,
+} from "@bufbuild/connect-core";
+import {
   connectCodeToHttpStatus,
   connectEndStreamFlag,
   connectEndStreamToJson,
-  ConnectError,
-  connectErrorFromReason,
   connectErrorToJson,
   connectParseContentType,
   connectParseTimeout,
-  encodeEnvelope,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect-core/protocol-connect";
 import {
   BinaryReadOptions,
   BinaryWriteOptions,

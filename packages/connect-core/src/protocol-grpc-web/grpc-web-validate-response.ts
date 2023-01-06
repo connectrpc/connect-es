@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
-import { grpcParseContentType } from "./grpc-parse-content-type.js";
-import { ConnectError } from "./connect-error.js";
-import { grpcFindTrailerError } from "./grpc-trailer-status.js";
-import { Code } from "./code.js";
+import { grpcCodeFromHttpStatus } from "../protocol-grpc/grpc-code-from-http-status.js";
+import { ConnectError } from "../connect-error.js";
+import { grpcFindTrailerError } from "../protocol-grpc/grpc-trailer-status.js";
+import { Code } from "../code.js";
+import { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
 
 /**
- * Validates response status and header for the gRPC protocol.
+ * Validates response status and header for the gRPC-web protocol.
  * Throws a ConnectError if the header contains an error status,
  * the HTTP status indicates an error, or if the content type is
  * unexpected.
  */
-export function grpcValidateResponse(
+export function grpcWebValidateResponse(
   useBinaryFormat: boolean,
   status: number,
   headers: Headers
@@ -37,11 +37,17 @@ export function grpcValidateResponse(
     );
   }
   const mimeType = headers.get("Content-Type");
-  const parsedType = grpcParseContentType(mimeType);
+  const parsedType = grpcWebParseContentType(mimeType);
   if (!parsedType || parsedType.binary != useBinaryFormat) {
     throw new ConnectError(
       `unexpected response content type ${mimeType ?? "?"}`,
       Code.Internal
+    );
+  }
+  if (parsedType.text) {
+    throw new ConnectError(
+      "grpc-web-text is not supported",
+      Code.InvalidArgument
     );
   }
   const err = grpcFindTrailerError(headers);

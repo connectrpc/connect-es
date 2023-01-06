@@ -16,8 +16,8 @@ import {
   grpcFindTrailerError,
   grpcSetTrailerStatus,
 } from "./grpc-trailer-status.js";
-import { ConnectError } from "./connect-error.js";
-import { Code } from "./code.js";
+import { ConnectError } from "../connect-error.js";
+import { Code } from "../code.js";
 import { Int32Value } from "@bufbuild/protobuf";
 
 describe("grpcSetTrailerStatus()", function () {

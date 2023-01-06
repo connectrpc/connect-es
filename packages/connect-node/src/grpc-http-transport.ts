@@ -29,6 +29,7 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
+import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -53,7 +54,6 @@ import {
   write,
 } from "./private/io.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { grpcValidateTrailer } from "@bufbuild/connect-core";
 import {
   compressionGzip,
   compressionBrotli,

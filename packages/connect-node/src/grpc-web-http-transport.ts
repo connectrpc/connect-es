@@ -17,9 +17,6 @@ import {
   createClientMethodSerializers,
   createMethodUrl,
   encodeEnvelope,
-  grpcValidateTrailer,
-  grpcWebTrailerParse,
-  grpcWebTrailerFlag,
   Interceptor,
   runStreaming,
   runUnary,
@@ -30,6 +27,11 @@ import {
   UnaryResponse,
   Code,
 } from "@bufbuild/connect-core";
+import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
+import {
+  grpcWebTrailerParse,
+  grpcWebTrailerFlag,
+} from "@bufbuild/connect-core/protocol-grpc-web";
 import type {
   AnyMessage,
   BinaryReadOptions,
