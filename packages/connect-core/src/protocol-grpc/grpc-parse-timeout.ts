@@ -15,17 +15,8 @@
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 
-enum TimeoutUnit {
-  Hour = "H",
-  Minute = "M",
-  Second = "S",
-  Millisecond = "m",
-  Microsecond = "u",
-  Nanosecond = "n",
-}
-
 /**
- * Parse a gRPC Timeout(Deadline) header.
+ * Parse a gRPC Timeout (Deadline) header.
  */
 export function grpcParseTimeout(
   value: string | null
@@ -33,60 +24,20 @@ export function grpcParseTimeout(
   if (value === null) {
     return undefined;
   }
-  const timevalueScheme = /^\d+[HMSmun]$/;
-
-  if (!timevalueScheme.test(value)) {
-    return new ConnectError(
-      `protocol error: invalid grpc timeout format: ${value}`,
-      Code.InvalidArgument
-    );
-  }
-
-  const regex = /(\d{1,9})([HMSmun])$/gm;
-  const results = regex.exec(value);
-
+  const results = /^(\d{1,8})([HMSmun])$/.exec(value);
   if (results === null) {
     return new ConnectError(
       `protocol error: invalid grpc timeout value: ${value}`,
       Code.InvalidArgument
     );
   }
-
-  const [, duration, unit] = results;
-
-  if (duration.length > 8) {
-    return new ConnectError(
-      `protocol error: invalid grpc timeout value: ${duration}`,
-      Code.InvalidArgument
-    );
-  }
-
-  const timeout = parseInt(duration);
-
-  if (!Number.isInteger(timeout)) {
-    return new ConnectError(
-      `protocol error: grpc timeout value must be an integer: ${timeout}`,
-      Code.InvalidArgument
-    );
-  }
-
-  switch (unit) {
-    case TimeoutUnit.Hour:
-      return timeout * 60 * 60 * 1000;
-    case TimeoutUnit.Minute:
-      return timeout * 60 * 60 * 1000;
-    case TimeoutUnit.Second:
-      return timeout * 1000;
-    case TimeoutUnit.Millisecond:
-      return timeout;
-    case TimeoutUnit.Microsecond:
-      return timeout / 1000;
-    case TimeoutUnit.Nanosecond:
-      return timeout / 1000 / 1000;
-    default:
-      return new ConnectError(
-        `protocol error: invalid grpc timeout unit: ${unit}`,
-        Code.InvalidArgument
-      );
-  }
+  const v = {
+    H: 60 * 60 * 1000, // hour
+    M: 60 * 1000, // minute
+    S: 1000, // second
+    m: 1, // millisecond
+    u: 0.001, // microsecond
+    n: 0.000001, // nanosecond
+  };
+  return v[results[2] as keyof typeof v] * parseInt(results[1]);
 }

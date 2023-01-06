@@ -161,7 +161,7 @@ export function end(stream: stream.Writable): Promise<void> {
 
 export function write(
   stream: stream.Writable,
-  data: Uint8Array | string
+  data: Uint8Array
 ): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     if (stream.errored) {
@@ -171,11 +171,10 @@ export function write(
     stream.once("error", error);
 
     stream.once("drain", drain);
-    const encoding = typeof data == "string" ? "utf8" : "binary";
     // flushed == false: the stream wishes for the calling code to wait for
     // the 'drain' event to be emitted before continuing to write additional
     // data.
-    const flushed = stream.write(data, encoding, function (err) {
+    const flushed = stream.write(data, "binary", function (err) {
       if (err && !flushed) {
         // We are never getting a "drain" nor an "error" event if the stream
         // has already ended (ERR_STREAM_WRITE_AFTER_END), so we have to
