@@ -48,11 +48,3 @@ export {
   encodeEnvelope,
   encodeEnvelopes,
 } from "./envelope.js";
-export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";
-export { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
-export { grpcWebValidateResponse } from "./grpc-web-validate-response.js";
-export {
-  grpcWebTrailerFlag,
-  grpcWebTrailerParse,
-  grpcWebTrailerSerialize,
-} from "./grpc-web-trailer.js";
