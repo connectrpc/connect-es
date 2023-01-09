@@ -16,7 +16,7 @@ import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 
 /**
- * Parse a Connect Timeout(Deadline) header.
+ * Parse a Connect Timeout (Deadline) header.
  */
 export function connectParseTimeout(
   value: string | null
@@ -24,26 +24,12 @@ export function connectParseTimeout(
   if (value === null) {
     return undefined;
   }
-
-  const regex = /^\d{0,10}$/;
-  const results = regex.exec(value);
-
+  const results = /^\d{1,10}$/.exec(value);
   if (results === null) {
     return new ConnectError(
       `protocol error: invalid connect timeout value: ${value}`,
       Code.InvalidArgument
     );
   }
-
-  const [duration] = results;
-  const timeout = parseInt(duration);
-
-  if (!Number.isInteger(timeout)) {
-    return new ConnectError(
-      `protocol error: connect timeout value must be an integer: ${timeout}`,
-      Code.InvalidArgument
-    );
-  }
-
-  return timeout;
+  return parseInt(results[0]);
 }
