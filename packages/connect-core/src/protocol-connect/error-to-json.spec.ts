@@ -14,12 +14,12 @@
 
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { connectErrorToJson } from "./connect-error-to-json.js";
+import { errorToJson } from "./error-to-json.js";
 import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
 
-describe("connectErrorToJson()", () => {
+describe("errorToJson()", () => {
   it("serializes code and message", () => {
-    const json = connectErrorToJson(
+    const json = errorToJson(
       new ConnectError("Not permitted", Code.PermissionDenied),
       undefined
     );
@@ -27,7 +27,7 @@ describe("connectErrorToJson()", () => {
     expect(json.message as unknown).toBe("Not permitted");
   });
   it("does not serialize empty message", () => {
-    const json = connectErrorToJson(
+    const json = errorToJson(
       new ConnectError("", Code.PermissionDenied),
       undefined
     );
@@ -50,7 +50,7 @@ describe("connectErrorToJson()", () => {
     err.details.push(
       new ErrorDetail({ reason: "soirée 🎉", domain: "example.com" })
     );
-    const got = connectErrorToJson(err, undefined);
+    const got = errorToJson(err, undefined);
     const want = {
       code: "permission_denied",
       message: "Not permitted",

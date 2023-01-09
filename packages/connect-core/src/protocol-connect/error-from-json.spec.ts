@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
-import { connectErrorFromJson } from "./connect-error-from-json.js";
+import { errorFromJson } from "./error-from-json.js";
 import { Code, codeToString } from "../code.js";
 import { connectErrorDetails } from "../connect-error.js";
 
-describe("connectErrorFromJson()", () => {
+describe("errorFromJson()", () => {
   it("parses code and message", () => {
-    const error = connectErrorFromJson({
+    const error = errorFromJson({
       code: "permission_denied",
       message: "Not permitted",
     });
@@ -28,7 +28,7 @@ describe("connectErrorFromJson()", () => {
     expect(error.details.length).toBe(0);
   });
   it("does not require message", () => {
-    const error = connectErrorFromJson({
+    const error = errorFromJson({
       code: codeToString(Code.PermissionDenied),
     });
     expect(error.message).toBe("[permission_denied]");
@@ -36,7 +36,7 @@ describe("connectErrorFromJson()", () => {
   });
   it("with invalid code throws", () => {
     expect(() =>
-      connectErrorFromJson({
+      errorFromJson({
         code: "wrong code",
         message: "Not permitted",
       })
@@ -46,7 +46,7 @@ describe("connectErrorFromJson()", () => {
   });
   it("with code Ok throws", () => {
     expect(() =>
-      connectErrorFromJson({
+      errorFromJson({
         code: "ok",
         message: "Not permitted",
       })
@@ -56,7 +56,7 @@ describe("connectErrorFromJson()", () => {
   });
   it("with missing code throws", () => {
     expect(() =>
-      connectErrorFromJson({
+      errorFromJson({
         message: "Not permitted",
       })
     ).toThrowError("[internal] cannot decode ConnectError from JSON: object");
@@ -89,11 +89,11 @@ describe("connectErrorFromJson()", () => {
       ],
     };
     it("adds to raw detail", () => {
-      const error = connectErrorFromJson(json);
+      const error = errorFromJson(json);
       expect(error.details.length).toBe(1);
     });
     it("works with connectErrorDetails()", () => {
-      const error = connectErrorFromJson(json);
+      const error = errorFromJson(json);
       const details = connectErrorDetails(error, ErrorDetail);
       expect(details.length).toBe(1);
       expect(details[0]?.reason).toBe("soirée 🎉");

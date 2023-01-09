@@ -18,7 +18,7 @@ import { Code } from "../code.js";
  * Determine the Connect error code for the given HTTP status code.
  * See https://connect.build/docs/protocol#error-codes
  */
-export function connectCodeFromHttpStatus(httpStatus: number): Code {
+export function codeFromHttpStatus(httpStatus: number): Code {
   switch (httpStatus) {
     case 400: // Bad Request
       return Code.InvalidArgument;

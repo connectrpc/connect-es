@@ -14,8 +14,8 @@
 
 import { MethodKind } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
-import { connectParseContentType } from "./connect-parse-content-type.js";
-import { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
+import { parseContentType } from "./parse-content-type.js";
+import { codeFromHttpStatus } from "./code-from-http-status.js";
 import { ConnectError } from "../connect-error.js";
 
 /**
@@ -23,20 +23,17 @@ import { ConnectError } from "../connect-error.js";
  * Throws a ConnectError if the header indicates an error, or if
  * the content type is unexpected.
  */
-export function connectValidateResponse(
+export function validateResponse(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   status: number,
   headers: Headers
 ): { isConnectUnaryError: boolean } {
   const mimeType = headers.get("Content-Type");
-  const parsedType = connectParseContentType(mimeType);
+  const parsedType = parseContentType(mimeType);
   if (status !== 200) {
     if (!parsedType) {
-      throw new ConnectError(
-        `HTTP ${status}`,
-        connectCodeFromHttpStatus(status)
-      );
+      throw new ConnectError(`HTTP ${status}`, codeFromHttpStatus(status));
     }
     if (
       methodKind == MethodKind.Unary &&

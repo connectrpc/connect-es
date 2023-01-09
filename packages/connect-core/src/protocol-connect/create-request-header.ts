@@ -19,7 +19,7 @@ const protocolVersion = "1";
 /**
  * Creates headers for a Connect request.
  */
-export function connectCreateRequestHeader(
+export function createRequestHeader(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,

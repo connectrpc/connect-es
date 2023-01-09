@@ -29,12 +29,12 @@ import {
   UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
-  connectCreateRequestHeader,
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
-  connectErrorFromJson,
-  connectTrailerDemux,
-  connectValidateResponse,
+  createRequestHeader,
+  endStreamFlag,
+  endStreamFromJson,
+  errorFromJson,
+  trailerDemux,
+  validateResponse,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
@@ -223,13 +223,13 @@ export function createConnectHttp2Transport(
               );
             }
             if (isConnectUnaryError) {
-              throw connectErrorFromJson(
+              throw errorFromJson(
                 jsonParse(responseBody),
-                appendHeaders(...connectTrailerDemux(responseHeader))
+                appendHeaders(...trailerDemux(responseHeader))
               );
             }
             const responseMessage = parse(responseBody);
-            const [header, trailer] = connectTrailerDemux(responseHeader);
+            const [header, trailer] = trailerDemux(responseHeader);
             return <UnaryResponse<O>>{
               stream: false,
               service,
@@ -377,9 +377,9 @@ export function createConnectHttp2Transport(
                     }
                     data = await compression.decompress(data, readMaxBytes);
                   }
-                  if ((flags & connectEndStreamFlag) === connectEndStreamFlag) {
+                  if ((flags & endStreamFlag) === endStreamFlag) {
                     endStreamReceived = true;
-                    const endStream = connectEndStreamFromJson(data);
+                    const endStream = endStreamFromJson(data);
                     responseTrailer.resolve(endStream.metadata);
                     if (endStream.error) {
                       throw endStream.error;
@@ -416,7 +416,7 @@ export function connectCreateRequestHeaderWithCompression(
   acceptCompression: string[],
   sendCompression: string | undefined
 ): Headers {
-  const result = connectCreateRequestHeader(
+  const result = createRequestHeader(
     methodKind,
     useBinaryFormat,
     timeoutMs,
@@ -459,6 +459,6 @@ export function connectValidateResponseWithCompression(
   }
   return {
     compression,
-    ...connectValidateResponse(methodKind, useBinaryFormat, status, headers),
+    ...validateResponse(methodKind, useBinaryFormat, status, headers),
   };
 }

@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code } from "../code.js";
-import { ConnectError } from "../connect-error.js";
-
 /**
- * Parse a Connect Timeout (Deadline) header.
+ * In unary RPCs, Connect transports trailing metadata as response header
+ * fields, prefixed with "trailer-".
+ *
+ * This function demuxes headers and trailers into two separate Headers
+ * objects.
  */
-export function connectParseTimeout(
-  value: string | null
-): number | undefined | ConnectError {
-  if (value === null) {
-    return undefined;
-  }
-  const results = /^\d{1,10}$/.exec(value);
-  if (results === null) {
-    return new ConnectError(
-      `protocol error: invalid connect timeout value: ${value}`,
-      Code.InvalidArgument
-    );
-  }
-  return parseInt(results[0]);
+export function trailerDemux(
+  header: Headers
+): [header: Headers, trailer: Headers] {
+  const h = new Headers(),
+    t = new Headers();
+  header.forEach((value, key) => {
+    if (key.toLowerCase().startsWith("trailer-")) {
+      t.set(key.substring(8), value);
+    } else {
+      h.set(key, value);
+    }
+  });
+  return [h, t];
 }

@@ -18,16 +18,16 @@ import type {
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
 import type { ConnectError } from "../connect-error.js";
-import { connectErrorFromJson } from "./connect-error-from-json.js";
+import { errorFromJson } from "./error-from-json.js";
 import { newParseError } from "../private/new-parse-error.js";
-import { connectErrorToJson } from "./connect-error-to-json.js";
+import { errorToJson } from "./error-to-json.js";
 import { appendHeaders } from "../http-headers.js";
 
 /**
- * connectEndStreamFlag indicates that the data in a EnvelopedMessage
+ * endStreamFlag indicates that the data in a EnvelopedMessage
  * is a EndStreamResponse of the Connect protocol.
  */
-export const connectEndStreamFlag = 0b00000010;
+export const endStreamFlag = 0b00000010;
 
 /**
  * Represents the EndStreamResponse of the Connect protocol.
@@ -40,7 +40,7 @@ interface EndStreamResponse {
 /**
  * Parse an EndStreamResponse of the Connect protocol.
  */
-export function connectEndStreamFromJson(
+export function endStreamFromJson(
   data: Uint8Array | string
 ): EndStreamResponse {
   let jsonValue: JsonValue;
@@ -81,9 +81,7 @@ export function connectEndStreamFromJson(
     }
   }
   const error =
-    "error" in jsonValue
-      ? connectErrorFromJson(jsonValue.error, metadata)
-      : undefined;
+    "error" in jsonValue ? errorFromJson(jsonValue.error, metadata) : undefined;
   return { metadata, error };
 }
 
@@ -96,14 +94,14 @@ export function connectEndStreamFromJson(
  *
  * See https://connect.build/docs/protocol#error-end-stream
  */
-export function connectEndStreamToJson(
+export function endStreamToJson(
   metadata: Headers,
   error: ConnectError | undefined,
   jsonWriteOptions: Partial<JsonWriteOptions> | undefined
 ): JsonObject {
   const es: JsonObject = {};
   if (error !== undefined) {
-    es.error = connectErrorToJson(error, jsonWriteOptions);
+    es.error = errorToJson(error, jsonWriteOptions);
     metadata = appendHeaders(metadata, error.metadata);
   }
   let hasMetadata = false;

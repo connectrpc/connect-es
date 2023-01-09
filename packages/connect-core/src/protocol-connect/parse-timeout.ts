@@ -12,21 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Code } from "../code.js";
+import { ConnectError } from "../connect-error.js";
+
 /**
- * Parse a Connect Content-Type header.
+ * Parse a Connect Timeout (Deadline) header.
  */
-export function connectParseContentType(
-  contentType: string | null
-): { stream: boolean; binary: boolean } | undefined {
-  const match = contentType
-    ?.toLowerCase()
-    ?.match(
-      /^application\/(connect\+)?(?:(json)(?:; ?charset=utf-?8)?|(proto))$/
-    );
-  if (!match) {
+export function parseTimeout(
+  value: string | null
+): number | undefined | ConnectError {
+  if (value === null) {
     return undefined;
   }
-  const stream = !!match[1];
-  const binary = !!match[3];
-  return { stream, binary };
+  const results = /^\d{1,10}$/.exec(value);
+  if (results === null) {
+    return new ConnectError(
+      `protocol error: invalid connect timeout value: ${value}`,
+      Code.InvalidArgument
+    );
+  }
+  return parseInt(results[0]);
 }

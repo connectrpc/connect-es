@@ -13,13 +13,10 @@
 // limitations under the License.
 
 import type { JsonObject } from "@bufbuild/protobuf";
-import {
-  connectEndStreamFromJson,
-  connectEndStreamToJson,
-} from "./connect-end-stream.js";
+import { endStreamFromJson, endStreamToJson } from "./end-stream.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { connectErrorToJson } from "./connect-error-to-json.js";
+import { errorToJson } from "./error-to-json.js";
 import { Headers as UndiciHeaders } from "undici";
 
 // TODO we need to replace all Headers ctor calls in our code or require Node.js >= v18
@@ -27,7 +24,7 @@ if (typeof globalThis.Headers !== "function") {
   globalThis.Headers = UndiciHeaders as unknown as typeof Headers;
 }
 
-describe("connectEndStreamFromJson()", function () {
+describe("endStreamFromJson()", function () {
   it("should parse expected", function () {
     const json: JsonObject = {
       error: {
@@ -36,29 +33,29 @@ describe("connectEndStreamFromJson()", function () {
       },
       metadata: { foo: ["baz", "bar"] },
     };
-    const endStream = connectEndStreamFromJson(JSON.stringify(json));
+    const endStream = endStreamFromJson(JSON.stringify(json));
     expect(endStream.metadata.get("foo")).toBe("baz, bar");
     expect(endStream.error?.code).toBe(Code.ResourceExhausted);
     expect(endStream.error?.rawMessage).toBe("my bad");
   });
 });
 
-describe("connectEndStreamToJson()", function () {
+describe("endStreamToJson()", function () {
   it("should be {} in the most simple form", function () {
-    const got = connectEndStreamToJson(new Headers(), undefined, undefined);
+    const got = endStreamToJson(new Headers(), undefined, undefined);
     const want: JsonObject = {};
     expect(got).toEqual(want);
   });
   it("should serialize the error", function () {
     const err = new ConnectError("my bad", Code.ResourceExhausted);
-    const got = connectEndStreamToJson(new Headers(), err, undefined);
+    const got = endStreamToJson(new Headers(), err, undefined);
     const want: JsonObject = {
-      error: connectErrorToJson(err, undefined),
+      error: errorToJson(err, undefined),
     };
     expect(got).toEqual(want);
   });
   it("should serialize metadata", function () {
-    const got = connectEndStreamToJson(
+    const got = endStreamToJson(
       new Headers({
         foo: "bar",
       }),
@@ -74,9 +71,9 @@ describe("connectEndStreamToJson()", function () {
     const err = new ConnectError("my bad", Code.ResourceExhausted, {
       foo: "bar",
     });
-    const got = connectEndStreamToJson(new Headers(), err, undefined);
+    const got = endStreamToJson(new Headers(), err, undefined);
     const want: JsonObject = {
-      error: connectErrorToJson(err, undefined),
+      error: errorToJson(err, undefined),
       metadata: { foo: ["bar"] },
     };
     expect(got).toEqual(want);
@@ -85,7 +82,7 @@ describe("connectEndStreamToJson()", function () {
     const err = new ConnectError("my bad", Code.ResourceExhausted, {
       foo: "bar",
     });
-    const got = connectEndStreamToJson(
+    const got = endStreamToJson(
       new Headers({
         foo: "baz",
       }),
@@ -93,7 +90,7 @@ describe("connectEndStreamToJson()", function () {
       undefined
     );
     const want: JsonObject = {
-      error: connectErrorToJson(err, undefined),
+      error: errorToJson(err, undefined),
       metadata: { foo: ["baz, bar"] },
     };
     expect(got).toEqual(want);

@@ -13,23 +13,23 @@
 // limitations under the License.
 
 import { ConnectError } from "../connect-error.js";
-import { connectParseTimeout } from "./connect-parse-timeout.js";
+import { parseTimeout } from "./parse-timeout.js";
 
-describe("connectParseTimeout()", function () {
+describe("parseTimeout()", function () {
   it("should parse proper timeout", () => {
-    expect(connectParseTimeout("1")).toEqual(1);
-    expect(connectParseTimeout("1234567890")).toEqual(1234567890);
+    expect(parseTimeout("1")).toEqual(1);
+    expect(parseTimeout("1234567890")).toEqual(1234567890);
   });
   it("should should return undefined for null value", () => {
-    expect(connectParseTimeout(null)).toEqual(undefined);
+    expect(parseTimeout(null)).toEqual(undefined);
   });
   it("should should return a ConnectError for an incorrect value", () => {
-    expect(connectParseTimeout("100m")).toBeInstanceOf(ConnectError);
-    expect(connectParseTimeout("1H")).toBeInstanceOf(ConnectError);
-    expect(connectParseTimeout("-1")).toBeInstanceOf(ConnectError);
-    expect(connectParseTimeout("1e+10")).toBeInstanceOf(ConnectError);
-    expect(connectParseTimeout("")).toBeInstanceOf(ConnectError);
-    expect(connectParseTimeout("12345678901")).toBeInstanceOf(ConnectError);
-    expect(connectParseTimeout("foo")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("100m")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("1H")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("-1")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("1e+10")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("12345678901")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("foo")).toBeInstanceOf(ConnectError);
   });
 });

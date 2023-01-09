@@ -45,12 +45,12 @@ import {
   runUnary,
 } from "@bufbuild/connect-core";
 import {
-  connectCreateRequestHeader,
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
-  connectErrorFromJson,
-  connectTrailerDemux,
-  connectValidateResponse,
+  createRequestHeader,
+  endStreamFlag,
+  endStreamFromJson,
+  errorFromJson,
+  trailerDemux,
+  validateResponse,
 } from "@bufbuild/connect-core/protocol-connect";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
@@ -134,7 +134,7 @@ export function createConnectTransport(
         options.jsonOptions,
         options.binaryOptions
       );
-      const createRequestHeader = connectCreateRequestHeader.bind(
+      const createConnectRequestHeader = createRequestHeader.bind(
         null,
         method.kind,
         useBinaryFormat
@@ -152,7 +152,7 @@ export function createConnectTransport(
               redirect: "error",
               mode: "cors",
             },
-            header: createRequestHeader(timeoutMs, header),
+            header: createConnectRequestHeader(timeoutMs, header),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
@@ -163,19 +163,19 @@ export function createConnectTransport(
               signal: req.signal,
               body: serialize(req.message),
             });
-            const { isConnectUnaryError } = connectValidateResponse(
+            const { isConnectUnaryError } = validateResponse(
               method.kind,
               useBinaryFormat,
               response.status,
               response.headers
             );
             if (isConnectUnaryError) {
-              throw connectErrorFromJson(
+              throw errorFromJson(
                 (await response.json()) as JsonValue,
-                appendHeaders(...connectTrailerDemux(response.headers))
+                appendHeaders(...trailerDemux(response.headers))
               );
             }
-            const [demuxedHeader, demuxedTrailer] = connectTrailerDemux(
+            const [demuxedHeader, demuxedTrailer] = trailerDemux(
               response.headers
             );
             return <UnaryResponse<O>>{
@@ -210,7 +210,7 @@ export function createConnectTransport(
         options.jsonOptions,
         options.binaryOptions
       );
-      const createRequestHeader = connectCreateRequestHeader.bind(
+      const createConnectRequestHeader = createRequestHeader.bind(
         null,
         method.kind,
         useBinaryFormat
@@ -228,7 +228,7 @@ export function createConnectTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeader(timeoutMs, header),
+          header: createConnectRequestHeader(timeoutMs, header),
         },
         async (req) => {
           const pendingSend: EnvelopedMessage[] = [];
@@ -270,7 +270,7 @@ export function createConnectTransport(
                   signal: req.signal,
                   body: encodeEnvelopes(...pendingSend),
                 });
-                connectValidateResponse(
+                validateResponse(
                   method.kind,
                   useBinaryFormat,
                   response.status,
@@ -304,12 +304,9 @@ export function createConnectTransport(
                     value: undefined,
                   };
                 }
-                if (
-                  (result.value.flags & connectEndStreamFlag) ===
-                  connectEndStreamFlag
-                ) {
+                if ((result.value.flags & endStreamFlag) === endStreamFlag) {
                   endStreamReceived = true;
-                  const endStream = connectEndStreamFromJson(result.value.data);
+                  const endStream = endStreamFromJson(result.value.data);
                   responseTrailer.resolve(endStream.metadata);
                   if (endStream.error) {
                     throw endStream.error;

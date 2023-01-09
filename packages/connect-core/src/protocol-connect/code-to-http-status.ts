@@ -18,7 +18,7 @@ import { Code } from "../code.js";
  * Returns a HTTP status code for the given Connect code.
  * See https://connect.build/docs/protocol#error-codes
  */
-export function connectCodeToHttpStatus(code: Code): number {
+export function codeToHttpStatus(code: Code): number {
   switch (code) {
     case Code.Canceled:
       return 408; // Request Timeout

@@ -13,23 +13,20 @@
 // limitations under the License.
 
 /**
- * In unary RPCs, Connect transports trailing metadata as response header
- * fields, prefixed with "trailer-".
- *
- * This function demuxes headers and trailers into two separate Headers
- * objects.
+ * Parse a Connect Content-Type header.
  */
-export function connectTrailerDemux(
-  header: Headers
-): [header: Headers, trailer: Headers] {
-  const h = new Headers(),
-    t = new Headers();
-  header.forEach((value, key) => {
-    if (key.toLowerCase().startsWith("trailer-")) {
-      t.set(key.substring(8), value);
-    } else {
-      h.set(key, value);
-    }
-  });
-  return [h, t];
+export function parseContentType(
+  contentType: string | null
+): { stream: boolean; binary: boolean } | undefined {
+  const match = contentType
+    ?.toLowerCase()
+    ?.match(
+      /^application\/(connect\+)?(?:(json)(?:; ?charset=utf-?8)?|(proto))$/
+    );
+  if (!match) {
+    return undefined;
+  }
+  const stream = !!match[1];
+  const binary = !!match[3];
+  return { stream, binary };
 }

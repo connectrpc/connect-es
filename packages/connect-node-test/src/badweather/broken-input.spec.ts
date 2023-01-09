@@ -16,8 +16,8 @@ import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { createTestServers } from "../helpers/testserver.js";
 import { Code, createMethodUrl } from "@bufbuild/connect-core";
 import {
-  connectEndStreamFromJson,
-  connectErrorFromJson,
+  endStreamFromJson,
+  errorFromJson,
 } from "@bufbuild/connect-core/protocol-connect";
 import { http2Request } from "../helpers/http2-request.js";
 import type { MethodInfo } from "@bufbuild/protobuf";
@@ -50,7 +50,7 @@ describe("broken input", () => {
       const reqUnary = async (type: string, body: Uint8Array) =>
         req(TestService.methods.unaryCall, type, body).then((res) => ({
           status: res.status,
-          error: connectErrorFromJson(
+          error: errorFromJson(
             JSON.parse(new TextDecoder().decode(res.body)) // eslint-disable-line @typescript-eslint/no-unsafe-argument
           ),
         }));
@@ -76,7 +76,7 @@ describe("broken input", () => {
         const reqStreaming = async (type: string, body: Uint8Array) =>
           req(method, type, body).then((res) => ({
             status: res.status,
-            endStream: connectEndStreamFromJson(res.body.subarray(5)),
+            endStream: endStreamFromJson(res.body.subarray(5)),
           }));
         it("should raise HTTP 400 for for invalid JSON", async () => {
           const json = new TextEncoder().encode("this is not json");

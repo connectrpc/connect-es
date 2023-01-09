@@ -12,34 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { connectParseContentType } from "./connect-parse-content-type.js";
+import { parseContentType } from "./parse-content-type.js";
 
-describe("connectParseContentType()", function () {
+describe("parseContentType()", function () {
   it("should parse", function () {
-    expect(connectParseContentType("application/json")).toEqual({
+    expect(parseContentType("application/json")).toEqual({
       stream: false,
       binary: false,
     });
-    expect(connectParseContentType("application/json;charset=utf8")).toEqual({
+    expect(parseContentType("application/json;charset=utf8")).toEqual({
       stream: false,
       binary: false,
     });
-    expect(connectParseContentType("application/json; charset=utf-8")).toEqual({
+    expect(parseContentType("application/json; charset=utf-8")).toEqual({
       stream: false,
       binary: false,
     });
-    expect(connectParseContentType("application/proto")).toEqual({
+    expect(parseContentType("application/proto")).toEqual({
       stream: false,
       binary: true,
     });
-    expect(connectParseContentType("application/connect+json")).toEqual({
+    expect(parseContentType("application/connect+json")).toEqual({
       stream: true,
       binary: false,
     });
-    expect(
-      connectParseContentType("application/connect+json;charset=utf8")
-    ).toEqual({ stream: true, binary: false });
-    expect(connectParseContentType("application/connect+proto")).toEqual({
+    expect(parseContentType("application/connect+json;charset=utf8")).toEqual({
+      stream: true,
+      binary: false,
+    });
+    expect(parseContentType("application/connect+proto")).toEqual({
       stream: true,
       binary: true,
     });

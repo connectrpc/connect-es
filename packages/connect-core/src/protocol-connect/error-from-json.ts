@@ -21,7 +21,7 @@ import { newParseError } from "../private/new-parse-error.js";
  * Parse a Connect error from a JSON value.
  * Will return a ConnectError, but throw one in case the JSON is malformed.
  */
-export function connectErrorFromJson(
+export function errorFromJson(
   jsonValue: JsonValue,
   metadata?: HeadersInit
 ): ConnectError {

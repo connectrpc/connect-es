@@ -20,12 +20,12 @@ import {
   connectErrorFromReason,
 } from "@bufbuild/connect-core";
 import {
-  connectCodeToHttpStatus,
-  connectEndStreamFlag,
-  connectEndStreamToJson,
-  connectErrorToJson,
-  connectParseContentType,
-  connectParseTimeout,
+  codeToHttpStatus,
+  endStreamFlag,
+  endStreamToJson,
+  errorToJson,
+  parseContentType,
+  parseTimeout,
 } from "@bufbuild/connect-core/protocol-connect";
 import {
   BinaryReadOptions,
@@ -98,7 +98,7 @@ export function createConnectProtocol(
     compressionBrotli,
   ];
   return {
-    supportsMediaType: (type) => !!connectParseContentType(type),
+    supportsMediaType: (type) => !!parseContentType(type),
 
     createHandler<I extends Message<I>, O extends Message<O>>(
       spec: ImplSpec<I, O>
@@ -107,9 +107,7 @@ export function createConnectProtocol(
         case MethodKind.Unary:
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
-            const type = connectParseContentType(
-              requestHeader.get(headerContentType)
-            );
+            const type = parseContentType(requestHeader.get(headerContentType));
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -149,7 +147,7 @@ export function createConnectProtocol(
               responseTrailer: new Headers(),
             };
 
-            const timeout = connectParseTimeout(
+            const timeout = parseTimeout(
               requestHeader.get(connectTimeoutHeader)
             );
 
@@ -271,9 +269,7 @@ export function createConnectProtocol(
         case MethodKind.ServerStreaming: {
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
-            const type = connectParseContentType(
-              requestHeader.get(headerContentType)
-            );
+            const type = parseContentType(requestHeader.get(headerContentType));
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -313,7 +309,7 @@ export function createConnectProtocol(
               );
             }
 
-            const timeout = connectParseTimeout(
+            const timeout = parseTimeout(
               requestHeader.get(connectTimeoutHeader)
             );
 
@@ -442,9 +438,7 @@ export function createConnectProtocol(
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
-            const type = connectParseContentType(
-              requestHeader.get(headerContentType)
-            );
+            const type = parseContentType(requestHeader.get(headerContentType));
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -484,7 +478,7 @@ export function createConnectProtocol(
               responseTrailer: new Headers(),
             };
 
-            const timeout = connectParseTimeout(
+            const timeout = parseTimeout(
               requestHeader.get(connectTimeoutHeader)
             );
 
@@ -607,9 +601,7 @@ export function createConnectProtocol(
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
-            const type = connectParseContentType(
-              requestHeader.get(headerContentType)
-            );
+            const type = parseContentType(requestHeader.get(headerContentType));
 
             if (type === undefined) {
               return await endWithHttpStatus(
@@ -649,7 +641,7 @@ export function createConnectProtocol(
               responseTrailer: new Headers(),
             };
 
-            const timeout = connectParseTimeout(
+            const timeout = parseTimeout(
               requestHeader.get(connectTimeoutHeader)
             );
 
@@ -804,13 +796,13 @@ async function endWithConnectEndStream(
   if (!res.headersSent) {
     res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
   }
-  const endStreamJson = connectEndStreamToJson(
+  const endStreamJson = endStreamToJson(
     context.responseTrailer,
     error,
     jsonWriteOptions
   );
   let data = jsonSerialize(endStreamJson);
-  let flags = connectEndStreamFlag;
+  let flags = endStreamFlag;
   if (responseCompression && data.length >= compressMinBytes) {
     data = await responseCompression.compress(data);
     flags = flags | compressedFlag;
@@ -832,13 +824,13 @@ async function endWithConnectUnaryError(
     error.metadata
   );
   header.set(headerContentType, "application/json");
-  const json = connectErrorToJson(error, jsonWriteOptions);
+  const json = errorToJson(error, jsonWriteOptions);
   let body = jsonSerialize(json);
   if (responseCompression && body.length >= compressMinBytes) {
     body = await responseCompression.compress(body);
     header.set(headerUnaryEncoding, responseCompression.name);
   }
-  const statusCode = connectCodeToHttpStatus(error.code);
+  const statusCode = codeToHttpStatus(error.code);
   res.writeHead(statusCode, webHeaderToNodeHeaders(header));
   await write(res, body);
   await end(res);

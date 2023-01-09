@@ -32,7 +32,7 @@ import { codeToString } from "../code.js";
  *
  * See https://connect.build/docs/protocol#error-end-stream
  */
-export function connectErrorToJson(
+export function errorToJson(
   error: ConnectError,
   jsonWriteOptions: Partial<JsonWriteOptions> | undefined
 ): JsonObject {

@@ -16,8 +16,8 @@ import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { createTestServers } from "../helpers/testserver.js";
 import { Code, createMethodUrl } from "@bufbuild/connect-core";
 import {
-  connectEndStreamFromJson,
-  connectErrorFromJson,
+  endStreamFromJson,
+  errorFromJson,
 } from "@bufbuild/connect-core/protocol-connect";
 import { http2Request } from "../helpers/http2-request.js";
 import type { MethodInfo } from "@bufbuild/protobuf";
@@ -48,7 +48,7 @@ describe("unsupported content encoding", () => {
             "content-encoding": "banana",
           });
           expect(res.status).toBe(404);
-          const err = connectErrorFromJson(
+          const err = errorFromJson(
             JSON.parse(new TextDecoder().decode(res.body)) as JsonValue
           );
           expect(err.code).toBe(Code.Unimplemented);
@@ -67,7 +67,7 @@ describe("unsupported content encoding", () => {
             "content-type": "application/connect+json",
             "connect-content-encoding": "banana",
           });
-          const endStream = connectEndStreamFromJson(res.body.subarray(5));
+          const endStream = endStreamFromJson(res.body.subarray(5));
           expect(endStream.error?.code).toBe(Code.Unimplemented);
           expect(endStream.error?.rawMessage).toMatch(
             /^unknown compression "banana": supported encodings are gzip(, [a-z]+)*$/
