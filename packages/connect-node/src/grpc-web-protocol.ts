@@ -46,6 +46,18 @@ import {
 import type * as http from "http";
 import type * as http2 from "http2";
 import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
+import {
+  compressedFlag,
+  Compression,
+  compressionBrotli,
+  compressionGzip,
+} from "./compression.js";
+import { compressionNegotiate } from "./private/compression-negotiate.js";
+import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
+
+const headerEncoding = "Grpc-Encoding";
+const headerAcceptEncoding = "Grpc-Accept-Encoding";
+const grpcWebTimeoutHeader = "Grpc-Timeout";
 
 /**
  * Options for creating a gRPC-web Protocol instance.
@@ -53,9 +65,12 @@ import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 interface CreateGrpcWebProtocolOptions {
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+  // TODO document
+  acceptCompression?: Compression[];
+  compressMinBytes?: number;
+  readMaxBytes?: number;
+  sendMaxBytes?: number;
 }
-
-const grpcWebTimeoutHeader = "Grpc-Timeout";
 
 /**
  * Create a gRPC-web Protocol instance.
@@ -63,6 +78,12 @@ const grpcWebTimeoutHeader = "Grpc-Timeout";
 export function createGrpcWebProtocol(
   options: CreateGrpcWebProtocolOptions
 ): Protocol {
+  const readMaxBytes = validateReadMaxBytesOption(options.readMaxBytes);
+  const compressMinBytes = options.compressMinBytes ?? 0;
+  const acceptCompression = options.acceptCompression ?? [
+    compressionGzip,
+    compressionBrotli,
+  ];
   return {
     supportsMediaType: (type) => !!grpcWebParseContentType(type),
 
@@ -116,6 +137,37 @@ export function createGrpcWebProtocol(
                 );
               });
             }
+
+            const {
+              requestCompression,
+              responseCompression,
+              unsupportedError,
+              supportedNames,
+            } = compressionNegotiate(
+              acceptCompression,
+              requestHeader.get(headerEncoding),
+              requestHeader.get(headerAcceptEncoding)
+            );
+
+            if (unsupportedError) {
+              unsupportedError.metadata.set(
+                headerAcceptEncoding,
+                supportedNames
+              );
+              return await endWithGrpcWebTrailer(
+                res,
+                context,
+                unsupportedError
+              );
+            }
+
+            if (responseCompression) {
+              context.responseHeader.set(
+                headerEncoding,
+                responseCompression.name
+              );
+            }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -131,7 +183,18 @@ export function createGrpcWebProtocol(
                 new ConnectError("Missing input message", Code.Internal)
               );
             }
-            const input = parse(inputResult.value.data);
+            const flags = inputResult.value.flags;
+            let data = inputResult.value.data;
+            if ((flags & compressedFlag) === compressedFlag) {
+              if (!requestCompression) {
+                throw new ConnectError(
+                  `received compressed envelope, but no content-encoding`,
+                  Code.InvalidArgument
+                );
+              }
+              data = await requestCompression.decompress(data, readMaxBytes);
+            }
+            const input = parse(data);
             let output: O | PartialMessage<O>;
             try {
               output = await spec.impl(input, context);
@@ -143,7 +206,13 @@ export function createGrpcWebProtocol(
               );
             }
             res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
-            await write(res, encodeEnvelope(0, serialize(normalize(output))));
+            let response = serialize(normalize(output));
+            let envelopeFlag = 0;
+            if (responseCompression && data.length >= compressMinBytes) {
+              response = await responseCompression.compress(response);
+              envelopeFlag = flags | compressedFlag;
+            }
+            await write(res, encodeEnvelope(envelopeFlag, response));
             return await endWithGrpcWebTrailer(res, context, undefined);
           };
         case MethodKind.ServerStreaming: {
@@ -193,6 +262,35 @@ export function createGrpcWebProtocol(
               });
             }
 
+            const {
+              requestCompression,
+              responseCompression,
+              unsupportedError,
+              supportedNames,
+            } = compressionNegotiate(
+              acceptCompression,
+              requestHeader.get(headerEncoding),
+              requestHeader.get(headerAcceptEncoding)
+            );
+
+            if (unsupportedError) {
+              unsupportedError.metadata.set(
+                headerAcceptEncoding,
+                supportedNames
+              );
+              return await endWithGrpcWebTrailer(
+                res,
+                context,
+                unsupportedError
+              );
+            }
+            if (responseCompression) {
+              context.responseHeader.set(
+                headerEncoding,
+                responseCompression.name
+              );
+            }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -209,7 +307,10 @@ export function createGrpcWebProtocol(
                 new ConnectError("Missing input message", Code.Internal)
               );
             }
-            if (inputResult.value.flags !== 0) {
+            if (
+              requestCompression === undefined &&
+              inputResult.value.flags !== 0
+            ) {
               return await endWithGrpcWebTrailer(
                 res,
                 context,
@@ -221,7 +322,18 @@ export function createGrpcWebProtocol(
                 )
               );
             }
-            const input = parse(inputResult.value.data);
+            const flags = inputResult.value.flags;
+            let data = inputResult.value.data;
+            if ((flags & compressedFlag) === compressedFlag) {
+              if (!requestCompression) {
+                throw new ConnectError(
+                  `received compressed envelope, but no content-encoding`,
+                  Code.InvalidArgument
+                );
+              }
+              data = await requestCompression.decompress(data, readMaxBytes);
+            }
+            const input = parse(data);
             try {
               for await (const output of spec.impl(input, context)) {
                 if (!res.headersSent) {
@@ -230,10 +342,13 @@ export function createGrpcWebProtocol(
                     webHeaderToNodeHeaders(context.responseHeader)
                   );
                 }
-                await write(
-                  res,
-                  encodeEnvelope(0, serialize(normalize(output)))
-                );
+                let data = serialize(normalize(output));
+                let flags = 0;
+                if (responseCompression && data.length >= compressMinBytes) {
+                  data = await responseCompression.compress(data);
+                  flags = flags | compressedFlag;
+                }
+                await write(res, encodeEnvelope(flags, data));
               }
             } catch (e) {
               return await endWithGrpcWebTrailer(
@@ -292,6 +407,35 @@ export function createGrpcWebProtocol(
               });
             }
 
+            const {
+              requestCompression,
+              responseCompression,
+              unsupportedError,
+              supportedNames,
+            } = compressionNegotiate(
+              acceptCompression,
+              requestHeader.get(headerEncoding),
+              requestHeader.get(headerAcceptEncoding)
+            );
+
+            if (unsupportedError) {
+              unsupportedError.metadata.set(
+                headerAcceptEncoding,
+                supportedNames
+              );
+              return await endWithGrpcWebTrailer(
+                res,
+                context,
+                unsupportedError
+              );
+            }
+            if (responseCompression) {
+              context.responseHeader.set(
+                headerEncoding,
+                responseCompression.name
+              );
+            }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -306,7 +450,10 @@ export function createGrpcWebProtocol(
                 if (result.done) {
                   break;
                 }
-                if (result.value.flags !== 0) {
+                if (
+                  requestCompression === undefined &&
+                  result.value.flags !== 0
+                ) {
                   return await endWithGrpcWebTrailer(
                     res,
                     context,
@@ -318,7 +465,21 @@ export function createGrpcWebProtocol(
                     )
                   );
                 }
-                yield parse(result.value.data);
+                const flags = result.value.flags;
+                let data = result.value.data;
+                if ((flags & compressedFlag) === compressedFlag) {
+                  if (!requestCompression) {
+                    throw new ConnectError(
+                      `received compressed envelope, but no content-encoding on server`,
+                      Code.InvalidArgument
+                    );
+                  }
+                  data = await requestCompression.decompress(
+                    data,
+                    readMaxBytes
+                  );
+                }
+                yield parse(data);
               }
             }
 
@@ -332,8 +493,14 @@ export function createGrpcWebProtocol(
                 connectErrorFromReason(e)
               );
             }
+            let data = serialize(normalize(output));
+            let flags = 0;
+            if (responseCompression && data.length >= compressMinBytes) {
+              data = await responseCompression.compress(data);
+              flags = flags | compressedFlag;
+            }
             res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
-            await write(res, encodeEnvelope(0, serialize(normalize(output))));
+            await write(res, encodeEnvelope(flags, data));
             return await endWithGrpcWebTrailer(res, context, undefined);
           };
         }
@@ -384,6 +551,35 @@ export function createGrpcWebProtocol(
               });
             }
 
+            const {
+              requestCompression,
+              responseCompression,
+              unsupportedError,
+              supportedNames,
+            } = compressionNegotiate(
+              acceptCompression,
+              requestHeader.get(headerEncoding),
+              requestHeader.get(headerAcceptEncoding)
+            );
+
+            if (unsupportedError) {
+              unsupportedError.metadata.set(
+                headerAcceptEncoding,
+                supportedNames
+              );
+              return await endWithGrpcWebTrailer(
+                res,
+                context,
+                unsupportedError
+              );
+            }
+            if (responseCompression) {
+              context.responseHeader.set(
+                headerEncoding,
+                responseCompression.name
+              );
+            }
+
             const { normalize, parse, serialize } =
               createServerMethodSerializers(
                 options.jsonOptions,
@@ -398,7 +594,10 @@ export function createGrpcWebProtocol(
                 if (result.done) {
                   break;
                 }
-                if (result.value.flags !== 0) {
+                if (
+                  requestCompression === undefined &&
+                  result.value.flags !== 0
+                ) {
                   return await endWithGrpcWebTrailer(
                     res,
                     context,
@@ -410,7 +609,21 @@ export function createGrpcWebProtocol(
                     )
                   );
                 }
-                yield parse(result.value.data);
+                const flags = result.value.flags;
+                let data = result.value.data;
+                if ((flags & compressedFlag) === compressedFlag) {
+                  if (!requestCompression) {
+                    throw new ConnectError(
+                      `received compressed envelope, but no content-encoding on server`,
+                      Code.InvalidArgument
+                    );
+                  }
+                  data = await requestCompression.decompress(
+                    data,
+                    readMaxBytes
+                  );
+                }
+                yield parse(data);
               }
             }
 
@@ -422,10 +635,13 @@ export function createGrpcWebProtocol(
                     webHeaderToNodeHeaders(context.responseHeader)
                   );
                 }
-                await write(
-                  res,
-                  encodeEnvelope(0, serialize(normalize(output)))
-                );
+                let data = serialize(normalize(output));
+                let flags = 0;
+                if (responseCompression && data.length >= compressMinBytes) {
+                  data = await responseCompression.compress(data);
+                  flags = flags | compressedFlag;
+                }
+                await write(res, encodeEnvelope(flags, data));
               }
             } catch (e) {
               return await endWithGrpcWebTrailer(
