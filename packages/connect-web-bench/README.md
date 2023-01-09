@@ -10,6 +10,6 @@ it like a web server would usually do.
 
 | code generator | bundle size        | minified               | compressed           |
 |----------------|-------------------:|-----------------------:|---------------------:|
-| connect-web    | 94,204 b | 43,331 b | 11,940 b |
-| connect-web (legacy) | 88,075 b | 41,019 b | 11,356 b |
-| grpc-web       | 413,539 b    | 301,006 b    | 53,260 b |
+| connect-web    | 101,457 b | 43,331 b | 11,940 b |
+| connect-web (legacy) | 94,981 b | 41,061 b | 11,392 b |
+| grpc-web       | 414,073 b    | 301,006 b    | 53,260 b |

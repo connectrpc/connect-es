@@ -31,7 +31,7 @@ export function grpcParseTimeout(
       Code.InvalidArgument
     );
   }
-  const v = {
+  const unitToMultiplicand = {
     H: 60 * 60 * 1000, // hour
     M: 60 * 1000, // minute
     S: 1000, // second
@@ -39,5 +39,8 @@ export function grpcParseTimeout(
     u: 0.001, // microsecond
     n: 0.000001, // nanosecond
   };
-  return v[results[2] as keyof typeof v] * parseInt(results[1]);
+  return (
+    unitToMultiplicand[results[2] as keyof typeof unitToMultiplicand] *
+    parseInt(results[1])
+  );
 }
