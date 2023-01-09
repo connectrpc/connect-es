@@ -69,22 +69,9 @@ export class ConnectError extends Error {
    * Create a new ConnectError. If no code is provided, code "unknown" is
    * used.
    */
-  constructor(message: string, code?: Code, metadata?: HeadersInit);
-  /**
-   * @deprecated We do not support providing error details in the constructor.
-   * This signature was left here by accident, and will be removed in the next
-   * release.
-   */
-  constructor(
-    message: string,
-    code?: Code,
-    details?: AnyMessage[],
-    metadata?: HeadersInit
-  );
   constructor(
     message: string,
     code: Code = Code.Unknown,
-    detailsOrMetadata?: AnyMessage[] | HeadersInit,
     metadata?: HeadersInit
   ) {
     super(createMessage(message, code));
@@ -92,12 +79,7 @@ export class ConnectError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
     this.rawMessage = message;
     this.code = code;
-    // TODO once we remove the deprecated constructor, this can become `new Headers(metadata ?? {})`
-    const metadataInit =
-      metadata ??
-      (Array.isArray(detailsOrMetadata) ? undefined : detailsOrMetadata) ??
-      {};
-    this.metadata = new Headers(metadataInit);
+    this.metadata = new Headers(metadata);
     this.details = [];
   }
 }
@@ -185,7 +167,7 @@ export function connectErrorFromJson(
   if (message != null && typeof message !== "string") {
     throw newParseError(jsonValue.code, ".message");
   }
-  const error = new ConnectError(message ?? "", code, undefined, metadata);
+  const error = new ConnectError(message ?? "", code, metadata);
   if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
     for (const detail of jsonValue.details) {
       if (
