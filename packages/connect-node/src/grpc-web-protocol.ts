@@ -19,8 +19,8 @@ import {
   encodeEnvelope,
 } from "@bufbuild/connect-core";
 import {
-  grpcParseTimeout,
-  grpcSetTrailerStatus,
+  parseTimeout,
+  setTrailerStatus,
 } from "@bufbuild/connect-core/protocol-grpc";
 import {
   grpcWebParseContentType,
@@ -120,7 +120,7 @@ export function createGrpcWebProtocol(
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
-            const timeout = grpcParseTimeout(
+            const timeout = parseTimeout(
               requestHeader.get(grpcWebTimeoutHeader)
             );
 
@@ -244,7 +244,7 @@ export function createGrpcWebProtocol(
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
-            const timeout = grpcParseTimeout(
+            const timeout = parseTimeout(
               requestHeader.get(grpcWebTimeoutHeader)
             );
 
@@ -389,7 +389,7 @@ export function createGrpcWebProtocol(
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
-            const timeout = grpcParseTimeout(
+            const timeout = parseTimeout(
               requestHeader.get(grpcWebTimeoutHeader)
             );
 
@@ -533,7 +533,7 @@ export function createGrpcWebProtocol(
               responseHeader: grpcWebCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
-            const timeout = grpcParseTimeout(
+            const timeout = parseTimeout(
               requestHeader.get(grpcWebTimeoutHeader)
             );
 
@@ -674,7 +674,7 @@ async function endWithGrpcWebTrailer(
   if (!res.headersSent) {
     res.writeHead(200, webHeaderToNodeHeaders(context.responseHeader));
   }
-  grpcSetTrailerStatus(context.responseTrailer, error);
+  setTrailerStatus(context.responseTrailer, error);
   const trailerBytes = grpcWebTrailerSerialize(context.responseTrailer);
   await write(res, encodeEnvelope(grpcWebTrailerFlag, trailerBytes));
   await end(res);

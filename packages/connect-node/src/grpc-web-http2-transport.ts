@@ -27,7 +27,7 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
-import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
+import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import {
   grpcWebCreateRequestHeader,
   grpcWebTrailerParse,
@@ -242,7 +242,7 @@ export function createGrpcWebHttp2Transport(
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              grpcValidateTrailer(grpcWebTrailerParse(messageOrTrailerData));
+              validateTrailer(grpcWebTrailerParse(messageOrTrailerData));
               // At this point, we received trailers only, but the trailers did
               // not have an error status code.
               throw "unexpected trailer";
@@ -269,7 +269,7 @@ export function createGrpcWebHttp2Transport(
               );
             }
             const trailer = grpcWebTrailerParse(trailerResultData);
-            grpcValidateTrailer(trailer);
+            validateTrailer(trailer);
 
             const eofResult = await readEnvelope(stream);
             if (!eofResult.done) {
@@ -426,7 +426,7 @@ export function createGrpcWebHttp2Transport(
                   if ((flags & grpcWebTrailerFlag) === grpcWebTrailerFlag) {
                     endStreamReceived = true;
                     const trailer = grpcWebTrailerParse(data);
-                    grpcValidateTrailer(trailer);
+                    validateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
                       done: true,

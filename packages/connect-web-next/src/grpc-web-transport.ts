@@ -48,7 +48,7 @@ import {
   grpcWebTrailerFlag,
   grpcWebValidateResponse,
 } from "@bufbuild/connect-core/protocol-grpc-web";
-import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
+import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
 import { defer } from "./defer.js";
@@ -185,7 +185,7 @@ export function createGrpcWebTransport(
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              grpcValidateTrailer(
+              validateTrailer(
                 grpcWebTrailerParse(messageOrTrailerResult.value.data)
               );
               // At this point, we received trailers only, but the trailers did
@@ -201,7 +201,7 @@ export function createGrpcWebTransport(
               throw "missing trailer";
             }
             const trailer = grpcWebTrailerParse(trailerResult.value.data);
-            grpcValidateTrailer(trailer);
+            validateTrailer(trailer);
             const eofResult = await reader.read();
             if (!eofResult.done) {
               throw "extraneous data";
@@ -335,7 +335,7 @@ export function createGrpcWebTransport(
                 ) {
                   endStreamReceived = true;
                   const trailer = grpcWebTrailerParse(result.value.data);
-                  grpcValidateTrailer(trailer);
+                  validateTrailer(trailer);
                   responseTrailer.resolve(trailer);
                   return {
                     done: true,

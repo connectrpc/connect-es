@@ -28,9 +28,9 @@ import {
   UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
-  grpcCreateRequestHeader,
-  grpcValidateResponse,
-  grpcValidateTrailer,
+  createRequestHeader,
+  validateResponse,
+  validateTrailer,
 } from "@bufbuild/connect-core/protocol-grpc";
 import {
   AnyMessage,
@@ -156,7 +156,7 @@ export function createGrpcHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: grpcCreateRequestHeaderWithCompression(
+            header: createRequestHeaderWithCompression(
               method.kind,
               useBinaryFormat,
               timeoutMs,
@@ -213,7 +213,7 @@ export function createGrpcHttp2Transport(
             await end(stream);
 
             const [responseCode, responseHeader] = await headersPromise;
-            const { compression } = grpcValidateResponseWithCompression(
+            const { compression } = validateResponseWithCompression(
               useBinaryFormat,
               acceptCompression,
               responseCode,
@@ -226,7 +226,7 @@ export function createGrpcHttp2Transport(
             }
 
             const trailer = await trailerPromise;
-            grpcValidateTrailer(trailer);
+            validateTrailer(trailer);
 
             if (messageResult.done) {
               throw "premature eof";
@@ -291,7 +291,7 @@ export function createGrpcHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcCreateRequestHeaderWithCompression(
+          header: createRequestHeaderWithCompression(
             method.kind,
             useBinaryFormat,
             timeoutMs,
@@ -364,7 +364,7 @@ export function createGrpcHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headerPromise;
-                const { compression } = grpcValidateResponseWithCompression(
+                const { compression } = validateResponseWithCompression(
                   useBinaryFormat,
                   acceptCompression,
                   responseStatus,
@@ -374,7 +374,7 @@ export function createGrpcHttp2Transport(
                   const result = await readEnvelope(stream);
                   if (result.done) {
                     const trailer = await trailerPromise;
-                    grpcValidateTrailer(trailer);
+                    validateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
                       done: true,
@@ -414,7 +414,7 @@ export function createGrpcHttp2Transport(
   };
 }
 
-export function grpcCreateRequestHeaderWithCompression(
+export function createRequestHeaderWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
@@ -422,7 +422,7 @@ export function grpcCreateRequestHeaderWithCompression(
   acceptCompression: string[],
   sendCompression: string | undefined
 ): Headers {
-  const result = grpcCreateRequestHeader(
+  const result = createRequestHeader(
     useBinaryFormat,
     timeoutMs,
     userProvidedHeaders
@@ -440,13 +440,13 @@ export function grpcCreateRequestHeaderWithCompression(
   return result;
 }
 
-export function grpcValidateResponseWithCompression(
+export function validateResponseWithCompression(
   useBinaryFormat: boolean,
   acceptCompression: Compression[],
   status: number,
   headers: Headers
 ): { compression: Compression | undefined } {
-  grpcValidateResponse(useBinaryFormat, status, headers);
+  validateResponse(useBinaryFormat, status, headers);
 
   let compression: Compression | undefined;
   const encodingField = "Grpc-Encoding";

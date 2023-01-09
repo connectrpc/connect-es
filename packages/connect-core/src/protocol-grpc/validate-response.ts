@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
-import { grpcParseContentType } from "./grpc-parse-content-type.js";
+import { codeFromHttpStatus } from "./code-from-http-status.js";
+import { parseContentType } from "./parse-content-type.js";
 import { ConnectError } from "../connect-error.js";
-import { grpcFindTrailerError } from "./grpc-trailer-status.js";
+import { findTrailerError } from "./trailer-status.js";
 import { Code } from "../code.js";
 
 /**
@@ -24,12 +24,12 @@ import { Code } from "../code.js";
  * the HTTP status indicates an error, or if the content type is
  * unexpected.
  */
-export function grpcValidateResponse(
+export function validateResponse(
   useBinaryFormat: boolean,
   status: number,
   headers: Headers
 ): void {
-  const code = grpcCodeFromHttpStatus(status);
+  const code = codeFromHttpStatus(status);
   if (code != null) {
     throw new ConnectError(
       decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
@@ -37,14 +37,14 @@ export function grpcValidateResponse(
     );
   }
   const mimeType = headers.get("Content-Type");
-  const parsedType = grpcParseContentType(mimeType);
+  const parsedType = parseContentType(mimeType);
   if (!parsedType || parsedType.binary != useBinaryFormat) {
     throw new ConnectError(
       `unexpected response content type ${mimeType ?? "?"}`,
       Code.Internal
     );
   }
-  const err = grpcFindTrailerError(headers);
+  const err = findTrailerError(headers);
   if (err) {
     throw err;
   }

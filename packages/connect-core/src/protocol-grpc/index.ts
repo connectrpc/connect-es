@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { grpcCodeFromHttpStatus } from "./grpc-code-from-http-status.js";
-export { grpcCreateRequestHeader } from "./grpc-create-request-header.js";
-export { grpcParseContentType } from "./grpc-parse-content-type.js";
-export { grpcParseTimeout } from "./grpc-parse-timeout.js";
-export {
-  grpcFindTrailerError,
-  grpcSetTrailerStatus,
-} from "./grpc-trailer-status.js";
-export { grpcValidateResponse } from "./grpc-validate-response.js";
-export { grpcValidateTrailer } from "./grpc-validate-trailer.js";
+export { codeFromHttpStatus } from "./code-from-http-status.js";
+export { createRequestHeader } from "./create-request-header.js";
+export { parseContentType } from "./parse-content-type.js";
+export { parseTimeout } from "./parse-timeout.js";
+export { findTrailerError, setTrailerStatus } from "./trailer-status.js";
+export { validateResponse } from "./validate-response.js";
+export { validateTrailer } from "./validate-trailer.js";

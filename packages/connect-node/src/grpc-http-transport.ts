@@ -29,7 +29,7 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
-import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
+import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -62,8 +62,8 @@ import {
 } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 import {
-  grpcCreateRequestHeaderWithCompression,
-  grpcValidateResponseWithCompression,
+  createRequestHeaderWithCompression,
+  validateResponseWithCompression,
 } from "./grpc-http2-transport.js";
 
 export interface GrpcHttpTransportOptions {
@@ -168,7 +168,7 @@ export function createGrpcHttpTransport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: grpcCreateRequestHeaderWithCompression(
+            header: createRequestHeaderWithCompression(
               method.kind,
               useBinaryFormat,
               timeoutMs,
@@ -207,7 +207,7 @@ export function createGrpcHttpTransport(
               typeof response.statusCode == "number",
               "http1 client response is missing status code"
             );
-            const { compression } = grpcValidateResponseWithCompression(
+            const { compression } = validateResponseWithCompression(
               useBinaryFormat,
               acceptCompression,
               response.statusCode,
@@ -221,7 +221,7 @@ export function createGrpcHttpTransport(
             }
 
             const trailer = await trailerPromise;
-            grpcValidateTrailer(trailer);
+            validateTrailer(trailer);
 
             if (messageResult.done) {
               throw "premature eof";
@@ -286,7 +286,7 @@ export function createGrpcHttpTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcCreateRequestHeaderWithCompression(
+          header: createRequestHeaderWithCompression(
             method.kind,
             useBinaryFormat,
             timeoutMs,
@@ -362,7 +362,7 @@ export function createGrpcHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
-                const { compression } = grpcValidateResponseWithCompression(
+                const { compression } = validateResponseWithCompression(
                   useBinaryFormat,
                   acceptCompression,
                   response.statusCode,
@@ -373,7 +373,7 @@ export function createGrpcHttpTransport(
                   const result = await readEnvelope(response);
                   if (result.done) {
                     const trailer = await responseTrailer;
-                    grpcValidateTrailer(trailer);
+                    validateTrailer(trailer);
                     return {
                       done: true,
                       value: undefined,

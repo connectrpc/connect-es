@@ -13,31 +13,31 @@
 // limitations under the License.
 
 import { ConnectError } from "../connect-error.js";
-import { grpcParseTimeout } from "./grpc-parse-timeout.js";
+import { parseTimeout } from "./parse-timeout.js";
 
-describe("grpcParseTimeout()", function () {
+describe("parseTimeout()", function () {
   it("should parse proper timeout", () => {
-    expect(grpcParseTimeout("1H")).toEqual(3600000);
-    expect(grpcParseTimeout("1M")).toEqual(60000);
-    expect(grpcParseTimeout("1S")).toEqual(1000);
-    expect(grpcParseTimeout("12345678m")).toEqual(12345678);
-    expect(grpcParseTimeout("1m")).toEqual(1);
-    expect(grpcParseTimeout("1000u")).toEqual(1);
-    expect(grpcParseTimeout("1000000n")).toEqual(1);
+    expect(parseTimeout("1H")).toEqual(3600000);
+    expect(parseTimeout("1M")).toEqual(60000);
+    expect(parseTimeout("1S")).toEqual(1000);
+    expect(parseTimeout("12345678m")).toEqual(12345678);
+    expect(parseTimeout("1m")).toEqual(1);
+    expect(parseTimeout("1000u")).toEqual(1);
+    expect(parseTimeout("1000000n")).toEqual(1);
   });
   it("should should return undefined for null value", () => {
-    expect(grpcParseTimeout(null)).toEqual(undefined);
+    expect(parseTimeout(null)).toEqual(undefined);
   });
   it("should should return a ConnectError for an incorrect value", () => {
-    expect(grpcParseTimeout("-1m")).toBeInstanceOf(ConnectError);
-    expect(grpcParseTimeout("HH")).toBeInstanceOf(ConnectError);
-    expect(grpcParseTimeout("123456789m")).toBeInstanceOf(ConnectError);
-    expect(grpcParseTimeout("12345678")).toBeInstanceOf(ConnectError);
-    expect(grpcParseTimeout("1H1H")).toBeInstanceOf(ConnectError);
-    expect(grpcParseTimeout("foo")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("-1m")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("HH")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("123456789m")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("12345678")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("1H1H")).toBeInstanceOf(ConnectError);
+    expect(parseTimeout("foo")).toBeInstanceOf(ConnectError);
   });
   it("should should return a Connect Error for an incorrect timeout unit", () => {
-    const result = grpcParseTimeout("1X");
+    const result = parseTimeout("1X");
     expect(result).toBeInstanceOf(ConnectError);
   });
 });

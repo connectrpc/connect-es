@@ -12,18 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  grpcFindTrailerError,
-  grpcSetTrailerStatus,
-} from "./grpc-trailer-status.js";
+import { findTrailerError, setTrailerStatus } from "./trailer-status.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { Int32Value } from "@bufbuild/protobuf";
 
-describe("grpcSetTrailerStatus()", function () {
+describe("setTrailerStatus()", function () {
   it("should set grpc-status when called without error", function () {
     const t = new Headers();
-    grpcSetTrailerStatus(t, undefined);
+    setTrailerStatus(t, undefined);
     let count = 0;
     t.forEach(() => count++);
     expect(count).toBe(1);
@@ -33,7 +30,7 @@ describe("grpcSetTrailerStatus()", function () {
     const t = new Headers({
       foo: "bar",
     });
-    grpcSetTrailerStatus(t, undefined);
+    setTrailerStatus(t, undefined);
     let count = 0;
     t.forEach(() => count++);
     expect(count).toBe(2);
@@ -42,10 +39,7 @@ describe("grpcSetTrailerStatus()", function () {
   });
   it("should set only grpc-status and grpc-message when called with an error", function () {
     const t = new Headers();
-    grpcSetTrailerStatus(
-      t,
-      new ConnectError("soirée 🎉", Code.ResourceExhausted)
-    );
+    setTrailerStatus(t, new ConnectError("soirée 🎉", Code.ResourceExhausted));
     let count = 0;
     t.forEach(() => count++);
     expect(count).toBe(2);
@@ -54,7 +48,7 @@ describe("grpcSetTrailerStatus()", function () {
   });
   it("should set all related fields when called with an error with details", function () {
     const t = new Headers();
-    grpcSetTrailerStatus(
+    setTrailerStatus(
       t,
       new ConnectError("soirée 🎉", Code.ResourceExhausted, {}, [
         new Int32Value({ value: 123 }),
@@ -71,36 +65,36 @@ describe("grpcSetTrailerStatus()", function () {
   });
 });
 
-describe("grpcFindTrailerError()", function () {
+describe("findTrailerError()", function () {
   it("should not find an error on empty trailer", function () {
     const t = new Headers();
-    expect(grpcFindTrailerError(t)).toBeUndefined();
+    expect(findTrailerError(t)).toBeUndefined();
   });
   it("should not find an error for grpc-status 0", function () {
     const t = new Headers({
       "grpc-status": "0",
     });
-    expect(grpcFindTrailerError(t)).toBeUndefined();
+    expect(findTrailerError(t)).toBeUndefined();
   });
   it("should not find an error for grpc-status 0", function () {
     const t = new Headers({
       "grpc-status": "0",
     });
-    expect(grpcFindTrailerError(t)).toBeUndefined();
+    expect(findTrailerError(t)).toBeUndefined();
   });
   it("should find an error for the grpc-status field", function () {
     const t = new Headers({
       "grpc-status": "8", // resource_exhausted
     });
-    expect(grpcFindTrailerError(t)?.code).toBe(Code.ResourceExhausted);
+    expect(findTrailerError(t)?.code).toBe(Code.ResourceExhausted);
   });
   it("should use the grpc-message field", function () {
     const t = new Headers({
       "grpc-status": "8", // resource_exhausted
       "grpc-message": "soir%C3%A9e%20%F0%9F%8E%89",
     });
-    expect(grpcFindTrailerError(t)?.code).toBe(Code.ResourceExhausted);
-    expect(grpcFindTrailerError(t)?.rawMessage).toBe("soirée 🎉");
+    expect(findTrailerError(t)?.code).toBe(Code.ResourceExhausted);
+    expect(findTrailerError(t)?.rawMessage).toBe("soirée 🎉");
   });
   it("should prefer the grpc-status-details-bin field", function () {
     const t = new Headers({
@@ -108,6 +102,6 @@ describe("grpcFindTrailerError()", function () {
       "grpc-status-details-bin":
         "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew==",
     });
-    expect(grpcFindTrailerError(t)?.code).toBe(Code.ResourceExhausted);
+    expect(findTrailerError(t)?.code).toBe(Code.ResourceExhausted);
   });
 });

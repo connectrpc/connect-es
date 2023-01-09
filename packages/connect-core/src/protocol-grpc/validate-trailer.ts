@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { grpcFindTrailerError } from "./grpc-trailer-status.js";
+import { findTrailerError } from "./trailer-status.js";
 
 /**
  * Validates a trailer for the gRPC and the gRPC-web protocol.
  * Throws a ConnectError if the trailer contains an error status.
  */
-export function grpcValidateTrailer(trailer: Headers): void {
-  const err = grpcFindTrailerError(trailer);
+export function validateTrailer(trailer: Headers): void {
+  const err = findTrailerError(trailer);
   if (err) {
     throw err;
   }

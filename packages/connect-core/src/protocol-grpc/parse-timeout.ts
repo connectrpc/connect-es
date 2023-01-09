@@ -18,7 +18,7 @@ import { ConnectError } from "../connect-error.js";
 /**
  * Parse a gRPC Timeout (Deadline) header.
  */
-export function grpcParseTimeout(
+export function parseTimeout(
   value: string | null
 ): number | undefined | ConnectError {
   if (value === null) {

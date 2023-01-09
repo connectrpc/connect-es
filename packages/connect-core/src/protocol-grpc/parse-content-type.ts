@@ -15,7 +15,7 @@
 /**
  * Parse a gRPC Content-Type header.
  */
-export function grpcParseContentType(
+export function parseContentType(
   contentType: string | null
 ): { binary: boolean } | undefined {
   const match = contentType

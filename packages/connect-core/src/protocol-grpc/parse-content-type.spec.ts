@@ -12,32 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { grpcParseContentType } from "./grpc-parse-content-type.js";
+import { parseContentType } from "./parse-content-type.js";
 
-describe("grpcParseContentType()", function () {
+describe("parseContentType()", function () {
   it("should parse", function () {
-    expect(grpcParseContentType("application/grpc")).toEqual({
+    expect(parseContentType("application/grpc")).toEqual({
       binary: true,
     });
-    expect(grpcParseContentType("application/GRPC")).toEqual({
+    expect(parseContentType("application/GRPC")).toEqual({
       binary: true,
     });
-    expect(grpcParseContentType("application/grpc+proto")).toEqual({
+    expect(parseContentType("application/grpc+proto")).toEqual({
       binary: true,
     });
-    expect(grpcParseContentType("application/grpc+json")).toEqual({
+    expect(parseContentType("application/grpc+json")).toEqual({
       binary: false,
     });
-    expect(grpcParseContentType("application/grpc+json;charset=utf8")).toEqual({
+    expect(parseContentType("application/grpc+json;charset=utf8")).toEqual({
       binary: false,
     });
+    expect(parseContentType("application/grpc+json; charset=utf-8")).toEqual({
+      binary: false,
+    });
+    expect(parseContentType("application/octet-stream")).toBeUndefined();
     expect(
-      grpcParseContentType("application/grpc+json; charset=utf-8")
-    ).toEqual({ binary: false });
-    expect(grpcParseContentType("application/octet-stream")).toBeUndefined();
-    expect(
-      grpcParseContentType("application/grpc-web+json;charset=iso-8859-1")
+      parseContentType("application/grpc-web+json;charset=iso-8859-1")
     ).toBeUndefined();
-    expect(grpcParseContentType("application/grpc-web+thrift")).toBeUndefined();
+    expect(parseContentType("application/grpc-web+thrift")).toBeUndefined();
   });
 });

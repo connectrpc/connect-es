@@ -15,7 +15,7 @@
 /**
  * Creates headers for a gRPC request.
  */
-export function grpcCreateRequestHeader(
+export function createRequestHeader(
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined

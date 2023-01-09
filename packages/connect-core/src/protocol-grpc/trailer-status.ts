@@ -29,7 +29,7 @@ const fieldGrpcStatusDetailsBin = "grpc-status-details-bin",
  * will also set the field "grpc-status-details-bin" with an encoded
  * google.rpc.Status message including the error details.
  */
-export function grpcSetTrailerStatus(
+export function setTrailerStatus(
   target: Headers,
   error: ConnectError | undefined
 ): void {
@@ -63,7 +63,7 @@ export function grpcSetTrailerStatus(
  * the fields "grpc-status" and "grpc-message" are used.
  * Returns an error only if the gRPC status code is > 0.
  */
-export function grpcFindTrailerError(
+export function findTrailerError(
   headerOrTrailer: Headers
 ): ConnectError | undefined {
   // Prefer the protobuf-encoded data to the grpc-status header.

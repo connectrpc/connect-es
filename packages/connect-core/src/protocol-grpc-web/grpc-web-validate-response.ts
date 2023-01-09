@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { grpcCodeFromHttpStatus } from "../protocol-grpc/grpc-code-from-http-status.js";
+import { codeFromHttpStatus } from "../protocol-grpc/code-from-http-status.js";
 import { ConnectError } from "../connect-error.js";
-import { grpcFindTrailerError } from "../protocol-grpc/grpc-trailer-status.js";
+import { findTrailerError } from "../protocol-grpc/trailer-status.js";
 import { Code } from "../code.js";
 import { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
 
@@ -29,7 +29,7 @@ export function grpcWebValidateResponse(
   status: number,
   headers: Headers
 ): void {
-  const code = grpcCodeFromHttpStatus(status);
+  const code = codeFromHttpStatus(status);
   if (code != null) {
     throw new ConnectError(
       decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
@@ -50,7 +50,7 @@ export function grpcWebValidateResponse(
       Code.InvalidArgument
     );
   }
-  const err = grpcFindTrailerError(headers);
+  const err = findTrailerError(headers);
   if (err) {
     throw err;
   }
