@@ -13,15 +13,7 @@
 // limitations under the License.
 
 import { Code, codeToString } from "./code.js";
-import {
-  Any,
-  AnyMessage,
-  createRegistry,
-  IMessageTypeRegistry,
-  JsonValue,
-  Message,
-  MessageType,
-} from "@bufbuild/protobuf";
+import { AnyMessage, createRegistry, IMessageTypeRegistry, JsonValue, Message, MessageType } from "@bufbuild/protobuf";
 
 /**
  * ConnectError captures three pieces of information: a Code, an error
@@ -134,20 +126,13 @@ export function connectErrorDetails(
       }
       continue;
     }
-    try {
-      const type = registry.findMessage(data.type);
-      if (type) {
-        const any = new Any({
-          typeUrl: `type.googleapis.com/${data.type}`,
-          value: data.value,
-        });
-        const message = new type();
-        if (any.unpackTo(message)) {
-          details.push(message);
-        }
+    const type = registry.findMessage(data.type);
+    if (type) {
+      try {
+        details.push(type.fromBinary(data.value));
+      } catch (_) {
+        //
       }
-    } catch (_) {
-      //
     }
   }
   return details;

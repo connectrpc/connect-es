@@ -118,13 +118,9 @@ export function connectErrorDetails(
   for (const data of error.details) {
     try {
       const any = new Any(data);
-      const name = any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1);
-      const type = typeRegistry.findMessage(name);
-      if (type) {
-        const message = new type();
-        if (any.unpackTo(message)) {
-          details.push(message);
-        }
+      const message = any.unpack(typeRegistry);
+      if (message) {
+        details.push(message);
       }
     } catch (_) {
       //
