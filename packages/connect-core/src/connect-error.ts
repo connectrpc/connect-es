@@ -14,7 +14,6 @@
 
 import { Code, codeToString } from "./code.js";
 import {
-  Any,
   AnyMessage,
   createRegistry,
   IMessageTypeRegistry,
@@ -134,20 +133,13 @@ export function connectErrorDetails(
       }
       continue;
     }
-    try {
-      const type = registry.findMessage(data.type);
-      if (type) {
-        const any = new Any({
-          typeUrl: `type.googleapis.com/${data.type}`,
-          value: data.value,
-        });
-        const message = new type();
-        if (any.unpackTo(message)) {
-          details.push(message);
-        }
+    const type = registry.findMessage(data.type);
+    if (type) {
+      try {
+        details.push(type.fromBinary(data.value));
+      } catch (_) {
+        //
       }
-    } catch (_) {
-      //
     }
   }
   return details;
