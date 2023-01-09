@@ -13,7 +13,14 @@
 // limitations under the License.
 
 import { Code, codeToString } from "./code.js";
-import { AnyMessage, createRegistry, IMessageTypeRegistry, JsonValue, Message, MessageType } from "@bufbuild/protobuf";
+import {
+  AnyMessage,
+  createRegistry,
+  IMessageTypeRegistry,
+  JsonValue,
+  Message,
+  MessageType,
+} from "@bufbuild/protobuf";
 
 /**
  * ConnectError captures three pieces of information: a Code, an error
