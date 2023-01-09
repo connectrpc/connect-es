@@ -104,9 +104,9 @@ This option controls whether the plugin generates JavaScript, TypeScript,
 or TypeScript declaration files.
 
 Possible values:
-- `target=js` - generates a `_pb.js` file for every `.proto` input file.
-- `target=ts` - generates a `_pb.ts` file for every `.proto` input file.
-- `target=dts` - generates a `_pb.d.ts` file for every `.proto` input file.
+- `target=js` - generates a `_connectweb.js` file for every `.proto` input file.
+- `target=ts` - generates a `_connectweb.ts` file for every `.proto` input file.
+- `target=dts` - generates a `_connectweb.d.ts` file for every `.proto` input file.
 
 Multiple values can be given by separating them with `+`, for example
 `target=js+dts`.
