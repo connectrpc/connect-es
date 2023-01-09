@@ -11,6 +11,8 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - uses: bufbuild/buf-setup-action@v1.11.0
+        with:
+          github_token: ${{ github.token }}
       - name: cache
         uses: actions/cache@v3
         with:
