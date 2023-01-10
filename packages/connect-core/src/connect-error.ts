@@ -23,9 +23,9 @@ import {
 } from "@bufbuild/protobuf";
 
 /**
- * ConnectError captures three pieces of information: a Code, an error
- * message, and an optional collection of arbitrary Protobuf messages called
- * "details".
+ * ConnectError captures four pieces of information: a Code, an error
+ * message, an optional cause of the error, and an optional collection of
+ * arbitrary Protobuf messages called  "details".
  *
  * Because developer tools typically show just the error message, we prefix
  * it with the status code, so that the most important information is always
@@ -66,6 +66,11 @@ export class ConnectError extends Error {
   override name = "ConnectError";
 
   /**
+   * The cause of this error TODO write more
+   */
+  cause: unknown;
+
+  /**
    * Create a new ConnectError.
    * If no code is provided, code "unknown" is used.
    * Outgoing details are only relevant for the server side - a service may
@@ -74,9 +79,23 @@ export class ConnectError extends Error {
    */
   constructor(
     message: string,
-    code: Code = Code.Unknown,
+    code?: Code,
     metadata?: HeadersInit,
     outgoingDetails?: Message[]
+  );
+  constructor(
+    message: string,
+    code?: Code,
+    metadata?: HeadersInit,
+    outgoingDetails?: Message[],
+    cause?: unknown
+  );
+  constructor(
+    message: string,
+    code: Code = Code.Unknown,
+    metadata?: HeadersInit,
+    outgoingDetails?: Message[],
+    cause?: unknown
   ) {
     super(createMessage(message, code));
     // see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html#example
@@ -85,6 +104,7 @@ export class ConnectError extends Error {
     this.code = code;
     this.metadata = new Headers(metadata ?? {});
     this.details = outgoingDetails ?? [];
+    this.cause = cause;
   }
 }
 
