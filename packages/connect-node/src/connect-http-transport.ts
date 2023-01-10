@@ -311,13 +311,6 @@ export function createConnectHttpTransport(
               nodeHeaderToWebHeader(res.headers)
             );
 
-            if (
-              "host" in stream &&
-              stream.host === "unresolvable-host.some.domain"
-            ) {
-              throw new ConnectError("unresolvable host", Code.Unavailable);
-            }
-
             const conn: StreamingConn<I, O> = {
               ...req,
               responseHeader,
@@ -454,7 +447,7 @@ function getNodeRequest(
   req: StreamingRequest,
   httpOptions: http.RequestOptions | https.RequestOptions | undefined
 ) {
-  return new Promise<http.ClientRequest>((resolve) => {
+  return new Promise<http.ClientRequest>((resolve, reject) => {
     const endpoint = new URL(req.url);
     const nodeRequestFn = nodeRequest(endpoint.protocol);
     const request = nodeRequestFn(req.url, {
@@ -464,6 +457,11 @@ function getNodeRequest(
       signal: req.signal,
       ...httpOptions,
     });
-    resolve(request);
+    request.on("socket", (socket) => {
+      socket.on("connect", () => {
+        resolve(request);
+      });
+      socket.on("error", reject);
+    });
   });
 }
