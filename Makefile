@@ -47,7 +47,7 @@ $(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-core: $(GEN)/connect-core node_modules tsconfig.base.json packages/connect-core/tsconfig.json $(shell find packages/connect-core/src -name '*.ts') $(shell find packages/connect-core -name 'protocol-*.js')
+$(BUILD)/connect-core: $(GEN)/connect-core node_modules tsconfig.base.json packages/connect-core/tsconfig.json $(shell find packages/connect-core/src -name '*.ts') packages/connect-core/*.js
 	npm run -w packages/connect-core clean
 	npm run -w packages/connect-core build
 	@mkdir -p $(@D)
