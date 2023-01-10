@@ -12,10 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { codeFromHttpStatus } from "./http-status.js";
-export { createRequestHeader } from "./create-request-header.js";
-export { parseContentType } from "./parse-content-type.js";
-export { parseTimeout } from "./parse-timeout.js";
-export { findTrailerError, setTrailerStatus } from "./trailer-status.js";
-export { validateResponse } from "./validate-response.js";
-export { validateTrailer } from "./validate-trailer.js";
+/**
+ * In unary RPCs, Connect transports trailing metadata as response header
+ * fields, prefixed with "trailer-".
+ *
+ * This function demuxes headers and trailers into two separate Headers
+ * objects.
+ */
+export function trailerDemux(
+  header: Headers
+): [header: Headers, trailer: Headers] {
+  const h = new Headers(),
+    t = new Headers();
+  header.forEach((value, key) => {
+    if (key.toLowerCase().startsWith("trailer-")) {
+      t.set(key.substring(8), value);
+    } else {
+      h.set(key, value);
+    }
+  });
+  return [h, t];
+}

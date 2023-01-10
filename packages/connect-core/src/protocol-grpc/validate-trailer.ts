@@ -12,10 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { codeFromHttpStatus } from "./http-status.js";
-export { createRequestHeader } from "./create-request-header.js";
-export { parseContentType } from "./parse-content-type.js";
-export { parseTimeout } from "./parse-timeout.js";
-export { findTrailerError, setTrailerStatus } from "./trailer-status.js";
-export { validateResponse } from "./validate-response.js";
-export { validateTrailer } from "./validate-trailer.js";
+import { findTrailerError } from "./trailer-status.js";
+
+/**
+ * Validates a trailer for the gRPC and the gRPC-web protocol.
+ * Throws a ConnectError if the trailer contains an error status.
+ */
+export function validateTrailer(trailer: Headers): void {
+  const err = findTrailerError(trailer);
+  if (err) {
+    throw err;
+  }
+}

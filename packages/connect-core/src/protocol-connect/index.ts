@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { connectCodeFromHttpStatus } from "./connect-code-from-http-status.js";
-export { connectCodeToHttpStatus } from "./connect-code-to-http-status.js";
-export { connectCreateRequestHeader } from "./connect-create-request-header.js";
+export { codeFromHttpStatus, codeToHttpStatus } from "./http-status.js";
+export { createRequestHeader } from "./create-request-header.js";
 export {
-  connectEndStreamToJson,
-  connectEndStreamFromJson,
-  connectEndStreamFlag,
-} from "./connect-end-stream.js";
-export { connectErrorFromJson } from "./connect-error-from-json.js";
-export { connectErrorToJson } from "./connect-error-to-json.js";
-export { connectParseContentType } from "./connect-parse-content-type.js";
-export { connectParseTimeout } from "./connect-parse-timeout.js";
-export { connectTrailerDemux } from "./connect-trailer-demux.js";
-export { connectValidateResponse } from "./connect-validate-response.js";
+  endStreamToJson,
+  endStreamFromJson,
+  endStreamFlag,
+} from "./end-stream.js";
+export { errorFromJson } from "./error-from-json.js";
+export { errorToJson } from "./error-to-json.js";
+export { parseContentType } from "./parse-content-type.js";
+export { parseTimeout } from "./parse-timeout.js";
+export { trailerDemux } from "./trailer-demux.js";
+export { validateResponse } from "./validate-response.js";

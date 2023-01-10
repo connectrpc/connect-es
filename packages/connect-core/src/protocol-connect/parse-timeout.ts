@@ -12,10 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { codeFromHttpStatus } from "./http-status.js";
-export { createRequestHeader } from "./create-request-header.js";
-export { parseContentType } from "./parse-content-type.js";
-export { parseTimeout } from "./parse-timeout.js";
-export { findTrailerError, setTrailerStatus } from "./trailer-status.js";
-export { validateResponse } from "./validate-response.js";
-export { validateTrailer } from "./validate-trailer.js";
+import { Code } from "../code.js";
+import { ConnectError } from "../connect-error.js";
+
+/**
+ * Parse a Connect Timeout (Deadline) header.
+ */
+export function parseTimeout(
+  value: string | null
+): number | undefined | ConnectError {
+  if (value === null) {
+    return undefined;
+  }
+  const results = /^\d{1,10}$/.exec(value);
+  if (results === null) {
+    return new ConnectError(
+      `protocol error: invalid connect timeout value: ${value}`,
+      Code.InvalidArgument
+    );
+  }
+  return parseInt(results[0]);
+}

@@ -29,7 +29,7 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
-import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
+import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -221,7 +221,7 @@ export function createGrpcHttpTransport(
             }
 
             const trailer = await trailerPromise;
-            grpcValidateTrailer(trailer);
+            validateTrailer(trailer);
 
             if (messageResult.done) {
               throw "premature eof";
@@ -373,7 +373,7 @@ export function createGrpcHttpTransport(
                   const result = await readEnvelope(response);
                   if (result.done) {
                     const trailer = await responseTrailer;
-                    grpcValidateTrailer(trailer);
+                    validateTrailer(trailer);
                     return {
                       done: true,
                       value: undefined,

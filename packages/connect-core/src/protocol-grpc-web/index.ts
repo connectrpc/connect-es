@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { grpcWebCreateRequestHeader } from "./grpc-web-create-request-header.js";
-export { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
-export { grpcWebValidateResponse } from "./grpc-web-validate-response.js";
-export {
-  grpcWebTrailerFlag,
-  grpcWebTrailerParse,
-  grpcWebTrailerSerialize,
-} from "./grpc-web-trailer.js";
+export { createRequestHeader } from "./create-request-header.js";
+export { parseContentType } from "./parse-content-type.js";
+export { validateResponse } from "./validate-response.js";
+export { trailerFlag, trailerParse, trailerSerialize } from "./trailer.js";
