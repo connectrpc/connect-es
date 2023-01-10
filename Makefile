@@ -188,7 +188,7 @@ format: node_modules $(BIN)/license-header ## Format all files, adding license h
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 .PHONY: bench
-bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark code size
+bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web $(BUILD)/connect-web-next ## Benchmark code size
 	npm run -w packages/connect-web-bench report
 
 .PHONY: setversion

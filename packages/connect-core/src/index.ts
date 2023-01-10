@@ -41,7 +41,12 @@ export { runUnary, runStreaming } from "./interceptor.js";
 export { makeAnyClient, AnyClient } from "./any-client.js";
 export { codeToString, codeFromString } from "./code.js";
 export { createMethodUrl } from "./create-method-url.js";
-export { createClientMethodSerializers } from "./create-client-method-serializers.js";
+export {
+  Serialization,
+  createBinarySerialization,
+  createJsonSerialization,
+  createClientMethodSerializers,
+} from "./serialization.js";
 export {
   createEnvelopeReadableStream,
   EnvelopedMessage,
