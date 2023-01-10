@@ -183,7 +183,7 @@ export function createConnectTransport(
               service,
               method,
               header: demuxedHeader,
-              message: parse(await response.arrayBuffer()),
+              message: parse(new Uint8Array(await response.arrayBuffer())),
               trailer: demuxedTrailer,
             };
           },
