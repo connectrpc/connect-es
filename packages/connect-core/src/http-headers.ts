@@ -14,7 +14,7 @@
 
 import type { BinaryReadOptions, MessageType } from "@bufbuild/protobuf";
 import { Message, protoBase64 } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error.js";
+import { connectErrorFromReason } from "./connect-error.js";
 import { Code } from "./code.js";
 
 /**
@@ -76,10 +76,7 @@ export function decodeBinaryHeader<T extends Message<T>>(
     }
     return bytes;
   } catch (e) {
-    throw new ConnectError(
-      e instanceof Error ? e.message : String(e),
-      Code.DataLoss
-    );
+    throw connectErrorFromReason(e, Code.DataLoss);
   }
 }
 

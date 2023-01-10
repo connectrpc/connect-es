@@ -20,9 +20,9 @@ import type {
   Message,
   MessageType,
   MethodInfo,
-  PartialMessage,
+  PartialMessage
 } from "@bufbuild/protobuf";
-import { ConnectError } from "./connect-error.js";
+import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import { Code } from "./code.js";
 
 /**
@@ -96,8 +96,7 @@ export function createJsonSerialization<T extends Message<T>>(
         const json = textDecoder.decode(data);
         return messageType.fromJsonString(json, options);
       } catch (e) {
-        const m = e instanceof Error ? e.message : String(e);
-        throw new ConnectError(m, Code.InvalidArgument);
+        throw connectErrorFromReason(e, Code.InvalidArgument);
       }
     },
     serialize(data: T): Uint8Array {
@@ -105,8 +104,7 @@ export function createJsonSerialization<T extends Message<T>>(
         const json = data.toJsonString(options);
         return textEncoder.encode(json);
       } catch (e) {
-        const m = e instanceof Error ? e.message : String(e);
-        throw new ConnectError(m, Code.Internal);
+        throw connectErrorFromReason(e, Code.Internal);
       }
     },
   };
