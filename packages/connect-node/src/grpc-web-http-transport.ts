@@ -29,8 +29,8 @@ import {
 } from "@bufbuild/connect-core";
 import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import {
-  grpcWebTrailerParse,
-  grpcWebTrailerFlag,
+  trailerParse,
+  trailerFlag,
 } from "@bufbuild/connect-core/protocol-grpc-web";
 import type {
   AnyMessage,
@@ -234,13 +234,13 @@ export function createGrpcWebHttpTransport(
             }
 
             if (
-              (messageOrTrailerResult.value.flags & grpcWebTrailerFlag) ===
-              grpcWebTrailerFlag
+              (messageOrTrailerResult.value.flags & trailerFlag) ===
+              trailerFlag
             ) {
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              validateTrailer(grpcWebTrailerParse(messageOrTrailerData));
+              validateTrailer(trailerParse(messageOrTrailerData));
               // At this point, we received trailers only, but the trailers did
               // not have an error status code.
               throw "unexpected trailer";
@@ -267,7 +267,7 @@ export function createGrpcWebHttpTransport(
               );
             }
 
-            const trailer = grpcWebTrailerParse(trailerResultData);
+            const trailer = trailerParse(trailerResultData);
             validateTrailer(trailer);
 
             const eofResult = await readEnvelope(response);
@@ -429,9 +429,9 @@ export function createGrpcWebHttpTransport(
                     data = await compression.decompress(data, readMaxBytes);
                   }
 
-                  if ((flags & grpcWebTrailerFlag) === grpcWebTrailerFlag) {
+                  if ((flags & trailerFlag) === trailerFlag) {
                     endStreamReceived = true;
-                    const trailer = grpcWebTrailerParse(data);
+                    const trailer = trailerParse(data);
                     validateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {

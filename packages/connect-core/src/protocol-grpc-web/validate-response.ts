@@ -16,7 +16,7 @@ import { codeFromHttpStatus } from "../protocol-grpc/code-from-http-status.js";
 import { ConnectError } from "../connect-error.js";
 import { findTrailerError } from "../protocol-grpc/trailer-status.js";
 import { Code } from "../code.js";
-import { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
+import { parseContentType } from "./parse-content-type.js";
 
 /**
  * Validates response status and header for the gRPC-web protocol.
@@ -24,7 +24,7 @@ import { grpcWebParseContentType } from "./grpc-web-parse-content-type.js";
  * the HTTP status indicates an error, or if the content type is
  * unexpected.
  */
-export function grpcWebValidateResponse(
+export function validateResponse(
   useBinaryFormat: boolean,
   status: number,
   headers: Headers
@@ -37,7 +37,7 @@ export function grpcWebValidateResponse(
     );
   }
   const mimeType = headers.get("Content-Type");
-  const parsedType = grpcWebParseContentType(mimeType);
+  const parsedType = parseContentType(mimeType);
   if (!parsedType || parsedType.binary != useBinaryFormat) {
     throw new ConnectError(
       `unexpected response content type ${mimeType ?? "?"}`,

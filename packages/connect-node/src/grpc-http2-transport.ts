@@ -156,7 +156,7 @@ export function createGrpcHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: createRequestHeaderWithCompression(
+            header: grpcCreateRequestHeaderWithCompression(
               method.kind,
               useBinaryFormat,
               timeoutMs,
@@ -213,7 +213,7 @@ export function createGrpcHttp2Transport(
             await end(stream);
 
             const [responseCode, responseHeader] = await headersPromise;
-            const { compression } = validateResponseWithCompression(
+            const { compression } = grpcValidateResponseWithCompression(
               useBinaryFormat,
               acceptCompression,
               responseCode,
@@ -291,7 +291,7 @@ export function createGrpcHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeaderWithCompression(
+          header: grpcCreateRequestHeaderWithCompression(
             method.kind,
             useBinaryFormat,
             timeoutMs,
@@ -364,7 +364,7 @@ export function createGrpcHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headerPromise;
-                const { compression } = validateResponseWithCompression(
+                const { compression } = grpcValidateResponseWithCompression(
                   useBinaryFormat,
                   acceptCompression,
                   responseStatus,
@@ -414,7 +414,7 @@ export function createGrpcHttp2Transport(
   };
 }
 
-export function createRequestHeaderWithCompression(
+export function grpcCreateRequestHeaderWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
@@ -440,7 +440,7 @@ export function createRequestHeaderWithCompression(
   return result;
 }
 
-export function validateResponseWithCompression(
+export function grpcValidateResponseWithCompression(
   useBinaryFormat: boolean,
   acceptCompression: Compression[],
   status: number,

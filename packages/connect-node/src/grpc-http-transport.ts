@@ -62,8 +62,8 @@ import {
 } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 import {
-  createRequestHeaderWithCompression,
-  validateResponseWithCompression,
+  grpcCreateRequestHeaderWithCompression,
+  grpcValidateResponseWithCompression,
 } from "./grpc-http2-transport.js";
 
 export interface GrpcHttpTransportOptions {
@@ -168,7 +168,7 @@ export function createGrpcHttpTransport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: createRequestHeaderWithCompression(
+            header: grpcCreateRequestHeaderWithCompression(
               method.kind,
               useBinaryFormat,
               timeoutMs,
@@ -207,7 +207,7 @@ export function createGrpcHttpTransport(
               typeof response.statusCode == "number",
               "http1 client response is missing status code"
             );
-            const { compression } = validateResponseWithCompression(
+            const { compression } = grpcValidateResponseWithCompression(
               useBinaryFormat,
               acceptCompression,
               response.statusCode,
@@ -286,7 +286,7 @@ export function createGrpcHttpTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeaderWithCompression(
+          header: grpcCreateRequestHeaderWithCompression(
             method.kind,
             useBinaryFormat,
             timeoutMs,
@@ -362,7 +362,7 @@ export function createGrpcHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
-                const { compression } = validateResponseWithCompression(
+                const { compression } = grpcValidateResponseWithCompression(
                   useBinaryFormat,
                   acceptCompression,
                   response.statusCode,

@@ -13,15 +13,15 @@
 // limitations under the License.
 
 /**
- * grpcWebTrailerFlag indicates that the data in a EnvelopedMessage
+ * trailerFlag indicates that the data in a EnvelopedMessage
  * is a set of trailers of the gRPC-web protocol.
  */
-export const grpcWebTrailerFlag = 0b10000000;
+export const trailerFlag = 0b10000000;
 
 /**
  * Parse a gRPC-web trailer, a set of header fields separated by CRLF.
  */
-export function grpcWebTrailerParse(data: Uint8Array): Headers {
+export function trailerParse(data: Uint8Array): Headers {
   const headers = new Headers();
   const lines = new TextDecoder().decode(data).split("\r\n");
   for (const line of lines) {
@@ -41,7 +41,7 @@ export function grpcWebTrailerParse(data: Uint8Array): Headers {
 /**
  * Serialize a Headers object as a gRPC-web trailer.
  */
-export function grpcWebTrailerSerialize(trailer: Headers): Uint8Array {
+export function trailerSerialize(trailer: Headers): Uint8Array {
   const lines: string[] = [];
   trailer.forEach((value, key) => {
     lines.push(`${key}: ${value}\r\n`);

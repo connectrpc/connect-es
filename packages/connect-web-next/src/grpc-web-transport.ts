@@ -43,10 +43,10 @@ import {
   runUnary,
 } from "@bufbuild/connect-core";
 import {
-  grpcWebCreateRequestHeader,
-  grpcWebTrailerParse,
-  grpcWebTrailerFlag,
-  grpcWebValidateResponse,
+  createRequestHeader,
+  trailerParse,
+  trailerFlag,
+  validateResponse,
 } from "@bufbuild/connect-core/protocol-grpc-web";
 import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
@@ -151,11 +151,7 @@ export function createGrpcWebTransport(
               redirect: "error",
               mode: "cors",
             },
-            header: grpcWebCreateRequestHeader(
-              useBinaryFormat,
-              timeoutMs,
-              header
-            ),
+            header: createRequestHeader(useBinaryFormat, timeoutMs, header),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
@@ -166,7 +162,7 @@ export function createGrpcWebTransport(
               signal: req.signal,
               body: encodeEnvelope(0, serialize(req.message)),
             });
-            grpcWebValidateResponse(
+            validateResponse(
               useBinaryFormat,
               response.status,
               response.headers
@@ -181,13 +177,11 @@ export function createGrpcWebTransport(
             if (messageOrTrailerResult.done) {
               throw "premature eof";
             }
-            if (messageOrTrailerResult.value.flags === grpcWebTrailerFlag) {
+            if (messageOrTrailerResult.value.flags === trailerFlag) {
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              validateTrailer(
-                grpcWebTrailerParse(messageOrTrailerResult.value.data)
-              );
+              validateTrailer(trailerParse(messageOrTrailerResult.value.data));
               // At this point, we received trailers only, but the trailers did
               // not have an error status code.
               throw "unexpected trailer";
@@ -197,10 +191,10 @@ export function createGrpcWebTransport(
             if (trailerResult.done) {
               throw "missing trailer";
             }
-            if (trailerResult.value.flags !== grpcWebTrailerFlag) {
+            if (trailerResult.value.flags !== trailerFlag) {
               throw "missing trailer";
             }
-            const trailer = grpcWebTrailerParse(trailerResult.value.data);
+            const trailer = trailerParse(trailerResult.value.data);
             validateTrailer(trailer);
             const eofResult = await reader.read();
             if (!eofResult.done) {
@@ -249,11 +243,7 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcWebCreateRequestHeader(
-            useBinaryFormat,
-            timeoutMs,
-            header
-          ),
+          header: createRequestHeader(useBinaryFormat, timeoutMs, header),
         },
         async (req) => {
           const pendingSend: EnvelopedMessage[] = [];
@@ -294,7 +284,7 @@ export function createGrpcWebTransport(
                 body: encodeEnvelopes(...pendingSend),
               })
                 .then((response) => {
-                  grpcWebValidateResponse(
+                  validateResponse(
                     useBinaryFormat,
                     response.status,
                     response.headers
@@ -329,12 +319,9 @@ export function createGrpcWebTransport(
                     value: undefined,
                   };
                 }
-                if (
-                  (result.value.flags & grpcWebTrailerFlag) ===
-                  grpcWebTrailerFlag
-                ) {
+                if ((result.value.flags & trailerFlag) === trailerFlag) {
                   endStreamReceived = true;
-                  const trailer = grpcWebTrailerParse(result.value.data);
+                  const trailer = trailerParse(result.value.data);
                   validateTrailer(trailer);
                   responseTrailer.resolve(trailer);
                   return {

@@ -12,40 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  grpcWebTrailerParse,
-  grpcWebTrailerSerialize,
-} from "./grpc-web-trailer.js";
+import { trailerParse, trailerSerialize } from "./trailer.js";
 
-describe("grpcWebTrailerParse()", () => {
+describe("trailerParse()", () => {
   it("parses very simple case", () => {
-    const h = grpcWebTrailerParse(new TextEncoder().encode("foo: bar\r\n"));
+    const h = trailerParse(new TextEncoder().encode("foo: bar\r\n"));
     expect(h.get("foo")).toBe("bar");
   });
   it("parses empty", () => {
-    const h = grpcWebTrailerParse(new TextEncoder().encode(""));
+    const h = trailerParse(new TextEncoder().encode(""));
     expect(countFields(h)).toBe(0);
   });
   it("trims values", () => {
-    const h = grpcWebTrailerParse(new TextEncoder().encode("foo:bar \r\n"));
+    const h = trailerParse(new TextEncoder().encode("foo:bar \r\n"));
     expect(h.get("foo")).toBe("bar");
   });
   it("does not require last newline", () => {
-    const h = grpcWebTrailerParse(new TextEncoder().encode("foo: bar"));
+    const h = trailerParse(new TextEncoder().encode("foo: bar"));
     expect(h.get("foo")).toBe("bar");
   });
   it("appends", () => {
-    const h = grpcWebTrailerParse(
-      new TextEncoder().encode("foo: a\r\nfoo: b\r\n")
-    );
+    const h = trailerParse(new TextEncoder().encode("foo: a\r\nfoo: b\r\n"));
     expect(h.get("foo")).toBe("a, b");
   });
 });
 
-describe("grpcWebTrailerSerialize()", () => {
+describe("trailerSerialize()", () => {
   it("serializes empty", () => {
     const trailer = new Headers();
-    const data = grpcWebTrailerSerialize(trailer);
+    const data = trailerSerialize(trailer);
     expect(new TextDecoder().decode(data)).toBe("");
   });
   it("Headers trims whitespace", () => {
@@ -53,14 +48,14 @@ describe("grpcWebTrailerSerialize()", () => {
       foo: "bar ",
     });
     expect(trailer.get("foo")).toBe("bar");
-    const data = grpcWebTrailerSerialize(trailer);
+    const data = trailerSerialize(trailer);
     expect(new TextDecoder().decode(data)).toBe("foo: bar\r\n");
   });
   it("serializes lowercase field names", () => {
     const trailer = new Headers({
       Foo: "bar ",
     });
-    const data = grpcWebTrailerSerialize(trailer);
+    const data = trailerSerialize(trailer);
     expect(new TextDecoder().decode(data)).toBe("foo: bar\r\n");
   });
 });
@@ -71,7 +66,7 @@ describe("roundtrip", () => {
       foo: "a, b",
       bar: "123",
     });
-    const b = grpcWebTrailerParse(grpcWebTrailerSerialize(a));
+    const b = trailerParse(trailerSerialize(a));
     expect(countFields(b)).toBe(2);
     expect(b.get("foo")).toBe("a, b");
     expect(b.get("bar")).toBe("123");
@@ -80,7 +75,7 @@ describe("roundtrip", () => {
     const a = new Headers({
       foo: "bär",
     });
-    const b = grpcWebTrailerParse(grpcWebTrailerSerialize(a));
+    const b = trailerParse(trailerSerialize(a));
     expect(countFields(b)).toBe(1);
     expect(b.get("foo")).toBe("bär");
   });
