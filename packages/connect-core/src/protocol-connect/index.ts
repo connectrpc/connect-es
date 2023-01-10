@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { codeFromHttpStatus } from "./code-from-http-status.js";
-export { codeToHttpStatus } from "./code-to-http-status.js";
+export { codeFromHttpStatus, codeToHttpStatus } from "./http-status.js";
 export { createRequestHeader } from "./create-request-header.js";
 export {
   endStreamToJson,

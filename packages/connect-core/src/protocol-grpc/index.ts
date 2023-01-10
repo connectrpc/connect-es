@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { codeFromHttpStatus } from "./code-from-http-status.js";
+export { codeFromHttpStatus } from "./http-status.js";
 export { createRequestHeader } from "./create-request-header.js";
 export { parseContentType } from "./parse-content-type.js";
 export { parseTimeout } from "./parse-timeout.js";
