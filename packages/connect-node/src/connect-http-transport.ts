@@ -29,10 +29,10 @@ import {
   UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
-  connectEndStreamFlag,
-  connectEndStreamFromJson,
-  connectErrorFromJson,
-  connectTrailerDemux,
+  endStreamFlag,
+  endStreamFromJson,
+  errorFromJson,
+  trailerDemux,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
@@ -229,13 +229,13 @@ export function createConnectHttpTransport(
                   readMaxBytes
                 );
               }
-              throw connectErrorFromJson(
+              throw errorFromJson(
                 jsonParse(responseBody),
-                appendHeaders(...connectTrailerDemux(responseHeaders))
+                appendHeaders(...trailerDemux(responseHeaders))
               );
             }
 
-            const [header, trailer] = connectTrailerDemux(responseHeaders);
+            const [header, trailer] = trailerDemux(responseHeaders);
             let responseBody = await readToEnd(response); // TODO(TCN-785) honor readMaxBytes
 
             if (compression) {
@@ -380,9 +380,9 @@ export function createConnectHttpTransport(
                     }
                     data = await compression.decompress(data, readMaxBytes);
                   }
-                  if ((flags & connectEndStreamFlag) === connectEndStreamFlag) {
+                  if ((flags & endStreamFlag) === endStreamFlag) {
                     endStreamReceived = true;
-                    const endStream = connectEndStreamFromJson(data);
+                    const endStream = endStreamFromJson(data);
                     responseTrailer.resolve(endStream.metadata);
                     if (endStream.error) {
                       throw endStream.error;

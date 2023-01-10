@@ -47,7 +47,7 @@ $(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-core: $(GEN)/connect-core node_modules tsconfig.base.json packages/connect-core/tsconfig.json $(shell find packages/connect-core/src -name '*.ts')
+$(BUILD)/connect-core: $(GEN)/connect-core node_modules tsconfig.base.json packages/connect-core/tsconfig.json $(shell find packages/connect-core/src -name '*.ts') packages/connect-core/*.js
 	npm run -w packages/connect-core clean
 	npm run -w packages/connect-core build
 	@mkdir -p $(@D)
@@ -89,7 +89,7 @@ $(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-core: node_modules/.bin/protoc-gen-es packages/connect-core/buf.gen.yaml $(shell find packages/connect-core/proto -name '*.proto') Makefile
+$(GEN)/connect-core: node_modules/.bin/protoc-gen-es packages/connect-core/buf.gen.yaml $(shell find packages/connect-core/src -name '*.proto') Makefile
 	rm -rf packages/connect-core/src/gen/*
 	npm run -w packages/connect-core generate
 	@mkdir -p $(@D)
@@ -188,7 +188,7 @@ format: node_modules $(BIN)/license-header ## Format all files, adding license h
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 .PHONY: bench
-bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark code size
+bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web $(BUILD)/connect-web-next ## Benchmark code size
 	npm run -w packages/connect-web-bench report
 
 .PHONY: setversion

@@ -28,9 +28,9 @@ import {
   UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
-  grpcCreateRequestHeader,
-  grpcValidateResponse,
-  grpcValidateTrailer,
+  createRequestHeader,
+  validateResponse,
+  validateTrailer,
 } from "@bufbuild/connect-core/protocol-grpc";
 import {
   AnyMessage,
@@ -226,7 +226,7 @@ export function createGrpcHttp2Transport(
             }
 
             const trailer = await trailerPromise;
-            grpcValidateTrailer(trailer);
+            validateTrailer(trailer);
 
             if (messageResult.done) {
               throw "premature eof";
@@ -374,7 +374,7 @@ export function createGrpcHttp2Transport(
                   const result = await readEnvelope(stream);
                   if (result.done) {
                     const trailer = await trailerPromise;
-                    grpcValidateTrailer(trailer);
+                    validateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
                       done: true,
@@ -422,7 +422,7 @@ export function grpcCreateRequestHeaderWithCompression(
   acceptCompression: string[],
   sendCompression: string | undefined
 ): Headers {
-  const result = grpcCreateRequestHeader(
+  const result = createRequestHeader(
     useBinaryFormat,
     timeoutMs,
     userProvidedHeaders
@@ -446,7 +446,7 @@ export function grpcValidateResponseWithCompression(
   status: number,
   headers: Headers
 ): { compression: Compression | undefined } {
-  grpcValidateResponse(useBinaryFormat, status, headers);
+  validateResponse(useBinaryFormat, status, headers);
 
   let compression: Compression | undefined;
   const encodingField = "Grpc-Encoding";

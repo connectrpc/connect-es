@@ -27,12 +27,12 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
-import { grpcValidateTrailer } from "@bufbuild/connect-core/protocol-grpc";
+import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import {
-  grpcWebCreateRequestHeader,
-  grpcWebTrailerParse,
-  grpcWebTrailerFlag,
-  grpcWebValidateResponse,
+  createRequestHeader,
+  trailerParse,
+  trailerFlag,
+  validateResponse,
 } from "@bufbuild/connect-core/protocol-grpc-web";
 import {
   AnyMessage,
@@ -236,13 +236,13 @@ export function createGrpcWebHttp2Transport(
             }
 
             if (
-              (messageOrTrailerResult.value.flags & grpcWebTrailerFlag) ===
-              grpcWebTrailerFlag
+              (messageOrTrailerResult.value.flags & trailerFlag) ===
+              trailerFlag
             ) {
               // Unary responses require exactly one response message, but in
               // case of an error, it is perfectly valid to have a response body
               // that only contains error trailers.
-              grpcValidateTrailer(grpcWebTrailerParse(messageOrTrailerData));
+              validateTrailer(trailerParse(messageOrTrailerData));
               // At this point, we received trailers only, but the trailers did
               // not have an error status code.
               throw "unexpected trailer";
@@ -268,8 +268,8 @@ export function createGrpcWebHttp2Transport(
                 readMaxBytes
               );
             }
-            const trailer = grpcWebTrailerParse(trailerResultData);
-            grpcValidateTrailer(trailer);
+            const trailer = trailerParse(trailerResultData);
+            validateTrailer(trailer);
 
             const eofResult = await readEnvelope(stream);
             if (!eofResult.done) {
@@ -423,10 +423,10 @@ export function createGrpcWebHttp2Transport(
                     }
                     data = await compression.decompress(data, readMaxBytes);
                   }
-                  if ((flags & grpcWebTrailerFlag) === grpcWebTrailerFlag) {
+                  if ((flags & trailerFlag) === trailerFlag) {
                     endStreamReceived = true;
-                    const trailer = grpcWebTrailerParse(data);
-                    grpcValidateTrailer(trailer);
+                    const trailer = trailerParse(data);
+                    validateTrailer(trailer);
                     responseTrailer.resolve(trailer);
                     return {
                       done: true,
@@ -462,7 +462,7 @@ export function grpcWebCreateRequestHeaderWithCompression(
   acceptCompression: string[],
   sendCompression: string | undefined
 ): Headers {
-  const result = grpcWebCreateRequestHeader(
+  const result = createRequestHeader(
     useBinaryFormat,
     timeoutMs,
     userProvidedHeaders
@@ -486,7 +486,7 @@ export function grpcWebValidateResponseWithCompression(
   status: number,
   headers: Headers
 ): { compression: Compression | undefined } {
-  grpcWebValidateResponse(useBinaryFormat, status, headers);
+  validateResponse(useBinaryFormat, status, headers);
 
   let compression: Compression | undefined;
   const encodingField = "Grpc-Encoding";

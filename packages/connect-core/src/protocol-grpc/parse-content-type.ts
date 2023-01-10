@@ -12,10 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { codeFromHttpStatus } from "./http-status.js";
-export { createRequestHeader } from "./create-request-header.js";
-export { parseContentType } from "./parse-content-type.js";
-export { parseTimeout } from "./parse-timeout.js";
-export { findTrailerError, setTrailerStatus } from "./trailer-status.js";
-export { validateResponse } from "./validate-response.js";
-export { validateTrailer } from "./validate-trailer.js";
+/**
+ * Parse a gRPC Content-Type header.
+ */
+export function parseContentType(
+  contentType: string | null
+): { binary: boolean } | undefined {
+  const match = contentType
+    ?.toLowerCase()
+    ?.match(/^application\/grpc(?:\+(?:(json)(?:; ?charset=utf-?8)?|proto))?$/);
+  if (!match) {
+    return undefined;
+  }
+  const binary = !match[1];
+  return { binary };
+}
