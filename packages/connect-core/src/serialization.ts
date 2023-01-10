@@ -20,7 +20,7 @@ import type {
   Message,
   MessageType,
   MethodInfo,
-  PartialMessage
+  PartialMessage,
 } from "@bufbuild/protobuf";
 import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import { Code } from "./code.js";
