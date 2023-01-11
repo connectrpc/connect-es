@@ -21,9 +21,9 @@ import {
   createGrpcWebHttp2Transport,
   createGrpcHttp2Transport,
   createCallbackClient,
-  // createConnectHttpTransport,
-  // createGrpcWebHttpTransport,
-  // createGrpcHttpTransport,
+  createConnectHttpTransport,
+  createGrpcWebHttpTransport,
+  createGrpcHttpTransport,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 
@@ -34,23 +34,20 @@ describe("unresolvable_host", function () {
       "@bufbuild/connect-node (gRPC-web, http2)",
       createGrpcWebHttp2Transport(options),
     ],
-    // TODO(TCN-921)
-    // [
-    //   "@bufbuild/connect-node (gRPC-web, http)",
-    //   createGrpcWebHttpTransport(options),
-    // ],
+    [
+      "@bufbuild/connect-node (gRPC-web, http)",
+      createGrpcWebHttpTransport(options),
+    ],
     [
       "@bufbuild/connect-node (Connect, http2)",
       createConnectHttp2Transport(options),
     ],
-    // TODO(TCN-921)
-    // [
-    //   "@bufbuild/connect-node (Connect, http)",
-    //   createConnectHttpTransport(options),
-    // ],
+    [
+      "@bufbuild/connect-node (Connect, http)",
+      createConnectHttpTransport(options),
+    ],
     ["@bufbuild/connect-node (gRPC, http2)", createGrpcHttp2Transport(options)],
-    // TODO(TCN-921)
-    // ["@bufbuild/connect-node (gRPC, http)", createGrpcHttpTransport(options)],
+    ["@bufbuild/connect-node (gRPC, http)", createGrpcHttpTransport(options)],
   ] as const;
   for (const [name, transport] of transports) {
     describe(`${name} against unresolvable domain`, function () {
@@ -92,6 +89,7 @@ describe("unresolvable_host", function () {
               await s.send({});
               await s.close();
               const res = await s.receive();
+
               expect(res).toBeUndefined();
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);

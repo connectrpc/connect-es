@@ -57,12 +57,9 @@ import {
   readToEnd,
   write,
 } from "./private/io.js";
-import * as http from "http";
-import * as https from "https";
-import {
-  nodeHeaderToWebHeader,
-  webHeaderToNodeHeaders,
-} from "./private/web-header-to-node-headers.js";
+import type * as http from "http";
+import type * as https from "https";
+import { nodeHeaderToWebHeader } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
@@ -70,6 +67,7 @@ import {
   connectCreateRequestHeaderWithCompression,
   connectValidateResponseWithCompression,
 } from "./connect-http2-transport.js";
+import { getNodeRequest, makeNodeRequest } from "./private/node-request.js";
 
 const messageFlag = 0b00000000;
 
@@ -119,17 +117,6 @@ export interface ConnectHttpTransportOptions {
   compressMinBytes?: number;
   readMaxBytes?: number;
   sendMaxBytes?: number;
-}
-
-interface NodeRequestOptions<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
-> extends Pick<ConnectHttpTransportOptions, "httpOptions"> {
-  // Unary Request
-  req: UnaryRequest<I>;
-
-  // Request body
-  payload: Uint8Array;
 }
 
 /**
@@ -294,23 +281,12 @@ export function createConnectHttpTransport(
             options.sendCompression?.name
           ),
         },
-        (req: StreamingRequest<I, O>) => {
+        async (req: StreamingRequest<I, O>) => {
           try {
-            const endpoint = new URL(req.url);
-            const nodeRequestFn = nodeRequest(endpoint.protocol);
-            const stream = nodeRequestFn(req.url, {
-              headers: webHeaderToNodeHeaders(req.header),
-              method: "POST",
-              path: endpoint.pathname,
-              signal: req.signal,
-              ...options.httpOptions,
-            });
+            const stream = await getNodeRequest(req, options.httpOptions);
             const responsePromise = new Promise<http.IncomingMessage>(
-              (resolve, reject) => {
-                stream.on("response", (res) => {
-                  resolve(res);
-                });
-                stream.on("error", reject);
+              (resolve) => {
+                stream.on("response", (res) => resolve(res));
               }
             );
             let endStreamReceived = false;
@@ -318,6 +294,7 @@ export function createConnectHttpTransport(
             const responseHeader = responsePromise.then((res) =>
               nodeHeaderToWebHeader(res.headers)
             );
+
             const conn: StreamingConn<I, O> = {
               ...req,
               responseHeader,
@@ -407,7 +384,7 @@ export function createConnectHttpTransport(
                 }
               },
             };
-            return Promise.resolve(conn);
+            return conn;
           } catch (e) {
             throw connectErrorFromNodeReason(e);
           }
@@ -416,36 +393,4 @@ export function createConnectHttpTransport(
       );
     },
   };
-}
-
-function makeNodeRequest(options: NodeRequestOptions) {
-  return new Promise<http.IncomingMessage>((resolve, reject) => {
-    const endpoint = new URL(options.req.url);
-    const nodeRequestFn = nodeRequest(endpoint.protocol);
-    const request = nodeRequestFn(options.req.url, {
-      headers: webHeaderToNodeHeaders(options.req.header),
-      method: "POST",
-      path: endpoint.pathname,
-      signal: options.req.signal,
-      ...options.httpOptions,
-    });
-
-    request.on("error", (err) => {
-      reject(`request failed ${String(err)}`);
-    });
-
-    request.on("response", (res) => {
-      return resolve(res);
-    });
-
-    request.write(options.payload);
-    request.end();
-  });
-}
-
-function nodeRequest(protocol: string) {
-  if (protocol.startsWith("http") || protocol.startsWith("https")) {
-    return protocol.includes("https") ? https.request : http.request;
-  }
-  throw new Error("Unsupported protocol");
 }
