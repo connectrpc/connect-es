@@ -81,12 +81,22 @@ function wrapZLibErrors<T>(
         break;
       case "Z_DATA_ERROR":
       case "ERR_PADDING_2":
-        // TODO(TCN-785) we may want to preserve the cause, but not in the connect error message
-        e = new ConnectError("decompression failed", Code.InvalidArgument);
+        e = new ConnectError(
+          "decompression failed",
+          Code.InvalidArgument,
+          undefined,
+          undefined,
+          e
+        );
         break;
       default:
-        // TODO(TCN-785) we may want to preserve the cause, but not in the connect error message
-        e = new ConnectError("decompression failed", Code.Internal);
+        e = new ConnectError(
+          "decompression failed",
+          Code.Internal,
+          undefined,
+          undefined,
+          e
+        );
         break;
     }
     return Promise.reject(e);
