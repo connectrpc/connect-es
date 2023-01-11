@@ -69,8 +69,6 @@ import {
 } from "./connect-http2-transport.js";
 import { getNodeRequest, makeNodeRequest } from "./private/node-request.js";
 
-const messageFlag = 0b00000000;
-
 export interface ConnectHttpTransportOptions {
   /**
    * Base URI for all HTTP requests.
@@ -109,7 +107,9 @@ export interface ConnectHttpTransportOptions {
   /**
    * Options for the http request.
    */
-  httpOptions?: http.RequestOptions | https.RequestOptions;
+  httpOptions?:
+    | Omit<http.RequestOptions, "signal">
+    | Omit<https.RequestOptions, "signal">;
 
   // TODO document
   acceptCompression?: Compression[];
@@ -306,7 +306,7 @@ export function createConnectHttpTransport(
                     "cannot send, stream is already closed"
                   );
                 }
-                let flags = messageFlag;
+                let flags = 0;
                 let body = serialize(normalize(message));
                 if (
                   options.sendCompression &&

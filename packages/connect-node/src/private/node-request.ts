@@ -18,10 +18,6 @@ import type { AnyMessage, Message } from "@bufbuild/protobuf";
 import type { StreamingRequest, UnaryRequest } from "@bufbuild/connect-core";
 import { webHeaderToNodeHeaders } from "./web-header-to-node-headers.js";
 
-interface HttpRequestOptions
-  extends http.RequestOptions,
-    https.RequestOptions {}
-
 interface NodeRequestOptions<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
@@ -32,7 +28,9 @@ interface NodeRequestOptions<
   // Request body
   payload: Uint8Array;
 
-  httpOptions?: HttpRequestOptions;
+  httpOptions?:
+    | Omit<http.RequestOptions, "signal">
+    | Omit<https.RequestOptions, "signal">;
 }
 
 function nodeRequest(protocol: string) {
@@ -47,11 +45,11 @@ export function makeNodeRequest(options: NodeRequestOptions) {
     const endpoint = new URL(options.req.url);
     const nodeRequestFn = nodeRequest(endpoint.protocol);
     const request = nodeRequestFn(options.req.url, {
+      ...options.httpOptions,
       headers: webHeaderToNodeHeaders(options.req.header),
       method: "POST",
       path: endpoint.pathname,
       signal: options.req.signal,
-      ...options.httpOptions,
     });
 
     request.once("error", (err) => {
@@ -69,17 +67,20 @@ export function makeNodeRequest(options: NodeRequestOptions) {
 
 export function getNodeRequest(
   req: StreamingRequest,
-  httpOptions: http.RequestOptions | https.RequestOptions | undefined
+  httpOptions:
+    | Omit<http.RequestOptions, "signal">
+    | Omit<https.RequestOptions, "signal">
+    | undefined
 ) {
   return new Promise<http.ClientRequest>((resolve, reject) => {
     const endpoint = new URL(req.url);
     const nodeRequestFn = nodeRequest(endpoint.protocol);
     const request = nodeRequestFn(req.url, {
+      ...httpOptions,
       headers: webHeaderToNodeHeaders(req.header),
       method: "POST",
       path: endpoint.pathname,
       signal: req.signal,
-      ...httpOptions,
     });
     request.once("socket", (socket) => {
       socket.once("connect", resolveRequest);
