@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as http from "http";
-import * as https from "https";
+import type * as http from "http";
+import type * as https from "https";
 import {
   Code,
   ConnectError,
@@ -42,10 +42,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
-import {
-  nodeHeaderToWebHeader,
-  webHeaderToNodeHeaders,
-} from "./private/web-header-to-node-headers.js";
+import { nodeHeaderToWebHeader } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
 import {
   end,
@@ -65,6 +62,7 @@ import {
   grpcCreateRequestHeaderWithCompression,
   grpcValidateResponseWithCompression,
 } from "./grpc-http2-transport.js";
+import { getNodeRequest, makeNodeRequest } from "./private/node-request.js";
 
 export interface GrpcHttpTransportOptions {
   /**
@@ -112,17 +110,6 @@ export interface GrpcHttpTransportOptions {
   compressMinBytes?: number;
   readMaxBytes?: number;
   sendMaxBytes?: number;
-}
-
-interface NodeRequestOptions<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
-> extends Pick<GrpcHttpTransportOptions, "httpOptions"> {
-  // Unary Request
-  req: UnaryRequest<I>;
-
-  // Request body
-  payload: Uint8Array;
 }
 
 const messageFlag = 0b00000000;
@@ -399,59 +386,4 @@ export function createGrpcHttpTransport(
       );
     },
   };
-}
-
-function nodeRequest(protocol: string) {
-  if (protocol.startsWith("http") || protocol.startsWith("https")) {
-    return protocol.includes("https") ? https.request : http.request;
-  }
-  throw new Error("Unsupported protocol");
-}
-
-function makeNodeRequest(options: NodeRequestOptions) {
-  return new Promise<http.IncomingMessage>((resolve, reject) => {
-    const endpoint = new URL(options.req.url);
-    const nodeRequestFn = nodeRequest(endpoint.protocol);
-    const request = nodeRequestFn(options.req.url, {
-      headers: webHeaderToNodeHeaders(options.req.header),
-      method: "POST",
-      path: endpoint.pathname,
-      signal: options.req.signal,
-      ...options.httpOptions,
-    });
-
-    request.on("error", (err) => {
-      reject(err);
-    });
-
-    request.on("response", (res) => {
-      return resolve(res);
-    });
-
-    request.write(options.payload);
-    request.end();
-  });
-}
-
-function getNodeRequest(
-  req: StreamingRequest,
-  httpOptions: http.RequestOptions | https.RequestOptions | undefined
-) {
-  return new Promise<http.ClientRequest>((resolve, reject) => {
-    const endpoint = new URL(req.url);
-    const nodeRequestFn = nodeRequest(endpoint.protocol);
-    const request = nodeRequestFn(req.url, {
-      headers: webHeaderToNodeHeaders(req.header),
-      method: "POST",
-      path: endpoint.pathname,
-      signal: req.signal,
-      ...httpOptions,
-    });
-    request.on("socket", (socket) => {
-      socket.on("connect", () => {
-        resolve(request);
-      });
-      socket.on("error", reject);
-    });
-  });
 }
