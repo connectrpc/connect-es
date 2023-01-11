@@ -52,7 +52,13 @@ export function transformSerializeWithEnd<T, E>(
           data = endSerialization.serialize(chunk.value);
         } catch (e) {
           return controller.error(
-            new ConnectError("failed to serialize end", Code.Internal)
+            new ConnectError(
+              "failed to serialize end",
+              Code.Internal,
+              undefined,
+              undefined,
+              e
+            )
           );
         }
       } else {
@@ -60,7 +66,13 @@ export function transformSerializeWithEnd<T, E>(
           data = serialization.serialize(chunk.value);
         } catch (e) {
           return controller.error(
-            new ConnectError("failed to serialize", Code.Internal)
+            new ConnectError(
+              "failed to serialize",
+              Code.Internal,
+              undefined,
+              undefined,
+              e
+            )
           );
         }
       }
@@ -94,7 +106,13 @@ export function transformParseWithEnd<T, E>(
           value = endSerialization.parse(data);
         } catch (e) {
           return controller.error(
-            new ConnectError("failed to parse end", Code.InvalidArgument)
+            new ConnectError(
+              "failed to parse end",
+              Code.InvalidArgument,
+              undefined,
+              undefined,
+              e
+            )
           );
         }
         return controller.enqueue({ value, end: true });
@@ -104,7 +122,13 @@ export function transformParseWithEnd<T, E>(
         value = serialization.parse(data);
       } catch (e) {
         return controller.error(
-          new ConnectError("failed to parse end", Code.InvalidArgument)
+          new ConnectError(
+            "failed to parse end",
+            Code.InvalidArgument,
+            undefined,
+            undefined,
+            e
+          )
         );
       }
       controller.enqueue({ value, end: false });
@@ -126,7 +150,13 @@ export function transformSerialize<T>(
         data = serialization.serialize(chunk);
       } catch (e) {
         return controller.error(
-          new ConnectError("failed to serialize", Code.Internal)
+          new ConnectError(
+            "failed to serialize",
+            Code.Internal,
+            undefined,
+            undefined,
+            e
+          )
         );
       }
       controller.enqueue({ flags: 0, data });
@@ -148,7 +178,13 @@ export function transformParse<T>(
         data = serialization.parse(chunk.data);
       } catch (e) {
         return controller.error(
-          new ConnectError("failed to parse", Code.Internal)
+          new ConnectError(
+            "failed to parse",
+            Code.Internal,
+            undefined,
+            undefined,
+            e
+          )
         );
       }
       controller.enqueue(data);
