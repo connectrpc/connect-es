@@ -14,26 +14,13 @@
 
 import * as zlib from "zlib";
 import { promisify } from "util";
-import { Code, ConnectError } from "@bufbuild/connect-core";
+import { Code, ConnectError, Compression } from "@bufbuild/connect-core";
 import { getNodeErrorProps } from "./private/node-error.js";
-
-export interface Compression {
-  name: string;
-  compress: (bytes: Uint8Array) => Promise<Uint8Array>;
-  decompress: (bytes: Uint8Array, readMaxBytes: number) => Promise<Uint8Array>;
-}
 
 const gzip = promisify(zlib.gzip);
 const gunzip = promisify(zlib.gunzip);
 const brotliCompress = promisify(zlib.brotliCompress);
 const brotliDecompress = promisify(zlib.brotliDecompress);
-
-/**
- * compressedFlag indicates that the data in a EnvelopedMessage is
- * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
- * and Connect protocols.
- */
-export const compressedFlag = 0b00000001;
 
 export const compressionGzip: Compression = {
   name: "gzip",

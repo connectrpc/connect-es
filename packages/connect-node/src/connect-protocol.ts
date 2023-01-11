@@ -18,6 +18,8 @@ import {
   ConnectError,
   encodeEnvelope,
   connectErrorFromReason,
+  Compression,
+  compressedFlag,
 } from "@bufbuild/connect-core";
 import {
   codeToHttpStatus,
@@ -54,7 +56,6 @@ import {
   readToEnd,
   write,
 } from "./private/io.js";
-import { compressedFlag, Compression } from "./compression.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";

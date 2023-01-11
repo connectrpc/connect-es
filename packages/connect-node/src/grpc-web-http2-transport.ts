@@ -14,6 +14,8 @@
 
 import {
   Code,
+  compressedFlag,
+  Compression,
   ConnectError,
   createClientMethodSerializers,
   createMethodUrl,
@@ -52,12 +54,7 @@ import { defer } from "./private/defer.js";
 import { end, readEnvelope, readResponseHeader, write } from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
-import {
-  type Compression,
-  compressionBrotli,
-  compressionGzip,
-  compressedFlag,
-} from "./compression.js";
+import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 
 /**

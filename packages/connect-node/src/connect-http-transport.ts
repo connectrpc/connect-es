@@ -15,6 +15,8 @@
 import {
   appendHeaders,
   Code,
+  compressedFlag,
+  Compression,
   ConnectError,
   createClientMethodSerializers,
   createMethodUrl,
@@ -59,12 +61,7 @@ import type * as http from "http";
 import type * as https from "https";
 import { nodeHeaderToWebHeader } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
-import {
-  compressedFlag,
-  Compression,
-  compressionBrotli,
-  compressionGzip,
-} from "./compression.js";
+import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 import {
   connectCreateRequestHeaderWithCompression,

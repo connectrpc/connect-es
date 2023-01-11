@@ -32,10 +32,13 @@ export interface EnvelopedMessage {
 }
 
 /**
- * Create a ReadableStream of enveloped messages from a ReadableStream of bytes.
+ * Create a WHATWG ReadableStream of enveloped messages from a ReadableStream
+ * of bytes.
  *
  * Ideally, this would simply be a TransformStream, but ReadableStream.pipeThrough
  * does not have the necessary availability at this time.
+ *
+ * Note that such a TransformStream is implement by transformSplit().
  */
 export function createEnvelopeReadableStream(
   stream: ReadableStream<Uint8Array>
