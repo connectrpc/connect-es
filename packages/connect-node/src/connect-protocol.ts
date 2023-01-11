@@ -108,7 +108,6 @@ export function createConnectProtocol(
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = parseContentType(requestHeader.get(headerContentType));
-
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -126,7 +125,7 @@ export function createConnectProtocol(
 
             if (
               shouldRequireHeader &&
-              req.headers[connectProtocolVersionHeader] !==
+              requestHeader.get(connectProtocolVersionHeader) !==
                 connectProtocolVersion
             ) {
               return await endWithHttpStatus(
@@ -139,7 +138,7 @@ export function createConnectProtocol(
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: requestHeader,
+              requestHeader,
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
                 type.binary
@@ -150,7 +149,6 @@ export function createConnectProtocol(
             const timeout = parseTimeout(
               requestHeader.get(connectTimeoutHeader)
             );
-
             if (timeout instanceof ConnectError) {
               return await endWithConnectUnaryError(
                 res,
@@ -161,7 +159,6 @@ export function createConnectProtocol(
                 compressMinBytes
               );
             }
-
             if (typeof timeout === "number") {
               res.setTimeout(timeout, () => {
                 return void endWithConnectUnaryError(
@@ -274,7 +271,6 @@ export function createConnectProtocol(
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = parseContentType(requestHeader.get(headerContentType));
-
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -303,7 +299,7 @@ export function createConnectProtocol(
 
             if (
               shouldRequireHeader &&
-              req.headers[connectProtocolVersionHeader] !==
+              requestHeader.get(connectProtocolVersionHeader) !==
                 connectProtocolVersion
             ) {
               return await endWithHttpStatus(
@@ -316,7 +312,6 @@ export function createConnectProtocol(
             const timeout = parseTimeout(
               requestHeader.get(connectTimeoutHeader)
             );
-
             if (timeout instanceof ConnectError) {
               return await endWithConnectEndStream(
                 res,
@@ -327,7 +322,6 @@ export function createConnectProtocol(
                 compressMinBytes
               );
             }
-
             if (typeof timeout === "number") {
               res.setTimeout(timeout, () => {
                 return void endWithConnectEndStream(
@@ -443,7 +437,6 @@ export function createConnectProtocol(
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = parseContentType(requestHeader.get(headerContentType));
-
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -461,7 +454,7 @@ export function createConnectProtocol(
 
             if (
               shouldRequireHeader &&
-              req.headers[connectProtocolVersionHeader] !==
+              requestHeader.get(connectProtocolVersionHeader) !==
                 connectProtocolVersion
             ) {
               return await endWithHttpStatus(
@@ -474,7 +467,7 @@ export function createConnectProtocol(
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
                 type.binary
@@ -485,7 +478,6 @@ export function createConnectProtocol(
             const timeout = parseTimeout(
               requestHeader.get(connectTimeoutHeader)
             );
-
             if (timeout instanceof ConnectError) {
               return await endWithConnectEndStream(
                 res,
@@ -496,7 +488,6 @@ export function createConnectProtocol(
                 compressMinBytes
               );
             }
-
             if (typeof timeout === "number") {
               res.setTimeout(timeout, () => {
                 return void endWithConnectEndStream(
@@ -606,7 +597,6 @@ export function createConnectProtocol(
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
             const type = parseContentType(requestHeader.get(headerContentType));
-
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -624,7 +614,7 @@ export function createConnectProtocol(
 
             if (
               shouldRequireHeader &&
-              req.headers[connectProtocolVersionHeader] !==
+              requestHeader.get(connectProtocolVersionHeader) !==
                 connectProtocolVersion
             ) {
               return await endWithHttpStatus(
@@ -637,7 +627,7 @@ export function createConnectProtocol(
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: connectCreateResponseHeader(
                 spec.method.kind,
                 type.binary
@@ -648,7 +638,6 @@ export function createConnectProtocol(
             const timeout = parseTimeout(
               requestHeader.get(connectTimeoutHeader)
             );
-
             if (timeout instanceof ConnectError) {
               return await endWithConnectEndStream(
                 res,
@@ -659,7 +648,6 @@ export function createConnectProtocol(
                 compressMinBytes
               );
             }
-
             if (typeof timeout === "number") {
               res.setTimeout(timeout, () => {
                 return void endWithConnectEndStream(
