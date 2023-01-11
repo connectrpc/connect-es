@@ -54,7 +54,8 @@ import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-op
 
 const headerEncoding = "Grpc-Encoding";
 const headerAcceptEncoding = "Grpc-Accept-Encoding";
-const timeoutHeader = "Grpc-Timeout";
+const headerContentType = "Content-Type";
+const headerTimeout = "Grpc-Timeout";
 
 /**
  * Options for creating a gRPC-web Protocol instance.
@@ -91,8 +92,7 @@ export function createGrpcWebProtocol(
         case MethodKind.Unary:
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
-            const type = parseContentType(req.headers["content-type"] ?? null);
-
+            const type = parseContentType(requestHeader.get(headerContentType));
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -111,16 +111,15 @@ export function createGrpcWebProtocol(
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: createResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
-            const timeout = parseTimeout(requestHeader.get(timeoutHeader));
 
+            const timeout = parseTimeout(requestHeader.get(headerTimeout));
             if (timeout instanceof ConnectError) {
               return await endWithGrpcWebTrailer(res, context, timeout);
             }
-
             if (typeof timeout === "number") {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
@@ -211,8 +210,7 @@ export function createGrpcWebProtocol(
         case MethodKind.ServerStreaming: {
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
-            const type = parseContentType(req.headers["content-type"] ?? null);
-
+            const type = parseContentType(requestHeader.get(headerContentType));
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -235,12 +233,11 @@ export function createGrpcWebProtocol(
               responseHeader: createResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
-            const timeout = parseTimeout(requestHeader.get(timeoutHeader));
 
+            const timeout = parseTimeout(requestHeader.get(headerTimeout));
             if (timeout instanceof ConnectError) {
               return await endWithGrpcWebTrailer(res, context, timeout);
             }
-
             if (typeof timeout === "number") {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
@@ -352,8 +349,7 @@ export function createGrpcWebProtocol(
         case MethodKind.ClientStreaming: {
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
-            const type = parseContentType(req.headers["content-type"] ?? null);
-
+            const type = parseContentType(requestHeader.get(headerContentType));
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -372,16 +368,15 @@ export function createGrpcWebProtocol(
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader: nodeHeaderToWebHeader(req.headers),
+              requestHeader,
               responseHeader: createResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
-            const timeout = parseTimeout(requestHeader.get(timeoutHeader));
 
+            const timeout = parseTimeout(requestHeader.get(headerTimeout));
             if (timeout instanceof ConnectError) {
               return await endWithGrpcWebTrailer(res, context, timeout);
             }
-
             if (typeof timeout === "number") {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
@@ -492,8 +487,7 @@ export function createGrpcWebProtocol(
         case MethodKind.BiDiStreaming: {
           return async (req, res) => {
             const requestHeader = nodeHeaderToWebHeader(req.headers);
-            const type = parseContentType(req.headers["content-type"] ?? null);
-
+            const type = parseContentType(requestHeader.get(headerContentType));
             if (type === undefined) {
               return await endWithHttpStatus(
                 res,
@@ -516,12 +510,11 @@ export function createGrpcWebProtocol(
               responseHeader: createResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
-            const timeout = parseTimeout(requestHeader.get(timeoutHeader));
 
+            const timeout = parseTimeout(requestHeader.get(headerTimeout));
             if (timeout instanceof ConnectError) {
               return await endWithGrpcWebTrailer(res, context, timeout);
             }
-
             if (typeof timeout === "number") {
               res.setTimeout(timeout, () => {
                 return void endWithGrpcWebTrailer(
