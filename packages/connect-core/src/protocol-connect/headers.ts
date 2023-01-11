@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { codeFromHttpStatus } from "./http-status.js";
-export { createRequestHeader } from "./create-request-header.js";
-export { parseContentType } from "./parse-content-type.js";
-export { parseTimeout } from "./parse-timeout.js";
-export { findTrailerError, setTrailerStatus } from "./trailer-status.js";
-export { validateResponse } from "./validate-response.js";
-export { validateTrailer } from "./validate-trailer.js";
-export * from "./headers.js";
+export const headerUnaryEncoding = "Content-Encoding";
+export const headerStreamEncoding = "Connect-Content-Encoding";
+export const headerUnaryAcceptEncoding = "Accept-Encoding";
+export const headerStreamAcceptEncoding = "Connect-Accept-Encoding";
+export const headerContentType = "Content-Type";
+export const headerTimeout = "Connect-Timeout-Ms";
+export const headerProtocolVersion = "Connect-Protocol-Version";

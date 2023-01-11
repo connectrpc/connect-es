@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import { MethodKind } from "@bufbuild/protobuf";
-
-const protocolVersion = "1";
+import { protocolVersion } from "./version.js";
 
 /**
  * Creates headers for a Connect request.

@@ -99,7 +99,9 @@ export interface GrpcHttpTransportOptions {
   /**
    * Options for the http request.
    */
-  httpOptions?: http.RequestOptions | https.RequestOptions;
+  httpOptions?:
+    | Omit<http.RequestOptions, "signal">
+    | Omit<https.RequestOptions, "signal">;
 
   // TODO document
   acceptCompression?: Compression[];
@@ -108,8 +110,6 @@ export interface GrpcHttpTransportOptions {
   readMaxBytes?: number;
   sendMaxBytes?: number;
 }
-
-const messageFlag = 0b00000000;
 
 /**
  * Create a Transport for the gRPC protocol using the
@@ -164,21 +164,20 @@ export function createGrpcHttpTransport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-            let flag = messageFlag;
+            let flags = 0;
             let body = serialize(req.message);
-
             if (
               options.sendCompression !== undefined &&
               body.length >= compressMinBytes
             ) {
               body = await options.sendCompression.compress(body);
-              flag = compressedFlag;
+              flags = compressedFlag;
               req.header.set("Grpc-Encoding", options.sendCompression.name);
             } else {
               req.header.delete("Grpc-Encoding");
             }
 
-            const envelope = encodeEnvelope(flag, body);
+            const envelope = encodeEnvelope(flags, body);
             const response = await makeNodeRequest({
               req,
               payload: envelope,
@@ -304,7 +303,7 @@ export function createGrpcHttpTransport(
                     "cannot send, stream is already closed"
                   );
                 }
-                let flags = messageFlag;
+                let flags = 0;
                 let body = serialize(normalize(message));
                 if (
                   options.sendCompression &&

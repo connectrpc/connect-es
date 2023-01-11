@@ -61,8 +61,6 @@ import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 
-const messageFlag = 0b00000000;
-
 /**
  * Options used to configure the gRPC-web transport.
  *
@@ -179,7 +177,7 @@ export function createGrpcHttp2Transport(
                 s.on("error", (err) => reject(err));
               });
 
-            let flag = messageFlag;
+            let flag = 0;
             let body = serialize(req.message);
             if (
               options.sendCompression !== undefined &&
@@ -332,9 +330,8 @@ export function createGrpcHttp2Transport(
                     "cannot send, stream is already closed"
                   );
                 }
-                let flags = messageFlag;
+                let flags = 0;
                 let body = serialize(normalize(message));
-
                 if (
                   options.sendCompression &&
                   body.length >= compressMinBytes

@@ -25,3 +25,5 @@ export { parseContentType } from "./parse-content-type.js";
 export { parseTimeout } from "./parse-timeout.js";
 export { trailerDemux } from "./trailer-demux.js";
 export { validateResponse } from "./validate-response.js";
+export * from "./headers.js";
+export { protocolVersion } from "./version.js";
