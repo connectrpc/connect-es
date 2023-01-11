@@ -230,9 +230,13 @@ export function createConnectProtocol(
               } else if (connectErrorFromNodeReason(e).code == Code.Canceled) {
                 ce = new ConnectError("operation canceled", Code.Canceled);
               } else {
-                // TODO(TCN-785) We want to elide the error message for the client, but still
-                //    make it available for logging. We may have to add a "cause" property.
-                ce = new ConnectError("internal error", Code.Internal);
+                ce = new ConnectError(
+                  "internal error",
+                  Code.Internal,
+                  undefined,
+                  undefined,
+                  (e as Error).message
+                );
               }
               return await endWithConnectUnaryError(
                 res,
