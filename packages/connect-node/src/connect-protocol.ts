@@ -28,6 +28,14 @@ import {
   errorToJson,
   parseContentType,
   parseTimeout,
+  headerUnaryEncoding,
+  headerStreamEncoding,
+  headerUnaryAcceptEncoding,
+  headerStreamAcceptEncoding,
+  headerContentType,
+  headerTimeout,
+  headerProtocolVersion,
+  protocolVersion,
 } from "@bufbuild/connect-core/protocol-connect";
 import {
   BinaryReadOptions,
@@ -61,12 +69,6 @@ import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-op
 import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionNegotiate } from "./private/compression-negotiate.js";
 
-const headerUnaryEncoding = "Content-Encoding";
-const headerStreamEncoding = "Connect-Content-Encoding";
-const headerUnaryAcceptEncoding = "Accept-Encoding";
-const headerStreamAcceptEncoding = "Connect-Accept-Encoding";
-const headerContentType = "Content-Type";
-
 /**
  * Options for creating a Connect Protocol instance.
  */
@@ -81,17 +83,14 @@ interface CreateConnectProtocolOptions {
   requireConnectProtocolHeader?: boolean;
 }
 
-const connectProtocolVersionHeader = "Connect-Protocol-Version";
-const connectProtocolVersion = "1";
-const connectTimeoutHeader = "Connect-Timeout-Ms";
-
 /**
  * Create a Connect Protocol instance.
  */
 export function createConnectProtocol(
   options: CreateConnectProtocolOptions
 ): Protocol {
-  const shouldRequireHeader = options.requireConnectProtocolHeader ?? false;
+  const requireConnectProtocolHeader =
+    options.requireConnectProtocolHeader ?? false;
   const readMaxBytes = validateReadMaxBytesOption(options.readMaxBytes);
   const compressMinBytes = options.compressMinBytes ?? 0;
   const acceptCompression = options.acceptCompression ?? [
@@ -125,14 +124,13 @@ export function createConnectProtocol(
             }
 
             if (
-              shouldRequireHeader &&
-              requestHeader.get(connectProtocolVersionHeader) !==
-                connectProtocolVersion
+              requireConnectProtocolHeader &&
+              requestHeader.get(headerProtocolVersion) !== protocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
                 400,
-                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+                `Missing required header Connect-Protocol-Version ${protocolVersion}`
               );
             }
 
@@ -147,9 +145,7 @@ export function createConnectProtocol(
               responseTrailer: new Headers(),
             };
 
-            const timeout = parseTimeout(
-              requestHeader.get(connectTimeoutHeader)
-            );
+            const timeout = parseTimeout(requestHeader.get(headerTimeout));
             if (timeout instanceof ConnectError) {
               return await endWithConnectUnaryError(
                 res,
@@ -299,20 +295,17 @@ export function createConnectProtocol(
             };
 
             if (
-              shouldRequireHeader &&
-              requestHeader.get(connectProtocolVersionHeader) !==
-                connectProtocolVersion
+              requireConnectProtocolHeader &&
+              requestHeader.get(headerProtocolVersion) !== protocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
                 400,
-                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+                `Missing required header Connect-Protocol-Version ${protocolVersion}`
               );
             }
 
-            const timeout = parseTimeout(
-              requestHeader.get(connectTimeoutHeader)
-            );
+            const timeout = parseTimeout(requestHeader.get(headerTimeout));
             if (timeout instanceof ConnectError) {
               return await endWithConnectEndStream(
                 res,
@@ -454,14 +447,13 @@ export function createConnectProtocol(
             }
 
             if (
-              shouldRequireHeader &&
-              requestHeader.get(connectProtocolVersionHeader) !==
-                connectProtocolVersion
+              requireConnectProtocolHeader &&
+              requestHeader.get(headerProtocolVersion) !== protocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
                 400,
-                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+                `Missing required header Connect-Protocol-Version ${protocolVersion}`
               );
             }
 
@@ -476,9 +468,7 @@ export function createConnectProtocol(
               responseTrailer: new Headers(),
             };
 
-            const timeout = parseTimeout(
-              requestHeader.get(connectTimeoutHeader)
-            );
+            const timeout = parseTimeout(requestHeader.get(headerTimeout));
             if (timeout instanceof ConnectError) {
               return await endWithConnectEndStream(
                 res,
@@ -614,14 +604,13 @@ export function createConnectProtocol(
             }
 
             if (
-              shouldRequireHeader &&
-              requestHeader.get(connectProtocolVersionHeader) !==
-                connectProtocolVersion
+              requireConnectProtocolHeader &&
+              requestHeader.get(headerProtocolVersion) !== protocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
                 400,
-                `Missing required header Connect-Protocol-Version ${connectProtocolVersion}`
+                `Missing required header Connect-Protocol-Version ${protocolVersion}`
               );
             }
 
@@ -636,9 +625,7 @@ export function createConnectProtocol(
               responseTrailer: new Headers(),
             };
 
-            const timeout = parseTimeout(
-              requestHeader.get(connectTimeoutHeader)
-            );
+            const timeout = parseTimeout(requestHeader.get(headerTimeout));
             if (timeout instanceof ConnectError) {
               return await endWithConnectEndStream(
                 res,

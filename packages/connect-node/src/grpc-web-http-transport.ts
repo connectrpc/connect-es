@@ -99,7 +99,9 @@ export interface GrpcWebHttpTransportOptions {
   /**
    * Options for the http request.
    */
-  httpOptions?: http.RequestOptions | https.RequestOptions;
+  httpOptions?:
+    | Omit<http.RequestOptions, "signal">
+    | Omit<https.RequestOptions, "signal">;
 
   // TODO document
   acceptCompression?: Compression[];

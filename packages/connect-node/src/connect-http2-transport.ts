@@ -66,8 +66,6 @@ import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 
-const messageFlag = 0b00000000;
-
 /**
  * Options used to configure the Connect transport.
  */
@@ -323,7 +321,7 @@ export function createConnectHttp2Transport(
                     "cannot send, stream is already closed"
                   );
                 }
-                let flags = messageFlag;
+                let flags = 0;
                 let body = serialize(normalize(message));
                 if (
                   options.sendCompression &&

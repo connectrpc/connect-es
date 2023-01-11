@@ -23,6 +23,10 @@ import {
 import {
   parseTimeout,
   setTrailerStatus,
+  headerEncoding,
+  headerAcceptEncoding,
+  headerContentType,
+  headerTimeout,
 } from "@bufbuild/connect-core/protocol-grpc";
 import {
   parseContentType,
@@ -51,11 +55,6 @@ import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { compressionNegotiate } from "./private/compression-negotiate.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
-
-const headerEncoding = "Grpc-Encoding";
-const headerAcceptEncoding = "Grpc-Accept-Encoding";
-const headerContentType = "Content-Type";
-const headerTimeout = "Grpc-Timeout";
 
 /**
  * Options for creating a gRPC-web Protocol instance.
@@ -293,21 +292,6 @@ export function createGrpcWebProtocol(
                 new ConnectError("Missing input message", Code.Internal)
               );
             }
-            if (
-              requestCompression === undefined &&
-              inputResult.value.flags !== 0
-            ) {
-              return await endWithGrpcWebTrailer(
-                res,
-                context,
-                new ConnectError(
-                  `Unexpected input flags ${inputResult.value.flags.toString(
-                    2
-                  )}`,
-                  Code.Internal
-                )
-              );
-            }
             const flags = inputResult.value.flags;
             let data = inputResult.value.data;
             if ((flags & compressedFlag) === compressedFlag) {
@@ -429,21 +413,6 @@ export function createGrpcWebProtocol(
                 const result = await readEnvelope(req);
                 if (result.done) {
                   break;
-                }
-                if (
-                  requestCompression === undefined &&
-                  result.value.flags !== 0
-                ) {
-                  return await endWithGrpcWebTrailer(
-                    res,
-                    context,
-                    new ConnectError(
-                      `Unexpected input flags ${result.value.flags.toString(
-                        2
-                      )}`,
-                      Code.Internal
-                    )
-                  );
                 }
                 const flags = result.value.flags;
                 let data = result.value.data;
@@ -567,21 +536,6 @@ export function createGrpcWebProtocol(
                 const result = await readEnvelope(req);
                 if (result.done) {
                   break;
-                }
-                if (
-                  requestCompression === undefined &&
-                  result.value.flags !== 0
-                ) {
-                  return await endWithGrpcWebTrailer(
-                    res,
-                    context,
-                    new ConnectError(
-                      `Unexpected input flags ${result.value.flags.toString(
-                        2
-                      )}`,
-                      Code.Internal
-                    )
-                  );
                 }
                 const flags = result.value.flags;
                 let data = result.value.data;

@@ -16,3 +16,4 @@ export { createRequestHeader } from "./create-request-header.js";
 export { parseContentType } from "./parse-content-type.js";
 export { validateResponse } from "./validate-response.js";
 export { trailerFlag, trailerParse, trailerSerialize } from "./trailer.js";
+export * from "./headers.js";
