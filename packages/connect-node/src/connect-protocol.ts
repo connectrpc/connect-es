@@ -296,7 +296,7 @@ export function createConnectProtocol(
             if (
               shouldRequireHeader &&
               requestHeader.get(connectProtocolVersionHeader) !==
-              connectProtocolVersion
+                connectProtocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
@@ -451,7 +451,7 @@ export function createConnectProtocol(
             if (
               shouldRequireHeader &&
               requestHeader.get(connectProtocolVersionHeader) !==
-              connectProtocolVersion
+                connectProtocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
@@ -611,7 +611,7 @@ export function createConnectProtocol(
             if (
               shouldRequireHeader &&
               requestHeader.get(connectProtocolVersionHeader) !==
-              connectProtocolVersion
+                connectProtocolVersion
             ) {
               return await endWithHttpStatus(
                 res,
