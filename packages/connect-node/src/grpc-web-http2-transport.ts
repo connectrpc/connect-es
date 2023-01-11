@@ -31,12 +31,12 @@ import {
 } from "@bufbuild/connect-core";
 import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import {
-  createRequestHeader,
+  createRequestHeaderWithCompression,
   trailerParse,
   trailerFlag,
-  validateResponse,
+  validateResponseWithCompression,
 } from "@bufbuild/connect-core/protocol-grpc-web";
-import {
+import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
@@ -44,7 +44,6 @@ import {
   JsonWriteOptions,
   Message,
   MethodInfo,
-  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
@@ -148,7 +147,7 @@ export function createGrpcWebHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: grpcWebCreateRequestHeaderWithCompression(
+            header: createRequestHeaderWithCompression(
               method.kind,
               useBinaryFormat,
               timeoutMs,
@@ -204,7 +203,7 @@ export function createGrpcWebHttp2Transport(
             await end(stream);
 
             const [responseCode, responseHeader] = await headersPromise;
-            const { compression } = grpcWebValidateResponseWithCompression(
+            const { compression } = validateResponseWithCompression(
               useBinaryFormat,
               acceptCompression,
               responseCode,
@@ -316,7 +315,7 @@ export function createGrpcWebHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcWebCreateRequestHeaderWithCompression(
+          header: createRequestHeaderWithCompression(
             method.kind,
             useBinaryFormat,
             timeoutMs,
@@ -389,7 +388,7 @@ export function createGrpcWebHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headerPromise;
-                const { compression } = grpcWebValidateResponseWithCompression(
+                const { compression } = validateResponseWithCompression(
                   useBinaryFormat,
                   acceptCompression,
                   responseStatus,
@@ -451,53 +450,27 @@ export function createGrpcWebHttp2Transport(
   };
 }
 
-export function grpcWebCreateRequestHeaderWithCompression(
-  methodKind: MethodKind,
-  useBinaryFormat: boolean,
-  timeoutMs: number | undefined,
-  userProvidedHeaders: HeadersInit | undefined,
-  acceptCompression: string[],
-  sendCompression: string | undefined
-): Headers {
-  const result = createRequestHeader(
-    useBinaryFormat,
-    timeoutMs,
-    userProvidedHeaders
-  );
-  let acceptEncodingField = "Accept-Encoding";
-  if (methodKind !== MethodKind.Unary) {
-    acceptEncodingField = "GRPC-Web-" + acceptEncodingField;
-    if (sendCompression !== undefined) {
-      result.set("Grpc-Encoding", sendCompression);
-    }
-  }
-  if (acceptCompression.length > 0) {
-    result.set(acceptEncodingField, acceptCompression.join(","));
-  }
-  return result;
-}
+// export function grpcWebValidateResponseWithCompression(
+//   useBinaryFormat: boolean,
+//   acceptCompression: Compression[],
+//   status: number,
+//   headers: Headers
+// ): { compression: Compression | undefined } {
+//   validateResponse(useBinaryFormat, status, headers);
 
-export function grpcWebValidateResponseWithCompression(
-  useBinaryFormat: boolean,
-  acceptCompression: Compression[],
-  status: number,
-  headers: Headers
-): { compression: Compression | undefined } {
-  validateResponse(useBinaryFormat, status, headers);
-
-  let compression: Compression | undefined;
-  const encodingField = "Grpc-Encoding";
-  const encoding = headers.get(encodingField);
-  if (encoding !== null && encoding.toLowerCase() !== "identity") {
-    compression = acceptCompression.find((c) => c.name === encoding);
-    if (!compression) {
-      throw new ConnectError(
-        `unsupported response encoding "${encoding}"`,
-        Code.InvalidArgument
-      );
-    }
-  }
-  return {
-    compression,
-  };
-}
+//   let compression: Compression | undefined;
+//   const encodingField = "Grpc-Encoding";
+//   const encoding = headers.get(encodingField);
+//   if (encoding !== null && encoding.toLowerCase() !== "identity") {
+//     compression = acceptCompression.find((c) => c.name === encoding);
+//     if (!compression) {
+//       throw new ConnectError(
+//         `unsupported response encoding "${encoding}"`,
+//         Code.InvalidArgument
+//       );
+//     }
+//   }
+//   return {
+//     compression,
+//   };
+// }

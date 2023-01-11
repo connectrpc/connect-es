@@ -37,3 +37,33 @@ export function createRequestHeader(
   result.set("Connect-Protocol-Version", protocolVersion);
   return result;
 }
+
+/**
+ * Creates headers for a Connect request with compression.
+ */
+export function createRequestHeaderWithCompression(
+  methodKind: MethodKind,
+  useBinaryFormat: boolean,
+  timeoutMs: number | undefined,
+  userProvidedHeaders: HeadersInit | undefined,
+  acceptCompression: string[],
+  sendCompression: string | undefined
+): Headers {
+  const result = createRequestHeader(
+    methodKind,
+    useBinaryFormat,
+    timeoutMs,
+    userProvidedHeaders
+  );
+  let acceptEncodingField = "Accept-Encoding";
+  if (methodKind != MethodKind.Unary) {
+    acceptEncodingField = "Connect-" + acceptEncodingField;
+    if (sendCompression != undefined) {
+      result.set("Connect-Content-Encoding", sendCompression);
+    }
+  }
+  if (acceptCompression.length > 0) {
+    result.set(acceptEncodingField, acceptCompression.join(","));
+  }
+  return result;
+}

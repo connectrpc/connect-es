@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { MethodKind } from "@bufbuild/protobuf";
+
 /**
  * Creates headers for a gRPC request.
  */
@@ -34,5 +36,34 @@ export function createRequestHeader(
   // The gRPC-HTTP2 specification requires this - it flushes out proxies that
   // don't support HTTP trailers.
   result.set("Te", "trailers");
+  return result;
+}
+
+/**
+ * Creates headers for a gRPC request with compression.
+ */
+export function createRequestHeaderWithCompression(
+  methodKind: MethodKind,
+  useBinaryFormat: boolean,
+  timeoutMs: number | undefined,
+  userProvidedHeaders: HeadersInit | undefined,
+  acceptCompression: string[],
+  sendCompression: string | undefined
+): Headers {
+  const result = createRequestHeader(
+    useBinaryFormat,
+    timeoutMs,
+    userProvidedHeaders
+  );
+  let acceptEncodingField = "Accept-Encoding";
+  if (methodKind !== MethodKind.Unary) {
+    acceptEncodingField = "GRPC-" + acceptEncodingField;
+    if (sendCompression != undefined) {
+      result.set("Grpc-Encoding", sendCompression);
+    }
+  }
+  if (acceptCompression.length > 0) {
+    result.set(acceptEncodingField, acceptCompression.join(","));
+  }
   return result;
 }

@@ -31,12 +31,12 @@ import {
   UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
-  createRequestHeader,
+  createRequestHeaderWithCompression,
   endStreamFlag,
   endStreamFromJson,
   errorFromJson,
   trailerDemux,
-  validateResponse,
+  validateResponseWithCompression,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
@@ -49,7 +49,6 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
@@ -154,7 +153,7 @@ export function createConnectHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: connectCreateRequestHeaderWithCompression(
+            header: createRequestHeaderWithCompression(
               method.kind,
               useBinaryFormat,
               timeoutMs,
@@ -207,7 +206,7 @@ export function createConnectHttp2Transport(
             await end(stream);
             const [responseStatus, responseHeader] = await headerPromise;
             const { compression, isConnectUnaryError } =
-              connectValidateResponseWithCompression(
+              validateResponseWithCompression(
                 method.kind,
                 useBinaryFormat,
                 acceptCompression,
@@ -273,7 +272,7 @@ export function createConnectHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: connectCreateRequestHeaderWithCompression(
+          header: createRequestHeaderWithCompression(
             method.kind,
             useBinaryFormat,
             timeoutMs,
@@ -348,7 +347,7 @@ export function createConnectHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headersPromise;
-                const { compression } = connectValidateResponseWithCompression(
+                const { compression } = validateResponseWithCompression(
                   method.kind,
                   useBinaryFormat,
                   acceptCompression,
@@ -404,60 +403,5 @@ export function createConnectHttp2Transport(
         options.interceptors
       );
     },
-  };
-}
-
-export function connectCreateRequestHeaderWithCompression(
-  methodKind: MethodKind,
-  useBinaryFormat: boolean,
-  timeoutMs: number | undefined,
-  userProvidedHeaders: HeadersInit | undefined,
-  acceptCompression: string[],
-  sendCompression: string | undefined
-): Headers {
-  const result = createRequestHeader(
-    methodKind,
-    useBinaryFormat,
-    timeoutMs,
-    userProvidedHeaders
-  );
-  let acceptEncodingField = "Accept-Encoding";
-  if (methodKind != MethodKind.Unary) {
-    acceptEncodingField = "Connect-" + acceptEncodingField;
-    if (sendCompression != undefined) {
-      result.set("Connect-Content-Encoding", sendCompression);
-    }
-  }
-  if (acceptCompression.length > 0) {
-    result.set(acceptEncodingField, acceptCompression.join(","));
-  }
-  return result;
-}
-
-export function connectValidateResponseWithCompression(
-  methodKind: MethodKind,
-  useBinaryFormat: boolean,
-  acceptCompression: Compression[],
-  status: number,
-  headers: Headers
-): { compression: Compression | undefined; isConnectUnaryError: boolean } {
-  let compression: Compression | undefined;
-  const encodingField =
-    methodKind == MethodKind.Unary
-      ? "Content-Encoding"
-      : "Connect-Content-Encoding";
-  const encoding = headers.get(encodingField);
-  if (encoding != null && encoding.toLowerCase() !== "identity") {
-    compression = acceptCompression.find((c) => c.name === encoding);
-    if (!compression) {
-      throw new ConnectError(
-        `unsupported response encoding "${encoding}"`,
-        Code.InvalidArgument
-      );
-    }
-  }
-  return {
-    compression,
-    ...validateResponse(methodKind, useBinaryFormat, status, headers),
   };
 }

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { MethodKind } from "@bufbuild/protobuf";
+
 /**
  * Creates headers for a gRPC-web request.
  */
@@ -36,6 +38,35 @@ export function createRequestHeader(
   result.set("X-User-Agent", "@bufbuild/connect-web");
   if (timeoutMs !== undefined) {
     result.set("Grpc-Timeout", `${timeoutMs}m`);
+  }
+  return result;
+}
+
+/**
+ * Creates headers for a gRPC-web request with compression.
+ */
+export function createRequestHeaderWithCompression(
+  methodKind: MethodKind,
+  useBinaryFormat: boolean,
+  timeoutMs: number | undefined,
+  userProvidedHeaders: HeadersInit | undefined,
+  acceptCompression: string[],
+  sendCompression: string | undefined
+): Headers {
+  const result = createRequestHeader(
+    useBinaryFormat,
+    timeoutMs,
+    userProvidedHeaders
+  );
+  let acceptEncodingField = "Accept-Encoding";
+  if (methodKind !== MethodKind.Unary) {
+    acceptEncodingField = "GRPC-Web-" + acceptEncodingField;
+    if (sendCompression !== undefined) {
+      result.set("Grpc-Encoding", sendCompression);
+    }
+  }
+  if (acceptCompression.length > 0) {
+    result.set(acceptEncodingField, acceptCompression.join(","));
   }
   return result;
 }

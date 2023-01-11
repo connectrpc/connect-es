@@ -31,10 +31,12 @@ import {
   UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
+  createRequestHeaderWithCompression,
   endStreamFlag,
   endStreamFromJson,
   errorFromJson,
   trailerDemux,
+  validateResponseWithCompression,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
@@ -63,10 +65,6 @@ import { nodeHeaderToWebHeader } from "./private/web-header-to-node-headers.js";
 import { assert } from "./private/assert.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
-import {
-  connectCreateRequestHeaderWithCompression,
-  connectValidateResponseWithCompression,
-} from "./connect-http2-transport.js";
 import { getNodeRequest, makeNodeRequest } from "./private/node-request.js";
 
 export interface ConnectHttpTransportOptions {
@@ -161,7 +159,7 @@ export function createConnectHttpTransport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: connectCreateRequestHeaderWithCompression(
+            header: createRequestHeaderWithCompression(
               method.kind,
               useBinaryFormat,
               timeoutMs,
@@ -197,7 +195,7 @@ export function createConnectHttpTransport(
             );
 
             const { compression, isConnectUnaryError } =
-              connectValidateResponseWithCompression(
+              validateResponseWithCompression(
                 method.kind,
                 useBinaryFormat,
                 acceptCompression,
@@ -272,7 +270,7 @@ export function createConnectHttpTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: connectCreateRequestHeaderWithCompression(
+          header: createRequestHeaderWithCompression(
             method.kind,
             useBinaryFormat,
             timeoutMs,
@@ -336,7 +334,7 @@ export function createConnectHttpTransport(
                   typeof response.statusCode == "number",
                   "http1 client response is missing status code"
                 );
-                const { compression } = connectValidateResponseWithCompression(
+                const { compression } = validateResponseWithCompression(
                   method.kind,
                   useBinaryFormat,
                   acceptCompression,
