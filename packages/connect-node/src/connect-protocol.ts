@@ -235,7 +235,7 @@ export function createConnectProtocol(
                   Code.Internal,
                   undefined,
                   undefined,
-                  (e as Error).message
+                  e
                 );
               }
               return await endWithConnectUnaryError(

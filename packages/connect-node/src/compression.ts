@@ -86,7 +86,7 @@ function wrapZLibErrors<T>(
           Code.InvalidArgument,
           undefined,
           undefined,
-          code
+          e
         );
         break;
       default:
@@ -95,7 +95,7 @@ function wrapZLibErrors<T>(
           Code.Internal,
           undefined,
           undefined,
-          code
+          e
         );
         break;
     }

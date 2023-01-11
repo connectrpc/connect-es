@@ -70,7 +70,7 @@ export class ConnectError extends Error {
    * elided with the error message, the cause is specified here so that we don't
    * leak the underlying error, but instead make it available for logging.
    */
-  cause: unknown;
+  cause: unknown | undefined;
 
   /**
    * Create a new ConnectError.
@@ -79,19 +79,6 @@ export class ConnectError extends Error {
    * raise an error with details, and it is up to the protocol implementation
    * to encode and send the details along with error.
    */
-  constructor(
-    message: string,
-    code?: Code,
-    metadata?: HeadersInit,
-    outgoingDetails?: Message[]
-  );
-  constructor(
-    message: string,
-    code?: Code,
-    metadata?: HeadersInit,
-    outgoingDetails?: Message[],
-    cause?: unknown
-  );
   constructor(
     message: string,
     code: Code = Code.Unknown,
