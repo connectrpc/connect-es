@@ -19,7 +19,7 @@ import type {
 } from "@bufbuild/protobuf";
 import type { ConnectError } from "../connect-error.js";
 import { errorFromJson } from "./error-from-json.js";
-import { newParseError } from "../private/new-parse-error.js";
+import { newParseError } from "./new-parse-error.js";
 import { errorToJson } from "./error-to-json.js";
 import { appendHeaders } from "../http-headers.js";
 

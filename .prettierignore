@@ -1,5 +1,5 @@
 node_modules
-/packages/protobuf/src/google
+/packages/connect-core/src/protocol-grpc/gen/*.ts
 /packages/example/src/*_connectweb.ts
 /packages/example/src/*_pb.ts
 /packages/*/bin
