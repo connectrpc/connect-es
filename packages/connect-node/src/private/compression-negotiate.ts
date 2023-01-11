@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Compression } from "../compression.js";
-import { Code, ConnectError } from "@bufbuild/connect-core";
+import { Code, ConnectError, Compression } from "@bufbuild/connect-core";
 
 /**
  * compressionNegotiate validates the request encoding and determines

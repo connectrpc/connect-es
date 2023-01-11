@@ -13,41 +13,12 @@
 // limitations under the License.
 
 import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
-import { ReadableStream as NodeReadableStream } from "stream/web";
-
-// node >= v16 has an implementation for WHATWG streams, but doesn't expose
-// them in the global scope, nor globalThis.
-if (typeof globalThis.ReadableStream !== "function") {
-  globalThis.ReadableStream =
-    NodeReadableStream as unknown as typeof ReadableStream;
-}
-
-/**
- * Create a WHATWG ReadableStream from a Uint8Array.
- */
-function webReadableStreamFromBytes(
-  bytes: Uint8Array,
-  chunkSize = 2,
-  delay = 5
-) {
-  let offset = 0;
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      const end = Math.min(offset + chunkSize, bytes.byteLength);
-      controller.enqueue(bytes.slice(offset, end));
-      offset = end;
-      if (offset === bytes.length) {
-        controller.close();
-      }
-    },
-  });
-}
+import { createReadableByteStream } from "./whatwg-stream-helper.spec.js";
 
 describe("createEnvelopeReadableStream()", () => {
   it("reads empty stream", async () => {
     const reader = createEnvelopeReadableStream(
-      webReadableStreamFromBytes(new Uint8Array(0))
+      createReadableByteStream(new Uint8Array(0))
     ).getReader();
     const r = await reader.read();
     expect(r.done).toBeTrue();
@@ -69,7 +40,7 @@ describe("createEnvelopeReadableStream()", () => {
       },
     ];
     const reader = createEnvelopeReadableStream(
-      webReadableStreamFromBytes(encodeEnvelopes(...input))
+      createReadableByteStream(encodeEnvelopes(...input))
     ).getReader();
     for (const want of input) {
       const r = await reader.read();
@@ -133,7 +104,7 @@ describe("createEnvelopeReadableStream()", () => {
       },
     ];
     const reader = createEnvelopeReadableStream(
-      webReadableStreamFromBytes(encodeEnvelopes(...input))
+      createReadableByteStream(encodeEnvelopes(...input))
     ).getReader();
     for (const want of input) {
       const r = await reader.read();

@@ -26,6 +26,8 @@ import {
   UnaryRequest,
   UnaryResponse,
   Code,
+  Compression,
+  compressedFlag,
 } from "@bufbuild/connect-core";
 import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import {
@@ -54,12 +56,7 @@ import { end, readEnvelope, write } from "./private/io.js";
 import { assert } from "./private/assert.js";
 import { defer } from "./private/defer.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import {
-  compressedFlag,
-  Compression,
-  compressionBrotli,
-  compressionGzip,
-} from "./compression.js";
+import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 import {
   grpcWebCreateRequestHeaderWithCompression,

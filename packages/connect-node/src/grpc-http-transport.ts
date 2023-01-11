@@ -16,6 +16,8 @@ import * as http from "http";
 import * as https from "https";
 import {
   Code,
+  compressedFlag,
+  Compression,
   ConnectError,
   createClientMethodSerializers,
   createMethodUrl,
@@ -54,12 +56,7 @@ import {
   write,
 } from "./private/io.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import {
-  compressionGzip,
-  compressionBrotli,
-  Compression,
-  compressedFlag,
-} from "./compression.js";
+import { compressionGzip, compressionBrotli } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 import {
   grpcCreateRequestHeaderWithCompression,

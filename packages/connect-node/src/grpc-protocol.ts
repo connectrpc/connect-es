@@ -14,6 +14,8 @@
 
 import {
   Code,
+  compressedFlag,
+  Compression,
   ConnectError,
   connectErrorFromReason,
   encodeEnvelope,
@@ -43,12 +45,7 @@ import type * as http from "http";
 import type * as http2 from "http2";
 import { end, endWithHttpStatus, readEnvelope, write } from "./private/io.js";
 import { compressionNegotiate } from "./private/compression-negotiate.js";
-import {
-  compressedFlag,
-  Compression,
-  compressionBrotli,
-  compressionGzip,
-} from "./compression.js";
+import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 
 const messageFlag = 0b00000000;
@@ -104,10 +101,11 @@ export function createGrpcProtocol(
             const context: HandlerContext = {
               method: spec.method,
               service: spec.service,
-              requestHeader,
+              requestHeader: nodeHeaderToWebHeader(req.headers),
               responseHeader: grpcCreateResponseHeader(type.binary),
               responseTrailer: new Headers(),
             };
+
             const timeout = parseTimeout(requestHeader.get(grpcTimeoutHeader));
 
             if (timeout instanceof ConnectError) {

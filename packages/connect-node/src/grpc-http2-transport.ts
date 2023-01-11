@@ -14,6 +14,8 @@
 
 import {
   Code,
+  compressedFlag,
+  Compression,
   ConnectError,
   createClientMethodSerializers,
   createMethodUrl,
@@ -56,12 +58,7 @@ import {
 } from "./private/io.js";
 import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
-import {
-  compressedFlag,
-  Compression,
-  compressionBrotli,
-  compressionGzip,
-} from "./compression.js";
+import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 
 const messageFlag = 0b00000000;
