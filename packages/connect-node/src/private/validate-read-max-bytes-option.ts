@@ -29,7 +29,10 @@ export function validateReadMaxBytesOption(
     );
   }
   if (readMaxBytes > maxReadMaxBytes) {
-    throw new ConnectError("", Code.Internal);
+    throw new ConnectError(
+      `readMaxBytes ${readMaxBytes} is greater than the maximum allowable size.`,
+      Code.Internal
+    );
   }
   return readMaxBytes;
 }
