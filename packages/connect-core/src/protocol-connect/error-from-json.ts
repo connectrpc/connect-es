@@ -15,7 +15,7 @@
 import { JsonValue, protoBase64 } from "@bufbuild/protobuf";
 import { codeFromString } from "../code.js";
 import { ConnectError } from "../connect-error.js";
-import { newParseError } from "../private/new-parse-error.js";
+import { newParseError } from "./new-parse-error.js";
 
 /**
  * Parse a Connect error from a JSON value.
