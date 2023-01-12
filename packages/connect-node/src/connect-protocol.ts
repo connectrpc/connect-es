@@ -36,6 +36,7 @@ import {
   headerTimeout,
   headerProtocolVersion,
   protocolVersion,
+  trailerMux,
 } from "@bufbuild/connect-core/protocol-connect";
 import {
   BinaryReadOptions,
@@ -53,7 +54,6 @@ import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./private/web-header-to-node-headers.js";
-import { connectTrailerMux } from "./private/connect-trailer-mux.js";
 import type * as http from "http";
 import type * as http2 from "http2";
 import {
@@ -255,10 +255,7 @@ export function createConnectProtocol(
             res.writeHead(
               200,
               webHeaderToNodeHeaders(
-                connectTrailerMux(
-                  context.responseHeader,
-                  context.responseTrailer
-                )
+                trailerMux(context.responseHeader, context.responseTrailer)
               )
             );
             await write(res, responseBody);
@@ -800,7 +797,7 @@ async function endWithConnectUnaryError(
   compressMinBytes: number
 ): Promise<void> {
   const header = appendHeaders(
-    connectTrailerMux(context.responseHeader, context.responseTrailer),
+    trailerMux(context.responseHeader, context.responseTrailer),
     error.metadata
   );
   header.set(headerContentType, "application/json");
