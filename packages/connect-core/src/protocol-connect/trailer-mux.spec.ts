@@ -13,7 +13,12 @@
 // limitations under the License.
 
 import { trailerMux, trailerDemux } from "./trailer-mux.js";
-import { compare } from "./headers.spec.js";
+
+function listHeaderKeys(header: Headers): string[] {
+  const keys: string[] = [];
+  header.forEach((_, key) => keys.push(key));
+  return keys;
+}
 
 describe("trailer-mux", function () {
   let headers: Headers, trailers: Headers, combined: Headers;
@@ -32,32 +37,43 @@ describe("trailer-mux", function () {
   describe("muxing()", function () {
     it("should return an empty headers object when headers and trailers are empty", () => {
       const muxed = trailerMux(new Headers(), new Headers());
-      expect(compare(muxed, new Headers())).toBeTrue();
+      expect(listHeaderKeys(muxed)).toEqual([]);
     });
 
     it("should correctly mux headers and trailers", () => {
       const muxed = trailerMux(headers, trailers);
-      expect(compare(muxed, combined)).toBeTrue();
+
+      expect(listHeaderKeys(muxed)).toEqual(["content-type", "trailer-buf"]);
+      expect(muxed.get("Content-Type")).toBe("application/connect+json");
+      expect(muxed.get("Trailer-Buf")).toBe("buf.build");
     });
   });
 
   describe("demuxing()", function () {
     it("should return two empty header objects when the muxed object is empty", () => {
-      const demuxed = trailerDemux(new Headers());
-      expect(compare(demuxed[0], new Headers())).toBeTrue();
-      expect(compare(demuxed[1], new Headers())).toBeTrue();
+      const [gotHeader, gotTrailer] = trailerDemux(new Headers());
+
+      expect(listHeaderKeys(gotHeader)).toEqual([]);
+      expect(listHeaderKeys(gotTrailer)).toEqual([]);
     });
 
     it("should correctly demux headers and trailers", () => {
-      const demuxed = trailerDemux(combined);
-      expect(compare(demuxed[0], headers)).toBeTrue();
-      expect(compare(demuxed[1], trailers)).toBeTrue();
+      const [gotHeader, gotTrailer] = trailerDemux(combined);
+
+      expect(listHeaderKeys(gotHeader)).toEqual(["content-type"]);
+      expect(gotHeader.get("Content-Type")).toBe("application/connect+json");
+
+      expect(listHeaderKeys(gotTrailer)).toEqual(["buf"]);
+      expect(gotTrailer.get("Buf")).toBe("buf.build");
     });
 
     it("should return an empty trailers object if there are no trailers", () => {
-      const demuxed = trailerDemux(headers);
-      expect(compare(demuxed[0], headers)).toBeTrue();
-      expect(compare(demuxed[1], new Headers())).toBeTrue();
+      const [gotHeader, gotTrailer] = trailerDemux(headers);
+
+      expect(listHeaderKeys(gotHeader)).toEqual(["content-type"]);
+      expect(gotHeader.get("Content-Type")).toBe("application/connect+json");
+
+      expect(listHeaderKeys(gotTrailer)).toEqual([]);
     });
   });
 });
