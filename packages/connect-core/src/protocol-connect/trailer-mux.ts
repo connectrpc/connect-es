@@ -26,7 +26,7 @@ export function trailerDemux(
     t = new Headers();
   header.forEach((value, key) => {
     if (key.toLowerCase().startsWith("trailer-")) {
-      t.set(key.replace(/^[Tt]railer-/, ""), value);
+      t.set(key.substring(8), value);
     } else {
       h.set(key, value);
     }
