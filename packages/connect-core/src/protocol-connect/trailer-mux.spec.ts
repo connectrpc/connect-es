@@ -14,6 +14,16 @@
 
 import { trailerMux, trailerDemux } from "./trailer-mux.js";
 
+// Node17 and below treats header keys as case-sensitive, so the keys need to
+// be all lowercased for correct comparison.
+function lowerCaseKeys(headers: Headers): Headers {
+  const lower = new Headers();
+  headers.forEach((value, key) => {
+    lower.append(key.toLowerCase(), value);
+  });
+  return lower;
+}
+
 describe("trailer-mux", function () {
   let headers: Headers, trailers: Headers, combined: Headers;
   beforeEach(() => {
@@ -38,7 +48,7 @@ describe("trailer-mux", function () {
 
     it("should correctly mux headers and trailers", () => {
       const muxed = trailerMux(headers, trailers);
-      expect(muxed).toEqual(combined);
+      expect(muxed).toEqual(lowerCaseKeys(combined));
     });
   });
 
@@ -52,12 +62,15 @@ describe("trailer-mux", function () {
 
     it("should correctly demux headers and trailers", () => {
       const demuxed = trailerDemux(combined);
-      expect(demuxed).toEqual([headers, trailers]);
+      expect(demuxed).toEqual([
+        lowerCaseKeys(headers),
+        lowerCaseKeys(trailers),
+      ]);
     });
 
     it("should return an empty trailers object if there are no trailers", () => {
       const demuxed = trailerDemux(headers);
-      expect(demuxed[0]).toEqual(new Headers(headers));
+      expect(demuxed[0]).toEqual(new Headers(lowerCaseKeys(headers)));
       expect(demuxed[1]).toEqual(new Headers());
     });
   });
