@@ -13,6 +13,13 @@
 // limitations under the License.
 
 import { MethodKind } from "@bufbuild/protobuf";
+import type { Compression } from "../compression.js";
+import {
+  headerStreamAcceptEncoding,
+  headerStreamEncoding,
+  headerUnaryAcceptEncoding,
+  headerUnaryEncoding,
+} from "./headers.js";
 import { protocolVersion } from "./version.js";
 
 /**
@@ -35,5 +42,44 @@ export function createRequestHeader(
     result.set("Connect-Timeout-Ms", `${timeoutMs}`);
   }
   result.set("Connect-Protocol-Version", protocolVersion);
+  return result;
+}
+
+/**
+ * Creates headers for a Connect request with compression.
+ *
+ * Note that we always set the Content-Encoding header for unary methods.
+ * It is up to the caller to decide whether to apply compression - and remove
+ * the header if compression is not used, for example because the payload is
+ * too small to make compression effective.
+ */
+export function createRequestHeaderWithCompression(
+  methodKind: MethodKind,
+  useBinaryFormat: boolean,
+  timeoutMs: number | undefined,
+  userProvidedHeaders: HeadersInit | undefined,
+  acceptCompression: Compression[],
+  sendCompression: Compression | undefined
+): Headers {
+  const result = createRequestHeader(
+    methodKind,
+    useBinaryFormat,
+    timeoutMs,
+    userProvidedHeaders
+  );
+  if (sendCompression != undefined) {
+    const name =
+      methodKind == MethodKind.Unary
+        ? headerUnaryEncoding
+        : headerStreamEncoding;
+    result.set(name, sendCompression.name);
+  }
+  if (acceptCompression.length > 0) {
+    const name =
+      methodKind == MethodKind.Unary
+        ? headerUnaryAcceptEncoding
+        : headerStreamAcceptEncoding;
+    result.set(name, acceptCompression.map((c) => c.name).join(","));
+  }
   return result;
 }

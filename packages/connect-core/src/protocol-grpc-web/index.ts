@@ -12,9 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { createRequestHeader } from "./create-request-header.js";
+export {
+  createRequestHeader,
+  createRequestHeaderWithCompression,
+} from "./create-request-header.js";
 export { parseContentType } from "./parse-content-type.js";
-export { validateResponse } from "./validate-response.js";
+export {
+  validateResponse,
+  validateResponseWithCompression,
+} from "./validate-response.js";
 export { trailerFlag, trailerParse, trailerSerialize } from "./trailer.js";
 export * from "./headers.js";
 export {

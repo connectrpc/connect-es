@@ -13,10 +13,16 @@
 // limitations under the License.
 
 export { codeFromHttpStatus } from "./http-status.js";
-export { createRequestHeader } from "./create-request-header.js";
+export {
+  createRequestHeader,
+  createRequestHeaderWithCompression,
+} from "./create-request-header.js";
 export { parseContentType } from "./parse-content-type.js";
 export { parseTimeout } from "./parse-timeout.js";
 export { findTrailerError, setTrailerStatus } from "./trailer-status.js";
-export { validateResponse } from "./validate-response.js";
+export {
+  validateResponse,
+  validateResponseWithCompression,
+} from "./validate-response.js";
 export { validateTrailer } from "./validate-trailer.js";
 export * from "./headers.js";

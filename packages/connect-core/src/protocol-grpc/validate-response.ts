@@ -17,6 +17,8 @@ import { parseContentType } from "./parse-content-type.js";
 import { ConnectError } from "../connect-error.js";
 import { findTrailerError } from "./trailer-status.js";
 import { Code } from "../code.js";
+import type { Compression } from "../compression.js";
+import { headerEncoding } from "./headers.js";
 
 /**
  * Validates response status and header for the gRPC protocol.
@@ -48,4 +50,33 @@ export function validateResponse(
   if (err) {
     throw err;
   }
+}
+
+/**
+ * Validates response status and header for the gRPC protocol.
+ * This function is identical to validateResponse(), but also verifies
+ * that a given encoding header is acceptable.
+ */
+export function validateResponseWithCompression(
+  useBinaryFormat: boolean,
+  acceptCompression: Compression[],
+  status: number,
+  headers: Headers
+): { compression: Compression | undefined } {
+  validateResponse(useBinaryFormat, status, headers);
+
+  let compression: Compression | undefined;
+  const encoding = headers.get(headerEncoding);
+  if (encoding !== null && encoding.toLowerCase() !== "identity") {
+    compression = acceptCompression.find((c) => c.name === encoding);
+    if (!compression) {
+      throw new ConnectError(
+        `unsupported response encoding "${encoding}"`,
+        Code.InvalidArgument
+      );
+    }
+  }
+  return {
+    compression,
+  };
 }
