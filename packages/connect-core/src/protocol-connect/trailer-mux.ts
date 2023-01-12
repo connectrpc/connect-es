@@ -16,9 +16,31 @@
  * In unary RPCs, Connect transports trailing metadata as response header
  * fields, prefixed with "trailer-".
  *
+ * This function demuxes headers and trailers into two separate Headers
+ * objects.
+ */
+export function trailerDemux(
+  header: Headers
+): [header: Headers, trailer: Headers] {
+  const h = new Headers(),
+    t = new Headers();
+  header.forEach((value, key) => {
+    if (key.toLowerCase().startsWith("trailer-")) {
+      t.set(key.substring(8), value);
+    } else {
+      h.set(key, value);
+    }
+  });
+  return [h, t];
+}
+
+/**
+ * In unary RPCs, Connect transports trailing metadata as response header
+ * fields, prefixed with "trailer-".
+ *
  * This function muxes a header and a trailer into a single Headers object.
  */
-export function connectTrailerMux(header: Headers, trailer: Headers): Headers {
+export function trailerMux(header: Headers, trailer: Headers): Headers {
   const h = new Headers(header);
   trailer.forEach((value, key) => {
     h.set(`trailer-${key}`, value);
