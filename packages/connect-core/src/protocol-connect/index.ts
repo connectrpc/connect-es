@@ -26,10 +26,10 @@ export { errorFromJson } from "./error-from-json.js";
 export { errorToJson } from "./error-to-json.js";
 export { parseContentType } from "./parse-content-type.js";
 export { parseTimeout } from "./parse-timeout.js";
-export { trailerDemux } from "./trailer-demux.js";
 export {
   validateResponse,
   validateResponseWithCompression,
 } from "./validate-response.js";
+export { trailerMux, trailerDemux } from "./trailer-mux.js";
 export * from "./headers.js";
 export { protocolVersion } from "./version.js";
