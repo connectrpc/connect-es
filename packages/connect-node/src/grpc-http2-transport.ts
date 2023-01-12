@@ -420,7 +420,7 @@ export function grpcCreateRequestHeaderWithCompression(
     timeoutMs,
     userProvidedHeaders
   );
-  if (sendCompression != undefined) {
+  if (sendCompression !== undefined) {
     result.set(headerEncoding, sendCompression);
   }
   if (acceptCompression.length > 0) {
