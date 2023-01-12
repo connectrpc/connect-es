@@ -150,6 +150,26 @@ describe("headers from headers()", function () {
       )
     ).toBeTrue();
 
+    expect(
+      compare(
+        headers,
+        new Headers({
+          "content-type": "application/connect",
+          "x-custom": "test",
+        })
+      )
+    ).toBeFalse();
+
+    expect(
+      compare(
+        new Headers({
+          "content-type": "application/connect",
+          "x-custom": "test",
+        }),
+        headers
+      )
+    ).toBeFalse();
+
     expect(compare(headers, new Headers())).toBeFalse();
     expect(compare(new Headers(), headers)).toBeFalse();
     expect(compare(headers, headers)).toBeTrue();
