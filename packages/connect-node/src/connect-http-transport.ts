@@ -165,7 +165,7 @@ export function createConnectHttpTransport(
               timeoutMs,
               header,
               acceptCompression.map((c) => c.name),
-              options.sendCompression?.name
+              options.sendCompression
             ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
@@ -276,7 +276,7 @@ export function createConnectHttpTransport(
             timeoutMs,
             header,
             acceptCompression.map((c) => c.name),
-            options.sendCompression?.name
+            options.sendCompression
           ),
         },
         async (req: StreamingRequest<I, O>) => {

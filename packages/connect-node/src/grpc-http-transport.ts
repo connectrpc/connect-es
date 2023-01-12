@@ -33,6 +33,7 @@ import {
 } from "@bufbuild/connect-core";
 import {
   createRequestHeaderWithCompression,
+  headerEncoding,
   validateResponseWithCompression,
   validateTrailer,
 } from "@bufbuild/connect-core/protocol-grpc";
@@ -154,12 +155,11 @@ export function createGrpcHttpTransport(
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: createRequestHeaderWithCompression(
-              method.kind,
               useBinaryFormat,
               timeoutMs,
               header,
               acceptCompression.map((c) => c.name),
-              options.sendCompression?.name
+              options.sendCompression
             ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
@@ -173,9 +173,8 @@ export function createGrpcHttpTransport(
             ) {
               body = await options.sendCompression.compress(body);
               flags = compressedFlag;
-              req.header.set("Grpc-Encoding", options.sendCompression.name);
             } else {
-              req.header.delete("Grpc-Encoding");
+              req.header.delete(String(headerEncoding));
             }
 
             const envelope = encodeEnvelope(flags, body);
@@ -271,12 +270,11 @@ export function createGrpcHttpTransport(
           },
           signal: signal ?? new AbortController().signal,
           header: createRequestHeaderWithCompression(
-            method.kind,
             useBinaryFormat,
             timeoutMs,
             header,
             acceptCompression.map((c) => c.name),
-            options.sendCompression?.name
+            options.sendCompression
           ),
         },
         async (req: StreamingRequest<I, O>) => {

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
-import { headerAcceptEncoding, headerEncoding } from "./headers";
+import type { Compression } from "../compression.js";
+import { headerAcceptEncoding, headerEncoding } from "./headers.js";
 
 /**
  * Creates headers for a gRPC-web request.
@@ -47,12 +47,11 @@ export function createRequestHeader(
  * Creates headers for a gRPC-web request with compression.
  */
 export function createRequestHeaderWithCompression(
-  methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: string[],
-  sendCompression: string | undefined
+  sendCompression: Compression | undefined
 ): Headers {
   const result = createRequestHeader(
     useBinaryFormat,
@@ -60,7 +59,7 @@ export function createRequestHeaderWithCompression(
     userProvidedHeaders
   );
   if (sendCompression !== undefined) {
-    result.set(headerEncoding, sendCompression);
+    result.set(headerEncoding, sendCompression.name);
   }
   if (acceptCompression.length > 0) {
     result.set(headerAcceptEncoding, acceptCompression.join(","));

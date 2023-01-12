@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { MethodKind } from "@bufbuild/protobuf";
+import type { Compression } from "../compression.js";
 import {
   headerStreamAcceptEncoding,
   headerStreamEncoding,
@@ -59,7 +60,7 @@ export function createRequestHeaderWithCompression(
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: string[],
-  sendCompression: string | undefined
+  sendCompression: Compression | undefined
 ): Headers {
   const result = createRequestHeader(
     methodKind,
@@ -72,7 +73,7 @@ export function createRequestHeaderWithCompression(
       methodKind == MethodKind.Unary
         ? headerUnaryEncoding
         : headerStreamEncoding;
-    result.set(name, sendCompression);
+    result.set(name, sendCompression.name);
   }
   if (acceptCompression.length > 0) {
     const name =

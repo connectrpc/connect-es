@@ -151,12 +151,11 @@ export function createGrpcHttp2Transport(
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
             header: createRequestHeaderWithCompression(
-              method.kind,
               useBinaryFormat,
               timeoutMs,
               header,
               acceptCompression.map((c) => c.name),
-              options.sendCompression?.name
+              options.sendCompression
             ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
@@ -283,12 +282,11 @@ export function createGrpcHttp2Transport(
           },
           signal: signal ?? new AbortController().signal,
           header: createRequestHeaderWithCompression(
-            method.kind,
             useBinaryFormat,
             timeoutMs,
             header,
             acceptCompression.map((c) => c.name),
-            options.sendCompression?.name
+            options.sendCompression
           ),
         },
         async (req: StreamingRequest<I, O>) => {

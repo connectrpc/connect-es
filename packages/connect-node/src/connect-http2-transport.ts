@@ -37,6 +37,7 @@ import {
   errorFromJson,
   trailerDemux,
   headerUnaryEncoding,
+  validateResponseWithCompression,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
@@ -159,7 +160,7 @@ export function createConnectHttp2Transport(
               timeoutMs,
               header,
               acceptCompression.map((c) => c.name),
-              options.sendCompression?.name
+              options.sendCompression
             ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
@@ -279,7 +280,7 @@ export function createConnectHttp2Transport(
             timeoutMs,
             header,
             acceptCompression.map((c) => c.name),
-            options.sendCompression?.name
+            options.sendCompression
           ),
         },
         async (req: StreamingRequest<I, O>) => {
