@@ -37,6 +37,10 @@ import {
   errorFromJson,
   trailerDemux,
   validateResponse,
+  headerStreamAcceptEncoding,
+  headerStreamEncoding,
+  headerUnaryAcceptEncoding,
+  headerUnaryEncoding,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
@@ -421,15 +425,19 @@ export function connectCreateRequestHeaderWithCompression(
     timeoutMs,
     userProvidedHeaders
   );
-  let acceptEncodingField = "Accept-Encoding";
-  if (methodKind != MethodKind.Unary) {
-    acceptEncodingField = "Connect-" + acceptEncodingField;
-    if (sendCompression != undefined) {
-      result.set("Connect-Content-Encoding", sendCompression);
-    }
+  if (sendCompression != undefined) {
+    const name =
+      methodKind == MethodKind.Unary
+        ? headerUnaryEncoding
+        : headerStreamEncoding;
+    result.set(name, sendCompression);
   }
   if (acceptCompression.length > 0) {
-    result.set(acceptEncodingField, acceptCompression.join(","));
+    const name =
+      methodKind == MethodKind.Unary
+        ? headerUnaryAcceptEncoding
+        : headerStreamAcceptEncoding;
+    result.set(name, acceptCompression.join(","));
   }
   return result;
 }
@@ -442,11 +450,9 @@ export function connectValidateResponseWithCompression(
   headers: Headers
 ): { compression: Compression | undefined; isConnectUnaryError: boolean } {
   let compression: Compression | undefined;
-  const encodingField =
-    methodKind == MethodKind.Unary
-      ? "Content-Encoding"
-      : "Connect-Content-Encoding";
-  const encoding = headers.get(encodingField);
+  const encoding = headers.get(
+    methodKind == MethodKind.Unary ? headerUnaryEncoding : headerStreamEncoding
+  );
   if (encoding != null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);
     if (!compression) {
