@@ -23,3 +23,8 @@ export {
 } from "./validate-response.js";
 export { trailerFlag, trailerParse, trailerSerialize } from "./trailer.js";
 export * from "./headers.js";
+export {
+  parseTimeout,
+  setTrailerStatus,
+  validateTrailer,
+} from "../protocol-grpc/index.js";

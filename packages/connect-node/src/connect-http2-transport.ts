@@ -36,7 +36,7 @@ import {
   endStreamFromJson,
   errorFromJson,
   trailerDemux,
-  validateResponseWithCompression,
+  headerUnaryEncoding,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
@@ -186,9 +186,10 @@ export function createConnectHttp2Transport(
               requestBody.length >= compressMinBytes
             ) {
               requestBody = await options.sendCompression.compress(requestBody);
-              req.header.set("Content-Encoding", options.sendCompression.name);
             } else {
-              req.header.delete("Content-Encoding");
+              // We did not apply compression, so we have to remove the Content-Encoding
+              // header that may have been set.
+              req.header.delete(headerUnaryEncoding);
             }
 
             const stream = session.request(

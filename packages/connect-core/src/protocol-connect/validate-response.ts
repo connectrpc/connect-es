@@ -18,6 +18,7 @@ import { parseContentType } from "./parse-content-type.js";
 import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
 import type { Compression } from "../compression.js";
+import { headerUnaryEncoding, headerStreamEncoding } from "./headers.js";
 
 /**
  * Validates response status and header for the Connect protocol.
@@ -66,11 +67,9 @@ export function validateResponseWithCompression(
   headers: Headers
 ): { compression: Compression | undefined; isConnectUnaryError: boolean } {
   let compression: Compression | undefined;
-  const encodingField =
-    methodKind == MethodKind.Unary
-      ? "Content-Encoding"
-      : "Connect-Content-Encoding";
-  const encoding = headers.get(encodingField);
+  const encoding = headers.get(
+    methodKind == MethodKind.Unary ? headerUnaryEncoding : headerStreamEncoding
+  );
   if (encoding != null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);
     if (!compression) {

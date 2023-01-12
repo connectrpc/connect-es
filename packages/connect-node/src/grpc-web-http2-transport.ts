@@ -29,7 +29,6 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
-import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import {
   createRequestHeaderWithCompression,
   trailerParse,
@@ -449,28 +448,3 @@ export function createGrpcWebHttp2Transport(
     },
   };
 }
-
-// export function grpcWebValidateResponseWithCompression(
-//   useBinaryFormat: boolean,
-//   acceptCompression: Compression[],
-//   status: number,
-//   headers: Headers
-// ): { compression: Compression | undefined } {
-//   validateResponse(useBinaryFormat, status, headers);
-
-//   let compression: Compression | undefined;
-//   const encodingField = "Grpc-Encoding";
-//   const encoding = headers.get(encodingField);
-//   if (encoding !== null && encoding.toLowerCase() !== "identity") {
-//     compression = acceptCompression.find((c) => c.name === encoding);
-//     if (!compression) {
-//       throw new ConnectError(
-//         `unsupported response encoding "${encoding}"`,
-//         Code.InvalidArgument
-//       );
-//     }
-//   }
-//   return {
-//     compression,
-//   };
-// }

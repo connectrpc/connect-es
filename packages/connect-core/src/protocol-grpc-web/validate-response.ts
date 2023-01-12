@@ -18,6 +18,7 @@ import { findTrailerError } from "../protocol-grpc/trailer-status.js";
 import { Code } from "../code.js";
 import { parseContentType } from "./parse-content-type.js";
 import type { Compression } from "../compression.js";
+import { headerEncoding } from "./headers.js";
 
 /**
  * Validates response status and header for the gRPC-web protocol.
@@ -66,8 +67,7 @@ export function validateResponseWithCompression(
   validateResponse(useBinaryFormat, status, headers);
 
   let compression: Compression | undefined;
-  const encodingField = "Grpc-Encoding";
-  const encoding = headers.get(encodingField);
+  const encoding = headers.get(headerEncoding);
   if (encoding !== null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);
     if (!compression) {

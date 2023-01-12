@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { MethodKind } from "@bufbuild/protobuf";
+import { headerAcceptEncoding, headerEncoding } from "./headers";
 
 /**
  * Creates headers for a gRPC-web request.
@@ -58,15 +59,11 @@ export function createRequestHeaderWithCompression(
     timeoutMs,
     userProvidedHeaders
   );
-  let acceptEncodingField = "Accept-Encoding";
-  if (methodKind !== MethodKind.Unary) {
-    acceptEncodingField = "GRPC-Web-" + acceptEncodingField;
-    if (sendCompression !== undefined) {
-      result.set("Grpc-Encoding", sendCompression);
-    }
+  if (sendCompression !== undefined) {
+    result.set(headerEncoding, sendCompression);
   }
   if (acceptCompression.length > 0) {
-    result.set(acceptEncodingField, acceptCompression.join(","));
+    result.set(headerAcceptEncoding, acceptCompression.join(","));
   }
   return result;
 }

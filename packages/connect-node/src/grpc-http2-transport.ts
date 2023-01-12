@@ -184,9 +184,6 @@ export function createGrpcHttp2Transport(
             ) {
               body = await options.sendCompression.compress(body);
               flag = compressedFlag;
-              req.header.set("Grpc-Encoding", options.sendCompression.name);
-            } else {
-              req.header.delete("Grpc-Encoding");
             }
 
             const stream = session.request(
