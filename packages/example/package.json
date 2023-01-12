@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "buf generate",
-    "start": "esbuild src/main.ts --servedir=www --outdir=www/js --bundle",
+    "buf:generate": "buf generate buf.build/bufbuild/eliza",
+    "client": "esbuild src/main.ts --servedir=www --outdir=www/js --bundle",
+    "server": "echo \"no server yet\"",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

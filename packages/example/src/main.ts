@@ -16,7 +16,7 @@ import {
   createConnectTransport,
   createPromiseClient,
 } from "@bufbuild/connect-web";
-import { ElizaService } from "./eliza_connectweb";
+import { ElizaService } from "./gen/buf/connect/demo/eliza/v1/eliza_connectweb";
 
 const root = document.querySelector<HTMLElement>("#root");
 const input = document.createElement("input");
