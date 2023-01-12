@@ -29,14 +29,16 @@ import {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
-import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import {
   createRequestHeader,
-  trailerParse,
+  headerAcceptEncoding,
+  headerEncoding,
   trailerFlag,
+  trailerParse,
   validateResponse,
+  validateTrailer,
 } from "@bufbuild/connect-core/protocol-grpc-web";
-import {
+import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
@@ -464,15 +466,11 @@ export function grpcWebCreateRequestHeaderWithCompression(
     timeoutMs,
     userProvidedHeaders
   );
-  let acceptEncodingField = "Accept-Encoding";
-  if (methodKind !== MethodKind.Unary) {
-    acceptEncodingField = "GRPC-Web-" + acceptEncodingField;
-    if (sendCompression !== undefined) {
-      result.set("Grpc-Encoding", sendCompression);
-    }
+  if (sendCompression !== undefined) {
+    result.set(headerEncoding, sendCompression);
   }
   if (acceptCompression.length > 0) {
-    result.set(acceptEncodingField, acceptCompression.join(","));
+    result.set(headerAcceptEncoding, acceptCompression.join(","));
   }
   return result;
 }
@@ -486,8 +484,7 @@ export function grpcWebValidateResponseWithCompression(
   validateResponse(useBinaryFormat, status, headers);
 
   let compression: Compression | undefined;
-  const encodingField = "Grpc-Encoding";
-  const encoding = headers.get(encodingField);
+  const encoding = headers.get(headerEncoding);
   if (encoding !== null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);
     if (!compression) {
