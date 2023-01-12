@@ -37,6 +37,10 @@ import {
   errorFromJson,
   trailerDemux,
   validateResponse,
+  headerStreamAcceptEncoding,
+  headerStreamEncoding,
+  headerUnaryAcceptEncoding,
+  headerUnaryEncoding,
 } from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
@@ -187,9 +191,10 @@ export function createConnectHttp2Transport(
               requestBody.length >= compressMinBytes
             ) {
               requestBody = await options.sendCompression.compress(requestBody);
-              req.header.set("Content-Encoding", options.sendCompression.name);
             } else {
-              req.header.delete("Content-Encoding");
+              // We did not apply compression, so we have to remove the Content-Encoding
+              // header that may have been set.
+              req.header.delete(headerUnaryEncoding);
             }
 
             const stream = session.request(
@@ -407,6 +412,14 @@ export function createConnectHttp2Transport(
   };
 }
 
+/**
+ * Creates headers for a Connect request with compression.
+ *
+ * Note that we always set the Content-Encoding header for unary methods.
+ * It is up to the caller to decide whether to apply compression - and remove
+ * the header if compression is not used, for example because the payload is
+ * too small to make compression effective.
+ */
 export function connectCreateRequestHeaderWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
@@ -421,15 +434,19 @@ export function connectCreateRequestHeaderWithCompression(
     timeoutMs,
     userProvidedHeaders
   );
-  let acceptEncodingField = "Accept-Encoding";
-  if (methodKind != MethodKind.Unary) {
-    acceptEncodingField = "Connect-" + acceptEncodingField;
-    if (sendCompression != undefined) {
-      result.set("Connect-Content-Encoding", sendCompression);
-    }
+  if (sendCompression != undefined) {
+    const name =
+      methodKind == MethodKind.Unary
+        ? headerUnaryEncoding
+        : headerStreamEncoding;
+    result.set(name, sendCompression);
   }
   if (acceptCompression.length > 0) {
-    result.set(acceptEncodingField, acceptCompression.join(","));
+    const name =
+      methodKind == MethodKind.Unary
+        ? headerUnaryAcceptEncoding
+        : headerStreamAcceptEncoding;
+    result.set(name, acceptCompression.join(","));
   }
   return result;
 }
@@ -442,11 +459,9 @@ export function connectValidateResponseWithCompression(
   headers: Headers
 ): { compression: Compression | undefined; isConnectUnaryError: boolean } {
   let compression: Compression | undefined;
-  const encodingField =
-    methodKind == MethodKind.Unary
-      ? "Content-Encoding"
-      : "Connect-Content-Encoding";
-  const encoding = headers.get(encodingField);
+  const encoding = headers.get(
+    methodKind == MethodKind.Unary ? headerUnaryEncoding : headerStreamEncoding
+  );
   if (encoding != null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);
     if (!compression) {

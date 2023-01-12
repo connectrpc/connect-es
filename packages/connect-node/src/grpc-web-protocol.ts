@@ -27,8 +27,6 @@ import {
   headerAcceptEncoding,
   headerContentType,
   headerTimeout,
-} from "@bufbuild/connect-core/protocol-grpc";
-import {
   parseContentType,
   trailerFlag,
   trailerSerialize,
