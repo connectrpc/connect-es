@@ -338,7 +338,7 @@ export function createGrpcWebHttpTransport(
                 let flags = 0;
                 let body = serialize(normalize(message));
                 if (
-                  options.sendCompression &&
+                  options.sendCompression !== undefined &&
                   body.length >= compressMinBytes
                 ) {
                   flags = flags | compressedFlag;
