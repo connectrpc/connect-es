@@ -13,65 +13,51 @@
 // limitations under the License.
 
 import { trailerMux, trailerDemux } from "./trailer-mux.js";
-
-// Node17 and below treats header keys as case-sensitive, so the keys need to
-// be all lowercased for correct comparison.
-function lowerCaseKeys(headers: Headers): Headers {
-  const lower = new Headers();
-  headers.forEach((value, key) => {
-    lower.append(key.toLowerCase(), value);
-  });
-  return lower;
-}
+import { compare } from "./headers.spec.js";
 
 describe("trailer-mux", function () {
   let headers: Headers, trailers: Headers, combined: Headers;
   beforeEach(() => {
     headers = new Headers({
       "Content-Type": "application/connect+json",
-      "X-Custom-Header": "A custom header",
     });
     trailers = new Headers({
       Buf: "buf.build",
     });
     combined = new Headers({
       "Content-Type": "application/connect+json",
-      "X-Custom-Header": "A custom header",
       "Trailer-Buf": "buf.build",
     });
   });
   describe("muxing()", function () {
     it("should return an empty headers object when headers and trailers are empty", () => {
       const muxed = trailerMux(new Headers(), new Headers());
-      expect(muxed).toEqual(new Headers());
+      expect(compare(muxed, new Headers())).toBeTrue();
     });
 
     it("should correctly mux headers and trailers", () => {
       const muxed = trailerMux(headers, trailers);
-      expect(muxed).toEqual(lowerCaseKeys(combined));
+      expect(compare(muxed, combined)).toBeTrue();
     });
   });
 
   describe("demuxing()", function () {
     it("should return two empty header objects when the muxed object is empty", () => {
-      expect(trailerDemux(new Headers())).toEqual([
-        new Headers(),
-        new Headers(),
-      ]);
+      const demuxed = trailerDemux(new Headers());
+      expect(compare(demuxed[0], new Headers())).toBeTrue();
+      expect(compare(demuxed[1], new Headers())).toBeTrue();
     });
 
     it("should correctly demux headers and trailers", () => {
       const demuxed = trailerDemux(combined);
-      expect(demuxed).toEqual([
-        lowerCaseKeys(headers),
-        lowerCaseKeys(trailers),
-      ]);
+      expect(compare(demuxed[0], headers)).toBeTrue();
+      expect(compare(demuxed[1], trailers)).toBeTrue();
     });
 
     it("should return an empty trailers object if there are no trailers", () => {
       const demuxed = trailerDemux(headers);
-      expect(demuxed[0]).toEqual(new Headers(lowerCaseKeys(headers)));
-      expect(demuxed[1]).toEqual(new Headers());
+      expect(compare(demuxed[0], headers)).toBeTrue();
+      expect(compare(demuxed[1], new Headers())).toBeTrue();
     });
   });
 });
