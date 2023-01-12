@@ -52,6 +52,11 @@ export function validateResponse(
   }
 }
 
+/**
+ * Validates response status and header for the gRPC protocol.
+ * This function is identical to validateResponse(), but also verifies
+ * that a given encoding header is acceptable.
+ */
 export function validateResponseWithCompression(
   useBinaryFormat: boolean,
   acceptCompression: Compression[],

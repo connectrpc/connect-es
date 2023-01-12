@@ -158,7 +158,7 @@ export function createGrpcHttpTransport(
               useBinaryFormat,
               timeoutMs,
               header,
-              acceptCompression.map((c) => c.name),
+              acceptCompression,
               options.sendCompression
             ),
             message: normalize(message),
@@ -273,7 +273,7 @@ export function createGrpcHttpTransport(
             useBinaryFormat,
             timeoutMs,
             header,
-            acceptCompression.map((c) => c.name),
+            acceptCompression,
             options.sendCompression
           ),
         },

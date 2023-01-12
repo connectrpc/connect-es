@@ -59,6 +59,11 @@ export function validateResponse(
   return { isConnectUnaryError: false };
 }
 
+/**
+ * Validates response status and header for the Connect protocol.
+ * This function is identical to validateResponse(), but also verifies
+ * that a given encoding header is acceptable.
+ */
 export function validateResponseWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,

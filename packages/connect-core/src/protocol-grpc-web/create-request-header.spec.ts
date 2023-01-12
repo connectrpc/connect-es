@@ -19,10 +19,20 @@ import {
 } from "./create-request-header.js";
 import { headerEncoding, headerAcceptEncoding } from "./headers.js";
 
+function listHeaderKeys(header: Headers): string[] {
+  const keys: string[] = [];
+  header.forEach((_, key) => keys.push(key));
+  return keys;
+}
+
 describe("createRequestHeader", () => {
   it("should create request headers", () => {
     const headers = createRequestHeader(true, undefined, undefined);
-    expect(headers instanceof Headers).toBe(true);
+    expect(listHeaderKeys(headers)).toEqual([
+      "content-type",
+      "x-grpc-web",
+      "x-user-agent",
+    ]);
     expect(headers.get("Content-Type")).toBe("application/grpc-web+proto");
     expect(headers.get("X-User-Agent")).toBe("@bufbuild/connect-web");
     expect(headers.get("X-Grpc-Web")).toBe("1");
@@ -30,7 +40,12 @@ describe("createRequestHeader", () => {
 
   it("should create request headers with timeout", () => {
     const headers = createRequestHeader(true, 10, undefined);
-    expect(headers instanceof Headers).toBe(true);
+    expect(listHeaderKeys(headers)).toEqual([
+      "content-type",
+      "grpc-timeout",
+      "x-grpc-web",
+      "x-user-agent",
+    ]);
     expect(headers.get("Grpc-Timeout")).toBe("10m");
   });
 
@@ -45,10 +60,16 @@ describe("createRequestHeader", () => {
       true,
       undefined,
       undefined,
-      [compressionMock.name],
+      [compressionMock],
       compressionMock
     );
-    expect(headers instanceof Headers).toBe(true);
+    expect(listHeaderKeys(headers)).toEqual([
+      "content-type",
+      "grpc-accept-encoding",
+      "grpc-encoding",
+      "x-grpc-web",
+      "x-user-agent",
+    ]);
     expect(headers.get(headerEncoding)).toBe(compressionMock.name);
     expect(headers.get(headerAcceptEncoding)).toBe(compressionMock.name);
   });

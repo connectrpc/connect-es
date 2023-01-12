@@ -159,7 +159,7 @@ export function createConnectHttp2Transport(
               useBinaryFormat,
               timeoutMs,
               header,
-              acceptCompression.map((c) => c.name),
+              acceptCompression,
               options.sendCompression
             ),
             message: normalize(message),
@@ -279,7 +279,7 @@ export function createConnectHttp2Transport(
             useBinaryFormat,
             timeoutMs,
             header,
-            acceptCompression.map((c) => c.name),
+            acceptCompression,
             options.sendCompression
           ),
         },

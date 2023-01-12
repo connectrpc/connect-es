@@ -53,13 +53,12 @@ export function createRequestHeader(
  * the header if compression is not used, for example because the payload is
  * too small to make compression effective.
  */
-
 export function createRequestHeaderWithCompression(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
-  acceptCompression: string[],
+  acceptCompression: Compression[],
   sendCompression: Compression | undefined
 ): Headers {
   const result = createRequestHeader(
@@ -80,7 +79,7 @@ export function createRequestHeaderWithCompression(
       methodKind == MethodKind.Unary
         ? headerUnaryAcceptEncoding
         : headerStreamAcceptEncoding;
-    result.set(name, acceptCompression.join(","));
+    result.set(name, acceptCompression.map((c) => c.name).join(","));
   }
   return result;
 }

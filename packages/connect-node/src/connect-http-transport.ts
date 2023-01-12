@@ -164,7 +164,7 @@ export function createConnectHttpTransport(
               useBinaryFormat,
               timeoutMs,
               header,
-              acceptCompression.map((c) => c.name),
+              acceptCompression,
               options.sendCompression
             ),
             message: normalize(message),
@@ -275,7 +275,7 @@ export function createConnectHttpTransport(
             useBinaryFormat,
             timeoutMs,
             header,
-            acceptCompression.map((c) => c.name),
+            acceptCompression,
             options.sendCompression
           ),
         },

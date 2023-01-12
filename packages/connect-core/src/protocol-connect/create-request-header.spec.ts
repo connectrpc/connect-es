@@ -25,6 +25,12 @@ import {
   headerUnaryEncoding,
 } from "./headers.js";
 
+function listHeaderKeys(header: Headers): string[] {
+  const keys: string[] = [];
+  header.forEach((_, key) => keys.push(key));
+  return keys;
+}
+
 describe("createRequestHeader", () => {
   it("should create request headers", () => {
     const headers = createRequestHeader(
@@ -33,14 +39,21 @@ describe("createRequestHeader", () => {
       undefined,
       undefined
     );
-    expect(headers instanceof Headers).toBe(true);
+    expect(listHeaderKeys(headers)).toEqual([
+      "connect-protocol-version",
+      "content-type",
+    ]);
     expect(headers.get("Content-Type")).toBe("application/proto");
     expect(headers.get("Connect-Protocol-Version")).toBe("1");
   });
 
   it("should create request headers with timeout", () => {
     const headers = createRequestHeader(MethodKind.Unary, true, 10, undefined);
-    expect(headers instanceof Headers).toBe(true);
+    expect(listHeaderKeys(headers)).toEqual([
+      "connect-protocol-version",
+      "connect-timeout-ms",
+      "content-type",
+    ]);
     expect(headers.get("Connect-Timeout-Ms")).toBe("10");
   });
 });
@@ -59,10 +72,15 @@ describe("createRequestHeaderWithCompression", () => {
       true,
       undefined,
       undefined,
-      [compressionMock.name],
+      [compressionMock],
       compressionMock
     );
-    expect(headers instanceof Headers).toBe(true);
+    expect(listHeaderKeys(headers)).toEqual([
+      "accept-encoding",
+      "connect-protocol-version",
+      "content-encoding",
+      "content-type",
+    ]);
     expect(headers.get(headerUnaryEncoding)).toBe(compressionMock.name);
     expect(headers.get(headerUnaryAcceptEncoding)).toBe(compressionMock.name);
   });
@@ -73,10 +91,15 @@ describe("createRequestHeaderWithCompression", () => {
       true,
       undefined,
       undefined,
-      [compressionMock.name],
+      [compressionMock],
       compressionMock
     );
-    expect(headers instanceof Headers).toBe(true);
+    expect(listHeaderKeys(headers)).toEqual([
+      "connect-accept-encoding",
+      "connect-content-encoding",
+      "connect-protocol-version",
+      "content-type",
+    ]);
     expect(headers.get(headerStreamEncoding)).toBe(compressionMock.name);
     expect(headers.get(headerStreamAcceptEncoding)).toBe(compressionMock.name);
   });
