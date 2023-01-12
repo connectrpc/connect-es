@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-describe("headers()", function () {
+describe("Fetch API Headers", function () {
   let headers: Headers;
   beforeEach(() => {
     headers = new Headers({
