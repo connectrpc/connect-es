@@ -23,6 +23,10 @@ export function compare(h1: Headers, h2: Headers): boolean {
     h2Els.push([key, value]);
   });
 
+  if (h1Els.length !== h2Els.length) {
+    return false;
+  }
+
   for (let i = 0; i < h1Els.length; i++) {
     const key1 = h1Els[i][0];
     const key2 = h2Els[i][0];
@@ -57,7 +61,7 @@ describe("headers()", function () {
     expect(headers.has("Content-Type")).toBeTrue();
     expect(headers.has("content-type")).toBeTrue();
   });
-  it("case-insensitive equality()", function () {
+  it("equality()", function () {
     expect(
       compare(
         headers,
@@ -75,6 +79,31 @@ describe("headers()", function () {
         })
       )
     ).toBeTrue();
+
+    expect(
+      compare(
+        headers,
+        new Headers({
+          "content-type": "application/connect",
+          "x-custom": "test",
+        })
+      )
+    ).toBeFalse();
+
+    expect(
+      compare(
+        new Headers({
+          "content-type": "application/connect",
+          "x-custom": "test",
+        }),
+        headers
+      )
+    ).toBeFalse();
+
+    expect(compare(headers, new Headers())).toBeFalse();
+    expect(compare(new Headers(), headers)).toBeFalse();
+    expect(compare(headers, headers)).toBeTrue();
+    expect(compare(new Headers(), new Headers())).toBeTrue();
   });
 });
 
@@ -102,7 +131,7 @@ describe("headers from headers()", function () {
     expect(headers.has("Content-Type")).toBeTrue();
     expect(headers.has("content-type")).toBeTrue();
   });
-  it("case-insensitive equality()", function () {
+  it("equality()", function () {
     expect(
       compare(
         headers,
@@ -120,5 +149,9 @@ describe("headers from headers()", function () {
         })
       )
     ).toBeTrue();
+
+    expect(compare(headers, new Headers())).toBeFalse();
+    expect(compare(new Headers(), headers)).toBeFalse();
+    expect(compare(headers, headers)).toBeTrue();
   });
 });
