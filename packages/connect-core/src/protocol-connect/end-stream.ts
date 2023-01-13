@@ -17,11 +17,13 @@ import type {
   JsonValue,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import type { ConnectError } from "../connect-error.js";
 import { errorFromJson } from "./error-from-json.js";
 import { newParseError } from "./new-parse-error.js";
 import { errorToJson } from "./error-to-json.js";
 import { appendHeaders } from "../http-headers.js";
+import { ConnectError } from "../connect-error.js";
+import type { Serialization } from "../serialization";
+import { Code } from "../code.js";
 
 /**
  * endStreamFlag indicates that the data in a EnvelopedMessage
@@ -115,4 +117,39 @@ export function endStreamToJson(
     es.metadata = md;
   }
   return es;
+}
+
+/**
+ * Create a Serialization object that serializes a Connect EndStreamResponse.
+ */
+export function createEndStreamSerialization(
+  options: Partial<JsonWriteOptions> | undefined
+): Serialization<EndStreamResponse> {
+  const textEncoder = new TextEncoder();
+  return {
+    serialize(data: EndStreamResponse): Uint8Array {
+      try {
+        const jsonObject = endStreamToJson(data.metadata, data.error, options);
+        const jsonString = JSON.stringify(jsonObject);
+        return textEncoder.encode(jsonString);
+      } catch (e) {
+        const m = e instanceof Error ? e.message : String(e);
+        throw new ConnectError(
+          `failed to serialize EndStreamResponse: ${m}`,
+          Code.Internal
+        );
+      }
+    },
+    parse(data: Uint8Array): EndStreamResponse {
+      try {
+        return endStreamFromJson(data);
+      } catch (e) {
+        const m = e instanceof Error ? e.message : String(e);
+        throw new ConnectError(
+          `failed to parse EndStreamResponse: ${m}`,
+          Code.Internal
+        );
+      }
+    },
+  };
 }

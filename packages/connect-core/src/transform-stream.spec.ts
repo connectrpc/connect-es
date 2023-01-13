@@ -17,9 +17,7 @@ import {
   transformDecompress,
   transformJoin,
   transformParse,
-  transformParseWithEnd,
   transformSerialize,
-  transformSerializeWithEnd,
   transformSplit,
 } from "./transform-stream.js";
 import type { Compression } from "./compression.js";
@@ -122,10 +120,10 @@ describe("transforming WHATWG streams", () => {
       },
     };
 
-    describe("transformSerializeWithEnd()", function () {
+    describe("transformSerialize()", function () {
       it("should serialize to envelopes", async function () {
         const stream = createReadableStream(goldenItems).pipeThrough(
-          transformSerializeWithEnd(serialization, endSerialization, endFlag),
+          transformSerialize(serialization, endFlag, endSerialization),
           {}
         );
         const got = await readAll(stream);
@@ -133,14 +131,29 @@ describe("transforming WHATWG streams", () => {
       });
     });
 
-    describe("transformParseWithEnd()", function () {
+    describe("transformParse()", function () {
       it("should parse from envelopes", async function () {
         const stream = createReadableStream(goldenEnvelopes).pipeThrough(
-          transformParseWithEnd(serialization, endSerialization, endFlag),
+          transformParse(serialization, endFlag, endSerialization),
           {}
         );
         const got = await readAll(stream);
         expect(got).toEqual(goldenItems);
+      });
+      it("should raise error on unexpected end flag", async function () {
+        const stream = createReadableStream(goldenEnvelopes).pipeThrough(
+          transformParse(serialization, endFlag, null),
+          {}
+        );
+        try {
+          await readAll(stream);
+          fail("expected error");
+        } catch (e) {
+          expect(e).toBeInstanceOf(ConnectError);
+          expect(connectErrorFromReason(e).message).toBe(
+            "[invalid_argument] unexpected end flag"
+          );
+        }
       });
     });
   });
@@ -412,7 +425,7 @@ describe("transforming WHATWG streams", () => {
     it("should serialize, compress, join, split, decompress, and parse", async function () {
       const stream = createReadableStream(goldenItemsWithEnd)
         .pipeThrough(
-          transformSerializeWithEnd(serialization, endSerialization, endFlag),
+          transformSerialize(serialization, endFlag, endSerialization),
           {}
         )
         .pipeThrough(
@@ -426,7 +439,7 @@ describe("transforming WHATWG streams", () => {
           {}
         )
         .pipeThrough(
-          transformParseWithEnd(serialization, endSerialization, endFlag),
+          transformParse(serialization, endFlag, endSerialization),
           {}
         );
       const result = await readAll(stream);

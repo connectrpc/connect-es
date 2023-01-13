@@ -21,7 +21,12 @@ export {
   validateResponse,
   validateResponseWithCompression,
 } from "./validate-response.js";
-export { trailerFlag, trailerParse, trailerSerialize } from "./trailer.js";
+export {
+  trailerFlag,
+  trailerParse,
+  trailerSerialize,
+  createTrailerSerialization,
+} from "./trailer.js";
 export * from "./headers.js";
 export {
   parseTimeout,
