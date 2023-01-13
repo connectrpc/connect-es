@@ -1,4 +1,4 @@
-// Copyright 2022 Buf Technologies, Inc.
+// Copyright 2021-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ export const SayRequest = proto3.makeMessageType(
   "buf.connect.demo.eliza.v1.SayRequest",
   () => [
     { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ],
+  ]
 );
 
 /**
@@ -40,7 +40,7 @@ export const SayResponse = proto3.makeMessageType(
   "buf.connect.demo.eliza.v1.SayResponse",
   () => [
     { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ],
+  ]
 );
 
 /**
@@ -52,7 +52,7 @@ export const ConverseRequest = proto3.makeMessageType(
   "buf.connect.demo.eliza.v1.ConverseRequest",
   () => [
     { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ],
+  ]
 );
 
 /**
@@ -64,7 +64,7 @@ export const ConverseResponse = proto3.makeMessageType(
   "buf.connect.demo.eliza.v1.ConverseResponse",
   () => [
     { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ],
+  ]
 );
 
 /**
@@ -74,9 +74,7 @@ export const ConverseResponse = proto3.makeMessageType(
  */
 export const IntroduceRequest = proto3.makeMessageType(
   "buf.connect.demo.eliza.v1.IntroduceRequest",
-  () => [
-    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ],
+  () => [{ no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ }]
 );
 
 /**
@@ -88,6 +86,5 @@ export const IntroduceResponse = proto3.makeMessageType(
   "buf.connect.demo.eliza.v1.IntroduceResponse",
   () => [
     { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ],
+  ]
 );
-

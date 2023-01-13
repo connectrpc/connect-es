@@ -26,7 +26,11 @@ const handlers = createHandlers(ElizaService, {
   },
   async *introduce(req) {
     yield { sentence: `Hi ${req.name}, I'm eliza` };
-    yield { sentence: `How are you feeling?` };
+    yield {
+      sentence: `Before we begin, ${req.name}, let me tell you something about myself.`,
+    };
+    yield { sentence: `I'm a Rogerian psychotherapist.` };
+    yield { sentence: `How are you feeling today?` };
   },
   async *converse(reqs) {
     for await (const req of reqs) {
