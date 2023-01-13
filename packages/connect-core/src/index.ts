@@ -55,12 +55,11 @@ export {
 } from "./envelope.js";
 export { Compression, compressedFlag } from "./compression.js";
 export {
+  ParsedEnvelopedMessage,
   transformCompress,
   transformDecompress,
   transformJoin,
   transformSplit,
   transformSerialize,
   transformParse,
-  transformSerializeWithEnd,
-  transformParseWithEnd,
 } from "./transform-stream.js";

@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { Compression } from "../compression.js";
+import { headerAcceptEncoding, headerEncoding } from "./headers.js";
+
 /**
  * Creates headers for a gRPC request.
  */
@@ -34,5 +37,32 @@ export function createRequestHeader(
   // The gRPC-HTTP2 specification requires this - it flushes out proxies that
   // don't support HTTP trailers.
   result.set("Te", "trailers");
+  return result;
+}
+
+/**
+ * Creates headers for a gRPC request with compression.
+ */
+export function createRequestHeaderWithCompression(
+  useBinaryFormat: boolean,
+  timeoutMs: number | undefined,
+  userProvidedHeaders: HeadersInit | undefined,
+  acceptCompression: Compression[],
+  sendCompression: Compression | undefined
+): Headers {
+  const result = createRequestHeader(
+    useBinaryFormat,
+    timeoutMs,
+    userProvidedHeaders
+  );
+  if (sendCompression !== undefined) {
+    result.set(headerEncoding, sendCompression.name);
+  }
+  if (acceptCompression.length > 0) {
+    result.set(
+      headerAcceptEncoding,
+      acceptCompression.map((c) => c.name).join(",")
+    );
+  }
   return result;
 }

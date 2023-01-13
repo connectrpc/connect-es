@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { Compression } from "../compression.js";
+import { headerAcceptEncoding, headerEncoding } from "./headers.js";
+
 /**
  * Creates headers for a gRPC-web request.
  */
@@ -36,6 +39,33 @@ export function createRequestHeader(
   result.set("X-User-Agent", "@bufbuild/connect-web");
   if (timeoutMs !== undefined) {
     result.set("Grpc-Timeout", `${timeoutMs}m`);
+  }
+  return result;
+}
+
+/**
+ * Creates headers for a gRPC-web request with compression.
+ */
+export function createRequestHeaderWithCompression(
+  useBinaryFormat: boolean,
+  timeoutMs: number | undefined,
+  userProvidedHeaders: HeadersInit | undefined,
+  acceptCompression: Compression[],
+  sendCompression: Compression | undefined
+): Headers {
+  const result = createRequestHeader(
+    useBinaryFormat,
+    timeoutMs,
+    userProvidedHeaders
+  );
+  if (sendCompression !== undefined) {
+    result.set(headerEncoding, sendCompression.name);
+  }
+  if (acceptCompression.length > 0) {
+    result.set(
+      headerAcceptEncoding,
+      acceptCompression.map((c) => c.name).join(",")
+    );
   }
   return result;
 }

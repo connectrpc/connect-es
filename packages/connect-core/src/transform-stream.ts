@@ -19,12 +19,27 @@ import type { Serialization } from "./serialization.js";
 import { compressedFlag, Compression } from "./compression.js";
 
 /**
- * ValueOrEnd is either a value, or and end type. It is the counterpart of an
- * enveloped message - which can have a flag indicating a special message at
- * the end of the stream - but in deserialized form.
+ * ParsedEnvelopedMessage is the deserialized counterpart to an
+ * EnvelopedMessage.
+ *
+ * It is either a deserialized message M, or a deserialized end-of-stream
+ * message E, typically distinguished by a flag on an enveloped message.
  */
-type ValueOrEnd<T, E> = { end: false; value: T } | { end: true; value: E };
+export type ParsedEnvelopedMessage<M, E> =
+  | { end: false; value: M }
+  | { end: true; value: E };
 
+/**
+ * Creates a WHATWG TransformStream that takes a specified type as input,
+ * and serializes it as an enveloped messages.
+ *
+ * Note that this function has an override that lets the input stream
+ * distinguish between regular messages, and end-of-stream messages, as used
+ * by the RPP-web and Connect protocols.
+ */
+export function transformSerialize<T>(
+  serialization: Serialization<T>
+): TransformStream<T, EnvelopedMessage>;
 /**
  * Creates a WHATWG TransformStream that takes a value or special end type, and
  * serializes it as an enveloped message.
@@ -37,12 +52,40 @@ type ValueOrEnd<T, E> = { end: false; value: T } | { end: true; value: E };
  * serialization, and the resulting enveloped message does not have the given
  * endStreamFlag.
  */
-export function transformSerializeWithEnd<T, E>(
+export function transformSerialize<T, E>(
   serialization: Serialization<T>,
-  endSerialization: Serialization<E>,
-  endStreamFlag: number
-): TransformStream<ValueOrEnd<T, E>, EnvelopedMessage> {
-  return new TransformStream<ValueOrEnd<T, E>, EnvelopedMessage>({
+  endStreamFlag: number,
+  endSerialization: Serialization<E>
+): TransformStream<ParsedEnvelopedMessage<T, E>, EnvelopedMessage>;
+export function transformSerialize<T, E>(
+  serialization: Serialization<T>,
+  endStreamFlag?: number,
+  endSerialization?: Serialization<E>
+):
+  | TransformStream<T, EnvelopedMessage>
+  | TransformStream<ParsedEnvelopedMessage<T, E>, EnvelopedMessage> {
+  if (endStreamFlag === undefined || endSerialization === undefined) {
+    return new TransformStream<T, EnvelopedMessage>({
+      transform(chunk, controller) {
+        let value: Uint8Array;
+        try {
+          value = serialization.serialize(chunk);
+        } catch (e) {
+          return controller.error(
+            new ConnectError(
+              "failed to serialize message",
+              Code.Internal,
+              undefined,
+              undefined,
+              e
+            )
+          );
+        }
+        controller.enqueue({ flags: 0, data: value });
+      },
+    });
+  }
+  return new TransformStream<ParsedEnvelopedMessage<T, E>, EnvelopedMessage>({
     transform(chunk, controller) {
       let data: Uint8Array;
       let flags = 0;
@@ -67,7 +110,7 @@ export function transformSerializeWithEnd<T, E>(
         } catch (e) {
           return controller.error(
             new ConnectError(
-              "failed to serialize",
+              "failed to serialize message",
               Code.Internal,
               undefined,
               undefined,
@@ -82,8 +125,19 @@ export function transformSerializeWithEnd<T, E>(
 }
 
 /**
+ * Creates a WHATWG TransformStream that takes enveloped messages as input,
+ * parses the envelope payload and outputs the result.
+ *
+ * Note that this function has overrides that let the stream distinguish
+ * between regular messages, and end-of-stream messages, as used by the
+ * gRPP-web and Connect protocols.
+ */
+export function transformParse<T>(
+  serialization: Serialization<T>
+): TransformStream<EnvelopedMessage, T>;
+/**
  * Creates a WHATWG TransformStream that takes an enveloped message as input,
- * and returns either a value or a special end type.
+ * and outputs a ParsedEnvelopedMessage.
  *
  * For example, if the given endStreamFlag is set for an input envelope, its
  * payload is parsed using the given endSerialization, and an object with
@@ -92,15 +146,64 @@ export function transformSerializeWithEnd<T, E>(
  * If the endStreamFlag is not set, the payload is parsed using the given
  * serialization, and an object with { end: false, value: ... } is returned.
  */
-export function transformParseWithEnd<T, E>(
+export function transformParse<T>(
   serialization: Serialization<T>,
-  endSerialization: Serialization<E>,
-  endStreamFlag: number
-): TransformStream<EnvelopedMessage, ValueOrEnd<T, E>> {
-  return new TransformStream<EnvelopedMessage, ValueOrEnd<T, E>>({
+  endStreamFlag: number,
+  endSerialization: null
+): TransformStream<EnvelopedMessage, T>;
+/**
+ * Creates a WHATWG TransformStream that takes an enveloped message as input,
+ * and outputs a ParsedEnvelopedMessage.
+ *
+ * For example, if the given endStreamFlag is set for an input envelope, its
+ * payload is parsed using the given endSerialization, and an object with
+ * { end: true, value: ... } is returned.
+ *
+ * If the endStreamFlag is not set, the payload is parsed using the given
+ * serialization, and an object with { end: false, value: ... } is returned.
+ */
+export function transformParse<T, E>(
+  serialization: Serialization<T>,
+  endStreamFlag: number,
+  endSerialization: Serialization<E>
+): TransformStream<EnvelopedMessage, ParsedEnvelopedMessage<T, E>>;
+export function transformParse<T, E>(
+  serialization: Serialization<T>,
+  endStreamFlag?: number,
+  endSerialization?: null | Serialization<E>
+):
+  | TransformStream<EnvelopedMessage, T>
+  | TransformStream<EnvelopedMessage, ParsedEnvelopedMessage<T, E>> {
+  if (endStreamFlag === undefined || endSerialization === undefined) {
+    return new TransformStream<EnvelopedMessage, T>({
+      transform(chunk, controller) {
+        let value: T;
+        try {
+          value = serialization.parse(chunk.data);
+        } catch (e) {
+          return controller.error(
+            new ConnectError(
+              "failed to parse message",
+              Code.Internal,
+              undefined,
+              undefined,
+              e
+            )
+          );
+        }
+        controller.enqueue(value);
+      },
+    });
+  }
+  return new TransformStream<EnvelopedMessage, ParsedEnvelopedMessage<T, E>>({
     transform(chunk, controller) {
       const { flags, data } = chunk;
       if ((flags & endStreamFlag) === endStreamFlag) {
+        if (endSerialization === null) {
+          return controller.error(
+            new ConnectError("unexpected end flag", Code.InvalidArgument)
+          );
+        }
         let value: E;
         try {
           value = endSerialization.parse(data);
@@ -123,7 +226,7 @@ export function transformParseWithEnd<T, E>(
       } catch (e) {
         return controller.error(
           new ConnectError(
-            "failed to parse end",
+            "failed to parse message",
             Code.InvalidArgument,
             undefined,
             undefined,
@@ -132,62 +235,6 @@ export function transformParseWithEnd<T, E>(
         );
       }
       controller.enqueue({ value, end: false });
-    },
-  });
-}
-
-/**
- * Creates a WHATWG TransformStream that takes a specified type as input, and
- * serializes it as an enveloped messages.
- */
-export function transformSerialize<T>(
-  serialization: Serialization<T>
-): TransformStream<T, EnvelopedMessage> {
-  return new TransformStream<T, EnvelopedMessage>({
-    transform(chunk, controller) {
-      let data: Uint8Array;
-      try {
-        data = serialization.serialize(chunk);
-      } catch (e) {
-        return controller.error(
-          new ConnectError(
-            "failed to serialize",
-            Code.Internal,
-            undefined,
-            undefined,
-            e
-          )
-        );
-      }
-      controller.enqueue({ flags: 0, data });
-    },
-  });
-}
-
-/**
- * Creates a WHATWG TransformStream that takes enveloped messages as input, and
- * parses it into the specified type.
- */
-export function transformParse<T>(
-  serialization: Serialization<T>
-): TransformStream<EnvelopedMessage, T> {
-  return new TransformStream<EnvelopedMessage, T>({
-    transform(chunk, controller) {
-      let data: T;
-      try {
-        data = serialization.parse(chunk.data);
-      } catch (e) {
-        return controller.error(
-          new ConnectError(
-            "failed to parse",
-            Code.Internal,
-            undefined,
-            undefined,
-            e
-          )
-        );
-      }
-      controller.enqueue(data);
     },
   });
 }

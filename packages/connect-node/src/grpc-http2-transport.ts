@@ -30,11 +30,9 @@ import {
   UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
-  createRequestHeader,
-  validateResponse,
+  createRequestHeaderWithCompression,
+  validateResponseWithCompression,
   validateTrailer,
-  headerAcceptEncoding,
-  headerEncoding,
 } from "@bufbuild/connect-core/protocol-grpc";
 import type {
   AnyMessage,
@@ -44,7 +42,6 @@ import type {
   JsonWriteOptions,
   Message,
   MethodInfo,
-  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
@@ -153,13 +150,12 @@ export function createGrpcHttp2Transport(
             method,
             url: createMethodUrl(options.baseUrl, service, method),
             init: {},
-            header: grpcCreateRequestHeaderWithCompression(
-              method.kind,
+            header: createRequestHeaderWithCompression(
               useBinaryFormat,
               timeoutMs,
               header,
-              acceptCompression.map((c) => c.name),
-              options.sendCompression?.name
+              acceptCompression,
+              options.sendCompression
             ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
@@ -207,7 +203,7 @@ export function createGrpcHttp2Transport(
             await end(stream);
 
             const [responseCode, responseHeader] = await headersPromise;
-            const { compression } = grpcValidateResponseWithCompression(
+            const { compression } = validateResponseWithCompression(
               useBinaryFormat,
               acceptCompression,
               responseCode,
@@ -285,13 +281,12 @@ export function createGrpcHttp2Transport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: grpcCreateRequestHeaderWithCompression(
-            method.kind,
+          header: createRequestHeaderWithCompression(
             useBinaryFormat,
             timeoutMs,
             header,
-            acceptCompression.map((c) => c.name),
-            options.sendCompression?.name
+            acceptCompression,
+            options.sendCompression
           ),
         },
         async (req: StreamingRequest<I, O>) => {
@@ -332,7 +327,7 @@ export function createGrpcHttp2Transport(
                 let flags = 0;
                 let body = serialize(normalize(message));
                 if (
-                  options.sendCompression &&
+                  options.sendCompression !== undefined &&
                   body.length >= compressMinBytes
                 ) {
                   flags = flags | compressedFlag;
@@ -357,7 +352,7 @@ export function createGrpcHttp2Transport(
               },
               async read(): Promise<ReadableStreamReadResultLike<O>> {
                 const [responseStatus, responseHeader] = await headerPromise;
-                const { compression } = grpcValidateResponseWithCompression(
+                const { compression } = validateResponseWithCompression(
                   useBinaryFormat,
                   acceptCompression,
                   responseStatus,
@@ -404,51 +399,5 @@ export function createGrpcHttp2Transport(
         options.interceptors
       );
     },
-  };
-}
-
-export function grpcCreateRequestHeaderWithCompression(
-  methodKind: MethodKind,
-  useBinaryFormat: boolean,
-  timeoutMs: number | undefined,
-  userProvidedHeaders: HeadersInit | undefined,
-  acceptCompression: string[],
-  sendCompression: string | undefined
-): Headers {
-  const result = createRequestHeader(
-    useBinaryFormat,
-    timeoutMs,
-    userProvidedHeaders
-  );
-  if (sendCompression !== undefined) {
-    result.set(headerEncoding, sendCompression);
-  }
-  if (acceptCompression.length > 0) {
-    result.set(headerAcceptEncoding, acceptCompression.join(","));
-  }
-  return result;
-}
-
-export function grpcValidateResponseWithCompression(
-  useBinaryFormat: boolean,
-  acceptCompression: Compression[],
-  status: number,
-  headers: Headers
-): { compression: Compression | undefined } {
-  validateResponse(useBinaryFormat, status, headers);
-
-  let compression: Compression | undefined;
-  const encoding = headers.get(headerEncoding);
-  if (encoding !== null && encoding.toLowerCase() !== "identity") {
-    compression = acceptCompression.find((c) => c.name === encoding);
-    if (!compression) {
-      throw new ConnectError(
-        `unsupported response encoding "${encoding}"`,
-        Code.InvalidArgument
-      );
-    }
-  }
-  return {
-    compression,
   };
 }

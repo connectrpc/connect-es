@@ -13,17 +13,24 @@
 // limitations under the License.
 
 export { codeFromHttpStatus, codeToHttpStatus } from "./http-status.js";
-export { createRequestHeader } from "./create-request-header.js";
+export {
+  createRequestHeader,
+  createRequestHeaderWithCompression,
+} from "./create-request-header.js";
 export {
   endStreamToJson,
   endStreamFromJson,
   endStreamFlag,
+  createEndStreamSerialization,
 } from "./end-stream.js";
 export { errorFromJson } from "./error-from-json.js";
 export { errorToJson } from "./error-to-json.js";
 export { parseContentType } from "./parse-content-type.js";
 export { parseTimeout } from "./parse-timeout.js";
+export {
+  validateResponse,
+  validateResponseWithCompression,
+} from "./validate-response.js";
 export { trailerMux, trailerDemux } from "./trailer-mux.js";
-export { validateResponse } from "./validate-response.js";
 export * from "./headers.js";
 export { protocolVersion } from "./version.js";
