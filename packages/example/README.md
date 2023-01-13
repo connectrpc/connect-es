@@ -29,7 +29,7 @@ npm install
 
 The next step is to generate our service definitions and message types from the Eliza Protobuf file mentioned above.
 
-To use [`buf`](https://github.com/bufbuild/buf) to generate the code, simply run `buf generate` in this directory. 
+To use [`buf`](https://github.com/bufbuild/buf) to generate the code, simply run `npm run buf:generate` in this directory. 
 The [`buf.gen.yaml` file](./buf.gen.yaml) contains the plugin configuration. 
 
 Of course, you can use `protoc` as well if desired:
