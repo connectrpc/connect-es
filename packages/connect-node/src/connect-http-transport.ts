@@ -190,8 +190,6 @@ export function createConnectHttpTransport(
               httpOptions: options.httpOptions,
             });
 
-            // eslint-disable-next-line
-            console.log("goochy mcgooch");
             const responseHeaders = nodeHeaderToWebHeader(response.headers);
             assert(
               typeof response.statusCode == "number",
