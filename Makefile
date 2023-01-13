@@ -116,7 +116,7 @@ $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-co
 
 $(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web packages/example/buf.gen.yaml $(shell find packages/example -name '*.proto')
 	rm -rf packages/example/src/*_pb.ts packages/example/src/*_connectweb.ts
-	npm run -w packages/example generate
+	npm run -w packages/example buf:generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
