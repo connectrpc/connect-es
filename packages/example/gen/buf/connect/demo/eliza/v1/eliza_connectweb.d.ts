@@ -1,4 +1,4 @@
-// Copyright 2021-2023 Buf Technologies, Inc.
+// Copyright 2022 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,14 +17,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import {
-  ConverseRequest,
-  ConverseResponse,
-  IntroduceRequest,
-  IntroduceResponse,
-  SayRequest,
-  SayResponse,
-} from "./eliza_pb.js";
+import { ConverseRequest, ConverseResponse, IntroduceRequest, IntroduceResponse, SayRequest, SayResponse } from "./eliza_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -38,7 +31,7 @@ import { MethodKind } from "@bufbuild/protobuf";
  * @generated from service buf.connect.demo.eliza.v1.ElizaService
  */
 export declare const ElizaService: {
-  readonly typeName: "buf.connect.demo.eliza.v1.ElizaService";
+  readonly typeName: "buf.connect.demo.eliza.v1.ElizaService",
   readonly methods: {
     /**
      * Say is a unary request demo. This method should allow for a one sentence
@@ -47,11 +40,11 @@ export declare const ElizaService: {
      * @generated from rpc buf.connect.demo.eliza.v1.ElizaService.Say
      */
     readonly say: {
-      readonly name: "Say";
-      readonly I: typeof SayRequest;
-      readonly O: typeof SayResponse;
-      readonly kind: MethodKind.Unary;
-    };
+      readonly name: "Say",
+      readonly I: typeof SayRequest,
+      readonly O: typeof SayResponse,
+      readonly kind: MethodKind.Unary,
+    },
     /**
      * Converse is a bi-directional streaming request demo. This method should allow for
      * many requests and many responses.
@@ -59,11 +52,11 @@ export declare const ElizaService: {
      * @generated from rpc buf.connect.demo.eliza.v1.ElizaService.Converse
      */
     readonly converse: {
-      readonly name: "Converse";
-      readonly I: typeof ConverseRequest;
-      readonly O: typeof ConverseResponse;
-      readonly kind: MethodKind.BiDiStreaming;
-    };
+      readonly name: "Converse",
+      readonly I: typeof ConverseRequest,
+      readonly O: typeof ConverseResponse,
+      readonly kind: MethodKind.BiDiStreaming,
+    },
     /**
      * Introduce is a server-streaming request demo.  This method allows for a single request that will return a series
      * of responses
@@ -71,10 +64,11 @@ export declare const ElizaService: {
      * @generated from rpc buf.connect.demo.eliza.v1.ElizaService.Introduce
      */
     readonly introduce: {
-      readonly name: "Introduce";
-      readonly I: typeof IntroduceRequest;
-      readonly O: typeof IntroduceResponse;
-      readonly kind: MethodKind.ServerStreaming;
-    };
-  };
+      readonly name: "Introduce",
+      readonly I: typeof IntroduceRequest,
+      readonly O: typeof IntroduceResponse,
+      readonly kind: MethodKind.ServerStreaming,
+    },
+  }
 };
+

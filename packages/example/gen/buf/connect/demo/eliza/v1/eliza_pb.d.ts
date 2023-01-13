@@ -1,4 +1,4 @@
-// Copyright 2021-2023 Buf Technologies, Inc.
+// Copyright 2022 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,14 +17,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type {
-  BinaryReadOptions,
-  FieldList,
-  JsonReadOptions,
-  JsonValue,
-  PartialMessage,
-  PlainMessage,
-} from "@bufbuild/protobuf";
+import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
 
 /**
@@ -44,25 +37,13 @@ export declare class SayRequest extends Message<SayRequest> {
   static readonly typeName = "buf.connect.demo.eliza.v1.SayRequest";
   static readonly fields: FieldList;
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>
-  ): SayRequest;
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SayRequest;
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>
-  ): SayRequest;
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SayRequest;
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>
-  ): SayRequest;
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SayRequest;
 
-  static equals(
-    a: SayRequest | PlainMessage<SayRequest> | undefined,
-    b: SayRequest | PlainMessage<SayRequest> | undefined
-  ): boolean;
+  static equals(a: SayRequest | PlainMessage<SayRequest> | undefined, b: SayRequest | PlainMessage<SayRequest> | undefined): boolean;
 }
 
 /**
@@ -82,25 +63,13 @@ export declare class SayResponse extends Message<SayResponse> {
   static readonly typeName = "buf.connect.demo.eliza.v1.SayResponse";
   static readonly fields: FieldList;
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>
-  ): SayResponse;
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SayResponse;
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>
-  ): SayResponse;
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SayResponse;
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>
-  ): SayResponse;
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SayResponse;
 
-  static equals(
-    a: SayResponse | PlainMessage<SayResponse> | undefined,
-    b: SayResponse | PlainMessage<SayResponse> | undefined
-  ): boolean;
+  static equals(a: SayResponse | PlainMessage<SayResponse> | undefined, b: SayResponse | PlainMessage<SayResponse> | undefined): boolean;
 }
 
 /**
@@ -120,25 +89,13 @@ export declare class ConverseRequest extends Message<ConverseRequest> {
   static readonly typeName = "buf.connect.demo.eliza.v1.ConverseRequest";
   static readonly fields: FieldList;
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>
-  ): ConverseRequest;
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConverseRequest;
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>
-  ): ConverseRequest;
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ConverseRequest;
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>
-  ): ConverseRequest;
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ConverseRequest;
 
-  static equals(
-    a: ConverseRequest | PlainMessage<ConverseRequest> | undefined,
-    b: ConverseRequest | PlainMessage<ConverseRequest> | undefined
-  ): boolean;
+  static equals(a: ConverseRequest | PlainMessage<ConverseRequest> | undefined, b: ConverseRequest | PlainMessage<ConverseRequest> | undefined): boolean;
 }
 
 /**
@@ -158,25 +115,13 @@ export declare class ConverseResponse extends Message<ConverseResponse> {
   static readonly typeName = "buf.connect.demo.eliza.v1.ConverseResponse";
   static readonly fields: FieldList;
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>
-  ): ConverseResponse;
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConverseResponse;
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>
-  ): ConverseResponse;
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ConverseResponse;
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>
-  ): ConverseResponse;
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ConverseResponse;
 
-  static equals(
-    a: ConverseResponse | PlainMessage<ConverseResponse> | undefined,
-    b: ConverseResponse | PlainMessage<ConverseResponse> | undefined
-  ): boolean;
+  static equals(a: ConverseResponse | PlainMessage<ConverseResponse> | undefined, b: ConverseResponse | PlainMessage<ConverseResponse> | undefined): boolean;
 }
 
 /**
@@ -196,25 +141,13 @@ export declare class IntroduceRequest extends Message<IntroduceRequest> {
   static readonly typeName = "buf.connect.demo.eliza.v1.IntroduceRequest";
   static readonly fields: FieldList;
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>
-  ): IntroduceRequest;
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): IntroduceRequest;
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>
-  ): IntroduceRequest;
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): IntroduceRequest;
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>
-  ): IntroduceRequest;
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): IntroduceRequest;
 
-  static equals(
-    a: IntroduceRequest | PlainMessage<IntroduceRequest> | undefined,
-    b: IntroduceRequest | PlainMessage<IntroduceRequest> | undefined
-  ): boolean;
+  static equals(a: IntroduceRequest | PlainMessage<IntroduceRequest> | undefined, b: IntroduceRequest | PlainMessage<IntroduceRequest> | undefined): boolean;
 }
 
 /**
@@ -234,23 +167,12 @@ export declare class IntroduceResponse extends Message<IntroduceResponse> {
   static readonly typeName = "buf.connect.demo.eliza.v1.IntroduceResponse";
   static readonly fields: FieldList;
 
-  static fromBinary(
-    bytes: Uint8Array,
-    options?: Partial<BinaryReadOptions>
-  ): IntroduceResponse;
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): IntroduceResponse;
 
-  static fromJson(
-    jsonValue: JsonValue,
-    options?: Partial<JsonReadOptions>
-  ): IntroduceResponse;
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): IntroduceResponse;
 
-  static fromJsonString(
-    jsonString: string,
-    options?: Partial<JsonReadOptions>
-  ): IntroduceResponse;
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): IntroduceResponse;
 
-  static equals(
-    a: IntroduceResponse | PlainMessage<IntroduceResponse> | undefined,
-    b: IntroduceResponse | PlainMessage<IntroduceResponse> | undefined
-  ): boolean;
+  static equals(a: IntroduceResponse | PlainMessage<IntroduceResponse> | undefined, b: IntroduceResponse | PlainMessage<IntroduceResponse> | undefined): boolean;
 }
+
