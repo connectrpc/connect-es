@@ -21,6 +21,7 @@ export {
   endStreamToJson,
   endStreamFromJson,
   endStreamFlag,
+  createEndStreamSerialization,
 } from "./end-stream.js";
 export { errorFromJson } from "./error-from-json.js";
 export { errorToJson } from "./error-to-json.js";

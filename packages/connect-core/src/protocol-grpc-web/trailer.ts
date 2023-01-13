@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { Serialization } from "../serialization.js";
+
 /**
  * trailerFlag indicates that the data in a EnvelopedMessage
  * is a set of trailers of the gRPC-web protocol.
@@ -47,4 +49,15 @@ export function trailerSerialize(trailer: Headers): Uint8Array {
     lines.push(`${key}: ${value}\r\n`);
   });
   return new TextEncoder().encode(lines.join(""));
+}
+
+/**
+ * Create a Serialization object that serializes a gRPC-web trailer, a Headers
+ * object that is serialized as a set of header fields, separated by CRLF.
+ */
+export function createTrailerSerialization(): Serialization<Headers> {
+  return {
+    serialize: trailerSerialize,
+    parse: trailerParse,
+  };
 }

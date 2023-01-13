@@ -24,8 +24,8 @@ import {
   transformCompress,
   transformDecompress,
   transformJoin,
-  transformParseWithEnd,
-  transformSerializeWithEnd,
+  transformParse,
+  transformSerialize,
   transformSplit,
 } from "./transform-stream.js";
 import type { Compression } from "./compression.js";
@@ -111,7 +111,7 @@ describe("full story", function () {
     it("should write expected bytes", async function () {
       const stream = createReadableStream(goldenPayload)
         .pipeThrough(
-          transformSerializeWithEnd(serialization, endSerialization, endFlag),
+          transformSerialize(serialization, endFlag, endSerialization),
           {}
         )
         .pipeThrough(
@@ -130,7 +130,7 @@ describe("full story", function () {
         .pipeThrough(transformSplit(readMaxBytes), {})
         .pipeThrough(transformDecompress(compressionReverse, readMaxBytes), {})
         .pipeThrough(
-          transformParseWithEnd(serialization, endSerialization, endFlag),
+          transformParse(serialization, endFlag, endSerialization),
           {}
         );
       const all = await readAll(inputStream);
@@ -147,7 +147,7 @@ describe("full story", function () {
       const requestWriter = requestTransformStream.writable.getWriter();
       const rawRequestStream = requestTransformStream.readable
         .pipeThrough(
-          transformSerializeWithEnd(serialization, endSerialization, endFlag),
+          transformSerialize(serialization, endFlag, endSerialization),
           {}
         )
         .pipeThrough(
@@ -160,7 +160,7 @@ describe("full story", function () {
         .pipeThrough(transformSplit(readMaxBytes), {})
         .pipeThrough(transformDecompress(compressionReverse, readMaxBytes), {})
         .pipeThrough(
-          transformParseWithEnd(serialization, endSerialization, endFlag),
+          transformParse(serialization, endFlag, endSerialization),
           {}
         )
         .getReader();
@@ -250,7 +250,7 @@ describe("full story", function () {
         .pipeThrough(transformSplit(readMaxBytes), {})
         .pipeThrough(transformDecompress(compressionReverse, readMaxBytes), {})
         .pipeThrough(
-          transformParseWithEnd(serialization, endSerialization, endFlag),
+          transformParse(serialization, endFlag, endSerialization),
           {}
         );
 
@@ -305,7 +305,7 @@ describe("full story", function () {
         },
       })
         .pipeThrough(
-          transformSerializeWithEnd(serialization, endSerialization, endFlag),
+          transformSerialize(serialization, endFlag, endSerialization),
           {}
         )
         .pipeThrough(
