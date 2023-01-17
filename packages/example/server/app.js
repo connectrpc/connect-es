@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { createHandlers } from "@bufbuild/connect-node";
-import { ElizaService } from "../gen/buf/connect/demo/eliza/v1/eliza_connectweb.js";
+import { ElizaService } from "../gen/eliza_connectweb.js";
 import http from "http";
 import express from "express";
 import cors from "cors";

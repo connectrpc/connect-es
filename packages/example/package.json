@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "buf:generate": "buf generate buf.build/bufbuild/eliza",
+    "buf:generate": "buf generate",
     "client": "esbuild client/app.ts --servedir=www --outdir=www/js --bundle --serve=3000",
     "server": "node server/app.js",
     "lint": "tsc --noEmit"
