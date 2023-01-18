@@ -14,20 +14,9 @@
 
 import { Code } from "./code.js";
 import { ConnectError } from "./connect-error.js";
-import type { EnvelopedMessage } from "./envelope.js";
+import type { EnvelopedMessage, ParsedEnvelopedMessage } from "./envelope.js";
 import type { Serialization } from "./serialization.js";
 import { compressedFlag, Compression } from "./compression.js";
-
-/**
- * ParsedEnvelopedMessage is the deserialized counterpart to an
- * EnvelopedMessage.
- *
- * It is either a deserialized message M, or a deserialized end-of-stream
- * message E, typically distinguished by a flag on an enveloped message.
- */
-export type ParsedEnvelopedMessage<M, E> =
-  | { end: false; value: M }
-  | { end: true; value: E };
 
 /**
  * Creates a WHATWG TransformStream that takes a specified type as input,
@@ -37,7 +26,7 @@ export type ParsedEnvelopedMessage<M, E> =
  * distinguish between regular messages, and end-of-stream messages, as used
  * by the RPP-web and Connect protocols.
  */
-export function transformSerialize<T>(
+export function streamTransformSerialize<T>(
   serialization: Serialization<T>
 ): TransformStream<T, EnvelopedMessage>;
 /**
@@ -52,12 +41,12 @@ export function transformSerialize<T>(
  * serialization, and the resulting enveloped message does not have the given
  * endStreamFlag.
  */
-export function transformSerialize<T, E>(
+export function streamTransformSerialize<T, E>(
   serialization: Serialization<T>,
   endStreamFlag: number,
   endSerialization: Serialization<E>
 ): TransformStream<ParsedEnvelopedMessage<T, E>, EnvelopedMessage>;
-export function transformSerialize<T, E>(
+export function streamTransformSerialize<T, E>(
   serialization: Serialization<T>,
   endStreamFlag?: number,
   endSerialization?: Serialization<E>
@@ -132,7 +121,7 @@ export function transformSerialize<T, E>(
  * between regular messages, and end-of-stream messages, as used by the
  * gRPP-web and Connect protocols.
  */
-export function transformParse<T>(
+export function streamTransformParse<T>(
   serialization: Serialization<T>
 ): TransformStream<EnvelopedMessage, T>;
 /**
@@ -146,7 +135,7 @@ export function transformParse<T>(
  * If the endStreamFlag is not set, the payload is parsed using the given
  * serialization, and an object with { end: false, value: ... } is returned.
  */
-export function transformParse<T>(
+export function streamTransformParse<T>(
   serialization: Serialization<T>,
   endStreamFlag: number,
   endSerialization: null
@@ -162,12 +151,12 @@ export function transformParse<T>(
  * If the endStreamFlag is not set, the payload is parsed using the given
  * serialization, and an object with { end: false, value: ... } is returned.
  */
-export function transformParse<T, E>(
+export function streamTransformParse<T, E>(
   serialization: Serialization<T>,
   endStreamFlag: number,
   endSerialization: Serialization<E>
 ): TransformStream<EnvelopedMessage, ParsedEnvelopedMessage<T, E>>;
-export function transformParse<T, E>(
+export function streamTransformParse<T, E>(
   serialization: Serialization<T>,
   endStreamFlag?: number,
   endSerialization?: null | Serialization<E>
@@ -246,7 +235,7 @@ export function transformParse<T, E>(
  * An error is raised if an enveloped message is already compressed, or if
  * the compressed payload is larger than writeMaxBytes.
  */
-export function transformCompress(
+export function streamTransformCompress(
   compression: Compression,
   writeMaxBytes: number,
   compressMinBytes: number
@@ -284,7 +273,7 @@ export function transformCompress(
  * Creates a WHATWG TransformStream that takes enveloped messages as input, and
  * decompresses them using the given compression.
  */
-export function transformDecompress(
+export function streamTransformDecompress(
   compression: Compression,
   readMaxBytes: number
 ): TransformStream<EnvelopedMessage, EnvelopedMessage> {
@@ -308,7 +297,7 @@ export function transformDecompress(
  * The TransformStream raises an error if the payload of an enveloped message
  * is larger than writeMaxBytes.
  */
-export function transformJoin(
+export function streamTransformJoin(
   writeMaxBytes: number
 ): TransformStream<EnvelopedMessage, Uint8Array> {
   return new TransformStream<EnvelopedMessage, Uint8Array>({
@@ -341,7 +330,7 @@ export function transformJoin(
  * - if the stream ended before an enveloped message fully arrived,
  * - or if the stream ended with extraneous data.
  */
-export function transformSplit(
+export function streamTransformSplit(
   readMaxBytes: number
 ): TransformStream<Uint8Array, EnvelopedMessage> {
   let buffer = new Uint8Array(0);

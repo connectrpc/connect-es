@@ -13,29 +13,28 @@
 // limitations under the License.
 
 import {
+  transformAsyncIterable,
+  transformCatch,
   transformCompress,
   transformDecompress,
   transformJoin,
   transformParse,
   transformSerialize,
   transformSplit,
-} from "./transform-stream.js";
-import type { Compression } from "./compression.js";
+} from "./transform-iterable.js";
 import type { Serialization } from "./serialization.js";
-import type { EnvelopedMessage } from "./envelope.js";
-import { ConnectError, connectErrorFromReason } from "./connect-error.js";
-import { Code } from "./code.js";
 import {
-  createReadableByteStream,
-  createReadableStream,
-  node16WhatwgStreamPolyfill,
+  createAsyncIterable,
+  createAsyncIterableBytes,
   readAll,
   readAllBytes,
-} from "./whatwg-stream-helper.spec.js";
+} from "./transform-iterable-helper.spec.js";
+import { ConnectError, connectErrorFromReason } from "./connect-error.js";
+import { Code } from "./code.js";
+import type { EnvelopedMessage } from "./envelope.js";
+import type { Compression } from "./compression.js";
 
-node16WhatwgStreamPolyfill();
-
-describe("transforming WHATWG streams", () => {
+describe("transforming asynchronous iterables", () => {
   describe("serialization", function () {
     const goldenItems = ["a", "b", "c"];
     const goldenEnvelopes = [
@@ -62,21 +61,21 @@ describe("transforming WHATWG streams", () => {
     };
     describe("transformSerialize()", function () {
       it("should serialize to envelopes", async function () {
-        const stream = createReadableStream(goldenItems).pipeThrough(
-          transformSerialize(fakeSerialization),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(goldenItems),
+          transformSerialize(fakeSerialization)
         );
-        const got = await readAll(stream);
+        const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
       });
     });
     describe("transformParse()", function () {
       it("should parse from envelopes", async function () {
-        const stream = createReadableStream(goldenEnvelopes).pipeThrough(
-          transformParse(fakeSerialization),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(goldenEnvelopes),
+          transformParse(fakeSerialization)
         );
-        const got = await readAll(stream);
+        const got = await readAll(it);
         expect(got).toEqual(goldenItems);
       });
     });
@@ -122,38 +121,52 @@ describe("transforming WHATWG streams", () => {
 
     describe("transformSerialize()", function () {
       it("should serialize to envelopes", async function () {
-        const stream = createReadableStream(goldenItems).pipeThrough(
-          transformSerialize(serialization, endFlag, endSerialization),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(goldenItems),
+          transformSerialize(serialization, endFlag, endSerialization)
         );
-        const got = await readAll(stream);
+        const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
       });
     });
 
     describe("transformParse()", function () {
       it("should parse from envelopes", async function () {
-        const stream = createReadableStream(goldenEnvelopes).pipeThrough(
-          transformParse(serialization, endFlag, endSerialization),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(goldenEnvelopes),
+          transformParse(serialization, endFlag, endSerialization)
         );
-        const got = await readAll(stream);
+        const got = await readAll(it);
         expect(got).toEqual(goldenItems);
       });
-      it("should raise error on unexpected end flag", async function () {
-        const stream = createReadableStream(goldenEnvelopes).pipeThrough(
-          transformParse(serialization, endFlag, null),
-          {}
-        );
-        try {
-          await readAll(stream);
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[invalid_argument] unexpected end flag"
+      describe("with endCompression null", function () {
+        it("should raise error on unexpected end flag", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterable(goldenEnvelopes),
+            transformParse(serialization, endFlag, null)
           );
-        }
+          try {
+            await readAll(it);
+            fail("expected error");
+          } catch (e) {
+            expect(e).toBeInstanceOf(ConnectError);
+            expect(connectErrorFromReason(e).message).toBe(
+              "[invalid_argument] unexpected end flag"
+            );
+          }
+        });
+        it("should still parse to T", async function () {
+          const envelopesWithoutEndFlag = goldenEnvelopes.slice(0, 2);
+          const itemsWithoutEndFlag = goldenItems
+            .slice(0, 2)
+            .map((item) => item.value);
+          const it = transformAsyncIterable(
+            createAsyncIterable(envelopesWithoutEndFlag),
+            transformParse(serialization, endFlag, null)
+          );
+          const got = await readAll(it);
+          expect(got).toEqual(itemsWithoutEndFlag);
+        });
       });
     });
   });
@@ -180,20 +193,20 @@ describe("transforming WHATWG streams", () => {
 
     describe("transformJoin()", function () {
       it("should join envelopes", async function () {
-        const stream = createReadableStream(goldenEnvelopes).pipeThrough(
-          transformJoin(Number.MAX_SAFE_INTEGER),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(goldenEnvelopes),
+          transformJoin(Number.MAX_SAFE_INTEGER)
         );
-        const gotBytes = await readAllBytes(stream);
+        const gotBytes = await readAllBytes(it);
         expect(gotBytes).toEqual(goldenBytes);
       });
       it("should honor writeMaxBytes", async function () {
-        const stream = createReadableStream(goldenEnvelopes).pipeThrough(
-          transformJoin(3),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(goldenEnvelopes),
+          transformJoin(3)
         );
         try {
-          await readAll(stream);
+          await readAll(it);
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
@@ -206,20 +219,20 @@ describe("transforming WHATWG streams", () => {
 
     describe("transformSplit()", function () {
       it("should split envelopes", async function () {
-        const stream = createReadableByteStream(goldenBytes).pipeThrough(
-          transformSplit(Number.MAX_SAFE_INTEGER),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterableBytes(goldenBytes),
+          transformSplit(Number.MAX_SAFE_INTEGER)
         );
-        const got = await readAll(stream);
+        const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
       });
       it("should honor readMaxBytes", async function () {
-        const stream = createReadableByteStream(goldenBytes).pipeThrough(
-          transformSplit(3),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterableBytes(goldenBytes),
+          transformSplit(3)
         );
         try {
-          await readAll(stream);
+          await readAll(it);
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
@@ -284,20 +297,20 @@ describe("transforming WHATWG streams", () => {
 
     describe("transformCompress()", function () {
       it("should compress envelopes", async function () {
-        const stream = createReadableStream(uncompressedEnvelopes).pipeThrough(
-          transformCompress(compressionReverse, Number.MAX_SAFE_INTEGER, 0),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(uncompressedEnvelopes),
+          transformCompress(compressionReverse, Number.MAX_SAFE_INTEGER, 0)
         );
-        const gotEnvelopes = await readAll(stream);
+        const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(compressedEnvelopes);
       });
       it("should throw on compressed input", async function () {
-        const stream = createReadableStream(compressedEnvelopes).pipeThrough(
-          transformCompress(compressionReverse, 3, 0),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(compressedEnvelopes),
+          transformCompress(compressionReverse, 3, 0)
         );
         try {
-          await readAll(stream);
+          await readAll(it);
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
@@ -307,11 +320,11 @@ describe("transforming WHATWG streams", () => {
         }
       });
       it("should honor compressMinBytes", async function () {
-        const stream = createReadableStream(uncompressedEnvelopes).pipeThrough(
-          transformCompress(compressionReverse, Number.MAX_SAFE_INTEGER, 5),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(uncompressedEnvelopes),
+          transformCompress(compressionReverse, Number.MAX_SAFE_INTEGER, 5)
         );
-        const gotEnvelopes = await readAll(stream);
+        const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
       });
       it("should honor writeMaxBytes for the compressed message", async function () {
@@ -326,12 +339,12 @@ describe("transforming WHATWG streams", () => {
             throw "unimplemented";
           },
         };
-        const stream = createReadableStream(uncompressedEnvelopes).pipeThrough(
-          transformCompress(compressionTo5Bytes, 4, 0),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(uncompressedEnvelopes),
+          transformCompress(compressionTo5Bytes, 4, 0)
         );
         try {
-          await readAll(stream);
+          await readAll(it);
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
@@ -340,32 +353,72 @@ describe("transforming WHATWG streams", () => {
           );
         }
       });
+      describe("with null compression", function () {
+        it("should not compress", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterable(uncompressedEnvelopes),
+            transformCompress(null, Number.MAX_SAFE_INTEGER, 0)
+          );
+          const gotEnvelopes = await readAll(it);
+          expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
+        });
+        it("should throw on compressed input", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterable(compressedEnvelopes),
+            transformCompress(compressionReverse, 3, 0)
+          );
+          try {
+            await readAll(it);
+            fail("expected error");
+          } catch (e) {
+            expect(e).toBeInstanceOf(ConnectError);
+            expect(connectErrorFromReason(e).message).toBe(
+              "[internal] invalid envelope, already compressed"
+            );
+          }
+        });
+        it("should honor writeMaxBytes", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterable(uncompressedEnvelopes),
+            transformCompress(null, 3, 0)
+          );
+          try {
+            await readAll(it);
+            fail("expected error");
+          } catch (e) {
+            expect(e).toBeInstanceOf(ConnectError);
+            expect(connectErrorFromReason(e).message).toBe(
+              "[resource_exhausted] message size 4 is larger than configured writeMaxBytes 3"
+            );
+          }
+        });
+      });
     });
 
     describe("transformDecompress()", function () {
       it("should decompress envelopes", async function () {
-        const stream = createReadableStream(compressedEnvelopes).pipeThrough(
-          transformDecompress(compressionReverse, Number.MAX_SAFE_INTEGER),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(compressedEnvelopes),
+          transformDecompress(compressionReverse, Number.MAX_SAFE_INTEGER)
         );
-        const gotEnvelopes = await readAll(stream);
+        const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
       });
       it("should not decompress uncompressed envelopes", async function () {
-        const stream = createReadableStream(uncompressedEnvelopes).pipeThrough(
-          transformDecompress(compressionReverse, Number.MAX_SAFE_INTEGER),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(uncompressedEnvelopes),
+          transformDecompress(compressionReverse, Number.MAX_SAFE_INTEGER)
         );
-        const gotEnvelopes = await readAll(stream);
+        const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
       });
       it("should pass readMaxBytes to compression", async function () {
-        const stream = createReadableStream(compressedEnvelopes).pipeThrough(
-          transformDecompress(compressionReverse, 3),
-          {}
+        const it = transformAsyncIterable(
+          createAsyncIterable(compressedEnvelopes),
+          transformDecompress(compressionReverse, 3)
         );
         try {
-          await readAll(stream);
+          await readAll(it);
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
@@ -374,6 +427,96 @@ describe("transforming WHATWG streams", () => {
           );
         }
       });
+      describe("with null compression", function () {
+        it("should not decompress uncompressed envelopes", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterable(uncompressedEnvelopes),
+            transformDecompress(null, Number.MAX_SAFE_INTEGER)
+          );
+          const gotEnvelopes = await readAll(it);
+          expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
+        });
+        it("should raise error on compressed envelope", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterable(compressedEnvelopes),
+            transformDecompress(null, Number.MAX_SAFE_INTEGER)
+          );
+          try {
+            await readAll(it);
+            fail("expected error");
+          } catch (e) {
+            expect(e).toBeInstanceOf(ConnectError);
+            expect(connectErrorFromReason(e).message).toBe(
+              "[invalid_argument] received compressed envelope, but do not know how to decompress"
+            );
+          }
+        });
+      });
+    });
+  });
+
+  describe("error handling", function () {
+    const goldenItems = ["a", "b", "c"];
+    const serialization: Serialization<string> = {
+      serialize(data: string): Uint8Array {
+        if (data === "c") {
+          throw new Error("cannot serialize 'c'");
+        }
+        return new TextEncoder().encode(data);
+      },
+      parse(data: Uint8Array): string {
+        return new TextDecoder().decode(data);
+      },
+    };
+
+    it("should raise error when unhandled", async function () {
+      const it = transformAsyncIterable(
+        createAsyncIterable(goldenItems),
+        transformSerialize(serialization)
+      );
+      try {
+        await readAll(it);
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        if (e instanceof ConnectError) {
+          expect(e.code).toBe(Code.Internal);
+          expect(e.rawMessage).toBe("failed to serialize message");
+          expect(e.cause).toBeInstanceOf(Error);
+          if (e.cause instanceof Error) {
+            expect(e.cause.message).toBe("cannot serialize 'c'");
+          }
+        }
+      }
+    });
+
+    it("should catch error", async function () {
+      const goldenEnvelopes = [
+        {
+          data: new TextEncoder().encode("a"),
+          flags: 0b00000000,
+        },
+        {
+          data: new TextEncoder().encode("b"),
+          flags: 0b00000000,
+        },
+        {
+          data: new TextEncoder().encode("ERROR"),
+          flags: 0b00000000,
+        },
+      ];
+      const it = transformAsyncIterable(
+        createAsyncIterable(goldenItems),
+        transformSerialize(serialization),
+        transformCatch<EnvelopedMessage>(() => {
+          return {
+            flags: 0,
+            data: new TextEncoder().encode("ERROR"),
+          };
+        })
+      );
+      const result = await readAll(it);
+      expect(result).toEqual(goldenEnvelopes);
     });
   });
 
@@ -400,7 +543,7 @@ describe("transforming WHATWG streams", () => {
         return new TextDecoder().decode(data).slice(0, -1);
       },
     };
-    const compressionRevers: Compression = {
+    const compressionReverse: Compression = {
       name: "fake",
       compress(bytes) {
         const b = new Uint8Array(bytes.byteLength);
@@ -423,26 +566,16 @@ describe("transforming WHATWG streams", () => {
     };
 
     it("should serialize, compress, join, split, decompress, and parse", async function () {
-      const stream = createReadableStream(goldenItemsWithEnd)
-        .pipeThrough(
-          transformSerialize(serialization, endFlag, endSerialization),
-          {}
-        )
-        .pipeThrough(
-          transformCompress(compressionRevers, Number.MAX_SAFE_INTEGER, 0),
-          {}
-        )
-        .pipeThrough(transformJoin(Number.MAX_SAFE_INTEGER), {})
-        .pipeThrough(transformSplit(Number.MAX_SAFE_INTEGER), {})
-        .pipeThrough(
-          transformDecompress(compressionRevers, Number.MAX_SAFE_INTEGER),
-          {}
-        )
-        .pipeThrough(
-          transformParse(serialization, endFlag, endSerialization),
-          {}
-        );
-      const result = await readAll(stream);
+      const it = transformAsyncIterable(
+        createAsyncIterable(goldenItemsWithEnd),
+        transformSerialize(serialization, endFlag, endSerialization),
+        transformCompress(compressionReverse, Number.MAX_SAFE_INTEGER, 0),
+        transformJoin(Number.MAX_SAFE_INTEGER),
+        transformSplit(Number.MAX_SAFE_INTEGER),
+        transformDecompress(compressionReverse, Number.MAX_SAFE_INTEGER),
+        transformParse(serialization, endFlag, endSerialization)
+      );
+      const result = await readAll(it);
       expect(result).toEqual(goldenItemsWithEnd);
     });
   });

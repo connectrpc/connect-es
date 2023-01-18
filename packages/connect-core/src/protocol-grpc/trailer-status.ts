@@ -32,7 +32,7 @@ const fieldGrpcStatusDetailsBin = "grpc-status-details-bin",
 export function setTrailerStatus(
   target: Headers,
   error: ConnectError | undefined
-): void {
+): Headers {
   if (error) {
     target.set(fieldGrpcStatus, error.code.toString(10));
     target.set(fieldGrpcMessage, encodeURIComponent(error.rawMessage));
@@ -54,6 +54,7 @@ export function setTrailerStatus(
   } else {
     target.set(fieldGrpcStatus, "0");
   }
+  return target;
 }
 
 /**
