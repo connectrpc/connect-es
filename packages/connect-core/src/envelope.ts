@@ -153,7 +153,7 @@ export async function envelopeDecompress(
   if ((flags & compressedFlag) === compressedFlag) {
     if (!compression) {
       throw new ConnectError(
-        "received compressed envelope, but do not now how to decompress",
+        "received compressed envelope, but do not know how to decompress",
         Code.InvalidArgument
       );
     }

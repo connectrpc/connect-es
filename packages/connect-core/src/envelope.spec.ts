@@ -205,7 +205,7 @@ describe("envelope compression", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(connectErrorFromReason(e).message).toBe(
-            "[invalid_argument] received compressed envelope, but do not now how to decompress"
+            "[invalid_argument] received compressed envelope, but do not know how to decompress"
           );
         }
       });
