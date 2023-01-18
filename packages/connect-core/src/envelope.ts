@@ -14,6 +14,7 @@
 
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
+import { compressedFlag, Compression } from "./compression.js";
 
 /**
  * Represents an Enveloped-Message of the Connect protocol.
@@ -30,6 +31,17 @@ export interface EnvelopedMessage {
    */
   data: Uint8Array;
 }
+
+/**
+ * ParsedEnvelopedMessage is the deserialized counterpart to an
+ * EnvelopedMessage.
+ *
+ * It is either a deserialized message M, or a deserialized end-of-stream
+ * message E, typically distinguished by a flag on an enveloped message.
+ */
+export type ParsedEnvelopedMessage<M, E> =
+  | { end: false; value: M }
+  | { end: true; value: E };
 
 /**
  * Create a WHATWG ReadableStream of enveloped messages from a ReadableStream
@@ -92,6 +104,69 @@ export function createEnvelopeReadableStream(
       });
     },
   });
+}
+
+/**
+ * Compress an EnvelopedMessage.
+ *
+ * An error is raised if an enveloped message is already compressed, or if
+ * the compressed payload is larger than writeMaxBytes.
+ *
+ * If compression is null, an error is raised if the uncompressed payload is
+ * larger than writeMaxBytes.
+ */
+export async function envelopeCompress(
+  envelope: EnvelopedMessage,
+  compression: Compression | null,
+  writeMaxBytes: number,
+  compressMinBytes: number
+): Promise<EnvelopedMessage> {
+  let { flags, data } = envelope;
+  if ((flags & compressedFlag) === compressedFlag) {
+    throw new ConnectError(
+      "invalid envelope, already compressed",
+      Code.Internal
+    );
+  }
+  if (compression && data.byteLength >= compressMinBytes) {
+    data = await compression.compress(data);
+    flags = flags | compressedFlag;
+  }
+  if (data.byteLength > writeMaxBytes) {
+    throw new ConnectError(
+      `message size ${data.byteLength} is larger than configured writeMaxBytes ${writeMaxBytes}`,
+      Code.ResourceExhausted
+    );
+  }
+  return { data, flags };
+}
+
+/**
+ * Decompress an EnvelopedMessage.
+ */
+export async function envelopeDecompress(
+  envelope: EnvelopedMessage,
+  compression: Compression | null,
+  readMaxBytes: number
+): Promise<EnvelopedMessage> {
+  let { flags, data } = envelope;
+  if ((flags & compressedFlag) === compressedFlag) {
+    if (!compression) {
+      throw new ConnectError(
+        "received compressed envelope, but do not now how to decompress",
+        Code.InvalidArgument
+      );
+    }
+    data = await compression.decompress(data, readMaxBytes);
+    flags = flags ^ compressedFlag;
+  }
+  if (data.byteLength > readMaxBytes) {
+    throw new ConnectError(
+      `message size ${data.byteLength} is larger than configured readMaxBytes ${readMaxBytes}`,
+      Code.ResourceExhausted
+    );
+  }
+  return { data, flags };
 }
 
 /**
