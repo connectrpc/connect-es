@@ -5,7 +5,7 @@
   "scripts": {
     "buf:generate": "buf generate",
     "client": "esbuild client/app.ts --servedir=www --outdir=www/js --bundle --serve=3000",
-    "server": "node server/app.js",
+    "server": "node --loader ts-node/esm server/app.ts",
     "lint": "tsc --noEmit"
   },
   "engines": {
@@ -16,7 +16,8 @@
     "@bufbuild/connect-web": "^0.6.0",
     "@bufbuild/protobuf": "^1.0.0",
     "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "ts-node": "^10.9.1"
   },
   "devDependencies": {
     "@bufbuild/protoc-gen-connect-web": "^0.6.0",
