@@ -24,29 +24,34 @@ describe("large_unary", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
-  servers.describeTransports((transport) => {
-    const request = new SimpleRequest({
-      responseSize: 314159,
-      payload: {
-        body: new Uint8Array(271828).fill(0),
-      },
-    });
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
-      const response = await client.unaryCall(request);
-      expect(response.payload).toBeDefined();
-      expect(response.payload?.body.length).toEqual(request.responseSize);
-    });
-    it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport());
-      client.unaryCall(request, (err, response) => {
-        expect(err).toBeUndefined();
+  servers.describeTransportsOnly(
+    [
+      "@bufbuild/connect-node (Connect, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
+    ],
+    (transport) => {
+      const request = new SimpleRequest({
+        responseSize: 314159,
+        payload: {
+          body: new Uint8Array(271828).fill(0),
+        },
+      });
+      fit("with promise client", async function () {
+        const client = createPromiseClient(TestService, transport());
+        const response = await client.unaryCall(request);
         expect(response.payload).toBeDefined();
         expect(response.payload?.body.length).toEqual(request.responseSize);
-        done();
       });
-    });
-  });
+      it("with callback client", function (done) {
+        const client = createCallbackClient(TestService, transport());
+        client.unaryCall(request, (err, response) => {
+          expect(err).toBeUndefined();
+          expect(response.payload).toBeDefined();
+          expect(response.payload?.body.length).toEqual(request.responseSize);
+          done();
+        });
+      });
+    }
+  );
 
   afterAll(async () => await servers.stop());
 });

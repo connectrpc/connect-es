@@ -26,7 +26,7 @@ import {
   runUnary,
   StreamingConn,
   StreamingRequest,
-  Transport,
+  // Transport,
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect-core";
@@ -65,6 +65,7 @@ import {
 import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
+import type { TransportWithChannel } from "@bufbuild/connect-core/dist/types/transport.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -120,7 +121,7 @@ export interface ConnectHttp2TransportOptions {
  */
 export function createConnectHttp2Transport(
   options: ConnectHttp2TransportOptions
-): Transport {
+): TransportWithChannel {
   const useBinaryFormat = options.useBinaryFormat ?? false;
   const readMaxBytes = validateReadMaxBytesOption(options.readMaxBytes);
   const compressMinBytes = options.compressMinBytes ?? 0;
@@ -129,6 +130,7 @@ export function createConnectHttp2Transport(
     compressionBrotli,
   ];
   return {
+    channel: undefined,
     async unary<
       I extends Message<I> = AnyMessage,
       O extends Message<O> = AnyMessage
@@ -179,7 +181,8 @@ export function createConnectHttp2Transport(
                 );
                 s.on("error", (err) => reject(err));
               });
-
+            this.channel = session;
+            console.log("thisss", this);
             // TODO(TCN-785) honor sendMaxBytes
             let requestBody = serialize(req.message);
             if (

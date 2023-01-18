@@ -52,3 +52,7 @@ export interface Transport {
     header: HeadersInit | undefined
   ): Promise<StreamingConn<I, O>>;
 }
+
+export interface TransportWithChannel extends Transport {
+  channel: any;
+}
