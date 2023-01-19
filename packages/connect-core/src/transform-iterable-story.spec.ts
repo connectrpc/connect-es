@@ -53,13 +53,11 @@ class Reader<T> {
 
 class Writer<T> {
   private queue: IteratorResult<T>[] = [];
-  private promise: Promise<IteratorResult<T>> | undefined;
   private resolver: ((val: IteratorResult<T>) => void) | undefined;
 
   send(item: T) {
-    if (this.promise && this.resolver) {
+    if (this.resolver) {
       this.resolver({ value: item });
-      this.promise = undefined;
     } else {
       this.queue.push({
         value: item,
@@ -72,9 +70,8 @@ class Writer<T> {
       done: true,
       value: undefined,
     };
-    if (this.promise && this.resolver) {
+    if (this.resolver) {
       this.resolver(c);
-      this.promise = undefined;
     } else {
       this.queue.push(c);
     }
@@ -84,10 +81,9 @@ class Writer<T> {
       next: async () => {
         const payload = this.queue.shift();
         if (!payload) {
-          this.promise = new Promise<IteratorResult<T>>((resolve) => {
+          return new Promise<IteratorResult<T>>((resolve) => {
             this.resolver = resolve;
           });
-          return this.promise;
         }
         return payload;
       },
