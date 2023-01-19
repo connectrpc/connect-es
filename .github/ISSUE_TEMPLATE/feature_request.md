@@ -11,7 +11,7 @@ assignees: ''
 What's the problem? For example, "I'm always frustrated when..."
 
 Please note that Node.js is not supported by Connect-Web. We are working on
-Connect for Node.js - if you are interested, let us know on [Slack](https://buf.build/links/slack) or on 
+Connect for Node.js - if you are interested, let us know on Slack or on
 GitHub discussions.  
 
 **Describe the solution you'd like**
