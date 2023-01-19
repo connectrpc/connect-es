@@ -37,6 +37,9 @@ import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 
+
+const FETCH = typeof fetch !== "undefined" ? fetch : undefined;
+
 /**
  * Options used to configure the gRPC-web transport.
  *
@@ -72,6 +75,12 @@ export interface GrpcWebTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+    /**
+   * The fetch instance to use. Defaults to the global fetch.
+   */
+    fetch?: typeof fetch;
+
 }
 
 /**
@@ -88,6 +97,10 @@ export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
 ): Transport {
   assertFetchApi();
+  const fetch = options.fetch ?? FETCH;
+  if (fetch == undefined) {
+    throw new Error("fetch is not available");
+  }
   const transportOptions = options;
   return {
     async unary<

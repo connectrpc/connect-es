@@ -54,6 +54,10 @@ import { assertFetchApi } from "./assert-fetch-api.js";
 import { defer } from "./defer.js";
 import type { UnaryRequest } from "@bufbuild/connect-core";
 
+
+const FETCH = typeof fetch !== "undefined" ? fetch : undefined;
+
+
 /**
  * Options used to configure the gRPC-web transport.
  *
@@ -103,6 +107,11 @@ export interface GrpcWebTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * The fetch instance to use. Defaults to the global fetch.
+   */
+  fetch?: typeof fetch;
 }
 
 /**
@@ -119,6 +128,10 @@ export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
 ): Transport {
   assertFetchApi();
+  const fetch = options.fetch ?? FETCH;
+  if (fetch == undefined) {
+    throw new Error("fetch is not available");
+  }
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<

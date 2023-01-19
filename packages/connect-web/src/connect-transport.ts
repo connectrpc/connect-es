@@ -23,27 +23,30 @@ import {
   MethodInfo,
   MethodKind,
   PartialMessage,
-  ServiceType,
+  ServiceType
 } from "@bufbuild/protobuf";
+import { assertFetchApi } from "./assert-fetch-api.js";
+import { Code, codeFromConnectHttpStatus } from "./code.js";
 import {
   ConnectError,
   connectErrorFromJson,
   connectErrorFromReason,
-  newParseError,
+  newParseError
 } from "./connect-error.js";
-import { codeFromConnectHttpStatus, Code } from "./code.js";
-import type { Transport } from "./transport.js";
+import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
+import { mergeHeaders } from "./http-headers.js";
 import type {
   Interceptor,
   StreamResponse,
   UnaryRequest,
-  UnaryResponse,
+  UnaryResponse
 } from "./interceptor.js";
 import { runServerStream, runUnary } from "./interceptor.js";
-import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
-import { mergeHeaders } from "./http-headers.js";
-import { assertFetchApi } from "./assert-fetch-api.js";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
+import type { Transport } from "./transport.js";
+
+const FETCH = typeof fetch !== "undefined" ? fetch : undefined;
+
 
 /**
  * Options used to configure the Connect transport.
@@ -90,6 +93,12 @@ export interface ConnectTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * The fetch instance to use. Defaults to the global fetch.
+   */
+  fetch?: typeof fetch;
+
 }
 
 /**
@@ -102,6 +111,11 @@ export function createConnectTransport(
 ): Transport {
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? false;
+  
+  const fetch = options.fetch ?? FETCH;
+  if (fetch == undefined) {
+    throw new Error("fetch is not available");
+  }
   return {
     async unary<
       I extends Message<I> = AnyMessage,
@@ -114,6 +128,7 @@ export function createConnectTransport(
       header: HeadersInit | undefined,
       message: PartialMessage<I>
     ): Promise<UnaryResponse<O>> {
+
       try {
         return await runUnary<I, O>(
           {
