@@ -33,6 +33,68 @@ import {
   transformParse,
 } from "./transform-iterable.js";
 
+class Reader<T> {
+  private it: AsyncIterable<T>;
+
+  constructor(it: AsyncIterable<T>) {
+    this.it = it;
+  }
+  [Symbol.asyncIterator](): AsyncIterator<T, any> {
+    return {
+      next: async () => {
+        for await (const item of this.it) {
+          return { value: item };
+        }
+        return { value: "", done: true };
+      },
+    };
+  }
+}
+
+class Writer<T> {
+  private queue: IteratorResult<T>[] = [];
+  private promise: Promise<IteratorResult<T>> | undefined;
+  private resolver: ((val: IteratorResult<T>) => void) | undefined;
+
+  async send(item: T) {
+    if (this.promise && this.resolver) {
+      this.resolver({ value: item });
+      this.promise = undefined;
+    } else {
+      this.queue.push({
+        value: item,
+        done: false,
+      });
+    }
+  }
+  async close() {
+    const c: IteratorResult<T, undefined> = {
+      done: true,
+      value: undefined,
+    };
+    if (this.promise && this.resolver) {
+      this.resolver(c);
+      this.promise = undefined;
+    } else {
+      this.queue.push(c);
+    }
+  }
+  [Symbol.asyncIterator](): AsyncIterator<T> {
+    return {
+      next: async () => {
+        let payload = this.queue.shift();
+        if (!payload) {
+          this.promise = new Promise<IteratorResult<T>>((resolve) => {
+            this.resolver = resolve;
+          });
+          return this.promise;
+        }
+        return payload;
+      },
+    };
+  }
+}
+
 // These tests aim to model the usage of iterable transforms in clients and servers.
 // Note that the tests were written as a proof of concept, and the coverage is
 // incomplete (cancellation, backpressure, error handling, etc.).
@@ -131,102 +193,40 @@ describe("full story", function () {
     });
   });
 
-  // TODO
-  /*
   describe("client integration", function () {
     it("should works", async function () {
-      const requestTransformStream = new TransformStream<
-        { end: false; value: string } | { end: true; value: "end" },
-        { end: false; value: string } | { end: true; value: "end" }
-      >();
-      const requestWriter = requestTransformStream.writable.getWriter();
-      const rawRequestStream = requestTransformStream.readable
-        .pipeThrough(
-          streamTransformSerialize(serialization, endFlag, endSerialization),
-          {}
-        )
-        .pipeThrough(
-          streamTransformCompress(compressionReverse, writeMaxBytes, 0),
-          {}
-        )
-        .pipeThrough(streamTransformJoin(writeMaxBytes), {});
+      const writer = new Writer<Payload<string, "end">>();
+      const writerIt = transformAsyncIterable(
+        writer,
+        transformSerialize(serialization, endFlag, endSerialization),
+        transformCompress(compressionReverse, writeMaxBytes, 0),
+        transformJoin(writeMaxBytes)
+      );
 
-      const responseReader = createReadableByteStream(goldenBytes)
-        .pipeThrough(streamTransformSplit(readMaxBytes), {})
-        .pipeThrough(
-          streamTransformDecompress(compressionReverse, readMaxBytes),
-          {}
-        )
-        .pipeThrough(
-          streamTransformParse(serialization, endFlag, endSerialization),
-          {}
-        )
-        .getReader();
+      const reader = new Reader(writerIt);
+      const readerIt = transformAsyncIterable(
+        reader,
+        transformSplit(readMaxBytes),
+        transformDecompress(compressionReverse, readMaxBytes),
+        transformParse(serialization, endFlag, endSerialization)
+      );
 
-      const streamingConn = {
-        async send(message: string): Promise<void> {
-          await requestWriter.ready;
-          await requestWriter.write({
-            end: false,
-            value: message,
-          });
-        },
-        async close(): Promise<void> {
-          await requestWriter.ready;
-          await requestWriter.write({
-            end: true,
-            value: "end",
-          });
-          await requestWriter.close();
-        },
-        async read(): Promise<ReadableStreamReadResult<string>> {
-          const r = await responseReader.read();
-          if (r.done) {
-            return {
-              done: true,
-              value: undefined,
-            };
-          }
-          if (r.value.end) {
-            return {
-              done: true,
-              value: undefined,
-            };
-          }
-          return {
-            done: false,
-            value: r.value.value,
-          };
-        },
-      };
+      await writer.send({ value: "alpha", end: false });
+      await writer.send({ value: "beta", end: false });
+      await writer.send({ value: "gamma", end: false });
+      await writer.send({ value: "delta", end: false });
+      await writer.close();
 
-      const writtenBytesPromise = readAllBytes(rawRequestStream);
-
-      await streamingConn.send("alpha");
-      await streamingConn.send("beta");
-      await streamingConn.close();
-
-      const alpha = await streamingConn.read();
-      expect(alpha).toEqual({
-        done: false,
-        value: "alpha",
-      });
-      const beta = await streamingConn.read();
-      expect(beta).toEqual({
-        done: false,
-        value: "beta",
-      });
-      const end = await streamingConn.read();
-      expect(end).toEqual({
-        done: true,
-        value: undefined,
-      });
-
-      const writtenBytes = await writtenBytesPromise;
-      expect(writtenBytes).toEqual(goldenBytes);
+      const resp = await readAll(readerIt);
+      expect(resp).toEqual([
+        { value: "alpha", end: false },
+        { value: "beta", end: false },
+        { value: "gamma", end: false },
+        { value: "delta", end: false },
+      ]);
     });
   });
-*/
+
   describe("server integration", function () {
     const echoImplReceived: string[] = [];
 
