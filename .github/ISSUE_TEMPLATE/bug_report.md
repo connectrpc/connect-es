@@ -12,9 +12,8 @@ assignees: ''
 As clearly as you can, please tell us what the bug is.  
 
 Please note that Node.js is not supported by Connect-Web. We are working on
-Connect for Node.js - if you are interested, let us know on Slack or on 
+Connect for Node.js - if you are interested, let us know on [Slack](https://buf.build/links/slack) or on 
 GitHub discussions.  
-https://join.slack.com/t/bufbuild/shared_invite/zt-f5k547ki-VDs_iC4TblNCu7ubhRD17w
 
 
 **To Reproduce**
