@@ -113,6 +113,8 @@ export interface ConnectHttp2TransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  keepSessionAlive?: boolean;
 }
 
 /**
@@ -129,6 +131,7 @@ export function createConnectHttp2Transport(
     compressionGzip,
     compressionBrotli,
   ];
+  const keepAlive = options.keepSessionAlive ?? false;
   return {
     channel: undefined,
     async unary<
@@ -170,19 +173,40 @@ export function createConnectHttp2Transport(
           async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
             // TODO(TCN-884) We create a new session for every request - we should share a connection instead,
             //      and offer control over connection state via methods / properties on the transport.
-            const session: http2.ClientHttp2Session =
-              await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
-                const s = http2.connect(
-                  // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
-                  // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
-                  req.url,
-                  options.http2Options,
-                  (s) => resolve(s)
-                );
-                s.on("error", (err) => reject(err));
-              });
-            this.channel = session;
-            console.log("thisss", this);
+            // const session: http2.ClientHttp2Session =
+            //   await new Promise<http2.ClientHttp2Session>((resolve, reject) => {
+            //     const s = http2.connect(
+            //       // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
+            //       // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
+            //       req.url,
+            //       options.http2Options,
+            //       (s) => resolve(s)
+            //     );
+            //     s.on("error", (err) => reject(err));
+            //   });
+
+            let session: http2.ClientHttp2Session;
+            if (keepAlive && this.channel !== undefined) {
+              session = this.channel as http2.ClientHttp2Session;
+            } else {
+              session = await new Promise<http2.ClientHttp2Session>(
+                (resolve, reject) => {
+                  const s = http2.connect(
+                    // Userinfo (user ID and password), path, querystring, and fragment details in the URL will be ignored.
+                    // See https://nodejs.org/api/http2.html#http2connectauthority-options-listener
+                    req.url,
+                    options.http2Options,
+                    (s) => resolve(s)
+                  );
+                  s.on("error", (err) => reject(err));
+                }
+              );
+            }
+
+            if (keepAlive) {
+              this.channel = session;
+            }
+
             // TODO(TCN-785) honor sendMaxBytes
             let requestBody = serialize(req.message);
             if (
@@ -233,6 +257,10 @@ export function createConnectHttp2Transport(
             }
             const responseMessage = parse(responseBody);
             const [header, trailer] = trailerDemux(responseHeader);
+            if (!keepAlive) {
+              session.close();
+              this.channel = undefined;
+            }
             return <UnaryResponse<O>>{
               stream: false,
               service,
