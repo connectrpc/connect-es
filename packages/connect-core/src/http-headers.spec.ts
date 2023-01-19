@@ -14,6 +14,9 @@
 
 import { proto3, ScalarType } from "@bufbuild/protobuf";
 import { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
+import { node16FetchHeadersPolyfill } from "./node16-polyfill-helper.spec.js";
+
+node16FetchHeadersPolyfill();
 
 // prettier-ignore
 const M = proto3.makeMessageType("handwritten.M", [

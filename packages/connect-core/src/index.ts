@@ -57,7 +57,11 @@ export {
   envelopeDecompress,
   envelopeCompress,
 } from "./envelope.js";
-export { Compression, compressedFlag } from "./compression.js";
+export {
+  Compression,
+  compressedFlag,
+  compressionNegotiate,
+} from "./compression.js";
 export {
   streamTransformCompress,
   streamTransformDecompress,
