@@ -203,9 +203,8 @@ describe("full story", function () {
         transformJoin(writeMaxBytes)
       );
 
-      const reader = new Reader(writerIt);
-      const readerIt = transformAsyncIterable(
-        reader,
+      const reader = transformAsyncIterable(
+        new Reader(writerIt),
         transformSplit(readMaxBytes),
         transformDecompress(compressionReverse, readMaxBytes),
         transformParse(serialization, endFlag, endSerialization)
@@ -217,7 +216,7 @@ describe("full story", function () {
       await writer.send({ value: "delta", end: false });
       await writer.close();
 
-      const resp = await readAll(readerIt);
+      const resp = await readAll(reader);
       expect(resp).toEqual([
         { value: "alpha", end: false },
         { value: "beta", end: false },
