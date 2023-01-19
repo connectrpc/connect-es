@@ -47,6 +47,7 @@ export {
   createJsonSerialization,
   createMethodSerializationLookup,
   createClientMethodSerializers,
+  MethodSerializationLookup,
 } from "./serialization.js";
 export {
   createEnvelopeReadableStream,
@@ -61,6 +62,7 @@ export {
   Compression,
   compressedFlag,
   compressionNegotiate,
+  compressionValidateOptions,
 } from "./compression.js";
 export {
   streamTransformCompress,
@@ -71,13 +73,20 @@ export {
   streamTransformParse,
 } from "./stream-transform.js";
 export {
-  AsyncIterableTransformer,
+  AsyncIterableTransform,
   transformAsyncIterable,
+  transformCatch,
+  transformAppend,
+  transformPrepend,
+  transformReadAllBytes,
   transformCompress,
   transformDecompress,
   transformJoin,
   transformSplit,
   transformSerialize,
   transformParse,
-  transformCatch,
+  AsyncIterableSink,
+  pipeTo,
+  sinkAll,
+  sinkAllBytes,
 } from "./transform-iterable.js";

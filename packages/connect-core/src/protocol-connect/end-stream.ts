@@ -17,9 +17,8 @@ import type {
   JsonValue,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import { errorFromJson } from "./error-from-json.js";
+import { errorFromJson, errorToJson } from "./error-json.js";
 import { newParseError } from "./new-parse-error.js";
-import { errorToJson } from "./error-to-json.js";
 import { appendHeaders } from "../http-headers.js";
 import { ConnectError } from "../connect-error.js";
 import type { Serialization } from "../serialization.js";
@@ -34,7 +33,7 @@ export const endStreamFlag = 0b00000010;
 /**
  * Represents the EndStreamResponse of the Connect protocol.
  */
-interface EndStreamResponse {
+export interface EndStreamResponse {
   metadata: Headers;
   error?: ConnectError;
 }
@@ -147,7 +146,7 @@ export function createEndStreamSerialization(
         const m = e instanceof Error ? e.message : String(e);
         throw new ConnectError(
           `failed to parse EndStreamResponse: ${m}`,
-          Code.Internal
+          Code.InvalidArgument
         );
       }
     },
