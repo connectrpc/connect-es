@@ -17,7 +17,10 @@ import {
   createRequestHeader,
   createRequestHeaderWithCompression,
 } from "./create-request-header.js";
-import { headerEncoding, headerAcceptEncoding } from "./headers.js";
+import {
+  headerEncoding,
+  headerAcceptEncoding,
+} from "../protocol-grpc/headers.js";
 
 function listHeaderKeys(header: Headers): string[] {
   const keys: string[] = [];

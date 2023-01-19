@@ -17,9 +17,18 @@ export {
   createRequestHeader,
   createRequestHeaderWithCompression,
 } from "./create-request-header.js";
-export { parseContentType } from "./parse-content-type.js";
+export {
+  parseContentType,
+  contentTypeRegExp,
+  contentTypeJson,
+  contentTypeProto,
+} from "./content-type.js";
 export { parseTimeout } from "./parse-timeout.js";
-export { findTrailerError, setTrailerStatus } from "./trailer-status.js";
+export {
+  findTrailerError,
+  setTrailerStatus,
+  grpcStatusOk,
+} from "./trailer-status.js";
 export {
   validateResponse,
   validateResponseWithCompression,
