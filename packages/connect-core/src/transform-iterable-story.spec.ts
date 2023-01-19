@@ -39,7 +39,7 @@ class Reader<T> {
   constructor(it: AsyncIterable<T>) {
     this.it = it;
   }
-  [Symbol.asyncIterator](): AsyncIterator<T, any> {
+  [Symbol.asyncIterator](): AsyncIterator<T> {
     return {
       next: async () => {
         for await (const item of this.it) {
@@ -56,7 +56,7 @@ class Writer<T> {
   private promise: Promise<IteratorResult<T>> | undefined;
   private resolver: ((val: IteratorResult<T>) => void) | undefined;
 
-  async send(item: T) {
+  send(item: T) {
     if (this.promise && this.resolver) {
       this.resolver({ value: item });
       this.promise = undefined;
@@ -67,7 +67,7 @@ class Writer<T> {
       });
     }
   }
-  async close() {
+  close() {
     const c: IteratorResult<T, undefined> = {
       done: true,
       value: undefined,
@@ -82,7 +82,7 @@ class Writer<T> {
   [Symbol.asyncIterator](): AsyncIterator<T> {
     return {
       next: async () => {
-        let payload = this.queue.shift();
+        const payload = this.queue.shift();
         if (!payload) {
           this.promise = new Promise<IteratorResult<T>>((resolve) => {
             this.resolver = resolve;
@@ -210,11 +210,11 @@ describe("full story", function () {
         transformParse(serialization, endFlag, endSerialization)
       );
 
-      await writer.send({ value: "alpha", end: false });
-      await writer.send({ value: "beta", end: false });
-      await writer.send({ value: "gamma", end: false });
-      await writer.send({ value: "delta", end: false });
-      await writer.close();
+      writer.send({ value: "alpha", end: false });
+      writer.send({ value: "beta", end: false });
+      writer.send({ value: "gamma", end: false });
+      writer.send({ value: "delta", end: false });
+      writer.close();
 
       const resp = await readAll(reader);
       expect(resp).toEqual([
