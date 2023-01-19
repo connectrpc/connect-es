@@ -12,33 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ReadableStream as NodeReadableStream,
-  TransformStream as NodeTransformStream,
-  WritableStream as NodeWritableStream,
-} from "stream/web";
-
-/**
- * Make the WHATWG stream implementation of Node.js v16 available in the global
- * scope.
- */
-export function node16WhatwgStreamPolyfill() {
-  // node >= v16 has an implementation for WHATWG streams, but doesn't expose
-  // them in the global scope, nor globalThis.
-  if (typeof globalThis.ReadableStream !== "function") {
-    globalThis.ReadableStream =
-      NodeReadableStream as unknown as typeof ReadableStream;
-  }
-  if (typeof globalThis.WritableStream !== "function") {
-    globalThis.WritableStream =
-      NodeWritableStream as unknown as typeof WritableStream;
-  }
-  if (typeof globalThis.TransformStream !== "function") {
-    globalThis.TransformStream =
-      NodeTransformStream as unknown as typeof TransformStream;
-  }
-}
-
 /**
  * Create a WHATWG ReadableStream from a Uint8Array for usage in tests.
  */

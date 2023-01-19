@@ -15,7 +15,6 @@
 import {
   createReadableByteStream,
   createReadableStream,
-  node16WhatwgStreamPolyfill,
   readAll,
   readAllBytes,
 } from "./whatwg-stream-helper.spec.js";
@@ -32,6 +31,7 @@ import type { Compression } from "./compression.js";
 import { encodeEnvelopes } from "./envelope.js";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
+import { node16WhatwgStreamPolyfill } from "./node16-polyfill-helper.spec.js";
 
 node16WhatwgStreamPolyfill();
 

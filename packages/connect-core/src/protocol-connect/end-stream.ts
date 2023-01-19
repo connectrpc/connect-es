@@ -22,7 +22,7 @@ import { newParseError } from "./new-parse-error.js";
 import { errorToJson } from "./error-to-json.js";
 import { appendHeaders } from "../http-headers.js";
 import { ConnectError } from "../connect-error.js";
-import type { Serialization } from "../serialization";
+import type { Serialization } from "../serialization.js";
 import { Code } from "../code.js";
 
 /**
