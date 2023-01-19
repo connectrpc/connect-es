@@ -48,7 +48,7 @@ available [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).
 The library and the generated code are compatible with ES2017 and TypeScript 4.1.
 
-We are working on Connect for Node.js - join us on [Slack](https://join.slack.com/t/bufbuild/shared_invite/zt-f5k547ki-VDs_iC4TblNCu7ubhRD17w) 
+We are working on Connect for Node.js - join us on [Slack](https://buf.build/links/slack) 
 or see the [roadmap discussion](https://github.com/bufbuild/connect-web/discussions/315).
 
 
@@ -76,7 +76,7 @@ or see the [roadmap discussion](https://github.com/bufbuild/connect-web/discussi
 ## Status
 
 This project is a beta: we rely on it in production, but we may make a few
-changes as we gather feedback from early adopters. Join us on [Slack](https://join.slack.com/t/bufbuild/shared_invite/zt-f5k547ki-VDs_iC4TblNCu7ubhRD17w)
+changes as we gather feedback from early adopters. Join us on [Slack](https://buf.build/links/slack)
 or see the [roadmap discussion](https://github.com/bufbuild/connect-web/discussions/315) for details.
 
 
