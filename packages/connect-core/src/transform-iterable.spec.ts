@@ -19,6 +19,7 @@ import {
   transformDecompress,
   transformJoin,
   transformParse,
+  transformReadAllBytes,
   transformSerialize,
   transformSplit,
 } from "./transform-iterable.js";
@@ -35,7 +36,7 @@ import type { EnvelopedMessage } from "./envelope.js";
 import type { Compression } from "./compression.js";
 
 describe("transforming asynchronous iterables", () => {
-  describe("serialization", function () {
+  describe("envelope serialization", function () {
     const goldenItems = ["a", "b", "c"];
     const goldenEnvelopes = [
       {
@@ -81,7 +82,7 @@ describe("transforming asynchronous iterables", () => {
     });
   });
 
-  describe("serialization with end", function () {
+  describe("envelope serialization with end", function () {
     const endFlag = 0b10000000;
     const goldenItems = [
       { value: "a", end: false },
@@ -460,7 +461,7 @@ describe("transforming asynchronous iterables", () => {
     const serialization: Serialization<string> = {
       serialize(data: string): Uint8Array {
         if (data === "c") {
-          throw new Error("cannot serialize 'c'");
+          throw new ConnectError("cannot serialize 'c'", Code.Internal);
         }
         return new TextEncoder().encode(data);
       },
@@ -481,11 +482,8 @@ describe("transforming asynchronous iterables", () => {
         expect(e).toBeInstanceOf(ConnectError);
         if (e instanceof ConnectError) {
           expect(e.code).toBe(Code.Internal);
-          expect(e.rawMessage).toBe("failed to serialize message");
-          expect(e.cause).toBeInstanceOf(Error);
-          if (e.cause instanceof Error) {
-            expect(e.cause.message).toBe("cannot serialize 'c'");
-          }
+          expect(e.rawMessage).toBe("cannot serialize 'c'");
+          expect(e.cause).toBeUndefined();
         }
       }
     });
@@ -577,6 +575,141 @@ describe("transforming asynchronous iterables", () => {
       );
       const result = await readAll(it);
       expect(result).toEqual(goldenItemsWithEnd);
+    });
+  });
+
+  describe("transformReadAllBytes()", function () {
+    // prettier-ignore
+    const goldenBytes = new Uint8Array([
+      0xde, 0xad, 0xbe, 0xef,
+      0xde, 0xad, 0xbe, 0xef,
+      0xde, 0xad, 0xbe, 0xef,
+      0xde, 0xad, 0xbe, 0xef
+    ]);
+    it("should read all bytes", async function () {
+      const it = transformAsyncIterable(
+        createAsyncIterableBytes(goldenBytes),
+        transformReadAllBytes(Number.MAX_SAFE_INTEGER)
+      );
+      const got = await readAllBytes(it);
+      expect(got).toEqual(goldenBytes);
+    });
+    it("should honor readMaxBytes", async function () {
+      const it = transformAsyncIterable(
+        createAsyncIterableBytes(goldenBytes),
+        transformReadAllBytes(4)
+      );
+      try {
+        await readAllBytes(it);
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(connectErrorFromReason(e).message).toBe(
+          "[resource_exhausted] message size is larger than configured readMaxBytes 4"
+        );
+      }
+    });
+    describe("with length hint", function () {
+      describe("that matches actual length", function () {
+        it("should read without error", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterableBytes(goldenBytes),
+            transformReadAllBytes(
+              Number.MAX_SAFE_INTEGER,
+              goldenBytes.byteLength
+            )
+          );
+          const got = await readAllBytes(it);
+          expect(got).toEqual(goldenBytes);
+        });
+      });
+      describe("that exceeds readMaxBytes", function () {
+        it("should error", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterableBytes(goldenBytes),
+            transformReadAllBytes(4, 5)
+          );
+          try {
+            await readAllBytes(it);
+            fail("expected error");
+          } catch (e) {
+            expect(e).toBeInstanceOf(ConnectError);
+            expect(connectErrorFromReason(e).message).toBe(
+              "[resource_exhausted] message size 5 is larger than configured readMaxBytes 4"
+            );
+          }
+        });
+      });
+      describe("that is not an integer", function () {
+        it("should ignore length hint", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterableBytes(goldenBytes),
+            transformReadAllBytes(100, 100.75)
+          );
+          const got = await readAllBytes(it);
+          expect(got).toEqual(goldenBytes);
+        });
+      });
+      describe("that is NaN", function () {
+        it("should ignore length hint", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterableBytes(goldenBytes),
+            transformReadAllBytes(Number.MAX_SAFE_INTEGER, Number.NaN)
+          );
+          const got = await readAllBytes(it);
+          expect(got).toEqual(goldenBytes);
+        });
+      });
+      describe("that is negative", function () {
+        it("should ignore length hint", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterableBytes(goldenBytes),
+            transformReadAllBytes(Number.MAX_SAFE_INTEGER, -10)
+          );
+          const got = await readAllBytes(it);
+          expect(got).toEqual(goldenBytes);
+        });
+      });
+      describe("that is larger than the actual length", function () {
+        it("should error", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterableBytes(goldenBytes),
+            transformReadAllBytes(
+              Number.MAX_SAFE_INTEGER,
+              goldenBytes.byteLength + 100
+            )
+          );
+          try {
+            await readAllBytes(it);
+            fail("expected error");
+          } catch (e) {
+            expect(e).toBeInstanceOf(ConnectError);
+            expect(connectErrorFromReason(e).message).toBe(
+              "[invalid_argument] protocol error: promised 116 bytes, received 16"
+            );
+          }
+        });
+      });
+      describe("that is smaller than the actual length", function () {
+        it("should error", async function () {
+          const it = transformAsyncIterable(
+            createAsyncIterableBytes(goldenBytes),
+            transformReadAllBytes(
+              Number.MAX_SAFE_INTEGER,
+              goldenBytes.byteLength - 10
+            )
+          );
+          try {
+            await readAllBytes(it);
+            fail("expected error");
+          } catch (e) {
+            expect(e).toBeInstanceOf(ConnectError);
+            expect(connectErrorFromReason(e).message).toBe(
+              "[invalid_argument] protocol error: promised 6 bytes, received 8"
+            );
+          }
+        });
+      });
     });
   });
 });

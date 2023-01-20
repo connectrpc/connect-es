@@ -12,7 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const headerEncoding = "Grpc-Encoding";
-export const headerAcceptEncoding = "Grpc-Accept-Encoding";
-export const headerContentType = "Content-Type";
-export const headerTimeout = "Grpc-Timeout";
+export * from "../protocol-grpc/headers.js";

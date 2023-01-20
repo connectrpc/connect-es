@@ -23,6 +23,14 @@ import { Code } from "./code.js";
 export const compressedFlag = 0b00000001;
 
 /**
+ * At most, allow ~4GiB to be received or sent per message.
+ * zlib used by Node.js caps maxOutputLength at this value. It also happens to
+ * be the maximum theoretical message size supported by protobuf-es.
+ */
+const maxReadMaxBytes = 0xffffffff; // zlib caps maxOutputLength at this value
+const maxSendMaxBytes = maxReadMaxBytes;
+
+/**
  * Compression provides methods to compress and decompress data with
  * a certain compression algorithm.
  */
@@ -44,6 +52,44 @@ export interface Compression {
    * size exceeds readMaxBytes.
    */
   decompress: (bytes: Uint8Array, readMaxBytes: number) => Promise<Uint8Array>;
+}
+
+/**
+ * Common options for compression.
+ */
+interface CompressionOptions {
+  sendMaxBytes: number;
+  readMaxBytes: number;
+  compressMinBytes: number;
+}
+
+/**
+ * Validate common options for compression, setting default values where an
+ * option is omitted, and validating that
+ */
+export function compressionValidateOptions<
+  T extends Partial<CompressionOptions>
+>(opt: T): Omit<T, keyof CompressionOptions> & CompressionOptions {
+  const sendMaxBytes = opt.sendMaxBytes ?? maxSendMaxBytes;
+  const readMaxBytes = opt.readMaxBytes ?? maxReadMaxBytes;
+  if (sendMaxBytes < 1 || sendMaxBytes > maxSendMaxBytes) {
+    throw new ConnectError(
+      `sendMaxBytes ${sendMaxBytes} must be >= 1 and <= ${maxSendMaxBytes}`,
+      Code.Internal
+    );
+  }
+  if (readMaxBytes < 1 || readMaxBytes > maxReadMaxBytes) {
+    throw new ConnectError(
+      `readMaxBytes ${readMaxBytes} must be >= 1 and <= ${maxReadMaxBytes}`,
+      Code.Internal
+    );
+  }
+  return {
+    ...opt,
+    sendMaxBytes,
+    readMaxBytes,
+    compressMinBytes: opt.compressMinBytes ?? 0,
+  };
 }
 
 /**

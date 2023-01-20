@@ -30,8 +30,14 @@ import { Code } from "./code.js";
  * format.
  */
 export interface Serialization<T> {
+  /**
+   * Serialize T. Raises a ConnectError with Code.Internal if an error occurs.
+   */
   serialize: (data: T) => Uint8Array;
 
+  /**
+   * Parse T. Raises a ConnectError with Code.InvalidArgument if an error occurs.
+   */
   parse: (data: Uint8Array) => T;
 }
 
@@ -140,7 +146,7 @@ export function createMethodSerializationLookup<
  * MethodSerializationLookup provides convenient access to request and response
  * message serialization for a given method.
  */
-interface MethodSerializationLookup<
+export interface MethodSerializationLookup<
   I extends Message<I>,
   O extends Message<O>
 > {
