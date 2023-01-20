@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import { codeFromHttpStatus } from "../protocol-grpc/http-status.js";
-import { ConnectError } from "../connect-error.js";
+import { headerEncoding } from "../protocol-grpc/headers.js";
 import { findTrailerError } from "../protocol-grpc/trailer-status.js";
-import { Code } from "../code.js";
-import { parseContentType } from "./parse-content-type.js";
 import type { Compression } from "../compression.js";
-import { headerEncoding } from "./headers.js";
+import { ConnectError } from "../connect-error.js";
+import { Code } from "../code.js";
+import { parseContentType } from "./content-type.js";
 
 /**
  * Validates response status and header for the gRPC-web protocol.

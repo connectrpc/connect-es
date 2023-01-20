@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { codeFromHttpStatus } from "./http-status.js";
-import { parseContentType } from "./parse-content-type.js";
+import { parseContentType } from "./content-type.js";
 import { ConnectError } from "../connect-error.js";
 import { findTrailerError } from "./trailer-status.js";
 import { Code } from "../code.js";

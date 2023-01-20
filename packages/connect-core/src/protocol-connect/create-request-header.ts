@@ -15,12 +15,21 @@
 import { MethodKind } from "@bufbuild/protobuf";
 import type { Compression } from "../compression.js";
 import {
+  headerContentType,
   headerStreamAcceptEncoding,
   headerStreamEncoding,
   headerUnaryAcceptEncoding,
   headerUnaryEncoding,
+  headerTimeout,
+  headerProtocolVersion,
 } from "./headers.js";
 import { protocolVersion } from "./version.js";
+import {
+  contentTypeStreamJson,
+  contentTypeStreamProto,
+  contentTypeUnaryJson,
+  contentTypeUnaryProto,
+} from "./content-type.js";
 
 /**
  * Creates headers for a Connect request.
@@ -32,16 +41,20 @@ export function createRequestHeader(
   userProvidedHeaders: HeadersInit | undefined
 ): Headers {
   const result = new Headers(userProvidedHeaders ?? {});
-  let type = "application/";
-  if (methodKind != MethodKind.Unary) {
-    type += "connect+";
-  }
-  type += useBinaryFormat ? "proto" : "json";
-  result.set("Content-Type", type);
   if (timeoutMs !== undefined) {
-    result.set("Connect-Timeout-Ms", `${timeoutMs}`);
+    result.set(headerTimeout, `${timeoutMs}`);
   }
-  result.set("Connect-Protocol-Version", protocolVersion);
+  result.set(
+    headerContentType,
+    methodKind == MethodKind.Unary
+      ? useBinaryFormat
+        ? contentTypeUnaryProto
+        : contentTypeUnaryJson
+      : useBinaryFormat
+      ? contentTypeStreamProto
+      : contentTypeStreamJson
+  );
+  result.set(headerProtocolVersion, protocolVersion);
   return result;
 }
 

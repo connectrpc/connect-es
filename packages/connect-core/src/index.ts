@@ -45,21 +45,48 @@ export {
   Serialization,
   createBinarySerialization,
   createJsonSerialization,
+  createMethodSerializationLookup,
   createClientMethodSerializers,
+  MethodSerializationLookup,
 } from "./serialization.js";
 export {
   createEnvelopeReadableStream,
   EnvelopedMessage,
+  ParsedEnvelopedMessage,
   encodeEnvelope,
   encodeEnvelopes,
+  envelopeDecompress,
+  envelopeCompress,
 } from "./envelope.js";
-export { Compression, compressedFlag } from "./compression.js";
 export {
-  ParsedEnvelopedMessage,
+  Compression,
+  compressedFlag,
+  compressionNegotiate,
+  compressionValidateOptions,
+} from "./compression.js";
+export {
+  streamTransformCompress,
+  streamTransformDecompress,
+  streamTransformJoin,
+  streamTransformSplit,
+  streamTransformSerialize,
+  streamTransformParse,
+} from "./stream-transform.js";
+export {
+  AsyncIterableTransform,
+  transformAsyncIterable,
+  transformCatch,
+  transformAppend,
+  transformPrepend,
+  transformReadAllBytes,
   transformCompress,
   transformDecompress,
   transformJoin,
   transformSplit,
   transformSerialize,
   transformParse,
-} from "./transform-stream.js";
+  AsyncIterableSink,
+  pipeTo,
+  sinkAll,
+  sinkAllBytes,
+} from "./transform-iterable.js";

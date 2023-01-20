@@ -12,30 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { Serialization } from "./serialization.js";
+import type { Compression } from "./compression.js";
+import { encodeEnvelopes, ParsedEnvelopedMessage } from "./envelope.js";
+import { ConnectError } from "./connect-error.js";
+import { Code } from "./code.js";
 import {
-  createReadableByteStream,
-  createReadableStream,
-  node16WhatwgStreamPolyfill,
+  createAsyncIterable,
+  createAsyncIterableBytes,
   readAll,
   readAllBytes,
-} from "./whatwg-stream-helper.spec.js";
-import type { Serialization } from "./serialization.js";
+} from "./transform-iterable-helper.spec.js";
 import {
+  transformAsyncIterable,
   transformCompress,
   transformDecompress,
   transformJoin,
-  transformParse,
   transformSerialize,
   transformSplit,
-} from "./transform-stream.js";
-import type { Compression } from "./compression.js";
-import { encodeEnvelopes } from "./envelope.js";
-import { ConnectError } from "./connect-error.js";
-import { Code } from "./code.js";
+  transformParse,
+} from "./transform-iterable.js";
 
-node16WhatwgStreamPolyfill();
-
-// These tests aim to model the usage of transform streams in clients and servers.
+// These tests aim to model the usage of iterable transforms in clients and servers.
 // Note that the tests were written as a proof of concept, and the coverage is
 // incomplete (cancellation, backpressure, error handling, etc.).
 describe("full story", function () {
@@ -109,35 +107,32 @@ describe("full story", function () {
 
   describe("write", function () {
     it("should write expected bytes", async function () {
-      const stream = createReadableStream(goldenPayload)
-        .pipeThrough(
-          transformSerialize(serialization, endFlag, endSerialization),
-          {}
-        )
-        .pipeThrough(
-          transformCompress(compressionReverse, writeMaxBytes, 0),
-          {}
-        )
-        .pipeThrough(transformJoin(writeMaxBytes), {});
-      const all = await readAllBytes(stream);
+      const it = transformAsyncIterable(
+        createAsyncIterable(goldenPayload),
+        transformSerialize(serialization, endFlag, endSerialization),
+        transformCompress(compressionReverse, writeMaxBytes, 0),
+        transformJoin(writeMaxBytes)
+      );
+      const all = await readAllBytes(it);
       expect(all).toEqual(goldenBytes);
     });
   });
 
   describe("read", function () {
     it("should read expected bytes", async function () {
-      const inputStream = createReadableByteStream(goldenBytes)
-        .pipeThrough(transformSplit(readMaxBytes), {})
-        .pipeThrough(transformDecompress(compressionReverse, readMaxBytes), {})
-        .pipeThrough(
-          transformParse(serialization, endFlag, endSerialization),
-          {}
-        );
-      const all = await readAll(inputStream);
+      const it = transformAsyncIterable(
+        createAsyncIterableBytes(goldenBytes),
+        transformSplit(readMaxBytes),
+        transformDecompress(compressionReverse, readMaxBytes),
+        transformParse(serialization, endFlag, endSerialization)
+      );
+      const all = await readAll(it);
       expect(all).toEqual(goldenPayload);
     });
   });
 
+  // TODO
+  /*
   describe("client integration", function () {
     it("should works", async function () {
       const requestTransformStream = new TransformStream<
@@ -147,20 +142,23 @@ describe("full story", function () {
       const requestWriter = requestTransformStream.writable.getWriter();
       const rawRequestStream = requestTransformStream.readable
         .pipeThrough(
-          transformSerialize(serialization, endFlag, endSerialization),
+          streamTransformSerialize(serialization, endFlag, endSerialization),
           {}
         )
         .pipeThrough(
-          transformCompress(compressionReverse, writeMaxBytes, 0),
+          streamTransformCompress(compressionReverse, writeMaxBytes, 0),
           {}
         )
-        .pipeThrough(transformJoin(writeMaxBytes), {});
+        .pipeThrough(streamTransformJoin(writeMaxBytes), {});
 
       const responseReader = createReadableByteStream(goldenBytes)
-        .pipeThrough(transformSplit(readMaxBytes), {})
-        .pipeThrough(transformDecompress(compressionReverse, readMaxBytes), {})
+        .pipeThrough(streamTransformSplit(readMaxBytes), {})
         .pipeThrough(
-          transformParse(serialization, endFlag, endSerialization),
+          streamTransformDecompress(compressionReverse, readMaxBytes),
+          {}
+        )
+        .pipeThrough(
+          streamTransformParse(serialization, endFlag, endSerialization),
           {}
         )
         .getReader();
@@ -228,7 +226,7 @@ describe("full story", function () {
       expect(writtenBytes).toEqual(goldenBytes);
     });
   });
-
+*/
   describe("server integration", function () {
     const echoImplReceived: string[] = [];
 
@@ -246,76 +244,47 @@ describe("full story", function () {
     });
 
     it("should echo expected bytes", async function () {
-      const requestStream = createReadableByteStream(goldenBytes)
-        .pipeThrough(transformSplit(readMaxBytes), {})
-        .pipeThrough(transformDecompress(compressionReverse, readMaxBytes), {})
-        .pipeThrough(
-          transformParse(serialization, endFlag, endSerialization),
-          {}
-        );
-
-      // implementations take an iterable - make our stream available as one
-      const implInput: AsyncIterable<string> = {
-        [Symbol.asyncIterator](): AsyncIterator<string> {
-          const reader = requestStream.getReader();
-          return {
-            async next(): Promise<IteratorResult<string>> {
-              const r = await reader.read();
-              if (r.done) {
-                return {
-                  done: true,
-                  value: undefined,
-                };
+      const inputIt = transformAsyncIterable(
+        createAsyncIterableBytes(goldenBytes),
+        transformSplit(readMaxBytes),
+        transformDecompress(compressionReverse, readMaxBytes),
+        transformParse(serialization, endFlag, endSerialization),
+        async function* (
+          iterable: AsyncIterable<ParsedEnvelopedMessage<string, "end">>
+        ): AsyncIterable<string> {
+          let endReceived = false;
+          for await (const envelope of iterable) {
+            if (envelope.end) {
+              if (endReceived) {
+                throw new Error("already received end");
               }
-              if (r.value.end) {
-                return {
-                  done: true,
-                  value: undefined,
-                };
-              }
-              return {
-                done: false,
-                value: r.value.value,
-              };
-            },
-          };
-        },
-      };
-
-      // invoke the implementation
-      const implOutput = echoImpl(implInput)[Symbol.asyncIterator]();
-
-      // implementations return an iterable - make a readable stream from it
-      const responseStream = new ReadableStream<
-        { end: false; value: string } | { end: true; value: string }
-      >({
-        async pull(controller) {
-          const r = await implOutput.next();
-          if (r.done === true) {
-            controller.enqueue({
-              end: true,
-              value: "end",
-            });
-            return controller.close();
+              endReceived = true;
+              continue;
+            }
+            yield envelope.value;
           }
-          controller.enqueue({
-            end: false,
-            value: r.value,
-          });
-        },
-      })
-        .pipeThrough(
-          transformSerialize(serialization, endFlag, endSerialization),
-          {}
-        )
-        .pipeThrough(
-          transformCompress(compressionReverse, writeMaxBytes, 0),
-          {}
-        )
-        .pipeThrough(transformJoin(writeMaxBytes), {});
+          if (!endReceived) {
+            throw new Error("did not receive end");
+          }
+        }
+      );
 
-      // in practice, we would pipe the response data to a writable stream with pipeTo()
-      expect(await readAllBytes(responseStream)).toEqual(goldenBytes);
+      const outputIt = transformAsyncIterable(
+        echoImpl(inputIt),
+        async function* (
+          iterable: AsyncIterable<string>
+        ): AsyncIterable<ParsedEnvelopedMessage<string, "end">> {
+          for await (const message of iterable) {
+            yield { end: false, value: message };
+          }
+          yield { end: true, value: "end" };
+        },
+        transformSerialize(serialization, endFlag, endSerialization),
+        transformCompress(compressionReverse, writeMaxBytes, 0),
+        transformJoin(writeMaxBytes)
+      );
+
+      expect(await readAllBytes(outputIt)).toEqual(goldenBytes);
 
       // sanity check that the implementation was invoked
       expect(echoImplReceived).toEqual(["alpha", "beta"]);

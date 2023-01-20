@@ -14,7 +14,7 @@
 
 import { MethodKind } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
-import { parseContentType } from "./parse-content-type.js";
+import { parseContentType } from "./content-type.js";
 import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
 import type { Compression } from "../compression.js";

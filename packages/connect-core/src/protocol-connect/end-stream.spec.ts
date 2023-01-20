@@ -16,13 +16,10 @@ import type { JsonObject } from "@bufbuild/protobuf";
 import { endStreamFromJson, endStreamToJson } from "./end-stream.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { errorToJson } from "./error-to-json.js";
-import { Headers as UndiciHeaders } from "undici";
+import { node16FetchHeadersPolyfill } from "../node16-polyfill-helper.spec.js";
+import { errorToJson } from "./error-json.js";
 
-// TODO we need to replace all Headers ctor calls in our code or require Node.js >= v18
-if (typeof globalThis.Headers !== "function") {
-  globalThis.Headers = UndiciHeaders as unknown as typeof Headers;
-}
+node16FetchHeadersPolyfill();
 
 describe("endStreamFromJson()", function () {
   it("should parse expected", function () {

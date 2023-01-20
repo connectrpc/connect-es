@@ -30,8 +30,14 @@ import { Code } from "./code.js";
  * format.
  */
 export interface Serialization<T> {
+  /**
+   * Serialize T. Raises a ConnectError with Code.Internal if an error occurs.
+   */
   serialize: (data: T) => Uint8Array;
 
+  /**
+   * Parse T. Raises a ConnectError with Code.InvalidArgument if an error occurs.
+   */
   parse: (data: Uint8Array) => T;
 }
 
@@ -108,6 +114,50 @@ export function createJsonSerialization<T extends Message<T>>(
       }
     },
   };
+}
+
+/**
+ * Create an object that provides convenient access to request and response
+ * message serialization for a given method.
+ */
+export function createMethodSerializationLookup<
+  I extends Message<I>,
+  O extends Message<O>
+>(
+  method: MethodInfo<I, O>,
+  binaryOptions: Partial<BinaryReadOptions & BinaryWriteOptions> | undefined,
+  jsonOptions: Partial<JsonReadOptions & JsonWriteOptions> | undefined
+): MethodSerializationLookup<I, O> {
+  const inputBinary = createBinarySerialization(method.I, binaryOptions);
+  const inputJson = createJsonSerialization(method.I, jsonOptions);
+  const outputBinary = createBinarySerialization(method.O, binaryOptions);
+  const outputJson = createJsonSerialization(method.O, jsonOptions);
+  return {
+    getI(useBinaryFormat) {
+      return useBinaryFormat ? inputBinary : inputJson;
+    },
+    getO(useBinaryFormat) {
+      return useBinaryFormat ? outputBinary : outputJson;
+    },
+  };
+}
+
+/**
+ * MethodSerializationLookup provides convenient access to request and response
+ * message serialization for a given method.
+ */
+export interface MethodSerializationLookup<
+  I extends Message<I>,
+  O extends Message<O>
+> {
+  /**
+   * Get the JSON or binary serialization for the request message type.
+   */
+  getI(useBinaryFormat: boolean): Serialization<I>;
+  /**
+   * Get the JSON or binary serialization for the response message type.
+   */
+  getO(useBinaryFormat: boolean): Serialization<O>;
 }
 
 /**

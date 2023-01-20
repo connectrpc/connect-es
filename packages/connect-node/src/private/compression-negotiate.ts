@@ -15,6 +15,8 @@
 import { Code, ConnectError, Compression } from "@bufbuild/connect-core";
 
 /**
+ * @deprecated use compressionNegotiate from @bufbuild/core
+ *
  * compressionNegotiate validates the request encoding and determines
  * the accepted response encoding.
  *
