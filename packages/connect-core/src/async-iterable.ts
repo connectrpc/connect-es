@@ -14,9 +14,15 @@
 
 import { Code } from "./code.js";
 import { ConnectError } from "./connect-error.js";
-import type { EnvelopedMessage, ParsedEnvelopedMessage } from "./envelope.js";
+import type { EnvelopedMessage } from "./envelope.js";
+import {
+  encodeEnvelope,
+  envelopeCompress,
+  envelopeDecompress,
+} from "./envelope.js";
 import type { Serialization } from "./serialization.js";
-import { compressedFlag, Compression } from "./compression.js";
+import type { Compression } from "./compression.js";
+import { assertReadMaxBytes, assertWriteMaxBytes } from "./compression.js";
 
 /**
  * A function that takes an asynchronous iterable as an input, and returns a
@@ -57,6 +63,17 @@ export type AsyncIterableSink<T, R = void> = (
 interface PipeOptions {
   signal?: AbortSignal;
 }
+
+/**
+ * ParsedEnvelopedMessage is the deserialized counterpart to an
+ * EnvelopedMessage.
+ *
+ * It is either a deserialized message M, or a deserialized end-of-stream
+ * message E, typically distinguished by a flag on an enveloped message.
+ */
+type ParsedEnvelopedMessage<M, E> =
+  | { end: false; value: M }
+  | { end: true; value: E };
 
 /**
  * Takes an asynchronous iterable as an input, and passes it to a sink.
@@ -224,7 +241,7 @@ export function pipeTo(
   const sink = rest.pop() as AsyncIterableSink<unknown>;
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const it = transformAsyncIterable(iterable, ...rest, opt);
+  const it = pipe(iterable, ...rest, opt);
   return sink(it);
 }
 
@@ -257,7 +274,7 @@ export function sinkAllBytes(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2>(
+export function pipe<T1, T2>(
   iterable: AsyncIterable<T1>,
   transform: AsyncIterableTransform<T1, T2>,
   options?: PipeOptions
@@ -265,7 +282,7 @@ export function transformAsyncIterable<T1, T2>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3>(
+export function pipe<T1, T2, T3>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -274,7 +291,7 @@ export function transformAsyncIterable<T1, T2, T3>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4>(
+export function pipe<T1, T2, T3, T4>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -284,7 +301,7 @@ export function transformAsyncIterable<T1, T2, T3, T4>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4, T5>(
+export function pipe<T1, T2, T3, T4, T5>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -295,7 +312,7 @@ export function transformAsyncIterable<T1, T2, T3, T4, T5>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4, T5, T6>(
+export function pipe<T1, T2, T3, T4, T5, T6>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -307,7 +324,7 @@ export function transformAsyncIterable<T1, T2, T3, T4, T5, T6>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7>(
+export function pipe<T1, T2, T3, T4, T5, T6, T7>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -320,7 +337,7 @@ export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8>(
+export function pipe<T1, T2, T3, T4, T5, T6, T7, T8>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -334,7 +351,7 @@ export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -349,7 +366,7 @@ export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
+export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -366,7 +383,7 @@ export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
+export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -384,7 +401,7 @@ export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, 
 /**
  * Apply one or more transformations to an asynchronous iterable.
  */
-export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
+export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
   iterable: AsyncIterable<T1>,
   transform1: AsyncIterableTransform<T1, T2>,
   transform2: AsyncIterableTransform<T2, T3>,
@@ -399,7 +416,7 @@ export function transformAsyncIterable<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, 
   transform11: AsyncIterableTransform<T11, T12>,
   options?: PipeOptions
 ): AsyncIterable<T12>;
-export async function* transformAsyncIterable<I, O>(
+export async function* pipe<I, O>(
   iterable: AsyncIterable<I>,
   ...rest: (AsyncIterableTransform<unknown> | PipeOptions | undefined)[]
 ): AsyncIterable<O> {
@@ -426,13 +443,10 @@ function pickTransforms(
 }
 
 /**
- * Creates an AsyncIterableTransform that catches any error in the source, and
+ * Creates an AsyncIterableTransform that catches any error from the input, and
  * passes it to the given catchError function.
  *
- * The value returned from the catchError function is yielded as the last
- * element in the transformed iterable.
- *
- * If the function returns undefined, no element is yielded.
+ * The catchError function may return a final value.
  */
 export function transformCatch<T>(
   catchError: TransformCatchErrorFn<T>
@@ -452,8 +466,37 @@ export function transformCatch<T>(
 }
 
 type TransformCatchErrorFn<C> =
+  | ((reason: unknown) => void)
   | ((reason: unknown) => C | undefined)
   | ((reason: unknown) => Promise<C | undefined>);
+
+/**
+ * Creates an AsyncIterableTransform that catches any error from the input, and
+ * passes it to the given function. Unlike transformCatch(), the given function
+ * is also called when no error is raised.
+ */
+export function transformCatchFinally<T>(
+  catchFinally: TransformCatchFinallyFn<T>
+): AsyncIterableTransform<T> {
+  return async function* (iterable) {
+    let err: unknown | undefined;
+    try {
+      for await (const chunk of iterable) {
+        yield chunk;
+      }
+    } catch (e) {
+      err = e;
+    }
+    const caught = await catchFinally(err);
+    if (caught !== undefined) {
+      yield caught;
+    }
+  };
+}
+
+type TransformCatchFinallyFn<C> =
+  | ((reason: unknown | undefined) => C | undefined)
+  | ((reason: unknown | undefined) => Promise<C | undefined>);
 
 /**
  * Creates an AsyncIterableTransform that appends a value.
@@ -523,8 +566,9 @@ export function transformReadAllBytes(
  * distinguish between regular messages, and end-of-stream messages, as used
  * by the RPP-web and Connect protocols.
  */
-export function transformSerialize<T>(
-  serialization: Serialization<T>
+export function transformSerializeEnvelope<T>(
+  serialization: Serialization<T>,
+  writeMaxBytes: number
 ): AsyncIterableTransform<T, EnvelopedMessage>;
 /**
  * Creates an AsyncIterableTransform that takes a value or special end type, and
@@ -538,28 +582,34 @@ export function transformSerialize<T>(
  * serialization, and the resulting enveloped message does not have the given
  * endStreamFlag.
  */
-export function transformSerialize<T, E>(
+export function transformSerializeEnvelope<T, E>(
   serialization: Serialization<T>,
+  writeMaxBytes: number,
   endStreamFlag: number,
   endSerialization: Serialization<E>
 ): AsyncIterableTransform<ParsedEnvelopedMessage<T, E>, EnvelopedMessage>;
-export function transformSerialize<T, E>(
+export function transformSerializeEnvelope<T, E>(
   serialization: Serialization<T>,
+  writeMaxBytes: number,
   endStreamFlag?: number,
   endSerialization?: Serialization<E>
 ):
   | AsyncIterableTransform<T, EnvelopedMessage>
   | AsyncIterableTransform<ParsedEnvelopedMessage<T, E>, EnvelopedMessage> {
   if (endStreamFlag === undefined || endSerialization === undefined) {
-    return async function* (iterable: AsyncIterable<T>) {
+    return async function* (
+      iterable: AsyncIterable<T>
+    ): AsyncIterable<EnvelopedMessage> {
       for await (const chunk of iterable) {
-        yield { flags: 0, data: serialization.serialize(chunk) };
+        const data = serialization.serialize(chunk);
+        assertWriteMaxBytes(writeMaxBytes, data.byteLength);
+        yield { flags: 0, data };
       }
     };
   }
   return async function* (
     iterable: AsyncIterable<ParsedEnvelopedMessage<T, E>>
-  ) {
+  ): AsyncIterable<EnvelopedMessage> {
     for await (const chunk of iterable) {
       let data: Uint8Array;
       let flags = 0;
@@ -582,7 +632,7 @@ export function transformSerialize<T, E>(
  * between regular messages, and end-of-stream messages, as used by the
  * gRPP-web and Connect protocols.
  */
-export function transformParse<T>(
+export function transformParseEnvelope<T>(
   serialization: Serialization<T>
 ): AsyncIterableTransform<EnvelopedMessage, T>;
 /**
@@ -592,7 +642,7 @@ export function transformParse<T>(
  * Note that this override will look for the given endStreamFlag, and raise
  * and error if it is set.
  */
-export function transformParse<T>(
+export function transformParseEnvelope<T>(
   serialization: Serialization<T>,
   endStreamFlag: number,
   endSerialization: null
@@ -608,12 +658,12 @@ export function transformParse<T>(
  * If the endStreamFlag is not set, the payload is parsed using the given
  * serialization, and an object with { end: false, value: ... } is returned.
  */
-export function transformParse<T, E>(
+export function transformParseEnvelope<T, E>(
   serialization: Serialization<T>,
   endStreamFlag: number,
   endSerialization: Serialization<E>
 ): AsyncIterableTransform<EnvelopedMessage, ParsedEnvelopedMessage<T, E>>;
-export function transformParse<T, E>(
+export function transformParseEnvelope<T, E>(
   serialization: Serialization<T>,
   endStreamFlag?: number,
   endSerialization?: null | Serialization<E>
@@ -653,37 +703,14 @@ export function transformParse<T, E>(
 /**
  * Creates an AsyncIterableTransform that takes enveloped messages as input, and
  * compresses them if they are larger than compressMinBytes.
- *
- * An error is raised if an enveloped message is already compressed, or if
- * the compressed payload is larger than writeMaxBytes.
- *
- * If compression is null, an error is raised if the uncompressed payload is
- * larger than writeMaxBytes.
  */
-export function transformCompress(
+export function transformCompressEnvelope(
   compression: Compression | null,
-  writeMaxBytes: number,
   compressMinBytes: number
 ): AsyncIterableTransform<EnvelopedMessage, EnvelopedMessage> {
   return async function* (iterable) {
-    for await (let { flags, data } of iterable) {
-      if ((flags & compressedFlag) === compressedFlag) {
-        throw new ConnectError(
-          "invalid envelope, already compressed",
-          Code.Internal
-        );
-      }
-      if (compression && data.byteLength >= compressMinBytes) {
-        data = await compression.compress(data);
-        flags = flags | compressedFlag;
-      }
-      if (data.byteLength > writeMaxBytes) {
-        throw new ConnectError(
-          `message size ${data.byteLength} is larger than configured writeMaxBytes ${writeMaxBytes}`,
-          Code.ResourceExhausted
-        );
-      }
-      yield { data, flags };
+    for await (const env of iterable) {
+      yield await envelopeCompress(env, compression, compressMinBytes);
     }
   };
 }
@@ -691,28 +718,14 @@ export function transformCompress(
 /**
  * Creates an AsyncIterableTransform that takes enveloped messages as input, and
  * decompresses them using the given compression.
- *
- * Raises an error if an envelope is compressed, but compression is null.
  */
-export function transformDecompress(
+export function transformDecompressEnvelope(
   compression: Compression | null,
   readMaxBytes: number
 ): AsyncIterableTransform<EnvelopedMessage, EnvelopedMessage> {
   return async function* (iterable) {
-    for await (let { flags, data } of iterable) {
-      if ((flags & compressedFlag) !== compressedFlag) {
-        yield { flags, data };
-        continue;
-      }
-      if (!compression) {
-        throw new ConnectError(
-          "received compressed envelope, but do not know how to decompress",
-          Code.InvalidArgument
-        );
-      }
-      data = await compression.decompress(data, readMaxBytes);
-      flags = flags ^ compressedFlag;
-      yield { data, flags };
+    for await (const env of iterable) {
+      yield await envelopeDecompress(env, compression, readMaxBytes);
     }
   };
 }
@@ -720,27 +733,14 @@ export function transformDecompress(
 /**
  * Create an AsyncIterableTransform that takes enveloped messages as input and
  * joins them into a stream of raw bytes.
- *
- * The TransformStream raises an error if the payload of an enveloped message
- * is larger than writeMaxBytes.
  */
-export function transformJoin(
-  writeMaxBytes: number
-): AsyncIterableTransform<EnvelopedMessage, Uint8Array> {
+export function transformJoinEnvelopes(): AsyncIterableTransform<
+  EnvelopedMessage,
+  Uint8Array
+> {
   return async function* (iterable) {
     for await (const { flags, data } of iterable) {
-      if (data.byteLength > writeMaxBytes) {
-        throw new ConnectError(
-          `message size ${data.byteLength} is larger than configured writeMaxBytes ${writeMaxBytes}`,
-          Code.ResourceExhausted
-        );
-      }
-      const bytes = new Uint8Array(data.byteLength + 5);
-      bytes.set(data, 5);
-      const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-      v.setUint8(0, flags); // first byte is flags
-      v.setUint32(1, data.byteLength); // 4 bytes message length
-      yield bytes;
+      yield encodeEnvelope(flags, data);
     }
   };
 }
@@ -754,53 +754,76 @@ export function transformJoin(
  * - if the stream ended before an enveloped message fully arrived,
  * - or if the stream ended with extraneous data.
  */
-export function transformSplit(
+export function transformSplitEnvelope(
   readMaxBytes: number
 ): AsyncIterableTransform<Uint8Array, EnvelopedMessage> {
-  return async function* (iterable) {
-    let buffer = new Uint8Array(0);
-    let header: { length: number; flags: number } | undefined = undefined;
-    for await (const chunk of iterable) {
-      const g = new Uint8Array(buffer.byteLength + chunk.byteLength);
-      g.set(buffer);
-      g.set(chunk, buffer.byteLength);
-      buffer = g;
-      if (buffer.byteLength < 5) {
-        continue;
-      }
-      if (header === undefined) {
-        const v = new DataView(buffer.buffer, buffer.byteOffset, 5);
-        const flags = v.getUint8(0); // first byte is flags
-        const length = v.getUint32(1); // 4 bytes message length
-        if (length > readMaxBytes) {
-          throw new ConnectError(
-            `message size ${length} is larger than configured readMaxBytes ${readMaxBytes}`,
-            Code.ResourceExhausted
-          );
-        }
-        header = { length, flags };
-      }
-      if (buffer.byteLength - 5 < header.length) {
-        continue;
-      }
-      const data = buffer.subarray(5, 5 + header.length);
-      buffer = buffer.subarray(5 + header.length);
-      yield { flags: header.flags, data };
-      header = undefined;
+  // append chunk to buffer, returning updated buffer
+  function append(buffer: Uint8Array, chunk: Uint8Array): Uint8Array {
+    const n = new Uint8Array(buffer.byteLength + chunk.byteLength);
+    n.set(buffer);
+    n.set(chunk, buffer.length);
+    return n;
+  }
+
+  // tuple 0: envelope, or undefined if incomplete
+  // tuple 1: remainder of the buffer
+  function shiftEnvelope(
+    buffer: Uint8Array,
+    header: { length: number; flags: number }
+  ): [EnvelopedMessage | undefined, Uint8Array] {
+    if (buffer.byteLength < 5 + header.length) {
+      return [undefined, buffer];
     }
-    if (header) {
-      throw new ConnectError(
-        `protocol error: promised ${header.length} bytes in envelope, got ${
-          buffer.byteLength - 5
-        }`,
-        Code.InvalidArgument
-      );
+    return [
+      { flags: header.flags, data: buffer.subarray(5, 5 + header.length) },
+      buffer.subarray(5 + header.length),
+    ];
+  }
+
+  // undefined: header is incomplete
+  function peekHeader(
+    buffer: Uint8Array
+  ): { length: number; flags: number } | undefined {
+    if (buffer.byteLength < 5) {
+      return undefined;
+    }
+    const view = new DataView(
+      buffer.buffer,
+      buffer.byteOffset,
+      buffer.byteLength
+    );
+    const length = view.getUint32(1); // 4 bytes message length
+    const flags = view.getUint8(0); // first byte is flags
+    return { length, flags };
+  }
+
+  return async function* (iterable): AsyncIterable<EnvelopedMessage> {
+    let buffer = new Uint8Array(0);
+    for await (const chunk of iterable) {
+      buffer = append(buffer, chunk);
+      for (;;) {
+        const header = peekHeader(buffer);
+        if (!header) {
+          break;
+        }
+        assertReadMaxBytes(readMaxBytes, header.length, true);
+        let env: EnvelopedMessage | undefined;
+        [env, buffer] = shiftEnvelope(buffer, header);
+        if (!env) {
+          break;
+        }
+        yield env;
+      }
     }
     if (buffer.byteLength > 0) {
-      throw new ConnectError(
-        `protocol error: received ${buffer.byteLength} extra bytes`,
-        Code.InvalidArgument
-      );
+      const header = peekHeader(buffer);
+      let message = "protocol error: incomplete envelope";
+      if (header) {
+        message = `protocol error: promised ${
+          header.length
+        } bytes in enveloped message, got ${buffer.byteLength - 5} bytes`;
+      }
+      throw new ConnectError(message, Code.InvalidArgument);
     }
   };
 }
@@ -813,10 +836,7 @@ async function readAllBytes(
   const [ok, hint] = parseLengthHint(lengthHint);
   if (ok) {
     if (hint > readMaxBytes) {
-      throw new ConnectError(
-        `message size ${hint} is larger than configured readMaxBytes ${readMaxBytes}`,
-        Code.ResourceExhausted
-      );
+      assertReadMaxBytes(readMaxBytes, hint, true);
     }
     const buffer = new Uint8Array(hint);
     let offset = 0;
@@ -844,12 +864,7 @@ async function readAllBytes(
   let count = 0;
   for await (const chunk of iterable) {
     count += chunk.byteLength;
-    if (count > readMaxBytes) {
-      throw new ConnectError(
-        `message size is larger than configured readMaxBytes ${readMaxBytes}`,
-        Code.ResourceExhausted
-      );
-    }
+    assertReadMaxBytes(readMaxBytes, count);
     chunks.push(chunk);
   }
   const all = new Uint8Array(count);

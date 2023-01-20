@@ -13,23 +13,23 @@
 // limitations under the License.
 
 import {
-  transformAsyncIterable,
+  pipe,
   transformCatch,
-  transformCompress,
-  transformDecompress,
-  transformJoin,
-  transformParse,
+  transformCompressEnvelope,
+  transformDecompressEnvelope,
+  transformJoinEnvelopes,
+  transformParseEnvelope,
   transformReadAllBytes,
-  transformSerialize,
-  transformSplit,
-} from "./transform-iterable.js";
+  transformSerializeEnvelope,
+  transformSplitEnvelope,
+} from "./async-iterable.js";
 import type { Serialization } from "./serialization.js";
 import {
   createAsyncIterable,
   createAsyncIterableBytes,
   readAll,
   readAllBytes,
-} from "./transform-iterable-helper.spec.js";
+} from "./async-iterable-helper.spec.js";
 import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import { Code } from "./code.js";
 import type { EnvelopedMessage } from "./envelope.js";
@@ -60,21 +60,21 @@ describe("transforming asynchronous iterables", () => {
         return new TextDecoder().decode(data);
       },
     };
-    describe("transformSerialize()", function () {
+    describe("transformSerializeEnvelope()", function () {
       it("should serialize to envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(goldenItems),
-          transformSerialize(fakeSerialization)
+          transformSerializeEnvelope(fakeSerialization, Number.MAX_SAFE_INTEGER)
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
       });
     });
-    describe("transformParse()", function () {
+    describe("transformParseEnvelope()", function () {
       it("should parse from envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(goldenEnvelopes),
-          transformParse(fakeSerialization)
+          transformParseEnvelope(fakeSerialization)
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenItems);
@@ -120,31 +120,36 @@ describe("transforming asynchronous iterables", () => {
       },
     };
 
-    describe("transformSerialize()", function () {
+    describe("transformSerializeEnvelope()", function () {
       it("should serialize to envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(goldenItems),
-          transformSerialize(serialization, endFlag, endSerialization)
+          transformSerializeEnvelope(
+            serialization,
+            Number.MAX_SAFE_INTEGER,
+            endFlag,
+            endSerialization
+          )
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
       });
     });
 
-    describe("transformParse()", function () {
+    describe("transformParseEnvelope()", function () {
       it("should parse from envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(goldenEnvelopes),
-          transformParse(serialization, endFlag, endSerialization)
+          transformParseEnvelope(serialization, endFlag, endSerialization)
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenItems);
       });
       describe("with endCompression null", function () {
         it("should raise error on unexpected end flag", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterable(goldenEnvelopes),
-            transformParse(serialization, endFlag, null)
+            transformParseEnvelope(serialization, endFlag, null)
           );
           try {
             await readAll(it);
@@ -161,9 +166,9 @@ describe("transforming asynchronous iterables", () => {
           const itemsWithoutEndFlag = goldenItems
             .slice(0, 2)
             .map((item) => item.value);
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterable(envelopesWithoutEndFlag),
-            transformParse(serialization, endFlag, null)
+            transformParseEnvelope(serialization, endFlag, null)
           );
           const got = await readAll(it);
           expect(got).toEqual(itemsWithoutEndFlag);
@@ -192,45 +197,30 @@ describe("transforming asynchronous iterables", () => {
       0xde, 0xad, 0xbe, 0xe0, 0x80, 0x0, 0x0, 0x0, 0x4, 0xde, 0xad, 0xbe, 0xe1,
     ]);
 
-    describe("transformJoin()", function () {
+    describe("transformJoinEnvelopes()", function () {
       it("should join envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(goldenEnvelopes),
-          transformJoin(Number.MAX_SAFE_INTEGER)
+          transformJoinEnvelopes()
         );
         const gotBytes = await readAllBytes(it);
         expect(gotBytes).toEqual(goldenBytes);
       });
-      it("should honor writeMaxBytes", async function () {
-        const it = transformAsyncIterable(
-          createAsyncIterable(goldenEnvelopes),
-          transformJoin(3)
-        );
-        try {
-          await readAll(it);
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[resource_exhausted] message size 4 is larger than configured writeMaxBytes 3"
-          );
-        }
-      });
     });
 
-    describe("transformSplit()", function () {
+    describe("transformSplitEnvelope()", function () {
       it("should split envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterableBytes(goldenBytes),
-          transformSplit(Number.MAX_SAFE_INTEGER)
+          transformSplitEnvelope(Number.MAX_SAFE_INTEGER)
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
       });
       it("should honor readMaxBytes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterableBytes(goldenBytes),
-          transformSplit(3)
+          transformSplitEnvelope(3)
         );
         try {
           await readAll(it);
@@ -296,19 +286,19 @@ describe("transforming asynchronous iterables", () => {
       },
     };
 
-    describe("transformCompress()", function () {
+    describe("transformCompressEnvelope()", function () {
       it("should compress envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(uncompressedEnvelopes),
-          transformCompress(compressionReverse, Number.MAX_SAFE_INTEGER, 0)
+          transformCompressEnvelope(compressionReverse, 0)
         );
         const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(compressedEnvelopes);
       });
       it("should throw on compressed input", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(compressedEnvelopes),
-          transformCompress(compressionReverse, 3, 0)
+          transformCompressEnvelope(compressionReverse, 0)
         );
         try {
           await readAll(it);
@@ -321,52 +311,26 @@ describe("transforming asynchronous iterables", () => {
         }
       });
       it("should honor compressMinBytes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(uncompressedEnvelopes),
-          transformCompress(compressionReverse, Number.MAX_SAFE_INTEGER, 5)
+          transformCompressEnvelope(compressionReverse, 5)
         );
         const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
       });
-      it("should honor writeMaxBytes for the compressed message", async function () {
-        const compressionTo5Bytes: Compression = {
-          name: "fake",
-          compress(bytes) {
-            const b = new Uint8Array(5);
-            b.set(bytes, 0);
-            return Promise.resolve(b);
-          },
-          decompress() {
-            throw "unimplemented";
-          },
-        };
-        const it = transformAsyncIterable(
-          createAsyncIterable(uncompressedEnvelopes),
-          transformCompress(compressionTo5Bytes, 4, 0)
-        );
-        try {
-          await readAll(it);
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[resource_exhausted] message size 5 is larger than configured writeMaxBytes 4"
-          );
-        }
-      });
       describe("with null compression", function () {
         it("should not compress", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterable(uncompressedEnvelopes),
-            transformCompress(null, Number.MAX_SAFE_INTEGER, 0)
+            transformCompressEnvelope(null, 0)
           );
           const gotEnvelopes = await readAll(it);
           expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
         });
         it("should throw on compressed input", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterable(compressedEnvelopes),
-            transformCompress(compressionReverse, 3, 0)
+            transformCompressEnvelope(compressionReverse, 0)
           );
           try {
             await readAll(it);
@@ -378,45 +342,36 @@ describe("transforming asynchronous iterables", () => {
             );
           }
         });
-        it("should honor writeMaxBytes", async function () {
-          const it = transformAsyncIterable(
-            createAsyncIterable(uncompressedEnvelopes),
-            transformCompress(null, 3, 0)
-          );
-          try {
-            await readAll(it);
-            fail("expected error");
-          } catch (e) {
-            expect(e).toBeInstanceOf(ConnectError);
-            expect(connectErrorFromReason(e).message).toBe(
-              "[resource_exhausted] message size 4 is larger than configured writeMaxBytes 3"
-            );
-          }
-        });
       });
     });
 
-    describe("transformDecompress()", function () {
+    describe("transformDecompressEnvelope()", function () {
       it("should decompress envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(compressedEnvelopes),
-          transformDecompress(compressionReverse, Number.MAX_SAFE_INTEGER)
+          transformDecompressEnvelope(
+            compressionReverse,
+            Number.MAX_SAFE_INTEGER
+          )
         );
         const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
       });
       it("should not decompress uncompressed envelopes", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(uncompressedEnvelopes),
-          transformDecompress(compressionReverse, Number.MAX_SAFE_INTEGER)
+          transformDecompressEnvelope(
+            compressionReverse,
+            Number.MAX_SAFE_INTEGER
+          )
         );
         const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
       });
       it("should pass readMaxBytes to compression", async function () {
-        const it = transformAsyncIterable(
+        const it = pipe(
           createAsyncIterable(compressedEnvelopes),
-          transformDecompress(compressionReverse, 3)
+          transformDecompressEnvelope(compressionReverse, 3)
         );
         try {
           await readAll(it);
@@ -430,17 +385,17 @@ describe("transforming asynchronous iterables", () => {
       });
       describe("with null compression", function () {
         it("should not decompress uncompressed envelopes", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterable(uncompressedEnvelopes),
-            transformDecompress(null, Number.MAX_SAFE_INTEGER)
+            transformDecompressEnvelope(null, Number.MAX_SAFE_INTEGER)
           );
           const gotEnvelopes = await readAll(it);
           expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
         });
         it("should raise error on compressed envelope", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterable(compressedEnvelopes),
-            transformDecompress(null, Number.MAX_SAFE_INTEGER)
+            transformDecompressEnvelope(null, Number.MAX_SAFE_INTEGER)
           );
           try {
             await readAll(it);
@@ -471,9 +426,9 @@ describe("transforming asynchronous iterables", () => {
     };
 
     it("should raise error when unhandled", async function () {
-      const it = transformAsyncIterable(
+      const it = pipe(
         createAsyncIterable(goldenItems),
-        transformSerialize(serialization)
+        transformSerializeEnvelope(serialization, Number.MAX_SAFE_INTEGER)
       );
       try {
         await readAll(it);
@@ -503,9 +458,9 @@ describe("transforming asynchronous iterables", () => {
           flags: 0b00000000,
         },
       ];
-      const it = transformAsyncIterable(
+      const it = pipe(
         createAsyncIterable(goldenItems),
-        transformSerialize(serialization),
+        transformSerializeEnvelope(serialization, Number.MAX_SAFE_INTEGER),
         transformCatch<EnvelopedMessage>(() => {
           return {
             flags: 0,
@@ -564,14 +519,22 @@ describe("transforming asynchronous iterables", () => {
     };
 
     it("should serialize, compress, join, split, decompress, and parse", async function () {
-      const it = transformAsyncIterable(
+      const it = pipe(
         createAsyncIterable(goldenItemsWithEnd),
-        transformSerialize(serialization, endFlag, endSerialization),
-        transformCompress(compressionReverse, Number.MAX_SAFE_INTEGER, 0),
-        transformJoin(Number.MAX_SAFE_INTEGER),
-        transformSplit(Number.MAX_SAFE_INTEGER),
-        transformDecompress(compressionReverse, Number.MAX_SAFE_INTEGER),
-        transformParse(serialization, endFlag, endSerialization)
+        transformSerializeEnvelope(
+          serialization,
+          Number.MAX_SAFE_INTEGER,
+          endFlag,
+          endSerialization
+        ),
+        transformCompressEnvelope(compressionReverse, 0),
+        transformJoinEnvelopes(),
+        transformSplitEnvelope(Number.MAX_SAFE_INTEGER),
+        transformDecompressEnvelope(
+          compressionReverse,
+          Number.MAX_SAFE_INTEGER
+        ),
+        transformParseEnvelope(serialization, endFlag, endSerialization)
       );
       const result = await readAll(it);
       expect(result).toEqual(goldenItemsWithEnd);
@@ -587,7 +550,7 @@ describe("transforming asynchronous iterables", () => {
       0xde, 0xad, 0xbe, 0xef
     ]);
     it("should read all bytes", async function () {
-      const it = transformAsyncIterable(
+      const it = pipe(
         createAsyncIterableBytes(goldenBytes),
         transformReadAllBytes(Number.MAX_SAFE_INTEGER)
       );
@@ -595,7 +558,7 @@ describe("transforming asynchronous iterables", () => {
       expect(got).toEqual(goldenBytes);
     });
     it("should honor readMaxBytes", async function () {
-      const it = transformAsyncIterable(
+      const it = pipe(
         createAsyncIterableBytes(goldenBytes),
         transformReadAllBytes(4)
       );
@@ -612,7 +575,7 @@ describe("transforming asynchronous iterables", () => {
     describe("with length hint", function () {
       describe("that matches actual length", function () {
         it("should read without error", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(
               Number.MAX_SAFE_INTEGER,
@@ -625,7 +588,7 @@ describe("transforming asynchronous iterables", () => {
       });
       describe("that exceeds readMaxBytes", function () {
         it("should error", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(4, 5)
           );
@@ -642,7 +605,7 @@ describe("transforming asynchronous iterables", () => {
       });
       describe("that is not an integer", function () {
         it("should ignore length hint", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(100, 100.75)
           );
@@ -652,7 +615,7 @@ describe("transforming asynchronous iterables", () => {
       });
       describe("that is NaN", function () {
         it("should ignore length hint", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(Number.MAX_SAFE_INTEGER, Number.NaN)
           );
@@ -662,7 +625,7 @@ describe("transforming asynchronous iterables", () => {
       });
       describe("that is negative", function () {
         it("should ignore length hint", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(Number.MAX_SAFE_INTEGER, -10)
           );
@@ -672,7 +635,7 @@ describe("transforming asynchronous iterables", () => {
       });
       describe("that is larger than the actual length", function () {
         it("should error", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(
               Number.MAX_SAFE_INTEGER,
@@ -692,7 +655,7 @@ describe("transforming asynchronous iterables", () => {
       });
       describe("that is smaller than the actual length", function () {
         it("should error", async function () {
-          const it = transformAsyncIterable(
+          const it = pipe(
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(
               Number.MAX_SAFE_INTEGER,

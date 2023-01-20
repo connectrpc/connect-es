@@ -105,7 +105,7 @@ export interface GrpcWebHttp2TransportOptions {
   sendCompression?: Compression;
   compressMinBytes?: number;
   readMaxBytes?: number;
-  sendMaxBytes?: number;
+  writeMaxBytes?: number;
 }
 
 /**
