@@ -77,7 +77,7 @@ interface CreateConnectProtocolOptions {
   acceptCompression?: Compression[];
   compressMinBytes?: number;
   readMaxBytes?: number;
-  sendMaxBytes?: number;
+  writeMaxBytes?: number;
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
   requireConnectProtocolHeader?: boolean;

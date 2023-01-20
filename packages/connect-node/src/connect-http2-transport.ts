@@ -95,7 +95,7 @@ export interface ConnectHttp2TransportOptions {
   sendCompression?: Compression;
   compressMinBytes?: number;
   readMaxBytes?: number;
-  sendMaxBytes?: number;
+  writeMaxBytes?: number;
 
   /**
    * Interceptors that should be applied to all calls running through
@@ -180,7 +180,7 @@ export function createConnectHttp2Transport(
                 s.on("error", (err) => reject(err));
               });
 
-            // TODO(TCN-785) honor sendMaxBytes
+            // TODO(TCN-785) honor writeMaxBytes
             let requestBody = serialize(req.message);
             if (
               options.sendCompression !== undefined &&

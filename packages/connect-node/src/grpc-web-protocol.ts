@@ -64,7 +64,7 @@ interface CreateGrpcWebProtocolOptions {
   acceptCompression?: Compression[];
   compressMinBytes?: number;
   readMaxBytes?: number;
-  sendMaxBytes?: number;
+  writeMaxBytes?: number;
 }
 
 /**

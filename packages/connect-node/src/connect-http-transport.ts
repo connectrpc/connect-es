@@ -114,7 +114,7 @@ export interface ConnectHttpTransportOptions {
   sendCompression?: Compression;
   compressMinBytes?: number;
   readMaxBytes?: number;
-  sendMaxBytes?: number;
+  writeMaxBytes?: number;
 }
 
 /**

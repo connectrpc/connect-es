@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { createCallbackClient, CallbackClient } from "./callback-client.js";
-export { createPromiseClient, PromiseClient } from "./promise-client.js";
-export type { CallOptions } from "./call-options.js";
-export type { Transport } from "./transport.js";
 export {
   ConnectError,
   connectErrorDetails,
@@ -23,17 +19,21 @@ export {
 } from "./connect-error.js";
 export { Code } from "./code.js";
 export {
+  encodeBinaryHeader,
+  decodeBinaryHeader,
+  appendHeaders,
+} from "./http-headers.js";
+export { createCallbackClient, CallbackClient } from "./callback-client.js";
+export { createPromiseClient, PromiseClient } from "./promise-client.js";
+export type { CallOptions } from "./call-options.js";
+export type { Transport } from "./transport.js";
+export {
   Interceptor,
   UnaryRequest,
   UnaryResponse,
   StreamingRequest,
   StreamingConn,
 } from "./interceptor.js";
-export {
-  encodeBinaryHeader,
-  decodeBinaryHeader,
-  appendHeaders,
-} from "./http-headers.js";
 
 // Symbols above should be relevant to end users.
 // Symbols below should only be relevant for other libraries.
@@ -50,13 +50,12 @@ export {
   MethodSerializationLookup,
 } from "./serialization.js";
 export {
-  createEnvelopeReadableStream,
   EnvelopedMessage,
-  ParsedEnvelopedMessage,
   encodeEnvelope,
   encodeEnvelopes,
   envelopeDecompress,
   envelopeCompress,
+  createEnvelopeReadableStream,
 } from "./envelope.js";
 export {
   Compression,
@@ -65,28 +64,21 @@ export {
   compressionValidateOptions,
 } from "./compression.js";
 export {
-  streamTransformCompress,
-  streamTransformDecompress,
-  streamTransformJoin,
-  streamTransformSplit,
-  streamTransformSerialize,
-  streamTransformParse,
-} from "./stream-transform.js";
-export {
   AsyncIterableTransform,
-  transformAsyncIterable,
+  pipe,
   transformCatch,
+  transformCatchFinally,
   transformAppend,
   transformPrepend,
   transformReadAllBytes,
-  transformCompress,
-  transformDecompress,
-  transformJoin,
-  transformSplit,
-  transformSerialize,
-  transformParse,
+  transformCompressEnvelope,
+  transformDecompressEnvelope,
+  transformJoinEnvelopes,
+  transformSplitEnvelope,
+  transformSerializeEnvelope,
+  transformParseEnvelope,
   AsyncIterableSink,
   pipeTo,
   sinkAll,
   sinkAllBytes,
-} from "./transform-iterable.js";
+} from "./async-iterable.js";

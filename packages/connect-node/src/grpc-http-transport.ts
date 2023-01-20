@@ -110,7 +110,7 @@ export interface GrpcHttpTransportOptions {
   sendCompression?: Compression;
   compressMinBytes?: number;
   readMaxBytes?: number;
-  sendMaxBytes?: number;
+  writeMaxBytes?: number;
 }
 
 /**
