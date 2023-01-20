@@ -60,11 +60,11 @@ class Writer<T> {
   // read via the async iterator.
   private sendResolver: (() => void) | undefined;
 
-  async send(item: T) {
+  async process(item: IteratorResult<T, undefined>) {
     // If there is an iterator resolver then a consumer of the async iterator is waiting on a value.  So resolve that
     // promise with the new value being sent and return a promise that is immediately resolved
     if (this.queueResolver) {
-      this.queueResolver({ value: item });
+      this.queueResolver(item);
       this.queueResolver = undefined;
       return new Promise<void>((resolve) => {
         resolve();
@@ -72,25 +72,16 @@ class Writer<T> {
     }
     // Otherwise no one is waiting on a value yet so add it to the queue and return a promise that will be resolved
     // when someone reads this value
-    this.queue.push({
-      value: item,
-      done: false,
-    });
+    this.queue.push(item);
     return new Promise<void>((resolve) => {
       this.sendResolver = resolve;
     });
   }
+  async send(item: T) {
+    return this.process({ value: item, done: false });
+  }
   async close() {
-    const c: IteratorResult<T, undefined> = {
-      done: true,
-      value: undefined,
-    };
-    if (this.queueResolver) {
-      this.queueResolver(c);
-      this.queueResolver = undefined;
-    } else {
-      this.queue.push(c);
-    }
+    return this.process({ value: undefined, done: true });
   }
   [Symbol.asyncIterator](): AsyncIterator<T> {
     return {
@@ -235,7 +226,7 @@ describe("full story", function () {
         .then(() => writer.send({ value: "gamma", end: false }))
         .then(() => writer.send({ value: "delta", end: false }))
         .finally(() => {
-          writer.close();
+          void writer.close();
         });
 
       const resp = await readAll(reader);
