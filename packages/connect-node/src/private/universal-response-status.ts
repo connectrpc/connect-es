@@ -12,24 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code, ConnectError } from "@bufbuild/connect-core";
+import type { UniversalResponse } from "../protocol-handler.js";
 
-const maxReadMaxBytes = 0xffffffff; // zlib caps maxOutputLength at this value
-
-/**
- * @deprecated use compressionValidateOptions from @bufbuild/connect-core
- */
-export function validateReadMaxBytesOption(
-  readMaxBytes: number | undefined
-): number {
-  if (readMaxBytes === undefined) {
-    return maxReadMaxBytes;
-  }
-  if (readMaxBytes < 1 || readMaxBytes > maxReadMaxBytes) {
-    throw new ConnectError(
-      `readMaxBytes ${readMaxBytes} must be >= 1 and <= ${maxReadMaxBytes}`,
-      Code.Internal
-    );
-  }
-  return readMaxBytes;
-}
+export const uResponseOk: Readonly<UniversalResponse> = {
+  status: 200,
+};
+export const uResponseNotFound: Readonly<UniversalResponse> = {
+  status: 404,
+};
+export const uResponseUnsupportedMediaType: Readonly<UniversalResponse> = {
+  status: 415,
+};
+export const uResponseMethodNotAllowed: Readonly<UniversalResponse> = {
+  status: 405,
+};
+export const uResponseVersionNotSupported: Readonly<UniversalResponse> = {
+  status: 505,
+};

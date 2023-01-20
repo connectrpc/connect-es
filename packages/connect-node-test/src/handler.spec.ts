@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import {
-  createConnectProtocol,
   createHandler,
   createHandlers,
   unimplementService,
@@ -54,7 +53,7 @@ describe("createHandler()", () => {
       TestService.methods.emptyCall,
       (req) => req,
       {
-        protocols: [createConnectProtocol({})],
+        connect: true,
       }
     );
     expect(h).toBeDefined();
@@ -79,7 +78,7 @@ describe("createHandlers()", () => {
   });
   it("should take protocols options", () => {
     const h = createHandlers(TestService, unimplementService(TestService, {}), {
-      protocols: [createConnectProtocol({})],
+      connect: true,
     });
     expect(h).toBeDefined();
   });

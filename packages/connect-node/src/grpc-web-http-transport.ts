@@ -50,7 +50,7 @@ import type {
 } from "@bufbuild/protobuf";
 import type * as http from "http";
 import type * as https from "https";
-import { nodeHeaderToWebHeader } from "./private/web-header-to-node-headers.js";
+import { nodeHeaderToWebHeader } from "./private/node-universal.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { end, readEnvelope, write } from "./private/io.js";
 import { assert } from "./private/assert.js";

@@ -16,7 +16,7 @@ import * as http from "http";
 import * as https from "https";
 import type { AnyMessage, Message } from "@bufbuild/protobuf";
 import type { StreamingRequest, UnaryRequest } from "@bufbuild/connect-core";
-import { webHeaderToNodeHeaders } from "./web-header-to-node-headers.js";
+import { webHeaderToNodeHeaders } from "./node-universal.js";
 
 interface NodeRequestOptions<
   I extends Message<I> = AnyMessage,

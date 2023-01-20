@@ -19,23 +19,20 @@ import { assert } from "./assert.js";
 import type { ReadableStreamReadResultLike } from "../lib.dom.streams.js";
 import { Code, ConnectError, EnvelopedMessage } from "@bufbuild/connect-core";
 import type { JsonValue } from "@bufbuild/protobuf";
-import {
-  nodeHeaderToWebHeader,
-  webHeaderToNodeHeaders,
-} from "./web-header-to-node-headers.js";
+import { nodeHeaderToWebHeader } from "./node-universal.js";
 
+/**
+ * @deprecated
+ */
 export function jsonParse(bytes: Uint8Array): JsonValue {
   const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
   const jsonString = buf.toString("utf8");
   return JSON.parse(jsonString) as JsonValue;
 }
 
-export function jsonSerialize(json: JsonValue): Uint8Array {
-  const jsonString = JSON.stringify(json);
-  const encoder = new TextEncoder();
-  return encoder.encode(jsonString);
-}
-
+/**
+ * @deprecated
+ */
 export async function readEnvelope(
   stream: http2.ClientHttp2Stream | stream.Readable
 ): Promise<ReadableStreamReadResultLike<EnvelopedMessage>> {
@@ -94,7 +91,7 @@ export async function readEnvelope(
 }
 
 // Note: Will return {done: true} if size is 0
-export function read(
+function read(
   stream: http2.ClientHttp2Stream | stream.Readable,
   size: number
 ): Promise<ReadableStreamReadResultLike<Uint8Array>> {
@@ -207,6 +204,9 @@ export function write(
   });
 }
 
+/**
+ * @deprecated
+ */
 export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
   return new Promise<Uint8Array>((resolve, reject) => {
     if (stream.errored) {
@@ -250,26 +250,8 @@ export function readToEnd(stream: stream.Readable): Promise<Uint8Array> {
   });
 }
 
-export async function endWithHttpStatus(
-  res: http.ServerResponse | http2.Http2ServerResponse,
-  statusCode: number,
-  statusMessage: string,
-  header?: HeadersInit
-): Promise<void> {
-  const headers: http.OutgoingHttpHeaders | undefined = header
-    ? webHeaderToNodeHeaders(header)
-    : undefined;
-  if ("createPushResponse" in res) {
-    // this is a HTTP/2 response, which does not support status messages
-    res.writeHead(statusCode, headers);
-  } else {
-    res.writeHead(statusCode, statusMessage, headers);
-  }
-  await end(res);
-}
-
 /**
- * Returns a promise for the status code and headers of a HTTP/2 response.
+ * @deprecated
  */
 export function readResponseHeader(
   stream: http2.ClientHttp2Stream
@@ -310,7 +292,7 @@ export function readResponseHeader(
 }
 
 /**
- * Returns a promise for HTTP/2 response trailers.
+ * @deprecated
  */
 export function readResponseTrailer(
   stream: http2.ClientHttp2Stream
@@ -367,7 +349,7 @@ export function readResponseTrailer(
 }
 
 /**
- * Returns a promise for HTTP/1 response trailers.
+ * @deprecated
  */
 export function readHttp1ResponseTrailer(
   response: http.IncomingMessage
