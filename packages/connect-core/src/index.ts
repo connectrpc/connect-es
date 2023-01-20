@@ -15,7 +15,7 @@
 export { createCallbackClient, CallbackClient } from "./callback-client.js";
 export { createPromiseClient, PromiseClient } from "./promise-client.js";
 export type { CallOptions } from "./call-options.js";
-export type { Transport, TransportWithChannel } from "./transport.js";
+export type { Transport } from "./transport.js";
 export {
   ConnectError,
   connectErrorDetails,

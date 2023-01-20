@@ -35,7 +35,7 @@ describe("large_unary", function () {
           body: new Uint8Array(271828).fill(0),
         },
       });
-      fit("with promise client", async function () {
+      it("with promise client", async function () {
         const client = createPromiseClient(TestService, transport());
         const response = await client.unaryCall(request);
         expect(response.payload).toBeDefined();
