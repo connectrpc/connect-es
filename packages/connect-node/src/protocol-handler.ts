@@ -91,14 +91,14 @@ export interface UniversalHandler extends UniversalHandlerFn {
 }
 
 /**
- * A minimalistic abstraction of an HTTP handler.
+ * A minimal abstraction of an HTTP handler.
  */
 export type UniversalHandlerFn = (
   request: UniversalRequest
 ) => UniversalResponse | Promise<UniversalResponse>;
 
 /**
- * A minimalist abstraction of an HTTP request.
+ * A minimal abstraction of an HTTP request.
  */
 export interface UniversalRequest {
   httpVersion: string;
@@ -108,7 +108,7 @@ export interface UniversalRequest {
 }
 
 /**
- * A minimalist abstraction of an HTTP response.
+ * A minimal abstraction of an HTTP response.
  */
 export interface UniversalResponse {
   status: number;
