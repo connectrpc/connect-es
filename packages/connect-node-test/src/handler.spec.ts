@@ -54,6 +54,8 @@ describe("createHandler()", () => {
       (req) => req,
       {
         connect: true,
+        grpcWeb: false,
+        grpc: false,
       }
     );
     expect(h).toBeDefined();
@@ -79,6 +81,8 @@ describe("createHandlers()", () => {
   it("should take protocols options", () => {
     const h = createHandlers(TestService, unimplementService(TestService, {}), {
       connect: true,
+      grpcWeb: false,
+      grpc: false,
     });
     expect(h).toBeDefined();
   });
