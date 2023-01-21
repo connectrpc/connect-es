@@ -140,21 +140,19 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
       transformJoinEnvelopes(),
       transformCatch<Uint8Array>((e): void => {
-        if (e !== undefined) {
-          if (e instanceof ConnectError) {
-            setTrailerStatus(context.responseTrailer, e);
-          } else {
-            setTrailerStatus(
-              context.responseTrailer,
-              new ConnectError(
-                "internal error",
-                Code.Internal,
-                undefined,
-                undefined,
-                e
-              )
-            );
-          }
+        if (e instanceof ConnectError) {
+          setTrailerStatus(context.responseTrailer, e);
+        } else {
+          setTrailerStatus(
+            context.responseTrailer,
+            new ConnectError(
+              "internal error",
+              Code.Internal,
+              undefined,
+              undefined,
+              e
+            )
+          );
         }
       })
     );

@@ -148,12 +148,13 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
         opt.writeMaxBytes
       ),
       transformCatchFinally<EnvelopedMessage>((e) => {
+        const trailer = context.responseTrailer;
         if (e !== undefined) {
           if (e instanceof ConnectError) {
-            setTrailerStatus(context.responseTrailer, e);
+            setTrailerStatus(trailer, e);
           } else {
             setTrailerStatus(
-              context.responseTrailer,
+              trailer,
               new ConnectError(
                 "internal error",
                 Code.Internal,
@@ -166,7 +167,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
         }
         return {
           flags: trailerFlag,
-          data: trailerSerialization.serialize(context.responseTrailer),
+          data: trailerSerialization.serialize(trailer),
         };
       }),
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
