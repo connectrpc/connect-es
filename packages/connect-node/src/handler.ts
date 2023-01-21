@@ -93,8 +93,8 @@ export type Handler = NodeHandler & {
 };
 
 /**
- * Options for creating a Handler. If you do not specify any protocols,
- * all available protocols are enabled.
+ * Options for creating a Handler. By default, all available protocols are
+ * enabled.
  */
 interface HandlerOptions {
   // TODO document
@@ -184,7 +184,7 @@ export function createHandler<M extends MethodInfo>(
   const nodeHandler = universalHandlerToNodeHandler(
     protocolNegotiatingHandler,
     (reason) => {
-      // TODO(TCN-785) we will most likely need to inform the body iterable of write errors, to make sure it's aborted properly
+      // TODO(TCN-785)
       // eslint-disable-next-line no-console
       console.error("protocol handle failed", reason);
     }
