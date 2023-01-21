@@ -77,7 +77,7 @@ import {
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
-} from "./private/universal-response-status.js";
+} from "./protocol-handler.js";
 
 const protocolName = "connect";
 const methodPost = "POST";

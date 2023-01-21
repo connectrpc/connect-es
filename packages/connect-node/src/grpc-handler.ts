@@ -57,7 +57,7 @@ import {
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
-} from "./private/universal-response-status.js";
+} from "./protocol-handler.js";
 
 const protocolName = "grpc";
 const methodPost = "POST";

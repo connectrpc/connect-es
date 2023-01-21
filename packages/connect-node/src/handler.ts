@@ -47,7 +47,7 @@ import {
   uResponseNotFound,
   uResponseUnsupportedMediaType,
   uResponseVersionNotSupported,
-} from "./private/universal-response-status.js";
+} from "./protocol-handler.js";
 
 /**
  * Handler handles a Node.js request for one specific RPC - a procedure
