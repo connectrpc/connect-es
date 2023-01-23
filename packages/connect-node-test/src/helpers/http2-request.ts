@@ -21,21 +21,35 @@ interface Http2Response {
   body: Uint8Array;
 }
 
-export function http2Request(
-  method: string,
-  url: URL | string,
-  headers: http.OutgoingHttpHeaders,
-  body?: Uint8Array,
-  options?: http2.ClientSessionOptions | http2.SecureClientSessionOptions
-): Promise<Http2Response> {
+interface Http2RequestInit {
+  url: string;
+  method?: string;
+  body?: Uint8Array;
+  ctype?: string;
+  headers?: http2.OutgoingHttpHeaders;
+  rejectUnauthorized?: boolean;
+}
+
+export function http2Request(init: Http2RequestInit): Promise<Http2Response> {
   return new Promise<Http2Response>((resolve, reject) => {
+    const options: http2.SecureClientSessionOptions = {};
+    if (init.rejectUnauthorized !== undefined) {
+      options.rejectUnauthorized = init.rejectUnauthorized;
+    }
+    const headers: http.OutgoingHttpHeaders = {
+      ...init.headers,
+      ":path": new URL(init.url).pathname,
+      ":method": "GET",
+    };
+    if (init.ctype !== undefined) {
+      headers["content-type"] = init.ctype;
+    }
+    if (init.method !== undefined) {
+      headers[":method"] = init.method;
+    }
     http2
-      .connect(url, options, (sess) => {
-        const stream = sess.request({
-          ...headers,
-          ":method": method,
-          ":path": new URL(url).pathname,
-        });
+      .connect(init.url, options, (sess) => {
+        const stream = sess.request(headers);
         stream.once("error", reject);
         stream.once("response", (headers) => {
           const chunks: Uint8Array[] = [];
@@ -60,8 +74,8 @@ export function http2Request(
             });
           });
         });
-        if (body !== undefined) {
-          stream.write(body);
+        if (init.body !== undefined) {
+          stream.write(init.body);
         }
         stream.end();
       })

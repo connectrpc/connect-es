@@ -52,7 +52,7 @@ import type {
 } from "@bufbuild/protobuf";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+import { webHeaderToNodeHeaders } from "./private/node-universal.js";
 import { defer } from "./private/defer.js";
 import {
   end,

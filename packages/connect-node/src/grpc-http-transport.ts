@@ -49,7 +49,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
-import { nodeHeaderToWebHeader } from "./private/web-header-to-node-headers.js";
+import { nodeHeaderToWebHeader } from "./private/node-universal.js";
 import { assert } from "./private/assert.js";
 import {
   end,
