@@ -23,6 +23,14 @@ import { Code } from "./code.js";
 export const compressedFlag = 0b00000001;
 
 /**
+ * At most, allow ~4GiB to be received or sent per message.
+ * zlib used by Node.js caps maxOutputLength at this value. It also happens to
+ * be the maximum theoretical message size supported by protobuf-es.
+ */
+const maxReadMaxBytes = 0xffffffff;
+const maxWriteMaxBytes = maxReadMaxBytes;
+
+/**
  * Compression provides methods to compress and decompress data with
  * a certain compression algorithm.
  */
@@ -44,6 +52,76 @@ export interface Compression {
    * size exceeds readMaxBytes.
    */
   decompress: (bytes: Uint8Array, readMaxBytes: number) => Promise<Uint8Array>;
+}
+
+/**
+ * Raise an error ResourceExhausted if more than writeMaxByte are written.
+ */
+export function assertWriteMaxBytes(
+  writeMaxBytes: number,
+  bytesWritten: number
+): void {
+  if (bytesWritten > writeMaxBytes) {
+    throw new ConnectError(
+      `message size ${bytesWritten} is larger than configured writeMaxBytes ${writeMaxBytes}`,
+      Code.ResourceExhausted
+    );
+  }
+}
+
+/**
+ * Raise an error ResourceExhausted if more than readMaxBytes are read.
+ */
+export function assertReadMaxBytes(
+  readMaxBytes: number,
+  bytesRead: number,
+  totalSizeKnown = false
+): void {
+  if (bytesRead > readMaxBytes) {
+    let message = `message size is larger than configured readMaxBytes ${readMaxBytes}`;
+    if (totalSizeKnown) {
+      message = `message size ${bytesRead} is larger than configured readMaxBytes ${readMaxBytes}`;
+    }
+    throw new ConnectError(message, Code.ResourceExhausted);
+  }
+}
+
+/**
+ * Common options for compression.
+ */
+interface CompressionOptions {
+  writeMaxBytes: number;
+  readMaxBytes: number;
+  compressMinBytes: number;
+}
+
+/**
+ * Validate common options for compression, setting default values where an
+ * option is omitted, and validating that
+ */
+export function compressionValidateOptions<
+  T extends Partial<CompressionOptions>
+>(opt: T): Omit<T, keyof CompressionOptions> & CompressionOptions {
+  const writeMaxBytes = opt.writeMaxBytes ?? maxWriteMaxBytes;
+  const readMaxBytes = opt.readMaxBytes ?? maxReadMaxBytes;
+  if (writeMaxBytes < 1 || writeMaxBytes > maxWriteMaxBytes) {
+    throw new ConnectError(
+      `writeMaxBytes ${writeMaxBytes} must be >= 1 and <= ${maxWriteMaxBytes}`,
+      Code.Internal
+    );
+  }
+  if (readMaxBytes < 1 || readMaxBytes > maxReadMaxBytes) {
+    throw new ConnectError(
+      `readMaxBytes ${readMaxBytes} must be >= 1 and <= ${maxReadMaxBytes}`,
+      Code.Internal
+    );
+  }
+  return {
+    ...opt,
+    writeMaxBytes,
+    readMaxBytes,
+    compressMinBytes: opt.compressMinBytes ?? 0,
+  };
 }
 
 /**

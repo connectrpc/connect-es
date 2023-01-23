@@ -18,14 +18,23 @@ export {
   createRequestHeaderWithCompression,
 } from "./create-request-header.js";
 export {
+  EndStreamResponse,
   endStreamToJson,
   endStreamFromJson,
   endStreamFlag,
   createEndStreamSerialization,
 } from "./end-stream.js";
-export { errorFromJson } from "./error-from-json.js";
-export { errorToJson } from "./error-to-json.js";
-export { parseContentType } from "./parse-content-type.js";
+export { errorFromJson, errorToJson, errorToJsonBytes } from "./error-json.js";
+export {
+  parseContentType,
+  contentTypeUnaryProto,
+  contentTypeUnaryJson,
+  contentTypeStreamProto,
+  contentTypeStreamJson,
+  contentTypeRegExp,
+  contentTypeUnaryRegExp,
+  contentTypeStreamRegExp,
+} from "./content-type.js";
 export { parseTimeout } from "./parse-timeout.js";
 export {
   validateResponse,

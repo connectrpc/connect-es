@@ -14,7 +14,7 @@
 
 import type { Serialization } from "./serialization.js";
 import type { Compression } from "./compression.js";
-import { encodeEnvelopes, ParsedEnvelopedMessage } from "./envelope.js";
+import { encodeEnvelopes } from "./envelope.js";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
@@ -22,16 +22,16 @@ import {
   createAsyncIterableBytes,
   readAll,
   readAllBytes,
-} from "./transform-iterable-helper.spec.js";
+} from "./async-iterable-helper.spec.js";
 import {
-  transformAsyncIterable,
-  transformCompress,
-  transformDecompress,
-  transformJoin,
-  transformSerialize,
-  transformSplit,
-  transformParse,
-} from "./transform-iterable.js";
+  pipe,
+  transformCompressEnvelope,
+  transformDecompressEnvelope,
+  transformJoinEnvelopes,
+  transformSerializeEnvelope,
+  transformSplitEnvelope,
+  transformParseEnvelope,
+} from "./async-iterable.js";
 
 class Reader<T> {
   private it: AsyncIterable<T>;
@@ -194,11 +194,16 @@ describe("full story", function () {
 
   describe("write", function () {
     it("should write expected bytes", async function () {
-      const it = transformAsyncIterable(
+      const it = pipe(
         createAsyncIterable(goldenPayload),
-        transformSerialize(serialization, endFlag, endSerialization),
-        transformCompress(compressionReverse, writeMaxBytes, 0),
-        transformJoin(writeMaxBytes)
+        transformSerializeEnvelope(
+          serialization,
+          writeMaxBytes,
+          endFlag,
+          endSerialization
+        ),
+        transformCompressEnvelope(compressionReverse, 0),
+        transformJoinEnvelopes()
       );
       const all = await readAllBytes(it);
       expect(all).toEqual(goldenBytes);
@@ -207,11 +212,11 @@ describe("full story", function () {
 
   describe("read", function () {
     it("should read expected bytes", async function () {
-      const it = transformAsyncIterable(
+      const it = pipe(
         createAsyncIterableBytes(goldenBytes),
-        transformSplit(readMaxBytes),
-        transformDecompress(compressionReverse, readMaxBytes),
-        transformParse(serialization, endFlag, endSerialization)
+        transformSplitEnvelope(readMaxBytes),
+        transformDecompressEnvelope(compressionReverse, readMaxBytes),
+        transformParseEnvelope(serialization, endFlag, endSerialization)
       );
       const all = await readAll(it);
       expect(all).toEqual(goldenPayload);
@@ -328,14 +333,12 @@ describe("full story", function () {
     });
 
     it("should echo expected bytes", async function () {
-      const inputIt = transformAsyncIterable(
+      const inputIt = pipe(
         createAsyncIterableBytes(goldenBytes),
-        transformSplit(readMaxBytes),
-        transformDecompress(compressionReverse, readMaxBytes),
-        transformParse(serialization, endFlag, endSerialization),
-        async function* (
-          iterable: AsyncIterable<ParsedEnvelopedMessage<string, "end">>
-        ): AsyncIterable<string> {
+        transformSplitEnvelope(readMaxBytes),
+        transformDecompressEnvelope(compressionReverse, readMaxBytes),
+        transformParseEnvelope(serialization, endFlag, endSerialization),
+        async function* (iterable): AsyncIterable<string> {
           let endReceived = false;
           for await (const envelope of iterable) {
             if (envelope.end) {
@@ -353,19 +356,26 @@ describe("full story", function () {
         }
       );
 
-      const outputIt = transformAsyncIterable(
+      const outputIt = pipe(
         echoImpl(inputIt),
         async function* (
           iterable: AsyncIterable<string>
-        ): AsyncIterable<ParsedEnvelopedMessage<string, "end">> {
+        ): AsyncIterable<
+          { end: false; value: string | "end" } | { end: true; value: "end" }
+        > {
           for await (const message of iterable) {
             yield { end: false, value: message };
           }
           yield { end: true, value: "end" };
         },
-        transformSerialize(serialization, endFlag, endSerialization),
-        transformCompress(compressionReverse, writeMaxBytes, 0),
-        transformJoin(writeMaxBytes)
+        transformSerializeEnvelope(
+          serialization,
+          Number.MAX_SAFE_INTEGER,
+          endFlag,
+          endSerialization
+        ),
+        transformCompressEnvelope(compressionReverse, 0),
+        transformJoinEnvelopes()
       );
 
       expect(await readAllBytes(outputIt)).toEqual(goldenBytes);

@@ -47,6 +47,6 @@ export function newParseError(
   }
   return new ConnectError(
     `cannot decode ConnectError${property ?? ""} from JSON: ${d}`,
-    Code.Internal
+    Code.InvalidArgument
   );
 }

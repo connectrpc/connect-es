@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+export const headerContentType = "Content-Type";
 export const headerEncoding = "Grpc-Encoding";
 export const headerAcceptEncoding = "Grpc-Accept-Encoding";
-export const headerContentType = "Content-Type";
 export const headerTimeout = "Grpc-Timeout";
+export const headerGrpcStatus = "Grpc-Status";
+export const headerGrpcMessage = "Grpc-Message";
+export const headerStatusDetailsBin = "Grpc-Status-Details-Bin";
+export const headerUserAgent = "X-User-Agent";

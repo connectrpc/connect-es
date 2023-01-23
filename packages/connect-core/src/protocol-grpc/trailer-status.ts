@@ -17,10 +17,17 @@ import { Status } from "./gen/status_pb.js";
 import { ConnectError } from "../connect-error.js";
 import { decodeBinaryHeader, encodeBinaryHeader } from "../http-headers.js";
 import { Code } from "../code.js";
+import {
+  headerGrpcMessage,
+  headerGrpcStatus,
+  headerStatusDetailsBin,
+} from "./headers.js";
 
-const fieldGrpcStatusDetailsBin = "grpc-status-details-bin",
-  fieldGrpcStatus = "grpc-status",
-  fieldGrpcMessage = "grpc-message";
+/**
+ * The value of the Grpc-Status header or trailer in case of success.
+ * Used by the gRPC and gRPC-web protocols.
+ */
+export const grpcStatusOk = "0";
 
 /**
  * Sets the fields "grpc-status" and "grpc-message" in the given
@@ -34,8 +41,8 @@ export function setTrailerStatus(
   error: ConnectError | undefined
 ): Headers {
   if (error) {
-    target.set(fieldGrpcStatus, error.code.toString(10));
-    target.set(fieldGrpcMessage, encodeURIComponent(error.rawMessage));
+    target.set(headerGrpcStatus, error.code.toString(10));
+    target.set(headerGrpcMessage, encodeURIComponent(error.rawMessage));
     if (error.details.length > 0) {
       const status = new Status({
         code: error.code,
@@ -49,10 +56,10 @@ export function setTrailerStatus(
               })
         ),
       });
-      target.set(fieldGrpcStatusDetailsBin, encodeBinaryHeader(status));
+      target.set(headerStatusDetailsBin, encodeBinaryHeader(status));
     }
   } else {
-    target.set(fieldGrpcStatus, "0");
+    target.set(headerGrpcStatus, grpcStatusOk);
   }
   return target;
 }
@@ -68,7 +75,7 @@ export function findTrailerError(
   headerOrTrailer: Headers
 ): ConnectError | undefined {
   // Prefer the protobuf-encoded data to the grpc-status header.
-  const statusBytes = headerOrTrailer.get(fieldGrpcStatusDetailsBin);
+  const statusBytes = headerOrTrailer.get(headerStatusDetailsBin);
   if (statusBytes != null) {
     const status = decodeBinaryHeader(statusBytes, Status);
     if (status.code == 0) {
@@ -85,15 +92,15 @@ export function findTrailerError(
     }));
     return error;
   }
-  const grpcStatus = headerOrTrailer.get(fieldGrpcStatus);
+  const grpcStatus = headerOrTrailer.get(headerGrpcStatus);
   if (grpcStatus != null) {
-    const code = parseInt(grpcStatus, 10);
-    if (code === 0) {
+    if (grpcStatus === grpcStatusOk) {
       return undefined;
     }
+    const code = parseInt(grpcStatus, 10);
     if (code in Code) {
       return new ConnectError(
-        decodeURIComponent(headerOrTrailer.get(fieldGrpcMessage) ?? ""),
+        decodeURIComponent(headerOrTrailer.get(headerGrpcMessage) ?? ""),
         code,
         headerOrTrailer
       );

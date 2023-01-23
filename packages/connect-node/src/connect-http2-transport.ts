@@ -52,7 +52,7 @@ import type {
 } from "@bufbuild/protobuf";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+import { webHeaderToNodeHeaders } from "./private/node-universal.js";
 import { defer } from "./private/defer.js";
 import {
   end,
@@ -95,7 +95,7 @@ export interface ConnectHttp2TransportOptions {
   sendCompression?: Compression;
   compressMinBytes?: number;
   readMaxBytes?: number;
-  sendMaxBytes?: number;
+  writeMaxBytes?: number;
 
   /**
    * Interceptors that should be applied to all calls running through
@@ -180,7 +180,7 @@ export function createConnectHttp2Transport(
                 s.on("error", (err) => reject(err));
               });
 
-            // TODO(TCN-785) honor sendMaxBytes
+            // TODO(TCN-785) honor writeMaxBytes
             let requestBody = serialize(req.message);
             if (
               options.sendCompression !== undefined &&

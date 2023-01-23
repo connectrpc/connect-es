@@ -52,7 +52,7 @@ import * as http2 from "http2";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { defer } from "./private/defer.js";
 import { end, readEnvelope, readResponseHeader, write } from "./private/io.js";
-import { webHeaderToNodeHeaders } from "./private/web-header-to-node-headers.js";
+import { webHeaderToNodeHeaders } from "./private/node-universal.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
@@ -105,7 +105,7 @@ export interface GrpcWebHttp2TransportOptions {
   sendCompression?: Compression;
   compressMinBytes?: number;
   readMaxBytes?: number;
-  sendMaxBytes?: number;
+  writeMaxBytes?: number;
 }
 
 /**

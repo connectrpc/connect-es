@@ -12,11 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const headerContentType = "Content-Type";
-export const headerUnaryContentLength = "Content-Length";
-export const headerUnaryEncoding = "Content-Encoding";
-export const headerStreamEncoding = "Connect-Content-Encoding";
-export const headerUnaryAcceptEncoding = "Accept-Encoding";
-export const headerStreamAcceptEncoding = "Connect-Accept-Encoding";
-export const headerTimeout = "Connect-Timeout-Ms";
-export const headerProtocolVersion = "Connect-Protocol-Version";
+/**
+ * Regular Expression that matches any valid gRPC Content-Type header value.
+ */
+export const contentTypeRegExp =
+  /^application\/grpc(?:\+(?:(json)(?:; ?charset=utf-?8)?|proto))?$/i;
+
+export const contentTypeProto = "application/grpc+proto";
+export const contentTypeJson = "application/grpc+json";
+
+/**
+ * Parse a gRPC Content-Type header.
+ */
+export function parseContentType(
+  contentType: string | null
+): { binary: boolean } | undefined {
+  const match = contentType?.match(contentTypeRegExp);
+  if (!match) {
+    return undefined;
+  }
+  const binary = !match[1];
+  return { binary };
+}
