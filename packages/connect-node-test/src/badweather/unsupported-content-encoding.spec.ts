@@ -20,8 +20,6 @@ import {
   errorFromJson,
 } from "@bufbuild/connect-core/protocol-connect";
 import { http2Request } from "../helpers/http2-request.js";
-import type { MethodInfo } from "@bufbuild/protobuf";
-import type * as http from "http";
 import type { JsonValue } from "@bufbuild/protobuf";
 
 describe("unsupported content encoding", () => {
@@ -31,21 +29,22 @@ describe("unsupported content encoding", () => {
   servers.describeServers(
     ["@bufbuild/connect-node (h2c)", "connect-go (h2)"],
     (server, serverName) => {
-      function req(method: MethodInfo, headers: http.OutgoingHttpHeaders) {
-        const url = createMethodUrl(server.getUrl(), TestService, method);
-        if (serverName == "connect-go (h2)") {
-          return http2Request("POST", url, headers, undefined, {
-            rejectUnauthorized: false, // TODO set up cert for go server correctly
-          });
-        }
-        return http2Request("POST", url, headers);
-      }
+      const rejectUnauthorized = serverName !== "connect-go (h2)"; // TODO set up cert for go server correctly
+
       describe("Connect unary method", function () {
-        const reqUnary = req.bind(null, TestService.methods.unaryCall);
         it("should raise code unimplemented for unsupported content-encoding", async () => {
-          const res = await reqUnary({
-            "content-type": "application/json",
-            "content-encoding": "banana",
+          const res = await http2Request({
+            url: createMethodUrl(
+              server.getUrl(),
+              TestService,
+              TestService.methods.unaryCall
+            ),
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "content-encoding": "banana",
+            },
+            rejectUnauthorized,
           });
           expect(res.status).toBe(404);
           const err = errorFromJson(
@@ -53,24 +52,29 @@ describe("unsupported content encoding", () => {
           );
           expect(err.code).toBe(Code.Unimplemented);
           expect(err.rawMessage).toMatch(
-            /^unknown compression "banana": supported encodings are gzip(, [a-z]+)*$/
+            /^unknown compression "banana": supported encodings are gzip(,[a-z]+)*$/
           );
         });
       });
       describe("Connect streaming method", function () {
-        const reqStreaming = req.bind(
-          null,
-          TestService.methods.streamingInputCall
-        );
         it("should raise code unimplemented for unsupported connect-content-encoding", async () => {
-          const res = await reqStreaming({
-            "content-type": "application/connect+json",
-            "connect-content-encoding": "banana",
+          const res = await http2Request({
+            url: createMethodUrl(
+              server.getUrl(),
+              TestService,
+              TestService.methods.streamingInputCall
+            ),
+            method: "POST",
+            headers: {
+              "content-type": "application/connect+json",
+              "connect-content-encoding": "banana",
+            },
+            rejectUnauthorized,
           });
           const endStream = endStreamFromJson(res.body.subarray(5));
           expect(endStream.error?.code).toBe(Code.Unimplemented);
           expect(endStream.error?.rawMessage).toMatch(
-            /^unknown compression "banana": supported encodings are gzip(, [a-z]+)*$/
+            /^unknown compression "banana": supported encodings are gzip(,[a-z]+)*$/
           );
         });
       });
