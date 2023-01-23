@@ -51,34 +51,42 @@ class Reader<T> {
   }
 }
 
+// QueueElement represents an element in the writer queue, which consists of the payload being written as well as an
+// associated resolve function to be invoked/resolved when the written element is read from the queue via the async
+// iterator.
+interface QueueElement<T> {
+  payload: IteratorResult<T>;
+  resolver?: () => void;
+}
+
 class Writer<T> {
-  private queue: IteratorResult<T>[] = [];
+  private queue: QueueElement<T>[] = [];
   // Represents the resolve function of the promise returned by the async iterator if no values exist in the queue at
   // the time of request.  It is resolved when a value is successfully received into the queue.
   private queueResolver: ((val: IteratorResult<T>) => void) | undefined;
-  // Represents the resolve function of the promise returned by send.  It is resolved when a value is successfully
-  // read via the async iterator.
-  private sendResolver: (() => void) | undefined;
 
-  async process(item: IteratorResult<T, undefined>) {
+  async process(payload: IteratorResult<T, undefined>) {
     // If there is an iterator resolver then a consumer of the async iterator is waiting on a value.  So resolve that
     // promise with the new value being sent and return a promise that is immediately resolved
     if (this.queueResolver) {
-      this.queueResolver(item);
+      this.queueResolver(payload);
       this.queueResolver = undefined;
-      return new Promise<void>((resolve) => {
-        resolve();
-      });
+      return Promise.resolve();
     }
+    const elem: QueueElement<T> = {
+      payload,
+    };
+    const prom = new Promise<void>((resolve) => {
+      elem.resolver = resolve;
+    });
     // Otherwise no one is waiting on a value yet so add it to the queue and return a promise that will be resolved
     // when someone reads this value
-    this.queue.push(item);
-    return new Promise<void>((resolve) => {
-      this.sendResolver = resolve;
-    });
+    this.queue.push(elem);
+
+    return prom;
   }
-  async send(item: T) {
-    return this.process({ value: item, done: false });
+  async send(payload: T) {
+    return this.process({ value: payload, done: false });
   }
   async close() {
     return this.process({ value: undefined, done: true });
@@ -86,8 +94,8 @@ class Writer<T> {
   [Symbol.asyncIterator](): AsyncIterator<T> {
     return {
       next: async () => {
-        const payload = this.queue.shift();
-        if (!payload) {
+        const elem = this.queue.shift();
+        if (!elem) {
           // We don't have any payloads ready to be sent (i.e. the consumer of the iterator is consuming faster than
           // senders are sending).  So return a Promise ensuring we'll resolve it when we get something.
           return new Promise<IteratorResult<T>>((resolve) => {
@@ -95,13 +103,20 @@ class Writer<T> {
           });
         }
         // Resolve the send promise on a successful send/close.
-        if (this.sendResolver) {
-          this.sendResolver();
-          this.sendResolver = undefined;
+        if (elem.resolver) {
+          elem.resolver();
+          elem.resolver = undefined;
+        } else {
         }
-        return payload;
+        return elem.payload;
       },
     };
+  }
+}
+
+class ThrowingWriter<T> extends Writer<T> {
+  override async send(payload: T) {
+    throw Error(`Error occurred ${payload}`);
   }
 }
 
@@ -204,22 +219,79 @@ describe("full story", function () {
   });
 
   describe("client integration", function () {
-    it("should works", async function () {
-      const writer = new Writer<Payload<string, "end">>();
+    let writer: Writer<Payload<string, "end">>;
+    let writerIt: AsyncIterable<Uint8Array>;
+    let reader: AsyncIterable<ParsedEnvelopedMessage<string, "end">>;
+    beforeEach(() => {
+      writer = new Writer<Payload<string, "end">>();
+      writerIt = transformAsyncIterable(
+        writer,
+        transformSerialize(serialization, endFlag, endSerialization),
+        transformCompress(compressionReverse, writeMaxBytes, 0),
+        transformJoin(writeMaxBytes)
+      );
+      reader = transformAsyncIterable(
+        new Reader(writerIt),
+        transformSplit(readMaxBytes),
+        transformDecompress(compressionReverse, readMaxBytes),
+        transformParse(serialization, endFlag, endSerialization)
+      );
+    });
+    it("should correctly return results when caller waits properly", async function () {
+      writer
+        .send({ value: "alpha", end: false })
+        .then(() => writer.send({ value: "beta", end: false }))
+        .then(() => writer.send({ value: "gamma", end: false }))
+        .then(() => writer.send({ value: "delta", end: false }))
+        .finally(() => {
+          void writer.close();
+        });
+
+      const resp = await readAll(reader);
+      expect(resp).toEqual([
+        { value: "alpha", end: false },
+        { value: "beta", end: false },
+        { value: "gamma", end: false },
+        { value: "delta", end: false },
+      ]);
+    });
+    it("should correctly return results when caller sends without waiting", async function () {
+      // Writes all the payloads without awaiting and saves off promises from the writes
+      const writes = Promise.all([
+        writer.send({ value: "alpha", end: false }),
+        writer.send({ value: "beta", end: false }),
+        writer.send({ value: "gamma", end: false }),
+        writer.send({ value: "delta", end: false }),
+        writer.close(),
+      ]);
+
+      // Read all the written payloads
+      const resp = await readAll(reader);
+
+      // Await on the write promises now.  These should all be resolved since all payloads have been read.
+      await writes;
+
+      expect(resp).toEqual([
+        { value: "alpha", end: false },
+        { value: "beta", end: false },
+        { value: "gamma", end: false },
+        { value: "delta", end: false },
+      ]);
+    });
+    it("should correctly return results when caller throws", async function () {
+      const writer = new ThrowingWriter<Payload<string, "end">>();
       const writerIt = transformAsyncIterable(
         writer,
         transformSerialize(serialization, endFlag, endSerialization),
         transformCompress(compressionReverse, writeMaxBytes, 0),
         transformJoin(writeMaxBytes)
       );
-
       const reader = transformAsyncIterable(
         new Reader(writerIt),
         transformSplit(readMaxBytes),
         transformDecompress(compressionReverse, readMaxBytes),
         transformParse(serialization, endFlag, endSerialization)
       );
-
       writer
         .send({ value: "alpha", end: false })
         .then(() => writer.send({ value: "beta", end: false }))
