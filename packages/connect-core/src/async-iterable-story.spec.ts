@@ -47,6 +47,16 @@ class Reader<T> {
         }
         return { value: "", done: true };
       },
+      throw: async (e: Error) => {
+        // If the internal iterator we are reading from has a throw method, call that also.
+        const iter = this.it[Symbol.asyncIterator]();
+        if (iter.throw) {
+          await iter.throw(e);
+        }
+        return new Promise<IteratorResult<T>>((resolve) => {
+          resolve({ value: String(e), done: true });
+        });
+      },
     };
   }
 }
@@ -56,38 +66,41 @@ class Reader<T> {
 // iterator.
 interface QueueElement<T> {
   payload: IteratorResult<T>;
-  resolver?: () => void;
+  resolve?: () => void;
+  reject?: (reason?: Error) => void;
 }
 
 class Writer<T> {
   private queue: QueueElement<T>[] = [];
   // Represents the resolve function of the promise returned by the async iterator if no values exist in the queue at
   // the time of request.  It is resolved when a value is successfully received into the queue.
-  private queueResolver: ((val: IteratorResult<T>) => void) | undefined;
+  private queueResolve: ((val: IteratorResult<T>) => void) | undefined;
+  private error: Error | undefined = undefined;
 
   async process(payload: IteratorResult<T, undefined>) {
-    try {
-      // If there is an iterator resolver then a consumer of the async iterator is waiting on a value.  So resolve that
-      // promise with the new value being sent and return a promise that is immediately resolved
-      if (this.queueResolver) {
-        this.queueResolver(payload);
-        this.queueResolver = undefined;
-        return Promise.resolve();
-      }
-      const elem: QueueElement<T> = {
-        payload,
-      };
-      const prom = new Promise<void>((resolve) => {
-        elem.resolver = resolve;
-      });
-      // Otherwise no one is waiting on a value yet so add it to the queue and return a promise that will be resolved
-      // when someone reads this value
-      this.queue.push(elem);
-
-      return prom;
-    } catch (e) {
-      return Promise.reject(e);
+    // // If the writer's internal error was set, then reject any attempts at processing a payload.
+    if (this.error) {
+      return Promise.reject(String(this.error));
     }
+    // If there is an iterator resolver then a consumer of the async iterator is waiting on a value.  So resolve that
+    // promise with the new value being sent and return a promise that is immediately resolved
+    if (this.queueResolve) {
+      this.queueResolve(payload);
+      this.queueResolve = undefined;
+      return Promise.resolve();
+    }
+    const elem: QueueElement<T> = {
+      payload,
+    };
+    const prom = new Promise<void>((resolve, reject) => {
+      elem.resolve = resolve;
+      elem.reject = reject;
+    });
+    // Otherwise no one is waiting on a value yet so add it to the queue and return a promise that will be resolved
+    // when someone reads this value
+    this.queue.push(elem);
+
+    return prom;
   }
   async send(payload: T) {
     return this.process({ value: payload, done: false });
@@ -98,31 +111,41 @@ class Writer<T> {
   [Symbol.asyncIterator](): AsyncIterator<T> {
     return {
       next: async () => {
+        // If the writer's internal error was set, then reject any attempts at processing a payload.
+        if (this.error) {
+          return Promise.reject(String(this.error));
+        }
         const elem = this.queue.shift();
         if (!elem) {
           // We don't have any payloads ready to be sent (i.e. the consumer of the iterator is consuming faster than
           // senders are sending).  So return a Promise ensuring we'll resolve it when we get something.
           return new Promise<IteratorResult<T>>((resolve) => {
-            this.queueResolver = resolve;
+            this.queueResolve = resolve;
           });
         }
         // Resolve the send promise on a successful send/close.
-        if (elem.resolver) {
-          elem.resolver();
-          elem.resolver = undefined;
-        } else {
+        if (elem.resolve) {
+          elem.resolve();
         }
         return elem.payload;
+      },
+      throw: async (e: Error) => {
+        this.error = e;
+        // The reader of this iterator has failed with the given error.  So anything left in the queue should be
+        // drained and rejected with the given error
+        for (const item of this.queue) {
+          if (item.reject) {
+            item.reject(e);
+          }
+        }
+        // this.queue = [];
+        return new Promise<IteratorResult<T>>((resolve) => {
+          resolve({ value: String(e), done: true });
+        });
       },
     };
   }
 }
-
-// class ThrowingWriter<T> extends Writer<T> {
-//   override async send(payload: T) {
-//     throw Error(`Error occurred ${payload}`);
-//   }
-// }
 
 // These tests aim to model the usage of iterable transforms in clients and servers.
 // Note that the tests were written as a proof of concept, and the coverage is
@@ -228,15 +251,16 @@ describe("full story", function () {
   });
 
   describe("client integration", function () {
-    let writer: Writer<Payload<string, "end">>;
+    let clientWriter: Writer<Payload<string, "end">>;
+    let clientReader: Reader<Uint8Array>;
     let writerIt: AsyncIterable<Uint8Array>;
-    let reader: AsyncIterable<
+    let readerIt: AsyncIterable<
       { end: false; value: string | "end" } | { end: true; value: "end" }
     >;
     beforeEach(() => {
-      writer = new Writer<Payload<string, "end">>();
+      clientWriter = new Writer<Payload<string, "end">>();
       writerIt = pipe(
-        writer,
+        clientWriter,
         transformSerializeEnvelope(
           serialization,
           writeMaxBytes,
@@ -246,24 +270,25 @@ describe("full story", function () {
         transformCompressEnvelope(compressionReverse, 0),
         transformJoinEnvelopes()
       );
-      reader = pipe(
-        new Reader(writerIt),
+      clientReader = new Reader(writerIt);
+      readerIt = pipe(
+        clientReader,
         transformSplitEnvelope(readMaxBytes),
         transformDecompressEnvelope(compressionReverse, readMaxBytes),
         transformParseEnvelope(serialization, endFlag, endSerialization)
       );
     });
     it("should correctly return results when caller waits properly", async function () {
-      writer
+      clientWriter
         .send({ value: "alpha", end: false })
-        .then(() => writer.send({ value: "beta", end: false }))
-        .then(() => writer.send({ value: "gamma", end: false }))
-        .then(() => writer.send({ value: "delta", end: false }))
+        .then(() => clientWriter.send({ value: "beta", end: false }))
+        .then(() => clientWriter.send({ value: "gamma", end: false }))
+        .then(() => clientWriter.send({ value: "delta", end: false }))
         .finally(() => {
-          void writer.close();
+          void clientWriter.close();
         });
 
-      const resp = await readAll(reader);
+      const resp = await readAll(readerIt);
       expect(resp).toEqual([
         { value: "alpha", end: false },
         { value: "beta", end: false },
@@ -274,15 +299,15 @@ describe("full story", function () {
     it("should correctly return results when caller sends without waiting", async function () {
       // Writes all the payloads without awaiting and saves off promises from the writes
       const writes = Promise.all([
-        writer.send({ value: "alpha", end: false }),
-        writer.send({ value: "beta", end: false }),
-        writer.send({ value: "gamma", end: false }),
-        writer.send({ value: "delta", end: false }),
-        writer.close(),
+        clientWriter.send({ value: "alpha", end: false }),
+        clientWriter.send({ value: "beta", end: false }),
+        clientWriter.send({ value: "gamma", end: false }),
+        clientWriter.send({ value: "delta", end: false }),
+        clientWriter.close(),
       ]);
 
       // Read all the written payloads
-      const resp = await readAll(reader);
+      const resp = await readAll(readerIt);
 
       // Await on the write promises now.  These should all be resolved since all payloads have been read.
       await writes;
@@ -294,37 +319,71 @@ describe("full story", function () {
         { value: "delta", end: false },
       ]);
     });
-    // it("should correctly return results when caller throws", async function () {
-    //   const writer = new ThrowingWriter<Payload<string, "end">>();
-    //   const writerIt = transformAsyncIterable(
-    //     writer,
-    //     transformSerialize(serialization, endFlag, endSerialization),
-    //     transformCompress(compressionReverse, writeMaxBytes, 0),
-    //     transformJoin(writeMaxBytes)
-    //   );
-    //   const reader = transformAsyncIterable(
-    //     new Reader(writerIt),
-    //     transformSplit(readMaxBytes),
-    //     transformDecompress(compressionReverse, readMaxBytes),
-    //     transformParse(serialization, endFlag, endSerialization)
-    //   );
-    //   writer
-    //     .send({ value: "alpha", end: false })
-    //     .then(() => writer.send({ value: "beta", end: false }))
-    //     .then(() => writer.send({ value: "gamma", end: false }))
-    //     .then(() => writer.send({ value: "delta", end: false }))
-    //     .finally(() => {
-    //       void writer.close();
-    //     });
+    it("should correctly behave when consumer fails and throw is invoked", async function () {
+      // Save off the reader's iterator for future use
+      const clientReaderIt = clientReader[Symbol.asyncIterator]();
 
-    //   const resp = await readAll(reader);
-    //   expect(resp).toEqual([
-    //     { value: "alpha", end: false },
-    //     { value: "beta", end: false },
-    //     { value: "gamma", end: false },
-    //     { value: "delta", end: false },
-    //   ]);
-    // });
+      // Send four total payloads, but don't close the writer.  This means that any successful for..await loops
+      // reading this writer will not complete.
+      // successfulSends represents sends that are expected to succeed.
+      // failedSends represents sends that are expected to be rejected due to the reader failing.
+      const successfulSends = Promise.all([
+        clientWriter.send({ value: "alpha", end: false }),
+      ]);
+      const failedSends = Promise.all([
+        clientWriter.send({ value: "beta", end: false }),
+        clientWriter.send({ value: "gamma", end: false }),
+        clientWriter.send({ value: "delta", end: false }),
+      ]);
+
+      const resp: (
+        | { end: false; value: string }
+        | { end: true; value: "end" }
+      )[] = [];
+      try {
+        // Iterate over the reader and purposely fail after the first read.
+        for (;;) {
+          const result = await readerIt[Symbol.asyncIterator]().next();
+          resp.push(result.value as { end: false; value: string });
+          throw "READER_ERROR";
+        }
+      } catch (e) {
+        // Verify we got the first send only and then verify we caught the expected error.
+        expect(resp).toEqual([{ value: "alpha", end: false }]);
+        expect(e).toBe("READER_ERROR");
+        // Then call the throw function on the reader to tell it an error has occurred.
+        if (clientReaderIt.throw) {
+          clientReaderIt.throw(e).catch((e) => expect(e).toBe("READER_ERROR"));
+        }
+      }
+
+      // Verify that are expected successfulSends and failedSends resolved and rejected accordingly
+      successfulSends
+        .then((result) => expect(result).toEqual([undefined]))
+        .catch(() =>
+          fail("expected successful writes were unexpectedly rejected")
+        );
+
+      failedSends
+        .then(() => fail("expected failed writes were unexpectedly resolved"))
+        .catch((e) => expect(e).toBe("READER_ERROR"));
+
+      // At this point, both the reader and the writer are closed courtesy of our call to .throw above, so no further
+      // sends to the writer will succeed.
+      // They will all be rejected with the error the reader closed it with.
+      clientWriter
+        .send({ value: "omega", end: false })
+        .then(() => fail("send was unexpectedly resolved."))
+        .catch((e) => expect(e).toBe("READER_ERROR"));
+
+      // The reader's internal writer is closed so any future reads will immediately resolve with 'done'
+      readerIt[Symbol.asyncIterator]()
+        .next()
+        .then((result) =>
+          expect(result).toEqual({ value: undefined, done: true })
+        )
+        .catch(() => fail("reads were unexpectedly rejected"));
+    });
   });
 
   describe("server integration", function () {
