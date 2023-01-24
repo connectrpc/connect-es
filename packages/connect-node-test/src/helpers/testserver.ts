@@ -161,7 +161,7 @@ J4aliShXnxA=
           }
           nodeH2SecureServer.close((err) => (err ? reject(err) : resolve()));
           // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
-          resolve();
+          resolve(); // the server.close() callback above slows down our tests
         });
       },
     },
@@ -191,7 +191,7 @@ J4aliShXnxA=
           }
           nodeH2cServer.close((err) => (err ? reject(err) : resolve()));
           // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
-          resolve();
+          resolve(); // the server.close() callback above slows down our tests
         });
       },
     },
@@ -252,7 +252,7 @@ J4aliShXnxA=
             return;
           }
           nodeHttpsServer.close((err) => (err ? reject(err) : resolve()));
-          resolve();
+          resolve(); // the server.close() callback above slows down our tests
         });
       },
     },
