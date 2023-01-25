@@ -47,16 +47,6 @@ class Reader<T> {
         }
         return { value: "", done: true };
       },
-      throw: async (e: Error) => {
-        // If the internal iterator we are reading from has a throw method, call that also.
-        const iter = this.it[Symbol.asyncIterator]();
-        if (iter.throw) {
-          await iter.throw(e);
-        }
-        return new Promise<IteratorResult<T>>((resolve) => {
-          resolve({ value: String(e), done: true });
-        });
-      },
     };
   }
 }
@@ -320,11 +310,7 @@ describe("full story", function () {
       ]);
     });
     it("should correctly behave when consumer fails and throw is invoked", async function () {
-      // Save off the reader's iterator for future use
-      const clientReaderIt = clientReader[Symbol.asyncIterator]();
-
-      // Send four total payloads, but don't close the writer.  This means that any successful for..await loops
-      // reading this writer will not complete.
+      // Send four total payloads, but don't close the writer.
       // successfulSends represents sends that are expected to succeed.
       // failedSends represents sends that are expected to be rejected due to the reader failing.
       const successfulSends = Promise.all([
@@ -352,8 +338,9 @@ describe("full story", function () {
         expect(resp).toEqual([{ value: "alpha", end: false }]);
         expect(e).toBe("READER_ERROR");
         // Then call the throw function on the reader to tell it an error has occurred.
-        if (clientReaderIt.throw) {
-          clientReaderIt.throw(e).catch((e) => expect(e).toBe("READER_ERROR"));
+        const it = clientWriter[Symbol.asyncIterator]();
+        if (it.throw) {
+          it.throw(e);
         }
       }
 
@@ -376,13 +363,11 @@ describe("full story", function () {
         .then(() => fail("send was unexpectedly resolved."))
         .catch((e) => expect(e).toBe("READER_ERROR"));
 
-      // The reader's internal writer is closed so any future reads will immediately resolve with 'done'
+      // The reader's internal writer is closed so any future reads will be rejected.
       readerIt[Symbol.asyncIterator]()
         .next()
-        .then((result) =>
-          expect(result).toEqual({ value: undefined, done: true })
-        )
-        .catch(() => fail("reads were unexpectedly rejected"));
+        .then(() => fail("reads were unexpectedly resolved"))
+        .catch((e) => expect(e).toBe("READER_ERROR"));
     });
   });
 
