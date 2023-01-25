@@ -99,9 +99,11 @@ export function createNodeHttp1Client(
           status,
           header,
           body: read(nodeResponse, () => {
-            nodeHeaderToWebHeader(nodeResponse.trailers).forEach((value, key) => {
-              trailer.set(key, value);
-            });
+            nodeHeaderToWebHeader(nodeResponse.trailers).forEach(
+              (value, key) => {
+                trailer.set(key, value);
+              }
+            );
             nodeResponse.removeAllListeners();
           }),
           trailer,
@@ -220,7 +222,7 @@ export function createNodeHttp2Client(
 
 async function* read(
   readable: http.IncomingMessage | http2.ClientHttp2Stream,
-  finallyFn: undefined | (() => void) |(() => Promise<void>),
+  finallyFn: undefined | (() => void) | (() => Promise<void>)
 ): AsyncIterable<Uint8Array> {
   try {
     for await (const chunk of readable) {

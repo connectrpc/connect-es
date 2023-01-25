@@ -72,8 +72,8 @@ import type {
 } from "./protocol-handler.js";
 import {
   UniversalHandlerFn,
-  UniversalRequest,
-  UniversalResponse,
+  UniversalServerRequest,
+  UniversalServerResponse,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
@@ -136,8 +136,8 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
   serialization: MethodSerializationLookup<I, O>
 ) {
   return async function handle(
-    req: UniversalRequest
-  ): Promise<UniversalResponse> {
+    req: UniversalServerRequest
+  ): Promise<UniversalServerResponse> {
     const type = parseContentType(req.header.get(headerContentType));
     if (type == undefined || type.stream) {
       return uResponseUnsupportedMediaType;
@@ -242,7 +242,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
   serialization: MethodSerializationLookup<I, O>,
   endStreamSerialization: Serialization<EndStreamResponse>
 ) {
-  return function handle(req: UniversalRequest): UniversalResponse {
+  return function handle(req: UniversalServerRequest): UniversalServerResponse {
     const type = parseContentType(req.header.get(headerContentType));
     if (type == undefined || !type.stream) {
       return uResponseUnsupportedMediaType;

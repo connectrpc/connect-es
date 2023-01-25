@@ -56,8 +56,8 @@ import type {
   ProtocolHandlerFactInit,
 } from "./protocol-handler.js";
 import {
-  UniversalRequest,
-  UniversalResponse,
+  UniversalServerRequest,
+  UniversalServerResponse,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
@@ -101,7 +101,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     opt.binaryOptions,
     opt.jsonOptions
   );
-  return function handle(req: UniversalRequest): UniversalResponse {
+  return function handle(req: UniversalServerRequest): UniversalServerResponse {
     const type = parseContentType(req.header.get(headerContentType));
     if (type == undefined || type.text) {
       return uResponseUnsupportedMediaType;

@@ -44,13 +44,13 @@ export interface UniversalClientResponse {
  * A minimal abstraction of an HTTP handler.
  */
 export type UniversalHandlerFn = (
-  request: UniversalRequest
-) => UniversalResponse | Promise<UniversalResponse>;
+  request: UniversalServerRequest
+) => UniversalServerResponse | Promise<UniversalServerResponse>;
 
 /**
  * A minimal abstraction of an HTTP request on the server side.
  */
-export interface UniversalRequest {
+export interface UniversalServerRequest {
   httpVersion: string;
   method: string;
   header: Headers;
@@ -60,7 +60,7 @@ export interface UniversalRequest {
 /**
  * A minimal abstraction of an HTTP response on the server side.
  */
-export interface UniversalResponse {
+export interface UniversalServerResponse {
   status: number;
   header?: Headers;
   body?: AsyncIterable<Uint8Array> | Uint8Array;
@@ -70,30 +70,31 @@ export interface UniversalResponse {
 /**
  * HTTP 200 OK
  */
-export const uResponseOk: Readonly<UniversalResponse> = {
+export const uResponseOk: Readonly<UniversalServerResponse> = {
   status: 200,
 };
 /**
  * HTTP 404 Not Found
  */
-export const uResponseNotFound: Readonly<UniversalResponse> = {
+export const uResponseNotFound: Readonly<UniversalServerResponse> = {
   status: 404,
 };
 /**
  * HTTP 415 Unsupported Media Type
  */
-export const uResponseUnsupportedMediaType: Readonly<UniversalResponse> = {
-  status: 415,
-};
+export const uResponseUnsupportedMediaType: Readonly<UniversalServerResponse> =
+  {
+    status: 415,
+  };
 /**
  * HTTP 405 Method Not Allowed
  */
-export const uResponseMethodNotAllowed: Readonly<UniversalResponse> = {
+export const uResponseMethodNotAllowed: Readonly<UniversalServerResponse> = {
   status: 405,
 };
 /**
  * HTTP 505 Version Not Supported
  */
-export const uResponseVersionNotSupported: Readonly<UniversalResponse> = {
+export const uResponseVersionNotSupported: Readonly<UniversalServerResponse> = {
   status: 505,
 };

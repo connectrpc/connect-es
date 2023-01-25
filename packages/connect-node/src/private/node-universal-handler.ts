@@ -21,8 +21,8 @@ import {
 } from "./node-universal-header.js";
 import type {
   UniversalHandlerFn,
-  UniversalRequest,
-  UniversalResponse,
+  UniversalServerRequest,
+  UniversalServerResponse,
 } from "./universal.js";
 
 /**
@@ -64,7 +64,7 @@ async function runHandler(
 
 function universalRequestFromNodeRequest(
   nodeRequest: NodeServerRequest
-): UniversalRequest {
+): UniversalServerRequest {
   return {
     httpVersion: nodeRequest.httpVersion,
     method: nodeRequest.method ?? "",
@@ -74,7 +74,7 @@ function universalRequestFromNodeRequest(
 }
 
 async function universalResponseToNodeResponse(
-  universalResponse: UniversalResponse,
+  universalResponse: UniversalServerResponse,
   nodeResponse: NodeServerResponse
 ): Promise<void> {
   if (universalResponse.body instanceof Uint8Array) {

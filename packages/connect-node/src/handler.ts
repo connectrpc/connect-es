@@ -42,7 +42,7 @@ import { createGrpcHandlerProtocol } from "./grpc-handler.js";
 import { createGrpcWebProtocolHandler } from "./grpc-web-handler.js";
 import { createConnectProtocolHandler } from "./connect-handler.js";
 import {
-  UniversalRequest,
+  UniversalServerRequest,
   uResponseMethodNotAllowed,
   uResponseNotFound,
   uResponseUnsupportedMediaType,
@@ -142,7 +142,7 @@ export function createHandler<M extends MethodInfo>(
   const opt = internalHandlerOptions(options);
   const handlers = opt.protocols.map((fact) => fact(spec));
 
-  function protocolNegotiatingHandler(request: UniversalRequest) {
+  function protocolNegotiatingHandler(request: UniversalServerRequest) {
     if (
       method.kind == MethodKind.BiDiStreaming &&
       request.httpVersion.startsWith("1.")
