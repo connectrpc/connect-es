@@ -81,4 +81,5 @@ export {
   pipeTo,
   sinkAll,
   sinkAllBytes,
+  makeIterableAbortable,
 } from "./async-iterable.js";
