@@ -342,19 +342,15 @@ describe("full story", function () {
       }
 
       // Verify that our expected successfulSends and failedSends resolved and rejected accordingly
-      if (successfulSends) {
-        successfulSends
-          .then((result) => expect(result).toEqual([undefined]))
-          .catch(() =>
-            fail("expected successful writes were unexpectedly rejected")
-          );
-      }
+      successfulSends
+        .then((result) => expect(result).toEqual([undefined]))
+        .catch(() =>
+          fail("expected successful writes were unexpectedly rejected")
+        );
 
-      if (failedSends) {
-        failedSends
-          .then(() => fail("expected failed writes were unexpectedly resolved"))
-          .catch((e) => expect(e).toBe("READER_ERROR"));
-      }
+      failedSends
+        .then(() => fail("expected failed writes were unexpectedly resolved"))
+        .catch((e) => expect(e).toBe("READER_ERROR"));
 
       // At this point, the writer was closed courtesy of our call to .throw above, so no further
       // sends to the writer will succeed.
