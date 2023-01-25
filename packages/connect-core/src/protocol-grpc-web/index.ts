@@ -16,7 +16,12 @@ export {
   createRequestHeader,
   createRequestHeaderWithCompression,
 } from "./create-request-header.js";
-export { parseContentType } from "./parse-content-type.js";
+export {
+  parseContentType,
+  contentTypeRegExp,
+  contentTypeProto,
+  contentTypeJson,
+} from "./content-type.js";
 export {
   validateResponse,
   validateResponseWithCompression,
@@ -27,9 +32,10 @@ export {
   trailerSerialize,
   createTrailerSerialization,
 } from "./trailer.js";
-export * from "./headers.js";
 export {
   parseTimeout,
   setTrailerStatus,
   validateTrailer,
+  grpcStatusOk,
 } from "../protocol-grpc/index.js";
+export * from "./headers.js";

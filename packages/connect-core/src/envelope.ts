@@ -14,6 +14,7 @@
 
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
+import { compressedFlag, Compression } from "./compression.js";
 
 /**
  * Represents an Enveloped-Message of the Connect protocol.
@@ -37,20 +38,20 @@ export interface EnvelopedMessage {
  *
  * Ideally, this would simply be a TransformStream, but ReadableStream.pipeThrough
  * does not have the necessary availability at this time.
- *
- * Note that such a TransformStream is implement by transformSplit().
  */
 export function createEnvelopeReadableStream(
   stream: ReadableStream<Uint8Array>
 ): ReadableStream<EnvelopedMessage> {
   let reader: ReadableStreamDefaultReader<Uint8Array>;
   let buffer = new Uint8Array(0);
+
   function append(chunk: Uint8Array): void {
     const n = new Uint8Array(buffer.length + chunk.length);
     n.set(buffer);
     n.set(chunk, buffer.length);
     buffer = n;
   }
+
   return new ReadableStream<EnvelopedMessage>({
     start() {
       reader = stream.getReader();
@@ -95,6 +96,58 @@ export function createEnvelopeReadableStream(
 }
 
 /**
+ * Compress an EnvelopedMessage.
+ *
+ * Raises Internal if an enveloped message is already compressed.
+ */
+export async function envelopeCompress(
+  envelope: EnvelopedMessage,
+  compression: Compression | null,
+  compressMinBytes: number
+): Promise<EnvelopedMessage> {
+  let { flags, data } = envelope;
+  if ((flags & compressedFlag) === compressedFlag) {
+    throw new ConnectError(
+      "invalid envelope, already compressed",
+      Code.Internal
+    );
+  }
+  if (compression && data.byteLength >= compressMinBytes) {
+    data = await compression.compress(data);
+    flags = flags | compressedFlag;
+  }
+  return { data, flags };
+}
+
+/**
+ * Decompress an EnvelopedMessage.
+ *
+ * Raises InvalidArgument if an envelope is compressed, but compression is null.
+ *
+ * Relies on the provided Compression to raise ResourceExhausted if the
+ * *decompressed* message size is larger than readMaxBytes. If the envelope is
+ * not compressed, readMaxBytes is not honored.
+ */
+export async function envelopeDecompress(
+  envelope: EnvelopedMessage,
+  compression: Compression | null,
+  readMaxBytes: number
+): Promise<EnvelopedMessage> {
+  let { flags, data } = envelope;
+  if ((flags & compressedFlag) === compressedFlag) {
+    if (!compression) {
+      throw new ConnectError(
+        "received compressed envelope, but do not know how to decompress",
+        Code.InvalidArgument
+      );
+    }
+    data = await compression.decompress(data, readMaxBytes);
+    flags = flags ^ compressedFlag;
+  }
+  return { data, flags };
+}
+
+/**
  * Encode a single enveloped message.
  */
 export function encodeEnvelope(flags: number, data: Uint8Array): Uint8Array {
@@ -110,21 +163,19 @@ export function encodeEnvelope(flags: number, data: Uint8Array): Uint8Array {
  * Encode a set of enveloped messages.
  */
 export function encodeEnvelopes(...envelopes: EnvelopedMessage[]): Uint8Array {
-  const buffer = new ArrayBuffer(
-    envelopes.reduce(
-      (previousValue, currentValue) =>
-        previousValue + currentValue.data.length + 5,
-      0
-    )
+  const len = envelopes.reduce(
+    (previousValue, currentValue) =>
+      previousValue + currentValue.data.length + 5,
+    0
   );
-  const bytes = new Uint8Array(buffer);
+  const bytes = new Uint8Array(len);
+  const v = new DataView(bytes.buffer);
   let offset = 0;
   for (const e of envelopes) {
-    const v = new DataView(buffer, offset);
-    v.setUint8(0, e.flags); // first byte is flags
-    v.setUint32(1, e.data.length); // 4 bytes message length
+    v.setUint8(offset, e.flags); // first byte is flags
+    v.setUint32(offset + 1, e.data.length); // 4 bytes message length
     bytes.set(e.data, offset + 5);
     offset += e.data.length + 5;
   }
-  return new Uint8Array(buffer);
+  return bytes;
 }

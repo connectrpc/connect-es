@@ -16,6 +16,9 @@ import { Code, ConnectError } from "@bufbuild/connect-core";
 
 const maxReadMaxBytes = 0xffffffff; // zlib caps maxOutputLength at this value
 
+/**
+ * @deprecated use compressionValidateOptions from @bufbuild/connect-core
+ */
 export function validateReadMaxBytesOption(
   readMaxBytes: number | undefined
 ): number {
@@ -25,12 +28,6 @@ export function validateReadMaxBytesOption(
   if (readMaxBytes < 1 || readMaxBytes > maxReadMaxBytes) {
     throw new ConnectError(
       `readMaxBytes ${readMaxBytes} must be >= 1 and <= ${maxReadMaxBytes}`,
-      Code.Internal
-    );
-  }
-  if (readMaxBytes > maxReadMaxBytes) {
-    throw new ConnectError(
-      `readMaxBytes ${readMaxBytes} is greater than the maximum allowable size.`,
       Code.Internal
     );
   }

@@ -20,18 +20,15 @@ import {
   ScalarType,
   Struct,
 } from "@bufbuild/protobuf";
-import { Headers as UndiciHeaders } from "undici";
 import {
   ConnectError,
   connectErrorDetails,
   connectErrorFromReason,
 } from "./connect-error.js";
 import { Code } from "./code.js";
+import { node16FetchHeadersPolyfill } from "./node16-polyfill-helper.spec.js";
 
-// TODO we need to replace all Headers ctor calls in our code or require Node.js >= v18
-if (typeof globalThis.Headers !== "function") {
-  globalThis.Headers = UndiciHeaders as unknown as typeof Headers;
-}
+node16FetchHeadersPolyfill();
 
 describe("ConnectError", () => {
   describe("constructor", () => {

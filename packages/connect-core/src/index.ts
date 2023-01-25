@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { createCallbackClient, CallbackClient } from "./callback-client.js";
-export { createPromiseClient, PromiseClient } from "./promise-client.js";
-export type { CallOptions } from "./call-options.js";
-export type { Transport } from "./transport.js";
 export {
   ConnectError,
   connectErrorDetails,
@@ -23,17 +19,21 @@ export {
 } from "./connect-error.js";
 export { Code } from "./code.js";
 export {
+  encodeBinaryHeader,
+  decodeBinaryHeader,
+  appendHeaders,
+} from "./http-headers.js";
+export { createCallbackClient, CallbackClient } from "./callback-client.js";
+export { createPromiseClient, PromiseClient } from "./promise-client.js";
+export type { CallOptions } from "./call-options.js";
+export type { Transport } from "./transport.js";
+export {
   Interceptor,
   UnaryRequest,
   UnaryResponse,
   StreamingRequest,
   StreamingConn,
 } from "./interceptor.js";
-export {
-  encodeBinaryHeader,
-  decodeBinaryHeader,
-  appendHeaders,
-} from "./http-headers.js";
 
 // Symbols above should be relevant to end users.
 // Symbols below should only be relevant for other libraries.
@@ -45,21 +45,41 @@ export {
   Serialization,
   createBinarySerialization,
   createJsonSerialization,
+  createMethodSerializationLookup,
   createClientMethodSerializers,
+  MethodSerializationLookup,
 } from "./serialization.js";
 export {
-  createEnvelopeReadableStream,
   EnvelopedMessage,
   encodeEnvelope,
   encodeEnvelopes,
+  envelopeDecompress,
+  envelopeCompress,
+  createEnvelopeReadableStream,
 } from "./envelope.js";
-export { Compression, compressedFlag } from "./compression.js";
 export {
-  ParsedEnvelopedMessage,
-  transformCompress,
-  transformDecompress,
-  transformJoin,
-  transformSplit,
-  transformSerialize,
-  transformParse,
-} from "./transform-stream.js";
+  Compression,
+  compressedFlag,
+  compressionNegotiate,
+  compressionValidateOptions,
+} from "./compression.js";
+export {
+  AsyncIterableTransform,
+  pipe,
+  transformCatch,
+  transformCatchFinally,
+  transformAppend,
+  transformPrepend,
+  transformReadAllBytes,
+  transformCompressEnvelope,
+  transformDecompressEnvelope,
+  transformJoinEnvelopes,
+  transformSplitEnvelope,
+  transformSerializeEnvelope,
+  transformParseEnvelope,
+  AsyncIterableSink,
+  pipeTo,
+  sinkAll,
+  sinkAllBytes,
+  makeIterableAbortable,
+} from "./async-iterable.js";
