@@ -130,7 +130,7 @@ describe("pipe()", function () {
     expect(sum).toBe(9);
   });
 
-  describe("with error raising consumer", function () {
+  describe("with error-raising consumer", function () {
     const sourceLog: string[] = [];
     beforeEach(function () {
       sourceLog.splice(0);
@@ -245,7 +245,7 @@ describe("pipeTo()", function () {
     expect(sum).toBe(9);
   });
 
-  describe("with error raising sink", function () {
+  describe("with error-raising sink", function () {
     const sourceLog: string[] = [];
     beforeEach(function () {
       sourceLog.splice(0);
@@ -358,7 +358,7 @@ describe("makeIterableAbortable()", function () {
       expect(sourceLog).toEqual(["yield a", "swallowed ERR", "finally"]);
     });
   });
-  describe("with error catching source", function () {
+  describe("with error-catching source", function () {
     // eslint-disable-next-line @typescript-eslint/require-await
     async function* source() {
       try {
