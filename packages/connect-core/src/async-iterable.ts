@@ -94,7 +94,7 @@ interface PipeOptions {
    * If this option is set to true, an error raised by the sink function given
    * to pipeTo() will raise the same error in the source iterable.
    *
-   * ``ts
+   * ```ts
    * async function source*() {
    *   const conn = await dbConn();
    *   try {

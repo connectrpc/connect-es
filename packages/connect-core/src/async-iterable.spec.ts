@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import {
-  makeIterableAbortable,
   pipe,
   pipeTo,
   transformCatch,
@@ -24,6 +23,7 @@ import {
   transformReadAllBytes,
   transformSerializeEnvelope,
   transformSplitEnvelope,
+  makeIterableAbortable,
 } from "./async-iterable.js";
 import type { Serialization } from "./serialization.js";
 import {
