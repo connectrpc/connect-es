@@ -241,16 +241,15 @@ describe("full story", function () {
   });
 
   describe("client integration", function () {
-    let clientWriter: Writer<Payload<string, "end">>;
-    let clientReader: Reader<Uint8Array>;
+    let writer: Writer<Payload<string, "end">>;
     let writerIt: AsyncIterable<Uint8Array>;
     let readerIt: AsyncIterable<
       { end: false; value: string | "end" } | { end: true; value: "end" }
     >;
     beforeEach(() => {
-      clientWriter = new Writer<Payload<string, "end">>();
+      writer = new Writer<Payload<string, "end">>();
       writerIt = pipe(
-        clientWriter,
+        writer,
         transformSerializeEnvelope(
           serialization,
           writeMaxBytes,
@@ -260,22 +259,21 @@ describe("full story", function () {
         transformCompressEnvelope(compressionReverse, 0),
         transformJoinEnvelopes()
       );
-      clientReader = new Reader(writerIt);
       readerIt = pipe(
-        clientReader,
+        new Reader(writerIt),
         transformSplitEnvelope(readMaxBytes),
         transformDecompressEnvelope(compressionReverse, readMaxBytes),
         transformParseEnvelope(serialization, endFlag, endSerialization)
       );
     });
     it("should correctly return results when caller waits properly", async function () {
-      clientWriter
+      writer
         .send({ value: "alpha", end: false })
-        .then(() => clientWriter.send({ value: "beta", end: false }))
-        .then(() => clientWriter.send({ value: "gamma", end: false }))
-        .then(() => clientWriter.send({ value: "delta", end: false }))
+        .then(() => writer.send({ value: "beta", end: false }))
+        .then(() => writer.send({ value: "gamma", end: false }))
+        .then(() => writer.send({ value: "delta", end: false }))
         .finally(() => {
-          void clientWriter.close();
+          void writer.close();
         });
 
       const resp = await readAll(readerIt);
@@ -289,11 +287,11 @@ describe("full story", function () {
     it("should correctly return results when caller sends without waiting", async function () {
       // Writes all the payloads without awaiting and saves off promises from the writes
       const writes = Promise.all([
-        clientWriter.send({ value: "alpha", end: false }),
-        clientWriter.send({ value: "beta", end: false }),
-        clientWriter.send({ value: "gamma", end: false }),
-        clientWriter.send({ value: "delta", end: false }),
-        clientWriter.close(),
+        writer.send({ value: "alpha", end: false }),
+        writer.send({ value: "beta", end: false }),
+        writer.send({ value: "gamma", end: false }),
+        writer.send({ value: "delta", end: false }),
+        writer.close(),
       ]);
 
       // Read all the written payloads
@@ -312,14 +310,13 @@ describe("full story", function () {
     it("should correctly behave when consumer fails and throw is invoked", async function () {
       // Send four total payloads, but don't close the writer.
       // successfulSends represents sends that are expected to succeed.
-      // failedSends represents sends that are expected to be rejected due to the reader failing.
       const successfulSends = Promise.all([
-        clientWriter.send({ value: "alpha", end: false }),
+        writer.send({ value: "alpha", end: false }),
       ]);
       const failedSends = Promise.all([
-        clientWriter.send({ value: "beta", end: false }),
-        clientWriter.send({ value: "gamma", end: false }),
-        clientWriter.send({ value: "delta", end: false }),
+        writer.send({ value: "beta", end: false }),
+        writer.send({ value: "gamma", end: false }),
+        writer.send({ value: "delta", end: false }),
       ]);
 
       const resp: (
@@ -337,28 +334,32 @@ describe("full story", function () {
         // Verify we got the first send only and then verify we caught the expected error.
         expect(resp).toEqual([{ value: "alpha", end: false }]);
         expect(e).toBe("READER_ERROR");
-        // Then call the throw function on the reader to tell it an error has occurred.
-        const it = clientWriter[Symbol.asyncIterator]();
+        // Then call the throw function on the writer to tell it an error has occurred.
+        const it = writer[Symbol.asyncIterator]();
         if (it.throw) {
-          it.throw(e);
+          await it.throw(e);
         }
       }
 
-      // Verify that are expected successfulSends and failedSends resolved and rejected accordingly
-      successfulSends
-        .then((result) => expect(result).toEqual([undefined]))
-        .catch(() =>
-          fail("expected successful writes were unexpectedly rejected")
-        );
+      // Verify that our expected successfulSends and failedSends resolved and rejected accordingly
+      if (successfulSends) {
+        successfulSends
+          .then((result) => expect(result).toEqual([undefined]))
+          .catch(() =>
+            fail("expected successful writes were unexpectedly rejected")
+          );
+      }
 
-      failedSends
-        .then(() => fail("expected failed writes were unexpectedly resolved"))
-        .catch((e) => expect(e).toBe("READER_ERROR"));
+      if (failedSends) {
+        failedSends
+          .then(() => fail("expected failed writes were unexpectedly resolved"))
+          .catch((e) => expect(e).toBe("READER_ERROR"));
+      }
 
-      // At this point, both the reader and the writer are closed courtesy of our call to .throw above, so no further
+      // At this point, the writer was closed courtesy of our call to .throw above, so no further
       // sends to the writer will succeed.
-      // They will all be rejected with the error the reader closed it with.
-      clientWriter
+      // They will all be rejected with the error passed to throw.
+      writer
         .send({ value: "omega", end: false })
         .then(() => fail("send was unexpectedly resolved."))
         .catch((e) => expect(e).toBe("READER_ERROR"));
