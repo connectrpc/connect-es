@@ -13,7 +13,9 @@
 // limitations under the License.
 
 import {
+  makeIterableAbortable,
   pipe,
+  pipeTo,
   transformCatch,
   transformCompressEnvelope,
   transformDecompressEnvelope,
@@ -34,6 +36,389 @@ import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import { Code } from "./code.js";
 import type { EnvelopedMessage } from "./envelope.js";
 import type { Compression } from "./compression.js";
+
+describe("slowly consuming an async iterable", function () {
+  it("should propagate backpressure to source", async function () {
+    const sourceDelayMs = 0;
+    const consumerDelayMs = 50;
+    let sourceElapsedMs = -1;
+    let consumeElapsedMs = -1;
+
+    async function* source() {
+      const tsStart = Date.now();
+      await new Promise((resolve) => setTimeout(resolve, sourceDelayMs));
+      yield "a";
+      await new Promise((resolve) => setTimeout(resolve, sourceDelayMs));
+      yield "b";
+      await new Promise((resolve) => setTimeout(resolve, sourceDelayMs));
+      yield "c";
+      sourceElapsedMs = Date.now() - tsStart;
+    }
+
+    async function slowConsume(source: AsyncIterable<string>) {
+      const tsStart = Date.now();
+      for await (const chunk of source) {
+        expect(chunk).toBeDefined(); // only to satisfy type checks
+        await new Promise((resolve) => setTimeout(resolve, consumerDelayMs));
+      }
+      consumeElapsedMs = Date.now() - tsStart;
+    }
+
+    await slowConsume(source());
+
+    // We expect the source to wait for the consumer, so both should run for
+    // about the same time (3 x 50ms = ~150ms).
+    // We have to be a bit lenient to account for the time it takes run the
+    // actual code, and variance introduced by setTimeout.
+    const leniency = 50;
+    expect(sourceElapsedMs).toBeGreaterThanOrEqual(consumeElapsedMs - leniency);
+    expect(sourceElapsedMs).toBeLessThanOrEqual(consumeElapsedMs + leniency);
+  });
+});
+
+describe("consuming an async iterable with for-await and throwing an error", function () {
+  it("should leave source dangling", async function () {
+    const sourceLog: string[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* source() {
+      try {
+        sourceLog.push("yield a");
+        yield "a";
+        sourceLog.push("yield b");
+        yield "b";
+      } finally {
+        sourceLog.push("finally");
+      }
+    }
+
+    const consumerLog: string[] = [];
+
+    async function consume(source: AsyncIterable<string>) {
+      for await (const chunk of source) {
+        consumerLog.push("received " + chunk);
+        throw "CONSUMER_ERROR";
+      }
+    }
+
+    try {
+      await consume(source());
+      fail("expected error");
+    } catch (e) {
+      expect(e).toBe("CONSUMER_ERROR");
+    }
+
+    expect(sourceLog).toEqual(["yield a"]);
+    expect(consumerLog).toEqual(["received a"]);
+  });
+});
+
+describe("pipe()", function () {
+  it("should apply transforms", async function () {
+    const iterable = pipe(
+      createAsyncIterable([1, 2, 3]),
+      async function* addOne(iterable) {
+        for await (const chunk of iterable) {
+          yield chunk + 1;
+        }
+      }
+    );
+    let sum = 0;
+    for await (const chunk of iterable) {
+      sum += chunk;
+    }
+    expect(sum).toBe(9);
+  });
+
+  describe("with error raising consumer", function () {
+    const sourceLog: string[] = [];
+    beforeEach(function () {
+      sourceLog.splice(0);
+    });
+
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* source() {
+      try {
+        sourceLog.push("yield a");
+        yield "a";
+        sourceLog.push("yield b");
+        yield "b";
+      } catch (e) {
+        sourceLog.push("saw " + String(e));
+        throw e;
+      } finally {
+        sourceLog.push("finally");
+      }
+    }
+
+    const consumerLog: string[] = [];
+    beforeEach(function () {
+      consumerLog.splice(0);
+    });
+
+    async function consumeWithError(
+      iterable: AsyncIterable<unknown>
+    ): Promise<void> {
+      const it = iterable[Symbol.asyncIterator]();
+      for (;;) {
+        const result = await it.next();
+        if (result.done === true) {
+          consumerLog.push("done");
+          break;
+        }
+        consumerLog.push("received " + String(result.value));
+        if (it.throw === undefined) {
+          throw new Error("iterable does not implement throw()");
+        }
+        await it.throw("DOWNSTREAM_ERROR").catch((e) => {
+          if (e !== "DOWNSTREAM_ERROR") {
+            throw e;
+          }
+        });
+        consumerLog.push("threw DOWNSTREAM_ERROR");
+      }
+    }
+
+    async function* noopTransform(
+      iterable: AsyncIterable<string>
+    ): AsyncIterable<string> {
+      yield* iterable;
+    }
+
+    it("should not propagate error to source by default, and leave it dangling", async function () {
+      const iterable = pipe(source(), noopTransform, {
+        // propagateDownStreamError: false <- default
+      });
+      await consumeWithError(iterable);
+      expect(sourceLog).toEqual(["yield a"]);
+      expect(consumerLog).toEqual([
+        "received a",
+        "threw DOWNSTREAM_ERROR",
+        "done",
+      ]);
+    });
+    it("should propagate error to source with propagateDownStreamError: true", async function () {
+      const iterable = pipe(source(), noopTransform, {
+        propagateDownStreamError: true,
+      });
+      await consumeWithError(iterable);
+      expect(sourceLog).toEqual(["yield a", "saw DOWNSTREAM_ERROR", "finally"]);
+      expect(consumerLog).toEqual([
+        "received a",
+        "threw DOWNSTREAM_ERROR",
+        "done",
+      ]);
+    });
+  });
+});
+
+describe("pipeTo()", function () {
+  it("should pipe iterable to sink", async function () {
+    const sum = await pipeTo(
+      createAsyncIterable([1, 2, 3]),
+      async (iterable) => {
+        let sum = 0;
+        for await (const chunk of iterable) {
+          sum += chunk;
+        }
+        return sum;
+      }
+    );
+    expect(sum).toBe(6);
+  });
+  it("should apply transforms", async function () {
+    const sum = await pipeTo(
+      createAsyncIterable([1, 2, 3]),
+      async function* addOne(iterable) {
+        for await (const chunk of iterable) {
+          yield chunk + 1;
+        }
+      },
+      async (iterable) => {
+        let sum = 0;
+        for await (const chunk of iterable) {
+          sum += chunk;
+        }
+        return sum;
+      }
+    );
+    expect(sum).toBe(9);
+  });
+
+  describe("with error raising sink", function () {
+    const sourceLog: string[] = [];
+    beforeEach(function () {
+      sourceLog.splice(0);
+    });
+
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* source() {
+      try {
+        sourceLog.push("yield a");
+        yield "a";
+        sourceLog.push("yield b");
+        yield "b";
+      } catch (e) {
+        sourceLog.push("saw " + String(e));
+        throw e;
+      } finally {
+        sourceLog.push("finally");
+      }
+    }
+
+    async function errorRaisingSink(iterable: AsyncIterable<string>) {
+      for await (const chunk of iterable) {
+        expect(chunk).toBeDefined(); // only to satisfy type checks
+        throw "SINK_ERROR";
+      }
+    }
+
+    async function* noopTransform(
+      iterable: AsyncIterable<string>
+    ): AsyncIterable<string> {
+      yield* iterable;
+    }
+
+    it("should not propagate error to source by default, and leave it dangling", async function () {
+      try {
+        await pipeTo(source(), noopTransform, errorRaisingSink, {
+          // propagateDownStreamError: false <- default
+        });
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBe("SINK_ERROR");
+      }
+      expect(sourceLog).toEqual(["yield a"]);
+    });
+    it("should propagate error to source with propagateDownStreamError: true", async function () {
+      try {
+        await pipeTo(source(), noopTransform, errorRaisingSink, {
+          propagateDownStreamError: true,
+        });
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBe("SINK_ERROR");
+      }
+      expect(sourceLog).toEqual(["yield a", "saw SINK_ERROR", "finally"]);
+    });
+  });
+});
+
+describe("makeIterableAbortable()", function () {
+  const sourceLog: string[] = [];
+  beforeEach(function () {
+    sourceLog.splice(0);
+  });
+  describe("with simple source", function () {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* source() {
+      try {
+        sourceLog.push("yield a");
+        yield "a";
+        sourceLog.push("yield b");
+        yield "b";
+      } catch (e) {
+        sourceLog.push("saw " + String(e));
+        throw e;
+      } finally {
+        sourceLog.push("finally");
+      }
+    }
+    it("should abort source", async function () {
+      const abortable = makeIterableAbortable(source());
+      for await (const chunk of abortable) {
+        expect(chunk).toBe("a");
+        const state = await abortable.abort("ERR");
+        expect(state).toBe("rethrown");
+      }
+      expect(sourceLog).toEqual(["yield a", "saw ERR", "finally"]);
+    });
+  });
+  describe("with error swallowing source", function () {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* source() {
+      try {
+        sourceLog.push("yield a");
+        yield "a";
+        sourceLog.push("yield b");
+        yield "b";
+      } catch (e) {
+        sourceLog.push("swallowed " + String(e));
+      } finally {
+        sourceLog.push("finally");
+      }
+    }
+    it("should abort source", async function () {
+      const abortable = makeIterableAbortable(source());
+      for await (const chunk of abortable) {
+        expect(chunk).toBe("a");
+        const state = await abortable.abort("ERR");
+        expect(state).toBe("completed");
+      }
+      expect(sourceLog).toEqual(["yield a", "swallowed ERR", "finally"]);
+    });
+  });
+  describe("with error catching source", function () {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* source() {
+      try {
+        sourceLog.push("yield a");
+        yield "a";
+        sourceLog.push("yield b");
+        yield "b";
+      } catch (e) {
+        sourceLog.push("caught " + String(e));
+        yield "result for downstream error";
+      } finally {
+        sourceLog.push("finally");
+      }
+    }
+    it("should abort source and ignore result for downstream error", async function () {
+      const abortable = makeIterableAbortable(source());
+      for await (const chunk of abortable) {
+        expect(chunk).toBe("a");
+        const state = await abortable.abort("ERR");
+        expect(state).toBe("caught");
+      }
+      expect(sourceLog).toEqual(["yield a", "caught ERR", "finally"]);
+    });
+  });
+
+  describe("with pipe()", function () {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* source() {
+      try {
+        sourceLog.push("yield a");
+        yield "a";
+        sourceLog.push("yield b");
+        yield "b";
+      } catch (e) {
+        sourceLog.push("saw " + String(e));
+        throw e;
+      } finally {
+        sourceLog.push("finally");
+      }
+    }
+    it("should abort source", async function () {
+      const iterable = pipe(
+        source(),
+        async function* noopTransform(
+          iterable: AsyncIterable<string>
+        ): AsyncIterable<string> {
+          yield* iterable;
+        },
+        { propagateDownStreamError: true }
+      );
+      const abortable = makeIterableAbortable(iterable);
+      for await (const chunk of abortable) {
+        expect(chunk).toBe("a");
+        const state = await abortable.abort("ERR");
+        expect(state).toBe("rethrown");
+      }
+      expect(sourceLog).toEqual(["yield a", "saw ERR", "finally"]);
+    });
+  });
+});
 
 describe("transforming asynchronous iterables", () => {
   describe("envelope serialization", function () {
@@ -443,33 +828,35 @@ describe("transforming asynchronous iterables", () => {
       }
     });
 
-    it("should catch error", async function () {
-      const goldenEnvelopes = [
-        {
-          data: new TextEncoder().encode("a"),
-          flags: 0b00000000,
-        },
-        {
-          data: new TextEncoder().encode("b"),
-          flags: 0b00000000,
-        },
-        {
-          data: new TextEncoder().encode("ERROR"),
-          flags: 0b00000000,
-        },
-      ];
-      const it = pipe(
-        createAsyncIterable(goldenItems),
-        transformSerializeEnvelope(serialization, Number.MAX_SAFE_INTEGER),
-        transformCatch<EnvelopedMessage>(() => {
-          return {
-            flags: 0,
+    describe("transformCatch()", function () {
+      it("should catch error", async function () {
+        const goldenEnvelopes = [
+          {
+            data: new TextEncoder().encode("a"),
+            flags: 0b00000000,
+          },
+          {
+            data: new TextEncoder().encode("b"),
+            flags: 0b00000000,
+          },
+          {
             data: new TextEncoder().encode("ERROR"),
-          };
-        })
-      );
-      const result = await readAll(it);
-      expect(result).toEqual(goldenEnvelopes);
+            flags: 0b00000000,
+          },
+        ];
+        const it = pipe(
+          createAsyncIterable(goldenItems),
+          transformSerializeEnvelope(serialization, Number.MAX_SAFE_INTEGER),
+          transformCatch<EnvelopedMessage>(() => {
+            return {
+              flags: 0,
+              data: new TextEncoder().encode("ERROR"),
+            };
+          })
+        );
+        const result = await readAll(it);
+        expect(result).toEqual(goldenEnvelopes);
+      });
     });
   });
 
