@@ -50,14 +50,14 @@ import {
 import type {
   ProtocolHandlerFact,
   ProtocolHandlerFactInit,
-  UniversalRequest,
-  UniversalResponse,
 } from "./protocol-handler.js";
 import {
+  UniversalRequest,
+  UniversalResponse,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
-} from "./protocol-handler.js";
+} from "./private/universal.js";
 
 const protocolName = "grpc";
 const methodPost = "POST";

@@ -49,7 +49,6 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
-import { nodeHeaderToWebHeader } from "./private/node-universal.js";
 import { assert } from "./private/assert.js";
 import {
   end,
@@ -62,6 +61,7 @@ import { compressionGzip, compressionBrotli } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 
 import { getNodeRequest, makeNodeRequest } from "./private/node-request.js";
+import { nodeHeaderToWebHeader } from "./private/node-universal-header.js";
 
 export interface GrpcHttpTransportOptions {
   /**

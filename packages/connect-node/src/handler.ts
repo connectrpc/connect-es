@@ -19,35 +19,35 @@ import {
   ConnectError,
   createMethodUrl,
 } from "@bufbuild/connect-core";
-import type {
+import {
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
   JsonWriteOptions,
   MethodInfo,
+  MethodKind,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
 import { createImplSpec, MethodImpl, ServiceImpl } from "./implementation.js";
 import type {
   ProtocolHandlerFact,
   ProtocolHandlerFactInit,
-  UniversalRequest,
 } from "./protocol-handler.js";
 import {
-  NodeHandler,
+  NodeHandlerFn,
   universalHandlerToNodeHandler,
-} from "./private/node-universal.js";
+} from "./private/node-universal-handler.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { createGrpcHandlerProtocol } from "./grpc-handler.js";
 import { createGrpcWebProtocolHandler } from "./grpc-web-handler.js";
 import { createConnectProtocolHandler } from "./connect-handler.js";
 import {
+  UniversalRequest,
   uResponseMethodNotAllowed,
   uResponseNotFound,
   uResponseUnsupportedMediaType,
   uResponseVersionNotSupported,
-} from "./protocol-handler.js";
+} from "./private/universal.js";
 
 /**
  * Handler handles a Node.js request for one specific RPC - a procedure
@@ -56,7 +56,7 @@ import {
  * That this function is compatible with http.RequestListener and its
  * equivalent for http2.
  */
-export type Handler = NodeHandler & {
+export type Handler = NodeHandlerFn & {
   /**
    * The names of the protocols this handler implements.
    */
@@ -213,7 +213,7 @@ export function createHandler<M extends MethodInfo>(
 export function mergeHandlers(
   handlers: Handler[],
   options?: MergeHandlersOptions
-): NodeHandler {
+): NodeHandlerFn {
   const prefix = options?.requestPathPrefix ?? "";
   const fallback =
     options?.fallback ??
@@ -246,7 +246,7 @@ interface MergeHandlersOptions {
    * If none of the handler request paths match, a 404 is served. This option
    * can provide a custom fallback for this case.
    */
-  fallback?: NodeHandler;
+  fallback?: NodeHandlerFn;
 }
 
 /**

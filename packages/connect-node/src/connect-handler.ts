@@ -69,15 +69,15 @@ import {
 import type {
   ProtocolHandlerFact,
   ProtocolHandlerFactInit,
+} from "./protocol-handler.js";
+import {
   UniversalHandlerFn,
   UniversalRequest,
   UniversalResponse,
-} from "./protocol-handler.js";
-import {
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
-} from "./protocol-handler.js";
+} from "./private/universal.js";
 
 const protocolName = "connect";
 const methodPost = "POST";
