@@ -1195,13 +1195,6 @@ export function createWritableIterable<T>(): WritableIterable<T> {
 
     return prom;
   };
-  const send = async (payload: T) => {
-    return process({ value: payload, done: false });
-  };
-  const close = async () => {
-    return process({ value: undefined, done: true });
-  };
-
   let closed = false;
   return {
     isClosed() {
@@ -1211,14 +1204,14 @@ export function createWritableIterable<T>(): WritableIterable<T> {
       if (closed) {
         throw new ConnectError("cannot write, already closed");
       }
-      return send(payload);
+      return process({ value: payload, done: false });
     },
     async close() {
       if (closed) {
         throw new ConnectError("cannot close, already closed");
       }
       closed = true;
-      return close();
+      return process({ value: undefined, done: true });
     },
     [Symbol.asyncIterator](): AsyncIterator<T> {
       return {
