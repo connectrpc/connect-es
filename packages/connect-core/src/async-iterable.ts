@@ -1155,24 +1155,31 @@ interface QueueElement<T> {
   reject?: (reason?: Error) => void;
 }
 
-// A class representing an AsyncIterable that is able to be written to.
-class Writer<T> {
-  private queue: QueueElement<T>[] = [];
+// WritableIterable represents an AsyncIterable that is able to be written to.
+export interface WritableIterable<T> extends AsyncIterable<T> {
+  write: (payload: T) => Promise<void>;
+  close: () => Promise<void>;
+  isClosed: () => boolean;
+}
+
+// Create an instance of a WritableIterable of type T
+export function createWritableIterable<T>(): WritableIterable<T> {
+  let queue: QueueElement<T>[] = [];
   // Represents the resolve function of the promise returned by the async iterator if no values exist in the queue at
   // the time of request.  It is resolved when a value is successfully received into the queue.
-  private queueResolve: ((val: IteratorResult<T>) => void) | undefined;
-  private error: Error | undefined = undefined;
+  let queueResolve: ((val: IteratorResult<T>) => void) | undefined;
+  let error: Error | undefined = undefined;
 
-  private async process(payload: IteratorResult<T, undefined>) {
+  const process = async (payload: IteratorResult<T, undefined>) => {
     // // If the writer's internal error was set, then reject any attempts at processing a payload.
-    if (this.error) {
-      return Promise.reject(String(this.error));
+    if (error) {
+      return Promise.reject(String(error));
     }
     // If there is an iterator resolver then a consumer of the async iterator is waiting on a value.  So resolve that
     // promise with the new value being sent and return a promise that is immediately resolved
-    if (this.queueResolve) {
-      this.queueResolve(payload);
-      this.queueResolve = undefined;
+    if (queueResolve) {
+      queueResolve(payload);
+      queueResolve = undefined;
       return Promise.resolve();
     }
     const elem: QueueElement<T> = {
@@ -1184,65 +1191,17 @@ class Writer<T> {
     });
     // Otherwise no one is waiting on a value yet so add it to the queue and return a promise that will be resolved
     // when someone reads this value
-    this.queue.push(elem);
+    queue.push(elem);
 
     return prom;
-  }
-  async send(payload: T) {
-    return this.process({ value: payload, done: false });
-  }
-  async close() {
-    return this.process({ value: undefined, done: true });
-  }
-  [Symbol.asyncIterator](): AsyncIterator<T> {
-    return {
-      next: async () => {
-        // If the writer's internal error was set, then reject any attempts at processing a payload.
-        if (this.error) {
-          return Promise.reject(String(this.error));
-        }
-        const elem = this.queue.shift();
-        if (!elem) {
-          // We don't have any payloads ready to be sent (i.e. the consumer of the iterator is consuming faster than
-          // senders are sending).  So return a Promise ensuring we'll resolve it when we get something.
-          return new Promise<IteratorResult<T>>((resolve) => {
-            this.queueResolve = resolve;
-          });
-        }
-        // Resolve the send promise on a successful send/close.
-        if (elem.resolve) {
-          elem.resolve();
-        }
-        return elem.payload;
-      },
-      throw: async (e: Error) => {
-        this.error = e;
-        // The reader of this iterator has failed with the given error.  So anything left in the queue should be
-        // drained and rejected with the given error
-        for (const item of this.queue) {
-          if (item.reject) {
-            item.reject(e);
-          }
-        }
-        // this.queue = [];
-        return new Promise<IteratorResult<T>>((resolve) => {
-          resolve({ value: String(e), done: true });
-        });
-      },
-    };
-  }
-}
+  };
+  const send = async (payload: T) => {
+    return process({ value: payload, done: false });
+  };
+  const close = async () => {
+    return process({ value: undefined, done: true });
+  };
 
-// WritableIterable represents an AsyncIterable that is able to be written to.
-export interface WritableIterable<T> extends AsyncIterable<T> {
-  write: (payload: T) => Promise<void>;
-  close: () => Promise<void>;
-  isClosed: () => boolean;
-}
-
-// Create an instance of a WritableIterable of type T
-export function createWritableIterable<T>(): WritableIterable<T> {
-  const w = new Writer<T>();
   let closed = false;
   return {
     isClosed() {
@@ -1252,17 +1211,51 @@ export function createWritableIterable<T>(): WritableIterable<T> {
       if (closed) {
         throw new ConnectError("cannot write, already closed");
       }
-      return w.send(payload);
+      return send(payload);
     },
     async close() {
       if (closed) {
         throw new ConnectError("cannot close, already closed");
       }
       closed = true;
-      return w.close();
+      return close();
     },
-    [Symbol.asyncIterator]() {
-      return w[Symbol.asyncIterator]();
+    [Symbol.asyncIterator](): AsyncIterator<T> {
+      return {
+        next: async () => {
+          // If the writer's internal error was set, then reject any attempts at processing a payload.
+          if (error) {
+            return Promise.reject(String(error));
+          }
+          const elem = queue.shift();
+          if (!elem) {
+            // We don't have any payloads ready to be sent (i.e. the consumer of the iterator is consuming faster than
+            // senders are sending).  So return a Promise ensuring we'll resolve it when we get something.
+            return new Promise<IteratorResult<T>>((resolve) => {
+              queueResolve = resolve;
+            });
+          }
+          // Resolve the send promise on a successful send/close.
+          if (elem.resolve) {
+            elem.resolve();
+          }
+          return elem.payload;
+        },
+        throw: async (e: Error) => {
+          error = e;
+          // The reader of this iterator has failed with the given error.  So anything left in the queue should be
+          // drained and rejected with the given error
+          for (const item of queue) {
+            if (item.reject) {
+              item.reject(e);
+            }
+          }
+          queue = [];
+          return new Promise<IteratorResult<T>>((resolve) => {
+            resolve({ value: String(e), done: true });
+          });
+        },
+      };
     },
   };
 }
