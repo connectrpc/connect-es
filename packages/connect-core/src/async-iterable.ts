@@ -1245,7 +1245,7 @@ export function createWritableIterable<T>(): WritableIterable<T> {
           }
           queue = [];
           return new Promise<IteratorResult<T>>((resolve) => {
-            resolve({ value: String(e), done: true });
+            resolve({ value: undefined, done: true });
           });
         },
       };
