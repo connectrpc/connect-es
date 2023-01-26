@@ -22,6 +22,7 @@ import type {
 } from "@bufbuild/protobuf";
 import type { ImplSpec } from "./implementation.js";
 import type { Compression } from "@bufbuild/connect-core";
+import type { UniversalHandlerFn } from "./private/universal.js";
 
 /**
  * Creates a handler function for an RPC definition and an RPC implementation,
@@ -89,65 +90,3 @@ export interface UniversalHandler extends UniversalHandlerFn {
    */
   supportedContentType: RegExp;
 }
-
-/**
- * A minimal abstraction of an HTTP handler.
- */
-export type UniversalHandlerFn = (
-  request: UniversalRequest
-) => UniversalResponse | Promise<UniversalResponse>;
-
-/**
- * A minimal abstraction of an HTTP request.
- */
-export interface UniversalRequest {
-  httpVersion: string;
-  method: string;
-  header: Headers;
-  body: AsyncIterable<Uint8Array>;
-}
-
-/**
- * A minimal abstraction of an HTTP response.
- */
-export interface UniversalResponse {
-  status: number;
-  header?: Headers;
-  body?: AsyncIterable<Uint8Array> | Uint8Array;
-  trailer?: Headers;
-}
-
-/**
- * HTTP 200 OK
- */
-export const uResponseOk: Readonly<UniversalResponse> = {
-  status: 200,
-};
-
-/**
- * HTTP 404 Not Found
- */
-export const uResponseNotFound: Readonly<UniversalResponse> = {
-  status: 404,
-};
-
-/**
- * HTTP 415 Unsupported Media Type
- */
-export const uResponseUnsupportedMediaType: Readonly<UniversalResponse> = {
-  status: 415,
-};
-
-/**
- * HTTP 405 Method Not Allowed
- */
-export const uResponseMethodNotAllowed: Readonly<UniversalResponse> = {
-  status: 405,
-};
-
-/**
- * HTTP 505 Version Not Supported
- */
-export const uResponseVersionNotSupported: Readonly<UniversalResponse> = {
-  status: 505,
-};

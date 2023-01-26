@@ -51,3 +51,9 @@ export {
   createHandlers,
   mergeHandlers,
 } from "./handler.js";
+
+// TODO remove temporary export
+export {
+  createNodeHttp1Client,
+  createNodeHttp2Client,
+} from "./private/node-universal-client.js";
