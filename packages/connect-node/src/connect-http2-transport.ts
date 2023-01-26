@@ -52,7 +52,6 @@ import type {
 } from "@bufbuild/protobuf";
 import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import * as http2 from "http2";
-import { webHeaderToNodeHeaders } from "./private/node-universal.js";
 import { defer } from "./private/defer.js";
 import {
   end,
@@ -65,6 +64,7 @@ import {
 import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
+import { webHeaderToNodeHeaders } from "./private/node-universal-header.js";
 
 /**
  * Options used to configure the Connect transport.

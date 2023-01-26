@@ -19,7 +19,7 @@ import { assert } from "./assert.js";
 import type { ReadableStreamReadResultLike } from "../lib.dom.streams.js";
 import { Code, ConnectError, EnvelopedMessage } from "@bufbuild/connect-core";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { nodeHeaderToWebHeader } from "./node-universal.js";
+import { nodeHeaderToWebHeader } from "./node-universal-header.js";
 
 /**
  * @deprecated

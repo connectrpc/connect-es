@@ -50,14 +50,14 @@ import {
 import type {
   ProtocolHandlerFact,
   ProtocolHandlerFactInit,
-  UniversalRequest,
-  UniversalResponse,
 } from "./protocol-handler.js";
 import {
+  UniversalServerRequest,
+  UniversalServerResponse,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
-} from "./protocol-handler.js";
+} from "./private/universal.js";
 
 const protocolName = "grpc";
 const methodPost = "POST";
@@ -95,7 +95,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     opt.binaryOptions,
     opt.jsonOptions
   );
-  return function handle(req: UniversalRequest): UniversalResponse {
+  return function handle(req: UniversalServerRequest): UniversalServerResponse {
     const type = parseContentType(req.header.get(headerContentType));
     if (type == undefined) {
       return uResponseUnsupportedMediaType;

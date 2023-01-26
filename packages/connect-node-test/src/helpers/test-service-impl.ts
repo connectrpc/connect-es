@@ -20,6 +20,7 @@ import {
   ServiceImpl,
 } from "@bufbuild/connect-node";
 import type { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import type { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { interop } from "./interop.js";
 
 export const testService: ServiceImpl<typeof TestService> = {
@@ -118,10 +119,29 @@ export const testService: ServiceImpl<typeof TestService> = {
     }
   },
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async *halfDuplexCall(/*requests*/) {
-    yield {};
-    throw new ConnectError("TODO", Code.Unimplemented);
+  async *halfDuplexCall(requests) {
+    const buffer: StreamingOutputCallRequest[] = [];
+    for await (const req of requests) {
+      buffer.push(req);
+    }
+    for await (const req of buffer) {
+      if (req.responseStatus?.code !== undefined) {
+        throw new ConnectError(
+          req.responseStatus.message,
+          req.responseStatus.code
+        );
+      }
+      for (const param of req.responseParameters) {
+        if (param.intervalUs > 0) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, param.intervalUs / 1000);
+          });
+        }
+        yield {
+          payload: interop.makeServerPayload(req.responseType, param.size),
+        };
+      }
+    }
   },
 
   unimplementedCall(/*request*/) {

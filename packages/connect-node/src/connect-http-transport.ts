@@ -61,11 +61,11 @@ import {
 } from "./private/io.js";
 import type * as http from "http";
 import type * as https from "https";
-import { nodeHeaderToWebHeader } from "./private/node-universal.js";
 import { assert } from "./private/assert.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { validateReadMaxBytesOption } from "./private/validate-read-max-bytes-option.js";
 import { getNodeRequest, makeNodeRequest } from "./private/node-request.js";
+import { nodeHeaderToWebHeader } from "./private/node-universal-header.js";
 
 export interface ConnectHttpTransportOptions {
   /**
