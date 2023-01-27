@@ -31,6 +31,8 @@ import {
   transformSplitEnvelope,
   transformParseEnvelope,
   createAsyncIterable,
+  createWritableIterable,
+  WritableIterable,
 } from "./async-iterable.js";
 
 // These tests aim to model the usage of iterable transforms in clients and servers.
@@ -136,102 +138,152 @@ describe("full story", function () {
     });
   });
 
-  // TODO
-  /*
   describe("client integration", function () {
-    it("should works", async function () {
-      const requestTransformStream = new TransformStream<
-        { end: false; value: string } | { end: true; value: "end" },
-        { end: false; value: string } | { end: true; value: "end" }
-      >();
-      const requestWriter = requestTransformStream.writable.getWriter();
-      const rawRequestStream = requestTransformStream.readable
-        .pipeThrough(
-          streamTransformSerialize(serialization, endFlag, endSerialization),
-          {}
-        )
-        .pipeThrough(
-          streamTransformCompress(compressionReverse, writeMaxBytes, 0),
-          {}
-        )
-        .pipeThrough(streamTransformJoin(writeMaxBytes), {});
+    let writer: WritableIterable<Payload<string, "end">>;
+    let writerIt: AsyncIterable<Uint8Array>;
+    let readerIt: AsyncIterable<
+      { end: false; value: string | "end" } | { end: true; value: "end" }
+    >;
+    beforeEach(() => {
+      writer = createWritableIterable<Payload<string, "end">>();
+      writerIt = pipe(
+        writer,
+        transformSerializeEnvelope(
+          serialization,
+          writeMaxBytes,
+          endFlag,
+          endSerialization
+        ),
+        transformCompressEnvelope(compressionReverse, 0),
+        transformJoinEnvelopes()
+      );
+      readerIt = pipe(
+        writerIt,
+        transformSplitEnvelope(readMaxBytes),
+        transformDecompressEnvelope(compressionReverse, readMaxBytes),
+        transformParseEnvelope(serialization, endFlag, endSerialization)
+      );
+    });
+    it("should correctly return results when caller waits properly", async function () {
+      writer
+        .write({ value: "alpha", end: false })
+        .then(() => writer.write({ value: "beta", end: false }))
+        .then(() => writer.write({ value: "gamma", end: false }))
+        .then(() => writer.write({ value: "delta", end: false }))
+        .finally(() => {
+          void writer.close();
+        });
 
-      const responseReader = createReadableByteStream(goldenBytes)
-        .pipeThrough(streamTransformSplit(readMaxBytes), {})
-        .pipeThrough(
-          streamTransformDecompress(compressionReverse, readMaxBytes),
-          {}
-        )
-        .pipeThrough(
-          streamTransformParse(serialization, endFlag, endSerialization),
-          {}
-        )
-        .getReader();
+      const resp = await readAll(readerIt);
+      expect(resp).toEqual([
+        { value: "alpha", end: false },
+        { value: "beta", end: false },
+        { value: "gamma", end: false },
+        { value: "delta", end: false },
+      ]);
+    });
+    it("should correctly return results when caller sends without waiting", async function () {
+      // Writes all the payloads without awaiting and saves off promises from the writes
+      const writes = Promise.all([
+        writer.write({ value: "alpha", end: false }),
+        writer.write({ value: "beta", end: false }),
+        writer.write({ value: "gamma", end: false }),
+        writer.write({ value: "delta", end: false }),
+        writer.close(),
+      ]);
 
-      const streamingConn = {
-        async send(message: string): Promise<void> {
-          await requestWriter.ready;
-          await requestWriter.write({
-            end: false,
-            value: message,
-          });
-        },
-        async close(): Promise<void> {
-          await requestWriter.ready;
-          await requestWriter.write({
-            end: true,
-            value: "end",
-          });
-          await requestWriter.close();
-        },
-        async read(): Promise<ReadableStreamReadResult<string>> {
-          const r = await responseReader.read();
-          if (r.done) {
-            return {
-              done: true,
-              value: undefined,
-            };
-          }
-          if (r.value.end) {
-            return {
-              done: true,
-              value: undefined,
-            };
-          }
-          return {
-            done: false,
-            value: r.value.value,
-          };
-        },
-      };
+      // Read all the written payloads
+      const resp = await readAll(readerIt);
 
-      const writtenBytesPromise = readAllBytes(rawRequestStream);
+      // Await on the write promises now.  These should all be resolved since all payloads have been read.
+      await writes;
 
-      await streamingConn.send("alpha");
-      await streamingConn.send("beta");
-      await streamingConn.close();
+      expect(resp).toEqual([
+        { value: "alpha", end: false },
+        { value: "beta", end: false },
+        { value: "gamma", end: false },
+        { value: "delta", end: false },
+      ]);
+    });
+    it("should throw if close is called on a writer that is already closed", function () {
+      void writer.close();
 
-      const alpha = await streamingConn.read();
-      expect(alpha).toEqual({
-        done: false,
-        value: "alpha",
-      });
-      const beta = await streamingConn.read();
-      expect(beta).toEqual({
-        done: false,
-        value: "beta",
-      });
-      const end = await streamingConn.read();
-      expect(end).toEqual({
-        done: true,
-        value: undefined,
-      });
+      writer
+        .close()
+        .catch((e) =>
+          expect(e).toEqual(new ConnectError("cannot close, already closed"))
+        );
+    });
+    it("should throw if write is called on a writer that is closed", function () {
+      void writer.close();
 
-      const writtenBytes = await writtenBytesPromise;
-      expect(writtenBytes).toEqual(goldenBytes);
+      writer
+        .write({ value: "alpha", end: false })
+        .catch((e) =>
+          expect(e).toEqual(new ConnectError("cannot write, already closed"))
+        );
+    });
+    it("should correctly behave when consumer fails and throw is invoked", async function () {
+      // Send four total payloads, but don't close the writer.
+      // successfulSends represents sends that are expected to succeed.
+      const successfulSends = Promise.all([
+        writer.write({ value: "alpha", end: false }),
+      ]);
+      const failedSends = Promise.all([
+        writer.write({ value: "beta", end: false }),
+        writer.write({ value: "gamma", end: false }),
+        writer.write({ value: "delta", end: false }),
+      ]);
+
+      const resp: (
+        | { end: false; value: string }
+        | { end: true; value: "end" }
+      )[] = [];
+      try {
+        // Iterate over the reader and purposely fail after the first read.
+        for (;;) {
+          const result = await readerIt[Symbol.asyncIterator]().next();
+          resp.push(result.value as { end: false; value: string });
+          throw "READER_ERROR";
+        }
+      } catch (e) {
+        // Verify we got the first send only and then verify we caught the expected error.
+        expect(resp).toEqual([{ value: "alpha", end: false }]);
+        expect(e).toBe("READER_ERROR");
+        // Then call the throw function on the writer to tell it an error has occurred.
+        const it = writer[Symbol.asyncIterator]();
+        if (it.throw) {
+          await it.throw(e);
+        }
+      }
+
+      // Verify that our expected successfulSends and failedSends resolved and rejected accordingly
+      successfulSends
+        .then((result) => expect(result).toEqual([undefined]))
+        .catch(() =>
+          fail("expected successful writes were unexpectedly rejected")
+        );
+
+      failedSends
+        .then(() => fail("expected failed writes were unexpectedly resolved"))
+        .catch((e) => expect(e).toBe("READER_ERROR"));
+
+      // At this point, the writer was closed courtesy of our call to .throw above, so no further
+      // sends to the writer will succeed.
+      // They will all be rejected with the error passed to throw.
+      writer
+        .write({ value: "omega", end: false })
+        .then(() => fail("send was unexpectedly resolved."))
+        .catch((e) => expect(e).toBe("READER_ERROR"));
+
+      // The reader's internal writer is closed so any future reads will be rejected.
+      readerIt[Symbol.asyncIterator]()
+        .next()
+        .then(() => fail("reads were unexpectedly resolved"))
+        .catch((e) => expect(e).toBe("READER_ERROR"));
     });
   });
-*/
+
   describe("server integration", function () {
     const echoImplReceived: string[] = [];
 
