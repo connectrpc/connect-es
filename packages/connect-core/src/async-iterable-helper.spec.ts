@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export async function* createAsyncIterable<T>(items: T[]): AsyncIterable<T> {
-  for (const item of items) {
-    yield item;
-  }
-}
-
 export async function* createAsyncIterableBytes(
   bytes: Uint8Array,
   chunkSize = 2,

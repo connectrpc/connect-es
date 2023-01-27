@@ -24,6 +24,7 @@ import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 import { connectErrorFromReason } from "@bufbuild/connect-core";
 
+// TODO(TCN-918)
 xdescribe("timeout_on_sleeping_server", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());

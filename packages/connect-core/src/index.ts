@@ -71,6 +71,7 @@ export {
   transformAppend,
   transformPrepend,
   transformReadAllBytes,
+  transformNormalizeMessage,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,
@@ -82,4 +83,7 @@ export {
   sinkAll,
   sinkAllBytes,
   makeIterableAbortable,
+  WritableIterable,
+  createWritableIterable,
+  createAsyncIterable,
 } from "./async-iterable.js";

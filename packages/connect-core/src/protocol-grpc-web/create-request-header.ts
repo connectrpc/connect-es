@@ -59,14 +59,14 @@ export function createRequestHeaderWithCompression(
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: Compression[],
-  sendCompression: Compression | undefined
+  sendCompression: Compression | null
 ): Headers {
   const result = createRequestHeader(
     useBinaryFormat,
     timeoutMs,
     userProvidedHeaders
   );
-  if (sendCompression !== undefined) {
+  if (sendCompression != null) {
     result.set(headerEncoding, sendCompression.name);
   }
   if (acceptCompression.length > 0) {

@@ -101,7 +101,7 @@ interface CompressionOptions {
  */
 export function compressionValidateOptions<
   T extends Partial<CompressionOptions>
->(opt: T): Omit<T, keyof CompressionOptions> & CompressionOptions {
+>(opt: T): CompressionOptions {
   const writeMaxBytes = opt.writeMaxBytes ?? maxWriteMaxBytes;
   const readMaxBytes = opt.readMaxBytes ?? maxReadMaxBytes;
   if (writeMaxBytes < 1 || writeMaxBytes > maxWriteMaxBytes) {

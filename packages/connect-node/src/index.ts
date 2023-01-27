@@ -32,12 +32,9 @@ export {
   decodeBinaryHeader,
 } from "@bufbuild/connect-core";
 
-export { createConnectHttp2Transport } from "./connect-http2-transport.js";
-export { createConnectHttpTransport } from "./connect-http-transport.js";
-export { createGrpcHttp2Transport } from "./grpc-http2-transport.js";
-export { createGrpcHttpTransport } from "./grpc-http-transport.js";
-export { createGrpcWebHttp2Transport } from "./grpc-web-http2-transport.js";
-export { createGrpcWebHttpTransport } from "./grpc-web-http-transport.js";
+export { createGrpcWebTransport } from "./grpc-web-transport.js";
+export { createGrpcTransport } from "./grpc-transport.js";
+export { createConnectTransport } from "./connect-transport.js";
 export { compressionBrotli, compressionGzip } from "./compression.js";
 export {
   ServiceImpl,
@@ -51,9 +48,3 @@ export {
   createHandlers,
   mergeHandlers,
 } from "./handler.js";
-
-// TODO remove temporary export
-export {
-  createNodeHttp1Client,
-  createNodeHttp2Client,
-} from "./private/node-universal-client.js";

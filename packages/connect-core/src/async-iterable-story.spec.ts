@@ -18,7 +18,6 @@ import { encodeEnvelopes } from "./envelope.js";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
-  createAsyncIterable,
   createAsyncIterableBytes,
   readAll,
   readAllBytes,
@@ -31,6 +30,7 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
   transformParseEnvelope,
+  createAsyncIterable,
 } from "./async-iterable.js";
 
 // These tests aim to model the usage of iterable transforms in clients and servers.
