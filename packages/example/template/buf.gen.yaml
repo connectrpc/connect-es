@@ -1,0 +1,10 @@
+# buf.gen.yaml defines a local generation template.
+# For details, see https://docs.buf.build/configuration/v1/buf-gen-yaml
+version: v1
+plugins:
+  - name: es
+    opt: target=ts
+    out: gen
+  - name: connect-web
+    opt: target=ts
+    out: gen
