@@ -32,6 +32,9 @@ service ElizaService {
   // Introduce is a server-streaming request demo.  This method allows for a single request that will return a series
   // of responses
   rpc Introduce(IntroduceRequest) returns (stream IntroduceResponse) {}
+  // Vent is a client-streaming request demo.  This method allows for multiple requests tthat will return a single
+  // response
+  rpc Vent(stream VentRequest) returns (VentResponse) {}
 }
 
 // SayRequest describes the sentence said to the ELIZA program.
@@ -51,6 +54,16 @@ message ConverseRequest {
 
 // ConverseResponse describes the sentence responded by the ELIZA program.
 message ConverseResponse {
+  string sentence = 1;
+}
+
+// VentRequest describes the sentence said to the ELIZA program.
+message VentRequest {
+  string sentence = 1;
+}
+
+// VentResponse describes the sentence responded by the ELIZA program.
+message VentResponse {
   string sentence = 1;
 }
 
