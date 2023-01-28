@@ -12,30 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from "./connect-http2-transport.js";
-export * from "./grpc-web-http2-transport.js";
-export * from "./grpc-http2-transport.js";
-export * from "./grpc-web-http-transport.js";
-export * from "./compression.js";
-export {
-  Handler,
-  createHandler,
-  createHandlers,
-  mergeHandlers,
-} from "./handler.js";
-export {
-  ServiceImpl,
-  MethodImpl,
-  HandlerContext,
-  unimplementService,
-} from "./implementation.js";
-export { Protocol } from "./protocol.js";
-export { createConnectProtocol } from "./connect-protocol.js";
-export { createGrpcWebProtocol } from "./grpc-web-protocol.js";
-export { createGrpcProtocol } from "./grpc-protocol.js";
-export { createConnectHttpTransport } from "./connect-http-transport.js";
-export { createGrpcHttpTransport } from "./grpc-http-transport.js";
-export { createGrpcWebHttpTransport } from "./grpc-web-http-transport.js";
 export {
   createCallbackClient,
   CallbackClient,
@@ -55,3 +31,29 @@ export {
   encodeBinaryHeader,
   decodeBinaryHeader,
 } from "@bufbuild/connect-core";
+
+export { createConnectHttp2Transport } from "./connect-http2-transport.js";
+export { createConnectHttpTransport } from "./connect-http-transport.js";
+export { createGrpcHttp2Transport } from "./grpc-http2-transport.js";
+export { createGrpcHttpTransport } from "./grpc-http-transport.js";
+export { createGrpcWebHttp2Transport } from "./grpc-web-http2-transport.js";
+export { createGrpcWebHttpTransport } from "./grpc-web-http-transport.js";
+export { compressionBrotli, compressionGzip } from "./compression.js";
+export {
+  ServiceImpl,
+  MethodImpl,
+  HandlerContext,
+  unimplementService,
+} from "./implementation.js";
+export {
+  Handler,
+  createHandler,
+  createHandlers,
+  mergeHandlers,
+} from "./handler.js";
+
+// TODO remove temporary export
+export {
+  createNodeHttp1Client,
+  createNodeHttp2Client,
+} from "./private/node-universal-client.js";

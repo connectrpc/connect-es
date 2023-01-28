@@ -185,6 +185,14 @@ describe("envelope compression", function () {
         );
       }
     });
+    it("should ignore readMaxBytes for uncompressed envelope", async function () {
+      const got = await envelopeDecompress(
+        uncompressedEnvelope,
+        compressionReverse,
+        0
+      );
+      expect(got).toEqual(uncompressedEnvelope);
+    });
     describe("with null compression", function () {
       it("should not decompress uncompressed envelopes", async function () {
         const got = await envelopeDecompress(
@@ -209,16 +217,9 @@ describe("envelope compression", function () {
           );
         }
       });
-      it("should honor readMaxBytes", async function () {
-        try {
-          await envelopeDecompress(uncompressedEnvelope, null, 3);
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[resource_exhausted] message size 4 is larger than configured readMaxBytes 3"
-          );
-        }
+      it("should ignore readMaxBytes", async function () {
+        const got = await envelopeDecompress(uncompressedEnvelope, null, 0);
+        expect(got).toEqual(uncompressedEnvelope);
       });
     });
   });
@@ -228,7 +229,6 @@ describe("envelope compression", function () {
       const got = await envelopeCompress(
         uncompressedEnvelope,
         compressionReverse,
-        Number.MAX_SAFE_INTEGER,
         0
       );
       expect(got).toEqual(compressedEnvelope);
@@ -237,19 +237,13 @@ describe("envelope compression", function () {
       const got = await envelopeCompress(
         uncompressedEnvelope,
         compressionReverse,
-        Number.MAX_SAFE_INTEGER,
         0
       );
       expect(got).toEqual(compressedEnvelope);
     });
     it("should throw on compressed input", async function () {
       try {
-        await envelopeCompress(
-          compressedEnvelope,
-          compressionReverse,
-          Number.MAX_SAFE_INTEGER,
-          0
-        );
+        await envelopeCompress(compressedEnvelope, compressionReverse, 0);
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
@@ -259,34 +253,13 @@ describe("envelope compression", function () {
       }
     });
     it("should honor compressMinBytes", async function () {
-      const got = await envelopeCompress(
-        uncompressedEnvelope,
-        null,
-        Number.MAX_SAFE_INTEGER,
-        5
-      );
+      const got = await envelopeCompress(uncompressedEnvelope, null, 5);
       expect(got).toEqual(uncompressedEnvelope);
     });
     describe("with null compression", function () {
       it("should not compress", async function () {
-        const got = await envelopeCompress(
-          uncompressedEnvelope,
-          null,
-          Number.MAX_SAFE_INTEGER,
-          0
-        );
+        const got = await envelopeCompress(uncompressedEnvelope, null, 0);
         expect(got).toEqual(uncompressedEnvelope);
-      });
-      it("should honor writeMaxBytes", async function () {
-        try {
-          await envelopeCompress(uncompressedEnvelope, null, 3, 0);
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[resource_exhausted] message size 4 is larger than configured writeMaxBytes 3"
-          );
-        }
       });
     });
   });

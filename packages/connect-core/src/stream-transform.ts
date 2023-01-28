@@ -14,9 +14,20 @@
 
 import { Code } from "./code.js";
 import { ConnectError } from "./connect-error.js";
-import type { EnvelopedMessage, ParsedEnvelopedMessage } from "./envelope.js";
+import type { EnvelopedMessage } from "./envelope.js";
 import type { Serialization } from "./serialization.js";
 import { compressedFlag, Compression } from "./compression.js";
+
+/**
+ * ParsedEnvelopedMessage is the deserialized counterpart to an
+ * EnvelopedMessage.
+ *
+ * It is either a deserialized message M, or a deserialized end-of-stream
+ * message E, typically distinguished by a flag on an enveloped message.
+ */
+type ParsedEnvelopedMessage<M, E> =
+  | { end: false; value: M }
+  | { end: true; value: E };
 
 /**
  * Creates a WHATWG TransformStream that takes a specified type as input,

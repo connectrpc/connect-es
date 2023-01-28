@@ -12,58 +12,105 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createMethodUrl } from "@bufbuild/connect-core";
-import type {
+import {
+  Code,
+  Compression,
+  compressionValidateOptions,
+  ConnectError,
+  createMethodUrl,
+} from "@bufbuild/connect-core";
+import {
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
   JsonWriteOptions,
   MethodInfo,
+  MethodKind,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
-import type { MethodImpl, ServiceImpl } from "./implementation.js";
-import type * as http from "http";
-import type * as http2 from "http2";
-import { createConnectProtocol } from "./connect-protocol.js";
-import type { ImplSpec, Protocol } from "./protocol.js";
-import { endWithHttpStatus } from "./private/io.js";
-import { createGrpcWebProtocol } from "./grpc-web-protocol.js";
-import { createGrpcProtocol } from "./grpc-protocol.js";
+import { createImplSpec, MethodImpl, ServiceImpl } from "./implementation.js";
+import type {
+  ProtocolHandlerFact,
+  ProtocolHandlerFactInit,
+} from "./protocol-handler.js";
+import {
+  NodeHandlerFn,
+  universalHandlerToNodeHandler,
+} from "./private/node-universal-handler.js";
+import { compressionBrotli, compressionGzip } from "./compression.js";
+import { createGrpcHandlerProtocol } from "./grpc-handler.js";
+import { createGrpcWebProtocolHandler } from "./grpc-web-handler.js";
+import { createConnectProtocolHandler } from "./connect-handler.js";
+import {
+  UniversalServerRequest,
+  uResponseMethodNotAllowed,
+  uResponseNotFound,
+  uResponseUnsupportedMediaType,
+  uResponseVersionNotSupported,
+} from "./private/universal.js";
 
 /**
- * Handler handles a Node.js request for one specific RPC.
- * Note that this function is compatible with http.RequestListener and its
+ * Handler handles a Node.js request for one specific RPC - a procedure
+ * typically defined in protobuf.
+ *
+ * That this function is compatible with http.RequestListener and its
  * equivalent for http2.
  */
-export type Handler = NodeHandler & {
+export type Handler = NodeHandlerFn & {
   /**
-   * The service the RPC belongs to.
+   * The names of the protocols this handler implements.
+   */
+  protocolNames: string[];
+
+  /**
+   * Information about the related protobuf service.
    */
   service: ServiceType;
+
   /**
-   * The RPC.
+   * Information about the method of the protobuf service.
    */
   method: MethodInfo;
+
   /**
    * The request path of the procedure, without any prefixes.
    * For example, "/something/foo.FooService/Bar" for the method
    * "Bar" of the service "foo.FooService".
    */
   requestPath: string;
+
+  /**
+   * The HTTP request methods this handler allows. For example, "POST".
+   * Note that a specific protocol may only support some verbs.
+   */
+  allowedMethods: string[];
+
+  /**
+   * A regular expression that matches all Content-Type header values that this
+   * procedure supports.
+   */
+  supportedContentType: RegExp[];
 };
 
 /**
- * Options for creating a Handler. If you do not specify any protocols,
- * all available protocols are enabled.
+ * Options for creating a Handler. By default, all available protocols are
+ * enabled.
  */
-type HandlerOptions =
-  | {
-      jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
-      binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
-      requireConnectProtocolHeader?: boolean;
-    }
-  | { protocols: Protocol[] };
+interface HandlerOptions {
+  // TODO document
+  grpc?: boolean;
+  grpcWeb?: boolean;
+  connect?: boolean;
+  acceptCompression?: Compression[];
+  compressMinBytes?: number;
+  readMaxBytes?: number;
+  writeMaxBytes?: number;
+  jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
+  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+  maxDeadlineDurationMs?: number; // TODO TCN-785
+  shutdownSignal?: AbortSignal; // TODO TCN-919
+  requireConnectProtocolHeader?: boolean;
+}
 
 /**
  * createHandlers() takes a service definition and a service implementation,
@@ -74,9 +121,10 @@ export function createHandlers<T extends ServiceType>(
   implementation: ServiceImpl<T>,
   options?: HandlerOptions
 ): Handler[] {
+  const normalOptions = internalHandlerOptions(options);
   return Object.entries(service.methods).map(([name, method]) => {
     const i = implementation[name].bind(implementation);
-    return createHandler(service, method, i, options);
+    return createHandler(service, method, i, normalOptions);
   });
 }
 
@@ -90,43 +138,70 @@ export function createHandler<M extends MethodInfo>(
   impl: MethodImpl<M>,
   options?: HandlerOptions
 ): Handler {
-  const protocols = normalizeHandlerOptions(options);
-  const protocolHandlers = protocols.map((p) =>
-    Object.assign(p.createHandler(createImplSpec(service, method, impl)), p)
-  );
+  const spec = createImplSpec(service, method, impl);
+  const opt = internalHandlerOptions(options);
+  const handlers = opt.protocols.map((fact) => fact(spec));
 
-  function handleAny(
-    req: http.IncomingMessage | http2.Http2ServerRequest,
-    res: http.ServerResponse | http2.Http2ServerResponse
-  ): void {
-    if (method.kind == MethodKind.BiDiStreaming && req.httpVersionMajor !== 2) {
-      // Clients coded to expect full-duplex connections may hang if they've
-      // mistakenly negotiated HTTP/1.1. To unblock them, we must close the
-      // underlying TCP connection.
-      return void endWithHttpStatus(res, 505, "Version Not Supported", {
-        Connection: "close",
-      });
+  function protocolNegotiatingHandler(request: UniversalServerRequest) {
+    if (
+      method.kind == MethodKind.BiDiStreaming &&
+      request.httpVersion.startsWith("1.")
+    ) {
+      return {
+        ...uResponseVersionNotSupported,
+        // Clients coded to expect full-duplex connections may hang if they've
+        // mistakenly negotiated HTTP/1.1. To unblock them, we must close the
+        // underlying TCP connection.
+        header: new Headers({ Connection: "close" }),
+      };
     }
-    if (req.method !== "POST") {
-      // The gRPC-HTTP2, gRPC-Web, and Connect protocols are all POST-only.
-      return void endWithHttpStatus(res, 405, "Method Not Allowed");
+    const contentType = request.header.get("Content-Type") ?? "";
+    const firstMatch = handlers
+      .filter(
+        (h) =>
+          h.supportedContentType.test(contentType) &&
+          h.allowedMethods.includes(request.method)
+      )
+      .shift();
+    if (firstMatch) {
+      return firstMatch(request);
     }
-    const handleProtocol = protocolHandlers.find((p) =>
-      p.supportsMediaType(req.headers["content-type"] ?? "")
+    const contentTypeMatches = handlers.some((h) =>
+      h.supportedContentType.test(contentType)
     );
-    if (!handleProtocol) {
-      return void endWithHttpStatus(res, 415, "Unsupported Media Type");
+    if (!contentTypeMatches) {
+      return uResponseUnsupportedMediaType;
     }
-    handleProtocol(req, res).catch((reason) => {
-      // TODO need to handle rejections here, but it's unclear how exactly
+    const methodMatches = handlers.some((h) =>
+      h.allowedMethods.includes(request.method)
+    );
+    if (!methodMatches) {
+      return uResponseMethodNotAllowed;
+    }
+    return uResponseUnsupportedMediaType;
+  }
+
+  const nodeHandler = universalHandlerToNodeHandler(
+    protocolNegotiatingHandler,
+    (reason) => {
+      // TODO(TCN-785)
       // eslint-disable-next-line no-console
       console.error("protocol handle failed", reason);
-    });
-  }
-  return Object.assign(handleAny, {
+    }
+  );
+
+  return Object.assign(nodeHandler, {
     service,
     method,
+    // we expect all protocols to be served under the same path
     requestPath: createMethodUrl("/", service, method),
+    supportedContentType: handlers.map((h) => h.supportedContentType),
+    protocolNames: handlers
+      .flatMap((h) => h.protocolNames)
+      .filter((value, index, array) => array.indexOf(value) === index),
+    allowedMethods: handlers
+      .flatMap((h) => h.allowedMethods)
+      .filter((value, index, array) => array.indexOf(value) === index),
   });
 }
 
@@ -138,12 +213,12 @@ export function createHandler<M extends MethodInfo>(
 export function mergeHandlers(
   handlers: Handler[],
   options?: MergeHandlersOptions
-): NodeHandler {
+): NodeHandlerFn {
   const prefix = options?.requestPathPrefix ?? "";
   const fallback =
     options?.fallback ??
     ((request, response) => {
-      response.writeHead(404);
+      response.writeHead(uResponseNotFound.status);
       response.end();
     });
   return function handleByRequestPath(request, response) {
@@ -171,40 +246,58 @@ interface MergeHandlersOptions {
    * If none of the handler request paths match, a 404 is served. This option
    * can provide a custom fallback for this case.
    */
-  fallback?: NodeHandler;
+  fallback?: NodeHandlerFn;
 }
 
 /**
- * NodeHandler is compatible with http.RequestListener and its equivalent
- * for http2.
+ * Turns HandlerOptions - the options accepted by the public API when a user
+ * creates a handler - into the internal type.
+ * The function validates the options and sets defaults.
  */
-type NodeHandler = (
-  request: http.IncomingMessage | http2.Http2ServerRequest,
-  response: http.ServerResponse | http2.Http2ServerResponse
-) => void;
-
-function normalizeHandlerOptions(init?: HandlerOptions): Protocol[] {
+function internalHandlerOptions(
+  init?: HandlerOptions | InternalHandlerOptions
+): InternalHandlerOptions {
   init = init ?? {};
   if ("protocols" in init) {
-    return init.protocols;
-  } else {
-    return [
-      createConnectProtocol(init),
-      createGrpcWebProtocol(init),
-      createGrpcProtocol(init),
-    ];
+    return init;
   }
+  const maxDeadlineDurationMs =
+    init.maxDeadlineDurationMs ?? Number.MAX_SAFE_INTEGER;
+  const acceptCompression = init.acceptCompression ?? [
+    compressionGzip,
+    compressionBrotli,
+  ];
+  const hpo: ProtocolHandlerFactInit = {
+    ...init,
+    ...compressionValidateOptions(init),
+    maxDeadlineDurationMs,
+    acceptCompression,
+  };
+  const protocols: ProtocolHandlerFact[] = [];
+  if (init.grpc !== false) {
+    protocols.push(createGrpcHandlerProtocol(hpo));
+  }
+  if (init.grpcWeb !== false) {
+    protocols.push(createGrpcWebProtocolHandler(hpo));
+  }
+  if (init.connect !== false) {
+    protocols.push(createConnectProtocolHandler(hpo));
+  }
+  if (protocols.length === 0) {
+    throw new ConnectError(
+      "cannot create handler, all protocols are disabled",
+      Code.InvalidArgument
+    );
+  }
+  return {
+    protocols,
+    maxDeadlineDurationMs,
+    shutdownSignal: init.shutdownSignal,
+  };
 }
 
-function createImplSpec<M extends MethodInfo>(
-  service: ServiceType,
-  method: M,
-  impl: MethodImpl<M>
-): ImplSpec {
-  return {
-    kind: method.kind,
-    service,
-    method,
-    impl,
-  } as ImplSpec;
+interface InternalHandlerOptions {
+  protocols: ProtocolHandlerFact[];
+  maxDeadlineDurationMs: number;
+  shutdownSignal?: AbortSignal;
 }

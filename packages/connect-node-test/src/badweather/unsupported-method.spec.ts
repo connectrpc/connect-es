@@ -24,29 +24,37 @@ describe("unsupported method", () => {
   servers.describeServers(
     ["@bufbuild/connect-node (h2c)", "connect-go (h2)"],
     (server, serverName) => {
-      function req(method: string) {
-        const url = createMethodUrl(
-          server.getUrl(),
-          TestService,
-          TestService.methods.unaryCall
-        );
-        if (serverName == "connect-go (h2)") {
-          return http2Request(method, url, {}, undefined, {
-            rejectUnauthorized: false, // TODO set up cert for go server correctly
-          });
-        }
-        return http2Request(method, url, {});
-      }
+      const rejectUnauthorized = serverName !== "connect-go (h2)"; // TODO set up cert for go server correctly
 
-      it("should raise HTTP 405 for GET", async () => {
-        const res = await req("GET");
-        expect(res.status).toBe(405);
-        expect(res.body.byteLength).toBe(0);
-      });
-      it("should raise HTTP 405 for PUT", async () => {
-        const res = await req("PUT");
-        expect(res.status).toBe(405);
-        expect(res.body.byteLength).toBe(0);
+      describe("unary method", function () {
+        it("should raise HTTP 405 Method Not Allowed for GET", async () => {
+          const res = await http2Request({
+            url: createMethodUrl(
+              server.getUrl(),
+              TestService,
+              TestService.methods.unaryCall
+            ),
+            method: "GET",
+            ctype: "application/json",
+            rejectUnauthorized,
+          });
+          expect(res.status).toBe(405);
+          expect(res.body.byteLength).toBe(0);
+        });
+        it("should raise HTTP 405 Method Not Allowed for PUT", async () => {
+          const res = await http2Request({
+            url: createMethodUrl(
+              server.getUrl(),
+              TestService,
+              TestService.methods.unaryCall
+            ),
+            method: "PUT",
+            ctype: "application/json",
+            rejectUnauthorized,
+          });
+          expect(res.status).toBe(405);
+          expect(res.body.byteLength).toBe(0);
+        });
       });
     }
   );
