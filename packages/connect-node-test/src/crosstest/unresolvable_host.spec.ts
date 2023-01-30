@@ -23,8 +23,8 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 
-// TODO(TCN-1068) fix broken unresolvable_host tests
 describe("unresolvable_host", function () {
   const optionsHttp2 = {
     baseUrl: "https://unresolvable-host.some.domain",
@@ -64,13 +64,14 @@ describe("unresolvable_host", function () {
               await client.unaryCall({});
               fail("expected an error");
             } catch (e) {
+              expect(connectErrorFromReason(e).message).toBe(
+                "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
+              );
               expect(e).toBeInstanceOf(ConnectError);
-              const err = connectErrorFromReason(e);
-              expect(err.code).toBe(Code.Unavailable);
             }
           });
         });
-        xdescribe("for server-streaming", function () {
+        describe("for server-streaming", function () {
           it("should raise code unavailable", async function () {
             try {
               for await (const res of client.streamingOutputCall({})) {
@@ -79,29 +80,40 @@ describe("unresolvable_host", function () {
               }
               fail("expected to catch an error");
             } catch (e) {
+              expect(connectErrorFromReason(e).message).toBe(
+                "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
+              );
               expect(e).toBeInstanceOf(ConnectError);
-              const err = connectErrorFromReason(e);
-              expect(err.code).toBe(Code.Unavailable);
             }
           });
         });
-        xdescribe("for client-streaming", function () {
+        describe("for client-streaming", function () {
           it("should raise code unavailable", async function () {
+            async function* input() {
+              yield {
+                payload: {
+                  body: new Uint8Array(),
+                  type: PayloadType.COMPRESSABLE,
+                },
+              };
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              yield {
+                payload: {
+                  body: new Uint8Array(),
+                  type: PayloadType.COMPRESSABLE,
+                },
+              };
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              yield {
+                payload: {
+                  body: new Uint8Array(),
+                  type: PayloadType.COMPRESSABLE,
+                },
+              };
+            }
             try {
-              const s = await client.streamingInputCall();
-              let ok: boolean;
-              ok = await s.send({});
-              expect(ok).toBeFalse();
-              expect(s.sendError).toBeInstanceOf(ConnectError);
-              ok = await s.send({});
-              expect(ok).toBeFalse();
-              expect(s.sendError).toBeInstanceOf(ConnectError);
-              ok = await s.close();
-              expect(ok).toBeFalse();
-              expect(s.sendError).toBeInstanceOf(ConnectError);
-              const res = await s.receive();
+              await client.streamingInputCall(input());
               fail("expected error");
-              expect(res).toBeUndefined();
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
               const err = connectErrorFromReason(e);
@@ -109,17 +121,39 @@ describe("unresolvable_host", function () {
             }
           });
         });
-        xdescribe("for bidi-streaming", function () {
+        describe("for bidi-streaming", function () {
           it("should raise code unavailable", async function () {
+            async function* input() {
+              yield {
+                responseParameters: [
+                  {
+                    size: 1,
+                  },
+                ],
+              };
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              yield {
+                responseParameters: [
+                  {
+                    size: 1,
+                  },
+                ],
+              };
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              yield {
+                responseParameters: [
+                  {
+                    size: 1,
+                  },
+                ],
+              };
+            }
             try {
-              const s = await client.fullDuplexCall();
-              fail("expected to catch an error");
-              await s.send({});
-              await s.send({});
-              await s.close();
-              for await (const res of s.receiveAll()) {
+              for await (const res of client.fullDuplexCall(input())) {
                 expect(res).toBeDefined(); // only to satisfy type checks
+                fail("expected to catch an error");
               }
+              fail("expected to catch an error");
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
               const err = connectErrorFromReason(e);
@@ -138,7 +172,7 @@ describe("unresolvable_host", function () {
             });
           });
         });
-        xdescribe("for server-streaming", function () {
+        describe("for server-streaming", function () {
           it("should raise code unavailable", function (done) {
             client.streamingOutputCall(
               {},

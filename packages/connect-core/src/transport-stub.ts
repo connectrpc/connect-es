@@ -13,20 +13,19 @@
 // limitations under the License.
 
 import type {
-  AnyMessage,
   Message,
   MethodInfo,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
 import type { Transport } from "./transport.js";
-import { ConnectError } from "./connect-error.js";
+import type { ConnectError } from "./connect-error.js";
 import {
   Interceptor,
   runStreaming,
   runUnary,
-  StreamingConn,
-  StreamingRequest,
+  StreamResponse,
+  StreamRequest,
   UnaryRequest,
   UnaryResponse,
 } from "./interceptor.js";
@@ -36,9 +35,7 @@ interface StubTransportOptions {
   interceptors?: Interceptor[];
   unaryResponseHeader?: HeadersInit;
   unaryResponseTrailer?: HeadersInit;
-  streamSend?: (null | ConnectError)[];
-  streamClose?: null | ConnectError;
-  streamRead?: (null | ConnectError)[];
+  streamOutput?: (null | ConnectError)[]; // null for default message, ConnectError for error
   streamResponseHeader?: HeadersInit;
   streamResponseTrailer?: HeadersInit;
 }
@@ -53,10 +50,10 @@ export function stubTransport(options: StubTransportOptions): Transport {
         options.interceptors
       );
     },
-    stream(service, method, signal, timeoutMs, header) {
+    stream(service, method, signal, timeoutMs, header, input) {
       return runStreaming(
-        createStreamingRequest(options, service, method, signal, header),
-        (req) => Promise.resolve(createStreamingConn(options, req)),
+        createStreamingRequest(options, service, method, signal, header, input),
+        (req) => Promise.resolve(createStreamingResponse(options, req)),
         options.interceptors
       );
     },
@@ -66,14 +63,14 @@ export function stubTransport(options: StubTransportOptions): Transport {
 /**
  * Create a request with a single message.
  */
-function createUnaryRequest<T extends Message<T>>(
+function createUnaryRequest<I extends Message<I>, O extends Message<O>>(
   stub: StubTransportOptions,
   service: ServiceType,
-  method: MethodInfo<T, AnyMessage>,
+  method: MethodInfo<I, O>,
   signal: AbortSignal | undefined,
   header: HeadersInit | undefined,
-  message: PartialMessage<T>
-): UnaryRequest<T> {
+  message: PartialMessage<I>
+): UnaryRequest<I, O> {
   signal = signal ?? new AbortController().signal;
   return {
     stream: false,
@@ -95,7 +92,7 @@ function createUnaryResponse<I extends Message<I>, O extends Message<O>>(
   service: ServiceType,
   method: MethodInfo<I, O>,
   request: UnaryRequest // eslint-disable-line @typescript-eslint/no-unused-vars
-): UnaryResponse<O> {
+): UnaryResponse<I, O> {
   return {
     stream: false,
     service,
@@ -111,8 +108,9 @@ function createStreamingRequest<I extends Message<I>, O extends Message<O>>(
   service: ServiceType,
   method: MethodInfo<I, O>,
   signal: AbortSignal | undefined,
-  header: HeadersInit | undefined
-): StreamingRequest<I, O> {
+  header: HeadersInit | undefined,
+  input: AsyncIterable<I>
+): StreamRequest<I, O> {
   return {
     stream: true,
     service,
@@ -121,105 +119,44 @@ function createStreamingRequest<I extends Message<I>, O extends Message<O>>(
     init: {},
     signal: signal ?? new AbortController().signal,
     header: new Headers(header),
+    message: input,
   };
 }
 
 /**
  * Create a streaming response with three messages with default values.
  */
-function createStreamingConn<I extends Message<I>, O extends Message<O>>(
+function createStreamingResponse<I extends Message<I>, O extends Message<O>>(
   stub: StubTransportOptions,
-  request: StreamingRequest<I, O>
-): StreamingConn<I, O> {
-  const streamRead = stub.streamRead ?? [null];
-  const responseHeader = defer<Headers>();
-  const responseTrailer = defer<Headers>();
+  request: StreamRequest<I, O>
+): StreamResponse<I, O> {
+  const streamRead = stub.streamOutput ?? [null];
+  const trailer = new Headers();
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async function* output() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for await (const _ of request.message) {
+      //
+    }
+    for (const nullOrConnectErr of streamRead) {
+      if (nullOrConnectErr === null) {
+        yield new request.method.O();
+      } else {
+        throw nullOrConnectErr;
+      }
+    }
+    if (stub.streamResponseTrailer) {
+      new Headers(stub.streamResponseTrailer).forEach((value, key) =>
+        trailer.set(key, value)
+      );
+    }
+  }
   return {
+    stream: true as const,
     service: request.service,
     method: request.method,
-    stream: true as const,
-    send() {
-      if (stub.streamSend === undefined) {
-        return Promise.resolve();
-      }
-      const r = stub.streamSend.shift();
-      if (r === null) {
-        return Promise.resolve();
-      }
-      if (r === undefined) {
-        return Promise.reject("stub transport ran out of stream send results");
-      }
-      return Promise.reject(r);
-    },
-    close() {
-      if (this.closed) {
-        throw new ConnectError("cannot send, stream is already closed");
-      }
-      this.closed = true;
-      if (stub.streamClose === undefined) {
-        return Promise.resolve();
-      }
-      if (stub.streamClose === null) {
-        return Promise.resolve();
-      }
-      return Promise.reject(stub.streamClose);
-    },
-    closed: false,
-    responseHeader,
-    async read() {
-      if (stub.streamResponseHeader !== undefined) {
-        responseHeader.resolve(new Headers(stub.streamResponseHeader));
-        await new Promise((resolve) => setTimeout(resolve, 1));
-      }
-      const r = streamRead.shift();
-      if (r === undefined) {
-        if (stub.streamResponseTrailer !== undefined) {
-          responseTrailer.resolve(new Headers(stub.streamResponseTrailer));
-          await new Promise((resolve) => setTimeout(resolve, 1));
-        }
-        return {
-          done: true as const,
-          value: undefined,
-        };
-      }
-      if (r === null) {
-        return {
-          done: false as const,
-          value: new request.method.O(),
-        };
-      }
-      throw r;
-    },
-    responseTrailer,
+    header: new Headers(stub.streamResponseHeader),
+    trailer,
+    message: output(),
   };
 }
-
-function defer<T>(): Promise<T> & Ctrl<T> {
-  let res: ((v: T | PromiseLike<T>) => void) | undefined = undefined;
-  let rej: ((reason?: unknown) => void) | undefined;
-  const p = new Promise<T>((resolve, reject) => {
-    res = resolve;
-    rej = reject;
-  });
-  void p.catch(() => {
-    // We want to provide several promises that are typically awaited
-    // by the user one after the other.
-    // If we reject one of the promises before it is awaited by the user,
-    // some runtimes may report an unhandled promise rejection.
-    // We are attaching this error handler to avoid the warnings.
-  });
-  const c: Ctrl<T> = {
-    resolve(v) {
-      res?.(v);
-    },
-    reject(reason) {
-      rej?.(reason);
-    },
-  };
-  return Object.assign(p, c);
-}
-
-type Ctrl<T> = {
-  resolve(v: T | PromiseLike<T>): void;
-  reject(reason?: unknown): void;
-};

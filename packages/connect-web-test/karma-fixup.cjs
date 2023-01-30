@@ -13,6 +13,9 @@ function fixupFactory(files) {
   }, {
     pattern: path.join(__dirname, "/karma-fixup-queueMicrotask.js"),
     included: true, served: true, watched: false
+  }, {
+    pattern: path.join(__dirname, "/karma-fixup-symbolAsyncIterator.js"),
+    included: true, served: true, watched: false
   });
 }
 

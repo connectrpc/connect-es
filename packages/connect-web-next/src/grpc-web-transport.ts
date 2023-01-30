@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
+import {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
@@ -20,39 +20,33 @@ import type {
   JsonWriteOptions,
   Message,
   MethodInfo,
+  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type {
-  Interceptor,
-  StreamingConn,
-  Transport,
-  UnaryResponse,
-} from "@bufbuild/connect-core";
+import type { UnaryRequest } from "@bufbuild/connect-core";
 import {
   Code,
-  ConnectError,
   connectErrorFromReason,
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
   encodeEnvelope,
-  encodeEnvelopes,
-  EnvelopedMessage,
+  Interceptor,
   runStreaming,
   runUnary,
+  StreamResponse,
+  Transport,
+  UnaryResponse,
 } from "@bufbuild/connect-core";
 import {
   createRequestHeader,
-  trailerParse,
   trailerFlag,
+  trailerParse,
   validateResponse,
 } from "@bufbuild/connect-core/protocol-grpc-web";
 import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
-import { defer } from "./defer.js";
-import type { UnaryRequest } from "@bufbuild/connect-core";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -131,7 +125,7 @@ export function createGrpcWebTransport(
       timeoutMs: number | undefined,
       header: Headers,
       message: PartialMessage<I>
-    ): Promise<UnaryResponse<O>> {
+    ): Promise<UnaryResponse<I, O>> {
       const { normalize, serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
@@ -155,7 +149,7 @@ export function createGrpcWebTransport(
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
-          async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+          async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
             const response = await fetch(req.url, {
               ...req.init,
               headers: req.header,
@@ -173,34 +167,37 @@ export function createGrpcWebTransport(
             const reader = createEnvelopeReadableStream(
               response.body
             ).getReader();
-            const messageOrTrailerResult = await reader.read();
-            if (messageOrTrailerResult.done) {
-              throw "premature eof";
+            let trailer: Headers | undefined;
+            let message: O | undefined;
+            for (;;) {
+              const r = await reader.read();
+              if (r.done) {
+                break;
+              }
+              const { flags, data } = r.value;
+              if (flags === trailerFlag) {
+                if (trailer !== undefined) {
+                  throw "extra trailer";
+                }
+                // Unary responses require exactly one response message, but in
+                // case of an error, it is perfectly valid to have a response body
+                // that only contains error trailers.
+                trailer = trailerParse(data);
+                continue;
+              }
+              if (message !== undefined) {
+                throw "extra message";
+              }
+              message = parse(data);
             }
-            if (messageOrTrailerResult.value.flags === trailerFlag) {
-              // Unary responses require exactly one response message, but in
-              // case of an error, it is perfectly valid to have a response body
-              // that only contains error trailers.
-              validateTrailer(trailerParse(messageOrTrailerResult.value.data));
-              // At this point, we received trailers only, but the trailers did
-              // not have an error status code.
-              throw "unexpected trailer";
-            }
-            const message = parse(messageOrTrailerResult.value.data);
-            const trailerResult = await reader.read();
-            if (trailerResult.done) {
+            if (trailer === undefined) {
               throw "missing trailer";
             }
-            if (trailerResult.value.flags !== trailerFlag) {
-              throw "missing trailer";
-            }
-            const trailer = trailerParse(trailerResult.value.data);
             validateTrailer(trailer);
-            const eofResult = await reader.read();
-            if (!eofResult.done) {
-              throw "extraneous data";
+            if (message === undefined) {
+              throw "missing message";
             }
-            return <UnaryResponse<O>>{
+            return <UnaryResponse<I, O>>{
               stream: false,
               header: response.headers,
               message,
@@ -222,14 +219,78 @@ export function createGrpcWebTransport(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
-      header: HeadersInit | undefined
-    ): Promise<StreamingConn<I, O>> {
-      const { normalize, serialize, parse } = createClientMethodSerializers(
+      header: HeadersInit | undefined,
+      input: AsyncIterable<I>
+    ): Promise<StreamResponse<I, O>> {
+      const { serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
         options.binaryOptions
       );
+      async function* parseResponseBody(
+        body: ReadableStream<Uint8Array>,
+        foundStatus: boolean,
+        trailerTarget: Headers
+      ) {
+        const reader = createEnvelopeReadableStream(body).getReader();
+        try {
+          if (foundStatus) {
+            // A grpc-status: 0 response header was present. This is a "trailers-only"
+            // response (a response without a body and no trailers).
+            //
+            // The spec seems to disallow a trailers-only response for status 0 - we are
+            // lenient and only verify that the body is empty.
+            //
+            // > [...] Trailers-Only is permitted for calls that produce an immediate error.
+            // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+            if (!(await reader.read()).done) {
+              throw "extra data for trailers-only";
+            }
+            return;
+          }
+          let trailerReceived = false;
+          for (;;) {
+            const result = await reader.read();
+            if (result.done) {
+              break;
+            }
+            const { flags, data } = result.value;
+            if ((flags & trailerFlag) === trailerFlag) {
+              if (trailerReceived) {
+                throw "extra trailer";
+              }
+              trailerReceived = true;
+              const trailer = trailerParse(data);
+              validateTrailer(trailer);
+              trailer.forEach((value, key) => trailerTarget.set(key, value));
+              continue;
+            }
+            if (trailerReceived) {
+              throw "extra message";
+            }
+            yield parse(data);
+            continue;
+          }
+          if (!trailerReceived) {
+            throw "missing trailer";
+          }
+        } catch (e) {
+          throw connectErrorFromReason(e);
+        }
+      }
+      async function createRequestBody(
+        input: AsyncIterable<I>
+      ): Promise<Uint8Array> {
+        if (method.kind != MethodKind.ServerStreaming) {
+          throw "The fetch API does not support streaming request bodies";
+        }
+        const r = await input[Symbol.asyncIterator]().next();
+        if (r.done == true) {
+          throw "missing request message";
+        }
+        return encodeEnvelope(0, serialize(r.value));
+      }
       return runStreaming<I, O>(
         {
           stream: true,
@@ -244,105 +305,34 @@ export function createGrpcWebTransport(
           },
           signal: signal ?? new AbortController().signal,
           header: createRequestHeader(useBinaryFormat, timeoutMs, header),
+          message: input,
         },
         async (req) => {
-          const pendingSend: EnvelopedMessage[] = [];
-          const responseHeader = defer<Headers>();
-          const responseReader =
-            defer<ReadableStreamDefaultReader<EnvelopedMessage>>();
-          const responseTrailer = defer<Headers>();
-          let endStreamReceived = false;
-          let messageReceived = false;
-          const conn: StreamingConn<I, O> = {
+          const fRes = await fetch(req.url, {
+            ...req.init,
+            headers: req.header,
+            signal: req.signal,
+            body: await createRequestBody(req.message),
+          });
+          const { foundStatus } = validateResponse(
+            useBinaryFormat,
+            fRes.status,
+            fRes.headers
+          );
+          if (!fRes.body) {
+            throw "missing response body";
+          }
+          const trailer = new Headers();
+          const res: StreamResponse<I, O> = {
             ...req,
-            responseHeader,
-            responseTrailer,
-            closed: false,
-            send(message: PartialMessage<I>): Promise<void> {
-              if (this.closed) {
-                return Promise.reject(
-                  new ConnectError("cannot send, request stream already closed")
-                );
-              }
-              pendingSend.push({
-                flags: 0,
-                data: serialize(normalize(message)),
-              });
-              return Promise.resolve();
-            },
-            close(): Promise<void> {
-              if (this.closed) {
-                return Promise.reject(
-                  new ConnectError("cannot send, request stream already closed")
-                );
-              }
-              this.closed = true;
-              fetch(req.url, {
-                ...req.init,
-                headers: req.header,
-                signal: req.signal,
-                body: encodeEnvelopes(...pendingSend),
-              })
-                .then((response) => {
-                  validateResponse(
-                    useBinaryFormat,
-                    response.status,
-                    response.headers
-                  );
-                  if (!response.body) {
-                    throw "missing response body";
-                  }
-                  responseHeader.resolve(response.headers);
-                  const reader = createEnvelopeReadableStream(
-                    response.body
-                  ).getReader();
-                  responseReader.resolve(reader);
-                })
-                .catch((reason) => {
-                  const e = connectErrorFromReason(reason);
-                  responseHeader.reject(e);
-                  responseReader.reject(e);
-                  responseTrailer.reject(e);
-                });
-              return Promise.resolve();
-            },
-            async read(): Promise<ReadableStreamReadResultLike<O>> {
-              try {
-                const reader = await responseReader;
-                const result = await reader.read();
-                if (result.done) {
-                  if (messageReceived && !endStreamReceived) {
-                    throw new ConnectError("missing trailers");
-                  }
-                  return {
-                    done: true,
-                    value: undefined,
-                  };
-                }
-                if ((result.value.flags & trailerFlag) === trailerFlag) {
-                  endStreamReceived = true;
-                  const trailer = trailerParse(result.value.data);
-                  validateTrailer(trailer);
-                  responseTrailer.resolve(trailer);
-                  return {
-                    done: true,
-                    value: undefined,
-                  };
-                }
-                messageReceived = true;
-                return {
-                  done: false,
-                  value: parse(result.value.data),
-                };
-              } catch (e) {
-                throw connectErrorFromReason(e);
-              }
-            },
+            header: fRes.headers,
+            trailer,
+            message: parseResponseBody(fRes.body, foundStatus, trailer),
           };
-          return Promise.resolve(conn);
+          return res;
         },
         options.interceptors
-      );
+      ).catch((e: unknown) => Promise.reject(connectErrorFromReason(e)));
     },
   };
 }

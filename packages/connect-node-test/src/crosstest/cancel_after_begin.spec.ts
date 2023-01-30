@@ -42,22 +42,30 @@ xdescribe("cancel_after_begin", function () {
   servers.describeTransports((transport) => {
     const servers = createTestServers();
     beforeAll(async () => await servers.start());
-
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       const controller = new AbortController();
-      const stream = await client.streamingInputCall({
-        signal: controller.signal,
-      });
-      try {
-        await stream.send({
+      async function* input() {
+        yield {
           payload: {
             body: new Uint8Array(),
             type: PayloadType.COMPRESSABLE,
           },
-        });
+        };
+        await new Promise((resolve) => setTimeout(resolve, 1));
         controller.abort();
-        await stream.close();
+        yield {
+          payload: {
+            body: new Uint8Array(),
+            type: PayloadType.COMPRESSABLE,
+          },
+        };
+      }
+      try {
+        await client.streamingInputCall(input(), {
+          signal: controller.signal,
+        });
+        fail("expected error");
       } catch (e) {
         expectError(e);
       }

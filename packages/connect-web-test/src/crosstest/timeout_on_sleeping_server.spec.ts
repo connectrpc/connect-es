@@ -32,7 +32,7 @@ describe("timeout_on_sleeping_server", function () {
     responseParameters: [
       {
         size: 31415,
-        intervalUs: 5000,
+        intervalUs: 50 * 1000, // 50ms
       },
     ],
   });

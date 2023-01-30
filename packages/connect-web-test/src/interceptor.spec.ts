@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CallOptions, Interceptor } from "@bufbuild/connect-web-next";
+import type {
+  CallOptions,
+  Interceptor,
+  StreamResponse,
+} from "@bufbuild/connect-web-next";
 import {
   createCallbackClient,
   createPromiseClient,
@@ -52,35 +56,30 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
     return keys;
   }
 
+  async function* logStream(res: StreamResponse) {
+    for await (const m of res.message) {
+      log.push(`${name} response stream received message`);
+      yield m;
+    }
+    yield* res.message;
+    log.push(
+      `${name} response stream done with trailers: ${listHeaderKeys(
+        res.trailer
+      ).join(", ")}`
+    );
+  }
+
   return (next) => async (req) => {
     log.push(`${name} sending request message`);
     const res = await next(req);
+    const headerKeys = listHeaderKeys(res.header).join(", ");
+    log.push(`${name} response received with headers: ${headerKeys}`);
     if (res.stream) {
       return {
         ...res,
-        responseHeader: res.responseHeader.then((h) => {
-          const headerKeys = listHeaderKeys(h).join(", ");
-          log.push(`${name} response received with headers: ${headerKeys}`);
-          return h;
-        }),
-        responseTrailer: res.responseTrailer.then((h) => {
-          const trailerKeys = listHeaderKeys(h).join(", ");
-          log.push(
-            `${name} response stream done with trailers: ${trailerKeys}`
-          );
-          return h;
-        }),
-        async read() {
-          const r = await res.read();
-          if (!r.done) {
-            log.push(`${name} response stream received message`);
-          }
-          return r;
-        },
+        message: logStream(res),
       };
     } else {
-      const headerKeys = listHeaderKeys(res.header).join(", ");
-      log.push(`${name} response received with headers: ${headerKeys}`);
       const trailerKeys = listHeaderKeys(res.trailer).join(", ");
       log.push(`${name} response done with trailers: ${trailerKeys}`);
     }

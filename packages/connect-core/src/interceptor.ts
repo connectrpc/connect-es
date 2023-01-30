@@ -16,11 +16,8 @@ import type {
   AnyMessage,
   Message,
   MethodInfo,
-  PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 
 /**
  * An interceptor can add logic to clients, similar to the decorators
@@ -54,8 +51,8 @@ export type Interceptor = (next: AnyFn) => AnyFn;
  * response to inspect and log.
  */
 type AnyFn = (
-  req: UnaryRequest | StreamingRequest
-) => Promise<UnaryResponse | StreamingConn>;
+  req: UnaryRequest | StreamRequest
+) => Promise<UnaryResponse | StreamResponse>;
 
 /**
  * UnaryFn represents the client-side invocation of a unary RPC - a method
@@ -67,7 +64,7 @@ type AnyFn = (
 type UnaryFn<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
-> = (req: UnaryRequest<I>) => Promise<UnaryResponse<O>>;
+> = (req: UnaryRequest<I, O>) => Promise<UnaryResponse<I, O>>;
 
 /**
  * StreamingFn represents the client-side invocation of a streaming RPC - a
@@ -79,48 +76,21 @@ type UnaryFn<
 type StreamingFn<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
-> = (req: StreamingRequest<I, O>) => Promise<StreamingConn<I, O>>;
+> = (req: StreamRequest<I, O>) => Promise<StreamResponse<I, O>>;
 
 /**
  * UnaryRequest is used in interceptors to represent a request with a
  * single input message.
  */
-export interface UnaryRequest<I extends Message<I> = AnyMessage> {
+export interface UnaryRequest<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
+> extends RequestCommon<I, O> {
   /**
    * The `stream` property discriminates between UnaryRequest and
    * StreamingRequest.
    */
   readonly stream: false;
-
-  /**
-   * Metadata related to the service that is being called.
-   */
-  readonly service: ServiceType;
-
-  /**
-   * Metadata related to the service method that is being called.
-   */
-  readonly method: MethodInfo<I, AnyMessage>;
-
-  /**
-   * The URL the request is going to hit.
-   */
-  readonly url: string;
-
-  /**
-   * Optional parameters to the fetch API.
-   */
-  readonly init: Exclude<RequestInit, "body" | "headers" | "signal">;
-
-  /**
-   * The AbortSignal for the current call.
-   */
-  readonly signal: AbortSignal;
-
-  /**
-   * Headers that will be sent along with the request.
-   */
-  readonly header: Headers;
 
   /**
    * The input message that will be transmitted.
@@ -132,7 +102,10 @@ export interface UnaryRequest<I extends Message<I> = AnyMessage> {
  * UnaryResponse is used in interceptors to represent a response with
  * a single output message.
  */
-export interface UnaryResponse<O extends Message<O> = AnyMessage> {
+export interface UnaryResponse<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
+> extends ResponseCommon<I, O> {
   /**
    * The `stream` property discriminates between UnaryResponse and
    * StreamingConn.
@@ -140,45 +113,52 @@ export interface UnaryResponse<O extends Message<O> = AnyMessage> {
   readonly stream: false;
 
   /**
-   * Metadata related to the service that is being called.
-   */
-  readonly service: ServiceType;
-
-  /**
-   * Metadata related to the service method that is being called.
-   */
-  readonly method: MethodInfo<AnyMessage, O>;
-
-  /**
-   * Headers received from the response.
-   */
-  readonly header: Headers;
-
-  /**
    * The received output message.
    */
   readonly message: O;
-
-  /**
-   * Trailers received from the response.
-   */
-  readonly trailer: Headers;
 }
 
 /**
- * StreamingRequest is used in interceptors to represent a request that has
+ * StreamRequest is used in interceptors to represent a request that has
  * zero or more input messages, and zero or more output messages.
  */
-export interface StreamingRequest<
+export interface StreamRequest<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage
-> {
+> extends RequestCommon<I, O> {
   /**
    * The `stream` property discriminates between UnaryRequest and
    * StreamingRequest.
    */
   readonly stream: true;
 
+  /**
+   * The input messages that will be transmitted.
+   */
+  readonly message: AsyncIterable<I>;
+}
+
+/**
+ * StreamResponse is used in interceptors to represent an ongoing call that has
+ * zero or more input messages, and zero or more output messages.
+ */
+export interface StreamResponse<
+  I extends Message<I> = AnyMessage,
+  O extends Message<O> = AnyMessage
+> extends ResponseCommon<I, O> {
+  /**
+   * The `stream` property discriminates between UnaryResponse and
+   * StreamingConn.
+   */
+  readonly stream: true;
+
+  /**
+   * The output messages.
+   */
+  readonly message: AsyncIterable<O>;
+}
+
+interface RequestCommon<I extends Message<I>, O extends Message<O>> {
   /**
    * Metadata related to the service that is being called.
    */
@@ -210,20 +190,7 @@ export interface StreamingRequest<
   readonly header: Headers;
 }
 
-/**
- * StreamingConn is used in interceptors to represent an ongoing call that has
- * zero or more input messages, and zero or more output messages.
- */
-export interface StreamingConn<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
-> {
-  /**
-   * The `stream` property discriminates between UnaryResponse and
-   * StreamingConn.
-   */
-  readonly stream: true;
-
+interface ResponseCommon<I extends Message<I>, O extends Message<O>> {
   /**
    * Metadata related to the service that is being called.
    */
@@ -235,49 +202,16 @@ export interface StreamingConn<
   readonly method: MethodInfo<I, O>;
 
   /**
-   * Transmits a single input message. It is up to clients to honor streaming
-   * method semantics - for example, a server-streaming method only accepts a
-   * single input message by definition.
-   *
-   * The Transport must raise a ConnectError with code "aborted" if send()
-   * fails because the server has already ended the connection.
+   * Headers received from the response.
    */
-  send(message: PartialMessage<I>): Promise<void>;
-
-  /**
-   * Close the stream of input messages, signalling to the server that the
-   * client is not going to send any more messages.
-   *
-   * The Transport must raise a ConnectError with code "aborted" if close()
-   * fails because the server has already ended the connection.
-   */
-  close(): Promise<void>;
-
-  // TODO make it a function to avoid the need for a getter?
-  closed: boolean;
-
-  readonly responseHeader: Promise<Headers>;
-
-  /**
-   * Reads a single output message from the response. The return value is a
-   * promise, which fulfills/rejects with a result depending on the state of
-   * the stream.
-   *
-   * The behavior is as follows:
-   * 1. If a message was read successfully, the promise is fulfilled with an
-   * object of the form `{value: O, done: false}`.
-   * 2. If the end of the stream was reached, the promise is fulfilled with
-   * `{value: undefined, done: true}`.
-   * 3. If an error occurred, the response is rejected with this error.
-   */
-  read(): Promise<ReadableStreamReadResultLike<O>>;
+  readonly header: Headers;
 
   /**
    * Trailers received from the response.
-   * Note that trailers are only populated if the entirety of the stream was
-   * read.
+   * Note that trailers are only populated when the entirety of the response
+   * has been read.
    */
-  readonly responseTrailer: Promise<Headers>;
+  readonly trailer: Headers;
 }
 
 /**
@@ -301,10 +235,10 @@ function applyInterceptors<T>(next: T, interceptors: Interceptor[]): T {
  * is only used when implementing a Transport.
  */
 export function runUnary<I extends Message<I>, O extends Message<O>>(
-  req: UnaryRequest<I>,
+  req: UnaryRequest<I, O>,
   next: UnaryFn<I, O>,
   interceptors: Interceptor[] | undefined
-): Promise<UnaryResponse<O>> {
+): Promise<UnaryResponse<I, O>> {
   if (interceptors) {
     next = applyInterceptors(next, interceptors);
   }
@@ -316,10 +250,10 @@ export function runUnary<I extends Message<I>, O extends Message<O>>(
  * function is only used when implementing a Transport.
  */
 export function runStreaming<I extends Message<I>, O extends Message<O>>(
-  req: StreamingRequest<I, O>,
+  req: StreamRequest<I, O>,
   next: StreamingFn<I, O>,
   interceptors: Interceptor[] | undefined
-): Promise<StreamingConn<I, O>> {
+): Promise<StreamResponse<I, O>> {
   if (interceptors) {
     next = applyInterceptors(next, interceptors);
   }

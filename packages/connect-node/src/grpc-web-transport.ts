@@ -19,14 +19,13 @@ import {
   createAsyncIterable,
   createMethodSerializationLookup,
   createMethodUrl,
-  createWritableIterable,
   Interceptor,
   pipe,
   pipeTo,
   runStreaming,
   runUnary,
-  StreamingConn,
-  StreamingRequest,
+  StreamRequest,
+  StreamResponse,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,
@@ -56,8 +55,6 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { defer } from "./private/defer.js";
 import type {
   NodeHttp1TransportOptions,
   NodeHttp2TransportOptions,
@@ -136,7 +133,7 @@ export function createGrpcWebTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>
-    ): Promise<UnaryResponse<O>> {
+    ): Promise<UnaryResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
@@ -160,11 +157,12 @@ export function createGrpcWebTransport(
             message instanceof method.I ? message : new method.I(message),
           signal: signal ?? new AbortController().signal,
         },
-        async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
-          const universalResponse = await opt.client({
+        async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
+          const uRes = await opt.client({
             url: req.url,
             method: "POST",
             header: req.header,
+            signal: req.signal,
             body: pipe(
               createAsyncIterable([req.message]),
               transformSerializeEnvelope(
@@ -180,16 +178,15 @@ export function createGrpcWebTransport(
                 propagateDownStreamError: true,
               }
             ),
-            signal: req.signal,
           });
           const { compression } = validateResponseWithCompression(
             opt.useBinaryFormat,
             opt.acceptCompression,
-            universalResponse.status,
-            universalResponse.header
+            uRes.status,
+            uRes.header
           );
           const { trailer, message } = await pipeTo(
-            universalResponse.body,
+            uRes.body,
             transformSplitEnvelope(opt.readMaxBytes),
             transformDecompressEnvelope(compression ?? null, opt.readMaxBytes),
             transformParseEnvelope<O, Headers>(
@@ -238,11 +235,11 @@ export function createGrpcWebTransport(
               Code.InvalidArgument
             );
           }
-          return <UnaryResponse<O>>{
+          return <UnaryResponse<I, O>>{
             stream: false,
             service,
             method,
-            header: universalResponse.header,
+            header: uRes.header,
             message,
             trailer,
           };
@@ -258,8 +255,9 @@ export function createGrpcWebTransport(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
-      header: HeadersInit | undefined
-    ): Promise<StreamingConn<I, O>> {
+      header: HeadersInit | undefined,
+      input: AsyncIterable<I>
+    ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
@@ -284,16 +282,18 @@ export function createGrpcWebTransport(
             opt.acceptCompression,
             opt.sendCompression
           ),
+          message: pipe(input, transformNormalizeMessage(method.I), {
+            propagateDownStreamError: true,
+          }),
         },
-        // eslint-disable-next-line @typescript-eslint/require-await
-        async (req: StreamingRequest<I, O>) => {
-          const writable = createWritableIterable<PartialMessage<I>>();
-          const universalResponsePromise = opt.client({
+        async (req: StreamRequest<I, O>) => {
+          const uRes = await opt.client({
             url: req.url,
             method: "POST",
             header: req.header,
+            signal: req.signal,
             body: pipe(
-              writable,
+              req.message,
               transformNormalizeMessage(method.I),
               transformSerializeEnvelope(
                 serialization.getI(opt.useBinaryFormat),
@@ -303,111 +303,86 @@ export function createGrpcWebTransport(
                 opt.sendCompression,
                 opt.compressMinBytes
               ),
-              transformJoinEnvelopes()
+              transformJoinEnvelopes(),
+              { propagateDownStreamError: true }
             ),
-            signal: req.signal,
           });
-          const responseTrailer = defer<Headers>();
-          let outputIt: AsyncIterator<O> | undefined;
-          const conn: StreamingConn<I, O> = {
+          const { compression, foundStatus } = validateResponseWithCompression(
+            opt.useBinaryFormat,
+            opt.acceptCompression,
+            uRes.status,
+            uRes.header
+          );
+          const res: StreamResponse<I, O> = {
             ...req,
-            responseHeader: universalResponsePromise.then((r) => r.header),
-            responseTrailer: responseTrailer,
-            closed: false,
-            async send(message: PartialMessage<I>): Promise<void> {
-              await writable.write(message);
-            },
-            async close(): Promise<void> {
-              await writable.close();
-            },
-            async read(): Promise<ReadableStreamReadResultLike<O>> {
-              if (outputIt === undefined) {
-                const uRes = await universalResponsePromise;
-                const { compression, foundStatus } =
-                  validateResponseWithCompression(
-                    opt.useBinaryFormat,
-                    opt.acceptCompression,
-                    uRes.status,
-                    uRes.header
-                  );
-                outputIt = pipe(
-                  uRes.body,
-                  transformSplitEnvelope(opt.readMaxBytes),
-                  transformDecompressEnvelope(
-                    compression ?? null,
-                    opt.readMaxBytes
-                  ),
-                  transformParseEnvelope(
-                    serialization.getO(opt.useBinaryFormat),
-                    trailerFlag,
-                    createTrailerSerialization()
-                  ),
-                  async function* (iterable) {
-                    if (foundStatus) {
-                      // A grpc-status: 0 response header was present. This is a "trailers-only"
-                      // response (a response without a body and no trailers).
-                      //
-                      // The spec seems to disallow a trailers-only response for status 0 - we are
-                      // lenient and only verify that the body is empty.
-                      //
-                      // > [...] Trailers-Only is permitted for calls that produce an immediate error.
-                      // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
-                      const r = await iterable[Symbol.asyncIterator]().next();
-                      if (r.done !== true) {
-                        const e = new ConnectError(
-                          "protocol error: received extra trailer",
-                          Code.InvalidArgument
-                        );
-                        responseTrailer.reject(e);
-                        throw e;
-                      }
-                      return;
-                    }
-                    let trailerReceived = false;
-                    for await (const chunk of iterable) {
-                      if (chunk.end) {
-                        if (trailerReceived) {
-                          const e = new ConnectError(
-                            "protocol error: received extra trailer",
-                            Code.InvalidArgument
-                          );
-                          responseTrailer.reject(e);
-                          throw e;
-                        }
-                        trailerReceived = true;
-                        validateTrailer(chunk.value);
-                        responseTrailer.resolve(chunk.value);
-                        continue;
-                      }
-                      if (trailerReceived) {
-                        const e = new ConnectError(
-                          "protocol error: received extra message after trailer",
-                          Code.InvalidArgument
-                        );
-                        responseTrailer.reject(e);
-                        throw e;
-                      }
-                      yield chunk.value;
-                    }
-                    if (!trailerReceived) {
-                      const e = new ConnectError(
-                        "protocol error: missing trailer",
+            header: uRes.header,
+            trailer: new Headers(),
+            message: pipe(
+              uRes.body,
+              transformSplitEnvelope(opt.readMaxBytes),
+              transformDecompressEnvelope(
+                compression ?? null,
+                opt.readMaxBytes
+              ),
+              transformParseEnvelope(
+                serialization.getO(opt.useBinaryFormat),
+                trailerFlag,
+                createTrailerSerialization()
+              ),
+              async function* (iterable) {
+                if (foundStatus) {
+                  // A grpc-status: 0 response header was present. This is a "trailers-only"
+                  // response (a response without a body and no trailers).
+                  //
+                  // The spec seems to disallow a trailers-only response for status 0 - we are
+                  // lenient and only verify that the body is empty.
+                  //
+                  // > [...] Trailers-Only is permitted for calls that produce an immediate error.
+                  // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+                  const r = await iterable[Symbol.asyncIterator]().next();
+                  if (r.done !== true) {
+                    throw new ConnectError(
+                      "protocol error: extra data for trailers-only",
+                      Code.InvalidArgument
+                    );
+                  }
+                  return;
+                }
+                let trailerReceived = false;
+                for await (const chunk of iterable) {
+                  if (chunk.end) {
+                    if (trailerReceived) {
+                      throw new ConnectError(
+                        "protocol error: received extra trailer",
                         Code.InvalidArgument
                       );
-                      responseTrailer.reject(e);
-                      throw e;
                     }
+                    trailerReceived = true;
+                    validateTrailer(chunk.value);
+                    chunk.value.forEach((value, key) =>
+                      res.trailer.set(key, value)
+                    );
+                    continue;
                   }
-                )[Symbol.asyncIterator]();
-              }
-              const r = await outputIt.next();
-              if (r.done === true) {
-                return { done: true, value: undefined };
-              }
-              return { done: false, value: r.value };
-            },
+                  if (trailerReceived) {
+                    throw new ConnectError(
+                      "protocol error: received extra message after trailer",
+                      Code.InvalidArgument
+                    );
+                  }
+                  yield chunk.value;
+                }
+                if (!trailerReceived) {
+                  throw new ConnectError(
+                    "protocol error: missing trailer",
+                    Code.InvalidArgument
+                  );
+                }
+              },
+              { propagateDownStreamError: true }
+            ),
           };
-          return conn;
+          return res;
         },
         options.interceptors
       );
