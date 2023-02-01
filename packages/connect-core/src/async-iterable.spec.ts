@@ -24,10 +24,10 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
   makeIterableAbortable,
+  createAsyncIterable,
 } from "./async-iterable.js";
 import type { Serialization } from "./serialization.js";
 import {
-  createAsyncIterable,
   createAsyncIterableBytes,
   readAll,
   readAllBytes,

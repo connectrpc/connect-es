@@ -23,6 +23,7 @@ import {
 import type { Serialization } from "./serialization.js";
 import type { Compression } from "./compression.js";
 import { assertReadMaxBytes, assertWriteMaxBytes } from "./compression.js";
+import type { Message, MessageType, PartialMessage } from "@bufbuild/protobuf";
 
 /**
  * A function that takes an asynchronous iterable as a source, and returns a
@@ -687,6 +688,24 @@ export function transformReadAllBytes(
 }
 
 /**
+ * Creates an AsyncIterableTransform that takes partial protobuf messages of the
+ * specified message type as input, and yields full instances.
+ */
+export function transformNormalizeMessage<T extends Message<T>>(
+  messageType: MessageType<T>
+): AsyncIterableTransform<T | PartialMessage<T>, T> {
+  return async function* (iterable) {
+    for await (const chunk of iterable) {
+      if (chunk instanceof messageType) {
+        yield chunk;
+      } else {
+        yield new messageType(chunk as PartialMessage<T>);
+      }
+    }
+  };
+}
+
+/**
  * Creates an AsyncIterableTransform that takes a specified type as input,
  * and serializes it as an enveloped messages.
  *
@@ -1127,25 +1146,6 @@ export function makeIterableAbortable<T>(
   };
 }
 
-// A class representing a reader that reads from the given AsyncIterable.
-export class Reader<T> {
-  private it: AsyncIterable<T>;
-
-  constructor(it: AsyncIterable<T>) {
-    this.it = it;
-  }
-  [Symbol.asyncIterator](): AsyncIterator<T> {
-    return {
-      next: async () => {
-        for await (const item of this.it) {
-          return { value: item };
-        }
-        return { value: "", done: true };
-      },
-    };
-  }
-}
-
 // QueueElement represents an element in the writer queue, which consists of the payload being written as well as an
 // associated resolve function to be invoked/resolved when the written element is read from the queue via the async
 // iterator.
@@ -1251,4 +1251,12 @@ export function createWritableIterable<T>(): WritableIterable<T> {
       };
     },
   };
+}
+
+/**
+ * Create an asynchronous iterable from an array.
+ */
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function* createAsyncIterable<T>(items: T[]): AsyncIterable<T> {
+  yield* items;
 }
