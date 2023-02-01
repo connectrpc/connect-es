@@ -153,20 +153,26 @@ testnode: $(BIN)/node16 $(BIN)/node18 $(BUILD)/connect-node-test
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
+	$(MAKE) connectnodeserverrun
 	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
+	$(MAKE) connectnodeserverstop
 
 .PHONY: testwebbrowser
 testwebbrowser: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
+	$(MAKE) connectnodeserverrun
 	npm run -w packages/connect-web-test karma
 	$(MAKE) crosstestserverstop
+	$(MAKE) connectnodeserverstop
 
 .PHONY: testwebbrowserlocal
 testwebbrowserlocal: $(BUILD)/connect-web-test
 	$(MAKE) crosstestserverrun
+	$(MAKE) connectnodeserverrun
 	npm run -w packages/connect-web-test karma-serve
 	$(MAKE) crosstestserverstop
+	$(MAKE) connectnodeserverstop
 
 .PHONY: testwebbrowserstack
 testwebbrowserstack: $(BUILD)/connect-web-test
@@ -225,6 +231,14 @@ crosstestserverrun: crosstestserverstop
 	docker run --rm --name servergrpc -p 8083:8083 -d \
 		bufbuild/connect-crosstest:$(CROSSTEST_VERSION) \
 		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
+
+.PHONY: connectnodeserverrun
+connectnodeserverrun: $(BUILD)/connect-node-test
+	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs restart
+
+.PHONY: connectnodeserverstop
+connectnodeserverstop: $(BUILD)/connect-node-test
+	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs stop
 
 .PHONY: checkdiff
 checkdiff:

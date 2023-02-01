@@ -19,8 +19,7 @@ import {
   Code,
 } from "@bufbuild/connect-web-next";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/crosstestserver.js";
 
 describe("unimplemented_method", function () {
   function expectError(err: unknown) {
@@ -29,9 +28,9 @@ describe("unimplemented_method", function () {
       expect(err.code).toEqual(Code.Unimplemented);
     }
   }
-  describeTransports(crosstestTransports, (transport) => {
+  describeTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         await client.unimplementedCall({});
         fail("expected to catch an error");
@@ -40,7 +39,7 @@ describe("unimplemented_method", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.unimplementedCall({}, (err: ConnectError | undefined) => {
         expectError(err);
         done();

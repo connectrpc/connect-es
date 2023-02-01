@@ -13,15 +13,14 @@
 // limitations under the License.
 
 import {
+  Code,
   ConnectError,
+  connectErrorDetails,
   createCallbackClient,
   createPromiseClient,
-  connectErrorDetails,
-  Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 import {
   ErrorDetail,
   StreamingOutputCallRequest,
@@ -29,7 +28,7 @@ import {
 } from "../gen/grpc/testing/messages_pb.js";
 
 describe("fail_server_streaming", () => {
-  function expectError(err: unknown, transportName: string) {
+  function expectError(err: unknown) {
     const expectedErrorDetail = new ErrorDetail({
       reason: "soirée 🎉",
       domain: "connect-crosstest",
@@ -38,54 +37,49 @@ describe("fail_server_streaming", () => {
     if (err instanceof ConnectError) {
       expect(err.code).toEqual(Code.ResourceExhausted);
       expect(err.rawMessage).toEqual("soirée 🎉");
-      // the experimental gRPC transport does not implement error details
-      if (transportName !== "gRPC transport") {
-        const details = connectErrorDetails(err, ErrorDetail);
-        expect(details.length).toEqual(1);
-        expect(details[0]).toBeInstanceOf(ErrorDetail);
-        if (details[0] instanceof ErrorDetail) {
-          expect(expectedErrorDetail.equals(details[0])).toBeTrue();
-        }
+      const details = connectErrorDetails(err, ErrorDetail);
+      expect(details.length).toEqual(1);
+      expect(details[0]).toBeInstanceOf(ErrorDetail);
+      if (details[0] instanceof ErrorDetail) {
+        expect(expectedErrorDetail.equals(details[0])).toBeTrue();
       }
     }
   }
+
   const size = 314159;
+
   function expectResponseSize(response: StreamingOutputCallResponse) {
     expect(response.payload).toBeDefined();
     expect(response.payload?.body.length).toEqual(size);
   }
+
   const request = new StreamingOutputCallRequest({
     responseParameters: [{ size }],
   });
-  legacyDescribeTransports(
-    legacyCrosstestTransports,
-    (transport, transportName) => {
-      it("with promise client", async function () {
-        const client = createPromiseClient(TestService, transport);
-        try {
-          for await (const response of client.failStreamingOutputCall(
-            request
-          )) {
-            expectResponseSize(response);
-          }
-          fail("expected to catch an error");
-        } catch (e) {
-          expectError(e, transportName);
+  describeLegacyTransports((transport) => {
+    it("with promise client", async function () {
+      const client = createPromiseClient(TestService, transport());
+      try {
+        for await (const response of client.failStreamingOutputCall(request)) {
+          expectResponseSize(response);
         }
-      });
-      it("with callback client", function (done) {
-        const client = createCallbackClient(TestService, transport);
-        client.failStreamingOutputCall(
-          request,
-          (response) => {
-            expectResponseSize(response);
-          },
-          (err: ConnectError | undefined) => {
-            expectError(err, transportName);
-            done();
-          }
-        );
-      });
-    }
-  );
+        fail("expected to catch an error");
+      } catch (e) {
+        expectError(e);
+      }
+    });
+    it("with callback client", function (done) {
+      const client = createCallbackClient(TestService, transport());
+      client.failStreamingOutputCall(
+        request,
+        (response) => {
+          expectResponseSize(response);
+        },
+        (err: ConnectError | undefined) => {
+          expectError(err);
+          done();
+        }
+      );
+    });
+  });
 });

@@ -24,7 +24,7 @@ import {
 } from "@bufbuild/connect-web-next";
 import { TestService } from "./gen/grpc/testing/test_connectweb.js";
 import { StreamingOutputCallRequest } from "./gen/grpc/testing/messages_pb.js";
-import { crosstestTransports } from "./helpers/crosstestserver.js";
+import { describeTransports } from "./helpers/crosstestserver.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   /**
@@ -46,6 +46,11 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
       "accept-encoding",
       "content-encoding",
       "content-length",
+      "connection",
+      "keep-alive",
+      "access-control-allow-headers",
+      "access-control-allow-methods",
+      "access-control-max-age",
     ];
     const keys: string[] = [];
     header.forEach((_, key) => {
@@ -104,12 +109,13 @@ describe("unary interceptors", () => {
     "outer response received with headers: x-grpc-test-echo-initial",
     "outer response done with trailers: x-grpc-test-echo-trailing-bin",
   ] as const;
-  for (const [name, transportFactory] of Object.entries(crosstestTransports)) {
-    it(`via ${name} and promise client`, async () => {
+
+  describeTransports((transport) => {
+    it("with promise client", async () => {
       const log: string[] = [];
       const client = createPromiseClient(
         TestService,
-        transportFactory({
+        transport({
           interceptors: [
             makeLoggingInterceptor("outer", log),
             makeLoggingInterceptor("inner", log),
@@ -127,11 +133,11 @@ describe("unary interceptors", () => {
       );
       expect(log).toEqual(wantLog);
     });
-    it(`via ${name} and callback client`, (done) => {
+    it("with callback client", (done) => {
       const log: string[] = [];
       const client = createCallbackClient(
         TestService,
-        transportFactory({
+        transport({
           interceptors: [
             makeLoggingInterceptor("outer", log),
             makeLoggingInterceptor("inner", log),
@@ -152,7 +158,7 @@ describe("unary interceptors", () => {
         options
       );
     });
-  }
+  });
 });
 
 describe("server stream interceptors", () => {
@@ -189,16 +195,16 @@ describe("server stream interceptors", () => {
     "inner response stream done with trailers: x-grpc-test-echo-trailing-bin",
     "outer response stream done with trailers: x-grpc-test-echo-trailing-bin",
   ] as const;
-  for (const [name, transportFactory] of Object.entries(crosstestTransports)) {
-    it(`via ${name} and promise client`, async () => {
+  describeTransports((transport) => {
+    it("with promise client", async () => {
       const log: string[] = [];
-      const transport = transportFactory({
+      const t = transport({
         interceptors: [
           makeLoggingInterceptor("outer", log),
           makeLoggingInterceptor("inner", log),
         ],
       });
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, t);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const _response of client.streamingOutputCall(
         request,
@@ -208,15 +214,15 @@ describe("server stream interceptors", () => {
       }
       expect(log).toEqual(wantLog);
     });
-    it(`via ${name} and callback client`, (done) => {
+    it("with callback client", (done) => {
       const log: string[] = [];
-      const transport = transportFactory({
+      const t = transport({
         interceptors: [
           makeLoggingInterceptor("outer", log),
           makeLoggingInterceptor("inner", log),
         ],
       });
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, t);
       client.streamingOutputCall(
         request,
         () => void 0,
@@ -227,5 +233,5 @@ describe("server stream interceptors", () => {
         options
       );
     });
-  }
+  });
 });

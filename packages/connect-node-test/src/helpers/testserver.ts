@@ -198,16 +198,56 @@ J4aliShXnxA=
         if (address == null || typeof address == "string") {
           throw new Error("cannot get server port");
         }
-        return `http://localhost:${address.port}`;
+        return `http://127.0.0.1:${address.port}`;
       },
-      start() {
+      start(port = 0) {
         return new Promise<void>((resolve) => {
+          const corsAllowHeaders = [
+            "Content-Type",
+            // gRPC-web
+            "X-User-Agent",
+            "X-Grpc-Web",
+            "Grpc-Timeout",
+            // Connect
+            "Connect-Protocol-Version",
+            "Connect-Timeout-Ms",
+            // used in tests
+            "X-Grpc-Test-Echo-Initial",
+            "X-Grpc-Test-Echo-Trailing-Bin",
+          ];
+          const corsExposeHeaders = [
+            // gRPC-web
+            "Grpc-Status",
+            "Grpc-Message",
+            // used in tests
+            "Grpc-Status-Details-Bin", // error details
+            "X-Grpc-Test-Echo-Initial",
+            "X-Grpc-Test-Echo-Trailing-Bin",
+            "Trailer-X-Grpc-Test-Echo-Trailing-Bin", // unary trailer in Connect
+          ];
+          const corsHeaders = {
+            "Access-Control-Allow-Origin": "*", // caution with this
+            "Access-Control-Allow-Methods": "OPTIONS, POST",
+            "Access-Control-Allow-Headers": corsAllowHeaders.join(", "),
+            "Access-Control-Expose-Headers": corsExposeHeaders.join(", "),
+            "Access-Control-Max-Age": 2 * 3600,
+          };
+          const serviceHandler = mergeHandlers(
+            createHandlers(TestService, testService, {})
+          );
           nodeHttpServer = http
-            .createServer(
-              {},
-              mergeHandlers(createHandlers(TestService, testService, {}))
-            )
-            .listen(0, resolve);
+            .createServer({}, (req, res) => {
+              if (req.method === "OPTIONS") {
+                res.writeHead(204, corsHeaders);
+                res.end();
+                return;
+              }
+              for (const [k, v] of Object.entries(corsHeaders)) {
+                res.setHeader(k, v);
+              }
+              serviceHandler(req, res);
+            })
+            .listen(port, resolve);
         });
       },
       stop() {

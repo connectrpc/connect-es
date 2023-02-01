@@ -24,7 +24,7 @@ describe("ping_pong", () => {
   beforeAll(async () => await servers.start());
 
   servers.describeTransportsExcluding(
-    // All following Transports run against an HTTP/1 server, which cannot support full-duplex.
+    // All following Transports run over HTTP/1, which cannot support full-duplex.
     [
       "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)",
       "@bufbuild/connect-node (Connect, binary, http) against @bufbuild/connect-node (h1)",

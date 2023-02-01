@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { CallOptions } from "@bufbuild/connect-web-next";
 import {
+  Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-  Code,
 } from "@bufbuild/connect-web-next";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
+import { describeTransportsExcluding } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
-import type { CallOptions } from "@bufbuild/connect-web-next";
+import { connectErrorFromReason } from "@bufbuild/connect-web";
 
 describe("timeout_on_sleeping_server", function () {
   const request = new StreamingOutputCallRequest({
@@ -39,49 +39,60 @@ describe("timeout_on_sleeping_server", function () {
   const options: CallOptions = {
     timeoutMs: 1, // 1ms
   };
-  function expectError(err: unknown) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
-      // and will return an HTTP status code 408 when stream max duration time reached, which
-      // cannot be translated to a connect error code, so connect-web client throws an Unknown.
-      expect(
-        err.code === Code.Unknown || err.code === Code.DeadlineExceeded
-      ).toBeTrue();
-    }
-  }
-  describeTransports(crosstestTransports, (transport) => {
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
-      try {
-        for await (const response of client.streamingOutputCall(
-          request,
-          options
-        )) {
-          fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`
-          );
+  // TODO(TCN-761)
+  describeTransportsExcluding(
+    [
+      "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-web (Connect, binary) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-web (gRPC-web, binary) gRPC-web against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against @bufbuild/connect-node (h1)",
+    ],
+    (transport) => {
+      it("with promise client", async function () {
+        const client = createPromiseClient(TestService, transport());
+        try {
+          for await (const response of client.streamingOutputCall(
+            request,
+            options
+          )) {
+            fail(
+              `expecting no response from sleeping server, got: ${response.toJsonString()}`
+            );
+          }
+          fail("expected to catch an error");
+        } catch (e) {
+          // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
+          // and will return an HTTP status code 408 when stream max duration time reached, which
+          // cannot be translated to a connect error code, so connect-web client throws an Unknown.
+          const got = connectErrorFromReason(e).code;
+          expect(
+            got === Code.DeadlineExceeded || got === Code.Unknown
+          ).toBeTrue();
+          expect(e).toBeInstanceOf(ConnectError);
         }
-        fail("expected to catch an error");
-      } catch (e) {
-        expectError(e);
-      }
-    });
-    it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
-      client.streamingOutputCall(
-        request,
-        (response) => {
-          fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`
-          );
-        },
-        (err: ConnectError | undefined) => {
-          expectError(err);
-          done();
-        },
-        options
-      );
-    });
-  });
+      });
+      it("with callback client", function (done) {
+        const client = createCallbackClient(TestService, transport());
+        client.streamingOutputCall(
+          request,
+          (response) => {
+            fail(
+              `expecting no response from sleeping server, got: ${response.toJsonString()}`
+            );
+          },
+          (err: ConnectError | undefined) => {
+            // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
+            // and will return an HTTP status code 408 when stream max duration time reached, which
+            // cannot be translated to a connect error code, so connect-web client throws an Unknown.
+            expect(
+              err?.code === Code.DeadlineExceeded || err?.code === Code.Unknown
+            ).toBeTrue();
+            expect(err).toBeInstanceOf(ConnectError);
+            done();
+          },
+          options
+        );
+      });
+    }
+  );
 });

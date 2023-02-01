@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { CallOptions } from "@bufbuild/connect-web";
 import {
+  Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-  Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransportsExcluding } from "../helpers/legacy-crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
-import type { CallOptions } from "@bufbuild/connect-web";
 
 describe("timeout_on_sleeping_server", function () {
   const request = new StreamingOutputCallRequest({
@@ -50,38 +49,46 @@ describe("timeout_on_sleeping_server", function () {
       ).toBeTrue();
     }
   }
-  legacyDescribeTransports(legacyCrosstestTransports, (transport) => {
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
-      try {
-        for await (const response of client.streamingOutputCall(
-          request,
-          options
-        )) {
-          fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`
-          );
+  // TODO(TCN-761)
+  describeLegacyTransportsExcluding(
+    [
+      "legacy gRPC-web transport against @bufbuild/connect-node (h1)",
+      "legacy connect JSON transport against @bufbuild/connect-node (h1)",
+      "legacy connect binary transport against @bufbuild/connect-node (h1)",
+    ],
+    (transport) => {
+      it("with promise client", async function () {
+        const client = createPromiseClient(TestService, transport());
+        try {
+          for await (const response of client.streamingOutputCall(
+            request,
+            options
+          )) {
+            fail(
+              `expecting no response from sleeping server, got: ${response.toJsonString()}`
+            );
+          }
+          fail("expected to catch an error");
+        } catch (e) {
+          expectError(e);
         }
-        fail("expected to catch an error");
-      } catch (e) {
-        expectError(e);
-      }
-    });
-    it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
-      client.streamingOutputCall(
-        request,
-        (response) => {
-          fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`
-          );
-        },
-        (err: ConnectError | undefined) => {
-          expectError(err);
-          done();
-        },
-        options
-      );
-    });
-  });
+      });
+      it("with callback client", function (done) {
+        const client = createCallbackClient(TestService, transport());
+        client.streamingOutputCall(
+          request,
+          (response) => {
+            fail(
+              `expecting no response from sleeping server, got: ${response.toJsonString()}`
+            );
+          },
+          (err: ConnectError | undefined) => {
+            expectError(err);
+            done();
+          },
+          options
+        );
+      });
+    }
+  );
 });

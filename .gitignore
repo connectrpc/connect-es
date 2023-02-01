@@ -1,4 +1,5 @@
 /.tmp
 /packages/*/dist
 /packages/connect-web-test/local.log
+/packages/connect-node-test/.connect-node-h1-server.*
 node_modules

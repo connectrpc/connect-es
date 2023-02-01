@@ -14,61 +14,44 @@
 
 import {
   ConnectError,
+  connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
 import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 
 describe("unimplemented_server_streaming_service", function () {
-  function expectError(err: unknown, transportName: string) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      switch (transportName) {
-        case "gRPC transport":
-          // @grpc/grpc-js appears to be unable to handle 404
-          expect(err.code).toEqual(Code.Internal);
-          expect(err.rawMessage).toEqual("Received RST_STREAM with code 0");
-          break;
-        default:
-          expect(err.code).toEqual(Code.Unimplemented);
-          break;
-      }
-    }
-  }
   const request = new Empty();
-  legacyDescribeTransports(
-    legacyCrosstestTransports,
-    (transport, transportName) => {
-      it("with promise client", async function () {
-        const client = createPromiseClient(UnimplementedService, transport);
-        try {
-          for await (const response of client.unimplementedStreamingOutputCall(
-            request
-          )) {
-            fail(`expecting no response, got: ${response.toJsonString()}`);
-          }
-          fail("expected to catch an error");
-        } catch (e) {
-          expectError(e, transportName);
+  describeLegacyTransports((transport) => {
+    it("with promise client", async function () {
+      const client = createPromiseClient(UnimplementedService, transport());
+      try {
+        for await (const response of client.unimplementedStreamingOutputCall(
+          request
+        )) {
+          fail(`expecting no response, got: ${response.toJsonString()}`);
         }
-      });
-      it("with callback client", function (done) {
-        const client = createCallbackClient(UnimplementedService, transport);
-        client.unimplementedStreamingOutputCall(
-          request,
-          (response) => {
-            fail(`expecting no response, got: ${response.toJsonString()}`);
-          },
-          (err: ConnectError | undefined) => {
-            expectError(err, transportName);
-            done();
-          }
-        );
-      });
-    }
-  );
+        fail("expected to catch an error");
+      } catch (e) {
+        expect(connectErrorFromReason(e).code).toEqual(Code.Unimplemented);
+        expect(e).toBeInstanceOf(ConnectError);
+      }
+    });
+    it("with callback client", function (done) {
+      const client = createCallbackClient(UnimplementedService, transport());
+      client.unimplementedStreamingOutputCall(
+        request,
+        (response) => {
+          fail(`expecting no response, got: ${response.toJsonString()}`);
+        },
+        (err: ConnectError | undefined) => {
+          expect(err?.code).toEqual(Code.Unimplemented);
+          done();
+        }
+      );
+    });
+  });
 });
