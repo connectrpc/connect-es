@@ -522,6 +522,10 @@ describe("transforming asynchronous iterables", () => {
     });
 
     describe("transformParseEnvelope()", function () {
+      const envelopesWithoutEndFlag = goldenEnvelopes.slice(0, 2);
+      const itemsWithoutEndFlag = goldenItems
+        .slice(0, 2)
+        .map((item) => item.value);
       it("should parse from envelopes", async function () {
         const it = pipe(
           createAsyncIterable(goldenEnvelopes),
@@ -530,7 +534,25 @@ describe("transforming asynchronous iterables", () => {
         const got = await readAll(it);
         expect(got).toEqual(goldenItems);
       });
-      describe("with endCompression null", function () {
+      describe("with endStreamFlag but endCompression omitted", function () {
+        it("should skip unexpected end flag", async function () {
+          const it = pipe(
+            createAsyncIterable(goldenEnvelopes),
+            transformParseEnvelope(serialization, endFlag)
+          );
+          const got = await readAll(it);
+          expect(got).toEqual(itemsWithoutEndFlag);
+        });
+        it("should still parse to T", async function () {
+          const it = pipe(
+            createAsyncIterable(envelopesWithoutEndFlag),
+            transformParseEnvelope(serialization, endFlag)
+          );
+          const got = await readAll(it);
+          expect(got).toEqual(itemsWithoutEndFlag);
+        });
+      });
+      describe("with endStreamFlag and endCompression null", function () {
         it("should raise error on unexpected end flag", async function () {
           const it = pipe(
             createAsyncIterable(goldenEnvelopes),
@@ -547,10 +569,6 @@ describe("transforming asynchronous iterables", () => {
           }
         });
         it("should still parse to T", async function () {
-          const envelopesWithoutEndFlag = goldenEnvelopes.slice(0, 2);
-          const itemsWithoutEndFlag = goldenItems
-            .slice(0, 2)
-            .map((item) => item.value);
           const it = pipe(
             createAsyncIterable(envelopesWithoutEndFlag),
             transformParseEnvelope(serialization, endFlag, null)
