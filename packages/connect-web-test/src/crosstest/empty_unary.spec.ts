@@ -17,20 +17,19 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-web-next";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 
 describe("empty_unary", function () {
-  describeTransports(crosstestTransports, (transport) => {
+  describeTransports((transport) => {
     const empty = new Empty();
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       const response = await client.emptyCall(empty);
       expect(response).toEqual(empty);
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.emptyCall(empty, (err, response) => {
         expect(err).toBeUndefined();
         expect(response).toEqual(empty);

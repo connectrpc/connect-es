@@ -17,21 +17,20 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 
 describe("empty_unary_with_timeout", function () {
-  legacyDescribeTransports(legacyCrosstestTransports, (transport) => {
+  describeLegacyTransports((transport) => {
     const empty = new Empty();
     const deadlineMs = 1000; // 1 second
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       const response = await client.emptyCall(empty, { timeoutMs: deadlineMs });
       expect(response).toEqual(empty);
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.emptyCall(
         empty,
         (err, response) => {

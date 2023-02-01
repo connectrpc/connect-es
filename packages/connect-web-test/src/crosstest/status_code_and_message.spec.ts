@@ -19,12 +19,11 @@ import {
   Code,
 } from "@bufbuild/connect-web-next";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
 describe("status_code_and_message", function () {
-  describeTransports(crosstestTransports, (transport) => {
+  describeTransports((transport) => {
     const TEST_STATUS_MESSAGE = "test status message";
     const request = new SimpleRequest({
       responseStatus: {
@@ -40,7 +39,7 @@ describe("status_code_and_message", function () {
       }
     }
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         await client.unaryCall(request);
         fail("expected to catch an error");
@@ -49,7 +48,7 @@ describe("status_code_and_message", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.unaryCall(request, (err: ConnectError | undefined) => {
         expectError(err);
         done();

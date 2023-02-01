@@ -17,12 +17,11 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-web-next";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { describeTransports } from "../helpers/describe-transports.js";
-import { crosstestTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 
 describe("server_streaming", function () {
-  describeTransports(crosstestTransports, (transport) => {
+  describeTransports((transport) => {
     const sizes = [31415, 9, 2653, 58979];
     const request = new StreamingOutputCallRequest({
       responseParameters: sizes.map((size, index) => ({
@@ -31,7 +30,7 @@ describe("server_streaming", function () {
       })),
     });
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       let responseCount = 0;
       for await (const response of client.streamingOutputCall(request)) {
         expect(response.payload).toBeDefined();
@@ -41,7 +40,7 @@ describe("server_streaming", function () {
       expect(responseCount).toEqual(sizes.length);
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       let responseCount = 0;
       client.streamingOutputCall(
         request,

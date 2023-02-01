@@ -19,8 +19,7 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect-web";
-import { legacyDescribeTransports } from "./helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "./helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "./helpers/legacy-crosstestserver.js";
 import { TestService } from "./gen/grpc/testing/test_connectweb.js";
 
 // TODO remove this file after connect-web has migrated to connect-core
@@ -31,9 +30,9 @@ describe("explicit cancellation with AbortController", function () {
   const options: Readonly<CallOptions> = {
     signal: abort.signal,
   };
-  legacyDescribeTransports(legacyCrosstestTransports, (transport) => {
+  describeLegacyTransports((transport) => {
     describe("with promise client", () => {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       it("works for unary method", async () => {
         let caughtError = false;
         try {
@@ -65,7 +64,7 @@ describe("explicit cancellation with AbortController", function () {
       });
     });
     describe("with callback client", () => {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       it("works for unary method", (done) => {
         client.unaryCall(
           {},

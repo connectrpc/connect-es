@@ -19,8 +19,7 @@ import {
   Code,
 } from "@bufbuild/connect-web";
 import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 
 describe("unimplemented_service", function () {
   function expectError(err: unknown) {
@@ -33,9 +32,9 @@ describe("unimplemented_service", function () {
     }
   }
 
-  legacyDescribeTransports(legacyCrosstestTransports, (transport) => {
+  describeLegacyTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(UnimplementedService, transport);
+      const client = createPromiseClient(UnimplementedService, transport());
       try {
         await client.unimplementedCall({});
         fail("expected to catch an error");
@@ -44,7 +43,7 @@ describe("unimplemented_service", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(UnimplementedService, transport);
+      const client = createCallbackClient(UnimplementedService, transport());
       client.unimplementedCall({}, (err: ConnectError | undefined) => {
         expectError(err);
         done();

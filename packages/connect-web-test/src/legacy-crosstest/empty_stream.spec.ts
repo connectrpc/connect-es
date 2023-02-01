@@ -17,15 +17,14 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 
 describe("empty_stream", function () {
-  legacyDescribeTransports(legacyCrosstestTransports, (transport) => {
+  describeLegacyTransports((transport) => {
     const request = new StreamingOutputCallRequest();
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         for await (const response of client.streamingOutputCall(request)) {
           fail(
@@ -37,7 +36,7 @@ describe("empty_stream", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.streamingOutputCall(
         request,
         () => {

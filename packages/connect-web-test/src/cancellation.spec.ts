@@ -19,8 +19,7 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect-web-next";
-import { describeTransports } from "./helpers/describe-transports.js";
-import { crosstestTransports } from "./helpers/crosstestserver.js";
+import { describeTransports } from "./helpers/crosstestserver.js";
 import { TestService } from "./gen/grpc/testing/test_connectweb.js";
 
 describe("explicit cancellation with AbortController", function () {
@@ -29,9 +28,9 @@ describe("explicit cancellation with AbortController", function () {
   const options: Readonly<CallOptions> = {
     signal: abort.signal,
   };
-  describeTransports(crosstestTransports, (transport) => {
+  describeTransports((transport) => {
     describe("with promise client", () => {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       it("works for unary method", async () => {
         let caughtError = false;
         try {
@@ -63,7 +62,7 @@ describe("explicit cancellation with AbortController", function () {
       });
     });
     describe("with callback client", () => {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       it("works for unary method", (done) => {
         client.unaryCall(
           {},
