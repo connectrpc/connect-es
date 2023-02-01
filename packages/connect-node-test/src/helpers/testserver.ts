@@ -863,7 +863,7 @@ J4aliShXnxA=
     describeServers(
       only: Array<keyof typeof servers>,
       specDefinitions: (
-        server: typeof servers[keyof typeof servers],
+        server: (typeof servers)[keyof typeof servers],
         serverName: keyof typeof servers
       ) => void
     ) {
