@@ -17,7 +17,7 @@
     "@bufbuild/connect-core": "0.6.0",
     "@bufbuild/connect-node": "0.6.0",
     "@bufbuild/connect-web-next": "0.6.0",
-    "@grpc/grpc-js": "^1.7.1",
+    "@grpc/grpc-js": "^1.8.7",
     "@types/jasmine": "^4.3.0",
     "@types/long": "^5.0.0",
     "esbuild": "^0.16.12",
