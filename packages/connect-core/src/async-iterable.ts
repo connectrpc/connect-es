@@ -786,6 +786,17 @@ export function transformParseEnvelope<T>(
  * Creates an AsyncIterableTransform that takes enveloped messages as input,
  * parses the envelope payload and outputs the result.
  *
+ * Note that this override will look for the given endStreamFlag, and silently
+ * ignore envelopes with this flag.
+ */
+export function transformParseEnvelope<T>(
+  serialization: Serialization<T>,
+  endStreamFlag: number
+): AsyncIterableTransform<EnvelopedMessage, T>;
+/**
+ * Creates an AsyncIterableTransform that takes enveloped messages as input,
+ * parses the envelope payload and outputs the result.
+ *
  * Note that this override will look for the given endStreamFlag, and raise
  * and error if it is set.
  */
@@ -840,7 +851,11 @@ export function transformParseEnvelope<T, E>(
         endStreamFlag !== undefined &&
         (flags & endStreamFlag) === endStreamFlag
       ) {
-        throw new ConnectError("unexpected end flag", Code.InvalidArgument);
+        if (endSerialization === null) {
+          throw new ConnectError("unexpected end flag", Code.InvalidArgument);
+        }
+        // skips end-of-stream envelope
+        continue;
       }
       yield serialization.parse(data);
     }

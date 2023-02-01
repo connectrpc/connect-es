@@ -139,8 +139,9 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformDecompressEnvelope(compression.request, opt.readMaxBytes),
       transformParseEnvelope(
         serialization.getI(type.binary),
-        trailerFlag,
-        null
+        trailerFlag
+        // if we set `null` here, an end-stream-message in the request
+        // raises an error, but we want to be lenient
       ),
       transformInvokeImplementation<I, O>(spec, context),
       transformSerializeEnvelope(
