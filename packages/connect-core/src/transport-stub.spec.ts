@@ -50,20 +50,24 @@ describe("stubTransport()", () => {
   });
   describe("streaming", function () {
     it("should return singe response by default", async function () {
-      const conn = await transport.stream(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      async function* input() {
+        yield new Int32Value();
+      }
+      const res = await transport.stream(
         TestService,
         TestService.methods.bidiStream,
         undefined,
         undefined,
-        undefined
+        undefined,
+        input()
       );
-      await conn.send(new Int32Value());
-      let res = await conn.read();
-      expect(res.done).toBeFalse();
-      expect(res.value).toBeInstanceOf(StringValue);
-      res = await conn.read();
-      expect(res.done).toBeTrue();
-      await conn.close();
+      let receivedResponseMessages = 0;
+      for await (const m of res.message) {
+        expect(m).toBeInstanceOf(StringValue);
+        receivedResponseMessages++;
+      }
+      expect(receivedResponseMessages).toBe(1);
     });
   });
 });

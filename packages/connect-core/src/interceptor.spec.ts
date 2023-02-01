@@ -14,43 +14,38 @@
 
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import { stubTransport } from "./transport-stub.js";
-import type { Interceptor } from "./interceptor.js";
+import type { Interceptor, StreamResponse } from "./interceptor.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
     log.push(`${name} sending request with headers: ${headerKeys(req.header)}`);
     const res = await next(req);
+    log.push(
+      `${name} response received with headers: ${headerKeys(res.header)}`
+    );
     if (res.stream) {
       return {
         ...res,
-        responseHeader: res.responseHeader.then((h) => {
-          log.push(`${name} response received with headers: ${headerKeys(h)}`);
-          return h;
-        }),
-        responseTrailer: res.responseTrailer.then((h) => {
-          log.push(
-            `${name} response stream done with trailers: ${headerKeys(h)}`
-          );
-          return h;
-        }),
-        async read() {
-          const r = await res.read();
-          if (!r.done) {
-            log.push(`${name} response stream received message`);
-          }
-          return r;
-        },
+        message: logStream(res),
       };
     } else {
-      log.push(
-        `${name} response received with headers: ${headerKeys(res.header)}`
-      );
       log.push(
         `${name} response done with trailers: ${headerKeys(res.trailer)}`
       );
     }
     return res;
   };
+
+  async function* logStream(res: StreamResponse) {
+    for await (const m of res.message) {
+      log.push(`${name} response stream received message`);
+      yield m;
+    }
+    yield* res.message;
+    log.push(
+      `${name} response stream done with trailers: ${headerKeys(res.trailer)}`
+    );
+  }
 
   /**
    * Return all keys of a Headers object, without needing
@@ -144,20 +139,23 @@ describe("stream interceptors", () => {
         "stream-response-trailer": "foo",
       }),
     });
-    const conn = await transport.stream(
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* input() {
+      yield new TestService.methods.serverStream.I();
+    }
+    const res = await transport.stream(
       TestService,
       TestService.methods.serverStream,
       undefined,
       undefined,
       {
         "stream-request-header": "foo",
-      }
+      },
+      input()
     );
-    await conn.send({});
-    let res = await conn.read();
-    expect(res.done).toBeFalse();
-    res = await conn.read();
-    expect(res.done).toBeTrue();
+    for await (const m of res.message) {
+      expect(m).toBeDefined(); // only to satisfy type checks
+    }
     expect(log).toEqual(wantLog);
   });
 });

@@ -16,38 +16,43 @@ import {
   Code,
   ConnectError,
   connectErrorFromReason,
-  createPromiseClient,
-  createConnectHttp2Transport,
-  createGrpcWebHttp2Transport,
-  createGrpcHttp2Transport,
   createCallbackClient,
-  createConnectHttpTransport,
-  createGrpcWebHttpTransport,
-  createGrpcHttpTransport,
+  createConnectTransport,
+  createGrpcTransport,
+  createGrpcWebTransport,
+  createPromiseClient,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 
 describe("unresolvable_host", function () {
-  const options = { baseUrl: "https://unresolvable-host.some.domain" };
+  const optionsHttp2 = {
+    baseUrl: "https://unresolvable-host.some.domain",
+    httpVersion: "2" as const,
+  };
+  const optionsHttp1 = {
+    baseUrl: "https://unresolvable-host.some.domain",
+    httpVersion: "1.1" as const,
+  };
   const transports = [
     [
       "@bufbuild/connect-node (gRPC-web, http2)",
-      createGrpcWebHttp2Transport(options),
+      createGrpcWebTransport(optionsHttp2),
     ],
     [
       "@bufbuild/connect-node (gRPC-web, http)",
-      createGrpcWebHttpTransport(options),
+      createGrpcTransport(optionsHttp1),
     ],
     [
       "@bufbuild/connect-node (Connect, http2)",
-      createConnectHttp2Transport(options),
+      createConnectTransport(optionsHttp2),
     ],
     [
       "@bufbuild/connect-node (Connect, http)",
-      createConnectHttpTransport(options),
+      createConnectTransport(optionsHttp1),
     ],
-    ["@bufbuild/connect-node (gRPC, http2)", createGrpcHttp2Transport(options)],
-    ["@bufbuild/connect-node (gRPC, http)", createGrpcHttpTransport(options)],
+    ["@bufbuild/connect-node (gRPC, http2)", createGrpcTransport(optionsHttp2)],
+    ["@bufbuild/connect-node (gRPC, http)", createGrpcTransport(optionsHttp1)],
   ] as const;
   for (const [name, transport] of transports) {
     describe(`${name} against unresolvable domain`, function () {
@@ -59,9 +64,10 @@ describe("unresolvable_host", function () {
               await client.unaryCall({});
               fail("expected an error");
             } catch (e) {
+              expect(connectErrorFromReason(e).message).toBe(
+                "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
+              );
               expect(e).toBeInstanceOf(ConnectError);
-              const err = connectErrorFromReason(e);
-              expect(err.code).toBe(Code.Unavailable);
             }
           });
         });
@@ -74,23 +80,40 @@ describe("unresolvable_host", function () {
               }
               fail("expected to catch an error");
             } catch (e) {
+              expect(connectErrorFromReason(e).message).toBe(
+                "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
+              );
               expect(e).toBeInstanceOf(ConnectError);
-              const err = connectErrorFromReason(e);
-              expect(err.code).toBe(Code.Unavailable);
             }
           });
         });
         describe("for client-streaming", function () {
           it("should raise code unavailable", async function () {
+            async function* input() {
+              yield {
+                payload: {
+                  body: new Uint8Array(),
+                  type: PayloadType.COMPRESSABLE,
+                },
+              };
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              yield {
+                payload: {
+                  body: new Uint8Array(),
+                  type: PayloadType.COMPRESSABLE,
+                },
+              };
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              yield {
+                payload: {
+                  body: new Uint8Array(),
+                  type: PayloadType.COMPRESSABLE,
+                },
+              };
+            }
             try {
-              const s = await client.streamingInputCall();
-              fail("expected to catch an error");
-              await s.send({});
-              await s.send({});
-              await s.close();
-              const res = await s.receive();
-
-              expect(res).toBeUndefined();
+              await client.streamingInputCall(input());
+              fail("expected error");
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
               const err = connectErrorFromReason(e);
@@ -100,15 +123,37 @@ describe("unresolvable_host", function () {
         });
         describe("for bidi-streaming", function () {
           it("should raise code unavailable", async function () {
+            async function* input() {
+              yield {
+                responseParameters: [
+                  {
+                    size: 1,
+                  },
+                ],
+              };
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              yield {
+                responseParameters: [
+                  {
+                    size: 1,
+                  },
+                ],
+              };
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              yield {
+                responseParameters: [
+                  {
+                    size: 1,
+                  },
+                ],
+              };
+            }
             try {
-              const s = await client.fullDuplexCall();
-              fail("expected to catch an error");
-              await s.send({});
-              await s.send({});
-              await s.close();
-              for await (const res of s.receiveAll()) {
+              for await (const res of client.fullDuplexCall(input())) {
                 expect(res).toBeDefined(); // only to satisfy type checks
+                fail("expected to catch an error");
               }
+              fail("expected to catch an error");
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
               const err = connectErrorFromReason(e);
@@ -141,13 +186,13 @@ describe("unresolvable_host", function () {
             );
           });
         });
-        describe("for client-streaming", function () {
-          xit("should raise code unavailable", function () {
+        xdescribe("for client-streaming", function () {
+          it("should raise code unavailable", function () {
             // TODO(TCN-568, TCN-679) add methods for client-streaming and bidi-streaming
           });
         });
-        describe("for bidi-streaming", function () {
-          xit("should raise code unavailable", function () {
+        xdescribe("for bidi-streaming", function () {
+          it("should raise code unavailable", function () {
             // TODO(TCN-568, TCN-679) add methods for client-streaming and bidi-streaming
           });
         });

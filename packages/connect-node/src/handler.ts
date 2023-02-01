@@ -37,6 +37,7 @@ import {
   NodeHandlerFn,
   universalHandlerToNodeHandler,
 } from "./private/node-universal-handler.js";
+import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { createGrpcHandlerProtocol } from "./grpc-handler.js";
 import { createGrpcWebProtocolHandler } from "./grpc-web-handler.js";
@@ -184,9 +185,15 @@ export function createHandler<M extends MethodInfo>(
   const nodeHandler = universalHandlerToNodeHandler(
     protocolNegotiatingHandler,
     (reason) => {
+      if (connectErrorFromNodeReason(reason).code == Code.Aborted) {
+        return;
+      }
       // TODO(TCN-785)
       // eslint-disable-next-line no-console
-      console.error("protocol handle failed", reason);
+      console.error(
+        `handler for rpc ${method.name} of ${service.typeName} failed`,
+        reason
+      );
     }
   );
 

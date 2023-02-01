@@ -18,7 +18,6 @@ import { encodeEnvelopes } from "./envelope.js";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
-  createAsyncIterable,
   createAsyncIterableBytes,
   readAll,
   readAllBytes,
@@ -31,10 +30,10 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
   transformParseEnvelope,
+  createAsyncIterable,
   createWritableIterable,
-  Reader,
+  WritableIterable,
 } from "./async-iterable.js";
-import type { WritableIterable } from "./async-iterable.js";
 
 // These tests aim to model the usage of iterable transforms in clients and servers.
 // Note that the tests were written as a proof of concept, and the coverage is
@@ -159,7 +158,7 @@ describe("full story", function () {
         transformJoinEnvelopes()
       );
       readerIt = pipe(
-        new Reader(writerIt),
+        writerIt,
         transformSplitEnvelope(readMaxBytes),
         transformDecompressEnvelope(compressionReverse, readMaxBytes),
         transformParseEnvelope(serialization, endFlag, endSerialization)

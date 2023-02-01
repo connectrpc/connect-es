@@ -26,6 +26,7 @@ import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
 import { connectErrorFromReason } from "./connect-error.js";
 import type { CallOptions } from "./call-options.js";
+import { createAsyncIterable } from "./async-iterable.js";
 
 // prettier-ignore
 /**
@@ -136,41 +137,25 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
-  return function (requestMessage, onResponse, onClose, options) {
+  return function (input, onResponse, onClose, options) {
     const abort = new AbortController();
+    const inputMessage =
+      input instanceof method.I ? input : new method.I(input);
     async function run() {
       options = wrapSignal(abort, options);
-      const conn = await transport.stream(
+      const response = await transport.stream(
         service,
         method,
         options.signal,
         options.timeoutMs,
-        options.headers
+        options.headers,
+        createAsyncIterable([inputMessage])
       );
-      try {
-        await conn.send(requestMessage);
-        await conn.close();
-      } catch (e) {
-        if (connectErrorFromReason(e).code == Code.Aborted) {
-          // We do not want intentional errors from the server to be shadowed
-          // by client-side errors.
-          // This can occur if the server has written a response with an error
-          // and has ended the connection. This response may already sit in a
-          // buffer on the client, while it is still writing to the request
-          // body.
-          // We rely on the Transport to raise a code "aborted" in this case,
-          // and ignore this error.
-        } else {
-          throw e;
-        }
+      options.onHeader?.(response.header);
+      for await (const message of response.message) {
+        onResponse(message);
       }
-      options.onHeader?.(await conn.responseHeader);
-      let result = await conn.read();
-      while (!result.done) {
-        onResponse(result.value);
-        result = await conn.read();
-      }
-      options.onTrailer?.(await conn.responseTrailer);
+      options.onTrailer?.(response.trailer);
       onClose(undefined);
     }
     run().catch((reason) => {

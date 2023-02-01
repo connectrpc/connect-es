@@ -19,7 +19,7 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { StreamingConn, UnaryResponse } from "./interceptor.js";
+import type { StreamResponse, UnaryResponse } from "./interceptor.js";
 
 /**
  * Transport represents the underlying transport for a client.
@@ -38,7 +38,7 @@ export interface Transport {
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
     input: PartialMessage<I>
-  ): Promise<UnaryResponse<O>>;
+  ): Promise<UnaryResponse<I, O>>;
 
   /**
    * Call a streaming RPC - a method that takes zero or more input messages,
@@ -49,6 +49,7 @@ export interface Transport {
     method: MethodInfo<I, O>,
     signal: AbortSignal | undefined,
     timeoutMs: number | undefined,
-    header: HeadersInit | undefined
-  ): Promise<StreamingConn<I, O>>;
+    header: HeadersInit | undefined,
+    input: AsyncIterable<I>
+  ): Promise<StreamResponse<I, O>>;
 }

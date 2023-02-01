@@ -72,7 +72,7 @@ export function createRequestHeaderWithCompression(
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: Compression[],
-  sendCompression: Compression | undefined
+  sendCompression: Compression | null
 ): Headers {
   const result = createRequestHeader(
     methodKind,
@@ -80,7 +80,7 @@ export function createRequestHeaderWithCompression(
     timeoutMs,
     userProvidedHeaders
   );
-  if (sendCompression != undefined) {
+  if (sendCompression != null) {
     const name =
       methodKind == MethodKind.Unary
         ? headerUnaryEncoding

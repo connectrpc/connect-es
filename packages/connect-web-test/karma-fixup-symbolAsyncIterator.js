@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * Assert that condition is truthy or throw error (with message)
- */
-export function assert(condition: unknown, msg?: string): asserts condition {
-  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- we want the implicit conversion to boolean
-  if (!condition) {
-    throw new Error(msg);
+/* eslint-disable */
+
+// As long as for-await is transpiled to iterators, Symbol.asyncIterator is
+// only required to identify async iterables, and we only need to provide the
+// symbol.
+
+(function () {
+  if (!Symbol.asyncIterator) {
+    Symbol.asyncIterator = Symbol("fake-async-iterator");
   }
-}
+})();

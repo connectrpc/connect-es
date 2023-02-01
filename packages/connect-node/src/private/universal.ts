@@ -26,7 +26,7 @@ export interface UniversalClientRequest {
   url: string;
   method: string;
   header: Headers;
-  body?: AsyncIterable<Uint8Array>;
+  body: AsyncIterable<Uint8Array>;
   signal?: AbortSignal;
 }
 

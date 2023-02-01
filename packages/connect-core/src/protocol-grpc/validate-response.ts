@@ -18,27 +18,36 @@ import { ConnectError } from "../connect-error.js";
 import { findTrailerError } from "./trailer-status.js";
 import { Code } from "../code.js";
 import type { Compression } from "../compression.js";
-import { headerEncoding } from "./headers.js";
+import {
+  headerContentType,
+  headerEncoding,
+  headerGrpcMessage,
+  headerGrpcStatus,
+} from "./headers.js";
 
 /**
  * Validates response status and header for the gRPC protocol.
  * Throws a ConnectError if the header contains an error status,
  * the HTTP status indicates an error, or if the content type is
  * unexpected.
+ *
+ * Returns an object that indicates whether a gRPC status was found
+ * in the response header. In this case, clients can not expect a
+ * trailer.
  */
 export function validateResponse(
   useBinaryFormat: boolean,
   status: number,
   headers: Headers
-): void {
+): { foundStatus: boolean } {
   const code = codeFromHttpStatus(status);
   if (code != null) {
     throw new ConnectError(
-      decodeURIComponent(headers.get("grpc-message") ?? `HTTP ${status}`),
+      decodeURIComponent(headers.get(headerGrpcMessage) ?? `HTTP ${status}`),
       code
     );
   }
-  const mimeType = headers.get("Content-Type");
+  const mimeType = headers.get(headerContentType);
   const parsedType = parseContentType(mimeType);
   if (!parsedType || parsedType.binary != useBinaryFormat) {
     throw new ConnectError(
@@ -50,21 +59,25 @@ export function validateResponse(
   if (err) {
     throw err;
   }
+  return { foundStatus: headers.has(headerGrpcStatus) };
 }
 
 /**
  * Validates response status and header for the gRPC protocol.
  * This function is identical to validateResponse(), but also verifies
  * that a given encoding header is acceptable.
+ *
+ * Returns an object with the response compression, and a boolean
+ * indicating whether a gRPC status was found in the response header
+ * (in this case, clients can not expect a trailer).
  */
 export function validateResponseWithCompression(
   useBinaryFormat: boolean,
   acceptCompression: Compression[],
   status: number,
   headers: Headers
-): { compression: Compression | undefined } {
-  validateResponse(useBinaryFormat, status, headers);
-
+): { foundStatus: boolean; compression: Compression | undefined } {
+  const { foundStatus } = validateResponse(useBinaryFormat, status, headers);
   let compression: Compression | undefined;
   const encoding = headers.get(headerEncoding);
   if (encoding !== null && encoding.toLowerCase() !== "identity") {
@@ -77,6 +90,7 @@ export function validateResponseWithCompression(
     }
   }
   return {
+    foundStatus,
     compression,
   };
 }

@@ -28,8 +28,8 @@ export {
   Interceptor,
   UnaryRequest,
   UnaryResponse,
-  StreamingRequest,
-  StreamingConn,
+  StreamRequest,
+  StreamResponse,
   encodeBinaryHeader,
   decodeBinaryHeader,
 } from "@bufbuild/connect-core";

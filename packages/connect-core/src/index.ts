@@ -31,8 +31,8 @@ export {
   Interceptor,
   UnaryRequest,
   UnaryResponse,
-  StreamingRequest,
-  StreamingConn,
+  StreamRequest,
+  StreamResponse,
 } from "./interceptor.js";
 
 // Symbols above should be relevant to end users.
@@ -71,6 +71,7 @@ export {
   transformAppend,
   transformPrepend,
   transformReadAllBytes,
+  transformNormalizeMessage,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,
@@ -82,4 +83,7 @@ export {
   sinkAll,
   sinkAllBytes,
   makeIterableAbortable,
+  WritableIterable,
+  createWritableIterable,
+  createAsyncIterable,
 } from "./async-iterable.js";

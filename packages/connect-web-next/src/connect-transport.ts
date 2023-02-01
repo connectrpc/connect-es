@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
+import {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
@@ -21,12 +21,12 @@ import type {
   JsonWriteOptions,
   Message,
   MethodInfo,
+  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
 import type {
   Interceptor,
-  StreamingConn,
   Transport,
   UnaryRequest,
   UnaryResponse,
@@ -34,15 +34,14 @@ import type {
 import {
   appendHeaders,
   Code,
-  ConnectError,
   connectErrorFromReason,
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
-  encodeEnvelopes,
-  EnvelopedMessage,
+  encodeEnvelope,
   runStreaming,
   runUnary,
+  StreamResponse,
 } from "@bufbuild/connect-core";
 import {
   createRequestHeader,
@@ -52,9 +51,7 @@ import {
   trailerDemux,
   validateResponse,
 } from "@bufbuild/connect-core/protocol-connect";
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 import { assertFetchApi } from "./assert-fetch-api.js";
-import { defer } from "./defer.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -127,17 +124,12 @@ export function createConnectTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>
-    ): Promise<UnaryResponse<O>> {
+    ): Promise<UnaryResponse<I, O>> {
       const { normalize, serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
         options.binaryOptions
-      );
-      const createConnectRequestHeader = createRequestHeader.bind(
-        null,
-        method.kind,
-        useBinaryFormat
       );
       try {
         return await runUnary<I, O>(
@@ -152,11 +144,16 @@ export function createConnectTransport(
               redirect: "error",
               mode: "cors",
             },
-            header: createConnectRequestHeader(timeoutMs, header),
+            header: createRequestHeader(
+              method.kind,
+              useBinaryFormat,
+              timeoutMs,
+              header
+            ),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
-          async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+          async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
             const response = await fetch(req.url, {
               ...req.init,
               headers: req.header,
@@ -178,7 +175,7 @@ export function createConnectTransport(
             const [demuxedHeader, demuxedTrailer] = trailerDemux(
               response.headers
             );
-            return <UnaryResponse<O>>{
+            return <UnaryResponse<I, O>>{
               stream: false,
               service,
               method,
@@ -202,19 +199,63 @@ export function createConnectTransport(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
-      header: HeadersInit | undefined
-    ): Promise<StreamingConn<I, O>> {
-      const { normalize, serialize, parse } = createClientMethodSerializers(
+      header: HeadersInit | undefined,
+      input: AsyncIterable<I>
+    ): Promise<StreamResponse<I, O>> {
+      const { serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
         options.binaryOptions
       );
-      const createConnectRequestHeader = createRequestHeader.bind(
-        null,
-        method.kind,
-        useBinaryFormat
-      );
+
+      async function* parseResponseBody(
+        body: ReadableStream<Uint8Array>,
+        trailerTarget: Headers
+      ) {
+        const reader = createEnvelopeReadableStream(body).getReader();
+        try {
+          let endStreamReceived = false;
+          for (;;) {
+            const result = await reader.read();
+            if (result.done) {
+              break;
+            }
+            const { flags, data } = result.value;
+            if ((flags & endStreamFlag) === endStreamFlag) {
+              endStreamReceived = true;
+              const endStream = endStreamFromJson(data);
+              if (endStream.error) {
+                throw endStream.error;
+              }
+              endStream.metadata.forEach((value, key) =>
+                trailerTarget.set(key, value)
+              );
+              continue;
+            }
+            yield parse(data);
+          }
+          if (!endStreamReceived) {
+            throw "missing EndStreamResponse";
+          }
+        } catch (e) {
+          throw connectErrorFromReason(e);
+        }
+      }
+
+      async function createRequestBody(
+        input: AsyncIterable<I>
+      ): Promise<Uint8Array> {
+        if (method.kind != MethodKind.ServerStreaming) {
+          throw "The fetch API does not support streaming request bodies";
+        }
+        const r = await input[Symbol.asyncIterator]().next();
+        if (r.done == true) {
+          throw "missing request message";
+        }
+        return encodeEnvelope(0, serialize(r.value));
+      }
+
       return runStreaming<I, O>(
         {
           stream: true,
@@ -228,107 +269,45 @@ export function createConnectTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createConnectRequestHeader(timeoutMs, header),
+          header: createRequestHeader(
+            method.kind,
+            useBinaryFormat,
+            timeoutMs,
+            header
+          ),
+          message: input,
         },
         async (req) => {
-          const pendingSend: EnvelopedMessage[] = [];
-          const responseHeader = defer<Headers>();
-          const responseReader =
-            defer<ReadableStreamDefaultReader<EnvelopedMessage>>();
-          const responseTrailer = defer<Headers>();
-          let endStreamReceived = false;
-          const conn: StreamingConn<I, O> = {
-            stream: true,
-            service,
-            method,
-            responseHeader,
-            responseTrailer,
-            closed: false,
-            send(message: PartialMessage<I>): Promise<void> {
-              if (this.closed) {
-                return Promise.reject(
-                  new ConnectError("cannot send, stream is already closed")
-                );
-              }
-              pendingSend.push({
-                flags: 0b00000000,
-                data: serialize(normalize(message)),
-              });
-              return Promise.resolve();
-            },
-            close(): Promise<void> {
-              if (this.closed) {
-                return Promise.reject(
-                  new ConnectError("cannot close, stream is already closed")
-                );
-              }
-              this.closed = true;
-              (async () => {
-                const response = await fetch(req.url, {
-                  ...req.init,
-                  headers: req.header,
-                  signal: req.signal,
-                  body: encodeEnvelopes(...pendingSend),
-                });
-                validateResponse(
-                  method.kind,
-                  useBinaryFormat,
-                  response.status,
-                  response.headers
-                );
-                responseHeader.resolve(response.headers);
-                if (response.body === null) {
-                  throw "missing response body";
-                }
-                responseReader.resolve(
-                  createEnvelopeReadableStream(response.body).getReader()
-                );
-              })().catch((reason) => {
-                const e = connectErrorFromReason(reason);
-                responseHeader.reject(e);
-                responseReader.reject(e);
-                responseTrailer.reject(e);
-              });
-              return Promise.resolve();
-            },
-            async read(): Promise<ReadableStreamReadResultLike<O>> {
-              try {
-                const reader = await responseReader;
-                const result = await reader.read();
-                if (result.done) {
-                  if (!endStreamReceived) {
-                    throw new ConnectError("missing EndStreamResponse");
-                  }
-                  return {
-                    done: true,
-                    value: undefined,
-                  };
-                }
-                if ((result.value.flags & endStreamFlag) === endStreamFlag) {
-                  endStreamReceived = true;
-                  const endStream = endStreamFromJson(result.value.data);
-                  responseTrailer.resolve(endStream.metadata);
-                  if (endStream.error) {
-                    throw endStream.error;
-                  }
-                  return {
-                    done: true,
-                    value: undefined,
-                  };
-                }
-                return {
-                  done: false,
-                  value: parse(result.value.data),
-                };
-              } catch (e) {
-                throw connectErrorFromReason(e);
-              }
-            },
-          };
-          return Promise.resolve(conn);
+          try {
+            const fRes = await fetch(req.url, {
+              ...req.init,
+              headers: req.header,
+              signal: req.signal,
+              body: await createRequestBody(req.message),
+            });
+            validateResponse(
+              method.kind,
+              useBinaryFormat,
+              fRes.status,
+              fRes.headers
+            );
+            if (fRes.body === null) {
+              throw "missing response body";
+            }
+            const trailer = new Headers();
+            const res: StreamResponse<I, O> = {
+              ...req,
+              header: fRes.headers,
+              trailer,
+              message: parseResponseBody(fRes.body, trailer),
+            };
+            return res;
+          } catch (e) {
+            throw connectErrorFromReason(e, Code.Internal);
+          }
         },
         options.interceptors
-      );
+      ).catch((e: unknown) => Promise.reject(connectErrorFromReason(e)));
     },
   };
 }
