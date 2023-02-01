@@ -19,8 +19,7 @@ import {
   Code,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 
 describe("unimplemented_server_streaming_method", function () {
@@ -31,9 +30,9 @@ describe("unimplemented_server_streaming_method", function () {
     }
   }
   const request = new Empty();
-  legacyDescribeTransports(legacyCrosstestTransports, (transport) => {
+  describeLegacyTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         for await (const response of client.unimplementedStreamingOutputCall(
           request
@@ -46,7 +45,7 @@ describe("unimplemented_server_streaming_method", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.unimplementedStreamingOutputCall(
         request,
         (response) => {

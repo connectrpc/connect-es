@@ -17,12 +17,11 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
 describe("large_unary", function () {
-  legacyDescribeTransports(legacyCrosstestTransports, (transport) => {
+  describeLegacyTransports((transport) => {
     const request = new SimpleRequest({
       responseSize: 314159,
       payload: {
@@ -30,13 +29,13 @@ describe("large_unary", function () {
       },
     });
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       const response = await client.unaryCall(request);
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.unaryCall(request, (err, response) => {
         expect(err).toBeUndefined();
         expect(response.payload).toBeDefined();

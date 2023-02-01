@@ -19,15 +19,14 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
-import { legacyDescribeTransports } from "../helpers/legacy-describe-transports.js";
-import { legacyCrosstestTransports } from "../helpers/legacy-crosstestserver.js";
+import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 import {
   StreamingOutputCallRequest,
   StreamingOutputCallResponse,
 } from "../gen/grpc/testing/messages_pb.js";
 
 describe("custom_metadata_server_streaming", function () {
-  legacyDescribeTransports(legacyCrosstestTransports, (transport) => {
+  describeLegacyTransports((transport) => {
     const size = 314159;
     const binaryValue = new Uint8Array([0xab, 0xab, 0xab]);
     const requestHeaders = {
@@ -55,7 +54,7 @@ describe("custom_metadata_server_streaming", function () {
       }
     }
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       let responseHeaders: Headers | undefined;
       let responseTrailers: Headers | undefined;
       for await (const response of client.streamingOutputCall(request, {
@@ -73,7 +72,7 @@ describe("custom_metadata_server_streaming", function () {
       expectResponseTrailers(responseTrailers);
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       let responseHeaders: Headers | undefined;
       let responseTrailers: Headers | undefined;
       client.streamingOutputCall(
