@@ -13,13 +13,11 @@
 // limitations under the License.
 
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
-import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import {
   createBiDiStreamingFn,
   createClientStreamingFn,
   createServerStreamingFn,
 } from "./promise-client.js";
-import { Code } from "./code.js";
 import { stubTransport } from "./transport-stub.js";
 
 const TestService = {
@@ -47,6 +45,20 @@ const TestService = {
 } as const;
 
 describe("createClientStreamingFn()", function () {
+  const inputLog: string[] = [];
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async function* input() {
+    try {
+      inputLog.push("yield 1");
+      yield new Int32Value({
+        value: 1,
+      });
+    } finally {
+      inputLog.push("finally");
+    }
+  }
+
   it("works as expected on the happy path", async () => {
     const transport = stubTransport({});
     const fn = createClientStreamingFn(
@@ -54,70 +66,16 @@ describe("createClientStreamingFn()", function () {
       TestService,
       TestService.methods.clientStream
     );
-    const call = await fn();
-
-    let sendOk = await call.send(new Int32Value({ value: 123 }));
-    expect(sendOk).toBe(true);
-    expect(call.sendError).toBeUndefined();
-
-    sendOk = await call.close();
-    expect(sendOk).toBe(true);
-    expect(call.sendError).toBeUndefined();
-
-    const res = await call.receive();
-    expect(res).toBeDefined();
-  });
-  it("works as expected on early close on the server", async () => {
-    const transport = stubTransport({
-      streamSend: [
-        null,
-        new ConnectError("stream ended, cannot write", Code.Aborted),
-      ],
-      streamClose: new ConnectError("stream ended, cannot close", Code.Aborted),
-      streamRead: [new ConnectError("server message", Code.ResourceExhausted)],
-    });
-    const fn = createClientStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.clientStream
-    );
-    const call = await fn();
-
-    let sendOk = await call.send(new Int32Value({ value: 123 }));
-    expect(sendOk).toBe(true);
-    expect(call.sendError).toBeUndefined();
-
-    sendOk = await call.send(new Int32Value({ value: 123 }));
-    expect(sendOk).toBe(false);
-    expect(call.sendError).toBeDefined();
-    expect(call.sendError?.code).toBe(Code.Aborted);
-    expect(call.sendError?.message).toBe(
-      "[aborted] stream ended, cannot write"
-    );
-
-    sendOk = await call.close();
-    expect(sendOk).toBe(false);
-    expect(call.sendError).toBeDefined();
-    expect(call.sendError?.code).toBe(Code.Aborted);
-    expect(call.sendError?.message).toBe(
-      "[aborted] stream ended, cannot close"
-    );
-
-    try {
-      await call.receive();
-      fail("expected error");
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConnectError);
-      const err = connectErrorFromReason(e);
-      expect(err.message).toBe("[resource_exhausted] server message");
-    }
+    const res = await fn(input());
+    expect(res).toBeInstanceOf(StringValue);
+    expect(inputLog).toEqual(["yield 1", "finally"]);
   });
 });
 
 describe("createServerStreamingFn()", function () {
   it("works as expected on the happy path", async () => {
     const transport = stubTransport({
-      streamRead: [null, null, null],
+      streamOutput: [null, null, null],
     });
     const fn = createServerStreamingFn(
       transport,
@@ -130,152 +88,35 @@ describe("createServerStreamingFn()", function () {
     }
     expect(receivedMessages.length).toBe(3);
   });
-  it("works as expected on early close on the server", async () => {
-    const transport = stubTransport({
-      streamSend: [
-        new ConnectError("stream ended, cannot write", Code.Aborted),
-      ],
-      streamClose: new ConnectError("stream ended, cannot close", Code.Aborted),
-      streamRead: [new ConnectError("server message", Code.ResourceExhausted)],
-    });
-    const fn = createServerStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.serverStream
-    );
-    try {
-      for await (const res of fn(new Int32Value({ value: 123 }))) {
-        fail("expected error");
-        expect(res).toBeDefined(); // only to satisfy type checks
-      }
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConnectError);
-      const err = connectErrorFromReason(e);
-      expect(err.message).toBe("[resource_exhausted] server message");
-    }
-  });
-  it("does not ignore send errors other than Code.Aborted", async () => {
-    const transport = stubTransport({
-      streamSend: [new ConnectError("client message", Code.InvalidArgument)],
-    });
-    const fn = createServerStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.serverStream
-    );
-    try {
-      for await (const res of fn(new Int32Value({ value: 123 }))) {
-        fail("expected error");
-        expect(res).toBeDefined(); // only to satisfy type checks
-      }
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConnectError);
-      const err = connectErrorFromReason(e);
-      expect(err.message).toBe("[invalid_argument] client message");
-    }
-  });
-  it("does not ignore close errors other than Code.Aborted", async () => {
-    const transport = stubTransport({
-      streamClose: new ConnectError("client message", Code.InvalidArgument),
-    });
-    const fn = createServerStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.serverStream
-    );
-    try {
-      for await (const res of fn(new Int32Value({ value: 123 }))) {
-        fail("expected error");
-        expect(res).toBeDefined(); // only to satisfy type checks
-      }
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConnectError);
-      const err = connectErrorFromReason(e);
-      expect(err.message).toBe("[invalid_argument] client message");
-    }
-  });
 });
 
 describe("createBiDiStreamingFn()", () => {
   it("works as expected on the happy path", async () => {
-    const transport = stubTransport({
-      streamSend: [null, null, null],
-      streamRead: [null, null, null],
-    });
-    const fn = createBiDiStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.bidiStream
-    );
-    const call = await fn();
+    const inputLog: string[] = [];
 
-    let sendOk = await call.send(new Int32Value({ value: 123 }));
-    expect(sendOk).toBe(true);
-    expect(call.sendError).toBeUndefined();
-
-    let res = await call.receive();
-    expect(res).toBeInstanceOf(StringValue);
-
-    sendOk = await call.send(new Int32Value({ value: 123 }));
-    expect(sendOk).toBe(true);
-    expect(call.sendError).toBeUndefined();
-
-    res = await call.receive();
-    expect(res).toBeInstanceOf(StringValue);
-
-    sendOk = await call.close();
-    expect(sendOk).toBe(true);
-    expect(call.sendError).toBeUndefined();
-
-    res = await call.receive();
-    expect(res).toBeInstanceOf(StringValue);
-
-    res = await call.receive();
-    expect(res).toBeNull();
-  });
-  it("works as expected on early close on the server", async () => {
-    const transport = stubTransport({
-      streamSend: [
-        null,
-        new ConnectError("stream ended, cannot write", Code.Aborted),
-      ],
-      streamClose: new ConnectError("stream ended, cannot close", Code.Aborted),
-      streamRead: [new ConnectError("server message", Code.ResourceExhausted)],
-    });
-    const fn = createBiDiStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.bidiStream
-    );
-    const call = await fn();
-
-    let sendOk = await call.send(new Int32Value({ value: 123 }));
-    expect(sendOk).toBe(true);
-    expect(call.sendError).toBeUndefined();
-
-    sendOk = await call.send(new Int32Value({ value: 123 }));
-    expect(sendOk).toBe(false);
-    expect(call.sendError).toBeDefined();
-    expect(call.sendError?.code).toBe(Code.Aborted);
-    expect(call.sendError?.message).toBe(
-      "[aborted] stream ended, cannot write"
-    );
-
-    sendOk = await call.close();
-    expect(sendOk).toBe(false);
-    expect(call.sendError).toBeDefined();
-    expect(call.sendError?.code).toBe(Code.Aborted);
-    expect(call.sendError?.message).toBe(
-      "[aborted] stream ended, cannot close"
-    );
-
-    try {
-      await call.receive();
-      fail("expected error");
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConnectError);
-      const err = connectErrorFromReason(e);
-      expect(err.message).toBe("[resource_exhausted] server message");
+    // eslint-disable-next-line @typescript-eslint/require-await
+    async function* input() {
+      try {
+        inputLog.push("yield 1");
+        yield new Int32Value({
+          value: 1,
+        });
+      } finally {
+        inputLog.push("finally");
+      }
     }
+
+    const transport = stubTransport({});
+    const fn = createBiDiStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.bidiStream
+    );
+
+    for await (const res of fn(input())) {
+      expect(res).toBeInstanceOf(StringValue);
+    }
+
+    expect(inputLog).toEqual(["yield 1", "finally"]);
   });
 });

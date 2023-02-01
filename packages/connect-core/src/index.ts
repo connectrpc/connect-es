@@ -31,8 +31,8 @@ export {
   Interceptor,
   UnaryRequest,
   UnaryResponse,
-  StreamingRequest,
-  StreamingConn,
+  StreamRequest,
+  StreamResponse,
 } from "./interceptor.js";
 
 // Symbols above should be relevant to end users.

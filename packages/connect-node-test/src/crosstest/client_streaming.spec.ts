@@ -25,18 +25,21 @@ describe("client_streaming", () => {
 
   servers.describeTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
-      const stream = await client.streamingInputCall();
-      for (const size of sizes) {
-        await stream.send({
-          payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
-          expectCompressed: {
-            value: false,
-          },
-        });
+      async function* input() {
+        for (const size of sizes) {
+          yield {
+            payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
+            expectCompressed: {
+              value: false,
+            },
+          };
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1));
       }
-      await stream.close();
-      const { aggregatedPayloadSize } = await stream.receive();
+      const client = createPromiseClient(TestService, transport());
+      const { aggregatedPayloadSize } = await client.streamingInputCall(
+        input()
+      );
       expect(aggregatedPayloadSize).toBe(sizes.reduce((p, c) => p + c, 0));
     });
     it("with callback client", function (done) {

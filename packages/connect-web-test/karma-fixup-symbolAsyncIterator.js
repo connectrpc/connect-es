@@ -12,24 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from "./connect-transport.js";
-export * from "./grpc-web-transport.js";
-export {
-  createCallbackClient,
-  CallbackClient,
-  createPromiseClient,
-  PromiseClient,
-  CallOptions,
-  Transport,
-  ConnectError,
-  connectErrorDetails,
-  connectErrorFromReason,
-  Code,
-  Interceptor,
-  UnaryRequest,
-  UnaryResponse,
-  StreamRequest,
-  StreamResponse,
-  encodeBinaryHeader,
-  decodeBinaryHeader,
-} from "@bufbuild/connect-core";
+/* eslint-disable */
+
+// As long as for-await is transpiled to iterators, Symbol.asyncIterator is
+// only required to identify async iterables, and we only need to provide the
+// symbol.
+
+(function () {
+  if (!Symbol.asyncIterator) {
+    Symbol.asyncIterator = Symbol("fake-async-iterator");
+  }
+})();

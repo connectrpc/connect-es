@@ -55,7 +55,10 @@ export function createNodeHttp1Client(
   ): Promise<UniversalClientResponse> {
     const sentinel = createSentinel();
     return new Promise<UniversalClientResponse>((resolve, reject) => {
-      sentinel.catch(reject);
+      sentinel.catch((e) => {
+        reject(e);
+      });
+
       h1Request(
         sentinel,
         req.url,
@@ -124,7 +127,9 @@ export function createNodeHttp2Client(
   ): Promise<UniversalClientResponse> {
     const sentinel = createSentinel();
     return new Promise<UniversalClientResponse>((resolve, reject) => {
-      sentinel.catch(reject);
+      sentinel.catch((e) => {
+        reject(e);
+      });
       h2Request(
         sentinel,
         sessionHolder,
@@ -297,19 +302,25 @@ function h2Request(
     !sessionHolder.lastSession.closed &&
     !sessionHolder.lastSession.destroyed
   ) {
-    return onConnectedSession(sessionHolder.lastSession);
+    return h2ConnectedSession(sessionHolder.lastSession);
   }
 
   const connectingSession = http2.connect(
     sessionHolder.authority,
     sessionHolder.options,
-    onConnectedSession
+    h2ConnectedSession
   );
-  connectingSession.on("error", sentinel.reject);
+  // connectingSession.on("error", sentinel.reject);
+  connectingSession.on("error", h2SessionConnectError);
 
-  function onConnectedSession(session: http2.ClientHttp2Session): void {
+  function h2SessionConnectError(e: unknown) {
+    sentinel.reject(e);
+  }
+
+  function h2ConnectedSession(session: http2.ClientHttp2Session): void {
     sessionHolder.lastSession = session;
     session.off("error", sentinel.reject);
+    session.off("error", h2SessionConnectError);
     session.on("error", sentinel.reject);
     sentinel.finally(() => {
       session.off("error", sentinel.reject);
@@ -336,9 +347,9 @@ function h2Request(
       }
       sentinel.reject(e);
     });
-    stream.on("abort", () =>
-      sentinel.reject(new ConnectError("node request aborted", Code.Aborted))
-    );
+    stream.on("abort", function h2StreamAbort() {
+      sentinel.reject(new ConnectError("node request aborted", Code.Aborted));
+    });
     onStream(stream);
   }
 }

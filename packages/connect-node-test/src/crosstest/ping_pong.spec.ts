@@ -59,22 +59,32 @@ describe("ping_pong", () => {
     (transport) => {
       it("with promise client", async function () {
         const client = createPromiseClient(TestService, transport());
-        const stream = await client.fullDuplexCall();
-        for (const size of sizes) {
-          await stream.send({
-            payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
-            responseParameters: [
-              {
-                size,
-                intervalUs: 0,
-              },
-            ],
-          });
-          const res = await stream.receive();
-          expect(res?.payload?.body.length).toBe(size);
-          expect(res?.payload?.type).toBe(PayloadType.COMPRESSABLE);
+
+        // eslint-disable-next-line @typescript-eslint/require-await
+        async function* input() {
+          for (const size of sizes) {
+            yield {
+              payload: interop.makeServerPayload(
+                PayloadType.COMPRESSABLE,
+                size
+              ),
+              responseParameters: [
+                {
+                  size,
+                  intervalUs: 0,
+                },
+              ],
+            };
+          }
         }
-        await stream.close();
+        let i = 0;
+        for await (const res of client.fullDuplexCall(input())) {
+          const size = sizes[i];
+          expect(res.payload?.body.length).toBe(size);
+          expect(res.payload?.type).toBe(PayloadType.COMPRESSABLE);
+          i++;
+        }
+        expect(i).toBe(sizes.length);
       });
       it("with callback client", function (done) {
         // TODO(TCN-679, TCN-568) need callback clients

@@ -20,15 +20,14 @@ import {
   createAsyncIterable,
   createMethodSerializationLookup,
   createMethodUrl,
-  createWritableIterable,
   Interceptor,
   pipe,
   pipeTo,
   runStreaming,
   runUnary,
   sinkAllBytes,
-  StreamingConn,
-  StreamingRequest,
+  StreamRequest,
+  StreamResponse,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,
@@ -61,8 +60,6 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
-import { defer } from "./private/defer.js";
 import { jsonParse } from "./private/io.js";
 import {
   NodeHttp1TransportOptions,
@@ -139,7 +136,7 @@ export function createConnectTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>
-    ): Promise<UnaryResponse<O>> {
+    ): Promise<UnaryResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
@@ -164,7 +161,7 @@ export function createConnectTransport(
             message instanceof method.I ? message : new method.I(message),
           signal: signal ?? new AbortController().signal,
         },
-        async (req: UnaryRequest<I>): Promise<UnaryResponse<O>> => {
+        async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           let requestBody = serialization
             .getI(opt.useBinaryFormat)
             .serialize(req.message);
@@ -181,8 +178,8 @@ export function createConnectTransport(
             url: req.url,
             method: "POST",
             header: req.header,
-            body: createAsyncIterable([requestBody]),
             signal: req.signal,
+            body: createAsyncIterable([requestBody]),
           });
           const { compression, isConnectUnaryError } =
             validateResponseWithCompression(
@@ -213,7 +210,7 @@ export function createConnectTransport(
               appendHeaders(header, trailer)
             );
           }
-          return <UnaryResponse<O>>{
+          return <UnaryResponse<I, O>>{
             stream: false,
             service,
             method,
@@ -236,8 +233,9 @@ export function createConnectTransport(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
-      header: HeadersInit | undefined
-    ): Promise<StreamingConn<I, O>> {
+      header: HeadersInit | undefined,
+      input: AsyncIterable<I>
+    ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
@@ -266,16 +264,19 @@ export function createConnectTransport(
             opt.acceptCompression,
             opt.sendCompression
           ),
+          message: pipe(input, transformNormalizeMessage(method.I), {
+            propagateDownStreamError: true,
+          }),
         },
         // eslint-disable-next-line @typescript-eslint/require-await
-        async (req: StreamingRequest<I, O>) => {
-          const writable = createWritableIterable<PartialMessage<I>>();
-          const universalResponsePromise = opt.client({
+        async (req: StreamRequest<I, O>) => {
+          const uRes = await opt.client({
             url: req.url,
             method: "POST",
             header: req.header,
+            signal: req.signal,
             body: pipe(
-              writable,
+              req.message,
               transformNormalizeMessage(method.I),
               transformSerializeEnvelope(
                 serialization.getI(opt.useBinaryFormat),
@@ -288,92 +289,68 @@ export function createConnectTransport(
               transformJoinEnvelopes(),
               { propagateDownStreamError: true }
             ),
-            signal: req.signal,
           });
-          const responseTrailer = defer<Headers>();
-          let outputIt: AsyncIterator<O> | undefined;
-          const conn: StreamingConn<I, O> = {
+          const { compression } = validateResponseWithCompression(
+            method.kind,
+            opt.useBinaryFormat,
+            opt.acceptCompression,
+            uRes.status,
+            uRes.header
+          );
+          const res: StreamResponse<I, O> = {
             ...req,
-            responseHeader: universalResponsePromise.then((r) => r.header),
-            responseTrailer: responseTrailer,
-            closed: false,
-            async send(message: PartialMessage<I>): Promise<void> {
-              await writable.write(message);
-            },
-            async close(): Promise<void> {
-              await writable.close();
-            },
-            async read(): Promise<ReadableStreamReadResultLike<O>> {
-              if (outputIt === undefined) {
-                const uRes = await universalResponsePromise;
-                const { compression } = validateResponseWithCompression(
-                  method.kind,
-                  opt.useBinaryFormat,
-                  opt.acceptCompression,
-                  uRes.status,
-                  uRes.header
-                );
-                outputIt = pipe(
-                  uRes.body,
-                  transformSplitEnvelope(opt.readMaxBytes),
-                  transformDecompressEnvelope(
-                    compression ?? null,
-                    opt.readMaxBytes
-                  ),
-                  transformParseEnvelope(
-                    serialization.getO(opt.useBinaryFormat),
-                    endStreamFlag,
-                    endStreamSerialization
-                  ),
-                  async function* (iterable) {
-                    let endStreamReceived = false;
-                    for await (const chunk of iterable) {
-                      if (chunk.end) {
-                        if (endStreamReceived) {
-                          const e = new ConnectError(
-                            "protocol error: received extra EndStreamResponse",
-                            Code.InvalidArgument
-                          );
-                          responseTrailer.reject(e);
-                          throw e;
-                        }
-                        endStreamReceived = true;
-                        if (chunk.value.error) {
-                          throw chunk.value.error;
-                        }
-                        responseTrailer.resolve(chunk.value.metadata);
-                        continue;
-                      }
-                      if (endStreamReceived) {
-                        const e = new ConnectError(
-                          "protocol error: received extra message after EndStreamResponse",
-                          Code.InvalidArgument
-                        );
-                        responseTrailer.reject(e);
-                        throw e;
-                      }
-                      yield chunk.value;
-                    }
-                    if (!endStreamReceived) {
-                      const e = new ConnectError(
-                        "protocol error: missing EndStreamResponse",
+            header: uRes.header,
+            trailer: new Headers(),
+            message: pipe(
+              uRes.body,
+              transformSplitEnvelope(opt.readMaxBytes),
+              transformDecompressEnvelope(
+                compression ?? null,
+                opt.readMaxBytes
+              ),
+              transformParseEnvelope(
+                serialization.getO(opt.useBinaryFormat),
+                endStreamFlag,
+                endStreamSerialization
+              ),
+              async function* (iterable) {
+                let endStreamReceived = false;
+                for await (const chunk of iterable) {
+                  if (chunk.end) {
+                    if (endStreamReceived) {
+                      throw new ConnectError(
+                        "protocol error: received extra EndStreamResponse",
                         Code.InvalidArgument
                       );
-                      responseTrailer.reject(e);
-                      throw e;
                     }
-                  },
-                  { propagateDownStreamError: true }
-                )[Symbol.asyncIterator]();
-              }
-              const r = await outputIt.next();
-              if (r.done === true) {
-                return { done: true, value: undefined };
-              }
-              return { done: false, value: r.value };
-            },
+                    endStreamReceived = true;
+                    if (chunk.value.error) {
+                      throw chunk.value.error;
+                    }
+                    chunk.value.metadata.forEach((value, key) =>
+                      res.trailer.set(key, value)
+                    );
+                    continue;
+                  }
+                  if (endStreamReceived) {
+                    throw new ConnectError(
+                      "protocol error: received extra message after EndStreamResponse",
+                      Code.InvalidArgument
+                    );
+                  }
+                  yield chunk.value;
+                }
+                if (!endStreamReceived) {
+                  throw new ConnectError(
+                    "protocol error: missing EndStreamResponse",
+                    Code.InvalidArgument
+                  );
+                }
+              },
+              { propagateDownStreamError: true }
+            ),
           };
-          return conn;
+          return res;
         },
         options.interceptors
       );

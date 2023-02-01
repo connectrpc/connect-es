@@ -25,7 +25,7 @@ module.exports = function(config) {
       define: {},
       plugins: [],
       tsconfig: "./tsconfig.json",
-      target: "es2016",
+      target: "es2015",
       singleBundle: true,
     },
 

@@ -41,6 +41,15 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
   } else if (
     chain.some(
       (p) =>
+        p.code == "ERR_STREAM_DESTROYED" || p.code == "ERR_HTTP2_INVALID_STREAM"
+    )
+  ) {
+    // A handler whose stream is suddenly destroyed usually means the client
+    // hung up. This behavior is triggered by the crosstest "cancel_after_begin".
+    code = Code.Aborted;
+  } else if (
+    chain.some(
+      (p) =>
         p.syscall === "getaddrinfo" &&
         (p.code == "ENOTFOUND" || p.code == "EAI_AGAIN")
     )
