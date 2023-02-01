@@ -17,14 +17,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import {
-  ConverseRequest,
-  ConverseResponse,
-  IntroduceRequest,
-  IntroduceResponse,
-  SayRequest,
-  SayResponse,
-} from "./eliza_pb.js";
+import { ConverseRequest, ConverseResponse, IntroduceRequest, IntroduceResponse, SayRequest, SayResponse } from "./eliza_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -76,5 +69,6 @@ export const ElizaService = {
       O: IntroduceResponse,
       kind: MethodKind.ServerStreaming,
     },
-  },
+  }
 } as const;
+
