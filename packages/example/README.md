@@ -39,7 +39,7 @@ The file `src/client.ts` implements a CLI client that you can run in Node.js.
 $ npm run client
 ```
 
-```shell
+```
 What is your name?
 > Donald
 Hi Donald, I'm eliza
