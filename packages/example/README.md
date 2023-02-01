@@ -9,13 +9,8 @@ You can find the protocol buffer schema [on the BSR](https://buf.build/bufbuild/
 
 ## Run the example
 
-### Prerequisites
-
-For this example, you will need [Node 18+](https://nodejs.org/en/download/) and [Buf](https://docs.buf.build/installation) installed.  
-
-### Setup
-
-First, download the source locally and install dependencies:
+You will need [Node 18+](https://nodejs.org/en/download/) installed. Download the example project and install 
+its dependencies:
 
 ```shell
 curl -L https://github.com/bufbuild/connect-web/archive/refs/heads/main.zip > connect-web-main.zip
@@ -25,51 +20,59 @@ cd connect-web-main/packages/example
 npm install
 ```
 
-### Generate code
+Next, start the Connect-Node server:
 
-The next step is to generate our service definitions and message types from the Eliza Protobuf file mentioned above.
+```shell
+npm start
+```
 
-To use [`buf`](https://github.com/bufbuild/buf) to generate the code, simply run `npm run buf:generate` in this directory. 
-The [`buf.gen.yaml` file](./buf.gen.yaml) contains the plugin configuration. 
+That's it!  You should now be able to open a web browser to http://localhost:8080 and see the example running locally.
+
+![Screenshot](README.png)
+
+
+## Using Node.js as a client
+
+The file `src/client.ts` implements a CLI client that you can run in Node.js. 
+
+```shell
+$ npm run client
+```
+
+```shell
+What is your name?
+> Donald
+Hi Donald, I'm eliza
+Before we begin, Donald, let me tell you something about myself.
+I'm a Rogerian psychotherapist.
+How are you feeling today?
+> █
+```
+
+
+## Generate code
+
+If you make changes to `eliza.proto`, make sure to re-generate the code. For example, you could rename a field, or
+add a procedure. If you have the buf CLI installed, simply run `npm run buf:generate` in this directory. 
+
+This will generate the service definitions and message types into the directory `src/gen`. The 
+[`buf.gen.yaml` file](./buf.gen.yaml) contains the plugin configuration. 
 
 Of course, you can use `protoc` as well if desired:
 
 ```bash
 protoc -I . eliza.proto \
   --plugin=protoc-gen-es=../../node_modules/.bin/protoc-gen-es \
-  --es_out src \
+  --es_out src/gen \
   --es_opt target=ts \
   --plugin=protoc-gen-connect-web=../../node_modules/.bin/protoc-gen-connect-web \
-  --connect-web_out src \
+  --connect-web_out src/gen \
   --connect-web_opt target=ts
 ```
-
-### Start the server
-
-Next, start the Connect-Node server:
-
-```shell
-npm run server
-```
-
-### Start the client
-
-Finally, in another terminal window, start the client:
-
-```shell
-npm run client
-```
-
-That's it!  You should now be able to open a web browser to http://localhost:3000 and see the example running locally.
-
-![Screenshot](README.png)
 
 ## More examples
 
 To get started, head over to the [docs](https://connect.build/docs/web/getting-started)
-for a tutorial on Connect-Web. You will also find API documentation and best practices there.
+for a tutorial. You will also find API documentation and best practices there.
 For using connect-web with your favorite framework, take a look at
 [connect-web-integration](https://github.com/bufbuild/connect-web-integration).
-
-Documentation for Connect-Node is coming soon!
-

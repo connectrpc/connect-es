@@ -4,9 +4,9 @@
   "type": "module",
   "scripts": {
     "buf:generate": "buf generate",
-    "client": "esbuild client/app.ts --servedir=www --outdir=www/js --bundle --serve=3000",
-    "server": "node --loader ts-node/esm server/app.ts",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "start": "tsx src/server.ts",
+    "client": "tsx src/client.ts"
   },
   "engines": {
     "node": ">=14"
@@ -15,9 +15,8 @@
     "@bufbuild/connect-node": "^0.6.0",
     "@bufbuild/connect-web": "^0.6.0",
     "@bufbuild/protobuf": "^1.0.0",
-    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "ts-node": "^10.9.1"
+    "tsx": "^3.12.2"
   },
   "devDependencies": {
     "@bufbuild/protoc-gen-connect-web": "^0.6.0",

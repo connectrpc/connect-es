@@ -10,6 +10,7 @@ module.exports = {
   ignorePatterns: [
     "packages/connect-web-bench/src/gen/grpcweb/**/*",
     "packages/connect-core/src/protocol-grpc/gen/**/*",
+    "packages/example/www/webclient.js",
     "packages/*/dist/**",
     "node_modules/**",
   ],

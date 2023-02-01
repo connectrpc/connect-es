@@ -1,6 +1,5 @@
 node_modules
 /packages/connect-core/src/protocol-grpc/gen/*.ts
-/packages/example/gen/*
 /packages/*/bin
 /packages/*/dist
 /packages/*/src/gen

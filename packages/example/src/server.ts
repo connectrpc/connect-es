@@ -13,10 +13,11 @@
 // limitations under the License.
 
 import { createHandlers } from "@bufbuild/connect-node";
-import { ElizaService } from "../gen/eliza_connectweb.js";
+import { ElizaService } from "./gen/eliza_connectweb.js";
 import http from "http";
 import express from "express";
-import cors from "cors";
+import * as esbuild from "esbuild";
+import { stdout } from "process";
 
 const handlers = createHandlers(ElizaService, {
   say(req) {
@@ -26,10 +27,13 @@ const handlers = createHandlers(ElizaService, {
   },
   async *introduce(req) {
     yield { sentence: `Hi ${req.name}, I'm eliza` };
+    await delay(250);
     yield {
       sentence: `Before we begin, ${req.name}, let me tell you something about myself.`,
     };
+    await delay(150);
     yield { sentence: `I'm a Rogerian psychotherapist.` };
+    await delay(150);
     yield { sentence: `How are you feeling today?` };
   },
   async *converse(reqs) {
@@ -41,10 +45,23 @@ const handlers = createHandlers(ElizaService, {
   },
 });
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 const app = express();
-app.use(cors());
+app.use(express.static("www"));
+
+void esbuild.build({
+  entryPoints: ["src/webclient.ts"],
+  bundle: true,
+  outdir: "www",
+});
 
 for (const handler of handlers) {
   app.post(handler.requestPath, handler);
 }
-http.createServer({}, app).listen(8080);
+http.createServer({}, app).listen(8080, () => {
+  stdout.write("The server is listening on http://localhost:8080\n");
+  stdout.write("Run `npm run client` for a terminal client.\n");
+});
