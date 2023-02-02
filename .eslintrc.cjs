@@ -11,6 +11,7 @@ module.exports = {
     "packages/connect-web-bench/src/gen/grpcweb/**/*",
     "packages/connect-core/src/protocol-grpc/gen/**/*",
     "packages/connect-node-test/connect-node-h1-server.mjs", // https://github.com/eslint/eslint/issues/14156
+    "packages/example/www/webclient.js",
     "packages/*/dist/**",
     "node_modules/**",
   ],

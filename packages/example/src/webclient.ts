@@ -16,14 +16,14 @@ import {
   createConnectTransport,
   createPromiseClient,
 } from "@bufbuild/connect-web";
-import { ElizaService } from "./eliza_connectweb";
+import { ElizaService } from "./gen/eliza_connectweb.js";
 
 const root = document.querySelector<HTMLElement>("#root");
 const input = document.createElement("input");
 
 void (async () => {
   const transport = createConnectTransport({
-    baseUrl: "https://demo.connect.build",
+    baseUrl: "/",
   });
 
   const client = createPromiseClient(ElizaService, transport);

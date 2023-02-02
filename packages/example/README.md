@@ -1,15 +1,16 @@
 # Code example
 
-This directly contains a simple, framework-independent example for Connect-Web.
-It is a web interface for [ELIZA](https://en.wikipedia.org/wiki/ELIZA), a very
-simple natural language processor built in the 1960s to represent a 
-psychotherapist. The ELIZA service is provided by us at [demo.connect.build](https://demo.connect.build).
-You can find the protocol buffer schema [on the BSR](https://buf.build/bufbuild/eliza/tree/main:buf/connect/demo/eliza/v1/eliza.proto).
+This directory contains a simple example for running a Connect-Web client with a Connect-Node server using [Express](https://expressjs.com/).
 
+The application is a web interface for a stripped-down version of [ELIZA](https://en.wikipedia.org/wiki/ELIZA), a very
+simple natural language processor built in the 1960s to represent a psychotherapist. 
+
+You can find the protocol buffer schema [on the BSR](https://buf.build/bufbuild/eliza/tree/main:buf/connect/demo/eliza/v1/eliza.proto).
 
 ## Run the example
 
-To run this example in your browser, simply run the following commands:
+You will need [Node 18](https://nodejs.org/en/download/) installed. Download the example project and install 
+its dependencies:
 
 ```shell
 curl -L https://github.com/bufbuild/connect-web/archive/refs/heads/main.zip > connect-web-main.zip
@@ -17,32 +18,57 @@ unzip connect-web-main.zip 'connect-web-main/packages/example/*'
 
 cd connect-web-main/packages/example
 npm install
-npm run start
 ```
+
+Next, start the Connect-Node server:
+
+```shell
+npm start
+```
+
+That's it!  You should now be able to open a web browser to http://localhost:8080 and see the example running locally.
 
 ![Screenshot](README.png)
 
-## Generate code yourself
 
-If you want to use [`buf`](https://github.com/bufbuild/buf) to generate the code, 
-simply run `buf generate` in this directory. [`buf.gen.yaml`](./buf.gen.yaml) 
-contains the plugin configuration. 
+## Using Node.js as a client
 
-Of course, you can use `protoc` as well:
+The file `src/client.ts` implements a CLI client that you can run in Node.js. 
+
+```shell
+$ npm run client
+```
+
+```
+What is your name?
+> John
+Hi John, I'm eliza
+Before we begin, John, let me tell you something about myself.
+I'm a Rogerian psychotherapist.
+How are you feeling today?
+> █
+```
+
+
+## Generate code
+
+If you make changes to `eliza.proto`, make sure to re-generate the code. For example, you could rename a field, or
+add a procedure. If you have the buf CLI installed, simply run `npm run buf:generate` in this directory. 
+
+This will generate the service definitions and message types into the directory `src/gen`. The 
+[`buf.gen.yaml` file](./buf.gen.yaml) contains the plugin configuration. 
+
+Of course, you can use `protoc` as well if desired:
 
 ```bash
 protoc -I . eliza.proto \
   --plugin=protoc-gen-es=../../node_modules/.bin/protoc-gen-es \
-  --es_out src \
+  --es_out src/gen \
   --es_opt target=ts \
   --plugin=protoc-gen-connect-web=../../node_modules/.bin/protoc-gen-connect-web \
-  --connect-web_out src \
+  --connect-web_out src/gen \
   --connect-web_opt target=ts
 ```
-
-If you prefer JavaScript output, simply remove the two lines with `target=ts`
-([explanation](https://github.com/bufbuild/connect-web/tree/main/packages/protoc-gen-connect-web#plugin-options)).
-
 
 ## More examples
 
