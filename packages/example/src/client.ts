@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import {
-  createGrpcTransport,
+  createConnectTransport,
   createPromiseClient,
 } from "@bufbuild/connect-node";
 import { ElizaService } from "./gen/eliza_connectweb.js";
@@ -23,7 +23,7 @@ import * as readline from "node:readline/promises";
 const rl = readline.createInterface(stdin, stdout);
 
 void (async () => {
-  const transport = createGrpcTransport({
+  const transport = createConnectTransport({
     httpVersion: "1.1",
     baseUrl: "http://localhost:8080",
   });
