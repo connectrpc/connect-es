@@ -84,7 +84,7 @@ $(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-web-next $(GE
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.json $(shell find packages/example/client -name '*.ts')
+$(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.json $(shell find packages/example/src -name '*.ts')
 	npm run -w packages/example lint
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -115,7 +115,7 @@ $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-co
 	@touch $(@)
 
 $(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web packages/example/buf.gen.yaml $(shell find packages/example -name '*.proto')
-	rm -rf packages/example/gen/*_pb.ts packages/example/gen/*_connectweb.ts
+	rm -rf packages/example/src/gen/*_pb.ts packages/example/src/gen/*_connectweb.ts
 	npm run -w packages/example buf:generate
 	@mkdir -p $(@D)
 	@touch $(@)
