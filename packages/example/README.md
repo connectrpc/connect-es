@@ -9,7 +9,7 @@ You can find the protocol buffer schema [on the BSR](https://buf.build/bufbuild/
 
 ## Run the example
 
-You will need [Node 18+](https://nodejs.org/en/download/) installed. Download the example project and install 
+You will need [Node 18](https://nodejs.org/en/download/) installed. Download the example project and install 
 its dependencies:
 
 ```shell
@@ -41,9 +41,9 @@ $ npm run client
 
 ```
 What is your name?
-> Donald
-Hi Donald, I'm eliza
-Before we begin, Donald, let me tell you something about myself.
+> John
+Hi John, I'm eliza
+Before we begin, John, let me tell you something about myself.
 I'm a Rogerian psychotherapist.
 How are you feeling today?
 > █
