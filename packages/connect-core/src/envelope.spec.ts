@@ -19,10 +19,30 @@ import {
   envelopeDecompress,
   EnvelopedMessage,
 } from "./envelope.js";
-import { createReadableByteStream } from "./whatwg-stream-helper.spec.js";
 import type { Compression } from "./compression.js";
 import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import { Code } from "./code.js";
+import { node16WhatwgStreamPolyfill } from "./node16-polyfill-helper.spec.js";
+
+node16WhatwgStreamPolyfill();
+
+/**
+ * Create a WHATWG ReadableStream from a Uint8Array for usage in tests.
+ */
+function createReadableByteStream(bytes: Uint8Array, chunkSize = 2, delay = 5) {
+  let offset = 0;
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      const end = Math.min(offset + chunkSize, bytes.byteLength);
+      controller.enqueue(bytes.slice(offset, end));
+      offset = end;
+      if (offset === bytes.length) {
+        controller.close();
+      }
+    },
+  });
+}
 
 describe("createEnvelopeReadableStream()", () => {
   it("reads empty stream", async () => {
