@@ -899,4 +899,3 @@ function getCertLocalhost(): { key: string; cert: string } {
   }
   return certLocalHost;
 }
-
