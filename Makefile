@@ -240,6 +240,10 @@ connectnodeserverrun: $(BUILD)/connect-node-test
 connectnodeserverstop: $(BUILD)/connect-node-test
 	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs stop
 
+.PHONY: updatelocalhostcert
+updatelocalhostcert:
+	openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -days 300 -keyout packages/connect-node-test/localhost-key.pem -out packages/connect-node-test/localhost-cert.pem
+
 .PHONY: checkdiff
 checkdiff:
 	@# Used in CI to verify that `make` doesn't produce a diff, but ignore changes in benchmarks
