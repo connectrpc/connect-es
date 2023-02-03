@@ -74,7 +74,7 @@ curl \
 `@bufbuild/connect-node` with the gRPC protocol:
 
 ```ts
-import { createHandler, mergeHandlers } from "@bufbuild/connect-node";
+import { createGrpcTransport, createPromiseClient } from "@bufbuild/connect-node";
 import { ElizaService } from "./gen/eliza_connectweb.js";
 
 const transport = createGrpcTransport({
