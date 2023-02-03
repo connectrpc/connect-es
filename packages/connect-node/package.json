@@ -1,8 +1,7 @@
 {
   "name": "@bufbuild/connect-node",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "license": "Apache-2.0",
-  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/bufbuild/connect-web.git",
@@ -24,7 +23,7 @@
     "types": "./dist/types/index.d.ts"
   },
   "dependencies": {
-    "@bufbuild/connect-core": "0.6.0"
+    "@bufbuild/connect-core": "0.7.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"
