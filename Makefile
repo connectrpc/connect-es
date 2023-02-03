@@ -217,6 +217,8 @@ release: all ## Release @bufbuild/connect-web
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
 	npm publish \
 		--workspace packages/connect-web \
+		--workspace packages/connect-node \
+		--workspace packages/connect-core \
 		--workspace packages/protoc-gen-connect-web
 
 .PHONY: crosstestserverstop
