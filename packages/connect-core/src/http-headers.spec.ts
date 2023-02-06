@@ -29,12 +29,12 @@ describe("encodeBinaryHeader()", function () {
   it("accepts unicode string", () => {
     const input = "👋";
     const encoded = encodeBinaryHeader(input);
-    expect(encoded).toEqual("8J+Riw==");
+    expect(encoded).toEqual("8J+Riw");
   });
   it("accepts Uint8Array", () => {
     const input = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
     const encoded = encodeBinaryHeader(input);
-    expect(encoded).toEqual("3q2+7w==");
+    expect(encoded).toEqual("3q2+7w");
   });
   it("accepts message", () => {
     const input = new M({
@@ -48,8 +48,13 @@ describe("encodeBinaryHeader()", function () {
 });
 
 describe("decodeBinaryHeader()", function () {
-  it("decodes Uint8Array", () => {
+  it("decodes Uint8Array with padding", () => {
     const decoded = decodeBinaryHeader("3q2+7w==");
+    expect(decoded).toBeInstanceOf(Uint8Array);
+    expect(decoded).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
+  });
+  it("decodes Uint8Array without padding", () => {
+    const decoded = decodeBinaryHeader("3q2+7w");
     expect(decoded).toBeInstanceOf(Uint8Array);
     expect(decoded).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
   });

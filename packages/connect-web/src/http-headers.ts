@@ -23,8 +23,8 @@ import { Code } from "./code.js";
  *
  * This function accepts raw binary data from a buffer, a string
  * with UTF-8 text, or a protobuf message. It encodes the input
- * with base64 and returns a string that can be used for a header
- * whose name ends with `-bin`.
+ * with unpadded base64 and returns a string that can be used for
+ * a header whose name ends with `-bin`.
  */
 export function encodeBinaryHeader(
   value: Uint8Array | ArrayBufferLike | Message | string
@@ -37,7 +37,7 @@ export function encodeBinaryHeader(
   } else {
     bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
   }
-  return protoBase64.enc(bytes);
+  return protoBase64.enc(bytes).replace(/=+$/, "");
 }
 
 /**
