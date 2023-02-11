@@ -13,17 +13,6 @@
 // limitations under the License.
 
 import type * as stream from "stream";
-import type { JsonValue } from "@bufbuild/protobuf";
-
-/**
- * TODO(TCN-1067) remove
- * @deprecated
- */
-export function jsonParse(bytes: Uint8Array): JsonValue {
-  const buf = bytes instanceof Buffer ? bytes : Buffer.from(bytes);
-  const jsonString = buf.toString("utf8");
-  return JSON.parse(jsonString) as JsonValue;
-}
 
 /**
  * TODO(TCN-1067) remove
