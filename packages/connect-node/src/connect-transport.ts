@@ -43,7 +43,7 @@ import {
   createEndStreamSerialization,
   createRequestHeaderWithCompression,
   endStreamFlag,
-  errorFromJson,
+  errorFromJsonBytes,
   headerUnaryContentLength,
   headerUnaryEncoding,
   trailerDemux,
@@ -60,7 +60,6 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { jsonParse } from "./private/io.js";
 import {
   NodeHttp1TransportOptions,
   NodeHttp2TransportOptions,
@@ -205,8 +204,8 @@ export function createConnectTransport(
             );
           }
           if (isConnectUnaryError) {
-            throw errorFromJson(
-              jsonParse(responseBody),
+            throw errorFromJsonBytes(
+              responseBody,
               appendHeaders(header, trailer)
             );
           }

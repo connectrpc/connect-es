@@ -24,7 +24,12 @@ export {
   endStreamFlag,
   createEndStreamSerialization,
 } from "./end-stream.js";
-export { errorFromJson, errorToJson, errorToJsonBytes } from "./error-json.js";
+export {
+  errorFromJson,
+  errorFromJsonBytes,
+  errorToJson,
+  errorToJsonBytes,
+} from "./error-json.js";
 export {
   parseContentType,
   contentTypeUnaryProto,

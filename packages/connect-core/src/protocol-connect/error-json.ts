@@ -76,6 +76,23 @@ export function errorFromJson(
 }
 
 /**
+ * Parse a Connect error from a serialized JSON value.
+ * Will return a ConnectError, but throw one in case the JSON is malformed.
+ */
+export function errorFromJsonBytes(
+  bytes: Uint8Array,
+  metadata?: HeadersInit
+): ConnectError {
+  let jsonValue: JsonValue;
+  try {
+    jsonValue = JSON.parse(new TextDecoder().decode(bytes)) as JsonValue;
+  } catch (e) {
+    throw newParseError(e, "", false);
+  }
+  return errorFromJson(jsonValue, metadata);
+}
+
+/**
  * Serialize the given error to JSON.
  *
  * The JSON serialization options are required to produce the optional
