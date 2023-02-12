@@ -33,7 +33,7 @@ export interface LimitIoOptions {
 }
 
 /**
- * Validate common options for compression, setting default values where an
+ * Validate common options for limiting I/O, setting default values where an
  * option is omitted, and validating that values are in reasonable ranges.
  */
 export function limitIoOptionsValidate<T extends Partial<LimitIoOptions>>(
