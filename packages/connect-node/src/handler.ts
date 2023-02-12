@@ -15,24 +15,24 @@
 import {
   Code,
   Compression,
-  compressionValidateOptions,
   ConnectError,
-  createMethodUrl,
+  ContentTypeMatcher,
+  limitIoOptionsValidate,
 } from "@bufbuild/connect-core";
-import {
+import type {
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
   JsonWriteOptions,
   MethodInfo,
-  MethodKind,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { createImplSpec, MethodImpl, ServiceImpl } from "./implementation.js";
+import type { MethodImpl, ServiceImpl } from "./implementation.js";
 import type {
   ProtocolHandlerFact,
   ProtocolHandlerFactInit,
 } from "./protocol-handler.js";
+import { createUniversalHandler } from "./protocol-handler.js";
 import {
   NodeHandlerFn,
   universalHandlerToNodeHandler,
@@ -42,13 +42,7 @@ import { compressionBrotli, compressionGzip } from "./compression.js";
 import { createGrpcHandlerProtocol } from "./grpc-handler.js";
 import { createGrpcWebProtocolHandler } from "./grpc-web-handler.js";
 import { createConnectProtocolHandler } from "./connect-handler.js";
-import {
-  UniversalServerRequest,
-  uResponseMethodNotAllowed,
-  uResponseNotFound,
-  uResponseUnsupportedMediaType,
-  uResponseVersionNotSupported,
-} from "./private/universal.js";
+import { uResponseNotFound } from "./private/universal.js";
 
 /**
  * Handler handles a Node.js request for one specific RPC - a procedure
@@ -87,10 +81,9 @@ export type Handler = NodeHandlerFn & {
   allowedMethods: string[];
 
   /**
-   * A regular expression that matches all Content-Type header values that this
-   * procedure supports.
+   * A matcher for Content-Type header values that this procedure supports.
    */
-  supportedContentType: RegExp[];
+  supportedContentType: ContentTypeMatcher;
 };
 
 /**
@@ -139,51 +132,15 @@ export function createHandler<M extends MethodInfo>(
   impl: MethodImpl<M>,
   options?: HandlerOptions
 ): Handler {
-  const spec = createImplSpec(service, method, impl);
   const opt = internalHandlerOptions(options);
-  const handlers = opt.protocols.map((fact) => fact(spec));
-
-  function protocolNegotiatingHandler(request: UniversalServerRequest) {
-    if (
-      method.kind == MethodKind.BiDiStreaming &&
-      request.httpVersion.startsWith("1.")
-    ) {
-      return {
-        ...uResponseVersionNotSupported,
-        // Clients coded to expect full-duplex connections may hang if they've
-        // mistakenly negotiated HTTP/1.1. To unblock them, we must close the
-        // underlying TCP connection.
-        header: new Headers({ Connection: "close" }),
-      };
-    }
-    const contentType = request.header.get("Content-Type") ?? "";
-    const firstMatch = handlers
-      .filter(
-        (h) =>
-          h.supportedContentType.test(contentType) &&
-          h.allowedMethods.includes(request.method)
-      )
-      .shift();
-    if (firstMatch) {
-      return firstMatch(request);
-    }
-    const contentTypeMatches = handlers.some((h) =>
-      h.supportedContentType.test(contentType)
-    );
-    if (!contentTypeMatches) {
-      return uResponseUnsupportedMediaType;
-    }
-    const methodMatches = handlers.some((h) =>
-      h.allowedMethods.includes(request.method)
-    );
-    if (!methodMatches) {
-      return uResponseMethodNotAllowed;
-    }
-    return uResponseUnsupportedMediaType;
-  }
-
+  const universalHandler = createUniversalHandler(
+    service,
+    method,
+    impl,
+    opt.protocols
+  );
   const nodeHandler = universalHandlerToNodeHandler(
-    protocolNegotiatingHandler,
+    universalHandler,
     (reason) => {
       if (connectErrorFromNodeReason(reason).code == Code.Aborted) {
         return;
@@ -196,19 +153,8 @@ export function createHandler<M extends MethodInfo>(
       );
     }
   );
-
   return Object.assign(nodeHandler, {
-    service,
-    method,
-    // we expect all protocols to be served under the same path
-    requestPath: createMethodUrl("/", service, method),
-    supportedContentType: handlers.map((h) => h.supportedContentType),
-    protocolNames: handlers
-      .flatMap((h) => h.protocolNames)
-      .filter((value, index, array) => array.indexOf(value) === index),
-    allowedMethods: handlers
-      .flatMap((h) => h.allowedMethods)
-      .filter((value, index, array) => array.indexOf(value) === index),
+    ...universalHandler,
   });
 }
 
@@ -276,7 +222,7 @@ function internalHandlerOptions(
   ];
   const hpo: ProtocolHandlerFactInit = {
     ...init,
-    ...compressionValidateOptions(init),
+    ...limitIoOptionsValidate(init),
     maxDeadlineDurationMs,
     acceptCompression,
   };

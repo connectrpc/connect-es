@@ -24,6 +24,11 @@ import type {
 } from "@bufbuild/protobuf";
 import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 import { Code } from "./code.js";
+import {
+  assertReadMaxBytes,
+  assertWriteMaxBytes,
+  LimitIoOptions,
+} from "./limit-io.js";
 
 /**
  * Serialization provides methods to serialize or parse data with a certain
@@ -42,81 +47,6 @@ export interface Serialization<T> {
 }
 
 /**
- * Options for createBinarySerialization()
- */
-export type BinarySerializationOptions = Partial<
-  BinaryReadOptions & BinaryWriteOptions
->;
-
-/**
- * Creates a Serialization object for serializing the given protobuf message
- * with the protobuf binary format.
- */
-export function createBinarySerialization<T extends Message<T>>(
-  messageType: MessageType<T>,
-  options: BinarySerializationOptions | undefined
-): Serialization<T> {
-  return {
-    parse(data: Uint8Array): T {
-      try {
-        return messageType.fromBinary(data, options);
-      } catch (e) {
-        const m = e instanceof Error ? e.message : String(e);
-        throw new ConnectError(`parse binary: ${m}`, Code.InvalidArgument);
-      }
-    },
-    serialize(data: T): Uint8Array {
-      try {
-        return data.toBinary(options);
-      } catch (e) {
-        const m = e instanceof Error ? e.message : String(e);
-        throw new ConnectError(`serialize binary: ${m}`, Code.Internal);
-      }
-    },
-  };
-}
-
-/**
- * Options for createJsonSerialization()
- */
-export type JsonSerializationOptions = Partial<
-  JsonReadOptions & JsonWriteOptions
-> & {
-  textEncoder?: { encode(input?: string): Uint8Array };
-  textDecoder?: { decode(input?: Uint8Array): string };
-};
-
-/**
- * Creates a Serialization object for serializing the given protobuf message
- * with the protobuf canonical JSON encoding.
- */
-export function createJsonSerialization<T extends Message<T>>(
-  messageType: MessageType<T>,
-  options: JsonSerializationOptions | undefined
-): Serialization<T> {
-  const textEncoder = options?.textEncoder ?? new TextEncoder();
-  const textDecoder = options?.textDecoder ?? new TextDecoder();
-  return {
-    parse(data: Uint8Array): T {
-      try {
-        const json = textDecoder.decode(data);
-        return messageType.fromJsonString(json, options);
-      } catch (e) {
-        throw connectErrorFromReason(e, Code.InvalidArgument);
-      }
-    },
-    serialize(data: T): Uint8Array {
-      try {
-        const json = data.toJsonString(options);
-        return textEncoder.encode(json);
-      } catch (e) {
-        throw connectErrorFromReason(e, Code.Internal);
-      }
-    },
-  };
-}
-
-/**
  * Create an object that provides convenient access to request and response
  * message serialization for a given method.
  */
@@ -126,12 +56,25 @@ export function createMethodSerializationLookup<
 >(
   method: MethodInfo<I, O>,
   binaryOptions: Partial<BinaryReadOptions & BinaryWriteOptions> | undefined,
-  jsonOptions: Partial<JsonReadOptions & JsonWriteOptions> | undefined
+  jsonOptions: Partial<JsonReadOptions & JsonWriteOptions> | undefined,
+  limitOptions: Exclude<LimitIoOptions, "compressMinBytes">
 ): MethodSerializationLookup<I, O> {
-  const inputBinary = createBinarySerialization(method.I, binaryOptions);
-  const inputJson = createJsonSerialization(method.I, jsonOptions);
-  const outputBinary = createBinarySerialization(method.O, binaryOptions);
-  const outputJson = createJsonSerialization(method.O, jsonOptions);
+  const inputBinary = limitSerialization(
+    createBinarySerialization(method.I, binaryOptions),
+    limitOptions
+  );
+  const inputJson = limitSerialization(
+    createJsonSerialization(method.I, jsonOptions),
+    limitOptions
+  );
+  const outputBinary = limitSerialization(
+    createBinarySerialization(method.O, binaryOptions),
+    limitOptions
+  );
+  const outputJson = limitSerialization(
+    createJsonSerialization(method.O, jsonOptions),
+    limitOptions
+  );
   return {
     getI(useBinaryFormat) {
       return useBinaryFormat ? inputBinary : inputJson;
@@ -183,4 +126,97 @@ export function createClientMethodSerializers<
     ? createBinarySerialization(method.O, binaryOptions)
     : createJsonSerialization(method.O, jsonOptions);
   return { normalize, parse: output.parse, serialize: input.serialize };
+}
+
+/**
+ * Apply I/O limits to a Serialization object, returning a new object.
+ */
+export function limitSerialization<T>(
+  serialization: Serialization<T>,
+  limitOptions: Pick<LimitIoOptions, "writeMaxBytes" | "readMaxBytes">
+): Serialization<T> {
+  return {
+    serialize(data) {
+      const bytes = serialization.serialize(data);
+      assertWriteMaxBytes(limitOptions.writeMaxBytes, bytes.byteLength);
+      return bytes;
+    },
+    parse(data) {
+      assertReadMaxBytes(limitOptions.readMaxBytes, data.byteLength, true);
+      return serialization.parse(data);
+    },
+  };
+}
+
+/**
+ * Options for createBinarySerialization()
+ */
+type BinarySerializationOptions = Partial<
+  BinaryReadOptions & BinaryWriteOptions
+>;
+
+/**
+ * Creates a Serialization object for serializing the given protobuf message
+ * with the protobuf binary format.
+ */
+export function createBinarySerialization<T extends Message<T>>(
+  messageType: MessageType<T>,
+  options: BinarySerializationOptions | undefined
+): Serialization<T> {
+  return {
+    parse(data: Uint8Array): T {
+      try {
+        return messageType.fromBinary(data, options);
+      } catch (e) {
+        const m = e instanceof Error ? e.message : String(e);
+        throw new ConnectError(`parse binary: ${m}`, Code.InvalidArgument);
+      }
+    },
+    serialize(data: T): Uint8Array {
+      try {
+        return data.toBinary(options);
+      } catch (e) {
+        const m = e instanceof Error ? e.message : String(e);
+        throw new ConnectError(`serialize binary: ${m}`, Code.Internal);
+      }
+    },
+  };
+}
+
+/**
+ * Options for createJsonSerialization()
+ */
+type JsonSerializationOptions = Partial<JsonReadOptions & JsonWriteOptions> & {
+  textEncoder?: { encode(input?: string): Uint8Array };
+  textDecoder?: { decode(input?: Uint8Array): string };
+};
+
+/**
+ * Creates a Serialization object for serializing the given protobuf message
+ * with the protobuf canonical JSON encoding.
+ */
+export function createJsonSerialization<T extends Message<T>>(
+  messageType: MessageType<T>,
+  options: JsonSerializationOptions | undefined
+): Serialization<T> {
+  const textEncoder = options?.textEncoder ?? new TextEncoder();
+  const textDecoder = options?.textDecoder ?? new TextDecoder();
+  return {
+    parse(data: Uint8Array): T {
+      try {
+        const json = textDecoder.decode(data);
+        return messageType.fromJsonString(json, options);
+      } catch (e) {
+        throw connectErrorFromReason(e, Code.InvalidArgument);
+      }
+    },
+    serialize(data: T): Uint8Array {
+      try {
+        const json = data.toJsonString(options);
+        return textEncoder.encode(json);
+      } catch (e) {
+        throw connectErrorFromReason(e, Code.Internal);
+      }
+    },
+  };
 }

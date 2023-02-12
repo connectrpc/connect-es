@@ -139,7 +139,8 @@ export function createConnectTransport(
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
-        options.jsonOptions
+        options.jsonOptions,
+        opt
       );
       return await runUnary<I, O>(
         {
@@ -238,7 +239,8 @@ export function createConnectTransport(
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
-        options.jsonOptions
+        options.jsonOptions,
+        opt
       );
       const endStreamSerialization = createEndStreamSerialization(
         options.jsonOptions
@@ -278,8 +280,7 @@ export function createConnectTransport(
               req.message,
               transformNormalizeMessage(method.I),
               transformSerializeEnvelope(
-                serialization.getI(opt.useBinaryFormat),
-                opt.writeMaxBytes
+                serialization.getI(opt.useBinaryFormat)
               ),
               transformCompressEnvelope(
                 opt.sendCompression,

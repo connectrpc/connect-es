@@ -137,7 +137,8 @@ export function createGrpcWebTransport(
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
-        options.jsonOptions
+        options.jsonOptions,
+        opt
       );
       return await runUnary<I, O>(
         {
@@ -166,8 +167,7 @@ export function createGrpcWebTransport(
             body: pipe(
               createAsyncIterable([req.message]),
               transformSerializeEnvelope(
-                serialization.getI(opt.useBinaryFormat),
-                opt.writeMaxBytes
+                serialization.getI(opt.useBinaryFormat)
               ),
               transformCompressEnvelope(
                 opt.sendCompression,
@@ -261,7 +261,8 @@ export function createGrpcWebTransport(
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
-        options.jsonOptions
+        options.jsonOptions,
+        opt
       );
       return runStreaming<I, O>(
         {
@@ -296,8 +297,7 @@ export function createGrpcWebTransport(
               req.message,
               transformNormalizeMessage(method.I),
               transformSerializeEnvelope(
-                serialization.getI(opt.useBinaryFormat),
-                opt.writeMaxBytes
+                serialization.getI(opt.useBinaryFormat)
               ),
               transformCompressEnvelope(
                 opt.sendCompression,

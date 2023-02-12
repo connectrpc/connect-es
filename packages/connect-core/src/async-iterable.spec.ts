@@ -449,7 +449,7 @@ describe("transforming asynchronous iterables", () => {
       it("should serialize to envelopes", async function () {
         const it = pipe(
           createAsyncIterable(goldenItems),
-          transformSerializeEnvelope(fakeSerialization, Number.MAX_SAFE_INTEGER)
+          transformSerializeEnvelope(fakeSerialization)
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
@@ -509,12 +509,7 @@ describe("transforming asynchronous iterables", () => {
       it("should serialize to envelopes", async function () {
         const it = pipe(
           createAsyncIterable(goldenItems),
-          transformSerializeEnvelope(
-            serialization,
-            Number.MAX_SAFE_INTEGER,
-            endFlag,
-            endSerialization
-          )
+          transformSerializeEnvelope(serialization, endFlag, endSerialization)
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
@@ -831,7 +826,7 @@ describe("transforming asynchronous iterables", () => {
     it("should raise error when unhandled", async function () {
       const it = pipe(
         createAsyncIterable(goldenItems),
-        transformSerializeEnvelope(serialization, Number.MAX_SAFE_INTEGER)
+        transformSerializeEnvelope(serialization)
       );
       try {
         await readAll(it);
@@ -864,7 +859,7 @@ describe("transforming asynchronous iterables", () => {
         ];
         const it = pipe(
           createAsyncIterable(goldenItems),
-          transformSerializeEnvelope(serialization, Number.MAX_SAFE_INTEGER),
+          transformSerializeEnvelope(serialization),
           transformCatch<EnvelopedMessage>(() => {
             return {
               flags: 0,
@@ -926,12 +921,7 @@ describe("transforming asynchronous iterables", () => {
     it("should serialize, compress, join, split, decompress, and parse", async function () {
       const it = pipe(
         createAsyncIterable(goldenItemsWithEnd),
-        transformSerializeEnvelope(
-          serialization,
-          Number.MAX_SAFE_INTEGER,
-          endFlag,
-          endSerialization
-        ),
+        transformSerializeEnvelope(serialization, endFlag, endSerialization),
         transformCompressEnvelope(compressionReverse, 0),
         transformJoinEnvelopes(),
         transformSplitEnvelope(Number.MAX_SAFE_INTEGER),

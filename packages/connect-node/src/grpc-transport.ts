@@ -133,7 +133,8 @@ export function createGrpcTransport(options: GrpcTransportOptions): Transport {
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
-        options.jsonOptions
+        options.jsonOptions,
+        opt
       );
       return await runUnary<I, O>(
         {
@@ -161,8 +162,7 @@ export function createGrpcTransport(options: GrpcTransportOptions): Transport {
             body: pipe(
               createAsyncIterable([req.message]),
               transformSerializeEnvelope(
-                serialization.getI(opt.useBinaryFormat),
-                opt.writeMaxBytes
+                serialization.getI(opt.useBinaryFormat)
               ),
               transformCompressEnvelope(
                 opt.sendCompression,
@@ -233,7 +233,8 @@ export function createGrpcTransport(options: GrpcTransportOptions): Transport {
       const serialization = createMethodSerializationLookup(
         method,
         options.binaryOptions,
-        options.jsonOptions
+        options.jsonOptions,
+        opt
       );
       return runStreaming<I, O>(
         {
@@ -264,8 +265,7 @@ export function createGrpcTransport(options: GrpcTransportOptions): Transport {
               req.message,
               transformNormalizeMessage(method.I),
               transformSerializeEnvelope(
-                serialization.getI(opt.useBinaryFormat),
-                opt.writeMaxBytes
+                serialization.getI(opt.useBinaryFormat)
               ),
               transformCompressEnvelope(
                 opt.sendCompression,

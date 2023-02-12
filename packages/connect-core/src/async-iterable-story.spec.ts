@@ -40,7 +40,6 @@ import {
 // incomplete (cancellation, backpressure, error handling, etc.).
 describe("full story", function () {
   const readMaxBytes = 0xffffffff; // zlib caps maxOutputLength at this value
-  const writeMaxBytes = readMaxBytes;
   const serialization: Serialization<string> = {
     serialize(data: string): Uint8Array {
       return new TextEncoder().encode(data);
@@ -111,12 +110,7 @@ describe("full story", function () {
     it("should write expected bytes", async function () {
       const it = pipe(
         createAsyncIterable(goldenPayload),
-        transformSerializeEnvelope(
-          serialization,
-          writeMaxBytes,
-          endFlag,
-          endSerialization
-        ),
+        transformSerializeEnvelope(serialization, endFlag, endSerialization),
         transformCompressEnvelope(compressionReverse, 0),
         transformJoinEnvelopes()
       );
@@ -148,12 +142,7 @@ describe("full story", function () {
       writer = createWritableIterable<Payload<string, "end">>();
       writerIt = pipe(
         writer,
-        transformSerializeEnvelope(
-          serialization,
-          writeMaxBytes,
-          endFlag,
-          endSerialization
-        ),
+        transformSerializeEnvelope(serialization, endFlag, endSerialization),
         transformCompressEnvelope(compressionReverse, 0),
         transformJoinEnvelopes()
       );
@@ -336,12 +325,7 @@ describe("full story", function () {
           }
           yield { end: true, value: "end" };
         },
-        transformSerializeEnvelope(
-          serialization,
-          Number.MAX_SAFE_INTEGER,
-          endFlag,
-          endSerialization
-        ),
+        transformSerializeEnvelope(serialization, endFlag, endSerialization),
         transformCompressEnvelope(compressionReverse, 0),
         transformJoinEnvelopes()
       );

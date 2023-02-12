@@ -15,11 +15,12 @@
 import {
   Code,
   compressionNegotiate,
-  compressionValidateOptions,
   ConnectError,
+  contentTypeMatcher,
   createMethodSerializationLookup,
   createMethodUrl,
   EnvelopedMessage,
+  limitIoOptionsValidate,
   pipe,
   Serialization,
   transformCatchFinally,
@@ -56,6 +57,7 @@ import type {
   ProtocolHandlerFactInit,
 } from "./protocol-handler.js";
 import {
+  assertByteStreamRequest,
   UniversalServerRequest,
   UniversalServerResponse,
   uResponseMethodNotAllowed,
@@ -72,7 +74,7 @@ const methodPost = "POST";
 export function createGrpcWebProtocolHandler(
   options: ProtocolHandlerFactInit
 ): ProtocolHandlerFact {
-  compressionValidateOptions(options);
+  limitIoOptionsValidate(options);
   const trailerSerialization = createTrailerSerialization();
 
   function fact(spec: ImplSpec) {
@@ -80,7 +82,7 @@ export function createGrpcWebProtocolHandler(
     return Object.assign(h, {
       protocolNames: [protocolName],
       allowedMethods: [methodPost],
-      supportedContentType: contentTypeRegExp,
+      supportedContentType: contentTypeMatcher(contentTypeRegExp),
       requestPath: createMethodUrl("/", spec.service, spec.method),
       service: spec.service,
       method: spec.method,
@@ -99,9 +101,11 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
   const serialization = createMethodSerializationLookup(
     spec.method,
     opt.binaryOptions,
-    opt.jsonOptions
+    opt.jsonOptions,
+    opt
   );
   return function handle(req: UniversalServerRequest): UniversalServerResponse {
+    assertByteStreamRequest(req);
     const type = parseContentType(req.header.get(headerContentType));
     if (type == undefined || type.text) {
       return uResponseUnsupportedMediaType;
@@ -144,10 +148,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
         // raises an error, but we want to be lenient
       ),
       transformInvokeImplementation<I, O>(spec, context),
-      transformSerializeEnvelope(
-        serialization.getO(type.binary),
-        opt.writeMaxBytes
-      ),
+      transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
         const trailer = context.responseTrailer;
         if (e !== undefined) {

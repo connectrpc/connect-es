@@ -22,8 +22,8 @@ import {
 } from "./envelope.js";
 import type { Serialization } from "./serialization.js";
 import type { Compression } from "./compression.js";
-import { assertReadMaxBytes, assertWriteMaxBytes } from "./compression.js";
 import type { Message, MessageType, PartialMessage } from "@bufbuild/protobuf";
+import { assertReadMaxBytes } from "./limit-io.js";
 
 /**
  * A function that takes an asynchronous iterable as a source, and returns a
@@ -714,8 +714,7 @@ export function transformNormalizeMessage<T extends Message<T>>(
  * by the RPP-web and Connect protocols.
  */
 export function transformSerializeEnvelope<T>(
-  serialization: Serialization<T>,
-  writeMaxBytes: number
+  serialization: Serialization<T>
 ): AsyncIterableTransform<T, EnvelopedMessage>;
 /**
  * Creates an AsyncIterableTransform that takes a value or special end type, and
@@ -731,13 +730,11 @@ export function transformSerializeEnvelope<T>(
  */
 export function transformSerializeEnvelope<T, E>(
   serialization: Serialization<T>,
-  writeMaxBytes: number,
   endStreamFlag: number,
   endSerialization: Serialization<E>
 ): AsyncIterableTransform<ParsedEnvelopedMessage<T, E>, EnvelopedMessage>;
 export function transformSerializeEnvelope<T, E>(
   serialization: Serialization<T>,
-  writeMaxBytes: number,
   endStreamFlag?: number,
   endSerialization?: Serialization<E>
 ):
@@ -749,7 +746,6 @@ export function transformSerializeEnvelope<T, E>(
     ): AsyncIterable<EnvelopedMessage> {
       for await (const chunk of iterable) {
         const data = serialization.serialize(chunk);
-        assertWriteMaxBytes(writeMaxBytes, data.byteLength);
         yield { flags: 0, data };
       }
     };
@@ -1002,7 +998,7 @@ export function transformSplitEnvelope(
  * - lengthHint is a positive integer, and the source contains more or less bytes
  *   than promised
  */
-async function readAllBytes(
+export async function readAllBytes(
   iterable: AsyncIterable<Uint8Array>,
   readMaxBytes: number,
   lengthHint?: number | string | null

@@ -16,8 +16,11 @@ import { StringValue } from "@bufbuild/protobuf";
 import {
   createBinarySerialization,
   createJsonSerialization,
+  limitSerialization,
+  Serialization,
 } from "./serialization.js";
 import { ConnectError, connectErrorFromReason } from "./connect-error.js";
+import { maxReadMaxBytes, maxWriteMaxBytes } from "./limit-io.js";
 
 describe("createBinarySerialization()", function () {
   const goldenMessage = new StringValue({ value: "abc" });
@@ -112,5 +115,42 @@ describe("createJsonSerialization()", function () {
         expect(c.message).toBe("[internal] x");
       }
     });
+  });
+});
+
+describe("limitSerialization()", function () {
+  const ser: Serialization<string> = {
+    serialize(data: string): Uint8Array {
+      return new TextEncoder().encode(data);
+    },
+    parse(data: Uint8Array): string {
+      return new TextDecoder().decode(data);
+    },
+  };
+  it("limits serialize", function () {
+    const limitedSer = limitSerialization(ser, {
+      readMaxBytes: maxReadMaxBytes,
+      writeMaxBytes: 3,
+    });
+    expect(() => limitedSer.serialize("abcdef")).toThrowError(
+      ConnectError,
+      "[resource_exhausted] message size 6 is larger than configured writeMaxBytes 3"
+    );
+    expect(() =>
+      limitedSer.parse(new TextEncoder().encode("abcdef"))
+    ).not.toThrowError();
+  });
+  it("limits parse", function () {
+    const limitedSer = limitSerialization(ser, {
+      readMaxBytes: 3,
+      writeMaxBytes: maxWriteMaxBytes,
+    });
+    expect(() => limitedSer.serialize("abcdef")).not.toThrowError();
+    expect(() =>
+      limitedSer.parse(new TextEncoder().encode("abcdef"))
+    ).toThrowError(
+      ConnectError,
+      "[resource_exhausted] message size 6 is larger than configured readMaxBytes 3"
+    );
   });
 });
