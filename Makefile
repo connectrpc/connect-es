@@ -13,8 +13,10 @@ GEN   = .tmp/gen
 CROSSTEST_VERSION := 2c228a09c52e3a95263034c1fb79119d33ab3258
 LICENSE_HEADER_YEAR_RANGE := 2021-2023
 LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
-NODE18_VERSION ?= v18.2.0
-NODE16_VERSION ?= v16.15.0
+NODE18_VERSION ?= v18.14.0
+NODE17_VERSION ?= v17.9.1
+NODE16_VERSION ?= v16.19.0
+NODE_MIN_VERSION ?= v16.0.0
 NODE_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
 
@@ -34,11 +36,25 @@ $(BIN)/node18: Makefile
 	rm -r $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)
 	@touch $(@)
 
+$(BIN)/node17: Makefile
+	@mkdir -p $(@D)
+	curl -sSL https://nodejs.org/dist/$(NODE17_VERSION)/node-$(NODE17_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE17_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
+	mv $(TMP)/node-$(NODE17_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
+	rm -r $(TMP)/node-$(NODE17_VERSION)-$(NODE_OS)-$(NODE_ARCH)
+	@touch $(@)
+
 $(BIN)/node16: Makefile
 	@mkdir -p $(@D)
 	curl -sSL https://nodejs.org/dist/$(NODE16_VERSION)/node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
 	mv $(TMP)/node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
 	rm -r $(TMP)/node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH)
+	@touch $(@)
+
+$(BIN)/node_min: Makefile
+	@mkdir -p $(@D)
+	curl -sSL https://nodejs.org/dist/$(NODE_MIN_VERSION)/node-$(NODE_MIN_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE_MIN_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
+	mv $(TMP)/node-$(NODE_MIN_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
+	rm -r $(TMP)/node-$(NODE_MIN_VERSION)-$(NODE_OS)-$(NODE_ARCH)
 	@touch $(@)
 
 $(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc-gen-connect-web/tsconfig.json $(shell find packages/protoc-gen-connect-web/src -name '*.ts')
@@ -144,9 +160,11 @@ testcore: $(BUILD)/connect-core
 	npm run -w packages/connect-core jasmine
 
 .PHONY: testnode
-testnode: $(BIN)/node16 $(BIN)/node18 $(BUILD)/connect-node-test
+testnode: $(BIN)/node_min $(BIN)/node16 $(BIN)/node17 $(BIN)/node18 $(BUILD)/connect-node-test
 	$(MAKE) crosstestserverrun
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node_min --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node17 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
 
