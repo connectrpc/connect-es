@@ -23,8 +23,8 @@ import type {
 } from "@bufbuild/protobuf";
 import {
   Compression,
-  compressionValidateOptions,
   Interceptor,
+  limitIoOptionsValidate,
 } from "@bufbuild/connect-core";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import {
@@ -80,7 +80,7 @@ export function validateNodeTransportOptions(
             options.nodeOptions
           )
         : createNodeHttp1Client(options.nodeOptions),
-    ...compressionValidateOptions(options),
+    ...limitIoOptionsValidate(options),
     sendCompression: options.sendCompression ?? null,
     acceptCompression: options.acceptCompression ?? [
       compressionGzip,

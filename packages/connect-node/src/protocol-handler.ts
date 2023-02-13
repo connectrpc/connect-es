@@ -12,17 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
+import {
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
   JsonWriteOptions,
   MethodInfo,
+  MethodKind,
   ServiceType,
 } from "@bufbuild/protobuf";
 import type { ImplSpec } from "./implementation.js";
-import type { Compression } from "@bufbuild/connect-core";
+import type { Compression, ContentTypeMatcher } from "@bufbuild/connect-core";
 import type { UniversalHandlerFn } from "./private/universal.js";
+import {
+  UniversalServerRequest,
+  uResponseMethodNotAllowed,
+  uResponseUnsupportedMediaType,
+  uResponseVersionNotSupported,
+} from "./private/universal.js";
+import { contentTypeMatcher, createMethodUrl } from "@bufbuild/connect-core";
+import { createImplSpec, MethodImpl } from "./implementation.js";
 
 /**
  * Creates a handler function for an RPC definition and an RPC implementation,
@@ -85,8 +94,94 @@ export interface UniversalHandler extends UniversalHandlerFn {
   allowedMethods: string[];
 
   /**
-   * A regular expression that matches all Content-Type header values that this
-   * procedure supports.
+   * A matcher for Content-Type header values that this procedure supports.
    */
-  supportedContentType: RegExp;
+  supportedContentType: ContentTypeMatcher;
+}
+
+/**
+ * Takes an RPC definition and an RPC implementation, and returns a universal
+ * HTTP handler that implements the given protocols.
+ */
+export function createUniversalHandler<M extends MethodInfo>(
+  service: ServiceType,
+  method: M,
+  impl: MethodImpl<M>,
+  protocols: ProtocolHandlerFact[]
+): UniversalHandler {
+  const spec = createImplSpec(service, method, impl);
+  return negotiateProtocol(
+    service,
+    method,
+    protocols.map((fact) => fact(spec))
+  );
+}
+
+/**
+ * Create a universal handler that negotiates the protocol.
+ *
+ * This functions takes one or more handlers - all for the same RPC, but for
+ * different protocols - and returns a single handler that looks at the
+ * Content-Type header and the HTTP verb of the incoming request to select
+ * the appropriate protocol-specific handler.
+ */
+function negotiateProtocol(
+  service: ServiceType,
+  method: MethodInfo,
+  protocolHandlers: UniversalHandler[]
+): UniversalHandler {
+  function protocolNegotiatingHandler(request: UniversalServerRequest) {
+    if (
+      method.kind == MethodKind.BiDiStreaming &&
+      request.httpVersion.startsWith("1.")
+    ) {
+      return {
+        ...uResponseVersionNotSupported,
+        // Clients coded to expect full-duplex connections may hang if they've
+        // mistakenly negotiated HTTP/1.1. To unblock them, we must close the
+        // underlying TCP connection.
+        header: new Headers({ Connection: "close" }),
+      };
+    }
+    const contentType = request.header.get("Content-Type") ?? "";
+    const firstMatch = protocolHandlers
+      .filter(
+        (h) =>
+          h.supportedContentType(contentType) &&
+          h.allowedMethods.includes(request.method)
+      )
+      .shift();
+    if (firstMatch) {
+      return firstMatch(request);
+    }
+    const contentTypeMatches = protocolHandlers.some((h) =>
+      h.supportedContentType(contentType)
+    );
+    if (!contentTypeMatches) {
+      return uResponseUnsupportedMediaType;
+    }
+    const methodMatches = protocolHandlers.some((h) =>
+      h.allowedMethods.includes(request.method)
+    );
+    if (!methodMatches) {
+      return uResponseMethodNotAllowed;
+    }
+    return uResponseUnsupportedMediaType;
+  }
+
+  return Object.assign(protocolNegotiatingHandler, {
+    service,
+    method,
+    // we expect all protocols to be served under the same path
+    requestPath: createMethodUrl("/", service, method),
+    supportedContentType: contentTypeMatcher(
+      ...protocolHandlers.map((h) => h.supportedContentType)
+    ),
+    protocolNames: protocolHandlers
+      .flatMap((h) => h.protocolNames)
+      .filter((value, index, array) => array.indexOf(value) === index),
+    allowedMethods: protocolHandlers
+      .flatMap((h) => h.allowedMethods)
+      .filter((value, index, array) => array.indexOf(value) === index),
+  });
 }

@@ -15,10 +15,11 @@
 import {
   Code,
   compressionNegotiate,
-  compressionValidateOptions,
   ConnectError,
+  contentTypeMatcher,
   createMethodSerializationLookup,
   createMethodUrl,
+  limitIoOptionsValidate,
   pipe,
   transformCatch,
   transformCompressEnvelope,
@@ -34,24 +35,25 @@ import {
   contentTypeJson,
   contentTypeProto,
   contentTypeRegExp,
+  grpcStatusOk,
   headerAcceptEncoding,
   headerContentType,
   headerEncoding,
   headerGrpcStatus,
   parseContentType,
   setTrailerStatus,
-  grpcStatusOk,
 } from "@bufbuild/connect-core/protocol-grpc";
 import {
   createHandlerContext,
-  transformInvokeImplementation,
   ImplSpec,
+  transformInvokeImplementation,
 } from "./implementation.js";
 import type {
   ProtocolHandlerFact,
   ProtocolHandlerFactInit,
 } from "./protocol-handler.js";
 import {
+  assertByteStreamRequest,
   UniversalServerRequest,
   UniversalServerResponse,
   uResponseMethodNotAllowed,
@@ -68,14 +70,13 @@ const methodPost = "POST";
 export function createGrpcHandlerProtocol(
   options: ProtocolHandlerFactInit
 ): ProtocolHandlerFact {
-  compressionValidateOptions(options);
-
+  limitIoOptionsValidate(options);
   function fact(spec: ImplSpec) {
     const h = createHandler(options, spec);
     return Object.assign(h, {
       protocolNames: [protocolName],
       allowedMethods: [methodPost],
-      supportedContentType: contentTypeRegExp,
+      supportedContentType: contentTypeMatcher(contentTypeRegExp),
       requestPath: createMethodUrl("/", spec.service, spec.method),
       service: spec.service,
       method: spec.method,
@@ -93,9 +94,11 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
   const serialization = createMethodSerializationLookup(
     spec.method,
     opt.binaryOptions,
-    opt.jsonOptions
+    opt.jsonOptions,
+    opt
   );
   return function handle(req: UniversalServerRequest): UniversalServerResponse {
+    assertByteStreamRequest(req);
     const type = parseContentType(req.header.get(headerContentType));
     if (type == undefined) {
       return uResponseUnsupportedMediaType;
@@ -133,10 +136,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformDecompressEnvelope(compression.request, opt.readMaxBytes),
       transformParseEnvelope(serialization.getI(type.binary)),
       transformInvokeImplementation<I, O>(spec, context),
-      transformSerializeEnvelope(
-        serialization.getO(type.binary),
-        opt.writeMaxBytes
-      ),
+      transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
       transformJoinEnvelopes(),
       transformCatch<Uint8Array>((e): void => {

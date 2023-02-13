@@ -13,33 +13,32 @@
 // limitations under the License.
 
 import type {
+  Compression,
   EnvelopedMessage,
   MethodSerializationLookup,
 } from "@bufbuild/connect-core";
 import {
   Code,
-  compressedFlag,
   compressionNegotiate,
-  compressionValidateOptions,
   ConnectError,
+  connectErrorFromReason,
+  contentTypeMatcher,
   createMethodSerializationLookup,
   createMethodUrl,
+  limitIoOptionsValidate,
   pipe,
-  pipeTo,
+  readAllBytes,
   Serialization,
-  sinkAllBytes,
-  transformCatch,
   transformCatchFinally,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,
   transformParseEnvelope,
   transformPrepend,
-  transformReadAllBytes,
   transformSerializeEnvelope,
   transformSplitEnvelope,
 } from "@bufbuild/connect-core";
-import { Message, MethodKind } from "@bufbuild/protobuf";
+import { Message, MethodInfo, MethodKind } from "@bufbuild/protobuf";
 import {
   codeToHttpStatus,
   contentTypeStreamJson,
@@ -64,6 +63,7 @@ import {
 import type { ImplSpec } from "./implementation.js";
 import {
   createHandlerContext,
+  invokeUnaryImplementation,
   transformInvokeImplementation,
 } from "./implementation.js";
 import type {
@@ -71,6 +71,7 @@ import type {
   ProtocolHandlerFactInit,
 } from "./protocol-handler.js";
 import {
+  assertByteStreamRequest,
   UniversalHandlerFn,
   UniversalServerRequest,
   UniversalServerResponse,
@@ -86,30 +87,29 @@ const methodPost = "POST";
  * Create a factory that creates Connect handlers.
  */
 export function createConnectProtocolHandler(
-  options: ProtocolHandlerFactInit
+  opt: ProtocolHandlerFactInit
 ): ProtocolHandlerFact {
-  compressionValidateOptions(options);
-  const endStreamSerialization = createEndStreamSerialization(
-    options.jsonOptions
-  );
+  limitIoOptionsValidate(opt);
+  const endStreamSerialization = createEndStreamSerialization(opt.jsonOptions);
 
   function fact(spec: ImplSpec) {
     let h: UniversalHandlerFn;
-    let supportedContentType: RegExp;
+    let contentTypeRegExp: RegExp;
     const serialization = createMethodSerializationLookup(
       spec.method,
-      options.binaryOptions,
-      options.jsonOptions
+      opt.binaryOptions,
+      opt.jsonOptions,
+      opt
     );
     switch (spec.kind) {
       case MethodKind.Unary:
-        supportedContentType = contentTypeUnaryRegExp;
-        h = createUnaryHandler(options, spec, serialization);
+        contentTypeRegExp = contentTypeUnaryRegExp;
+        h = createUnaryHandler(opt, spec, serialization);
         break;
       default:
-        supportedContentType = contentTypeStreamRegExp;
+        contentTypeRegExp = contentTypeStreamRegExp;
         h = createStreamHandler(
-          options,
+          opt,
           spec,
           serialization,
           endStreamSerialization
@@ -118,7 +118,7 @@ export function createConnectProtocolHandler(
     }
     return Object.assign(h, {
       protocolNames: [protocolName],
-      supportedContentType,
+      supportedContentType: contentTypeMatcher(contentTypeRegExp),
       allowedMethods: [methodPost],
       requestPath: createMethodUrl("/", spec.service, spec.method),
       service: spec.service,
@@ -132,7 +132,7 @@ export function createConnectProtocolHandler(
 
 function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
   opt: ProtocolHandlerFactInit,
-  spec: ImplSpec<I, O>,
+  spec: ImplSpec<I, O> & { kind: MethodKind.Unary },
   serialization: MethodSerializationLookup<I, O>
 ) {
   return async function handle(
@@ -156,84 +156,94 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       req.header.get(headerUnaryAcceptEncoding),
       headerUnaryAcceptEncoding
     );
-    let responseStatusCode = uResponseOk.status;
-    const responseBody = await pipeTo(
-      req.body,
-      transformPrepend<Uint8Array>(() => {
-        // raise compression error to serialize it as a error response
-        if (compression.error) throw compression.error;
-        return undefined;
-      }),
-      transformReadAllBytes(
+    let status = uResponseOk.status;
+    let body: Uint8Array;
+    try {
+      // raise compression error to serialize it as a error response
+      if (compression.error) {
+        throw compression.error;
+      }
+      const input = await parseUnaryInput(
+        spec.method,
+        serialization,
+        compression.request,
         opt.readMaxBytes,
-        req.header.get(headerUnaryContentLength)
-      ),
-      async function* wrapInEnvelope(
-        it: AsyncIterable<Uint8Array>
-      ): AsyncIterable<EnvelopedMessage> {
-        for await (const chunk of it) {
-          yield {
-            flags: compression.request ? compressedFlag : 0,
-            data: chunk,
-          };
-        }
-      },
-      transformDecompressEnvelope(compression.request, opt.readMaxBytes),
-      transformParseEnvelope(serialization.getI(type.binary)),
-      transformInvokeImplementation<I, O>(spec, context),
-      transformSerializeEnvelope(
-        serialization.getO(type.binary),
-        opt.writeMaxBytes
-      ),
-      transformCatch<EnvelopedMessage>((e) => {
-        let error: ConnectError | undefined;
-        if (e instanceof ConnectError) {
-          error = e;
-        } else {
-          error = new ConnectError(
-            "internal error",
-            Code.Internal,
-            undefined,
-            undefined,
-            e
-          );
-        }
-        responseStatusCode = codeToHttpStatus(error.code);
-        context.responseHeader.set(headerContentType, contentTypeUnaryJson);
-        error.metadata.forEach((value, key) => {
-          context.responseHeader.set(key, value);
-        });
-        return {
-          flags: 0,
-          data: errorToJsonBytes(error, opt.jsonOptions),
-        };
-      }),
-      transformCompressEnvelope(compression.response, opt.compressMinBytes),
-      async function* unwrapEnvelope(
-        it: AsyncIterable<EnvelopedMessage>
-      ): AsyncIterable<Uint8Array> {
-        for await (const { flags, data } of it) {
-          if (
-            compression.response &&
-            (flags & compressedFlag) === compressedFlag
-          ) {
-            context.responseHeader.set(
-              headerUnaryEncoding,
-              compression.response.name
-            );
-          }
-          yield data;
-        }
-      },
-      sinkAllBytes(Number.MAX_SAFE_INTEGER)
-    );
-
+        type.binary,
+        req
+      );
+      const output = await invokeUnaryImplementation(spec, context, input);
+      body = serialization.getO(type.binary).serialize(output);
+    } catch (e) {
+      let error: ConnectError | undefined;
+      if (e instanceof ConnectError) {
+        error = e;
+      } else {
+        error = new ConnectError(
+          "internal error",
+          Code.Internal,
+          undefined,
+          undefined,
+          e
+        );
+      }
+      status = codeToHttpStatus(error.code);
+      context.responseHeader.set(headerContentType, contentTypeUnaryJson);
+      error.metadata.forEach((value, key) => {
+        context.responseHeader.set(key, value);
+      });
+      body = errorToJsonBytes(error, opt.jsonOptions);
+    }
+    if (compression.response && body.byteLength >= opt.compressMinBytes) {
+      body = await compression.response.compress(body);
+      context.responseHeader.set(
+        headerUnaryEncoding,
+        compression.response.name
+      );
+    }
+    const header = trailerMux(context.responseHeader, context.responseTrailer);
+    header.set(headerUnaryContentLength, body.byteLength.toString(10));
     return {
-      status: responseStatusCode,
-      body: responseBody,
-      header: trailerMux(context.responseHeader, context.responseTrailer),
+      status,
+      body,
+      header,
     };
   };
+}
+
+async function parseUnaryInput<I extends Message<I>, O extends Message<O>>(
+  method: MethodInfo<I, O>,
+  serialization: MethodSerializationLookup<I, O>,
+  compression: Compression | null,
+  readMaxBytes: number,
+  useBinaryFormat: boolean,
+  request: UniversalServerRequest
+): Promise<I> {
+  if (
+    typeof request.body == "object" &&
+    request.body !== null &&
+    Symbol.asyncIterator in request.body
+  ) {
+    let reqBytes = await readAllBytes(
+      request.body,
+      readMaxBytes,
+      request.header.get(headerUnaryContentLength)
+    );
+    if (compression) {
+      reqBytes = await compression.decompress(reqBytes, readMaxBytes);
+    }
+    return serialization.getI(useBinaryFormat).parse(reqBytes);
+  }
+  if (useBinaryFormat) {
+    throw new ConnectError(
+      "received parsed JSON request body, but content-type indicates binary format",
+      Code.Internal
+    );
+  }
+  try {
+    return method.I.fromJson(request.body);
+  } catch (e) {
+    throw connectErrorFromReason(e, Code.InvalidArgument);
+  }
 }
 
 function createStreamHandler<I extends Message<I>, O extends Message<O>>(
@@ -243,6 +253,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
   endStreamSerialization: Serialization<EndStreamResponse>
 ) {
   return function handle(req: UniversalServerRequest): UniversalServerResponse {
+    assertByteStreamRequest(req);
     const type = parseContentType(req.header.get(headerContentType));
     if (type == undefined || !type.stream) {
       return uResponseUnsupportedMediaType;
@@ -283,10 +294,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
         // raises an error, but we want to be lenient
       ),
       transformInvokeImplementation<I, O>(spec, context),
-      transformSerializeEnvelope(
-        serialization.getO(type.binary),
-        opt.writeMaxBytes
-      ),
+      transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
         const end: EndStreamResponse = {
           metadata: context.responseTrailer,

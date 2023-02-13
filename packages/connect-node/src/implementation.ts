@@ -173,6 +173,22 @@ export function createImplSpec<M extends MethodInfo>(
 }
 
 /**
+ * Invoke a user-provided implementation of a unary RPC. Returns a normalized
+ * output message.
+ */
+export async function invokeUnaryImplementation<
+  I extends Message<I>,
+  O extends Message<O>
+>(
+  spec: ImplSpec<I, O> & { kind: MethodKind.Unary },
+  context: HandlerContext,
+  input: I
+): Promise<O> {
+  const output = await spec.impl(input, context);
+  return normalizeOutput(spec, output);
+}
+
+/**
  * Return an AsyncIterableTransform that invokes a user-provided implementation,
  * giving it input from an asynchronous iterable, and returning its output as an
  * asynchronous iterable.
@@ -181,22 +197,6 @@ export function transformInvokeImplementation<
   I extends Message<I>,
   O extends Message<O>
 >(spec: ImplSpec<I, O>, context: HandlerContext): AsyncIterableTransform<I, O> {
-  function normalizeOutput(message: O | PartialMessage<O>) {
-    if (message instanceof Message) {
-      return message;
-    }
-    try {
-      return new spec.method.O(message);
-    } catch (e) {
-      throw new ConnectError(
-        `failed to normalize message ${spec.method.O.typeName}`,
-        Code.Internal,
-        undefined,
-        undefined,
-        e
-      );
-    }
-  }
   switch (spec.kind) {
     case MethodKind.Unary:
       return async function* unary(input: AsyncIterable<I>) {
@@ -208,7 +208,7 @@ export function transformInvokeImplementation<
             Code.InvalidArgument
           );
         }
-        yield normalizeOutput(await spec.impl(input1.value, context));
+        yield normalizeOutput(spec, await spec.impl(input1.value, context));
         const input2 = await inputIt.next();
         if (input2.done !== true) {
           throw new ConnectError(
@@ -228,7 +228,7 @@ export function transformInvokeImplementation<
           );
         }
         for await (const o of spec.impl(input1.value, context)) {
-          yield normalizeOutput(o);
+          yield normalizeOutput(spec, o);
         }
         const input2 = await inputIt.next();
         if (input2.done !== true) {
@@ -241,14 +241,34 @@ export function transformInvokeImplementation<
     }
     case MethodKind.ClientStreaming: {
       return async function* clientStreaming(input: AsyncIterable<I>) {
-        yield normalizeOutput(await spec.impl(input, context));
+        yield normalizeOutput(spec, await spec.impl(input, context));
       };
     }
     case MethodKind.BiDiStreaming:
       return async function* biDiStreaming(input: AsyncIterable<I>) {
         for await (const o of spec.impl(input, context)) {
-          yield normalizeOutput(o);
+          yield normalizeOutput(spec, o);
         }
       };
+  }
+}
+
+function normalizeOutput<I extends Message<I>, O extends Message<O>>(
+  spec: ImplSpec<I, O>,
+  message: O | PartialMessage<O>
+) {
+  if (message instanceof Message) {
+    return message;
+  }
+  try {
+    return new spec.method.O(message);
+  } catch (e) {
+    throw new ConnectError(
+      `failed to normalize message ${spec.method.O.typeName}`,
+      Code.Internal,
+      undefined,
+      undefined,
+      e
+    );
   }
 }

@@ -43,11 +43,10 @@ export { codeToString, codeFromString } from "./code.js";
 export { createMethodUrl } from "./create-method-url.js";
 export {
   Serialization,
-  createBinarySerialization,
-  createJsonSerialization,
   createMethodSerializationLookup,
   createClientMethodSerializers,
   MethodSerializationLookup,
+  limitSerialization,
 } from "./serialization.js";
 export {
   EnvelopedMessage,
@@ -61,7 +60,6 @@ export {
   Compression,
   compressedFlag,
   compressionNegotiate,
-  compressionValidateOptions,
 } from "./compression.js";
 export {
   AsyncIterableTransform,
@@ -86,4 +84,7 @@ export {
   WritableIterable,
   createWritableIterable,
   createAsyncIterable,
+  readAllBytes,
 } from "./async-iterable.js";
+export { ContentTypeMatcher, contentTypeMatcher } from "./content-type.js";
+export { limitIoOptionsValidate } from "./limit-io.js";
