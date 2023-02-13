@@ -22,16 +22,22 @@ import {
   ServiceType,
 } from "@bufbuild/protobuf";
 import type { ImplSpec } from "./implementation.js";
+import { createImplSpec, MethodImpl, ServiceImpl } from "./implementation.js";
 import type { Compression, ContentTypeMatcher } from "@bufbuild/connect-core";
+import {
+  Code,
+  ConnectError,
+  contentTypeMatcher,
+  createMethodUrl,
+} from "@bufbuild/connect-core";
 import type { UniversalHandlerFn } from "./private/universal.js";
 import {
   UniversalServerRequest,
   uResponseMethodNotAllowed,
+  uResponseNotFound,
   uResponseUnsupportedMediaType,
   uResponseVersionNotSupported,
 } from "./private/universal.js";
-import { contentTypeMatcher, createMethodUrl } from "@bufbuild/connect-core";
-import { createImplSpec, MethodImpl } from "./implementation.js";
 
 /**
  * Creates a handler function for an RPC definition and an RPC implementation,
@@ -101,7 +107,7 @@ export interface UniversalHandler extends UniversalHandlerFn {
 
 /**
  * Takes an RPC definition and an RPC implementation, and returns a universal
- * HTTP handler that implements the given protocols.
+ * HTTP handler serving the given protocols.
  */
 export function createUniversalHandler<M extends MethodInfo>(
   service: ServiceType,
@@ -118,6 +124,77 @@ export function createUniversalHandler<M extends MethodInfo>(
 }
 
 /**
+ * Takes a service definition and a service implementation, and for each RPC,
+ * returns a universal HTTP handler serving the given protocols.
+ *
+ * The service implementation can be incomplete. Missing methods will raise
+ * a ConnectError with code unimplemented.
+ */
+export function createUniversalHandlers<T extends ServiceType>(
+  service: T,
+  impl: Partial<ServiceImpl<T>>,
+  protocols: ProtocolHandlerFact[]
+): UniversalHandler[] {
+  return Object.entries(service.methods).map(([localName, methodInfo]) => {
+    let fn: MethodImpl<typeof methodInfo> | undefined = impl[localName];
+    if (typeof fn == "function") {
+      fn = fn.bind(impl);
+    } else {
+      const message = `${service.typeName}.${methodInfo.name} is not implemented`;
+      fn = function unimplemented() {
+        throw new ConnectError(message, Code.Unimplemented);
+      };
+    }
+    return createUniversalHandler(service, methodInfo, fn, protocols);
+  });
+}
+
+/**
+ * Options to the function routeUniversalHandlers().
+ */
+interface RouteUniversalHandlersInit {
+  /**
+   * Handlers to route by request path.
+   */
+  handlers: UniversalHandler[];
+
+  /**
+   * Fallback that is called when the request path matches none of the handlers.
+   */
+  fallback?: UniversalHandlerFn;
+
+  /**
+   * Serve all handlers under this prefix. For example, the prefix "/something"
+   * will serve the RPC foo.FooService/Bar under "/something/foo.FooService/Bar".
+   * Note that some gRPC client implementations do not allow for prefixes.
+   */
+  requestPathPrefix?: string;
+}
+
+/**
+ * Route many handlers by request path.
+ *
+ * Takes an array of handler functions, and merges them into a single handler
+ * function that invokes the first handler with a matching request path. If no
+ * request path matches, it serves a 404 by default.
+ */
+export function routeUniversalHandlers(
+  init: RouteUniversalHandlersInit
+): UniversalHandlerFn {
+  const prefix = (init.requestPathPrefix ?? "").replace(/\/$/, "");
+  const next = init.fallback ?? (() => uResponseNotFound);
+  return async function routingHandler(request) {
+    const handler = init.handlers.find(
+      (h) => request.url.pathname === prefix + h.requestPath
+    );
+    if (!handler) {
+      return next(request);
+    }
+    return handler(request);
+  };
+}
+
+/**
  * Create a universal handler that negotiates the protocol.
  *
  * This functions takes one or more handlers - all for the same RPC, but for
@@ -130,7 +207,7 @@ function negotiateProtocol(
   method: MethodInfo,
   protocolHandlers: UniversalHandler[]
 ): UniversalHandler {
-  function protocolNegotiatingHandler(request: UniversalServerRequest) {
+  async function protocolNegotiatingHandler(request: UniversalServerRequest) {
     if (
       method.kind == MethodKind.BiDiStreaming &&
       request.httpVersion.startsWith("1.")

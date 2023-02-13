@@ -50,8 +50,9 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
   } else if (
     chain.some(
       (p) =>
-        p.syscall === "getaddrinfo" &&
-        (p.code == "ENOTFOUND" || p.code == "EAI_AGAIN")
+        p.code == "ENOTFOUND" ||
+        p.code == "EAI_AGAIN" ||
+        p.code == "ECONNREFUSED"
     )
   ) {
     // Calling an unresolvable host should raise a ConnectError with

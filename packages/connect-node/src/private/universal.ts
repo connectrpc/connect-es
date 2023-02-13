@@ -47,7 +47,7 @@ export interface UniversalClientResponse {
  */
 export type UniversalHandlerFn = (
   request: UniversalServerRequest
-) => UniversalServerResponse | Promise<UniversalServerResponse>;
+) => Promise<UniversalServerResponse>;
 
 /**
  * A minimal abstraction of an HTTP request on the server side.
@@ -55,6 +55,7 @@ export type UniversalHandlerFn = (
 export interface UniversalServerRequest {
   httpVersion: string;
   method: string;
+  url: URL;
   header: Headers;
   /**
    * Many server frameworks parse request bodies with the mime type
