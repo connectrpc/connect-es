@@ -32,7 +32,10 @@ import type {
   ProtocolHandlerFact,
   ProtocolHandlerFactInit,
 } from "./protocol-handler.js";
-import { createUniversalHandler } from "./protocol-handler.js";
+import {
+  createUniversalHandler,
+  createUniversalHandlers,
+} from "./protocol-handler.js";
 import {
   NodeHandlerFn,
   universalHandlerToNodeHandler,
@@ -90,7 +93,7 @@ export type Handler = NodeHandlerFn & {
  * Options for creating a Handler. By default, all available protocols are
  * enabled.
  */
-interface HandlerOptions {
+export interface HandlerOptions {
   // TODO document
   grpc?: boolean;
   grpcWeb?: boolean;
@@ -115,10 +118,16 @@ export function createHandlers<T extends ServiceType>(
   implementation: ServiceImpl<T>,
   options?: HandlerOptions
 ): Handler[] {
-  const normalOptions = internalHandlerOptions(options);
-  return Object.entries(service.methods).map(([name, method]) => {
-    const i = implementation[name].bind(implementation);
-    return createHandler(service, method, i, normalOptions);
+  const protocols = createProtocolsFromOptions(options);
+  const uHandlers = createUniversalHandlers(service, implementation, protocols);
+  return uHandlers.map((uHandler) => {
+    const nodeHandler = universalHandlerToNodeHandler(
+      uHandler,
+      makeInternalErrorHandler(uHandler.service, uHandler.method)
+    );
+    return Object.assign(nodeHandler, {
+      ...uHandler,
+    });
   });
 }
 
@@ -129,33 +138,40 @@ export function createHandlers<T extends ServiceType>(
 export function createHandler<M extends MethodInfo>(
   service: ServiceType,
   method: M,
-  impl: MethodImpl<M>,
+  implementation: MethodImpl<M>,
   options?: HandlerOptions
 ): Handler {
-  const opt = internalHandlerOptions(options);
+  const protocols = createProtocolsFromOptions(options);
   const universalHandler = createUniversalHandler(
     service,
     method,
-    impl,
-    opt.protocols
+    implementation,
+    protocols
   );
   const nodeHandler = universalHandlerToNodeHandler(
     universalHandler,
-    (reason) => {
-      if (connectErrorFromNodeReason(reason).code == Code.Aborted) {
-        return;
-      }
-      // TODO(TCN-785)
-      // eslint-disable-next-line no-console
-      console.error(
-        `handler for rpc ${method.name} of ${service.typeName} failed`,
-        reason
-      );
-    }
+    makeInternalErrorHandler(service, method)
   );
   return Object.assign(nodeHandler, {
     ...universalHandler,
   });
+}
+
+export function makeInternalErrorHandler(
+  service: ServiceType,
+  method: MethodInfo
+): (reason: unknown) => void {
+  return function onInternalError(reason) {
+    if (connectErrorFromNodeReason(reason).code == Code.Aborted) {
+      return;
+    }
+    // TODO(TCN-785)
+    // eslint-disable-next-line no-console
+    console.error(
+      `handler for rpc ${method.name} of ${service.typeName} failed`,
+      reason
+    );
+  };
 }
 
 /**
@@ -207,11 +223,11 @@ interface MergeHandlersOptions {
  * creates a handler - into the internal type.
  * The function validates the options and sets defaults.
  */
-function internalHandlerOptions(
-  init?: HandlerOptions | InternalHandlerOptions
-): InternalHandlerOptions {
+export function createProtocolsFromOptions(
+  init?: HandlerOptions | ProtocolHandlerFact[]
+): ProtocolHandlerFact[] {
   init = init ?? {};
-  if ("protocols" in init) {
+  if (Array.isArray(init)) {
     return init;
   }
   const maxDeadlineDurationMs =
@@ -242,15 +258,5 @@ function internalHandlerOptions(
       Code.InvalidArgument
     );
   }
-  return {
-    protocols,
-    maxDeadlineDurationMs,
-    shutdownSignal: init.shutdownSignal,
-  };
-}
-
-interface InternalHandlerOptions {
-  protocols: ProtocolHandlerFact[];
-  maxDeadlineDurationMs: number;
-  shutdownSignal?: AbortSignal;
+  return protocols;
 }

@@ -104,7 +104,10 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     opt.jsonOptions,
     opt
   );
-  return function handle(req: UniversalServerRequest): UniversalServerResponse {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  return async function handle(
+    req: UniversalServerRequest
+  ): Promise<UniversalServerResponse> {
     assertByteStreamRequest(req);
     const type = parseContentType(req.header.get(headerContentType));
     if (type == undefined || type.text) {

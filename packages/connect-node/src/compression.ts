@@ -38,7 +38,7 @@ export const compressionGzip: Compression = {
 };
 
 export const compressionBrotli: Compression = {
-  name: "brotli",
+  name: "br",
   compress(bytes) {
     return brotliCompress(bytes, {});
   },
