@@ -1,9 +1,8 @@
 # @bufbuild/protoc-gen-connect-es
 
 The code generator for connect-es, a simple library to work with servers and clients
-in ECMAScript. 
-
-Unlike REST, you get a type-safe client and never have to think about serialization again.
+in ECMAScript with the type-safety of TypeScript.  It generates code that is compatible with
+browsers and Node.js.
 
 Learn more about connect-web at [github.com/bufbuild/connect-web](https://github.com/bufbuild/connect-web).
 
