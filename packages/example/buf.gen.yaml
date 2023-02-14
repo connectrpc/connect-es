@@ -5,6 +5,6 @@ plugins:
   - name: es
     opt: target=ts
     out: src/gen
-  - name: connect-web
+  - name: connect-es
     opt: target=ts
     out: src/gen

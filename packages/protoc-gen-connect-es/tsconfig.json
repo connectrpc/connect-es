@@ -1,0 +1,7 @@
+{
+  "files": ["src/protoc-gen-connect-es-plugin.ts"],
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "resolveJsonModule": true
+  }
+}

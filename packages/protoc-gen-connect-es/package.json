@@ -1,0 +1,37 @@
+{
+  "name": "@bufbuild/protoc-gen-connect-es",
+  "version": "0.7.0",
+  "description": "Code generator for connect-es",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufbuild/connect-web.git",
+    "directory": "packages/protoc-gen-connect-es"
+  },
+  "bin": {
+    "protoc-gen-connect-es": "bin/protoc-gen-connect-es"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "scripts": {
+    "clean": "rm -rf ./dist/cjs/*",
+    "build": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs"
+  },
+  "preferUnplugged": true,
+  "dependencies": {
+    "@bufbuild/protoplugin": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@bufbuild/connect-web": "0.7.0",
+    "@bufbuild/protoc-gen-es": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@bufbuild/connect-web": {
+      "optional": true
+    },
+    "@bufbuild/protoc-gen-es": {
+      "optional": true
+    }
+  }
+}

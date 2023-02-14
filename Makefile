@@ -41,6 +41,12 @@ $(BIN)/node16: Makefile
 	rm -r $(TMP)/node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH)
 	@touch $(@)
 
+$(BUILD)/protoc-gen-connect-es: node_modules tsconfig.base.json packages/protoc-gen-connect-es/tsconfig.json $(shell find packages/protoc-gen-connect-es/src -name '*.ts')
+	npm run -w packages/protoc-gen-connect-es clean
+	npm run -w packages/protoc-gen-connect-es build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc-gen-connect-web/tsconfig.json $(shell find packages/protoc-gen-connect-web/src -name '*.ts')
 	npm run -w packages/protoc-gen-connect-web clean
 	npm run -w packages/protoc-gen-connect-web build
@@ -95,26 +101,26 @@ $(GEN)/connect-core: node_modules/.bin/protoc-gen-es packages/connect-core/buf.g
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web packages/connect-web-test/buf.gen.yaml Makefile
+$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web $(BUILD)/protoc-gen-connect-es packages/connect-web-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-test/src/gen/*
 	npm run -w packages/connect-web-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
 	npm run -w packages/connect-web-test generate buf.build/bufbuild/eliza
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web packages/connect-node-test/buf.gen.yaml Makefile
+$(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-node-test/src/gen/*
 	npm run -w packages/connect-node-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web packages/connect-web-bench/buf.gen.yaml Makefile
+$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web $(BUILD)/protoc-gen-connect-es packages/connect-web-bench/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-bench/src/gen/*
 	npm run -w packages/connect-web-bench generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web packages/example/buf.gen.yaml $(shell find packages/example -name '*.proto')
+$(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-web $(BUILD)/protoc-gen-connect-es packages/example/buf.gen.yaml $(shell find packages/example -name '*.proto')
 	rm -rf packages/example/src/gen/*
 	npm run -w packages/example buf:generate
 	@mkdir -p $(@D)
@@ -134,7 +140,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect-core $(BUILD)/connect-web-next $(BUILD)/connect-node $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
+build: $(BUILD)/connect-core $(BUILD)/connect-web-next $(BUILD)/connect-node $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-web $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
 
 .PHONY: test
 test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack
@@ -219,6 +225,7 @@ release: all ## Release @bufbuild/connect-web
 		--workspace packages/connect-web \
 		--workspace packages/connect-node \
 		--workspace packages/connect-core \
+		--workspace packages/protoc-gen-connect-es \
 		--workspace packages/protoc-gen-connect-web
 
 .PHONY: crosstestserverstop

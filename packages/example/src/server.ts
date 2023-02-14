@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { createHandlers } from "@bufbuild/connect-node";
-import { ElizaService } from "./gen/eliza_connectweb.js";
+import { ElizaService } from "./gen/eliza_connect.js";
 import type {
   SayRequest,
   IntroduceRequest,
