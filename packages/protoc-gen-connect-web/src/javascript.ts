@@ -26,7 +26,7 @@ export function generateJs(schema: Schema) {
     if (protoFile.services.length == 0) {
       continue;
     }
-    const file = schema.generateFile(protoFile.name + "_connect.js");
+    const file = schema.generateFile(protoFile.name + "_connectweb.js");
     file.preamble(protoFile);
     for (const service of protoFile.services) {
       generateService(schema, file, service);
