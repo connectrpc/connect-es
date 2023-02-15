@@ -65,7 +65,7 @@ protoc -I . eliza.proto \
   --plugin=protoc-gen-es=../../node_modules/.bin/protoc-gen-es \
   --es_out src/gen \
   --es_opt target=ts \
-  --plugin=protoc-gen-connect-web=../../node_modules/.bin/protoc-gen-connect-web \
+  --plugin=protoc-gen-connect-es=../../node_modules/.bin/protoc-gen-connect-es \
   --connect-web_out src/gen \
   --connect-web_opt target=ts
 ```

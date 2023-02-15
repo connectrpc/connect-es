@@ -25,7 +25,7 @@ happy to chat!
 ## A small example
 
 Curious what this looks like in practice? From a [Protobuf schema](https://github.com/bufbuild/connect-web/blob/main/packages/example/eliza.proto), 
-we generate a small piece of RPC metadata with [@bufbuild/protoc-gen-connect-web](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web), 
+we generate a small piece of RPC metadata with [@bufbuild/protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es), 
 the `ElizaService`. Using that metadata, we can build a server:
 
 ```ts
