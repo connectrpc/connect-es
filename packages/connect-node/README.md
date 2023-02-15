@@ -1,4 +1,4 @@
-# @bufbuild/connect-node (Preview)
+# @bufbuild/connect-node (Beta)
 
 Connect-Node is a slim library for building browser and gRPC-compatible HTTP APIs. 
 The procedures are defined in a [Protocol Buffer](https://developers.google.com/protocol-buffers)
@@ -14,7 +14,7 @@ API is as easy as using `curl`.
 
 ## Project status
 
-Connect-Node is still in preview, so we want your feedback! We’d love to learn about 
+Connect-Node is still in beta, so we want your feedback! We’d love to learn about 
 your use cases and what you’d like to do with Connect-Node. For example, do you plan 
 to use it with React, Remix, or on the edge with Vercel’s Edge Runtime? You can reach 
 us either through the [Buf Slack](https://buf.build/links/slack/) or by filing a 

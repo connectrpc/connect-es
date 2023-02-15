@@ -49,13 +49,13 @@ and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding
 The library and the generated code are compatible with ES2017 and TypeScript 4.1.
 
 
-## Connect for Node.js (Preview)
+## Connect for Node.js (Beta)
 
 With [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node), 
 you have the option to use the same clients from Connect-Web on Node.js v18. You can 
 also use it for servers using the Node.js `http`, `https`, or `http2` modules. 
 
-Connect-Node is still in preview, so we want your feedback! We’d love to learn about
+Connect-Node is still in beta, so we want your feedback! We’d love to learn about
 your use cases and what you’d like to do with Connect-Node. For example, do you plan
 to use it with React, Remix, or on the edge with Vercel’s Edge Runtime? You can reach
 us either through the [Buf Slack](https://buf.build/links/slack/) or by filing a
