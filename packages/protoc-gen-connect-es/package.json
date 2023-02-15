@@ -1,7 +1,7 @@
 {
   "name": "@bufbuild/protoc-gen-connect-es",
   "version": "0.7.0",
-  "description": "Code generator for connect-es",
+  "description": "Code generator for Connect",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

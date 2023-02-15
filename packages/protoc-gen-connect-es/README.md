@@ -1,6 +1,6 @@
 # @bufbuild/protoc-gen-connect-es
 
-The code generator for connect-es, a simple library to work with servers and clients
+The code generator for Connect, a simple library to work with servers and clients
 in ECMAScript with the type-safety of TypeScript.  It generates code that is compatible with
 browsers and Node.js.
 
