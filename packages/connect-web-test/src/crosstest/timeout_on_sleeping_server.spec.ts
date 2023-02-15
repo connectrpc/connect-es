@@ -19,7 +19,7 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect-web-next";
-import { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransportsExcluding } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { connectErrorFromReason } from "@bufbuild/connect-web";

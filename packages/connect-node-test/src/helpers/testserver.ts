@@ -26,7 +26,7 @@ import {
   mergeHandlers,
   Transport,
 } from "@bufbuild/connect-node";
-import { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { testService } from "./test-service-impl.js";
 
 export function createTestServers() {

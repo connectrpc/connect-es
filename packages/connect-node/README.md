@@ -31,7 +31,7 @@ the `ElizaService`. Using that metadata, we can build a server:
 ```ts
 // server.ts
 import { createHandler, mergeHandlers } from "@bufbuild/connect-node";
-import { ElizaService } from "./gen/eliza_connectweb.js";
+import { ElizaService } from "./gen/eliza_connect.js";
 import * as http2 from "http2";
 
 // A Node.js request listener that implements rpc Say(SayRequest) returns (SayResponse)
@@ -75,7 +75,7 @@ curl \
 
 ```ts
 import { createGrpcTransport, createPromiseClient } from "@bufbuild/connect-node";
-import { ElizaService } from "./gen/eliza_connectweb.js";
+import { ElizaService } from "./gen/eliza_connect.js";
 
 const transport = createGrpcTransport({
   baseUrl: "http://localhost:8080",

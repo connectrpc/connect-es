@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { makeAnyClient } from "@bufbuild/connect-web";
-import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import { TestService } from "./gen/grpc/testing/test_connect.js";
 
 // TODO remove this file after connect-web has migrated to connect-core
 
