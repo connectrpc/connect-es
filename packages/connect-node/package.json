@@ -22,6 +22,9 @@
     "require": "./dist/cjs/index.js",
     "types": "./dist/types/index.d.ts"
   },
+  "engines": {
+    "node": ">=16.0.0 <19"
+  },
   "dependencies": {
     "@bufbuild/connect-core": "0.7.0"
   },
