@@ -53,7 +53,7 @@ How are you feeling today?
 ## Generate code
 
 If you make changes to `eliza.proto`, make sure to re-generate the code. For example, you could rename a field, or
-add a procedure. If you have the buf CLI installed, simply run `npm run buf:generate` in this directory. 
+add a procedure. To do so, run `npx buf generate` in this directory.
 
 This will generate the service definitions and message types into the directory `src/gen`. The 
 [`buf.gen.yaml` file](./buf.gen.yaml) contains the plugin configuration. 

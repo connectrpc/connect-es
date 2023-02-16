@@ -19,7 +19,7 @@ and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 To install the plugins and their runtime libraries, run:
 
 ```shell
-npm install --save-dev @bufbuild/protoc-gen-connect-es @bufbuild/protoc-gen-es
+npm install --save-dev @bufbuild/protoc-gen-connect-es @bufbuild/protoc-gen-es @bufbuild/buf
 npm install @bufbuild/connect-web @bufbuild/protobuf
 ```
 
@@ -48,23 +48,10 @@ plugins:
     opt: target=ts
 ```
 
-Add the following script to your `package.json`:
-
-```json
-{
-  "name": "your-package",
-  "version": "1.0.0",
-  "scripts": {
-    "generate": "buf generate"
-  },
-  // ...
-}
-```
-
 To generate code for all protobuf files within your project, simply run:
 
 ```bash
-npm run generate
+npx buf generate
 ```
 
 Note that `buf` can generate from various [inputs](https://docs.buf.build/reference/inputs), 

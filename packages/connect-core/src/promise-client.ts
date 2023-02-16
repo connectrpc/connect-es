@@ -82,6 +82,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   method: MethodInfo<I, O>
 ): UnaryFn<I, O> {
   return async function (input, options) {
+    console.log("unary func2");
     const response = await transport.unary(
       service,
       method,
@@ -90,6 +91,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
       options?.headers,
       input
     );
+    console.log("unary func2 done");
     options?.onHeader?.(response.header);
     options?.onTrailer?.(response.trailer);
     return response.message;
