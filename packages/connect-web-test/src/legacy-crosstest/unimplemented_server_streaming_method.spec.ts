@@ -18,7 +18,7 @@ import {
   createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
-import { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 

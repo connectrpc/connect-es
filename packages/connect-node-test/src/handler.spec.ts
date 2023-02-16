@@ -18,7 +18,7 @@ import {
   unimplementService,
 } from "@bufbuild/connect-node";
 import { createRegistry } from "@bufbuild/protobuf";
-import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import { TestService } from "./gen/grpc/testing/test_connect.js";
 
 describe("createHandler()", () => {
   it("should take a method", () => {

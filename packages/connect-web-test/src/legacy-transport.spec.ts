@@ -31,7 +31,7 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import { TestService } from "./gen/grpc/testing/test_connect.js";
 import {
   SimpleResponse,
   StreamingOutputCallResponse,

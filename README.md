@@ -69,8 +69,8 @@ happy to chat!
   Implements browser clients for the Connect and gRPC-web protocols ([source code](packages/connect-web)).
 - [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node):
   Implements Node.js clients and servers for the Connect, gRPC-web, and gRPC protocols ([source code](packages/connect-node)).
-- [@bufbuild/protoc-gen-connect-web](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web):
-  Code generator plugin for the services in your schema ([source code](packages/protoc-gen-connect-web)).
+- [@bufbuild/protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es):
+  Code generator plugin for the services in your schema ([source code](packages/protoc-gen-connect-es)).
 
 
 ## Ecosystem

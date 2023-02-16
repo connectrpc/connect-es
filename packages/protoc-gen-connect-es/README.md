@@ -1,25 +1,25 @@
-# @bufbuild/protoc-gen-connect-web
+# @bufbuild/protoc-gen-connect-es
 
-The code generator for Connect-Web, a simple library to call remote procedures 
-from a browser client. Unlike REST, you get a type-safe client and never have 
-to think about serialization again.
+The code generator for Connect, a simple library to work with servers and clients
+in ECMAScript with the type-safety of TypeScript.  It generates code that is compatible with
+browsers and Node.js.
 
-Learn more about Connect-Web at [github.com/bufbuild/connect-web](https://github.com/bufbuild/connect-web).
+Learn more about connect-web at [github.com/bufbuild/connect-web](https://github.com/bufbuild/connect-web).
 
 ## Installation
 
-`protoc-gen-connect-web` is a code generator plugin for Protocol Buffer compilers, 
+`protoc-gen-connect-es` is a code generator plugin for Protocol Buffer compilers, 
 like [buf](https://github.com/bufbuild/buf) and [protoc](https://github.com/protocolbuffers/protobuf/releases).
-It generates clients from your Protocol Buffer schema, and works in tandem with
+It generates clients as well as server definitions from your Protocol Buffer schema, and works in tandem with
 [@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es),
-the code generator plugin for all Protocol Buffer base types. The code those two 
-plugins generate requires the runtime libraries [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web), 
+the code generator plugin for all Protocol Buffer base types. The code these two 
+plugins generate requires the runtime libraries [@bufbuild/connect-es](https://www.npmjs.com/package/@bufbuild/connect-es), 
 and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 
 To install the plugins and their runtime libraries, run:
 
 ```shell
-npm install --save-dev @bufbuild/protoc-gen-connect-web @bufbuild/protoc-gen-es
+npm install --save-dev @bufbuild/protoc-gen-connect-es @bufbuild/protoc-gen-es
 npm install @bufbuild/connect-web @bufbuild/protobuf
 ```
 
@@ -42,8 +42,8 @@ plugins:
   - name: es
     out: src/gen
     opt: target=ts
-  # This will invoke protoc-gen-connect-web
-  - name: connect-web
+  # This will invoke protoc-gen-connect-es
+  - name: connect-es
     out: src/gen
     opt: target=ts
 ```
@@ -80,8 +80,8 @@ PATH=$PATH:$(pwd)/node_modules/.bin \
   protoc -I . \
   --es_out src/gen \
   --es_opt target=ts \
-  --connect-web_out src/gen \
-  --connect-web_opt target=ts \
+  --connect-es_out src/gen \
+  --connect-es_opt target=ts \
   a.proto b.proto c.proto
 ```
 
@@ -92,7 +92,7 @@ Since yarn v2 and above does not use a `node_modules` directory, you need to
 change the variable a bit:
 
 ```bash
-PATH=$(dirname $(yarn bin protoc-gen-es)):$(dirname $(yarn bin protoc-gen-connect-web)):$PATH
+PATH=$(dirname $(yarn bin protoc-gen-es)):$(dirname $(yarn bin protoc-gen-connect-es)):$PATH
 ```
 
 
@@ -104,9 +104,9 @@ This option controls whether the plugin generates JavaScript, TypeScript,
 or TypeScript declaration files.
 
 Possible values:
-- `target=js` - generates a `_connectweb.js` file for every `.proto` input file.
-- `target=ts` - generates a `_connectweb.ts` file for every `.proto` input file.
-- `target=dts` - generates a `_connectweb.d.ts` file for every `.proto` input file.
+- `target=js` - generates a `_connect.js` file for every `.proto` input file.
+- `target=ts` - generates a `_connect.ts` file for every `.proto` input file.
+- `target=dts` - generates a `_connect.d.ts` file for every `.proto` input file.
 
 Multiple values can be given by separating them with `+`, for example
 `target=js+dts`.
@@ -117,7 +117,7 @@ bundler configurations. If you prefer to generate TypeScript, use `target=ts`.
 
 ### `import_extension=.js`
 
-By default, [protoc-gen-connect-web](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web)
+By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
 (and all other plugins based on [@bufbuild/protoplugin](https://www.npmjs.com/package/@bufbuild/protoplugin))
 uses a `.js` file extensions in import paths, even in TypeScript files.
 
@@ -132,7 +132,7 @@ in import paths with the given value. For example, set
 
 ### `keep_empty_files=true`
 
-By default, [protoc-gen-connect-web](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web)
+By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
 (and all other plugins based on [@bufbuild/protoplugin](https://www.npmjs.com/package/@bufbuild/protoplugin))
 omit empty files from the plugin output. This option disables pruning of
 empty files, to allow for smooth interoperation with Bazel and similar
@@ -172,7 +172,7 @@ message SayResponse {
 }
 ```
 
-`eliza_connectweb.ts`
+`eliza_connect.ts`
 ```ts
 /**
  * ElizaService provides a way to talk to the ELIZA, which is a port of

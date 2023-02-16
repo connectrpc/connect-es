@@ -21,12 +21,12 @@ import {
   localName,
 } from "@bufbuild/protoplugin/ecmascript";
 
-export function generateTs(schema: Schema) {
+export function generateJs(schema: Schema) {
   for (const protoFile of schema.files) {
     if (protoFile.services.length == 0) {
       continue;
     }
-    const file = schema.generateFile(protoFile.name + "_connectweb.ts");
+    const file = schema.generateFile(protoFile.name + "_connect.js");
     file.preamble(protoFile);
     for (const service of protoFile.services) {
       generateService(schema, file, service);
@@ -35,13 +35,8 @@ export function generateTs(schema: Schema) {
 }
 
 // prettier-ignore
-function generateService(
-  schema: Schema,
-  f: GeneratedFile,
-  service: DescService
-) {
-  const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } =
-    schema.runtime;
+function generateService(schema: Schema, f: GeneratedFile, service: DescService) {
+ const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } = schema.runtime;
   f.print(makeJsDoc(service));
   f.print("export const ", localName(service), " = {");
   f.print(`  typeName: `, literalString(service.typeName), `,`);
@@ -52,26 +47,14 @@ function generateService(
     f.print(`      name: `, literalString(method.name), `,`);
     f.print("      I: ", method.input, ",");
     f.print("      O: ", method.output, ",");
-    f.print(
-      "      kind: ",
-      rtMethodKind,
-      ".",
-      MethodKind[method.methodKind],
-      ","
-    );
+    f.print("      kind: ", rtMethodKind, ".", MethodKind[method.methodKind], ",");
     if (method.idempotency !== undefined) {
-      f.print(
-        "    idempotency: ",
-        rtMethodIdempotency,
-        ".",
-        MethodIdempotency[method.idempotency],
-        ","
-      );
+        f.print("      idempotency: ", rtMethodIdempotency, ".", MethodIdempotency[method.idempotency], ",");
     }
     // In case we start supporting options, we have to surface them here
     f.print("    },");
   }
   f.print("  }");
-  f.print("} as const;");
+  f.print("};");
   f.print();
 }

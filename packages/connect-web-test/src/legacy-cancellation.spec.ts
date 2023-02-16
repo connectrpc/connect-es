@@ -20,7 +20,7 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-web";
 import { describeLegacyTransports } from "./helpers/legacy-crosstestserver.js";
-import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import { TestService } from "./gen/grpc/testing/test_connect.js";
 
 // TODO remove this file after connect-web has migrated to connect-core
 
