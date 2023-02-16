@@ -18,7 +18,7 @@ import {
   createPromiseClient,
   connectErrorDetails,
   Code,
-} from "@bufbuild/connect-web-next";
+} from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
 import {

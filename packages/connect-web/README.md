@@ -1,7 +1,7 @@
 # @bufbuild/connect-web
 
-This is the runtime library package for Connect-Web. You'll find its code 
-generator at [@bufbuild/protoc-gen-connect-web](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-web).
+This is the runtime library package for Connect. You'll find its code 
+generator at [@bufbuild/protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es).
 
 Connect-Web is a simple library to call remote procedures from a web browser. 
 Unlike REST, you get a type-safe client and never have to think about

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CallOptions } from "@bufbuild/connect-web-next";
+import type { CallOptions } from "@bufbuild/connect-web";
 import {
   Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-} from "@bufbuild/connect-web-next";
+} from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connectweb.js";
 import { describeTransportsExcluding } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";

@@ -12,30 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
+import {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
+  JsonReadOptions,
+  JsonWriteOptions,
   Message,
   MethodInfo,
+  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { ConnectError, connectErrorFromReason } from "./connect-error.js";
-import { Code, codeFromGrpcWebHttpStatus } from "./code.js";
-import { decodeBinaryHeader } from "./http-headers.js";
-import { Status } from "./grpc/status/v1/status_pb.js";
-import type { Transport } from "./transport.js";
-import type { StreamResponse, UnaryResponse } from "./interceptor.js";
+import type { UnaryRequest } from "@bufbuild/connect-core";
 import {
+  Code,
+  connectErrorFromReason,
+  createClientMethodSerializers,
+  createEnvelopeReadableStream,
+  createMethodUrl,
+  encodeEnvelope,
   Interceptor,
-  runServerStream,
+  runStreaming,
   runUnary,
-  UnaryRequest,
-} from "./interceptor.js";
-import { createEnvelopeReadableStream, encodeEnvelopes } from "./envelope.js";
+  StreamResponse,
+  Transport,
+  UnaryResponse,
+} from "@bufbuild/connect-core";
+import {
+  createRequestHeader,
+  trailerFlag,
+  trailerParse,
+  validateResponse,
+} from "@bufbuild/connect-core/protocol-grpc-web";
+import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
 import { assertFetchApi } from "./assert-fetch-api.js";
-import type { ReadableStreamReadResultLike } from "./lib.dom.streams.js";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -52,8 +63,17 @@ export interface GrpcWebTransportOptions {
    *
    * This will make a `POST /my-api/my_package.MyService/Foo` to
    * `example.com` via HTTPS.
+   *
+   * If your API is served from the same domain as your site, use
+   * `baseUrl: window.location.origin` or simply "/".
    */
   baseUrl: string;
+
+  /**
+   * By default, clients use the binary format for gRPC-web, because
+   * not all gRPC-web implementations support JSON.
+   */
+  useBinaryFormat?: boolean;
 
   /**
    * Interceptors that should be applied to all calls running through
@@ -67,6 +87,11 @@ export interface GrpcWebTransportOptions {
    * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
    */
   credentials?: RequestCredentials;
+
+  /**
+   * Options for the JSON format.
+   */
+  jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
 
   /**
    * Options for the binary wire format.
@@ -88,7 +113,7 @@ export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
 ): Transport {
   assertFetchApi();
-  const transportOptions = options;
+  const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
@@ -100,200 +125,83 @@ export function createGrpcWebTransport(
       timeoutMs: number | undefined,
       header: Headers,
       message: PartialMessage<I>
-    ): Promise<UnaryResponse<O>> {
+    ): Promise<UnaryResponse<I, O>> {
+      const { normalize, serialize, parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
+      );
       try {
         return await runUnary<I, O>(
           {
             stream: false,
             service,
             method,
-            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
-              method.name
-            }`,
+            url: createMethodUrl(options.baseUrl, service, method),
             init: {
               method: "POST",
               credentials: options.credentials ?? "same-origin",
               redirect: "error",
               mode: "cors",
             },
-            header: createGrpcWebRequestHeaders(header, timeoutMs),
-            message:
-              message instanceof method.I ? message : new method.I(message),
+            header: createRequestHeader(useBinaryFormat, timeoutMs, header),
+            message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
-          async (unaryRequest) => {
-            const response = await fetch(unaryRequest.url, {
-              ...unaryRequest.init,
-              headers: unaryRequest.header,
-              signal: unaryRequest.signal,
-              body: createGrpcWebRequestBody(
-                unaryRequest.message,
-                options.binaryOptions
-              ),
+          async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
+            const response = await fetch(req.url, {
+              ...req.init,
+              headers: req.header,
+              signal: req.signal,
+              body: encodeEnvelope(0, serialize(req.message)),
             });
-            const headError =
-              extractHttpStatusError(response) ??
-              extractContentTypeError(response.headers) ??
-              extractDetailsError(response.headers) ??
-              extractHeadersError(response.headers);
-            if (headError) {
-              throw headError;
-            }
+            validateResponse(
+              useBinaryFormat,
+              response.status,
+              response.headers
+            );
             if (!response.body) {
               throw "missing response body";
             }
             const reader = createEnvelopeReadableStream(
               response.body
             ).getReader();
-            const messageOrTrailerResult = await reader.read();
-            if (messageOrTrailerResult.done) {
-              throw "premature eof";
+            let trailer: Headers | undefined;
+            let message: O | undefined;
+            for (;;) {
+              const r = await reader.read();
+              if (r.done) {
+                break;
+              }
+              const { flags, data } = r.value;
+              if (flags === trailerFlag) {
+                if (trailer !== undefined) {
+                  throw "extra trailer";
+                }
+                // Unary responses require exactly one response message, but in
+                // case of an error, it is perfectly valid to have a response body
+                // that only contains error trailers.
+                trailer = trailerParse(data);
+                continue;
+              }
+              if (message !== undefined) {
+                throw "extra message";
+              }
+              message = parse(data);
             }
-            if (messageOrTrailerResult.value.flags === trailerFlag) {
-              // Unary responses require exactly one response message, but in
-              // case of an error, it is perfectly valid to have a response body
-              // that only contains error trailers.
-              parseGrpcWebTrailerAndExtractError(
-                messageOrTrailerResult.value.data
-              );
-              // At this point, we received trailers only, but the trailers did
-              // not have an error status code.
-              throw "unexpected trailer";
-            }
-            const message = method.O.fromBinary(
-              messageOrTrailerResult.value.data,
-              transportOptions.binaryOptions
-            );
-            const trailerResult = await reader.read();
-            if (trailerResult.done) {
+            if (trailer === undefined) {
               throw "missing trailer";
             }
-            if (trailerResult.value.flags !== trailerFlag) {
-              throw "missing trailer";
+            validateTrailer(trailer);
+            if (message === undefined) {
+              throw "missing message";
             }
-            const trailer = parseGrpcWebTrailerAndExtractError(
-              trailerResult.value.data
-            );
-            const eofResult = await reader.read();
-            if (!eofResult.done) {
-              throw "extraneous data";
-            }
-            return <UnaryResponse<O>>{
+            return <UnaryResponse<I, O>>{
               stream: false,
               header: response.headers,
               message,
               trailer,
-            };
-          },
-          transportOptions.interceptors
-        );
-      } catch (e) {
-        throw connectErrorFromReason(e, Code.Internal);
-      }
-    },
-    async serverStream<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
-    >(
-      service: ServiceType,
-      method: MethodInfo<I, O>,
-      signal: AbortSignal | undefined,
-      timeoutMs: number | undefined,
-      header: HeadersInit | undefined,
-      message: PartialMessage<I>
-    ): Promise<StreamResponse<O>> {
-      try {
-        return await runServerStream<I, O>(
-          <UnaryRequest<I>>{
-            stream: false,
-            service,
-            method,
-            url: `${options.baseUrl.replace(/\/$/, "")}/${service.typeName}/${
-              method.name
-            }`,
-            init: {
-              method: "POST",
-              credentials: options.credentials ?? "same-origin",
-              redirect: "error",
-              mode: "cors",
-            },
-            header: createGrpcWebRequestHeaders(header, timeoutMs),
-            message:
-              message instanceof method.I ? message : new method.I(message),
-            signal: signal ?? new AbortController().signal,
-          },
-          async (unaryRequest: UnaryRequest<I>): Promise<StreamResponse<O>> => {
-            const response = await fetch(unaryRequest.url, {
-              ...unaryRequest.init,
-              headers: unaryRequest.header,
-              signal: unaryRequest.signal,
-              body: createGrpcWebRequestBody(
-                unaryRequest.message,
-                options.binaryOptions
-              ),
-            });
-
-            const err =
-              extractHttpStatusError(response) ??
-              extractContentTypeError(response.headers) ??
-              extractDetailsError(response.headers) ??
-              extractHeadersError(response.headers);
-            if (err) {
-              throw err;
-            }
-            if (!response.body) {
-              throw "missing response body";
-            }
-
-            const reader = createEnvelopeReadableStream(
-              response.body
-            ).getReader();
-
-            let endStreamReceived = false;
-            let messageReceived = false;
-            return <StreamResponse<O>>{
-              stream: true,
-              service,
-              method,
-              header: response.headers,
-              trailer: new Headers(),
-              async read(): Promise<ReadableStreamReadResultLike<O>> {
-                try {
-                  const result = await reader.read();
-                  if (result.done) {
-                    if (messageReceived && !endStreamReceived) {
-                      throw new ConnectError("missing trailers", Code.Internal);
-                    }
-                    return {
-                      done: true,
-                      value: undefined,
-                    };
-                  }
-                  if ((result.value.flags & trailerFlag) === trailerFlag) {
-                    endStreamReceived = true;
-                    const trailer = parseGrpcWebTrailerAndExtractError(
-                      result.value.data
-                    );
-                    trailer.forEach((value, key) =>
-                      this.trailer.append(key, value)
-                    );
-                    return {
-                      done: true,
-                      value: undefined,
-                    };
-                  }
-                  messageReceived = true;
-                  return {
-                    done: false,
-                    value: method.O.fromBinary(
-                      result.value.data,
-                      options.binaryOptions
-                    ),
-                  };
-                } catch (e) {
-                  throw connectErrorFromReason(e);
-                }
-              },
             };
           },
           options.interceptors
@@ -302,141 +210,129 @@ export function createGrpcWebTransport(
         throw connectErrorFromReason(e, Code.Internal);
       }
     },
-  };
-}
 
-function createGrpcWebRequestBody(
-  message: AnyMessage,
-  options: Partial<BinaryWriteOptions> | undefined
-): BodyInit {
-  return encodeEnvelopes({
-    data: message.toBinary(options),
-    flags: messageFlag,
-  });
-}
-
-const messageFlag = 0b00000000;
-const trailerFlag = 0b10000000;
-
-function createGrpcWebRequestHeaders(
-  headers: HeadersInit | undefined,
-  timeoutMs: number | undefined
-): Headers {
-  const result = new Headers(headers ?? {});
-  // We provide the most explicit description for our content type.
-  // Note that we do not support the grpc-web-text format.
-  // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2
-  result.set("Content-Type", "application/grpc-web+proto");
-  // Some servers may rely on the request header `X-Grpc-Web` to identify
-  // gRPC-web requests. For example the proxy by improbable:
-  // https://github.com/improbable-eng/grpc-web/blob/53aaf4cdc0fede7103c1b06f0cfc560c003a5c41/go/grpcweb/wrapper.go#L231
-  result.set("X-Grpc-Web", "1");
-  // Note that we do not comply with recommended structure for the
-  // user-agent string.
-  // https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
-  result.set("X-User-Agent", "@bufbuild/connect-web");
-  if (timeoutMs !== undefined) {
-    result.set("Grpc-Timeout", `${timeoutMs}m`);
-  }
-  return result;
-}
-
-function extractContentTypeError(header: Headers): ConnectError | undefined {
-  const type = header.get("Content-Type");
-  switch (type?.toLowerCase()) {
-    case "application/grpc-web":
-    case "application/grpc-web+proto":
-      return undefined;
-    case "application/grpc-web-text":
-    case "application/grpc-web-text+proto":
-      return new ConnectError("grpc-web-text is not supported", Code.Internal);
-    case undefined:
-    case null:
-    default:
-      return new ConnectError(
-        `unexpected content type: ${String(type)}`,
-        Code.Internal
+    async stream<
+      I extends Message<I> = AnyMessage,
+      O extends Message<O> = AnyMessage
+    >(
+      service: ServiceType,
+      method: MethodInfo<I, O>,
+      signal: AbortSignal | undefined,
+      timeoutMs: number | undefined,
+      header: HeadersInit | undefined,
+      input: AsyncIterable<I>
+    ): Promise<StreamResponse<I, O>> {
+      const { serialize, parse } = createClientMethodSerializers(
+        method,
+        useBinaryFormat,
+        options.jsonOptions,
+        options.binaryOptions
       );
-  }
-}
-
-function extractHttpStatusError(response: Response): ConnectError | undefined {
-  const code = codeFromGrpcWebHttpStatus(response.status);
-  if (!code) {
-    return undefined;
-  }
-  return new ConnectError(
-    decodeURIComponent(response.headers.get("grpc-message") ?? ""),
-    code
-  );
-}
-
-function extractHeadersError(header: Headers): ConnectError | undefined {
-  const value = header.get("grpc-status");
-  if (value === null) {
-    return undefined;
-  }
-  const code = parseInt(value);
-  if (code === 0) {
-    return undefined;
-  }
-  if (!(code in Code)) {
-    return new ConnectError(
-      `invalid grpc-status: ${value}`,
-      Code.Internal,
-      header
-    );
-  }
-  return new ConnectError(
-    decodeURIComponent(header.get("grpc-message") ?? ""),
-    code,
-    header
-  );
-}
-
-function extractDetailsError(header: Headers): ConnectError | undefined {
-  const grpcStatusDetailsBin = header.get("grpc-status-details-bin");
-  if (grpcStatusDetailsBin == null) {
-    return undefined;
-  }
-  try {
-    const status = decodeBinaryHeader(grpcStatusDetailsBin, Status);
-    // Prefer the protobuf-encoded data to the headers.
-    if (status.code == 0) {
-      return undefined;
-    }
-    const error = new ConnectError(status.message, status.code, header);
-    error.details.push(...status.details);
-    return error;
-  } catch (e) {
-    const ce = connectErrorFromReason(e, Code.Internal);
-    header.forEach((value, key) => ce.metadata.append(key, value));
-    return ce;
-  }
-}
-
-function parseGrpcWebTrailerAndExtractError(data: Uint8Array): Headers {
-  const trailer = parseGrpcWebTrailer(data);
-  const err = extractDetailsError(trailer) ?? extractHeadersError(trailer);
-  if (err) {
-    throw err;
-  }
-  return trailer;
-}
-
-function parseGrpcWebTrailer(data: Uint8Array): Headers {
-  const headers = new Headers();
-  const lines = String.fromCharCode(...data).split("\r\n");
-  for (const line of lines) {
-    if (line === "") {
-      continue;
-    }
-    const i = line.indexOf(":");
-    if (i > 0) {
-      const name = line.substring(0, i).trim();
-      const value = line.substring(i + 1).trim();
-      headers.append(name, value);
-    }
-  }
-  return headers;
+      async function* parseResponseBody(
+        body: ReadableStream<Uint8Array>,
+        foundStatus: boolean,
+        trailerTarget: Headers
+      ) {
+        const reader = createEnvelopeReadableStream(body).getReader();
+        try {
+          if (foundStatus) {
+            // A grpc-status: 0 response header was present. This is a "trailers-only"
+            // response (a response without a body and no trailers).
+            //
+            // The spec seems to disallow a trailers-only response for status 0 - we are
+            // lenient and only verify that the body is empty.
+            //
+            // > [...] Trailers-Only is permitted for calls that produce an immediate error.
+            // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+            if (!(await reader.read()).done) {
+              throw "extra data for trailers-only";
+            }
+            return;
+          }
+          let trailerReceived = false;
+          for (;;) {
+            const result = await reader.read();
+            if (result.done) {
+              break;
+            }
+            const { flags, data } = result.value;
+            if ((flags & trailerFlag) === trailerFlag) {
+              if (trailerReceived) {
+                throw "extra trailer";
+              }
+              trailerReceived = true;
+              const trailer = trailerParse(data);
+              validateTrailer(trailer);
+              trailer.forEach((value, key) => trailerTarget.set(key, value));
+              continue;
+            }
+            if (trailerReceived) {
+              throw "extra message";
+            }
+            yield parse(data);
+            continue;
+          }
+          if (!trailerReceived) {
+            throw "missing trailer";
+          }
+        } catch (e) {
+          throw connectErrorFromReason(e);
+        }
+      }
+      async function createRequestBody(
+        input: AsyncIterable<I>
+      ): Promise<Uint8Array> {
+        if (method.kind != MethodKind.ServerStreaming) {
+          throw "The fetch API does not support streaming request bodies";
+        }
+        const r = await input[Symbol.asyncIterator]().next();
+        if (r.done == true) {
+          throw "missing request message";
+        }
+        return encodeEnvelope(0, serialize(r.value));
+      }
+      return runStreaming<I, O>(
+        {
+          stream: true,
+          service,
+          method,
+          url: createMethodUrl(options.baseUrl, service, method),
+          init: {
+            method: "POST",
+            credentials: options.credentials ?? "same-origin",
+            redirect: "error",
+            mode: "cors",
+          },
+          signal: signal ?? new AbortController().signal,
+          header: createRequestHeader(useBinaryFormat, timeoutMs, header),
+          message: input,
+        },
+        async (req) => {
+          const fRes = await fetch(req.url, {
+            ...req.init,
+            headers: req.header,
+            signal: req.signal,
+            body: await createRequestBody(req.message),
+          });
+          const { foundStatus } = validateResponse(
+            useBinaryFormat,
+            fRes.status,
+            fRes.headers
+          );
+          if (!fRes.body) {
+            throw "missing response body";
+          }
+          const trailer = new Headers();
+          const res: StreamResponse<I, O> = {
+            ...req,
+            header: fRes.headers,
+            trailer,
+            message: parseResponseBody(fRes.body, foundStatus, trailer),
+          };
+          return res;
+        },
+        options.interceptors
+      ).catch((e: unknown) => Promise.reject(connectErrorFromReason(e)));
+    },
+  };
 }

@@ -12,42 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { createCallbackClient, CallbackClient } from "./callback-client.js";
-export { createPromiseClient, PromiseClient } from "./promise-client.js";
-export { makeAnyClient, AnyClient } from "./any-client.js";
-export type { CallOptions } from "./call-options.js";
-
+export * from "./connect-transport.js";
+export * from "./grpc-web-transport.js";
 export {
-  createConnectTransport,
-  ConnectTransportOptions,
-} from "./connect-transport.js";
-export {
-  createGrpcWebTransport,
-  GrpcWebTransportOptions,
-} from "./grpc-web-transport.js";
-export type { Transport } from "./transport.js";
-
-export {
-  Interceptor,
-  UnaryRequest,
-  UnaryResponse,
-  StreamResponse,
-  runUnary,
-  runServerStream,
-} from "./interceptor.js";
-
-export {
+  createCallbackClient,
+  CallbackClient,
+  createPromiseClient,
+  PromiseClient,
+  CallOptions,
+  Transport,
   ConnectError,
   connectErrorDetails,
   connectErrorFromReason,
-  connectErrorFromJson,
-} from "./connect-error.js";
-export { Code, codeFromString, codeToString } from "./code.js";
-
-export {
+  Code,
+  Interceptor,
+  UnaryRequest,
+  UnaryResponse,
+  StreamRequest,
+  StreamResponse,
   encodeBinaryHeader,
   decodeBinaryHeader,
-  mergeHeaders,
-} from "./http-headers.js";
-
-export { createEnvelopeReadableStream } from "./envelope.js";
+} from "@bufbuild/connect-core";
