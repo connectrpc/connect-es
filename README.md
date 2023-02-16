@@ -15,7 +15,7 @@ service ElizaService {
 }
 ```
 
-With the magic of code generation, this schema produces servers and clients:
+And with the magic of code generation, this schema produces servers and clients:
 
 ```ts
 const answer = await eliza.say({sentence: "I feel happy."});
