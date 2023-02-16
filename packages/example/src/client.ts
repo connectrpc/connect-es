@@ -16,7 +16,7 @@ import {
   createConnectTransport,
   createPromiseClient,
 } from "@bufbuild/connect-node";
-import { ElizaService } from "./gen/eliza_connectweb.js";
+import { ElizaService } from "./gen/eliza_connect.js";
 import { stdin, stdout } from "process";
 import * as readline from "node:readline/promises";
 

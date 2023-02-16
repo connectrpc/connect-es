@@ -16,7 +16,7 @@ import {
   createConnectTransport,
   createPromiseClient,
 } from "@bufbuild/connect-web-next";
-import { ElizaService } from "../gen/buf/connect/demo/eliza/v1/eliza_connectweb.js";
+import { ElizaService } from "../gen/buf/connect/demo/eliza/v1/eliza_connect.js";
 import { IntroduceRequest } from "../gen/buf/connect/demo/eliza/v1/eliza_pb.js";
 
 const timeoutMs = 15000;

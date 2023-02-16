@@ -18,7 +18,7 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect-web";
-import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import { TestService } from "./gen/grpc/testing/test_connect.js";
 import type { Interceptor } from "@bufbuild/connect-web";
 import { StreamingOutputCallRequest } from "./gen/grpc/testing/messages_pb.js";
 import type { CallOptions } from "@bufbuild/connect-web";

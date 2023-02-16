@@ -18,7 +18,7 @@ import {
   createPromiseClient,
   Code,
 } from "@bufbuild/connect-web";
-import { UnimplementedService } from "../gen/grpc/testing/test_connectweb.js";
+import { UnimplementedService } from "../gen/grpc/testing/test_connect.js";
 import { describeLegacyTransports } from "../helpers/legacy-crosstestserver.js";
 
 describe("unimplemented_service", function () {

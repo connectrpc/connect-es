@@ -19,7 +19,7 @@ import {
   encodeBinaryHeader,
   ServiceImpl,
 } from "@bufbuild/connect-node";
-import type { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import type { TestService } from "../gen/grpc/testing/test_connect.js";
 import type { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { interop } from "./interop.js";
 

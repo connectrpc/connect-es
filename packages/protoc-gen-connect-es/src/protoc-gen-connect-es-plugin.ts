@@ -18,8 +18,8 @@ import { generateJs } from "./javascript.js";
 import { generateDts } from "./declaration.js";
 import { version } from "../package.json";
 
-export const protocGenConnectWeb = createEcmaScriptPlugin({
-  name: "protoc-gen-connect-web",
+export const protocGenConnectEs = createEcmaScriptPlugin({
+  name: "protoc-gen-connect-es",
   version: `v${String(version)}`,
   generateTs,
   generateJs,

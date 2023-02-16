@@ -21,12 +21,12 @@ import {
   localName,
 } from "@bufbuild/protoplugin/ecmascript";
 
-export function generateDts(schema: Schema) {
+export function generateTs(schema: Schema) {
   for (const protoFile of schema.files) {
     if (protoFile.services.length == 0) {
       continue;
     }
-    const file = schema.generateFile(protoFile.name + "_connectweb.d.ts");
+    const file = schema.generateFile(protoFile.name + "_connect.ts");
     file.preamble(protoFile);
     for (const service of protoFile.services) {
       generateService(schema, file, service);
@@ -35,26 +35,43 @@ export function generateDts(schema: Schema) {
 }
 
 // prettier-ignore
-function generateService(schema: Schema, f: GeneratedFile, service: DescService) {
-  const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } = schema.runtime;
+function generateService(
+  schema: Schema,
+  f: GeneratedFile,
+  service: DescService
+) {
+  const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } =
+    schema.runtime;
   f.print(makeJsDoc(service));
-  f.print("export declare const ", localName(service), ": {");
-  f.print(`  readonly typeName: `, literalString(service.typeName), `,`);
-  f.print("  readonly methods: {");
+  f.print("export const ", localName(service), " = {");
+  f.print(`  typeName: `, literalString(service.typeName), `,`);
+  f.print("  methods: {");
   for (const method of service.methods) {
     f.print(makeJsDoc(method, "    "));
-    f.print("    readonly ", localName(method), ": {");
-    f.print(`      readonly name: `, literalString(method.name), `,`);
-    f.print("      readonly I: typeof ", method.input, ",");
-    f.print("      readonly O: typeof ", method.output, ",");
-    f.print("      readonly kind: ", rtMethodKind, ".", MethodKind[method.methodKind], ",");
+    f.print("    ", localName(method), ": {");
+    f.print(`      name: `, literalString(method.name), `,`);
+    f.print("      I: ", method.input, ",");
+    f.print("      O: ", method.output, ",");
+    f.print(
+      "      kind: ",
+      rtMethodKind,
+      ".",
+      MethodKind[method.methodKind],
+      ","
+    );
     if (method.idempotency !== undefined) {
-      f.print("      readonly idempotency: ", rtMethodIdempotency, ".", MethodIdempotency[method.idempotency], ",");
+      f.print(
+        "    idempotency: ",
+        rtMethodIdempotency,
+        ".",
+        MethodIdempotency[method.idempotency],
+        ","
+      );
     }
     // In case we start supporting options, we have to surface them here
     f.print("    },");
   }
   f.print("  }");
-  f.print("};");
+  f.print("} as const;");
   f.print();
 }

@@ -22,7 +22,7 @@ import {
   createGrpcWebTransport,
   createPromiseClient,
 } from "@bufbuild/connect-node";
-import { TestService } from "../gen/grpc/testing/test_connectweb.js";
+import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 
 describe("unresolvable_host", function () {

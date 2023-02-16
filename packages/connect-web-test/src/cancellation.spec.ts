@@ -20,7 +20,7 @@ import {
   createPromiseClient,
 } from "@bufbuild/connect-web-next";
 import { describeTransports } from "./helpers/crosstestserver.js";
-import { TestService } from "./gen/grpc/testing/test_connectweb.js";
+import { TestService } from "./gen/grpc/testing/test_connect.js";
 
 describe("explicit cancellation with AbortController", function () {
   const abort = new AbortController();
