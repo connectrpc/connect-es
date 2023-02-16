@@ -26,13 +26,11 @@ import { stdout } from "process";
 
 const handlers = createHandlers(ElizaService, {
   say(req: SayRequest) {
-    console.log("got a say say say");
     return {
       sentence: `You said ${req.sentence}`,
     };
   },
   async *introduce(req: IntroduceRequest) {
-    console.log("Introducing");
     yield { sentence: `Hi ${req.name}, I'm eliza` };
     await delay(250);
     yield {
@@ -68,7 +66,6 @@ void esbuild.build({
 for (const handler of handlers) {
   app.post(handler.requestPath, handler);
 }
-
 http.createServer({}, app).listen(8080, () => {
   stdout.write("The server is listening on http://localhost:8080\n");
   stdout.write("Run `npm run client` for a terminal client.\n");
