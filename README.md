@@ -39,8 +39,8 @@ from the web, the terminal, or native mobile clients. Under the hood, it uses
 [Protocol Buffers](https://github.com/bufbuild/protobuf-es) for the schema, and 
 implements RPC (remote procedure calls) with three protocols: The widely available 
 gRPC and gRPC-web, and Connect's [own protocol](https://connect.build/docs/protocol/), 
-optimized for the web. This gives you unparalleled interoperability with type-safety end 
-to end.
+optimized for the web. This gives you unparalleled interoperability with 
+full-stack type-safety.
 
 To get started, head over to the [docs](https://connect.build/docs/web/getting-started)
 for a tutorial. You will also find API documentation and best practices there.
