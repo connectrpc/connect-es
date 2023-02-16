@@ -83,8 +83,8 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 
 On Node.js, we use the `http`, `https`, or `http2` modules, and support v16, v17 and v18.
 
-Would like to use Connect on other platforms like Bun, Deno, Vercel’s Edge Runtime,
-Cloudflare Workers? We’d love to learn about your use cases and what you’d like to do 
+Would you like to use Connect on other platforms like Bun, Deno, Vercel’s Edge Runtime,
+or Cloudflare Workers? We’d love to learn about your use cases and what you’d like to do 
 with Connect. You can reach us either through the [Buf Slack](https://buf.build/links/slack/) 
 or by filing a [GitHub issue](https://github.com/bufbuild/connect-web/issues) and we’d 
 be more than happy to chat!
