@@ -33,9 +33,8 @@ curl \
 ```
 
 With Connect for ECMAScript, you can spin up a service in Node.js and call it
-from the web, the terminal, or native mobile clients. 
-
-Under the hood, it is [Protocol Buffers](https://github.com/bufbuild/protobuf-es) and
+from the web, the terminal, or native mobile clients. Under the hood, it uses 
+[Protocol Buffers](https://github.com/bufbuild/protobuf-es) for the schema, and 
 implements RPC (remote procedure calls) with three protocols: The widely available 
 gRPC and gRPC-web, and Connect's [own protocol](https://connect.build/docs/protocol/), 
 optimized for the web. This gives you unparalleled interoperability with type-safety end 
