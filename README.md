@@ -2,7 +2,7 @@
 
 # Connect for ECMAScript
 
-[![License](https://img.shields.io/github/license/bufbuild/connect-es?color=blue)](./LICENSE) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protobuf/latest?color=green&label=%40bufbuild%connect-web)](https://www.npmjs.com/package/@bufbuild/connect-web) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protoplugin/latest?color=green&label=%40bufbuild%connect-node)](https://www.npmjs.com/package/@bufbuild/connect-node) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protoc-gen-connect-es/latest?color=green&label=%40bufbuild%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
+[![License](https://img.shields.io/github/license/bufbuild/connect-es?color=blue)](./LICENSE) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protobuf/latest?color=green&label=%40bufbuild%2Fconnect-web)](https://www.npmjs.com/package/@bufbuild/connect-web) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protoplugin/latest?color=green&label=%40bufbuild%2Fconnect-node)](https://www.npmjs.com/package/@bufbuild/connect-node) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protoc-gen-connect-es/latest?color=green&label=%40bufbuild%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
 
 Connect is a family of libraries for building and consuming APIs on 
 different languages and platforms. 
