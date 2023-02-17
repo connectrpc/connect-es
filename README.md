@@ -50,7 +50,7 @@ For using Connect with your favorite frontend framework, take a look at
 ## Ecosystem
 
 * [connect-es-integration](https://github.com/bufbuild/connect-es-integration):
-  Illustrates the integration of Connect-ES in various JS frameworks and tooling
+  Illustrates the integration of Connect in various JS frameworks and tooling
 * [connect-query](https://github.com/bufbuild/connect-query):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
 * [connect-swift](https://github.com/bufbuild/connect-swift):
