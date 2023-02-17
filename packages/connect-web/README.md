@@ -39,5 +39,5 @@ console.log(answer);
 ```
 
 To get started, head over to the [docs](https://connect.build/docs/web/getting-started) 
-for a tutorial, or take a look at [our examples](https://github.com/bufbuild/connect-web-integration)
+for a tutorial, or take a look at [our examples](https://github.com/bufbuild/connect-es-integration)
 for integration with various frameworks. 

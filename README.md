@@ -45,12 +45,12 @@ full-stack type-safety.
 To get started, head over to the [docs](https://connect.build/docs/web/getting-started)
 for a tutorial. You will also find API documentation and best practices there.
 For using Connect with your favorite frontend framework, take a look at
-[connect-web-integration](https://github.com/bufbuild/connect-web-integration).
+[connect-es-integration](https://github.com/bufbuild/connect-es-integration).
 
 ## Ecosystem
 
-* [connect-web-integration](https://github.com/bufbuild/connect-web-integration):
-  Example projects using Connect-Web with various JS frameworks and tooling
+* [connect-es-integration](https://github.com/bufbuild/connect-es-integration):
+  Illustrates the integration of Connect-ES in various JS frameworks and tooling
 * [connect-query](https://github.com/bufbuild/connect-query):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
 * [connect-swift](https://github.com/bufbuild/connect-swift):
