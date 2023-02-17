@@ -55,13 +55,13 @@ $(BUILD)/protoc-gen-connect-es: node_modules tsconfig.base.json packages/protoc-
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-core: $(GEN)/connect-core node_modules tsconfig.base.json packages/connect-core/tsconfig.json $(shell find packages/connect-core/src -name '*.ts') packages/connect-core/*.js
-	npm run -w packages/connect-core clean
-	npm run -w packages/connect-core build
+$(BUILD)/connect: $(GEN)/connect node_modules tsconfig.base.json packages/connect/tsconfig.json $(shell find packages/connect/src -name '*.ts') packages/connect/*.js
+	npm run -w packages/connect clean
+	npm run -w packages/connect build
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node: $(BUILD)/connect-core packages/connect-node/tsconfig.json $(shell find packages/connect-node/src -name '*.ts')
+$(BUILD)/connect-node: $(BUILD)/connect packages/connect-node/tsconfig.json $(shell find packages/connect-node/src -name '*.ts')
 	npm run -w packages/connect-node clean
 	npm run -w packages/connect-node build
 	@mkdir -p $(@D)
@@ -90,9 +90,9 @@ $(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-core: node_modules/.bin/protoc-gen-es packages/connect-core/buf.gen.yaml $(shell find packages/connect-core/src -name '*.proto') Makefile
-	rm -rf packages/connect-core/src/gen/*
-	npm run -w packages/connect-core generate
+$(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(shell find packages/connect/src -name '*.proto') Makefile
+	rm -rf packages/connect/src/gen/*
+	npm run -w packages/connect generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -135,14 +135,14 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect-core $(BUILD)/connect-node $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
+build: $(BUILD)/connect $(BUILD)/connect-node $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
 
 .PHONY: test
 test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack
 
 .PHONY: testcore
-testcore: $(BUILD)/connect-core
-	npm run -w packages/connect-core jasmine
+testcore: $(BUILD)/connect
+	npm run -w packages/connect jasmine
 
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node17 $(BIN)/node18 $(BUILD)/connect-node-test
@@ -220,7 +220,7 @@ release: all ## Release @bufbuild/connect-web
 	npm publish \
 		--workspace packages/connect-web \
 		--workspace packages/connect-node \
-		--workspace packages/connect-core \
+		--workspace packages/connect \
 		--workspace packages/protoc-gen-connect-es
 
 .PHONY: crosstestserverstop

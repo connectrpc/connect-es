@@ -12,43 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  appendHeaders,
-  Code,
-  Compression,
-  ConnectError,
-  createAsyncIterable,
-  createMethodSerializationLookup,
-  createMethodUrl,
-  Interceptor,
-  pipe,
-  pipeTo,
-  runStreaming,
-  runUnary,
-  sinkAllBytes,
-  StreamRequest,
-  StreamResponse,
-  transformCompressEnvelope,
-  transformDecompressEnvelope,
-  transformJoinEnvelopes,
-  transformNormalizeMessage,
-  transformParseEnvelope,
-  transformSerializeEnvelope,
-  transformSplitEnvelope,
-  Transport,
-  UnaryRequest,
-  UnaryResponse,
-} from "@bufbuild/connect-core";
-import {
-  createEndStreamSerialization,
-  createRequestHeaderWithCompression,
-  endStreamFlag,
-  errorFromJsonBytes,
-  headerUnaryContentLength,
-  headerUnaryEncoding,
-  trailerDemux,
-  validateResponseWithCompression,
-} from "@bufbuild/connect-core/protocol-connect";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -60,6 +23,45 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
+import {
+  Compression,
+  createAsyncIterable,
+  createMethodSerializationLookup,
+  createMethodUrl,
+  pipe,
+  pipeTo,
+  sinkAllBytes,
+  transformCompressEnvelope,
+  transformDecompressEnvelope,
+  transformJoinEnvelopes,
+  transformNormalizeMessage,
+  transformParseEnvelope,
+  transformSerializeEnvelope,
+  transformSplitEnvelope,
+} from "@bufbuild/connect/protocol";
+import {
+  appendHeaders,
+  Code,
+  ConnectError,
+  Interceptor,
+  runStreaming,
+  runUnary,
+  StreamRequest,
+  StreamResponse,
+  Transport,
+  UnaryRequest,
+  UnaryResponse,
+} from "@bufbuild/connect";
+import {
+  createEndStreamSerialization,
+  requestHeaderWithCompression,
+  endStreamFlag,
+  errorFromJsonBytes,
+  headerUnaryContentLength,
+  headerUnaryEncoding,
+  trailerDemux,
+  validateResponseWithCompression,
+} from "@bufbuild/connect/protocol-connect";
 import {
   NodeHttp1TransportOptions,
   NodeHttp2TransportOptions,
@@ -149,7 +151,7 @@ export function createConnectTransport(
           method,
           url: createMethodUrl(options.baseUrl, service, method),
           init: {},
-          header: createRequestHeaderWithCompression(
+          header: requestHeaderWithCompression(
             method.kind,
             opt.useBinaryFormat,
             timeoutMs,
@@ -257,7 +259,7 @@ export function createConnectTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeaderWithCompression(
+          header: requestHeaderWithCompression(
             method.kind,
             opt.useBinaryFormat,
             timeoutMs,

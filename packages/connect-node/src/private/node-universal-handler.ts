@@ -14,18 +14,18 @@
 
 import type * as http from "http";
 import type * as http2 from "http2";
-import { write } from "./io.js";
-import {
-  nodeHeaderToWebHeader,
-  webHeaderToNodeHeaders,
-} from "./node-universal-header.js";
+import type * as stream from "stream";
+import type { JsonValue } from "@bufbuild/protobuf";
+import { Code, ConnectError } from "@bufbuild/connect";
 import type {
   UniversalHandlerFn,
   UniversalServerRequest,
   UniversalServerResponse,
-} from "./universal.js";
-import { Code, ConnectError } from "@bufbuild/connect-core";
-import type { JsonValue } from "@bufbuild/protobuf";
+} from "@bufbuild/connect/protocol";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./node-universal-header.js";
 
 /**
  * NodeHandlerFn is compatible with http.RequestListener and its equivalent
@@ -156,4 +156,49 @@ async function* asyncIterableFromNodeServerRequest(
   for await (const chunk of request) {
     yield chunk;
   }
+}
+
+function write(stream: stream.Writable, data: Uint8Array): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (stream.errored) {
+      return error(stream.errored);
+    }
+
+    stream.once("error", error);
+
+    stream.once("drain", drain);
+    // flushed == false: the stream wishes for the calling code to wait for
+    // the 'drain' event to be emitted before continuing to write additional
+    // data.
+    const flushed = stream.write(data, "binary", function (err) {
+      if (err && !flushed) {
+        // We are never getting a "drain" nor an "error" event if the stream
+        // has already ended (ERR_STREAM_WRITE_AFTER_END), so we have to
+        // resolve our promise in this callback.
+        error(err);
+        // However, once we do that (and remove our event listeners), we _do_
+        // get an "error" event, which ends up as an uncaught exception.
+        // We silence this error specifically with the following listener.
+        // All of this seems very fragile.
+        stream.once("error", () => {
+          //
+        });
+      }
+    });
+    if (flushed) {
+      drain();
+    }
+
+    function error(err: Error) {
+      stream.off("error", error);
+      stream.off("drain", drain);
+      reject(err);
+    }
+
+    function drain() {
+      stream.off("error", error);
+      stream.off("drain", drain);
+      resolve();
+    }
+  });
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Transport } from "@bufbuild/connect-core";
+import type { Transport } from "@bufbuild/connect";
 import {
   createConnectTransport,
   createGrpcWebTransport,

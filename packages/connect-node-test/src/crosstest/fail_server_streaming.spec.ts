@@ -18,7 +18,7 @@ import {
   connectErrorDetails,
   createCallbackClient,
   createPromiseClient,
-} from "@bufbuild/connect-node";
+} from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import {
   ErrorDetail,

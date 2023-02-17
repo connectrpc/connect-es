@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Code,
-  ConnectError,
-  connectErrorFromReason,
-} from "@bufbuild/connect-core";
+import { Code, ConnectError, connectErrorFromReason } from "@bufbuild/connect";
 
 /**
  * Similar to connectErrorFromReason(), this function turns any value into

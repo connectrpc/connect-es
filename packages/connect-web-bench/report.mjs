@@ -1,7 +1,7 @@
 import { buildSync } from "esbuild";
 import { brotliCompressSync } from "zlib";
 
-const connectweb = gather("src/entry-connectweb.ts");
+const connect = gather("src/entry-connect.ts");
 const grpcweb = gather("src/entry-grpcweb.ts");
 
 process.stdout.write(`# Code size comparison
@@ -16,7 +16,7 @@ it like a web server would usually do.
 
 | code generator | bundle size        | minified               | compressed           |
 |----------------|-------------------:|-----------------------:|---------------------:|
-| connect-web    | ${connectweb.size} | ${connectweb.minified} | ${connectweb.compressed} |
+| connect        | ${connect.size} | ${connect.minified} | ${connect.compressed} |
 | grpc-web       | ${grpcweb.size}    | ${grpcweb.minified}    | ${grpcweb.compressed} |
 `);
 

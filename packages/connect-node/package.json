@@ -26,7 +26,7 @@
     "node": ">=16.0.0 <19"
   },
   "dependencies": {
-    "@bufbuild/connect-core": "0.7.0"
+    "@bufbuild/connect": "0.7.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"

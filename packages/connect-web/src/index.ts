@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from "./connect-transport.js";
-export * from "./grpc-web-transport.js";
+export { createConnectTransport } from "./connect-transport.js";
+export { createGrpcWebTransport } from "./grpc-web-transport.js";
+// TODO(TCN-1261)
+export type { ConnectTransportOptions } from "./connect-transport.js";
+export type { GrpcWebTransportOptions } from "./grpc-web-transport.js";
+
+// TODO(TCN-1261)
 export {
   createCallbackClient,
   CallbackClient,
@@ -32,4 +37,4 @@ export {
   StreamResponse,
   encodeBinaryHeader,
   decodeBinaryHeader,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect";

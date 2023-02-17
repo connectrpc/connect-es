@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
 import * as http2 from "http2";
+import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
+import { createPromiseClient } from "@bufbuild/connect";
 import {
   createGrpcTransport,
   createHandler,
-  createPromiseClient,
   mergeHandlers,
 } from "@bufbuild/connect-node";
 

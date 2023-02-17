@@ -30,27 +30,29 @@ import type {
   Transport,
   UnaryRequest,
   UnaryResponse,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect";
 import {
   appendHeaders,
   Code,
   connectErrorFromReason,
+  runStreaming,
+  runUnary,
+  StreamResponse,
+} from "@bufbuild/connect";
+import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
   encodeEnvelope,
-  runStreaming,
-  runUnary,
-  StreamResponse,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect/protocol";
 import {
-  createRequestHeader,
+  requestHeader,
   endStreamFlag,
   endStreamFromJson,
   errorFromJson,
   trailerDemux,
   validateResponse,
-} from "@bufbuild/connect-core/protocol-connect";
+} from "@bufbuild/connect/protocol-connect";
 import { assertFetchApi } from "./assert-fetch-api.js";
 
 /**
@@ -144,7 +146,7 @@ export function createConnectTransport(
               redirect: "error",
               mode: "cors",
             },
-            header: createRequestHeader(
+            header: requestHeader(
               method.kind,
               useBinaryFormat,
               timeoutMs,
@@ -167,7 +169,6 @@ export function createConnectTransport(
               response.headers
             );
             if (isConnectUnaryError) {
-              response.body;
               throw errorFromJson(
                 (await response.json()) as JsonValue,
                 appendHeaders(...trailerDemux(response.headers))
@@ -270,7 +271,7 @@ export function createConnectTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeader(
+          header: requestHeader(
             method.kind,
             useBinaryFormat,
             timeoutMs,

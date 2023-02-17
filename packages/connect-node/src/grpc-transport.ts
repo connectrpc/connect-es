@@ -14,12 +14,21 @@
 
 import {
   Code,
-  Compression,
   ConnectError,
+  Interceptor,
+  Transport,
+  runUnary,
+  runStreaming,
+  StreamRequest,
+  StreamResponse,
+  UnaryRequest,
+  UnaryResponse,
+} from "@bufbuild/connect";
+import {
+  Compression,
   createAsyncIterable,
   createMethodSerializationLookup,
   createMethodUrl,
-  Interceptor,
   pipe,
   pipeTo,
   transformCompressEnvelope,
@@ -29,19 +38,12 @@ import {
   transformParseEnvelope,
   transformSerializeEnvelope,
   transformSplitEnvelope,
-  Transport,
-  runUnary,
-  runStreaming,
-  StreamRequest,
-  StreamResponse,
-  UnaryRequest,
-  UnaryResponse,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect/protocol";
 import {
-  createRequestHeaderWithCompression,
+  requestHeaderWithCompression,
   validateResponseWithCompression,
   validateTrailer,
-} from "@bufbuild/connect-core/protocol-grpc";
+} from "@bufbuild/connect/protocol-grpc";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -143,7 +145,7 @@ export function createGrpcTransport(options: GrpcTransportOptions): Transport {
           method,
           url: createMethodUrl(options.baseUrl, service, method),
           init: {},
-          header: createRequestHeaderWithCompression(
+          header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
             header,
@@ -244,7 +246,7 @@ export function createGrpcTransport(options: GrpcTransportOptions): Transport {
           url: createMethodUrl(options.baseUrl, service, method),
           init: {},
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeaderWithCompression(
+          header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
             header,

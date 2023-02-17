@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  createConnectTransport,
-  createPromiseClient,
-} from "@bufbuild/connect-web";
+import { createPromiseClient } from "@bufbuild/connect";
+import { createConnectTransport } from "@bufbuild/connect-web";
 import { ElizaService } from "./gen/eliza_connect.js";
 
 const root = document.querySelector<HTMLElement>("#root");

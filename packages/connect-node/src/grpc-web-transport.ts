@@ -14,36 +14,23 @@
 
 import {
   Code,
-  Compression,
   ConnectError,
-  createAsyncIterable,
-  createMethodSerializationLookup,
-  createMethodUrl,
   Interceptor,
-  pipe,
-  pipeTo,
   runStreaming,
   runUnary,
   StreamRequest,
   StreamResponse,
-  transformCompressEnvelope,
-  transformDecompressEnvelope,
-  transformJoinEnvelopes,
-  transformNormalizeMessage,
-  transformParseEnvelope,
-  transformSerializeEnvelope,
-  transformSplitEnvelope,
   Transport,
   UnaryRequest,
   UnaryResponse,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect";
 import {
-  createRequestHeaderWithCompression,
+  requestHeaderWithCompression,
   createTrailerSerialization,
   trailerFlag,
   validateResponseWithCompression,
   validateTrailer,
-} from "@bufbuild/connect-core/protocol-grpc-web";
+} from "@bufbuild/connect/protocol-grpc-web";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -55,11 +42,26 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
+import {
+  Compression,
+  createAsyncIterable,
+  createMethodSerializationLookup,
+  createMethodUrl,
+  pipe,
+  pipeTo,
+  transformCompressEnvelope,
+  transformDecompressEnvelope,
+  transformJoinEnvelopes,
+  transformNormalizeMessage,
+  transformParseEnvelope,
+  transformSerializeEnvelope,
+  transformSplitEnvelope,
+} from "@bufbuild/connect/protocol";
+import { validateNodeTransportOptions } from "./node-transport-options.js";
 import type {
   NodeHttp1TransportOptions,
   NodeHttp2TransportOptions,
 } from "./node-transport-options.js";
-import { validateNodeTransportOptions } from "./node-transport-options.js";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -147,7 +149,7 @@ export function createGrpcWebTransport(
           method,
           url: createMethodUrl(options.baseUrl, service, method),
           init: {},
-          header: createRequestHeaderWithCompression(
+          header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
             header,
@@ -276,7 +278,7 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeaderWithCompression(
+          header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
             header,

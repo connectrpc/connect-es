@@ -17,10 +17,12 @@ import {
   ConnectError,
   connectErrorFromReason,
   createCallbackClient,
+  createPromiseClient,
+} from "@bufbuild/connect";
+import {
   createConnectTransport,
   createGrpcTransport,
   createGrpcWebTransport,
-  createPromiseClient,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { PayloadType } from "../gen/grpc/testing/messages_pb.js";

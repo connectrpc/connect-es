@@ -21,11 +21,11 @@ import type {
   JsonReadOptions,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
+import type { Interceptor } from "@bufbuild/connect";
 import {
   Compression,
-  Interceptor,
-  limitIoOptionsValidate,
-} from "@bufbuild/connect-core";
+  validateReadWriteMaxBytes,
+} from "@bufbuild/connect/protocol";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import {
   createNodeHttp1Client,
@@ -72,6 +72,11 @@ export function validateNodeTransportOptions(
 ) {
   return {
     useBinaryFormat: options.useBinaryFormat ?? true,
+    ...validateReadWriteMaxBytes(
+      options.readMaxBytes,
+      options.writeMaxBytes,
+      options.compressMinBytes
+    ),
     client:
       options.httpVersion == "2"
         ? createNodeHttp2Client(
@@ -80,7 +85,6 @@ export function validateNodeTransportOptions(
             options.nodeOptions
           )
         : createNodeHttp1Client(options.nodeOptions),
-    ...limitIoOptionsValidate(options),
     sendCompression: options.sendCompression ?? null,
     acceptCompression: options.acceptCompression ?? [
       compressionGzip,

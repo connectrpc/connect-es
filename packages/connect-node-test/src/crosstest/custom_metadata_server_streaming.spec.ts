@@ -17,7 +17,7 @@ import {
   createPromiseClient,
   decodeBinaryHeader,
   encodeBinaryHeader,
-} from "@bufbuild/connect-node";
+} from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import {
   StreamingOutputCallRequest,

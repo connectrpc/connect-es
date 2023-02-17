@@ -14,7 +14,8 @@
 
 import * as zlib from "zlib";
 import { promisify } from "util";
-import { Code, ConnectError, Compression } from "@bufbuild/connect-core";
+import type { Compression } from "@bufbuild/connect/protocol";
+import { Code, ConnectError } from "@bufbuild/connect";
 import { getNodeErrorProps } from "./private/node-error.js";
 
 const gzip = promisify(zlib.gzip);

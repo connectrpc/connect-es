@@ -15,36 +15,15 @@
 // Polyfill the Headers API for Node versions < 18
 import "./node-headers-polyfill.js";
 
-export {
-  createCallbackClient,
-  CallbackClient,
-  createPromiseClient,
-  PromiseClient,
-  CallOptions,
-  Transport,
-  ConnectError,
-  connectErrorDetails,
-  connectErrorFromReason,
-  Code,
-  Interceptor,
-  UnaryRequest,
-  UnaryResponse,
-  StreamRequest,
-  StreamResponse,
-  encodeBinaryHeader,
-  decodeBinaryHeader,
-} from "@bufbuild/connect-core";
-
 export { createGrpcWebTransport } from "./grpc-web-transport.js";
 export { createGrpcTransport } from "./grpc-transport.js";
 export { createConnectTransport } from "./connect-transport.js";
 export { compressionBrotli, compressionGzip } from "./compression.js";
-export {
-  ServiceImpl,
-  MethodImpl,
-  HandlerContext,
-  unimplementService,
-} from "./implementation.js";
+
+// TODO(TCN-1261)
+export { unimplementService } from "./unimplement-service.js";
+
+// TODO(TCN-1219)
 export {
   Handler,
   createHandler,
