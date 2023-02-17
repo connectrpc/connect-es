@@ -75,4 +75,4 @@ protoc -I . eliza.proto \
 To get started, head over to the [docs](https://connect.build/docs/web/getting-started)
 for a tutorial. You will also find API documentation and best practices there.
 For using connect-web with your favorite framework, take a look at
-[connect-web-integration](https://github.com/bufbuild/connect-web-integration).
+[connect-es-integration](https://github.com/bufbuild/connect-es-integration).
