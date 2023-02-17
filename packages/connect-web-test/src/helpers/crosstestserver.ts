@@ -16,7 +16,7 @@ import type { Transport } from "@bufbuild/connect-core";
 import {
   createConnectTransport,
   createGrpcWebTransport,
-} from "@bufbuild/connect-web-next";
+} from "@bufbuild/connect-web";
 
 // The following servers are available through crosstests:
 //
