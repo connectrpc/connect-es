@@ -14,7 +14,7 @@
 
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
-import { createMethodUrl } from "@bufbuild/connect-core";
+import { createMethodUrl } from "@bufbuild/connect/protocol";
 import { http2Request } from "../helpers/http2-request.js";
 
 describe("unsupported method", () => {

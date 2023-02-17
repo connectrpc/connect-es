@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CallOptions } from "@bufbuild/connect-node";
 import {
+  CallOptions,
   Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-} from "@bufbuild/connect-node";
+  connectErrorFromReason,
+} from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
-import { connectErrorFromReason } from "@bufbuild/connect-core";
 
 // TODO(TCN-918)
 xdescribe("timeout_on_sleeping_server", function () {

@@ -16,17 +16,7 @@ import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";
 import type * as net from "net";
-import {
-  AsyncIterableSink,
-  Code,
-  ConnectError,
-  pipeTo,
-} from "@bufbuild/connect-core";
-import type {
-  UniversalClientFn,
-  UniversalClientRequest,
-  UniversalClientResponse,
-} from "./universal.js";
+import { Code, ConnectError } from "@bufbuild/connect";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
@@ -36,6 +26,13 @@ import {
   getNodeErrorProps,
   unwrapNodeErrorChain,
 } from "./node-error.js";
+import type {
+  AsyncIterableSink,
+  UniversalClientFn,
+  UniversalClientRequest,
+  UniversalClientResponse,
+} from "@bufbuild/connect/protocol";
+import { pipeTo } from "@bufbuild/connect/protocol";
 
 /**
  * Create an HTTP client using the Node.js `http` or `https` package.
@@ -181,6 +178,7 @@ function h1Request(
     );
     request.off("socket", onRequestSocket);
     socket.on("connect", onSocketConnect);
+
     function onSocketConnect() {
       socket.off("connect", onSocketConnect);
       onRequest(request);
@@ -197,6 +195,7 @@ function sinkRequest(
     return new Promise((resolve, reject) => {
       sentinel.catch(reject);
       writeNext();
+
       function writeNext() {
         if (sentinel.isRejected()) {
           return;

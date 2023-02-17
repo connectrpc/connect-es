@@ -16,8 +16,8 @@ import {
   ConnectError,
   connectErrorFromReason,
   HandlerContext,
-  unimplementService,
-} from "@bufbuild/connect-node";
+} from "@bufbuild/connect";
+import { unimplementService } from "@bufbuild/connect-node";
 import { TestService } from "./gen/grpc/testing/test_connect.js";
 import { Empty } from "./gen/grpc/testing/empty_pb.js";
 

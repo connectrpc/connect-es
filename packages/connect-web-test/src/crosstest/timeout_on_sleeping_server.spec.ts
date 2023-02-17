@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CallOptions } from "@bufbuild/connect-web";
+import type { CallOptions } from "@bufbuild/connect";
 import {
   Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-} from "@bufbuild/connect-web";
+  connectErrorFromReason,
+} from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransportsExcluding } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
-import { connectErrorFromReason } from "@bufbuild/connect-web";
 
 describe("timeout_on_sleeping_server", function () {
   const request = new StreamingOutputCallRequest({

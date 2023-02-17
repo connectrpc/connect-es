@@ -24,28 +24,30 @@ import {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { UnaryRequest } from "@bufbuild/connect-core";
+import type { UnaryRequest } from "@bufbuild/connect";
 import {
   Code,
   connectErrorFromReason,
-  createClientMethodSerializers,
-  createEnvelopeReadableStream,
-  createMethodUrl,
-  encodeEnvelope,
   Interceptor,
   runStreaming,
   runUnary,
   StreamResponse,
   Transport,
   UnaryResponse,
-} from "@bufbuild/connect-core";
+} from "@bufbuild/connect";
 import {
-  createRequestHeader,
+  createClientMethodSerializers,
+  createEnvelopeReadableStream,
+  createMethodUrl,
+  encodeEnvelope,
+} from "@bufbuild/connect/protocol";
+import {
+  requestHeader,
   trailerFlag,
   trailerParse,
   validateResponse,
-} from "@bufbuild/connect-core/protocol-grpc-web";
-import { validateTrailer } from "@bufbuild/connect-core/protocol-grpc";
+  validateTrailer,
+} from "@bufbuild/connect/protocol-grpc-web";
 import { assertFetchApi } from "./assert-fetch-api.js";
 
 /**
@@ -145,7 +147,7 @@ export function createGrpcWebTransport(
               redirect: "error",
               mode: "cors",
             },
-            header: createRequestHeader(useBinaryFormat, timeoutMs, header),
+            header: requestHeader(useBinaryFormat, timeoutMs, header),
             message: normalize(message),
             signal: signal ?? new AbortController().signal,
           },
@@ -304,7 +306,7 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           signal: signal ?? new AbortController().signal,
-          header: createRequestHeader(useBinaryFormat, timeoutMs, header),
+          header: requestHeader(useBinaryFormat, timeoutMs, header),
           message: input,
         },
         async (req) => {

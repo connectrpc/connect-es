@@ -18,7 +18,7 @@ import {
   connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
-} from "@bufbuild/connect-node";
+} from "@bufbuild/connect";
 import { UnimplementedService } from "../gen/grpc/testing/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
 

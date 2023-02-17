@@ -17,6 +17,7 @@ import * as http from "http";
 import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
+import type { Transport } from "@bufbuild/connect";
 import {
   compressionGzip,
   createConnectTransport,
@@ -24,7 +25,6 @@ import {
   createGrpcWebTransport,
   createHandlers,
   mergeHandlers,
-  Transport,
 } from "@bufbuild/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { testService } from "./test-service-impl.js";

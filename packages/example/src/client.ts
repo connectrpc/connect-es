@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  createConnectTransport,
-  createPromiseClient,
-} from "@bufbuild/connect-node";
+import { createPromiseClient } from "@bufbuild/connect";
+import { createConnectTransport } from "@bufbuild/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 import { stdin, stdout } from "process";
 import * as readline from "node:readline/promises";

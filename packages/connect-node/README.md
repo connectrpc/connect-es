@@ -1,4 +1,4 @@
-# @bufbuild/connect-node (Beta)
+# @bufbuild/connect-node
 
 Connect-Node is a slim library for building browser and gRPC-compatible HTTP APIs. 
 The procedures are defined in a [Protocol Buffer](https://developers.google.com/protocol-buffers)

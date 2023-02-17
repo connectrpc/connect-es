@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Code,
-  Compression,
-  ConnectError,
-  ContentTypeMatcher,
-  limitIoOptionsValidate,
-} from "@bufbuild/connect-core";
 import type {
   BinaryReadOptions,
   BinaryWriteOptions,
@@ -27,25 +20,24 @@ import type {
   MethodInfo,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { MethodImpl, ServiceImpl } from "./implementation.js";
-import type {
-  ProtocolHandlerFact,
-  ProtocolHandlerFactInit,
-} from "./protocol-handler.js";
 import {
-  createUniversalHandler,
-  createUniversalHandlers,
-} from "./protocol-handler.js";
+  Code,
+  createConnectRouter,
+  MethodImpl,
+  ServiceImpl,
+} from "@bufbuild/connect";
+import type { ConnectRouterOptions } from "@bufbuild/connect";
+import {
+  Compression,
+  ContentTypeMatcher,
+  uResponseNotFound,
+} from "@bufbuild/connect/protocol";
 import {
   NodeHandlerFn,
   universalHandlerToNodeHandler,
 } from "./private/node-universal-handler.js";
 import { connectErrorFromNodeReason } from "./private/node-error.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
-import { createGrpcHandlerProtocol } from "./grpc-handler.js";
-import { createGrpcWebProtocolHandler } from "./grpc-web-handler.js";
-import { createConnectProtocolHandler } from "./connect-handler.js";
-import { uResponseNotFound } from "./private/universal.js";
 
 /**
  * Handler handles a Node.js request for one specific RPC - a procedure
@@ -116,19 +108,27 @@ export interface HandlerOptions {
 export function createHandlers<T extends ServiceType>(
   service: T,
   implementation: ServiceImpl<T>,
-  options?: HandlerOptions
+  options?: ConnectRouterOptions
 ): Handler[] {
-  const protocols = createProtocolsFromOptions(options);
-  const uHandlers = createUniversalHandlers(service, implementation, protocols);
-  return uHandlers.map((uHandler) => {
-    const nodeHandler = universalHandlerToNodeHandler(
-      uHandler,
-      makeInternalErrorHandler(uHandler.service, uHandler.method)
-    );
-    return Object.assign(nodeHandler, {
-      ...uHandler,
+  options = {
+    acceptCompression: [compressionGzip, compressionBrotli],
+    ...options,
+  };
+  // options ??= {};
+  // if (options.acceptCompression === undefined) {
+  //   options.acceptCompression
+  // }
+  return createConnectRouter(options)
+    .service(service, implementation, options)
+    .handlers.map((uHandler) => {
+      const nodeHandler = universalHandlerToNodeHandler(
+        uHandler,
+        makeInternalErrorHandler(uHandler.service, uHandler.method)
+      );
+      return Object.assign(nodeHandler, {
+        ...uHandler,
+      });
     });
-  });
 }
 
 /**
@@ -139,21 +139,19 @@ export function createHandler<M extends MethodInfo>(
   service: ServiceType,
   method: M,
   implementation: MethodImpl<M>,
-  options?: HandlerOptions
+  options?: ConnectRouterOptions
 ): Handler {
-  const protocols = createProtocolsFromOptions(options);
-  const universalHandler = createUniversalHandler(
+  const uHandler = createConnectRouter(options).rpc(
     service,
     method,
-    implementation,
-    protocols
-  );
+    implementation
+  ).handlers[0];
   const nodeHandler = universalHandlerToNodeHandler(
-    universalHandler,
+    uHandler,
     makeInternalErrorHandler(service, method)
   );
   return Object.assign(nodeHandler, {
-    ...universalHandler,
+    ...uHandler,
   });
 }
 
@@ -216,47 +214,4 @@ interface MergeHandlersOptions {
    * can provide a custom fallback for this case.
    */
   fallback?: NodeHandlerFn;
-}
-
-/**
- * Turns HandlerOptions - the options accepted by the public API when a user
- * creates a handler - into the internal type.
- * The function validates the options and sets defaults.
- */
-export function createProtocolsFromOptions(
-  init?: HandlerOptions | ProtocolHandlerFact[]
-): ProtocolHandlerFact[] {
-  init = init ?? {};
-  if (Array.isArray(init)) {
-    return init;
-  }
-  const maxDeadlineDurationMs =
-    init.maxDeadlineDurationMs ?? Number.MAX_SAFE_INTEGER;
-  const acceptCompression = init.acceptCompression ?? [
-    compressionGzip,
-    compressionBrotli,
-  ];
-  const hpo: ProtocolHandlerFactInit = {
-    ...init,
-    ...limitIoOptionsValidate(init),
-    maxDeadlineDurationMs,
-    acceptCompression,
-  };
-  const protocols: ProtocolHandlerFact[] = [];
-  if (init.grpc !== false) {
-    protocols.push(createGrpcHandlerProtocol(hpo));
-  }
-  if (init.grpcWeb !== false) {
-    protocols.push(createGrpcWebProtocolHandler(hpo));
-  }
-  if (init.connect !== false) {
-    protocols.push(createConnectProtocolHandler(hpo));
-  }
-  if (protocols.length === 0) {
-    throw new ConnectError(
-      "cannot create handler, all protocols are disabled",
-      Code.InvalidArgument
-    );
-  }
-  return protocols;
 }
