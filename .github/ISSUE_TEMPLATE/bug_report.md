@@ -25,7 +25,9 @@ example.
 
 **Environment (please complete the following information):**
 - @bufbuild/connect-web version: (for example, `0.1.0`)
-- Framework and version: (for example, `react@18.2.0`)
+- @bufbuild/connect-node version: (for example, `0.1.0`)
+- Frontend framework and version: (for example, `react@18.2.0`)
+- Node.js version: (for example, `18.0.0`)
 - Browser and version: (for example, `Google Chrome 103.0.5060.134`)
 
 If your problem is specific to bundling, please also provide the following information: 

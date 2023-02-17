@@ -5,7 +5,6 @@
     "./packages/connect-node",
     "./packages/connect-node-test",
     "./packages/connect-web",
-    "./packages/connect-web-next",
     "./packages/connect-web-test",
     "./packages/connect-web-bench",
     "./packages/protoc-gen-connect-es",
