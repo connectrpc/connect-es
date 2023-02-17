@@ -15,7 +15,7 @@
 import {
   createCallbackClient,
   createPromiseClient,
-} from "@bufbuild/connect-web-next";
+} from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";

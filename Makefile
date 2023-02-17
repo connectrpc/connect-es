@@ -73,20 +73,13 @@ $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tscon
 	@mkdir -p $(@D)
 	@touch $(@)
 
-# connect-web-next is temporary
-$(BUILD)/connect-web-next: $(BUILD)/connect-core packages/connect-web-next/tsconfig.json $(shell find packages/connect-web-next/src -name '*.ts')
-	npm run -w packages/connect-web-next clean
-	npm run -w packages/connect-web-next build
-	@mkdir -p $(@D)
-	@touch $(@)
-
-$(BUILD)/connect-web-test: $(BUILD)/connect-web-next $(BUILD)/connect-web $(GEN)/connect-web-test packages/connect-web-test/tsconfig.json $(shell find packages/connect-web-test/src -name '*.ts')
+$(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test packages/connect-web-test/tsconfig.json $(shell find packages/connect-web-test/src -name '*.ts')
 	npm run -w packages/connect-web-test clean
 	npm run -w packages/connect-web-test build
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-web-next $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
+$(BUILD)/connect-node-test: $(BUILD)/connect-node $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
 	npm run -w packages/connect-node-test clean
 	npm run -w packages/connect-node-test build
 	@mkdir -p $(@D)
@@ -142,7 +135,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect-core $(BUILD)/connect-web-next $(BUILD)/connect-node $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
+build: $(BUILD)/connect-core $(BUILD)/connect-node $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
 
 .PHONY: test
 test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack
@@ -203,7 +196,7 @@ format: node_modules $(BIN)/license-header ## Format all files, adding license h
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 .PHONY: bench
-bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web $(BUILD)/connect-web-next ## Benchmark code size
+bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark code size
 	npm run -w packages/connect-web-bench report
 
 .PHONY: setversion
