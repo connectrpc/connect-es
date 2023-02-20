@@ -18,7 +18,6 @@ import type * as stream from "stream";
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@bufbuild/connect";
 import type {
-  UniversalHandlerFn,
   UniversalServerRequest,
   UniversalServerResponse,
 } from "@bufbuild/connect/protocol";
@@ -35,36 +34,38 @@ export type NodeHandlerFn = (
   request: NodeServerRequest,
   response: NodeServerResponse
 ) => void;
-type NodeServerRequest = http.IncomingMessage | http2.Http2ServerRequest;
-type NodeServerResponse = http.ServerResponse | http2.Http2ServerResponse;
 
 /**
- * Convert a universal handler to a Node.js handler function.
+ * A Node.js server request from the http, https, or the http2 module.
  */
-export function universalHandlerToNodeHandler(
-  universalHandler: UniversalHandlerFn,
-  onInternalError: (reason: unknown) => void,
-  onComplete?: () => void
-): NodeHandlerFn {
-  return function nodeHandler(
-    req: NodeServerRequest,
-    res: NodeServerResponse
-  ): void {
-    runHandler(universalHandler, req, res).then(onComplete, onInternalError);
-  };
-}
+export type NodeServerRequest = http.IncomingMessage | http2.Http2ServerRequest;
 
-async function runHandler(
-  universalHandler: UniversalHandlerFn,
-  nodeRequest: NodeServerRequest,
-  nodeResponse: NodeServerResponse
-) {
-  const universalResponse = await universalHandler(
-    universalRequestFromNodeRequest(nodeRequest, undefined)
-  );
-  await universalResponseToNodeResponse(universalResponse, nodeResponse);
-}
+/**
+ * A Node.js server response from the http, https, or the http2 module.
+ * Note that we are taking the liberty to patch the type of write() so
+ * that they are compatible with each other.
+ */
+export type NodeServerResponse = (
+  | Omit<http.ServerResponse, "write">
+  | Omit<http2.Http2ServerResponse, "write">
+) & {
+  write(
+    chunk: string | Uint8Array,
+    callback?: (err: Error | null | undefined) => void
+  ): boolean;
+  write(
+    chunk: string | Uint8Array,
+    encoding: BufferEncoding,
+    callback?: (err: Error | null | undefined) => void
+  ): boolean;
+};
 
+/**
+ * Creates a UniversalServerRequest to a Node.js server request.
+ * This function helps to implement adapters to server frameworks running
+ * on Node.js. Please be careful using this function in your own code, as we
+ * may have to make changes to it in the future.
+ */
 export function universalRequestFromNodeRequest(
   nodeRequest: NodeServerRequest,
   parsedJsonBody: JsonValue | undefined
@@ -96,6 +97,12 @@ export function universalRequestFromNodeRequest(
   };
 }
 
+/**
+ * Writes a UniversalServerResponse to a Node.js server response.
+ * This function helps to implement adapters to server frameworks running
+ * on Node.js. Please be careful using this function in your own code, as we
+ * may have to make changes to it in the future.
+ */
 export async function universalResponseToNodeResponse(
   universalResponse: UniversalServerResponse,
   nodeResponse: NodeServerResponse

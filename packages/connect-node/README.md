@@ -1,54 +1,99 @@
 # @bufbuild/connect-node
 
-Connect-Node is a slim library for building browser and gRPC-compatible HTTP APIs. 
-The procedures are defined in a [Protocol Buffer](https://developers.google.com/protocol-buffers)
-schema, and Connect generates code and types for type-safe clients and handlers.
-Handlers and clients support three protocols: gRPC, gRPC-Web, and Connect's own protocol.
+Connect is a family of libraries for building and consuming APIs on different languages and platforms, and 
+[@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings type-safe APIs with Protobuf to 
+TypeScript.
 
-The [Connect protocol](https://connect.build/docs/protocol/) is a simple,
-POST-only protocol that works over HTTP/1.1 or HTTP/2. It takes the best portions 
-of gRPC and gRPC-Web, including streaming, and packages them into a protocol that 
-works equally well in browsers, monoliths, and microservices. Calling a Connect 
-API is as easy as using `curl`.
+`@bufbuild/connect-node` provides the following adapters for Node.js:
+
+### createConnectTransport()
+
+Lets your clients running on Node.js talk to a server with the Connect protocol:
+
+```diff
+import { createPromiseClient } from "@bufbuild/connect";
++ import { createConnectTransport } from "@bufbuild/connect-node";
+import { ElizaService } from "./gen/eliza_connect.js";
+
++ // A transport for clients using the Connect protocol with Node.js `http` module
++ const transport = createConnectTransport({
++   baseUrl: "https://demo.connect.build",
++   httpVersion: "1.1"
++ });
+
+const client = createPromiseClient(ElizaService, transport);
+const { sentence } = await client.say({ sentence: "I feel happy." });
+console.log(sentence) // you said: I feel happy.
+```
+
+### createGrpcTransport()
+
+Lets your clients running on Node.js talk to a server with the gRPC protocol:
+
+```diff
+import { createPromiseClient } from "@bufbuild/connect";
++ import { createGrpcTransport } from "@bufbuild/connect-node";
+import { ElizaService } from "./gen/eliza_connect.js";
+
++ // A transport for clients using the gRPC protocol with Node.js `http2` module
++ const transport = createGrpcTransport({
++   baseUrl: "https://demo.connect.build",
++   httpVersion: "2"
++ });
+
+const client = createPromiseClient(ElizaService, transport);
+const { sentence } = await client.say({ sentence: "I feel happy." });
+console.log(sentence) // you said: I feel happy.
+```
+
+### createGrpcWebTransport()
+
+Lets your clients running on Node.js talk to a server with the gRPC-web protocol:
+
+```diff
+import { createPromiseClient } from "@bufbuild/connect";
++ import { createGrpcWebTransport } from "@bufbuild/connect-node";
+import { ElizaService } from "./gen/eliza_connect.js";
+
++ // A transport for clients using the Connect protocol with Node.js `http` module
++ const transport = createGrpcWebTransport({
++   baseUrl: "https://demo.connect.build",
++   httpVersion: "1.1"
++ });
+
+const client = createPromiseClient(ElizaService, transport);
+const { sentence } = await client.say({ sentence: "I feel happy." });
+console.log(sentence) // you said: I feel happy.
+```
 
 
-## Project status
+### connectNodeAdapter()
 
-Connect-Node is still in beta, so we want your feedback! We’d love to learn about 
-your use cases and what you’d like to do with Connect-Node. For example, do you plan 
-to use it with React, Remix, or on the edge with Vercel’s Edge Runtime? You can reach 
-us either through the [Buf Slack](https://buf.build/links/slack/) or by filing a 
-[GitHub issue](https://github.com/bufbuild/connect-web/issues) and we’d be more than 
-happy to chat!
-
-
-## A small example
-
-Curious what this looks like in practice? From a [Protobuf schema](https://github.com/bufbuild/connect-web/blob/main/packages/example/eliza.proto), 
-we generate a small piece of RPC metadata with [@bufbuild/protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es), 
-the `ElizaService`. Using that metadata, we can build a server:
+Run your Connect RPCs on the Node.js `http`, `https`, or `http2` modules.
 
 ```ts
-// server.ts
-import { createHandler, mergeHandlers } from "@bufbuild/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
-import * as http2 from "http2";
+// connect.ts
+import { ConnectRouter } from "@bufbuild/connect";
 
-// A Node.js request listener that implements rpc Say(SayRequest) returns (SayResponse)
-const handleSay = createHandler(
-  ElizaService,
-  ElizaService.methods.say,
-  async (req) => {
-    return {
-      sentence: `you said: ${req.sentence}`,
-    };
-  }
-);
+export default function(router: ConnectRouter) {
+  // implement rpc Say(SayRequest) returns (SayResponse)
+  router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
+    sentence: `you said: ${req.sentence}`,
+  }));
+}
+```
+
+```diff
+// server.ts
+import * as http2 from "http2";
++ import routes from "connect";
++ import { connectNodeAdapter } from "@bufbuild/connect-node";
 
 http2.createServer(
-  mergeHandlers([handleSay]) // responds with 404 for other requests
++ connectNodeAdapter({ routes }) // responds with 404 for other requests
 ).listen(8080);
 ```
+
 
 With that server running, you can make requests with any gRPC or Connect client.
 
@@ -87,11 +132,12 @@ const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```
 
-A client for the web browser actually looks identical to this example - it would 
-simply use `createConnectTransport` from `@bufbuild/connect-web` instead.
+A client for the web browser actually looks identical to this example - it would
+simply use `createConnectTransport` from [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web) 
+instead.
 
 
 ## Getting started
 
-To get started, head over to the [docs](https://connect.build/docs/node/getting-started) 
-for a tutorial, or take a look at [our example](https://github.com/bufbuild/connect-web/tree/main/packages/example). 
+To get started with Connect, head over to the [docs](https://connect.build/docs/node/getting-started) 
+for a tutorial, or take a look at [our example](https://github.com/bufbuild/connect-es/tree/main/packages/example). 

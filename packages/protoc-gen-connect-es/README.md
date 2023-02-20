@@ -4,7 +4,7 @@ The code generator for Connect, a simple library to work with servers and client
 in ECMAScript with the type-safety of TypeScript.  It generates code that is compatible with
 browsers and Node.js.
 
-Learn more about connect-web at [github.com/bufbuild/connect-web](https://github.com/bufbuild/connect-web).
+Learn more about Connect at [github.com/bufbuild/connect-es](https://github.com/bufbuild/connect-es).
 
 ## Installation
 
@@ -16,12 +16,17 @@ the code generator plugin for all Protocol Buffer base types. The code these two
 plugins generate requires the runtime libraries [@bufbuild/connect-es](https://www.npmjs.com/package/@bufbuild/connect-es), 
 and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 
-To install the plugins and their runtime libraries, run:
+To install `buf`, the plugins and their runtime libraries, run:
 
 ```shell
-npm install --save-dev @bufbuild/protoc-gen-connect-es @bufbuild/protoc-gen-es @bufbuild/buf
-npm install @bufbuild/connect-web @bufbuild/protobuf
+npm install --save-dev @bufbuild/buf @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-es
+npm install @bufbuild/connect @bufbuild/protobuf
 ```
+
+If you want to call Connect or gRPC-web services from a web browsers, make sure to install 
+[@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web). If you want servers too, 
+install [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node) or
+[@bufbuild/connect-fastify](https://www.npmjs.com/package/@bufbuild/connect-fastify).
 
 We use peer dependencies to ensure that code generator and runtime library are
 compatible with each other. Note that yarn and pnpm only emit a warning in this case.
@@ -55,7 +60,7 @@ npx buf generate
 ```
 
 Note that `buf` can generate from various [inputs](https://docs.buf.build/reference/inputs), 
-not just local protobuf files. For example, `npm run generate buf.build/bufbuild/eliza` 
+not just local protobuf files. For example, `npx buf generate buf.build/bufbuild/eliza` 
 generates code for the module [bufbuild/eliza](https://buf.build/bufbuild/eliza) on the Buf Schema
 Registry.
 

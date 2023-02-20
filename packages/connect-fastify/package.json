@@ -1,11 +1,11 @@
 {
-  "name": "@bufbuild/connect-node",
+  "name": "@bufbuild/connect-fastify",
   "version": "0.7.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/bufbuild/connect-es.git",
-    "directory": "packages/connect-node"
+    "directory": "packages/connect-fastify"
   },
   "sideEffects": false,
   "scripts": {
@@ -26,7 +26,9 @@
     "node": ">=16.0.0 <19"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.7.0"
+    "@bufbuild/connect": "0.7.0",
+    "@bufbuild/connect-node": "^0.7.0",
+    "fastify": "^4.13.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"

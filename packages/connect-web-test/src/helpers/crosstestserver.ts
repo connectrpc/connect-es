@@ -26,7 +26,7 @@ import {
 // | connect-go h2 | 8081 |
 // | grpc-go       | 8083 |
 //
-// Source: // https://github.com/bufbuild/connect-web/pull/87
+// Source: // https://github.com/bufbuild/connect-es/pull/87
 const crossTestConnectGoH1BaseUrl = "https://127.0.0.1:8080";
 
 // see connect-node-h1-server.mjs

@@ -24,9 +24,7 @@ import {
 import {
   ProtocolHandlerFactory,
   UniversalHandler,
-  UniversalHandlerFn,
   UniversalHandlerOptions,
-  uResponseNotFound,
   validateUniversalHandlerOptions,
   createUniversalMethodHandler,
   createUniversalServiceHandlers,
@@ -36,53 +34,21 @@ import { createHandlerFactory as handlerFactoryGrpc } from "./protocol-grpc/hand
 import { createHandlerFactory as handlerFactoryConnect } from "./protocol-connect/handler-factory.js";
 
 /**
- * Options to the function routeUniversalHandlers().
- */
-interface RouteUniversalHandlersInit {
-  /**
-   * Handlers to route by request path.
-   */
-  handlers: UniversalHandler[];
-
-  /**
-   * Fallback that is called when the request path matches none of the handlers.
-   */
-  fallback?: UniversalHandlerFn;
-
-  /**
-   * Serve all handlers under this prefix. For example, the prefix "/something"
-   * will serve the RPC foo.FooService/Bar under "/something/foo.FooService/Bar".
-   * Note that some gRPC client implementations do not allow for prefixes.
-   */
-  requestPathPrefix?: string;
-}
-
-// TODO (TCN-1219)
-/**
- * @deprecated
+ * ConnectRouter is your single registration point for RPCs.
  *
- * Route many handlers by request path.
+ * Create a file `connect.ts` with a default export such as this:
  *
- * Takes an array of handler functions, and merges them into a single handler
- * function that invokes the first handler with a matching request path. If no
- * request path matches, it serves a 404 by default.
+ * ```ts
+ * import {ConnectRouter} from "@bufbuild/connect";
+ *
+ * export default (router: ConnectRouter) => {
+ *   router.service(ElizaService, {});
+ * }
+ * ```
+ *
+ * The pass this function to adapters and plugins, for example
+ * from @bufbuild/connect-node, or from @bufbuild/connect-fastify.
  */
-export function routeUniversalHandlers(
-  init: RouteUniversalHandlersInit
-): UniversalHandlerFn {
-  const prefix = (init.requestPathPrefix ?? "").replace(/\/$/, "");
-  const next = init.fallback ?? (() => uResponseNotFound);
-  return async function routingHandler(request) {
-    const handler = init.handlers.find(
-      (h) => request.url.pathname === prefix + h.requestPath
-    );
-    if (!handler) {
-      return next(request);
-    }
-    return handler(request);
-  };
-}
-
 export interface ConnectRouter {
   readonly handlers: UniversalHandler[];
   service<T extends ServiceType>(
@@ -96,7 +62,6 @@ export interface ConnectRouter {
     impl: MethodImpl<M>,
     options?: Partial<UniversalHandlerOptions>
   ): this;
-  reduce(opt: Omit<RouteUniversalHandlersInit, "handlers">): UniversalHandlerFn;
 }
 
 export interface ConnectRouterOptions extends Partial<UniversalHandlerOptions> {
@@ -131,12 +96,6 @@ export function createConnectRouter(
         )
       );
       return this;
-    },
-    reduce(opt) {
-      return routeUniversalHandlers({
-        handlers,
-        ...opt,
-      });
     },
   };
 }

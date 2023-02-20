@@ -12,16 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Polyfill the Headers API for Node versions < 18
-import "./node-headers-polyfill.js";
-
-export { createGrpcWebTransport } from "./grpc-web-transport.js";
-export { createGrpcTransport } from "./grpc-transport.js";
-export { createConnectTransport } from "./connect-transport.js";
-export { compressionBrotli, compressionGzip } from "./compression.js";
-export { connectNodeAdapter } from "./connect-node-adapter.js";
-
-export {
-  universalRequestFromNodeRequest,
-  universalResponseToNodeResponse,
-} from "./node-universal-handler.js";
+export { fastifyConnectPlugin } from "./fastify-connect-plugin.js";

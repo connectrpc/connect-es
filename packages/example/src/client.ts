@@ -22,8 +22,11 @@ const rl = readline.createInterface(stdin, stdout);
 
 void (async () => {
   const transport = createConnectTransport({
-    httpVersion: "1.1",
-    baseUrl: "http://localhost:8080",
+    httpVersion: "2",
+    baseUrl: "https://localhost:8080",
+    nodeOptions: {
+      rejectUnauthorized: false,
+    },
   });
 
   const client = createPromiseClient(ElizaService, transport);

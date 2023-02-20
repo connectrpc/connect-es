@@ -7,6 +7,7 @@
     "./packages/connect-web",
     "./packages/connect-web-test",
     "./packages/connect-web-bench",
+    "./packages/connect-fastify",
     "./packages/protoc-gen-connect-es",
     "./packages/example"
   ],

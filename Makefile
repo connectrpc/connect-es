@@ -67,6 +67,12 @@ $(BUILD)/connect-node: $(BUILD)/connect packages/connect-node/tsconfig.json $(sh
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-fastify: $(BUILD)/connect $(BUILD)/connect-node packages/connect-fastify/tsconfig.json $(shell find packages/connect-fastify/src -name '*.ts')
+	npm run -w packages/connect-fastify clean
+	npm run -w packages/connect-fastify build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
@@ -79,7 +85,7 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test packages
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node-test: $(BUILD)/connect-node $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
+$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
 	npm run -w packages/connect-node-test clean
 	npm run -w packages/connect-node-test build
 	@mkdir -p $(@D)
@@ -135,7 +141,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect $(BUILD)/connect-node $(BUILD)/connect-web $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
+build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
 
 .PHONY: test
 test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack
@@ -220,6 +226,7 @@ release: all ## Release @bufbuild/connect-web
 	npm publish \
 		--workspace packages/connect-web \
 		--workspace packages/connect-node \
+		--workspace packages/connect-fastify \
 		--workspace packages/connect \
 		--workspace packages/protoc-gen-connect-es
 

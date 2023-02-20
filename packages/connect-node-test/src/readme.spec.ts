@@ -14,11 +14,12 @@
 
 import * as http2 from "http2";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
-import { createPromiseClient } from "@bufbuild/connect";
+import { ConnectRouter, createPromiseClient } from "@bufbuild/connect";
 import {
+  connectNodeAdapter,
   createGrpcTransport,
-  createHandler,
-  mergeHandlers,
+  createGrpcWebTransport,
+  createConnectTransport,
 } from "@bufbuild/connect-node";
 
 /* eslint-disable @typescript-eslint/require-await */
@@ -58,31 +59,58 @@ describe("readme", function () {
     },
   } as const;
 
+  it("createConnectTransport()", async function () {
+    // A transport for clients using the gRPC protocol with Node.js `http` module
+    const transport = createConnectTransport({
+      baseUrl: "https://demo.connect.build",
+      httpVersion: "1.1",
+    });
+    const client = createPromiseClient(ElizaService, transport);
+    const { sentence } = await client.say({ sentence: "I feel happy." });
+    expect(sentence).toBeDefined();
+  });
+
+  it("createGrpcTransport()", async function () {
+    // A transport for clients using the gRPC protocol with Node.js `http2` module
+    const transport = createGrpcTransport({
+      baseUrl: "https://demo.connect.build",
+      httpVersion: "2",
+    });
+    const client = createPromiseClient(ElizaService, transport);
+    const { sentence } = await client.say({ sentence: "I feel happy." });
+    expect(sentence).toBeDefined();
+  });
+
+  it("createGrpcWebTransport()", async function () {
+    // A transport for clients using the gRPC-web protocol with Node.js `http` module
+    const transport = createGrpcWebTransport({
+      baseUrl: "https://demo.connect.build",
+      httpVersion: "1.1",
+    });
+    const client = createPromiseClient(ElizaService, transport);
+    const { sentence } = await client.say({ sentence: "I feel happy." });
+    expect(sentence).toBeDefined();
+  });
+
   it("should work as well", async function () {
     let port = -1;
 
+    function routes(router: ConnectRouter) {
+      router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
+        sentence: `you said: ${req.sentence}`,
+      }));
+    }
+
     function startServer() {
       return new Promise<http2.Http2Server>((resolve) => {
-        // A Node.js request listener that implements rpc Say(SayRequest) returns (SayResponse)
-        const handleSay = createHandler(
-          ElizaService,
-          ElizaService.methods.say,
-          async (req) => {
-            return {
-              sentence: `you said: ${req.sentence}`,
-            };
+        const handler = connectNodeAdapter({ routes });
+        const server = http2.createServer(handler).listen(0, () => {
+          const a = server.address();
+          if (a !== null && typeof a !== "string") {
+            port = a.port;
           }
-        );
-
-        const server = http2
-          .createServer(mergeHandlers([handleSay]))
-          .listen(0, () => {
-            const a = server.address();
-            if (a !== null && typeof a !== "string") {
-              port = a.port;
-            }
-            resolve(server);
-          });
+          resolve(server);
+        });
       });
     }
 
