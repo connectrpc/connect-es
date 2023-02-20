@@ -1,10 +1,11 @@
 {
   "name": "@bufbuild/connect",
   "version": "0.7.0",
+  "description": "Type-safe APIs with Protobuf and TypeScript.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bufbuild/connect-web.git",
+    "url": "https://github.com/bufbuild/connect-es.git",
     "directory": "packages/connect"
   },
   "sideEffects": false,

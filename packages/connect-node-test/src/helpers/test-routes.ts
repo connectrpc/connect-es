@@ -15,15 +15,20 @@
 import {
   Code,
   ConnectError,
+  ConnectRouter,
   decodeBinaryHeader,
   encodeBinaryHeader,
   ServiceImpl,
 } from "@bufbuild/connect";
-import type { TestService } from "../gen/grpc/testing/test_connect.js";
+import { TestService } from "../gen/grpc/testing/test_connect.js";
 import type { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { interop } from "./interop.js";
 
-export const testService: ServiceImpl<typeof TestService> = {
+export default function (router: ConnectRouter) {
+  router.service(TestService, testService);
+}
+
+const testService: ServiceImpl<typeof TestService> = {
   emptyCall() {
     return {};
   },

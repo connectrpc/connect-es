@@ -57,11 +57,11 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
 } from "@bufbuild/connect/protocol";
-import { validateNodeTransportOptions } from "./node-transport-options.js";
+import { validateNodeTransportOptions } from "./validate-node-transport-options.js";
 import type {
   NodeHttp1TransportOptions,
   NodeHttp2TransportOptions,
-} from "./node-transport-options.js";
+} from "./validate-node-transport-options.js";
 
 /**
  * Options used to configure the gRPC-web transport.

@@ -20,14 +20,19 @@ import * as path from "path";
 import type { Transport } from "@bufbuild/connect";
 import {
   compressionGzip,
+  connectNodeAdapter,
   createConnectTransport,
   createGrpcTransport,
   createGrpcWebTransport,
-  createHandlers,
-  mergeHandlers,
 } from "@bufbuild/connect-node";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { testService } from "./test-service-impl.js";
+import { fastifyConnectPlugin } from "@bufbuild/connect-fastify";
+import testRoutes from "./test-routes.js";
+import {
+  fastify,
+  FastifyBaseLogger,
+  FastifyInstance,
+  FastifyTypeProviderDefault,
+} from "fastify";
 
 export function createTestServers() {
   // TODO http2 server with TLS and allow http1
@@ -35,6 +40,15 @@ export function createTestServers() {
   let nodeH2cServer: http2.Http2Server | undefined;
   let nodeHttpServer: http.Server | undefined;
   let nodeHttpsServer: http.Server | undefined;
+  let fastifyH2cServer:
+    | FastifyInstance<
+        http2.Http2Server,
+        http2.Http2ServerRequest,
+        http2.Http2ServerResponse,
+        FastifyBaseLogger,
+        FastifyTypeProviderDefault
+      >
+    | undefined;
 
   const certLocalhost = getCertLocalhost();
 
@@ -46,8 +60,9 @@ export function createTestServers() {
   // | connect-go h2 | 8081 |
   // | grpc-go       | 8083 |
   //
-  // Source: https://github.com/bufbuild/connect-web/pull/87
+  // Source: https://github.com/bufbuild/connect-es/pull/87
   const servers = {
+    // connect-go
     "connect-go (h1)": {
       getUrl() {
         return `https://localhost:8080`;
@@ -98,7 +113,7 @@ export function createTestServers() {
                 cert: certLocalhost.cert,
                 key: certLocalhost.key,
               },
-              mergeHandlers(createHandlers(TestService, testService, {}))
+              connectNodeAdapter({ routes: testRoutes })
             )
             .listen(0, resolve);
         });
@@ -115,6 +130,7 @@ export function createTestServers() {
         });
       },
     },
+    // connect-node
     "@bufbuild/connect-node (h2c)": {
       getUrl() {
         const address = nodeH2cServer?.address();
@@ -126,10 +142,7 @@ export function createTestServers() {
       start() {
         return new Promise<void>((resolve) => {
           nodeH2cServer = http2
-            .createServer(
-              {},
-              mergeHandlers(createHandlers(TestService, testService, {}))
-            )
+            .createServer({}, connectNodeAdapter({ routes: testRoutes }))
             .listen(0, resolve);
         });
       },
@@ -185,9 +198,7 @@ export function createTestServers() {
             "Access-Control-Expose-Headers": corsExposeHeaders.join(", "),
             "Access-Control-Max-Age": 2 * 3600,
           };
-          const serviceHandler = mergeHandlers(
-            createHandlers(TestService, testService, {})
-          );
+          const serviceHandler = connectNodeAdapter({ routes: testRoutes });
           nodeHttpServer = http
             .createServer({}, (req, res) => {
               if (req.method === "OPTIONS") {
@@ -213,7 +224,6 @@ export function createTestServers() {
         });
       },
     },
-
     "@bufbuild/connect-node (h1 + tls)": {
       getUrl() {
         const address = nodeHttpsServer?.address();
@@ -230,7 +240,7 @@ export function createTestServers() {
                 cert: certLocalhost.cert,
                 key: certLocalhost.key,
               },
-              mergeHandlers(createHandlers(TestService, testService, {}))
+              connectNodeAdapter({ routes: testRoutes })
             )
             .listen(0, resolve);
         });
@@ -244,6 +254,37 @@ export function createTestServers() {
           nodeHttpsServer.close((err) => (err ? reject(err) : resolve()));
           resolve(); // the server.close() callback above slows down our tests
         });
+      },
+    },
+    // connect-fastify
+    "@bufbuild/connect-fastify (h2c)": {
+      getUrl() {
+        if (!fastifyH2cServer) {
+          throw new Error("fastifyH2cServer not started");
+        }
+        const port = fastifyH2cServer.addresses().map((a) => a.port)[0] as
+          | number
+          | undefined;
+        if (port === undefined) {
+          throw new Error("fastifyH2cServer not started");
+        }
+        return `http://localhost:${port}`;
+      },
+      async start() {
+        fastifyH2cServer = fastify({
+          http2: true,
+          logger: false,
+        });
+        await fastifyH2cServer.register(fastifyConnectPlugin, {
+          routes: testRoutes,
+        });
+        await fastifyH2cServer.listen();
+      },
+      async stop() {
+        if (!fastifyH2cServer) {
+          throw new Error("fastifyH2cServer not started");
+        }
+        await fastifyH2cServer.close();
       },
     },
   };

@@ -30,7 +30,7 @@ import { compressionBrotli, compressionGzip } from "./compression.js";
 import {
   createNodeHttp1Client,
   createNodeHttp2Client,
-} from "./private/node-universal-client.js";
+} from "./node-universal-client.js";
 
 export interface NodeHttp1TransportOptions {
   httpVersion: "1.1";

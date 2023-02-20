@@ -1,32 +1,34 @@
 # Code example
 
-This directory contains a simple example for running a Connect-Web client with a Connect-Node server using [Express](https://expressjs.com/).
+This directory contains a simple example for running a Connect client from your web browser and a client from 
+your terminal against a server running in Node.js.
 
-The application is a web interface for a stripped-down version of [ELIZA](https://en.wikipedia.org/wiki/ELIZA), a very
-simple natural language processor built in the 1960s to represent a psychotherapist. 
+The application is a stripped-down version of [ELIZA](https://en.wikipedia.org/wiki/ELIZA), a very simple natural 
+language processor built in the 1960s to represent a psychotherapist. 
 
 You can find the protocol buffer schema [on the BSR](https://buf.build/bufbuild/eliza/tree/main:buf/connect/demo/eliza/v1/eliza.proto).
 
 ## Run the example
 
-You will need [Node 18](https://nodejs.org/en/download/) installed. Download the example project and install 
-its dependencies:
+You will need [Node](https://nodejs.org/en/download/) in version 16, 17, or 18 installed. Download the example project 
+and install its dependencies:
 
 ```shell
-curl -L https://github.com/bufbuild/connect-web/archive/refs/heads/main.zip > connect-web-main.zip
-unzip connect-web-main.zip 'connect-web-main/packages/example/*'
+curl -L https://github.com/bufbuild/connect-es/archive/refs/heads/main.zip > connect-web-main.zip
+unzip connect-es-main.zip 'connect-es-main/packages/example/*'
 
-cd connect-web-main/packages/example
+cd connect-es-main/packages/example
 npm install
 ```
 
-Next, start the Connect-Node server:
+Next, start the Connect server:
 
 ```shell
 npm start
 ```
 
-That's it!  You should now be able to open a web browser to http://localhost:8080 and see the example running locally.
+That's it!  You should now be able to open a web browser to https://localhost:8080 and see the example running locally.
+(The server uses a self-signed certificate that you have to accept.)
 
 ![Screenshot](README.png)
 

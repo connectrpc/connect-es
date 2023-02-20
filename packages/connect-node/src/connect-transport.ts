@@ -66,7 +66,7 @@ import {
   NodeHttp1TransportOptions,
   NodeHttp2TransportOptions,
   validateNodeTransportOptions,
-} from "./node-transport-options.js";
+} from "./validate-node-transport-options.js";
 
 /**
  * Options used to configure the Connect transport.

@@ -12,16 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Polyfill the Headers API for Node versions < 18
-import "./node-headers-polyfill.js";
+import {
+  connectErrorDetails,
+  connectErrorFromReason,
+  createCallbackClient,
+  createPromiseClient,
+  Code,
+  decodeBinaryHeader,
+  encodeBinaryHeader,
+} from "@bufbuild/connect-web";
 
-export { createGrpcWebTransport } from "./grpc-web-transport.js";
-export { createGrpcTransport } from "./grpc-transport.js";
-export { createConnectTransport } from "./connect-transport.js";
-export { compressionBrotli, compressionGzip } from "./compression.js";
-export { connectNodeAdapter } from "./connect-node-adapter.js";
-
-export {
-  universalRequestFromNodeRequest,
-  universalResponseToNodeResponse,
-} from "./node-universal-handler.js";
+describe("deprecated API", function () {
+  it("should be exported", function () {
+    expect(createCallbackClient).toBeDefined();
+    expect(createPromiseClient).toBeDefined();
+    expect(connectErrorDetails).toBeDefined();
+    expect(connectErrorFromReason).toBeDefined();
+    expect(Code).toBeDefined();
+    expect(encodeBinaryHeader).toBeDefined();
+    expect(decodeBinaryHeader).toBeDefined();
+  });
+});
