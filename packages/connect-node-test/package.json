@@ -23,7 +23,6 @@
     "@types/long": "^5.0.0",
     "esbuild": "^0.16.12",
     "fastify": "^4.13.0",
-    "headers-polyfill": "^3.1.2",
     "jasmine": "^4.5.0",
     "karma": "^6.4.1",
     "karma-browserstack-launcher": "^1.6.0",
