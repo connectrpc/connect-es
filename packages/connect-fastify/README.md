@@ -7,7 +7,7 @@ TypeScript.
 `@bufbuild/connect-fastify` provides a plugin for [fastify](https://www.fastify.io/), the fast and 
 low overhead web framework, for Node.js.
 
-### connectNodeAdapter()
+### fastifyConnectPlugin()
 
 Run your Connect RPCs on the Node.js `http`, `https`, or `http2` modules.
 
@@ -43,7 +43,7 @@ await server.listen({
 });
 ```
 
-With that server running, you can make requests with any gRPC or Connect client.
+With that server running, you can make requests with any gRPC (-web) or Connect client.
 
 `buf curl` with the gRPC protocol:
 
@@ -64,10 +64,11 @@ curl \
     http://localhost:8080/buf.connect.demo.eliza.v1.ElizaService/Say
 ```
 
-[@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node) with the gRPC protocol:
+Node.js with the gRPC protocol (using a transport from [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node)):
 
 ```ts
-import { createGrpcTransport, createPromiseClient } from "@bufbuild/connect-node";
+import { createPromiseClient } from "@bufbuild/connect";
+import { createGrpcTransport } from "@bufbuild/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
 const transport = createGrpcTransport({

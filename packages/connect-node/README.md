@@ -95,7 +95,7 @@ http2.createServer(
 ```
 
 
-With that server running, you can make requests with any gRPC or Connect client.
+With that server running, you can make requests with any gRPC (-web) or Connect client.
 
 `buf curl` with the gRPC protocol:
 
@@ -116,10 +116,11 @@ curl \
     http://localhost:8080/buf.connect.demo.eliza.v1.ElizaService/Say
 ```
 
-`@bufbuild/connect-node` with the gRPC protocol:
+Node.js with the gRPC protocol:
 
 ```ts
-import { createGrpcTransport, createPromiseClient } from "@bufbuild/connect-node";
+import { createPromiseClient } from "@bufbuild/connect";
+import { createGrpcTransport } from "@bufbuild/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
 const transport = createGrpcTransport({
