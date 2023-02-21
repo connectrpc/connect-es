@@ -930,12 +930,8 @@ function getCertLocalhost(): { key: string; cert: string } {
       }
       dir = path.join(dir, "..");
     }
-    const key = fs.readFileSync(path.join(dir, "localhost-key.pem"), {
-      encoding: "utf8",
-    });
-    const cert = fs.readFileSync(path.join(dir, "localhost-cert.pem"), {
-      encoding: "utf8",
-    });
+    const key = fs.readFileSync(path.join(dir, "localhost-key.pem"), "utf8");
+    const cert = fs.readFileSync(path.join(dir, "localhost-cert.pem"), "utf8");
     certLocalHost = { key, cert };
   }
   return certLocalHost;

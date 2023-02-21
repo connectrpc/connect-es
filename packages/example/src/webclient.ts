@@ -16,14 +16,11 @@ import { createPromiseClient } from "@bufbuild/connect";
 import { createConnectTransport } from "@bufbuild/connect-web";
 import { ElizaService } from "./gen/eliza_connect.js";
 
-const root = document.querySelector<HTMLElement>("#root");
-const input = document.createElement("input");
+// Alternatively, use createGrpcWebTransport here for the gRPC-web
+// protocol.
+const transport = createConnectTransport({ baseUrl: "/" });
 
 void (async () => {
-  const transport = createConnectTransport({
-    baseUrl: "/",
-  });
-
   const client = createPromiseClient(ElizaService, transport);
 
   print("What is your name?");
@@ -46,12 +43,13 @@ function print(text: string): void {
   const p = document.createElement("p");
   p.innerText = text;
   p.scrollIntoView();
-  root?.append(p);
+  document.querySelector<HTMLElement>("#root")?.append(p);
 }
 
 function prompt(): Promise<string> {
+  const input = document.createElement("input");
   input.value = "";
-  root?.append(input);
+  document.querySelector<HTMLElement>("#root")?.append(input);
   input.focus();
   return new Promise<string>((resolve) => {
     input.onkeyup = (ev) => {
