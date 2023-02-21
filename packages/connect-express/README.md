@@ -71,6 +71,9 @@ A client for the web browser actually looks identical to this example - it would
 simply use `createConnectTransport` from [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web) 
 instead.
 
+Note that support for gRPC is limited, since many gRPC clients require HTTP/2, 
+and Express does not support the Node.js `http2` module.
+
 
 ## Getting started
 
