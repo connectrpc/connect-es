@@ -95,7 +95,7 @@ http2.createServer(
 ```
 
 
-With that server running, you can make requests with any gRPC (-web) or Connect client.
+With that server running, you can make requests with any gRPC, gRPC-Web, or Connect client.
 
 `buf curl` with the gRPC protocol:
 
