@@ -48,7 +48,7 @@ With that server running, you can make requests with any gRPC, gRPC-Web, or Conn
 `buf curl` with the gRPC protocol:
 
 ```bash
-buf curl --schema /Users/ts/buf/connect-web-main/packages/example/eliza.proto \
+buf curl --schema buf.build/bufbuild/eliza \
   --protocol grpc --http2-prior-knowledge \
   -d '{"sentence": "I feel happy."}' \
   http://localhost:8080/buf.connect.demo.eliza.v1.ElizaService/Say
