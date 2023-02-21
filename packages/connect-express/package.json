@@ -1,0 +1,39 @@
+{
+  "name": "@bufbuild/connect-express",
+  "version": "0.7.0",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufbuild/connect-es.git",
+    "directory": "packages/connect-express"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "clean": "rm -rf ./dist/cjs/* ./dist/esm/* ./dist/types/*",
+    "build": "npm run build:cjs && npm run build:esm+types",
+    "build:cjs": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types"
+  },
+  "main": "./dist/cjs/index.js",
+  "type": "module",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/index.js",
+    "types": "./dist/types/index.d.ts"
+  },
+  "engines": {
+    "node": ">=16.0.0 <19"
+  },
+  "dependencies": {
+    "@bufbuild/connect": "0.7.0",
+    "@bufbuild/connect-node": "^0.7.0",
+    "@types/express": "^4.17.17"
+  },
+  "peerDependencies": {
+    "@bufbuild/protobuf": "^1.0.0"
+  },
+  "files": [
+    "dist/**/"
+  ]
+}

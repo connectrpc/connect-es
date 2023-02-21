@@ -183,7 +183,7 @@ export function createConnectTransport(
             signal: req.signal,
             body: createAsyncIterable([requestBody]),
           });
-          const { compression, isConnectUnaryError } =
+          const { compression, isUnaryError, unaryError } =
             validateResponseWithCompression(
               method.kind,
               opt.useBinaryFormat,
@@ -206,10 +206,11 @@ export function createConnectTransport(
               opt.readMaxBytes
             );
           }
-          if (isConnectUnaryError) {
+          if (isUnaryError) {
             throw errorFromJsonBytes(
               responseBody,
-              appendHeaders(header, trailer)
+              appendHeaders(header, trailer),
+              unaryError
             );
           }
           return <UnaryResponse<I, O>>{

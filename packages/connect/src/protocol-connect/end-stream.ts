@@ -18,7 +18,6 @@ import type {
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
 import { errorFromJson, errorToJson } from "./error-json.js";
-import { newParseError } from "./new-parse-error.js";
 import { appendHeaders } from "../http-headers.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
@@ -40,10 +39,12 @@ export interface EndStreamResponse {
 
 /**
  * Parse an EndStreamResponse of the Connect protocol.
+ * Throws a ConnectError on malformed input.
  */
 export function endStreamFromJson(
   data: Uint8Array | string
 ): EndStreamResponse {
+  const parseErr = new ConnectError("invalid end stream", Code.InvalidArgument);
   let jsonValue: JsonValue;
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -51,14 +52,14 @@ export function endStreamFromJson(
       typeof data == "string" ? data : new TextDecoder().decode(data)
     );
   } catch (e) {
-    throw newParseError(e, "", false);
+    throw parseErr;
   }
   if (
     typeof jsonValue != "object" ||
     jsonValue == null ||
     Array.isArray(jsonValue)
   ) {
-    throw newParseError(jsonValue);
+    throw parseErr;
   }
   const metadata = new Headers();
   if ("metadata" in jsonValue) {
@@ -67,14 +68,14 @@ export function endStreamFromJson(
       jsonValue.metadata == null ||
       Array.isArray(jsonValue.metadata)
     ) {
-      throw newParseError(jsonValue, ".metadata");
+      throw parseErr;
     }
     for (const [key, values] of Object.entries(jsonValue.metadata)) {
       if (
         !Array.isArray(values) ||
         values.some((value) => typeof value != "string")
       ) {
-        throw newParseError(values, `.metadata["${key}"]`);
+        throw parseErr;
       }
       for (const value of values) {
         metadata.append(key, value as string);
@@ -82,7 +83,9 @@ export function endStreamFromJson(
     }
   }
   const error =
-    "error" in jsonValue ? errorFromJson(jsonValue.error, metadata) : undefined;
+    "error" in jsonValue
+      ? errorFromJson(jsonValue.error, metadata, parseErr)
+      : undefined;
   return { metadata, error };
 }
 

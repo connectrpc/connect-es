@@ -65,7 +65,8 @@ For using Connect with your favorite frontend framework, take a look at
   **React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported, and 
   an expansion pack for [TanStack Query](https://github.com/bufbuild/connect-query).
 - On Node.js, we use the `http`, `https`, or `http2` modules, and support v16, v17 and v18.  
-  You can spin up a vanilla Node.js servers, or use our plugin for [Fastify](https://www.fastify.io/).
+  You can spin up a vanilla Node.js servers, or use our plugin for [Fastify](https://www.fastify.io/),
+  or for [Express](https://expressjs.com/).
 - The libraries and the generated code are compatible with ES2017 and TypeScript 4.1.
 
 Would you like to use Connect on other platforms like Bun, Deno, Vercel’s Edge Runtime,

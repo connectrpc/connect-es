@@ -14,11 +14,12 @@
 
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
-import { Code } from "@bufbuild/connect";
+import { Code, ConnectError } from "@bufbuild/connect";
 import { createMethodUrl } from "@bufbuild/connect/protocol";
 import {
   endStreamFromJson,
-  errorFromJson,
+  codeFromHttpStatus,
+  errorFromJsonBytes,
 } from "@bufbuild/connect/protocol-connect";
 import { http2Request } from "../helpers/http2-request.js";
 
@@ -48,9 +49,13 @@ describe("broken input", () => {
             }).then((res) => {
               return {
                 status: res.status,
-                error: errorFromJson(
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                  JSON.parse(new TextDecoder().decode(res.body))
+                error: errorFromJsonBytes(
+                  res.body,
+                  undefined,
+                  new ConnectError(
+                    `HTTP ${res.status}`,
+                    codeFromHttpStatus(res.status)
+                  )
                 ),
               };
             });

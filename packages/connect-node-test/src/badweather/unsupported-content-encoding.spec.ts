@@ -14,14 +14,14 @@
 
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
-import { Code } from "@bufbuild/connect";
+import { Code, ConnectError } from "@bufbuild/connect";
 import { createMethodUrl } from "@bufbuild/connect/protocol";
 import {
+  codeFromHttpStatus,
   endStreamFromJson,
-  errorFromJson,
+  errorFromJsonBytes,
 } from "@bufbuild/connect/protocol-connect";
 import { http2Request } from "../helpers/http2-request.js";
-import type { JsonValue } from "@bufbuild/protobuf";
 
 describe("unsupported content encoding", () => {
   const servers = createTestServers();
@@ -48,8 +48,13 @@ describe("unsupported content encoding", () => {
             rejectUnauthorized,
           });
           expect(res.status).toBe(404);
-          const err = errorFromJson(
-            JSON.parse(new TextDecoder().decode(res.body)) as JsonValue
+          const err = errorFromJsonBytes(
+            res.body,
+            undefined,
+            new ConnectError(
+              `HTTP ${res.status}`,
+              codeFromHttpStatus(res.status)
+            )
           );
           expect(err.code).toBe(Code.Unimplemented);
           expect(err.rawMessage).toMatch(

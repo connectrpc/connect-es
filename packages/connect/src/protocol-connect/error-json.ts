@@ -21,17 +21,22 @@ import {
 } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
-import { newParseError } from "./new-parse-error.js";
 import { codeFromString, codeToString } from "./code-string.js";
 
 /**
  * Parse a Connect error from a JSON value.
- * Will return a ConnectError, but throw one in case the JSON is malformed.
+ * Will return a ConnectError, and throw the provided fallback if parsing failed.
  */
 export function errorFromJson(
   jsonValue: JsonValue,
-  metadata?: HeadersInit
+  metadata: HeadersInit | undefined,
+  fallback: ConnectError
 ): ConnectError {
+  if (metadata) {
+    new Headers(metadata).forEach((value, key) =>
+      fallback.metadata.append(key, value)
+    );
+  }
   if (
     typeof jsonValue !== "object" ||
     jsonValue == null ||
@@ -39,15 +44,15 @@ export function errorFromJson(
     !("code" in jsonValue) ||
     typeof jsonValue.code !== "string"
   ) {
-    throw newParseError(jsonValue);
+    throw fallback;
   }
   const code = codeFromString(jsonValue.code);
   if (!code) {
-    throw newParseError(jsonValue.code, ".code");
+    throw fallback;
   }
   const message = jsonValue.message;
   if (message != null && typeof message !== "string") {
-    throw newParseError(jsonValue.code, ".message");
+    throw fallback;
   }
   const error = new ConnectError(message ?? "", code, metadata);
   if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
@@ -60,7 +65,7 @@ export function errorFromJson(
         typeof detail.value != "string" ||
         ("debug" in detail && typeof detail.debug != "object")
       ) {
-        throw newParseError(detail, `.details`);
+        throw fallback;
       }
       try {
         error.details.push({
@@ -69,7 +74,7 @@ export function errorFromJson(
           debug: detail.debug,
         });
       } catch (e) {
-        throw newParseError(e, `.details`, false);
+        throw fallback;
       }
     }
   }
@@ -78,19 +83,20 @@ export function errorFromJson(
 
 /**
  * Parse a Connect error from a serialized JSON value.
- * Will return a ConnectError, but throw one in case the JSON is malformed.
+ * Will return a ConnectError, and throw the provided fallback if parsing failed.
  */
 export function errorFromJsonBytes(
   bytes: Uint8Array,
-  metadata?: HeadersInit
+  metadata: HeadersInit | undefined,
+  fallback: ConnectError
 ): ConnectError {
   let jsonValue: JsonValue;
   try {
     jsonValue = JSON.parse(new TextDecoder().decode(bytes)) as JsonValue;
   } catch (e) {
-    throw newParseError(e, "", false);
+    throw fallback;
   }
-  return errorFromJson(jsonValue, metadata);
+  return errorFromJson(jsonValue, metadata, fallback);
 }
 
 /**

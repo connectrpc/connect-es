@@ -2,13 +2,14 @@
   "private": true,
   "workspaces": [
     "./packages/connect",
-    "./packages/connect-node",
-    "./packages/connect-node-test",
+    "./packages/protoc-gen-connect-es",
     "./packages/connect-web",
+    "./packages/connect-node",
+    "./packages/connect-fastify",
+    "./packages/connect-express",
+    "./packages/connect-node-test",
     "./packages/connect-web-test",
     "./packages/connect-web-bench",
-    "./packages/connect-fastify",
-    "./packages/protoc-gen-connect-es",
     "./packages/example"
   ],
   "type": "module",

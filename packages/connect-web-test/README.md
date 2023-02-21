@@ -10,6 +10,10 @@ The test suite is run multiple times:
 2. In multiple old browsers on Browserstack.
 3. In Node.js (v18 for the fetch API).
 
+The tests run against:
+- connect-go (h1/h2) via Docker
+- @bufbuild/connect-node (h1)
+
 ### Running tests in a headless browser
 
 Run `make testwebbrowser` to run tests in a headless Chrome. This can be 
