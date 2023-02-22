@@ -47,7 +47,7 @@ export function errorFromJson(
     throw fallback;
   }
   const code = codeFromString(jsonValue.code);
-  if (!code) {
+  if (code === undefined) {
     throw fallback;
   }
   const message = jsonValue.message;
