@@ -23,27 +23,36 @@ import { headerUnaryEncoding, headerStreamEncoding } from "./headers.js";
 /**
  * Validates response status and header for the Connect protocol.
  * Throws a ConnectError if the header indicates an error, or if
- * the content type is unexpected.
+ * the content type is unexpected, with the following exception:
+ * For unary RPCs with an HTTP error status and content type
+ * application/json, this returns an error derived from the HTTP
+ * status instead of throwing it, giving an implementation a chance
+ * to parse a Connect error from the wire.
  */
 export function validateResponse(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   status: number,
   headers: Headers
-): { isConnectUnaryError: boolean } {
+):
+  | { isUnaryError: false; unaryError?: undefined }
+  | { isUnaryError: true; unaryError: ConnectError } {
   const mimeType = headers.get("Content-Type");
   const parsedType = parseContentType(mimeType);
   if (status !== 200) {
-    if (!parsedType) {
-      throw new ConnectError(`HTTP ${status}`, codeFromHttpStatus(status));
-    }
+    const errorFromStatus = new ConnectError(
+      `HTTP ${status}`,
+      codeFromHttpStatus(status)
+    );
     if (
       methodKind == MethodKind.Unary &&
+      parsedType &&
       !parsedType.stream &&
       !parsedType.binary
     ) {
-      return { isConnectUnaryError: true };
+      return { isUnaryError: true, unaryError: errorFromStatus };
     }
+    throw errorFromStatus;
   }
   const isStream = methodKind != MethodKind.Unary;
   if (
@@ -53,10 +62,10 @@ export function validateResponse(
   ) {
     throw new ConnectError(
       `unexpected response content type "${mimeType ?? "?"}"`,
-      Code.Internal
+      Code.InvalidArgument
     );
   }
-  return { isConnectUnaryError: false };
+  return { isUnaryError: false };
 }
 
 /**
@@ -70,7 +79,9 @@ export function validateResponseWithCompression(
   acceptCompression: Compression[],
   status: number,
   headers: Headers
-): { compression: Compression | undefined; isConnectUnaryError: boolean } {
+): ReturnType<typeof validateResponse> & {
+  compression: Compression | undefined;
+} {
   let compression: Compression | undefined;
   const encoding = headers.get(
     methodKind == MethodKind.Unary ? headerUnaryEncoding : headerStreamEncoding

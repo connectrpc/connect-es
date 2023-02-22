@@ -73,6 +73,12 @@ $(BUILD)/connect-fastify: $(BUILD)/connect $(BUILD)/connect-node packages/connec
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-express: $(BUILD)/connect $(BUILD)/connect-node packages/connect-express/tsconfig.json $(shell find packages/connect-express/src -name '*.ts')
+	npm run -w packages/connect-express clean
+	npm run -w packages/connect-express build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
@@ -85,7 +91,7 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test packages
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
+$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
 	npm run -w packages/connect-node-test clean
 	npm run -w packages/connect-node-test build
 	@mkdir -p $(@D)
@@ -141,7 +147,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
+build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
 
 .PHONY: test
 test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack
@@ -213,7 +219,6 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 	npm i
 	$(MAKE) all
 
-# Release @bufbuild/connect-web.
 # Recommended procedure:
 # 1. Set a new version with the target `setversion`
 # 2. Commit and push all changes
@@ -221,12 +226,13 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 # 4. Run this target, publishing to npmjs.com
 # 5. Tag the release
 .PHONY: release
-release: all ## Release @bufbuild/connect-web
+release: all ## Release npm packages
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
 	npm publish \
 		--workspace packages/connect-web \
 		--workspace packages/connect-node \
 		--workspace packages/connect-fastify \
+		--workspace packages/connect-express \
 		--workspace packages/connect \
 		--workspace packages/protoc-gen-connect-es
 

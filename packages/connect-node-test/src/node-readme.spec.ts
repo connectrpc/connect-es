@@ -24,7 +24,7 @@ import {
 
 /* eslint-disable @typescript-eslint/require-await */
 
-describe("readme", function () {
+describe("node readme", function () {
   interface SayR extends Message<SayR> {
     sentence: string;
   }

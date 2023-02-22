@@ -1,15 +1,15 @@
-# @bufbuild/connect-fastify
+# @bufbuild/connect-express
 
 Connect is a family of libraries for building and consuming APIs on different languages and platforms, and
 [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings type-safe APIs with Protobuf to
 TypeScript.
 
-`@bufbuild/connect-fastify` provides a plugin for [fastify](https://www.fastify.io/), the fast and 
-low overhead web framework, for Node.js.
+`@bufbuild/connect-express` provides a middleware for [Express](https://expressjs.com/), the fast, 
+unopinionated, minimalist web framework for Node.js
 
-### fastifyConnectPlugin()
+### expressConnectMiddleware()
 
-Plug your Connect RPCs into a fastify server.
+Adds your Connect RPCs to an Express server.
 
 ```ts
 // connect.ts
@@ -25,34 +25,21 @@ export default function(router: ConnectRouter) {
 
 ```diff
 // server.ts
-import { fastify } from "fastify";
+import http from "http";
+import express from "express";
 + import routes from "connect";
-+ import { fastifyConnectPlugin } from "@bufbuild/connect-fastify";
++ import { expressConnectMiddleware } from "@bufbuild/connect-express";
 
-const server = fastify({
-  http2: true,
-});
+const app = express();
 
-+ await server.register(fastifyConnectPlugin, { 
++ app.use(expressConnectMiddleware({ 
 +  routes 
-+ });
++ }));
 
-await server.listen({
-  host: "localhost",
-  port: 8080,
-});
+http.createServer(app).listen(8080);
 ```
 
-With that server running, you can make requests with any gRPC, gRPC-Web, or Connect client.
-
-`buf curl` with the gRPC protocol:
-
-```bash
-buf curl --schema buf.build/bufbuild/eliza \
-  --protocol grpc --http2-prior-knowledge \
-  -d '{"sentence": "I feel happy."}' \
-  http://localhost:8080/buf.connect.demo.eliza.v1.ElizaService/Say
-```
+With that server running, you can make requests with any gRPC-web or Connect client.
 
 `curl` with the Connect protocol:
 
@@ -60,20 +47,19 @@ buf curl --schema buf.build/bufbuild/eliza \
 curl \
     --header "Content-Type: application/json" \
     --data '{"sentence": "I feel happy."}' \
-    --http2-prior-knowledge \
     http://localhost:8080/buf.connect.demo.eliza.v1.ElizaService/Say
 ```
 
-Node.js with the gRPC protocol (using a transport from [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node)):
+Node.js with the gRPC-web protocol (using a transport from [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node)):
 
 ```ts
 import { createPromiseClient } from "@bufbuild/connect";
-import { createGrpcTransport } from "@bufbuild/connect-node";
+import { createGrpcWebTransport } from "@bufbuild/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
-const transport = createGrpcTransport({
+const transport = createGrpcWebTransport({
   baseUrl: "http://localhost:8080",
-  httpVersion: "2",
+  httpVersion: "1.1",
 });
 
 const client = createPromiseClient(ElizaService, transport);
@@ -84,6 +70,9 @@ console.log(sentence) // you said: I feel happy.
 A client for the web browser actually looks identical to this example - it would
 simply use `createConnectTransport` from [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web) 
 instead.
+
+Note that support for gRPC is limited, since many gRPC clients require HTTP/2, 
+and Express does not support the Node.js `http2` module.
 
 
 ## Getting started

@@ -35,6 +35,24 @@ describe("endStreamFromJson()", function () {
     expect(endStream.error?.code).toBe(Code.ResourceExhausted);
     expect(endStream.error?.rawMessage).toBe("my bad");
   });
+  it("should raise protocol error on malformed metadata", function () {
+    const json: JsonObject = {
+      metadata: false,
+    };
+    expect(() => endStreamFromJson(JSON.stringify(json))).toThrowError(
+      "[invalid_argument] invalid end stream"
+    );
+  });
+  it("should raise protocol error on malformed error", function () {
+    const json: JsonObject = {
+      error: {
+        code: "OK",
+      },
+    };
+    expect(() => endStreamFromJson(JSON.stringify(json))).toThrowError(
+      "[invalid_argument] invalid end stream"
+    );
+  });
 });
 
 describe("endStreamToJson()", function () {

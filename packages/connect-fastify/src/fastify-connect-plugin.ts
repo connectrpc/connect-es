@@ -60,30 +60,21 @@ export function fastifyConnectPlugin(
     done();
     return;
   }
+  if (opts.acceptCompression === undefined) {
+    opts.acceptCompression = [compressionGzip, compressionBrotli];
+  }
   const router = createConnectRouter(opts);
   opts.routes(router);
+
   const uHandlers = router.handlers;
   if (uHandlers.length == 0) {
     done();
     return;
   }
 
-  if (opts.acceptCompression === undefined) {
-    opts.acceptCompression = [compressionGzip, compressionBrotli];
-  }
-
-  // we can override all content type parsers (including application/json) in this plugin
-  // without affecting outer scope
-  const types = [
-    protoConnect.contentTypeRegExp,
-    protoGrpcWeb.contentTypeRegExp,
-    protoGrpc.contentTypeRegExp,
-  ];
-  for (const type of types) {
-    instance.addContentTypeParser(type, (_req, _payload, done) => {
-      done(null, undefined);
-    });
-  }
+  // we can override all content type parsers (including application/json) in
+  // this plugin without affecting outer scope
+  addNoopContentTypeParsers(instance);
 
   for (const uHandler of uHandlers) {
     instance.all(
@@ -102,4 +93,42 @@ export function fastifyConnectPlugin(
   }
 
   done();
+}
+
+/**
+ * Registers fastify content type parsers that do nothing for all content-types
+ * known to Connect.
+ */
+function addNoopContentTypeParsers(instance: FastifyInstance): void {
+  instance.addContentTypeParser(
+    [
+      protoConnect.contentTypeUnaryJson,
+      protoConnect.contentTypeStreamJson,
+      protoGrpcWeb.contentTypeProto,
+      protoGrpcWeb.contentTypeJson,
+      protoGrpc.contentTypeProto,
+      protoGrpc.contentTypeJson,
+    ],
+    noopContentTypeParser
+  );
+  instance.addContentTypeParser(
+    protoGrpc.contentTypeRegExp,
+    noopContentTypeParser
+  );
+  instance.addContentTypeParser(
+    protoGrpcWeb.contentTypeRegExp,
+    noopContentTypeParser
+  );
+  instance.addContentTypeParser(
+    protoConnect.contentTypeRegExp,
+    noopContentTypeParser
+  );
+}
+
+function noopContentTypeParser(
+  _req: unknown,
+  _payload: unknown,
+  done: (err: null, body?: undefined) => void
+) {
+  done(null, undefined);
 }

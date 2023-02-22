@@ -26,6 +26,7 @@ import {
   createGrpcWebTransport,
 } from "@bufbuild/connect-node";
 import { fastifyConnectPlugin } from "@bufbuild/connect-fastify";
+import { expressConnectMiddleware } from "@bufbuild/connect-express";
 import testRoutes from "./test-routes.js";
 import {
   fastify,
@@ -33,6 +34,7 @@ import {
   FastifyInstance,
   FastifyTypeProviderDefault,
 } from "fastify";
+import { importExpress } from "./import-express.js";
 
 export function createTestServers() {
   // TODO http2 server with TLS and allow http1
@@ -49,6 +51,7 @@ export function createTestServers() {
         FastifyTypeProviderDefault
       >
     | undefined;
+  let expressServer: http.Server | undefined;
 
   const certLocalhost = getCertLocalhost();
 
@@ -280,11 +283,45 @@ export function createTestServers() {
         });
         await fastifyH2cServer.listen();
       },
-      async stop() {
+      stop() {
         if (!fastifyH2cServer) {
           throw new Error("fastifyH2cServer not started");
         }
-        await fastifyH2cServer.close();
+        void fastifyH2cServer.close(); // await close() slows down our tests
+        return Promise.resolve();
+      },
+    },
+    // connect-express
+    "@bufbuild/connect-express (h1)": {
+      getUrl() {
+        const address = expressServer?.address();
+        if (address == null || typeof address == "string") {
+          throw new Error("cannot get server port");
+        }
+        return `http://127.0.0.1:${address.port}`;
+      },
+      async start(port = 0) {
+        const express = await importExpress();
+        const app = express();
+        app.use(
+          expressConnectMiddleware({
+            routes: testRoutes,
+          })
+        );
+        expressServer = http.createServer(app);
+        return new Promise<void>((resolve) => {
+          expressServer?.listen(port, resolve);
+        });
+      },
+      stop() {
+        return new Promise<void>((resolve, reject) => {
+          if (!expressServer) {
+            reject(new Error("expressServer not started"));
+            return;
+          }
+          expressServer.close((err) => (err ? reject(err) : resolve()));
+          resolve(); // the server.close() callback above slows down our tests
+        });
       },
     },
   };
@@ -502,6 +539,44 @@ export function createTestServers() {
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
+    "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-fastify (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
+          httpVersion: "2",
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
+          httpVersion: "2",
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
+
+    "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-express (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-express (h1)"].getUrl(),
+          httpVersion: "1.1",
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-express (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-express (h1)"].getUrl(),
+          httpVersion: "1.1",
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
+
     // Connect
     "@bufbuild/connect-node (Connect, binary, http2, gzip) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
@@ -655,6 +730,44 @@ export function createTestServers() {
           useBinaryFormat: true,
           sendCompression: compressionGzip,
         }),
+    "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)":
+      (options?: Record<string, unknown>) =>
+        createConnectTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
+          httpVersion: "2",
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-fastify (h2c)":
+      (options?: Record<string, unknown>) =>
+        createConnectTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
+          httpVersion: "2",
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+
+    "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-express (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-express (h1)"].getUrl(),
+          httpVersion: "1.1",
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-express (h1)":
+      (options?: Record<string, unknown>) =>
+        createConnectTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-express (h1)"].getUrl(),
+          httpVersion: "1.1",
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+
     //gRPC-web
     "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
@@ -839,6 +952,42 @@ export function createTestServers() {
           nodeOptions: {
             rejectUnauthorized: false,
           },
+        }),
+    "@bufbuild/connect-node (gRPC-web, binary, http, gzip against @bufbuild/connect-fastify (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
+          httpVersion: "2",
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC-web, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
+          httpVersion: "2",
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC-web, JSON, http, gzip) against @bufbuild/connect-express (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-express (h1)"].getUrl(),
+          httpVersion: "1.1",
+          useBinaryFormat: false,
+          sendCompression: compressionGzip,
+        }),
+    "@bufbuild/connect-node (gRPC-web, binary, http, gzip) against @bufbuild/connect-express (h1)":
+      (options?: Record<string, unknown>) =>
+        createGrpcWebTransport({
+          ...options,
+          baseUrl: servers["@bufbuild/connect-express (h1)"].getUrl(),
+          httpVersion: "1.1",
+          useBinaryFormat: true,
+          sendCompression: compressionGzip,
         }),
   } as const;
 

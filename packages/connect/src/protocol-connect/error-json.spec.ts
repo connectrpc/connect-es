@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError, connectErrorDetails } from "../connect-error.js";
+import {
+  ConnectError,
+  connectErrorDetails,
+  connectErrorFromReason,
+} from "../connect-error.js";
 import { Code } from "../code.js";
 import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
 import { errorFromJson, errorToJson } from "./error-json.js";
@@ -77,49 +81,82 @@ describe("errorToJson()", () => {
 
 describe("errorFromJson()", () => {
   it("parses code and message", () => {
-    const error = errorFromJson({
-      code: "permission_denied",
-      message: "Not permitted",
-    });
+    const error = errorFromJson(
+      {
+        code: "permission_denied",
+        message: "Not permitted",
+      },
+      undefined,
+      new ConnectError("foo", Code.ResourceExhausted)
+    );
     expect(error.code).toBe(Code.PermissionDenied);
     expect(error.rawMessage).toBe("Not permitted");
     expect(error.details.length).toBe(0);
   });
   it("does not require message", () => {
-    const error = errorFromJson({
-      code: codeToString(Code.PermissionDenied),
-    });
+    const error = errorFromJson(
+      {
+        code: codeToString(Code.PermissionDenied),
+      },
+      undefined,
+      new ConnectError("foo", Code.ResourceExhausted)
+    );
     expect(error.message).toBe("[permission_denied]");
     expect(error.rawMessage).toBe("");
   });
-  it("with invalid code throws", () => {
+  it("with invalid code throws fallback", () => {
     expect(() =>
-      errorFromJson({
-        code: "wrong code",
-        message: "Not permitted",
-      })
-    ).toThrowError(
-      '[invalid_argument] cannot decode ConnectError.code from JSON: "wrong code"'
-    );
+      errorFromJson(
+        {
+          code: "wrong code",
+          message: "Not permitted",
+        },
+        undefined,
+        new ConnectError("foo", Code.ResourceExhausted)
+      )
+    ).toThrowError("[resource_exhausted] foo");
   });
-  it("with code Ok throws", () => {
-    expect(() =>
-      errorFromJson({
-        code: "ok",
-        message: "Not permitted",
-      })
-    ).toThrowError(
-      '[invalid_argument] cannot decode ConnectError.code from JSON: "ok"'
-    );
+  it("with invalid code throws fallback with metadata", () => {
+    try {
+      errorFromJson(
+        {
+          code: "wrong code",
+          message: "Not permitted",
+        },
+        new Headers({ foo: "bar" }),
+        new ConnectError("foo", Code.ResourceExhausted)
+      );
+      fail("expected error");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConnectError);
+      expect(connectErrorFromReason(e).message).toBe(
+        "[resource_exhausted] foo"
+      );
+      expect(connectErrorFromReason(e).metadata.get("foo")).toBe("bar");
+    }
   });
-  it("with missing code throws", () => {
+  it("with code Ok throws fallback", () => {
     expect(() =>
-      errorFromJson({
-        message: "Not permitted",
-      })
-    ).toThrowError(
-      "[invalid_argument] cannot decode ConnectError from JSON: object"
-    );
+      errorFromJson(
+        {
+          code: "ok",
+          message: "Not permitted",
+        },
+        undefined,
+        new ConnectError("foo", Code.ResourceExhausted)
+      )
+    ).toThrowError("[resource_exhausted] foo");
+  });
+  it("with missing code throws fallback", () => {
+    expect(() =>
+      errorFromJson(
+        {
+          message: "Not permitted",
+        },
+        undefined,
+        new ConnectError("foo", Code.ResourceExhausted)
+      )
+    ).toThrowError("[resource_exhausted] foo");
   });
   describe("with details", () => {
     type ErrorDetail = Message<ErrorDetail> & {
@@ -149,11 +186,19 @@ describe("errorFromJson()", () => {
       ],
     };
     it("adds to raw detail", () => {
-      const error = errorFromJson(json);
+      const error = errorFromJson(
+        json,
+        undefined,
+        new ConnectError("foo", Code.ResourceExhausted)
+      );
       expect(error.details.length).toBe(1);
     });
     it("works with connectErrorDetails()", () => {
-      const error = errorFromJson(json);
+      const error = errorFromJson(
+        json,
+        undefined,
+        new ConnectError("foo", Code.ResourceExhausted)
+      );
       const details = connectErrorDetails(error, ErrorDetail);
       expect(details.length).toBe(1);
       expect(details[0]?.reason).toBe("soirée 🎉");

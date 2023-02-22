@@ -162,16 +162,17 @@ export function createConnectTransport(
               signal: req.signal,
               body: serialize(req.message),
             });
-            const { isConnectUnaryError } = validateResponse(
+            const { isUnaryError, unaryError } = validateResponse(
               method.kind,
               useBinaryFormat,
               response.status,
               response.headers
             );
-            if (isConnectUnaryError) {
+            if (isUnaryError) {
               throw errorFromJson(
                 (await response.json()) as JsonValue,
-                appendHeaders(...trailerDemux(response.headers))
+                appendHeaders(...trailerDemux(response.headers)),
+                unaryError
               );
             }
             const [demuxedHeader, demuxedTrailer] = trailerDemux(
