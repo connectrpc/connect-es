@@ -7,7 +7,6 @@
     "url": "https://github.com/bufbuild/connect-es.git",
     "directory": "packages/connect-node"
   },
-  "sideEffects": false,
   "scripts": {
     "clean": "rm -rf ./dist/cjs/* ./dist/esm/* ./dist/types/*",
     "build": "npm run build:cjs && npm run build:esm+types",
@@ -26,7 +25,8 @@
     "node": ">=16.0.0 <19"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.7.0"
+    "@bufbuild/connect": "0.7.0",
+    "headers-polyfill": "^3.1.2"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"
