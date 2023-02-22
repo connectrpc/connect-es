@@ -20,10 +20,10 @@
   },
   "devDependencies": {
     "typescript": "^4.9.5",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
-    "eslint": "^8.33.0",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0",
+    "eslint": "^8.34.0",
     "eslint-plugin-node": "^11.1.0",
-    "prettier": "^2.8.3"
+    "prettier": "^2.8.4"
   }
 }
