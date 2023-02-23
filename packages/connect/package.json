@@ -37,9 +37,9 @@
       "require": "./dist/cjs/protocol-connect/index.js"
     },
     "./protocol-grpc": {
+      "types": "./dist/types/protocol-grpc/index.d.ts",
       "import": "./dist/esm/protocol-grpc/index.js",
-      "require": "./dist/cjs/protocol-grpc/index.js",
-      "types": "./dist/types/protocol-grpc/index.d.ts"
+      "require": "./dist/cjs/protocol-grpc/index.js"
     },
     "./protocol-grpc-web": {
       "types": "./dist/types/protocol-grpc-web/index.d.ts",
