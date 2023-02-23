@@ -47,6 +47,22 @@
       "require": "./dist/cjs/protocol-grpc-web/index.js"
     }
   },
+  "typesVersions": {
+    "*": {
+      "protocol": [
+        "./dist/types/protocol/index.d.ts"
+      ],
+      "protocol-connect": [
+        "./dist/types/protocol-connect/index.d.ts"
+      ],
+      "protocol-grpc": [
+        "./dist/types/protocol-grpc/index.d.ts"
+      ],
+      "protocol-grpc-web": [
+        "./dist/types/protocol-grpc-web/index.d.ts"
+      ]
+    }
+  },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"
   },
