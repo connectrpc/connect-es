@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-fastify",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -26,8 +26,8 @@
     "node": ">=16.0.0 <19"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.7.0",
-    "@bufbuild/connect-node": "^0.7.0",
+    "@bufbuild/connect": "0.8.0",
+    "@bufbuild/connect-node": "^0.8.0",
     "fastify": "^4.13.0"
   },
   "peerDependencies": {
