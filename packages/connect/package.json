@@ -22,23 +22,28 @@
   "exports": {
     ".": {
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
     },
     "./protocol": {
       "import": "./dist/esm/protocol/index.js",
-      "require": "./dist/cjs/protocol/index.js"
+      "require": "./dist/cjs/protocol/index.js",
+      "types": "./dist/types/protocol/index.d.ts"
     },
     "./protocol-connect": {
       "import": "./dist/esm/protocol-connect/index.js",
-      "require": "./dist/cjs/protocol-connect/index.js"
+      "require": "./dist/cjs/protocol-connect/index.js",
+      "types": "./dist/types/protocol-connect/index.d.ts"
     },
     "./protocol-grpc": {
       "import": "./dist/esm/protocol-grpc/index.js",
-      "require": "./dist/cjs/protocol-grpc/index.js"
+      "require": "./dist/cjs/protocol-grpc/index.js",
+      "types": "./dist/types/protocol-grpc/index.d.ts"
     },
     "./protocol-grpc-web": {
       "import": "./dist/esm/protocol-grpc-web/index.js",
-      "require": "./dist/cjs/protocol-grpc-web/index.js"
+      "require": "./dist/cjs/protocol-grpc-web/index.js",
+      "types": "./dist/types/protocol-grpc-web/index.d.ts"
     }
   },
   "types": "./dist/types/index.d.ts",
