@@ -19,9 +19,9 @@
   "type": "module",
   "types": "./dist/types/index.d.ts",
   "exports": {
+    "types": "./dist/types/index.d.ts",
     "import": "./dist/esm/index.js",
-    "require": "./dist/cjs/index.js",
-    "types": "./dist/types/index.d.ts"
+    "require": "./dist/cjs/index.js"
   },
   "dependencies": {
     "@bufbuild/connect": "0.8.0"
