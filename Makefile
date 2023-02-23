@@ -55,6 +55,12 @@ $(BUILD)/protoc-gen-connect-es: node_modules tsconfig.base.json packages/protoc-
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/protoc-gen-connect-web: node_modules tsconfig.base.json packages/protoc-gen-connect-web/tsconfig.json $(shell find packages/protoc-gen-connect-web/src -name '*.ts')
+	npm run -w packages/protoc-gen-connect-web clean
+	npm run -w packages/protoc-gen-connect-web build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/connect: $(GEN)/connect node_modules tsconfig.base.json packages/connect/tsconfig.json $(shell find packages/connect/src -name '*.ts') packages/connect/*.js
 	npm run -w packages/connect clean
 	npm run -w packages/connect build
@@ -147,7 +153,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
+build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/protoc-gen-connect-es $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
 
 .PHONY: test
 test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack
@@ -234,7 +240,8 @@ release: all ## Release npm packages
 		--workspace packages/connect-fastify \
 		--workspace packages/connect-express \
 		--workspace packages/connect \
-		--workspace packages/protoc-gen-connect-es
+		--workspace packages/protoc-gen-connect-es \
+		--workspace packages/protoc-gen-connect-web \
 
 .PHONY: crosstestserverstop
 crosstestserverstop:
