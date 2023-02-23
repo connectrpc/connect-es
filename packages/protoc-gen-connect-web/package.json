@@ -1,15 +1,14 @@
 {
-  "name": "@bufbuild/protoc-gen-connect-es",
+  "name": "@bufbuild/protoc-gen-connect-web",
   "version": "0.7.0",
-  "description": "Code generator for Connect",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/bufbuild/connect-es.git",
-    "directory": "packages/protoc-gen-connect-es"
+    "directory": "packages/protoc-gen-connect-web"
   },
   "bin": {
-    "protoc-gen-connect-es": "bin/protoc-gen-connect-es"
+    "protoc-gen-connect-web": "bin/protoc-gen-connect-web"
   },
   "engines": {
     "node": ">=14"
@@ -23,7 +22,7 @@
     "@bufbuild/protoplugin": "^1.0.0"
   },
   "peerDependencies": {
-    "@bufbuild/connect": "0.7.0",
+    "@bufbuild/connect": "*",
     "@bufbuild/protoc-gen-es": "^1.0.0"
   },
   "peerDependenciesMeta": {

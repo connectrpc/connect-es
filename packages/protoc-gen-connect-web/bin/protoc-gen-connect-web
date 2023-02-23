@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+
+const {runNodeJs} = require("@bufbuild/protoplugin");
+const {protocGenConnectWeb} = require("../dist/cjs/src/protoc-gen-connect-web-plugin.js");
+
+runNodeJs(protocGenConnectWeb);
