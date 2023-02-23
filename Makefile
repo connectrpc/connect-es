@@ -270,7 +270,7 @@ updatelocalhostcert:
 
 .PHONY: checkdiff
 checkdiff:
-	@# Used in CI to verify that `make` doesn't produce a diff, but ignore changes in benchmarks
+	@# Used in CI to verify that `make` does not produce a diff, but ignore changes in benchmarks
 	git checkout packages/connect-web-bench/README.md
 	test -z "$$(git status --porcelain | tee /dev/stderr)"
 
