@@ -115,7 +115,7 @@ export function createGrpcWebTransport(
   options: GrpcWebTransportOptions
 ): Transport {
   assertFetchApi();
-  const useBinaryFormat = options.useBinaryFormat ?? false;
+  const useBinaryFormat = options.useBinaryFormat ?? true;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
