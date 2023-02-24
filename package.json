@@ -3,6 +3,7 @@
   "workspaces": [
     "./packages/connect",
     "./packages/protoc-gen-connect-es",
+    "./packages/protoc-gen-connect-web",
     "./packages/connect-web",
     "./packages/connect-node",
     "./packages/connect-fastify",

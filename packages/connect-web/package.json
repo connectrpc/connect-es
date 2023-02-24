@@ -1,7 +1,6 @@
 {
   "name": "@bufbuild/connect-web",
-  "version": "0.7.0",
-  "private": true,
+  "version": "0.8.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -19,12 +18,12 @@
   "type": "module",
   "types": "./dist/types/index.d.ts",
   "exports": {
+    "types": "./dist/types/index.d.ts",
     "import": "./dist/esm/index.js",
-    "require": "./dist/cjs/index.js",
-    "types": "./dist/types/index.d.ts"
+    "require": "./dist/cjs/index.js"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.7.0"
+    "@bufbuild/connect": "0.8.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"
