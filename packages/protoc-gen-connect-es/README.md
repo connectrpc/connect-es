@@ -25,8 +25,9 @@ npm install @bufbuild/connect @bufbuild/protobuf
 
 If you want to call Connect or gRPC-web services from a web browsers, make sure to install 
 [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web). If you want servers too, 
-install [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node) or
-[@bufbuild/connect-fastify](https://www.npmjs.com/package/@bufbuild/connect-fastify).
+install [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node),
+[@bufbuild/connect-fastify](https://www.npmjs.com/package/@bufbuild/connect-fastify), or
+[@bufbuild/connect-express](https://www.npmjs.com/package/@bufbuild/connect-express)
 
 We use peer dependencies to ensure that code generator and runtime library are
 compatible with each other. Note that yarn and pnpm only emit a warning in this case.
