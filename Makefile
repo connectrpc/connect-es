@@ -85,7 +85,7 @@ $(BUILD)/connect-express: $(BUILD)/connect $(BUILD)/connect-node packages/connec
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-web: node_modules tsconfig.base.json packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
+$(BUILD)/connect-web: $(BUILD)/connect packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
 	@mkdir -p $(@D)
