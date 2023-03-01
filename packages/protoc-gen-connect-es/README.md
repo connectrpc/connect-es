@@ -13,7 +13,7 @@ like [buf](https://github.com/bufbuild/buf) and [protoc](https://github.com/prot
 It generates clients as well as server definitions from your Protocol Buffer schema, and works in tandem with
 [@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es),
 the code generator plugin for all Protocol Buffer base types. The code these two 
-plugins generate requires the runtime libraries [@bufbuild/connect-es](https://www.npmjs.com/package/@bufbuild/connect-es), 
+plugins generate requires the runtime libraries [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect), 
 and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 
 To install `buf`, the plugins and their runtime libraries, run:
