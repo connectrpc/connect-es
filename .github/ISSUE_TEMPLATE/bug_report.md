@@ -9,11 +9,7 @@ assignees: ''
 
 **Describe the bug**
 
-As clearly as you can, please tell us what the bug is.  
-
-Please note that Node.js is not supported by Connect-Web. We are working on
-Connect for Node.js - if you are interested, let us know on Slack or on 
-GitHub discussions.  
+As clearly as you can, please tell us what the bug is.
 
 
 **To Reproduce**
