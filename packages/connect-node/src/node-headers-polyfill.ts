@@ -18,14 +18,13 @@ import { Headers as HeadersPolyfill } from "headers-polyfill";
 // --experimental-fetch flag. It became available by default with Node
 // v18.0.0.
 // If this code runs in Node < 18, it installs an alternative
-// implementation.
+// implementation if one has not already been polyfilled.
 
 const [major] = process.versions.node
   .split(".")
   .map((value) => parseInt(value, 10));
 if (major < 18) {
-  if (typeof globalThis.Headers != "undefined") {
-    throw "expected Headers to be undeclared in node " + process.versions.node;
+  if (typeof globalThis.Headers === "undefined") {
+    globalThis.Headers = HeadersPolyfill as unknown as typeof Headers;
   }
-  globalThis.Headers = HeadersPolyfill as unknown as typeof Headers;
 }
