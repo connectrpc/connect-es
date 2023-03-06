@@ -14,11 +14,11 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.8.1",
-    "@bufbuild/connect-express": "0.8.1",
-    "@bufbuild/connect-fastify": "0.8.1",
-    "@bufbuild/connect-node": "0.8.1",
-    "@bufbuild/connect-web": "0.8.1",
+    "@bufbuild/connect": "0.8.2",
+    "@bufbuild/connect-express": "0.8.2",
+    "@bufbuild/connect-fastify": "0.8.2",
+    "@bufbuild/connect-node": "0.8.2",
+    "@bufbuild/connect-web": "0.8.2",
     "@grpc/grpc-js": "^1.8.7",
     "@types/express": "^4.17.17",
     "@types/jasmine": "^4.3.0",

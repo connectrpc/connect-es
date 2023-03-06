@@ -11,14 +11,14 @@
     "node": ">=16"
   },
   "dependencies": {
-    "@bufbuild/connect-node": "^0.8.1",
-    "@bufbuild/connect-web": "^0.8.1",
+    "@bufbuild/connect-node": "^0.8.2",
+    "@bufbuild/connect-web": "^0.8.2",
     "@bufbuild/protobuf": "^1.0.0",
     "tsx": "^3.12.2"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.15.0",
-    "@bufbuild/protoc-gen-connect-es": "^0.8.1",
+    "@bufbuild/protoc-gen-connect-es": "^0.8.2",
     "@bufbuild/protoc-gen-es": "^1.0.0",
     "@types/express": "^4.17.15",
     "esbuild": "^0.16.12",
