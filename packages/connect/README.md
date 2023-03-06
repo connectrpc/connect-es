@@ -41,11 +41,25 @@ optimized for the web. This gives you unparalleled interoperability with
 full-stack type-safety.
 
 
-## Getting started
+## Get started on the web
 
-To get started with Connect, head over to the [docs](https://connect.build/docs/node/getting-started)
-for a tutorial, or take a look at [our example](https://github.com/bufbuild/connect-es/tree/main/packages/example).
+Follow our [10 minute tutorial](https://connect.build/docs/web/getting-started) where
+we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
+web interface for ELIZA.
 
-Connect plays nice with Vue, Svelte, Remix, Next.js, Angular and many others. Take a look at
-[our examples](https://github.com/bufbuild/connect-es-integration) for various frameworks.
+**React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/bufbuild/connect-es-integration)),
+and we have an expansion pack for [TanStack Query](https://github.com/bufbuild/connect-query).
+We support all modern web browsers that implement the widely available
+[fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
+and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).
 
+
+## Get started on Node.js
+
+Follow our [10 minute tutorial](https://connect.build/docs/node/getting-started)
+to spin up a service in Node.js, and call it from the web, and from a gRPC client
+in your terminal.
+
+You can use vanilla Node.js, or our server plugins for [Fastify](https://www.fastify.io/)
+or [Express](https://expressjs.com/). We support the builtin `http`, and `http2`
+modules on Node.js v16, v17 and v18.

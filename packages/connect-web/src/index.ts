@@ -42,71 +42,71 @@ import {
 
 export {
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   createPromiseClient,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   createCallbackClient,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   CallbackClient,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   PromiseClient,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   CallOptions,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   Transport,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   ConnectError,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   connectErrorDetails,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   connectErrorFromReason,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   Code,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   Interceptor,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   UnaryRequest,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   UnaryResponse,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   StreamRequest,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   StreamResponse,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   encodeBinaryHeader,
   /**
-   * @deprecated please import from @bufbuild/connect instead
+   * @deprecated please import from \@bufbuild/connect instead
    */
   decodeBinaryHeader,
 };
