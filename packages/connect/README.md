@@ -57,7 +57,7 @@ and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding
 ## Get started on Node.js
 
 Follow our [10 minute tutorial](https://connect.build/docs/node/getting-started)
-to spin up service in Node.js, and call it from the web, and from a gRPC client
+to spin up a service in Node.js, and call it from the web, and from a gRPC client
 in your terminal.
 
 You can use vanilla Node.js, or our server plugins for [Fastify](https://www.fastify.io/)
