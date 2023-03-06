@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Type-safe APIs with Protobuf and TypeScript.",
   "license": "Apache-2.0",
   "repository": {

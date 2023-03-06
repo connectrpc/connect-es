@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-web",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -23,7 +23,7 @@
     "require": "./dist/cjs/index.js"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.8.1"
+    "@bufbuild/connect": "0.8.2"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.0.0"
