@@ -38,14 +38,52 @@ import type { Compression } from "./compression.js";
 import type { ProtocolHandlerFactory } from "./protocol-handler-factory.js";
 import { validateReadWriteMaxBytes } from "./limit-io.js";
 
-// TODO document
+/**
+ * Common options for handlers.
+ */
 export interface UniversalHandlerOptions {
+
+  /**
+   * Compression algorithms available to a server for decompressing request
+   * messages, and for compressing response messages.
+   */
   acceptCompression: Compression[];
+
+  /**
+   * Sets a minimum size threshold for compression: Messages that are smaller
+   * than the configured minimum are sent uncompressed.
+   *
+   * The default value is 1 kibibyte, because the CPU cost of compressing very
+   * small messages usually isn't worth the small reduction in network I/O.
+   */
   compressMinBytes: number;
+
+  /**
+   * Limits the performance impact of pathologically large messages sent by the
+   * client. Limits apply to each individual message, not to the stream as a
+   * whole.
+   *
+   * The default limit is the maximum supported value of ~4GiB.
+   */
   readMaxBytes: number;
+
+  /**
+   * Prevents sending messages too large for the client to handle.
+   *
+   * The default limit is the maximum supported value of ~4GiB.
+   */
   writeMaxBytes: number;
+
+  /**
+   * Options for the JSON format.
+   */
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
+
+  /**
+   * Options for the binary wire format.
+   */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
   maxDeadlineDurationMs: number; // TODO TCN-785
   shutdownSignal: AbortSignal; // TODO TCN-919
   // TODO
@@ -92,7 +130,13 @@ export interface UniversalHandler extends UniversalHandlerFn {
 
 const neverSignal = new AbortController().signal;
 
-// TODO document
+
+/**
+ * Asserts that the options are within sane limits, and returns default values
+ * where no value is provided.
+ *
+ * Note that this function does not set default values for `acceptCompression`.
+ */
 export function validateUniversalHandlerOptions(
   opt: Partial<UniversalHandlerOptions> | undefined
 ): UniversalHandlerOptions {
@@ -104,7 +148,6 @@ export function validateUniversalHandlerOptions(
       opt.writeMaxBytes,
       opt.compressMinBytes
     ),
-    compressMinBytes: opt.compressMinBytes ?? 0,
     jsonOptions: opt.jsonOptions,
     binaryOptions: opt.binaryOptions,
     maxDeadlineDurationMs: Number.MAX_SAFE_INTEGER,

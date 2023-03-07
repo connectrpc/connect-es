@@ -94,13 +94,6 @@ type ConnectTransportOptions = (
    */
   useBinaryFormat?: boolean;
 
-  // TODO document
-  acceptCompression?: Compression[];
-  sendCompression?: Compression;
-  compressMinBytes?: number;
-  readMaxBytes?: number;
-  writeMaxBytes?: number;
-
   /**
    * Interceptors that should be applied to all calls running through
    * this transport. See the Interceptor type for details.
@@ -116,6 +109,55 @@ type ConnectTransportOptions = (
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Compression algorithms available to a client. Clients ask servers to
+   * compress responses using any of the registered algorithms. The first
+   * registered algorithm is the most preferred.
+   *
+   * It is safe to use this option liberally: servers will ignore any
+   * compression algorithms they don't support. To compress requests, pair this
+   * option with `sendCompression`.
+   *
+   * If this option is not provided, the compression algorithms "gzip" and "br"
+   * (Brotli) are accepted. To opt out of response compression, pass an
+   * empty array.
+   */
+  acceptCompression?: Compression[];
+
+  /**
+   * Configures the client to use the specified algorithm to compress request
+   * messages.
+   *
+   * Because some servers don't support compression, clients default to sending
+   * uncompressed requests.
+   */
+  sendCompression?: Compression;
+
+  /**
+   * Sets a minimum size threshold for compression: Messages that are smaller
+   * than the configured minimum are sent uncompressed.
+   *
+   * The default value is 1 kibibyte, because the CPU cost of compressing very
+   * small messages usually isn't worth the small reduction in network I/O.
+   */
+  compressMinBytes?: number;
+
+  /**
+   * Limits the performance impact of pathologically large messages sent by the
+   * server. Limits apply to each individual message, not to the stream as a
+   * whole.
+   *
+   * The default limit is the maximum supported value of ~4GiB.
+   */
+  readMaxBytes?: number;
+
+  /**
+   * Prevents sending messages too large for the server to handle.
+   *
+   * The default limit is the maximum supported value of ~4GiB.
+   */
+  writeMaxBytes?: number;
 };
 
 /**

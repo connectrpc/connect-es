@@ -23,6 +23,12 @@ const gunzip = promisify(zlib.gunzip);
 const brotliCompress = promisify(zlib.brotliCompress);
 const brotliDecompress = promisify(zlib.brotliDecompress);
 
+/**
+ * The gzip compression algorithm, implemented with the Node.js built-in module
+ * zlib. This value can be used for the `sendCompression` and `acceptCompression`
+ * option of client transports, or for the `acceptCompression` option of server
+ * plugins like `fastifyConnectPlugin` from @bufbuild/connect-fastify.
+ */
 export const compressionGzip: Compression = {
   name: "gzip",
   compress(bytes) {
@@ -38,6 +44,12 @@ export const compressionGzip: Compression = {
   },
 };
 
+/**
+ * The brotli compression algorithm, implemented with the Node.js built-in module
+ * zlib. This value can be used for the `sendCompression` and `acceptCompression`
+ * option of client transports, or for the `acceptCompression` option of server
+ * plugins like `fastifyConnectPlugin` from @bufbuild/connect-fastify.
+ */
 export const compressionBrotli: Compression = {
   name: "br",
   compress(bytes) {
