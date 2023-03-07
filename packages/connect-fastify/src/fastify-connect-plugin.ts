@@ -94,7 +94,9 @@ export function fastifyConnectPlugin(
         // Note that also we are copying reply headers over top of the raw response headers here
         // to adhere to Fastify's contract here:  https://www.fastify.io/docs/latest/Reference/Reply/#getheaders
         for (const [key, value] of Object.entries(reply.getHeaders())) {
-          reply.raw.setHeader(key, value);
+          if (value !== undefined) {
+            reply.raw.setHeader(key, value);
+          }
         }
         await universalResponseToNodeResponse(uRes, reply.raw);
       }
