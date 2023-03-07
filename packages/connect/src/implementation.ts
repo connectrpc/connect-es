@@ -58,7 +58,7 @@ interface MI<
 
 /**
  * Context for an RPC on the server. Every RPC implementation can accept a
- * HandlerContext as an argument, and
+ * HandlerContext as an argument to gain access to headers and service metadata.
  */
 export interface HandlerContext {
   /**
