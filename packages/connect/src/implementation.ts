@@ -56,16 +56,43 @@ interface MI<
   readonly idempotency?: MethodIdempotency;
 }
 
-// TODO document
+/**
+ * Context for an RPC on the server. Every RPC implementation can accept a
+ * HandlerContext as an argument to gain access to headers and service metadata.
+ */
 export interface HandlerContext {
+  /**
+   * Metadata for the method being called.
+   */
   readonly method: MethodInfo;
+
+  /**
+   * Metadata for the service being called.
+   */
   readonly service: ServiceType;
+
+  /**
+   * Incoming request headers.
+   */
   readonly requestHeader: Headers;
+
+  /**
+   * Outgoing response headers.
+   *
+   * For methods that return a stream, response headers must be set before
+   * yielding the first response message.
+   */
   readonly responseHeader: Headers;
+
+  /**
+   * Outgoing response trailers.
+   */
   readonly responseTrailer: Headers;
 }
 
-// TODO document
+/**
+ * Create a new HandlerContext.
+ */
 export function createHandlerContext(
   spec: { service: ServiceType; method: MethodInfo },
   requestHeader: HeadersInit,
