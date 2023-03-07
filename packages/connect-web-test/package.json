@@ -17,7 +17,7 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@bufbuild/connect-web": "0.8.2",
+    "@bufbuild/connect-web": "0.8.2-1",
     "@bufbuild/connect": "0.8.2",
     "@types/jasmine": "^4.3.0",
     "esbuild": "^0.16.12",

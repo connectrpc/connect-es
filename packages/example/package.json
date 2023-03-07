@@ -11,8 +11,8 @@
     "node": ">=16"
   },
   "dependencies": {
-    "@bufbuild/connect-node": "^0.8.2",
-    "@bufbuild/connect-web": "^0.8.2",
+    "@bufbuild/connect-node": "^0.8.2-1",
+    "@bufbuild/connect-web": "^0.8.2-1",
     "@bufbuild/protobuf": "^1.0.0",
     "tsx": "^3.12.2"
   },
