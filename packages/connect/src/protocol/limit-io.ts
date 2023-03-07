@@ -23,10 +23,17 @@ import { Code } from "../code.js";
 const maxReadMaxBytes = 0xffffffff;
 const maxWriteMaxBytes = maxReadMaxBytes;
 
+/**
+ * The default value for the compressMinBytes option. The CPU cost of compressing
+ * very small messages usually isn't worth the small reduction in network I/O, so
+ * the default value is 1 kibibyte.
+ */
 const defaultCompressMinBytes = 1024;
 
 /**
- * Asserts that the options writeMaxBytes and readMaxBytes are in sane.
+ * Asserts that the options writeMaxBytes, readMaxBytes, and compressMinBytes
+ * are within sane limits, and returns default values where no value is
+ * provided.
  */
 export function validateReadWriteMaxBytes(
   readMaxBytes: number | undefined,

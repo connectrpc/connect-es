@@ -300,7 +300,6 @@ export function pipeTo(
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  // TODO should this be pipe(iterable, ... ???
   iterable = pipe(iterable, ...transforms, { propagateDownStreamError: false });
 
   return sink(iterable).catch((reason) => {
