@@ -42,7 +42,6 @@ import { validateReadWriteMaxBytes } from "./limit-io.js";
  * Common options for handlers.
  */
 export interface UniversalHandlerOptions {
-
   /**
    * Compression algorithms available to a server for decompressing request
    * messages, and for compressing response messages.
@@ -129,7 +128,6 @@ export interface UniversalHandler extends UniversalHandlerFn {
 }
 
 const neverSignal = new AbortController().signal;
-
 
 /**
  * Asserts that the options are within sane limits, and returns default values

@@ -61,7 +61,6 @@ interface MI<
  * HandlerContext as an argument, and
  */
 export interface HandlerContext {
-
   /**
    * Metadata for the method being called.
    */
