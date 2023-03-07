@@ -87,6 +87,14 @@ export function fastifyConnectPlugin(
             req.body as JsonValue | undefined
           )
         );
+        // Fastify maintains response headers on the reply object and only moves them to
+        // the raw response during reply.send, but we are not using reply.send with this plugin.
+        // So we need to manually copy them to the raw response before handing off to vanilla Node.
+        for (const [key, value] of Object.entries(reply.getHeaders())) {
+          if (value !== undefined) {
+            reply.raw.setHeader(key, value);
+          }
+        }
         await universalResponseToNodeResponse(uRes, reply.raw);
       }
     );
