@@ -116,7 +116,10 @@ export function createTestServers() {
                 cert: certLocalhost.cert,
                 key: certLocalhost.key,
               },
-              connectNodeAdapter({ routes: testRoutes })
+              connectNodeAdapter({
+                routes: testRoutes,
+                requireConnectProtocolHeader: true,
+              })
             )
             .listen(0, resolve);
         });
@@ -145,7 +148,13 @@ export function createTestServers() {
       start() {
         return new Promise<void>((resolve) => {
           nodeH2cServer = http2
-            .createServer({}, connectNodeAdapter({ routes: testRoutes }))
+            .createServer(
+              {},
+              connectNodeAdapter({
+                routes: testRoutes,
+                requireConnectProtocolHeader: true,
+              })
+            )
             .listen(0, resolve);
         });
       },
@@ -201,7 +210,10 @@ export function createTestServers() {
             "Access-Control-Expose-Headers": corsExposeHeaders.join(", "),
             "Access-Control-Max-Age": 2 * 3600,
           };
-          const serviceHandler = connectNodeAdapter({ routes: testRoutes });
+          const serviceHandler = connectNodeAdapter({
+            routes: testRoutes,
+            requireConnectProtocolHeader: true,
+          });
           nodeHttpServer = http
             .createServer({}, (req, res) => {
               if (req.method === "OPTIONS") {
@@ -243,7 +255,10 @@ export function createTestServers() {
                 cert: certLocalhost.cert,
                 key: certLocalhost.key,
               },
-              connectNodeAdapter({ routes: testRoutes })
+              connectNodeAdapter({
+                routes: testRoutes,
+                requireConnectProtocolHeader: true,
+              })
             )
             .listen(0, resolve);
         });
@@ -280,6 +295,7 @@ export function createTestServers() {
         });
         await fastifyH2cServer.register(fastifyConnectPlugin, {
           routes: testRoutes,
+          requireConnectProtocolHeader: true,
         });
         await fastifyH2cServer.listen();
       },
@@ -306,6 +322,7 @@ export function createTestServers() {
         app.use(
           expressConnectMiddleware({
             routes: testRoutes,
+            requireConnectProtocolHeader: true,
           })
         );
         expressServer = http.createServer(app);

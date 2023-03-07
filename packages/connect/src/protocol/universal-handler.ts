@@ -29,7 +29,6 @@ import {
   uResponseUnsupportedMediaType,
   uResponseVersionNotSupported,
 } from "./universal.js";
-import { createMethodUrl } from "./create-method-url.js";
 import {
   ContentTypeMatcher,
   contentTypeMatcher,
@@ -37,6 +36,8 @@ import {
 import type { Compression } from "./compression.js";
 import type { ProtocolHandlerFactory } from "./protocol-handler-factory.js";
 import { validateReadWriteMaxBytes } from "./limit-io.js";
+import { ConnectError } from "../connect-error.js";
+import { Code } from "../code.js";
 
 /**
  * Common options for handlers.
@@ -85,7 +86,18 @@ export interface UniversalHandlerOptions {
 
   maxDeadlineDurationMs: number; // TODO TCN-785
   shutdownSignal: AbortSignal; // TODO TCN-919
-  // TODO
+
+  /**
+   * Require requests using the Connect protocol to include the header
+   * Connect-Protocol-Version. This ensures that HTTP proxies and other
+   * code inspecting traffic can easily identify Connect RPC requests,
+   * even if they use a common Content-Type like application/json.
+   *
+   * If a Connect request does not include the Connect-Protocol-Version
+   * header, an error with code invalid_argument (HTTP 400) is returned.
+   * This option has no effect if the client uses the gRPC or the gRPC-web
+   * protocol.
+   */
   requireConnectProtocolHeader: boolean;
 }
 
@@ -139,8 +151,16 @@ export function validateUniversalHandlerOptions(
   opt: Partial<UniversalHandlerOptions> | undefined
 ): UniversalHandlerOptions {
   opt ??= {};
+  const acceptCompression = opt.acceptCompression
+    ? [...opt.acceptCompression]
+    : [];
+  const requireConnectProtocolHeader =
+    opt.requireConnectProtocolHeader ?? false;
+  const shutdownSignal = opt.shutdownSignal ?? neverSignal;
+  const maxDeadlineDurationMs =
+    opt.maxDeadlineDurationMs ?? Number.MAX_SAFE_INTEGER;
   return {
-    acceptCompression: opt.acceptCompression ? [...opt.acceptCompression] : [],
+    acceptCompression,
     ...validateReadWriteMaxBytes(
       opt.readMaxBytes,
       opt.writeMaxBytes,
@@ -148,15 +168,17 @@ export function validateUniversalHandlerOptions(
     ),
     jsonOptions: opt.jsonOptions,
     binaryOptions: opt.binaryOptions,
-    maxDeadlineDurationMs: Number.MAX_SAFE_INTEGER,
-    shutdownSignal: neverSignal,
-    requireConnectProtocolHeader: false,
+    maxDeadlineDurationMs,
+    shutdownSignal,
+    requireConnectProtocolHeader,
   };
 }
 
 /**
  * For the given service implementation, return a universal handler for each
  * RPC. The handler serves the given protocols.
+ *
+ * At least one protocol is required.
  */
 export function createUniversalServiceHandlers(
   spec: ServiceImplSpec,
@@ -170,16 +192,14 @@ export function createUniversalServiceHandlers(
 /**
  * Return a universal handler for the given RPC implementation.
  * The handler serves the given protocols.
+ *
+ * At least one protocol is required.
  */
 export function createUniversalMethodHandler(
   spec: MethodImplSpec,
   protocols: ProtocolHandlerFactory[]
 ): UniversalHandler {
-  return negotiateProtocol(
-    spec.service,
-    spec.method,
-    protocols.map((f) => f(spec))
-  );
+  return negotiateProtocol(protocols.map((f) => f(spec)));
 }
 
 /**
@@ -189,12 +209,33 @@ export function createUniversalMethodHandler(
  * different protocols - and returns a single handler that looks at the
  * Content-Type header and the HTTP verb of the incoming request to select
  * the appropriate protocol-specific handler.
+ *
+ * Raises an error if no protocol handlers were provided, or if they do not
+ * handle exactly the same RPC.
  */
-function negotiateProtocol(
-  service: ServiceType,
-  method: MethodInfo,
+export function negotiateProtocol(
   protocolHandlers: UniversalHandler[]
 ): UniversalHandler {
+  if (protocolHandlers.length == 0) {
+    throw new ConnectError("require at least one protocol", Code.Internal);
+  }
+  const service = protocolHandlers[0].service;
+  const method = protocolHandlers[0].method;
+  const requestPath = protocolHandlers[0].requestPath;
+  if (
+    protocolHandlers.some((h) => h.service !== service || h.method !== method)
+  ) {
+    throw new ConnectError(
+      "cannot negotiate protocol for different RPCs",
+      Code.Internal
+    );
+  }
+  if (protocolHandlers.some((h) => h.requestPath !== requestPath)) {
+    throw new ConnectError(
+      "cannot negotiate protocol for different requestPaths",
+      Code.Internal
+    );
+  }
   async function protocolNegotiatingHandler(request: UniversalServerRequest) {
     if (
       method.kind == MethodKind.BiDiStreaming &&
@@ -209,36 +250,26 @@ function negotiateProtocol(
       };
     }
     const contentType = request.header.get("Content-Type") ?? "";
-    const firstMatch = protocolHandlers
-      .filter(
-        (h) =>
-          h.supportedContentType(contentType) &&
-          h.allowedMethods.includes(request.method)
-      )
-      .shift();
-    if (firstMatch) {
-      return firstMatch(request);
-    }
-    const contentTypeMatches = protocolHandlers.some((h) =>
+    const matchingContentTypes = protocolHandlers.filter((h) =>
       h.supportedContentType(contentType)
     );
-    if (!contentTypeMatches) {
+    if (matchingContentTypes.length == 0) {
       return uResponseUnsupportedMediaType;
     }
-    const methodMatches = protocolHandlers.some((h) =>
+    const matchingMethod = matchingContentTypes.filter((h) =>
       h.allowedMethods.includes(request.method)
     );
-    if (!methodMatches) {
+    if (matchingMethod.length == 0) {
       return uResponseMethodNotAllowed;
     }
-    return uResponseUnsupportedMediaType;
+    const firstMatch = matchingMethod[0];
+    return firstMatch(request);
   }
 
   return Object.assign(protocolNegotiatingHandler, {
     service,
     method,
-    // we expect all protocols to be served under the same path
-    requestPath: createMethodUrl("/", service, method),
+    requestPath,
     supportedContentType: contentTypeMatcher(
       ...protocolHandlers.map((h) => h.supportedContentType)
     ),

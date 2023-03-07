@@ -46,6 +46,7 @@ describe("broken input", () => {
               ),
               method: "POST",
               ctype: "application/json",
+              headers: { "Connect-Protocol-Version": "1" },
             }).then((res) => {
               return {
                 status: res.status,
@@ -85,6 +86,7 @@ describe("broken input", () => {
               url: createMethodUrl(server.getUrl(), TestService, method),
               method: "POST",
               ctype: "application/connect+json",
+              headers: { "Connect-Protocol-Version": "1" },
             }).then((res) => ({
               status: res.status,
               endStream: endStreamFromJson(res.body.subarray(5)),

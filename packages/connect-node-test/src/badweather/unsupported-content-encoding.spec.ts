@@ -44,6 +44,7 @@ describe("unsupported content encoding", () => {
             headers: {
               "content-type": "application/json",
               "content-encoding": "banana",
+              "connect-protocol-version": "1",
             },
             rejectUnauthorized,
           });
@@ -74,6 +75,7 @@ describe("unsupported content encoding", () => {
             headers: {
               "content-type": "application/connect+json",
               "connect-content-encoding": "banana",
+              "connect-protocol-version": "1",
             },
             rejectUnauthorized,
           });
