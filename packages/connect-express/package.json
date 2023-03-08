@@ -34,6 +34,6 @@
     "@bufbuild/protobuf": "^1.0.0"
   },
   "files": [
-    "dist/**/"
+    "dist/**"
   ]
 }
