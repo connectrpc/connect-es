@@ -217,7 +217,7 @@ export function negotiateProtocol(
   protocolHandlers: UniversalHandler[]
 ): UniversalHandler {
   if (protocolHandlers.length == 0) {
-    throw new ConnectError("require at least one protocol", Code.Internal);
+    throw new ConnectError("at least one protocol is required", Code.Internal);
   }
   const service = protocolHandlers[0].service;
   const method = protocolHandlers[0].method;

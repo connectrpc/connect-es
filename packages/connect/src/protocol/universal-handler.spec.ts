@@ -108,7 +108,7 @@ describe("negotiateProtocol()", function () {
 
   it("should require at least one handler", function () {
     expect(() => negotiateProtocol([])).toThrowError(
-      "[internal] require at least one protocol"
+      "[internal] at least one protocol is required"
     );
   });
 
