@@ -73,6 +73,7 @@ import {
 import { codeToHttpStatus } from "./http-status.js";
 import { errorToJsonBytes } from "./error-json.js";
 import { trailerMux } from "./trailer-mux.js";
+import { requireProtocolVersion } from "./version.js";
 
 const protocolName = "connect";
 const methodPost = "POST";
@@ -153,6 +154,9 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     let status = uResponseOk.status;
     let body: Uint8Array;
     try {
+      if (opt.requireConnectProtocolHeader) {
+        requireProtocolVersion(req.header);
+      }
       // raise compression error to serialize it as a error response
       if (compression.error) {
         throw compression.error;
@@ -278,6 +282,9 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     const outputIt = pipe(
       req.body,
       transformPrepend<Uint8Array>(() => {
+        if (opt.requireConnectProtocolHeader) {
+          requireProtocolVersion(req.header);
+        }
         // raise compression error to serialize it as the end stream response
         if (compression.error) throw compression.error;
         return undefined;

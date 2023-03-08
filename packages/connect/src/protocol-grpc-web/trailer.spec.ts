@@ -60,7 +60,7 @@ describe("trailerSerialize()", () => {
   });
 });
 
-describe("roundtrip", () => {
+describe("trailer roundtrip", () => {
   it("should work", () => {
     const a = new Headers({
       foo: "a, b",
