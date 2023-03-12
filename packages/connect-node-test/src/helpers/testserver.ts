@@ -18,6 +18,7 @@ import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
 import type { Transport } from "@bufbuild/connect";
+import { cors } from "@bufbuild/connect";
 import {
   compressionGzip,
   connectNodeAdapter,
@@ -27,7 +28,6 @@ import {
 } from "@bufbuild/connect-node";
 import { fastifyConnectPlugin } from "@bufbuild/connect-fastify";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
-import testRoutes from "./test-routes.js";
 import {
   fastify,
   FastifyBaseLogger,
@@ -35,6 +35,7 @@ import {
   FastifyTypeProviderDefault,
 } from "fastify";
 import { importExpress } from "./import-express.js";
+import testRoutes from "./test-routes.js";
 
 export function createTestServers() {
   // TODO http2 server with TLS and allow http1
@@ -180,34 +181,21 @@ export function createTestServers() {
       },
       start(port = 0) {
         return new Promise<void>((resolve) => {
-          const corsAllowHeaders = [
-            "Content-Type",
-            // gRPC-web
-            "X-User-Agent",
-            "X-Grpc-Web",
-            "Grpc-Timeout",
-            // Connect
-            "Connect-Protocol-Version",
-            "Connect-Timeout-Ms",
-            // used in tests
-            "X-Grpc-Test-Echo-Initial",
-            "X-Grpc-Test-Echo-Trailing-Bin",
-          ];
-          const corsExposeHeaders = [
-            // gRPC-web
-            "Grpc-Status",
-            "Grpc-Message",
-            // used in tests
-            "Grpc-Status-Details-Bin", // error details
-            "X-Grpc-Test-Echo-Initial",
-            "X-Grpc-Test-Echo-Trailing-Bin",
-            "Trailer-X-Grpc-Test-Echo-Trailing-Bin", // unary trailer in Connect
-          ];
           const corsHeaders = {
             "Access-Control-Allow-Origin": "*", // caution with this
-            "Access-Control-Allow-Methods": "OPTIONS, POST",
-            "Access-Control-Allow-Headers": corsAllowHeaders.join(", "),
-            "Access-Control-Expose-Headers": corsExposeHeaders.join(", "),
+            "Access-Control-Allow-Methods": cors.allowedMethods.join(","),
+            "Access-Control-Allow-Headers": [
+              ...cors.allowedHeaders,
+              // used in tests
+              "X-Grpc-Test-Echo-Initial",
+              "X-Grpc-Test-Echo-Trailing-Bin",
+            ].join(", "),
+            "Access-Control-Expose-Headers": [
+              ...cors.exposedHeaders,
+              "X-Grpc-Test-Echo-Initial",
+              "X-Grpc-Test-Echo-Trailing-Bin",
+              "Trailer-X-Grpc-Test-Echo-Trailing-Bin", // unary trailer in Connect
+            ],
             "Access-Control-Max-Age": 2 * 3600,
           };
           const serviceHandler = connectNodeAdapter({

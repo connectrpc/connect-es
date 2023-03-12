@@ -45,6 +45,7 @@ export type {
 
 export { createConnectRouter } from "./router.js";
 export type { ConnectRouter, ConnectRouterOptions } from "./router.js";
+export { cors } from "./cors.js";
 
 // TODO(TCN-1261)
 

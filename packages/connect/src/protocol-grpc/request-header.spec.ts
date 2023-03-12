@@ -31,10 +31,10 @@ describe("requestHeader", () => {
     expect(listHeaderKeys(headers)).toEqual([
       "content-type",
       "te",
-      "x-user-agent",
+      "user-agent",
     ]);
     expect(headers.get("Content-Type")).toBe("application/grpc+proto");
-    expect(headers.get("X-User-Agent")).toBe("@bufbuild/connect-web");
+    expect(headers.get("User-Agent")).toBe("@bufbuild/connect-web");
   });
 
   it("should create request headers with timeout", () => {
@@ -43,7 +43,7 @@ describe("requestHeader", () => {
       "content-type",
       "grpc-timeout",
       "te",
-      "x-user-agent",
+      "user-agent",
     ]);
     expect(headers.get("Grpc-Timeout")).toBe("10m");
   });
@@ -67,7 +67,7 @@ describe("requestHeader", () => {
       "grpc-accept-encoding",
       "grpc-encoding",
       "te",
-      "x-user-agent",
+      "user-agent",
     ]);
     expect(headers.get(headerEncoding)).toBe(compressionMock.name);
     expect(headers.get(headerAcceptEncoding)).toBe(compressionMock.name);
