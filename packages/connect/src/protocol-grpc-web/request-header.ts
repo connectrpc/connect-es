@@ -18,7 +18,8 @@ import {
   headerContentType,
   headerEncoding,
   headerTimeout,
-  headerUserAgent,
+  headerXUserAgent,
+  headerXGrpcWeb,
 } from "./headers.js";
 import { contentTypeJson, contentTypeProto } from "./content-type.js";
 
@@ -37,14 +38,11 @@ export function requestHeader(
     headerContentType,
     useBinaryFormat ? contentTypeProto : contentTypeJson
   );
-  // Some servers may rely on the request header `X-Grpc-Web` to identify
-  // gRPC-web requests. For example the proxy by improbable:
-  // https://github.com/improbable-eng/grpc-web/blob/53aaf4cdc0fede7103c1b06f0cfc560c003a5c41/go/grpcweb/wrapper.go#L231
-  result.set("X-Grpc-Web", "1");
+  result.set(headerXGrpcWeb, "1");
   // Note that we do not comply with recommended structure for the
   // user-agent string.
   // https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
-  result.set(headerUserAgent, "@bufbuild/connect-web");
+  result.set(headerXUserAgent, "@bufbuild/connect-web");
   if (timeoutMs !== undefined) {
     result.set(headerTimeout, `${timeoutMs}m`);
   }
