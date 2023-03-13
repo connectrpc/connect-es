@@ -20,9 +20,35 @@ import {
   Code,
   decodeBinaryHeader,
   encodeBinaryHeader,
+  ConnectError,
 } from "@bufbuild/connect-web";
+import {
+  connectErrorFromReason as new_connectErrorFromReason,
+  ConnectError as new_ConnectError,
+} from "@bufbuild/connect";
 
 describe("deprecated API", function () {
+  describe("connectErrorFromReason from @bufbuild/connect-web", function () {
+    it("should not touch ConnectError from @bufbuild/connect-web", function () {
+      const e = new ConnectError("foo", Code.Unauthenticated);
+      const e2 = connectErrorFromReason(e);
+      expect(e2.code).toBe(Code.Unauthenticated);
+    });
+  });
+  describe("connectErrorFromReason from @bufbuild/connect-web", function () {
+    it("should not touch ConnectError from @bufbuild/connect", function () {
+      const e = new new_ConnectError("foo", Code.Unauthenticated);
+      const e2 = connectErrorFromReason(e);
+      expect(e2.code).toBe(Code.Unauthenticated);
+    });
+  });
+  describe("connectErrorFromReason from @bufbuild/connect", function () {
+    it("should not touch ConnectError from @bufbuild/connect-web", function () {
+      const e = new ConnectError("foo", Code.Unauthenticated);
+      const e2 = new_connectErrorFromReason(e);
+      expect(e2.code).toBe(Code.Unauthenticated);
+    });
+  });
   it("should be exported", function () {
     expect(createCallbackClient).toBeDefined();
     expect(createPromiseClient).toBeDefined();
