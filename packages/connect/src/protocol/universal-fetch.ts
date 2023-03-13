@@ -91,6 +91,7 @@ function universalServerRequestFromFetch(
     url,
     header: req.headers,
     body: iterableFromReadableStream(req.body),
+    signal: req.signal,
   };
 }
 

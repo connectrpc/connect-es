@@ -162,6 +162,7 @@ describe("createHandlerFactory()", function () {
         url: new URL(`https://example.com/${service.typeName}/${method.name}`),
         header: requestHeader(true, timeoutMs, undefined),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
+        signal: new AbortController().signal,
       });
       expect(res.status).toBe(200);
       const lastEnv = await getLastEnvelope(res);

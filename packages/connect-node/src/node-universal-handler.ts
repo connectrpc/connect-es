@@ -89,12 +89,15 @@ export function universalRequestFromNodeRequest(
     parsedJsonBody !== undefined
       ? parsedJsonBody
       : asyncIterableFromNodeServerRequest(nodeRequest);
+  const abortController = new AbortController();
+  nodeRequest.on("close", () => abortController.abort());
   return {
     httpVersion: nodeRequest.httpVersion,
     method: nodeRequest.method ?? "",
     url: new URL(pathname, `${protocol}://${authority}`),
     header: nodeHeaderToWebHeader(nodeRequest.headers),
     body,
+    signal: abortController.signal,
   };
 }
 

@@ -75,6 +75,11 @@ export interface HandlerContext {
   readonly deadline?: AbortSignal;
 
   /**
+   * An AbortSignal to know when the connection with the client is closed.
+   */
+  readonly signal: AbortSignal;
+
+  /**
    * Incoming request headers.
    */
   readonly requestHeader: Headers;
@@ -99,6 +104,7 @@ export interface HandlerContext {
 export function createHandlerContext(
   spec: { service: ServiceType; method: MethodInfo },
   deadline: AbortSignal | undefined, // TODO
+  signal: AbortSignal,
   requestHeader: HeadersInit,
   responseHeader: HeadersInit,
   responseTrailer: HeadersInit
@@ -107,6 +113,7 @@ export function createHandlerContext(
     method: spec.method,
     service: spec.service,
     deadline,
+    signal,
     requestHeader: new Headers(requestHeader),
     responseHeader: new Headers(responseHeader),
     responseTrailer: new Headers(responseTrailer),

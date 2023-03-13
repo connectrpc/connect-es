@@ -147,6 +147,7 @@ describe("createHandlerFactory()", function () {
           url: new URL("https://example.com"),
           header: new Headers({ "Content-Type": "application/json" }),
           body: 777,
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
         expect(res.body).toBeInstanceOf(Uint8Array);
@@ -171,6 +172,7 @@ describe("createHandlerFactory()", function () {
             "Connect-Protocol-Version": "UNEXPECTED",
           }),
           body: 777,
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
         expect(res.body).toBeInstanceOf(Uint8Array);
@@ -202,6 +204,7 @@ describe("createHandlerFactory()", function () {
           url: new URL("https://example.com"),
           header: new Headers({ "Content-Type": "application/connect+json" }),
           body: createAsyncIterableBytes(new Uint8Array()),
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(200);
         expect(res.body).not.toBeInstanceOf(Uint8Array);
@@ -225,6 +228,7 @@ describe("createHandlerFactory()", function () {
             "Connect-Protocol-Version": "UNEXPECTED",
           }),
           body: createAsyncIterableBytes(new Uint8Array()),
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(200);
         expect(res.body).not.toBeInstanceOf(Uint8Array);
@@ -262,6 +266,7 @@ describe("createHandlerFactory()", function () {
           ),
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([new Uint8Array(0)]),
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(408);
         expect(res.body).toBeDefined();
@@ -318,6 +323,7 @@ describe("createHandlerFactory()", function () {
           ),
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(200);
         expect(res.body).toBeDefined();
