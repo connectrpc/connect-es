@@ -177,11 +177,18 @@ function h1Request(
       sentinel.reject(new ConnectError("node socket timed out", Code.Aborted))
     );
     request.off("socket", onRequestSocket);
-    socket.on("connect", onSocketConnect);
 
     function onSocketConnect() {
       socket.off("connect", onSocketConnect);
       onRequest(request);
+    }
+
+    // If readyState is open, then socket is already open due to keepAlive, so
+    // the 'connect' event will never fire so call onRequest explicitly
+    if (socket.readyState === "open") {
+      onRequest(request);
+    } else {
+      socket.on("connect", onSocketConnect);
     }
   });
 }
