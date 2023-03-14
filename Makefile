@@ -85,6 +85,12 @@ $(BUILD)/connect-express: $(BUILD)/connect $(BUILD)/connect-node packages/connec
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-next: $(BUILD)/connect $(BUILD)/connect-node packages/connect-next/tsconfig.json $(shell find packages/connect-next/src -name '*.ts')
+	npm run -w packages/connect-next clean
+	npm run -w packages/connect-next build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/connect-web: $(BUILD)/connect packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
@@ -97,7 +103,7 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test packages
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
+$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
 	npm run -w packages/connect-node-test clean
 	npm run -w packages/connect-node-test build
 	@mkdir -p $(@D)
@@ -153,7 +159,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/protoc-gen-connect-es $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
+build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
 
 .PHONY: test
 test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack

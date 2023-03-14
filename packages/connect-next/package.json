@@ -1,0 +1,39 @@
+{
+  "name": "@bufbuild/connect-next",
+  "version": "0.8.3",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bufbuild/connect-es.git",
+    "directory": "packages/connect-next"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "clean": "rm -rf ./dist/cjs/* ./dist/esm/* ./dist/types/*",
+    "build": "npm run build:cjs && npm run build:esm+types",
+    "build:cjs": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types"
+  },
+  "main": "./dist/cjs/index.js",
+  "type": "module",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "types": "./dist/types/index.d.ts",
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/index.js"
+  },
+  "engines": {
+    "node": ">=16.0.0 <19"
+  },
+  "dependencies": {
+    "@bufbuild/connect": "0.8.3",
+    "@bufbuild/connect-node": "^0.8.3"
+  },
+  "peerDependencies": {
+    "@bufbuild/protobuf": "^1.0.0",
+    "next": "^13.2.4"
+  },
+  "files": [
+    "dist/**"
+  ]
+}
