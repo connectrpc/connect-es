@@ -67,7 +67,7 @@ describe("broken input", () => {
           expect(error.code).toBe(Code.InvalidArgument);
           if (serverName == "@bufbuild/connect-node (h2c)") {
             expect(error.rawMessage).toMatch(
-              /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token h in JSON/
+              /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token '?h'?.*JSON/
             );
           }
         });
@@ -91,7 +91,6 @@ describe("broken input", () => {
               status: res.status,
               endStream: endStreamFromJson(res.body.subarray(5)),
             }));
-
           it("should raise HTTP 400 for for invalid JSON", async () => {
             const json = new TextEncoder().encode("this is not json");
             const body = new Uint8Array(json.byteLength + 5);
@@ -107,8 +106,10 @@ describe("broken input", () => {
             expect(status).toBe(200);
             expect(endStream.error?.code).toBe(Code.InvalidArgument);
             if (serverName == "@bufbuild/connect-node (h2c)") {
+              // Error messages tend to change across Node versions. Should this happen again, this link is useful to
+              // build the correct RegExp:  https://regex101.com/r/By9VEN/1
               expect(endStream.error?.rawMessage).toMatch(
-                /^cannot decode grpc.testing.Streaming(Input|Output)CallRequest from JSON: Unexpected token h in JSON/
+                /^cannot decode grpc.testing.Streaming(Input|Output)CallRequest from JSON: Unexpected token '?h'?.*JSON/
               );
             }
           });
