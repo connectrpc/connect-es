@@ -63,7 +63,7 @@ in your terminal.
 
 You can use vanilla Node.js, or our server plugins for [Fastify](https://www.fastify.io/) 
 or [Express](https://expressjs.com/). We support the builtin `http`, and `http2` 
-modules on Node.js v16, v17 and v18.
+modules on Node.js v16 and later.
 
 
 ## Other platforms
