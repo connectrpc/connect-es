@@ -27,8 +27,6 @@ describe("broken input", () => {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
-  const nodeMajorVersion = process.version.split(".")[0];
-
   // TODO(TCN-785) add @bufbuild/connect-node, cover gRPC and gRPC-web, cover invalid protobuf binary input
   servers.describeServers(
     ["connect-go (h2)", "@bufbuild/connect-node (h2c)"],
@@ -68,15 +66,9 @@ describe("broken input", () => {
           expect(status).toBe(400);
           expect(error.code).toBe(Code.InvalidArgument);
           if (serverName == "@bufbuild/connect-node (h2c)") {
-            if (nodeMajorVersion === "v19") {
-              expect(error.rawMessage).toMatch(
-                /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token 'h', "this is not json" is not valid JSON/
-              );
-            } else {
-              expect(error.rawMessage).toMatch(
-                /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token h in JSON/
-              );
-            }
+            expect(error.rawMessage).toMatch(
+              /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token '?h'?.*JSON/
+            );
           }
         });
       });
@@ -114,15 +106,11 @@ describe("broken input", () => {
             expect(status).toBe(200);
             expect(endStream.error?.code).toBe(Code.InvalidArgument);
             if (serverName == "@bufbuild/connect-node (h2c)") {
-              if (nodeMajorVersion === "v19") {
-                expect(endStream.error?.rawMessage).toMatch(
-                  /^cannot decode grpc.testing.Streaming(Input|Output)CallRequest from JSON: Unexpected token 'h', "this is not json" is not valid JSON/
-                );
-              } else {
-                expect(endStream.error?.rawMessage).toMatch(
-                  /^cannot decode grpc.testing.Streaming(Input|Output)CallRequest from JSON: Unexpected token h in JSON/
-                );
-              }
+              // Error messages tend to change across Node versions. Should this happen again, this link is useful to
+              // build the correct RegExp:  https://regex101.com/r/By9VEN/1
+              expect(endStream.error?.rawMessage).toMatch(
+                /^cannot decode grpc.testing.Streaming(Input|Output)CallRequest from JSON: Unexpected token '?h'?.*JSON/
+              );
             }
           });
           it("should raise HTTP 400 for 0 message length", async () => {
