@@ -13,6 +13,7 @@ GEN   = .tmp/gen
 CROSSTEST_VERSION := 2c228a09c52e3a95263034c1fb79119d33ab3258
 LICENSE_HEADER_YEAR_RANGE := 2021-2023
 LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
+NODE19_VERSION ?= v19.2.0
 NODE18_VERSION ?= v18.2.0
 NODE17_VERSION ?= v17.0.0
 NODE16_VERSION ?= v16.0.0
@@ -27,6 +28,13 @@ node_modules/.bin/protoc-gen-es: node_modules
 $(BIN)/license-header: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@v1.1.0
+
+$(BIN)/node19: Makefile
+	@mkdir -p $(@D)
+	curl -sSL https://nodejs.org/dist/$(NODE19_VERSION)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
+	mv $(TMP)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
+	rm -r $(TMP)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)
+	@touch $(@)
 
 $(BIN)/node18: Makefile
 	@mkdir -p $(@D)
@@ -163,11 +171,12 @@ testcore: $(BUILD)/connect
 	npm run -w packages/connect jasmine
 
 .PHONY: testnode
-testnode: $(BIN)/node16 $(BIN)/node17 $(BIN)/node18 $(BUILD)/connect-node-test
+testnode: $(BIN)/node16 $(BIN)/node17 $(BIN)/node18 $(BIN)/node19 $(BUILD)/connect-node-test
 	$(MAKE) crosstestserverrun
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node17 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node19 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
 
 .PHONY: testwebnode
