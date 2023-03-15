@@ -14,6 +14,8 @@
 
 import type { JsonValue } from "@bufbuild/protobuf";
 import {
+  Code,
+  connectErrorFromReason,
   ConnectRouter,
   ConnectRouterOptions,
   createConnectRouter,
@@ -22,10 +24,10 @@ import * as protoConnect from "@bufbuild/connect/protocol-connect";
 import * as protoGrpcWeb from "@bufbuild/connect/protocol-grpc-web";
 import * as protoGrpc from "@bufbuild/connect/protocol-grpc";
 import {
-  universalRequestFromNodeRequest,
-  universalResponseToNodeResponse,
   compressionBrotli,
   compressionGzip,
+  universalRequestFromNodeRequest,
+  universalResponseToNodeResponse,
 } from "@bufbuild/connect-node";
 import type { FastifyInstance } from "fastify/types/instance";
 
@@ -81,21 +83,32 @@ export function fastifyConnectPlugin(
       uHandler.requestPath,
       {},
       async function handleFastifyRequest(req, reply) {
-        const uRes = await uHandler(
-          universalRequestFromNodeRequest(
-            req.raw,
-            req.body as JsonValue | undefined
-          )
-        );
-        // Fastify maintains response headers on the reply object and only moves them to
-        // the raw response during reply.send, but we are not using reply.send with this plugin.
-        // So we need to manually copy them to the raw response before handing off to vanilla Node.
-        for (const [key, value] of Object.entries(reply.getHeaders())) {
-          if (value !== undefined) {
-            reply.raw.setHeader(key, value);
+        try {
+          const uRes = await uHandler(
+            universalRequestFromNodeRequest(
+              req.raw,
+              req.body as JsonValue | undefined
+            )
+          );
+          // Fastify maintains response headers on the reply object and only moves them to
+          // the raw response during reply.send, but we are not using reply.send with this plugin.
+          // So we need to manually copy them to the raw response before handing off to vanilla Node.
+          for (const [key, value] of Object.entries(reply.getHeaders())) {
+            if (value !== undefined) {
+              reply.raw.setHeader(key, value);
+            }
           }
+          await universalResponseToNodeResponse(uRes, reply.raw);
+        } catch (e) {
+          if (connectErrorFromReason(e).code == Code.Aborted) {
+            return;
+          }
+          // eslint-disable-next-line no-console
+          console.error(
+            `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
+            e
+          );
         }
-        await universalResponseToNodeResponse(uRes, reply.raw);
       }
     );
   }

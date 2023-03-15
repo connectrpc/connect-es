@@ -309,7 +309,6 @@ function h2Request(
     sessionHolder.options,
     h2ConnectedSession
   );
-  // connectingSession.on("error", sentinel.reject);
   connectingSession.on("error", h2SessionConnectError);
 
   function h2SessionConnectError(e: unknown) {
@@ -329,7 +328,7 @@ function h2Request(
         }
       })
       .catch(() => {
-        // We intentionally swallow sentinel rejection - errors must 
+        // We intentionally swallow sentinel rejection - errors must
         // propagate through the request or response iterables.
       });
     const stream = session.request(
