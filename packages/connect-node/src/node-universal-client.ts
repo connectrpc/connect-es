@@ -172,12 +172,6 @@ function h1Request(
     sentinel.reject(new ConnectError("node request aborted", Code.Aborted))
   );
   request.on("socket", function onRequestSocket(socket: net.Socket) {
-    socket.on("error", sentinel.reject);
-    socket.on("timeout", () =>
-      sentinel.reject(new ConnectError("node socket timed out", Code.Aborted))
-    );
-    request.off("socket", onRequestSocket);
-
     function onSocketConnect() {
       socket.off("connect", onSocketConnect);
       onRequest(request);
