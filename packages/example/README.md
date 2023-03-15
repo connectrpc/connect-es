@@ -10,7 +10,7 @@ You can find the protocol buffer schema [on the BSR](https://buf.build/bufbuild/
 
 ## Run the example
 
-You will need [Node](https://nodejs.org/en/download/) in version 16, 17, 18, or 19 installed. Download 
+You will need [Node](https://nodejs.org/en/download/) in version 16 or later installed. Download 
 the example project and install its dependencies:
 
 ```shell
