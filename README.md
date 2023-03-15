@@ -89,6 +89,8 @@ be more than happy to chat!
   Plug your services into a [Fastify](https://www.fastify.io/) server.
 - [@bufbuild/connect-express](https://www.npmjs.com/package/@bufbuild/connect-express):
   Adds your services to an [Express](https://expressjs.com/) server.
+- [@bufbuild/connect-next](https://www.npmjs.com/package/@bufbuild/connect-next):
+  Serve your endpoints using API Routing in [Next.js](https://nextjs.org/).
 
 The libraries and the generated code are compatible with ES2017 and TypeScript 4.1.
 
