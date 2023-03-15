@@ -56,7 +56,11 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
     // This behavior is covered by the crosstest "unresolvable_host".
     code = Code.Unavailable;
   }
-  return connectErrorFromReason(reason, code);
+  const ce = connectErrorFromReason(reason, code);
+  if (ce !== reason) {
+    ce.cause = reason;
+  }
+  return ce;
 }
 
 /**

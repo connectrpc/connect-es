@@ -25,6 +25,7 @@ import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./node-universal-header.js";
+import { connectErrorFromNodeReason } from "./node-error.js";
 
 /**
  * NodeHandlerFn is compatible with http.RequestListener and its equivalent
@@ -103,7 +104,20 @@ export function universalRequestFromNodeRequest(
  * on Node.js. Please be careful using this function in your own code, as we
  * may have to make changes to it in the future.
  */
-export async function universalResponseToNodeResponse(
+export function universalResponseToNodeResponse(
+  universalResponse: UniversalServerResponse,
+  nodeResponse: NodeServerResponse
+): Promise<void> {
+  // return universalResponseToNodeResponseInternal(universalResponse, nodeResponse);
+  return universalResponseToNodeResponseInternal(
+    universalResponse,
+    nodeResponse
+  ).catch((e) => {
+    return Promise.reject(connectErrorFromNodeReason(e));
+  });
+}
+
+async function universalResponseToNodeResponseInternal(
   universalResponse: UniversalServerResponse,
   nodeResponse: NodeServerResponse
 ): Promise<void> {

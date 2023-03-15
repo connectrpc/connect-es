@@ -14,8 +14,8 @@
 
 import {
   ConnectRouter,
-  createConnectRouter,
   ConnectRouterOptions,
+  createConnectRouter,
 } from "@bufbuild/connect";
 import type { UniversalHandler } from "@bufbuild/connect/protocol";
 import {
@@ -74,6 +74,7 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
   for (const uHandler of router.handlers) {
     paths.set(prefix + uHandler.requestPath, uHandler);
   }
+
   async function handler(req: NextApiRequest, res: NextApiResponse) {
     const requestPath = req.url ?? "";
     const uHandler = paths.get(requestPath);
@@ -82,11 +83,20 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
       res.end();
       return;
     }
-    const uRes = await uHandler(
-      universalRequestFromNodeRequest(req, req.body as JsonValue | undefined)
-    );
-    await universalResponseToNodeResponse(uRes, res);
+    try {
+      const uRes = await uHandler(
+        universalRequestFromNodeRequest(req, req.body as JsonValue | undefined)
+      );
+      await universalResponseToNodeResponse(uRes, res);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
+        e
+      );
+    }
   }
+
   return {
     handler,
     config: {

@@ -309,7 +309,6 @@ function h2Request(
     sessionHolder.options,
     h2ConnectedSession
   );
-  // connectingSession.on("error", sentinel.reject);
   connectingSession.on("error", h2SessionConnectError);
 
   function h2SessionConnectError(e: unknown) {
@@ -321,12 +320,17 @@ function h2Request(
     session.off("error", sentinel.reject);
     session.off("error", h2SessionConnectError);
     session.on("error", sentinel.reject);
-    sentinel.finally(() => {
-      session.off("error", sentinel.reject);
-      if (!sessionHolder.keepOpen) {
-        session.close();
-      }
-    });
+    sentinel
+      .finally(() => {
+        session.off("error", sentinel.reject);
+        if (!sessionHolder.keepOpen) {
+          session.close();
+        }
+      })
+      .catch(() => {
+        // We intentionally swallow sentinel rejection - errors must
+        // propagate through the request or response iterables.
+      });
     const stream = session.request(
       {
         ...headers,
