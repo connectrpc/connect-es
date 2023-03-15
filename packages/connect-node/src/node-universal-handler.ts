@@ -25,6 +25,7 @@ import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./node-universal-header.js";
+import { connectErrorFromNodeReason } from "./node-error.js";
 
 /**
  * NodeHandlerFn is compatible with http.RequestListener and its equivalent
@@ -107,54 +108,63 @@ export async function universalResponseToNodeResponse(
   universalResponse: UniversalServerResponse,
   nodeResponse: NodeServerResponse
 ): Promise<void> {
-  if (universalResponse.body instanceof Uint8Array) {
-    nodeResponse.writeHead(
-      universalResponse.status,
-      webHeaderToNodeHeaders(universalResponse.header)
-    );
-    await write(nodeResponse, universalResponse.body);
-  } else if (universalResponse.body !== undefined) {
-    for await (const chunk of universalResponse.body) {
-      // we deliberately send headers *in* this loop, not before,
-      // because we have to give the implementation a chance to
-      // set response headers
-      if (!nodeResponse.headersSent) {
-        nodeResponse.writeHead(
-          universalResponse.status,
-          webHeaderToNodeHeaders(universalResponse.header)
-        );
-      }
-      await write(nodeResponse, chunk);
-      if ("flush" in nodeResponse && typeof nodeResponse.flush == "function") {
-        // The npm package "compression" is an express middleware that is widely used,
-        // for example in next.js. It uses the npm package "compressible" to determine
-        // whether to apply compression to a response. Unfortunately, "compressible"
-        // matches every mime type that ends with "+json", causing our server-streaming
-        // RPCs to be buffered.
-        // The package modifies the response object, and adds a flush() method, which
-        // flushes the underlying gzip or deflate stream from the Node.js zlib module.
-        // The method is added here:
-        // https://github.com/expressjs/compression/blob/ad5113b98cafe1382a0ece30bb4673707ac59ce7/index.js#L70
-        nodeResponse.flush();
+  try {
+    if (universalResponse.body instanceof Uint8Array) {
+      nodeResponse.writeHead(
+        universalResponse.status,
+        webHeaderToNodeHeaders(universalResponse.header)
+      );
+      await write(nodeResponse, universalResponse.body);
+    } else if (universalResponse.body !== undefined) {
+      for await (const chunk of universalResponse.body) {
+        // we deliberately send headers *in* this loop, not before,
+        // because we have to give the implementation a chance to
+        // set response headers
+        if (!nodeResponse.headersSent) {
+          nodeResponse.writeHead(
+            universalResponse.status,
+            webHeaderToNodeHeaders(universalResponse.header)
+          );
+        }
+        await write(nodeResponse, chunk);
+        if (
+          "flush" in nodeResponse &&
+          typeof nodeResponse.flush == "function"
+        ) {
+          // The npm package "compression" is an express middleware that is widely used,
+          // for example in next.js. It uses the npm package "compressible" to determine
+          // whether to apply compression to a response. Unfortunately, "compressible"
+          // matches every mime type that ends with "+json", causing our server-streaming
+          // RPCs to be buffered.
+          // The package modifies the response object, and adds a flush() method, which
+          // flushes the underlying gzip or deflate stream from the Node.js zlib module.
+          // The method is added here:
+          // https://github.com/expressjs/compression/blob/ad5113b98cafe1382a0ece30bb4673707ac59ce7/index.js#L70
+          nodeResponse.flush();
+        }
       }
     }
+    if (!nodeResponse.headersSent) {
+      nodeResponse.writeHead(
+        universalResponse.status,
+        webHeaderToNodeHeaders(universalResponse.header)
+      );
+    }
+    if (universalResponse.trailer) {
+      nodeResponse.addTrailers(
+        webHeaderToNodeHeaders(universalResponse.trailer)
+      );
+      universalResponse.trailer;
+    }
+    await new Promise<void>((resolve) => {
+      // The npm package "compression" crashes when a callback is passed to end()
+      // https://github.com/expressjs/compression/blob/ad5113b98cafe1382a0ece30bb4673707ac59ce7/index.js#L115
+      nodeResponse.once("end", resolve);
+      nodeResponse.end();
+    });
+  } catch (e) {
+    throw connectErrorFromNodeReason(e);
   }
-  if (!nodeResponse.headersSent) {
-    nodeResponse.writeHead(
-      universalResponse.status,
-      webHeaderToNodeHeaders(universalResponse.header)
-    );
-  }
-  if (universalResponse.trailer) {
-    nodeResponse.addTrailers(webHeaderToNodeHeaders(universalResponse.trailer));
-    universalResponse.trailer;
-  }
-  await new Promise<void>((resolve) => {
-    // The npm package "compression" crashes when a callback is passed to end()
-    // https://github.com/expressjs/compression/blob/ad5113b98cafe1382a0ece30bb4673707ac59ce7/index.js#L115
-    nodeResponse.once("end", resolve);
-    nodeResponse.end();
-  });
 }
 
 async function* asyncIterableFromNodeServerRequest(

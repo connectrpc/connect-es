@@ -14,6 +14,7 @@
 
 import {
   Code,
+  connectErrorFromReason,
   ConnectRouter,
   ConnectRouterOptions,
   createConnectRouter,
@@ -27,7 +28,6 @@ import {
   universalRequestFromNodeRequest,
   universalResponseToNodeResponse,
 } from "./node-universal-handler.js";
-import { connectErrorFromNodeReason } from "./node-error.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 
 interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
@@ -91,7 +91,7 @@ export function connectNodeAdapter(
     uHandler(uReq)
       .then((uRes) => universalResponseToNodeResponse(uRes, res))
       .catch((reason) => {
-        if (connectErrorFromNodeReason(reason).code == Code.Aborted) {
+        if (connectErrorFromReason(reason).code == Code.Aborted) {
           return;
         }
         // eslint-disable-next-line no-console

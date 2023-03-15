@@ -17,14 +17,7 @@ import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-// TODO(TCN-919)
-/*
-  When we run the test individually against one or two servers the test past
-  however, when ran against the entire test suite this test fails with an
-  Unhandled promise rejection: AbortError: The operation was aborted, error.
-  will investigate later on
-*/
-xdescribe("cancel_after_begin", function () {
+describe("cancel_after_begin", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
