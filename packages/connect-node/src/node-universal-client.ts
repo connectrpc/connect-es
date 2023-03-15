@@ -328,7 +328,10 @@ function h2Request(
           session.close();
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // We intentionally swallow sentinel rejection - errors must 
+        // propagate through the request or response iterables.
+      });
     const stream = session.request(
       {
         ...headers,
