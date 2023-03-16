@@ -1069,6 +1069,29 @@ interface Abortable {
 
 type AbortState = "rethrown" | "completed" | "caught";
 
+function assertHasThrow(
+  t: unknown,
+  message: string
+): asserts t is {
+  throw: CallableFunction;
+} {
+  if (
+    typeof t === "object" &&
+    t !== null &&
+    "throw" in t &&
+    typeof t.throw === "function"
+  ) {
+    return;
+  }
+  throw new Error(message);
+}
+
+const hasReturn = (t: unknown): t is { return: CallableFunction } =>
+  typeof t === "object" &&
+  t !== null &&
+  "return" in t &&
+  typeof t.return === "function";
+
 /**
  * Wrap the given iterable and return an iterable with an abort() method.
  *
@@ -1101,11 +1124,8 @@ type AbortState = "rethrown" | "completed" | "caught";
 export function makeIterableAbortable<T>(
   iterable: AsyncIterable<T>
 ): AsyncIterable<T> & Abortable {
-  const innerCandidate = iterable[Symbol.asyncIterator]();
-  if (innerCandidate.throw === undefined) {
-    throw new Error("AsyncIterable does not implement throw");
-  }
-  const inner = innerCandidate as Required<AsyncIterator<T>>;
+  const inner = iterable[Symbol.asyncIterator]();
+  assertHasThrow(inner, "AsyncIterable does not implement throw");
   let aborted: { reason: unknown; state: Promise<AbortState> } | undefined;
   let resultPromise: Promise<IteratorResult<T>> | undefined;
   let it: AsyncIterator<T> = {
@@ -1119,7 +1139,7 @@ export function makeIterableAbortable<T>(
       return inner.throw(e);
     },
   };
-  if (innerCandidate.return === undefined) {
+  if (hasReturn(inner)) {
     it = {
       ...it,
       return(value?: unknown): Promise<IteratorResult<T>> {

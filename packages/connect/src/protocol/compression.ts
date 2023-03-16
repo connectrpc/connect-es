@@ -61,7 +61,7 @@ export function compressionNegotiate(
 ): {
   request: Compression | null;
   response: Compression | null;
-  error?: ConnectError;
+  error?: ConnectError | undefined;
 } {
   let request = null;
   let response = null;

@@ -77,12 +77,12 @@ export interface UniversalHandlerOptions {
   /**
    * Options for the JSON format.
    */
-  jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
+  jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions> | undefined;
 
   /**
    * Options for the binary wire format.
    */
-  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions> | undefined;
 
   maxDeadlineDurationMs: number; // TODO TCN-785
   shutdownSignal: AbortSignal; // TODO TCN-919

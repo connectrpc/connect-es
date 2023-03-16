@@ -34,7 +34,7 @@ export const endStreamFlag = 0b00000010;
  */
 export interface EndStreamResponse {
   metadata: Headers;
-  error?: ConnectError;
+  error?: ConnectError | undefined;
 }
 
 /**
