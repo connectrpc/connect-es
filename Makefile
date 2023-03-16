@@ -254,6 +254,7 @@ release: all ## Release npm packages
 		--workspace packages/connect-node \
 		--workspace packages/connect-fastify \
 		--workspace packages/connect-express \
+		--workspace packages/connect-next \
 		--workspace packages/connect \
 		--workspace packages/protoc-gen-connect-es \
 		--workspace packages/protoc-gen-connect-web \
