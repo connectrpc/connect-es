@@ -61,9 +61,9 @@ Follow our [10 minute tutorial](https://connect.build/docs/node/getting-started)
 to spin up a service in Node.js, and call it from the web, and from a gRPC client 
 in your terminal.
 
-You can use vanilla Node.js, or our server plugins for [Fastify](https://www.fastify.io/) 
-or [Express](https://expressjs.com/). We support the builtin `http`, and `http2` 
-modules on Node.js v16 and later.
+You can serve your Connect RPCs with vanilla Node.js, or use our [server plugins](https://connect.build/docs/node/server-plugins)
+for **Fastify**, **Next.js**, and **Express**. We support Node.js v16 and later with 
+the builtin `http` and `http2` modules.
 
 
 ## Other platforms
@@ -87,6 +87,8 @@ be more than happy to chat!
   Serve RPCs on vanilla Node.js servers. Call RPCs with any protocol.
 - [@bufbuild/connect-fastify](https://www.npmjs.com/package/@bufbuild/connect-fastify):
   Plug your services into a [Fastify](https://www.fastify.io/) server.
+- [@bufbuild/connect-next](https://www.npmjs.com/package/@bufbuild/connect-next):
+  Serve your RPCs with [Next.js](https://nextjs.org/) API routes.
 - [@bufbuild/connect-express](https://www.npmjs.com/package/@bufbuild/connect-express):
   Adds your services to an [Express](https://expressjs.com/) server.
 
