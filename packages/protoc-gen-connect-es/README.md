@@ -16,10 +16,10 @@ the code generator plugin for all Protocol Buffer base types. The code these two
 plugins generate requires the runtime libraries [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect), 
 and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 
-To install `buf`, the plugins and their runtime libraries, run:
+To install the plugins and their runtime libraries, run:
 
 ```shell
-npm install --save-dev @bufbuild/buf @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-es
+npm install --save-dev @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-es
 npm install @bufbuild/connect @bufbuild/protobuf
 ```
 
@@ -30,12 +30,17 @@ install [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect
 [@bufbuild/connect-express](https://www.npmjs.com/package/@bufbuild/connect-express)
 
 We use peer dependencies to ensure that code generator and runtime library are
-compatible with each other. Note that yarn and pnpm only emit a warning in this case.
+compatible with each other. Note that npm installs them automatically, but yarn
+and pnpm do not.
 
 
 ## Generating code
 
 ### With buf
+
+```bash
+npm install --save-dev @bufbuild/buf
+```
 
 Add a new configuration file `buf.gen.yaml`:
 
@@ -51,7 +56,9 @@ plugins:
   # This will invoke protoc-gen-connect-es
   - name: connect-es
     out: src/gen
-    opt: target=ts
+    opt:
+      # Add more plugin options here
+      - target=ts 
 ```
 
 To generate code for all protobuf files within your project, simply run:
