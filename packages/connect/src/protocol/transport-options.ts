@@ -23,7 +23,6 @@ import type { Interceptor } from "../interceptor.js";
 import type { Compression } from "./compression.js";
 
 export interface CommonTransportOptions {
-
   /**
    * The HTTP client to use.
    */
