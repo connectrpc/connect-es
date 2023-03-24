@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+export {}; // Required to transpile this file with isolatedModules
+
 describe("Headers", () => {
   it("should accept undefined", () => {
     expect(() => new Headers(undefined)).not.toThrow();

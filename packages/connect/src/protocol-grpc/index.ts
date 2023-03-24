@@ -36,3 +36,4 @@ export {
 export { validateTrailer } from "./validate-trailer.js";
 export * from "./headers.js";
 export { createHandlerFactory } from "./handler-factory.js";
+export { createTransport } from "./transport.js";

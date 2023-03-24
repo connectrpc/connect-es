@@ -14,28 +14,26 @@
 
 export { createMethodUrl } from "./create-method-url.js";
 export {
-  Serialization,
   createMethodSerializationLookup,
   createClientMethodSerializers,
-  MethodSerializationLookup,
   limitSerialization,
+} from "./serialization.js";
+export type {
+  Serialization,
+  MethodSerializationLookup,
 } from "./serialization.js";
 export { validateReadWriteMaxBytes } from "./limit-io.js";
 export {
-  EnvelopedMessage,
   encodeEnvelope,
   encodeEnvelopes,
   envelopeDecompress,
   envelopeCompress,
   createEnvelopeReadableStream,
 } from "./envelope.js";
+export type { EnvelopedMessage } from "./envelope.js";
+export { compressedFlag, compressionNegotiate } from "./compression.js";
+export type { Compression } from "./compression.js";
 export {
-  Compression,
-  compressedFlag,
-  compressionNegotiate,
-} from "./compression.js";
-export {
-  AsyncIterableTransform,
   pipe,
   transformCatch,
   transformCatchFinally,
@@ -49,31 +47,26 @@ export {
   transformSplitEnvelope,
   transformSerializeEnvelope,
   transformParseEnvelope,
-  AsyncIterableSink,
   pipeTo,
   sinkAll,
   sinkAllBytes,
   makeIterableAbortable,
-  WritableIterable,
   createWritableIterable,
   createAsyncIterable,
   readAllBytes,
 } from "./async-iterable.js";
-export {
-  ContentTypeMatcher,
-  contentTypeMatcher,
-} from "./content-type-matcher.js";
+export type {
+  AsyncIterableTransform,
+  AsyncIterableSink,
+  WritableIterable,
+} from "./async-iterable.js";
+export { contentTypeMatcher } from "./content-type-matcher.js";
+export type { ContentTypeMatcher } from "./content-type-matcher.js";
 export {
   invokeUnaryImplementation,
   transformInvokeImplementation,
 } from "./invoke-implementation.js";
 export {
-  UniversalClientFn,
-  UniversalClientRequest,
-  UniversalClientResponse,
-  UniversalHandlerFn,
-  UniversalServerRequest,
-  UniversalServerResponse,
   assertByteStreamRequest,
   uResponseOk,
   uResponseNotFound,
@@ -81,11 +74,22 @@ export {
   uResponseMethodNotAllowed,
   uResponseVersionNotSupported,
 } from "./universal.js";
+export type {
+  UniversalClientFn,
+  UniversalClientRequest,
+  UniversalClientResponse,
+  UniversalHandlerFn,
+  UniversalServerRequest,
+  UniversalServerResponse,
+} from "./universal.js";
 export {
-  UniversalHandler,
-  UniversalHandlerOptions,
   validateUniversalHandlerOptions,
   createUniversalServiceHandlers,
   createUniversalMethodHandler,
 } from "./universal-handler.js";
-export { ProtocolHandlerFactory } from "./protocol-handler-factory.js";
+export type {
+  UniversalHandler,
+  UniversalHandlerOptions,
+} from "./universal-handler.js";
+export type { ProtocolHandlerFactory } from "./protocol-handler-factory.js";
+export type { CommonTransportOptions } from "./transport-options.js";
