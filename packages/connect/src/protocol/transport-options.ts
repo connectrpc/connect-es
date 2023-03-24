@@ -12,30 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Interceptor, Transport } from "@bufbuild/connect";
-import type { Compression } from "@bufbuild/connect/protocol";
-import { createTransport } from "@bufbuild/connect/protocol-grpc";
 import type {
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import type {
-  NodeHttp1TransportOptions,
-  NodeHttp2TransportOptions,
-} from "./validate-node-transport-options.js";
-import { validateNodeTransportOptions } from "./validate-node-transport-options.js";
+import type { UniversalClientFn } from "./universal.js";
+import type { Interceptor } from "../interceptor.js";
+import type { Compression } from "./compression.js";
 
-/**
- * Options used to configure the gRPC-web transport.
- *
- * See createGrpcTransport().
- */
-type GrpcTransportOptions = (
-  | NodeHttp1TransportOptions
-  | NodeHttp2TransportOptions
-) & {
+export interface CommonTransportOptions {
+  httpClient: UniversalClientFn;
+
   /**
    * Base URI for all HTTP requests.
    *
@@ -52,13 +41,13 @@ type GrpcTransportOptions = (
    * By default, clients use the binary format for gRPC-web, because
    * not all gRPC-web implementations support JSON.
    */
-  useBinaryFormat?: boolean;
+  useBinaryFormat: boolean;
 
   /**
    * Interceptors that should be applied to all calls running through
    * this transport. See the Interceptor type for details.
    */
-  interceptors?: Interceptor[];
+  interceptors: Interceptor[];
 
   /**
    * Options for the JSON format.
@@ -83,7 +72,7 @@ type GrpcTransportOptions = (
    * (Brotli) are accepted. To opt out of response compression, pass an
    * empty array.
    */
-  acceptCompression?: Compression[];
+  acceptCompression: Compression[];
 
   /**
    * Configures the client to use the specified algorithm to compress request
@@ -92,7 +81,7 @@ type GrpcTransportOptions = (
    * Because some servers don't support compression, clients default to sending
    * uncompressed requests.
    */
-  sendCompression?: Compression;
+  sendCompression: Compression | null;
 
   /**
    * Sets a minimum size threshold for compression: Messages that are smaller
@@ -101,7 +90,7 @@ type GrpcTransportOptions = (
    * The default value is 1 kibibyte, because the CPU cost of compressing very
    * small messages usually isn't worth the small reduction in network I/O.
    */
-  compressMinBytes?: number;
+  compressMinBytes: number;
 
   /**
    * Limits the performance impact of pathologically large messages sent by the
@@ -110,24 +99,12 @@ type GrpcTransportOptions = (
    *
    * The default limit is the maximum supported value of ~4GiB.
    */
-  readMaxBytes?: number;
+  readMaxBytes: number;
 
   /**
    * Prevents sending messages too large for the server to handle.
    *
    * The default limit is the maximum supported value of ~4GiB.
    */
-  writeMaxBytes?: number;
-};
-
-/**
- * Create a Transport for the gRPC protocol using the Node.js `http`, `http2`,
- * or `http2` module.
- */
-export function createGrpcTransport(options: GrpcTransportOptions): Transport {
-  const { client, ...opt } = validateNodeTransportOptions(options);
-  return createTransport({
-    ...opt,
-    httpClient: client,
-  });
+  writeMaxBytes: number;
 }

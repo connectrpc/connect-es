@@ -13,3 +13,5 @@
 // limitations under the License.
 
 // TODO(TCN-761) implement, see https://github.com/bufbuild/connect-crosstest#test-suite
+
+export {}; // Required to transpile this file with isolatedModules
