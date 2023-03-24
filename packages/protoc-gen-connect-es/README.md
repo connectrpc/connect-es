@@ -16,10 +16,10 @@ the code generator plugin for all Protocol Buffer base types. The code these two
 plugins generate requires the runtime libraries [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect), 
 and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 
-To install the plugins and their runtime libraries, run:
+To install `buf`, the plugins and their runtime libraries, run:
 
 ```shell
-npm install --save-dev @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-es
+npm install --save-dev @bufbuild/buf @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-es
 npm install @bufbuild/connect @bufbuild/protobuf
 ```
 
@@ -37,10 +37,6 @@ and pnpm do not.
 ## Generating code
 
 ### With buf
-
-```bash
-npm install --save-dev @bufbuild/buf
-```
 
 Add a new configuration file `buf.gen.yaml`:
 
