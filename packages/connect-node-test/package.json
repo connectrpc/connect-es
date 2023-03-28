@@ -4,12 +4,12 @@
   "scripts": {
     "clean": "rm -rf ./dist/cjs/*",
     "generate": "buf generate",
-    "build": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
+    "build": "npx tsc --project tsconfig.json --noEmit && npx esbuild `find ./src \\( -name '*.ts' -o -name '*.tsx' \\)` --outdir=dist/cjs --format=cjs",
     "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json"
   },
   "types": "./dist/types/index.d.ts",
   "exports": {
-    "import": "./dist/cjs/index.js",
+    "require": "./dist/cjs/index.js",
     "default": "./dist/cjs/index.js"
   },
   "dependencies": {

@@ -274,11 +274,11 @@ crosstestserverrun: crosstestserverstop
 
 .PHONY: connectnodeserverrun
 connectnodeserverrun: $(BUILD)/connect-node-test
-	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs restart
+	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.js restart
 
 .PHONY: connectnodeserverstop
 connectnodeserverstop: $(BUILD)/connect-node-test
-	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs stop
+	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.js stop
 
 .PHONY: updatelocalhostcert
 updatelocalhostcert:

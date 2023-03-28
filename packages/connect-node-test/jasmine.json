@@ -2,7 +2,6 @@
   "spec_dir": "dist/cjs",
   "spec_files": ["**/*.spec.js"],
   "helpers": ["helpers/**/*.js"],
-  "jsLoader": "require",
   "env": {
     "stopSpecOnExpectationFailure": false,
     "random": true
