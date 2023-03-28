@@ -14,7 +14,6 @@
     "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types"
   },
   "main": "./dist/cjs/index.js",
-  "type": "module",
   "types": "./dist/types/index.d.ts",
   "exports": {
     "types": "./dist/types/index.d.ts",
