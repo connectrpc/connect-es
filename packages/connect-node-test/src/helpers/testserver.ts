@@ -1077,8 +1077,7 @@ function getCertLocalhost(): { key: string; cert: string } {
   if (certLocalHost === undefined) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    const fileName = require("url").pathToFileURL(__filename).toString();
-    let dir = new URL(fileName).pathname;
+    let dir = new URL(import.meta.url).pathname;
     for (let i = 0; i < 10; i++) {
       if (fs.existsSync(path.join(dir, "package.json"))) {
         break;

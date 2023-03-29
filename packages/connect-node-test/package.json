@@ -2,15 +2,16 @@
   "name": "@bufbuild/connect-node-test",
   "private": true,
   "scripts": {
-    "clean": "rm -rf ./dist/cjs/*",
+    "clean": "rm -rf ./dist/esm/*",
     "generate": "buf generate",
-    "build": "npx tsc --project tsconfig.json --noEmit && npx esbuild `find ./src \\( -name '*.ts' -o -name '*.tsx' \\)` --outdir=dist/cjs --format=cjs",
+    "build": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
     "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json"
   },
+  "type": "module",
   "types": "./dist/types/index.d.ts",
   "exports": {
-    "require": "./dist/cjs/index.js",
-    "default": "./dist/cjs/index.js"
+    "import": "./dist/esm/index.js",
+    "default": "./dist/esm/index.js"
   },
   "dependencies": {
     "@bufbuild/connect": "0.8.4",

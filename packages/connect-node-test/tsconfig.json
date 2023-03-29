@@ -1,7 +1,4 @@
 {
   "include": ["src/**/*.ts"],
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "target": "es2020"
-  }
+  "extends": "../../tsconfig.base.json"
 }
