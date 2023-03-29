@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* eslint-disable */
+
 // Workaround for bundlers that do not support subpath exports.
-// This uses CJS syntax because the package.json does not specify a
-// type field, which as a result defaults to using CommonJS.
-// Therefore, bundlers that do not support subpath exports will
-// fallback to using CommonJS and will load this file, which keeps
-// everything CommonJS compatible.
 module.exports = require("./dist/cjs/protocol-connect/index.js");
