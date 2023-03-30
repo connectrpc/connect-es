@@ -60,5 +60,4 @@ export {
   createMethodImplSpec,
 } from "./implementation.js";
 export type { ServiceImplSpec, MethodImplSpec } from "./implementation.js";
-
-export { createRouterHttpClient } from "./router-http-client.js";
+export { createTransport } from "./protocol-connect/transport.js";

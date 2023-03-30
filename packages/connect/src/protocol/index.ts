@@ -82,6 +82,7 @@ export type {
   UniversalServerRequest,
   UniversalServerResponse,
 } from "./universal.js";
+export { createUniversalHandlerClient } from "./universal-handler-client.js";
 export {
   validateUniversalHandlerOptions,
   createUniversalServiceHandlers,

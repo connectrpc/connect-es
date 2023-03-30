@@ -12,25 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ConnectRouter } from "./router.js";
-import type { UniversalClientFn } from "./protocol/universal.js";
-import type { UniversalHandler } from "./protocol/universal-handler.js";
-import { ConnectError } from "./connect-error.js";
-import { createAsyncIterable } from "./protocol/async-iterable.js";
-import { Code } from "./code.js";
+import { Code } from "../code.js";
+import { ConnectError } from "../connect-error.js";
+import { createAsyncIterable } from "./async-iterable.js";
+import type { UniversalHandler } from "./universal-handler.js";
+import type { UniversalClientFn } from "./universal.js";
 
 /**
- * An in-memory {@link UniversalClientFn | http client} that can be used to route requests to a {@link ConnectRouter}
- * by passing network calls. Useful for testing and calling in-process services.
- *
- * @param router The {@link ConnectRouter} to use.
- * @returns The {@link UniversalClientFn} that can be passed to `createTransport` functions.
+ * An in-memory UniversalClientFn that can be used to route requests to a ConnectRouter
+ * bypassing network calls. Useful for testing and calling in-process services.
  */
-export function createRouterHttpClient(
-  router: ConnectRouter
+export function createUniversalHandlerClient(
+  uHandlers: UniversalHandler[]
 ): UniversalClientFn {
   const handlerMap = new Map<string, UniversalHandler>();
-  for (const handler of router.handlers) {
+  for (const handler of uHandlers) {
     handlerMap.set(handler.requestPath, handler);
   }
   return async (uClientReq) => {
@@ -44,7 +40,7 @@ export function createRouterHttpClient(
     }
     const uServerRes = await handler({
       body: uClientReq.body,
-      httpVersion: "1.1",
+      httpVersion: "2.0",
       method: uClientReq.method,
       url: reqUrl,
       header: uClientReq.header,
