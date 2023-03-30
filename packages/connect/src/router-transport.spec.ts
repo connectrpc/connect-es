@@ -15,7 +15,7 @@
 import { Int32Value, StringValue, MethodKind } from "@bufbuild/protobuf";
 import { createPromiseClient } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
-import { createRoutesTransport } from "./routes-transport.js";
+import { createRouterTransport } from "./router-transport.js";
 
 describe("createRoutesTransport", function () {
   const testService = {
@@ -47,11 +47,12 @@ describe("createRoutesTransport", function () {
       },
     },
   } as const;
-  const transport = createRoutesTransport(({ service }) => {
+  const transport = createRouterTransport(({ service }) => {
     service(testService, {
       unary(req) {
         return { value: req.value.toString() };
       },
+      // eslint-disable-next-line @typescript-eslint/require-await
       async *server(req) {
         for (let i = 0; i < req.value; i++) {
           yield { value: req.value.toString() };
@@ -76,7 +77,7 @@ describe("createRoutesTransport", function () {
     const res = await client.unary({ value: 13 });
     expect(res.value).toBe("13");
   });
-  it("should work for server steam", async function* () {
+  it("should work for server steam", async function () {
     const res = client.server({ value: 13 });
     let count = 0;
     for await (const next of res) {

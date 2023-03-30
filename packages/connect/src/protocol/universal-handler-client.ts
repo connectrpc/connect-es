@@ -45,13 +45,7 @@ export function createUniversalHandlerClient(
       url: reqUrl,
       header: uClientReq.header,
     });
-    if (uServerRes.body === undefined) {
-      throw new ConnectError(
-        `RouterHttpClient: missing body in handler response for ${reqUrl.pathname}`,
-        Code.Internal
-      );
-    }
-    let body = uServerRes.body;
+    let body = uServerRes.body ?? new Uint8Array();
     if (body instanceof Uint8Array) {
       body = createAsyncIterable([body]);
     }

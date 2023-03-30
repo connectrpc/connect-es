@@ -22,13 +22,13 @@ import {
 } from "./router.js";
 
 /**
- * Creates a Transport that routes requests to the configured routes. Useful for testing
+ * Creates a Transport that routes requests to the configured router. Useful for testing
  * and calling services running in the same process.
  *
  * This can be used to test both client logic by using this to stub/mock the backend,
  * and to test server logic by using this to run without needing to spin up a server.
  */
-export function createRoutesTransport(
+export function createRouterTransport(
   routes: (router: ConnectRouter) => void,
   options?: {
     transport?: Partial<CommonTransportOptions>;
