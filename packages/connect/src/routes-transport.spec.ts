@@ -33,6 +33,18 @@ describe("createRoutesTransport", function () {
         O: StringValue,
         kind: MethodKind.ServerStreaming,
       },
+      client: {
+        name: "Client",
+        I: Int32Value,
+        O: StringValue,
+        kind: MethodKind.ClientStreaming,
+      },
+      biDi: {
+        name: "BiDi",
+        I: Int32Value,
+        O: StringValue,
+        kind: MethodKind.BiDiStreaming,
+      },
     },
   } as const;
   const transport = createRoutesTransport(({ service }) => {
@@ -40,14 +52,53 @@ describe("createRoutesTransport", function () {
       unary(req) {
         return { value: req.value.toString() };
       },
-      server(req) {
-        return createAsyncIterable([{ value: req.value.toString() }]);
+      async *server(req) {
+        for (let i = 0; i < req.value; i++) {
+          yield { value: req.value.toString() };
+        }
+      },
+      async client(req) {
+        let value = 0;
+        for await (const next of req) {
+          value = next.value;
+        }
+        return { value: value.toString() };
+      },
+      async *biDi(req) {
+        for await (const next of req) {
+          yield { value: next.value.toString() };
+        }
       },
     });
   });
+  const client = createPromiseClient(testService, transport);
   it("should work for unary", async function () {
-    const client = createPromiseClient(testService, transport);
     const res = await client.unary({ value: 13 });
     expect(res.value).toBe("13");
+  });
+  it("should work for server steam", async function* () {
+    const res = client.server({ value: 13 });
+    let count = 0;
+    for await (const next of res) {
+      count++;
+      expect(next.value).toBe("13");
+    }
+    expect(count).toBe(13);
+  });
+  it("should work for client steam", async function () {
+    const res = await client.client(
+      createAsyncIterable([{ value: 12 }, { value: 13 }])
+    );
+    expect(res.value).toBe("13");
+  });
+  it("should work for bidi steam", async function () {
+    const payload = [{ value: 1 }, { value: 2 }];
+    const res = client.biDi(createAsyncIterable(payload));
+    let count = 0;
+    for await (const next of res) {
+      expect(next.value).toBe(payload[count].value.toString());
+      count++;
+    }
+    expect(count).toBe(payload.length);
   });
 });
