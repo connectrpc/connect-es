@@ -62,7 +62,7 @@ export type NodeServerResponse = (
 };
 
 /**
- * Creates a UniversalServerRequest to a Node.js server request.
+ * Converts a UniversalServerRequest to a Node.js server request.
  * This function helps to implement adapters to server frameworks running
  * on Node.js. Please be careful using this function in your own code, as we
  * may have to make changes to it in the future.

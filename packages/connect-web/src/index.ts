@@ -21,23 +21,23 @@ export type { GrpcWebTransportOptions } from "./grpc-web-transport.js";
 // please please import from @bufbuild/connect instead
 // TODO(TCN-1261)
 import {
-  createCallbackClient,
   CallbackClient,
-  createPromiseClient,
-  PromiseClient,
   CallOptions,
-  Transport,
+  Code,
   ConnectError,
   connectErrorDetails,
   connectErrorFromReason,
-  Code,
+  createCallbackClient,
+  createPromiseClient,
+  decodeBinaryHeader,
+  encodeBinaryHeader,
   Interceptor,
-  UnaryRequest,
-  UnaryResponse,
+  PromiseClient,
   StreamRequest,
   StreamResponse,
-  encodeBinaryHeader,
-  decodeBinaryHeader,
+  Transport,
+  UnaryRequest,
+  UnaryResponse,
 } from "@bufbuild/connect";
 
 export {
@@ -52,22 +52,6 @@ export {
   /**
    * @deprecated please import from \@bufbuild/connect instead
    */
-  CallbackClient,
-  /**
-   * @deprecated please import from \@bufbuild/connect instead
-   */
-  PromiseClient,
-  /**
-   * @deprecated please import from \@bufbuild/connect instead
-   */
-  CallOptions,
-  /**
-   * @deprecated please import from \@bufbuild/connect instead
-   */
-  Transport,
-  /**
-   * @deprecated please import from \@bufbuild/connect instead
-   */
   ConnectError,
   /**
    * @deprecated please import from \@bufbuild/connect instead
@@ -81,6 +65,32 @@ export {
    * @deprecated please import from \@bufbuild/connect instead
    */
   Code,
+  /**
+   * @deprecated please import from \@bufbuild/connect instead
+   */
+  encodeBinaryHeader,
+  /**
+   * @deprecated please import from \@bufbuild/connect instead
+   */
+  decodeBinaryHeader,
+};
+export type {
+  /**
+   * @deprecated please import from \@bufbuild/connect instead
+   */
+  CallbackClient,
+  /**
+   * @deprecated please import from \@bufbuild/connect instead
+   */
+  PromiseClient,
+  /**
+   * @deprecated please import from \@bufbuild/connect instead
+   */
+  CallOptions,
+  /**
+   * @deprecated please import from \@bufbuild/connect instead
+   */
+  Transport,
   /**
    * @deprecated please import from \@bufbuild/connect instead
    */
@@ -101,12 +111,4 @@ export {
    * @deprecated please import from \@bufbuild/connect instead
    */
   StreamResponse,
-  /**
-   * @deprecated please import from \@bufbuild/connect instead
-   */
-  encodeBinaryHeader,
-  /**
-   * @deprecated please import from \@bufbuild/connect instead
-   */
-  decodeBinaryHeader,
 };

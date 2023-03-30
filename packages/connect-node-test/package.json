@@ -4,8 +4,8 @@
   "scripts": {
     "clean": "rm -rf ./dist/esm/*",
     "generate": "buf generate",
-    "build": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
-    "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json"
+    "build": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
+    "jasmine": "jasmine --config=jasmine.json"
   },
   "type": "module",
   "types": "./dist/types/index.d.ts",

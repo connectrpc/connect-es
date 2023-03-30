@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+export {}; // Required to transpile this file with isolatedModules
+
 describe("Fetch API Headers", function () {
   let headers: Headers;
   beforeEach(() => {

@@ -51,3 +51,4 @@ export { protocolVersion } from "./version.js";
 export { codeFromString } from "./code-string.js";
 export { codeToString } from "./code-string.js";
 export { createHandlerFactory } from "./handler-factory.js";
+export { createTransport } from "./transport.js";

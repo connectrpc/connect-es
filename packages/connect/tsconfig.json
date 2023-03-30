@@ -6,8 +6,5 @@
     "src/protocol-grpc-web/index.ts"
   ],
   "include": ["src/**/*.spec.ts"],
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "esModuleInterop": true
-  }
+  "extends": "../../tsconfig.base.json"
 }

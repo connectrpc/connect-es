@@ -15,7 +15,7 @@
     "build": "npm run build:cjs && npm run build:esm+types",
     "build:cjs": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm+types": "npx tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types && echo >./dist/esm/package.json '{\"type\":\"module\"}'",
-    "jasmine": "../../node_modules/.bin/jasmine --config=jasmine.json"
+    "jasmine": "jasmine --config=jasmine.json"
   },
   "main": "./dist/cjs/index.js",
   "types": "./dist/types/index.d.ts",

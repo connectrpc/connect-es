@@ -170,11 +170,15 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
 
 .PHONY: test
-test: testcore testnode testwebnode testwebbrowser ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testnode testwebnode testwebbrowser ## Run all tests, except browserstack
 
-.PHONY: testcore
-testcore: $(BUILD)/connect
+.PHONY: testconnectpackage
+testconnectpackage: $(BUILD)/connect
 	npm run -w packages/connect jasmine
+
+.PHONY: testconnectnodepackage
+testconnectnodepackage: $(BUILD)/connect-node
+	npm run -w packages/connect-node jasmine
 
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node17 $(BIN)/node18 $(BIN)/node19 $(BUILD)/connect-node-test

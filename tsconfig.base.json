@@ -26,6 +26,9 @@
 
     // We need node's module resolution, so we do not have to skip lib checks
     "moduleResolution": "Node",
-    "skipLibCheck": false
+    "skipLibCheck": false,
+
+    // To support bundlers that transpile files in isolation
+    "isolatedModules": true
   }
 }

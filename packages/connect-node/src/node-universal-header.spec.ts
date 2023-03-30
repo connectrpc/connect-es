@@ -12,6 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO(TCN-761) implement, see https://github.com/bufbuild/connect-crosstest#test-suite
+import { nodeHeaderToWebHeader } from "./node-universal-header.js";
 
-export {}; // Required to transpile this file with isolatedModules
+describe("nodeHeaderToWebHeader", function () {
+  it("should accept empty node header", function () {
+    const h = nodeHeaderToWebHeader({});
+    let numHeaders = 0;
+    h.forEach(() => numHeaders++);
+    expect(numHeaders).toBe(0);
+  });
+});

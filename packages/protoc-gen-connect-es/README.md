@@ -30,7 +30,8 @@ install [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect
 [@bufbuild/connect-express](https://www.npmjs.com/package/@bufbuild/connect-express)
 
 We use peer dependencies to ensure that code generator and runtime library are
-compatible with each other. Note that yarn and pnpm only emit a warning in this case.
+compatible with each other. Note that npm installs them automatically, but yarn
+and pnpm do not.
 
 
 ## Generating code
@@ -51,7 +52,9 @@ plugins:
   # This will invoke protoc-gen-connect-es
   - name: connect-es
     out: src/gen
-    opt: target=ts
+    opt:
+      # Add more plugin options here
+      - target=ts 
 ```
 
 To generate code for all protobuf files within your project, simply run:

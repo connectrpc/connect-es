@@ -15,7 +15,7 @@
   },
   "scripts": {
     "clean": "rm -rf ./dist/cjs/*",
-    "build": "npx tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs"
+    "build": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs"
   },
   "preferUnplugged": true,
   "dependencies": {

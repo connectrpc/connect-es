@@ -40,3 +40,4 @@ export {
 } from "../protocol-grpc/index.js";
 export * from "./headers.js";
 export { createHandlerFactory } from "./handler-factory.js";
+export { createTransport } from "./transport.js";

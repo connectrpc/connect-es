@@ -122,7 +122,7 @@ export function createNodeHttp2Client(
   return async function request(
     req: UniversalClientRequest
   ): Promise<UniversalClientResponse> {
-    const sentinel = createSentinel();
+    const sentinel = createSentinel(req.signal);
     return new Promise<UniversalClientResponse>((resolve, reject) => {
       sentinel.catch((e) => {
         reject(e);
@@ -133,9 +133,8 @@ export function createNodeHttp2Client(
         req.url,
         req.method,
         webHeaderToNodeHeaders(req.header),
-        {
-          signal: req.signal,
-        },
+        req.signal,
+        {},
         (stream) => {
           void pipeTo(req.body, sinkRequest(sentinel, stream), {
             propagateDownStreamError: true,
@@ -287,7 +286,8 @@ function h2Request(
   url: string,
   method: string,
   headers: http2.OutgoingHttpHeaders,
-  options: http2.ClientSessionRequestOptions,
+  signal: AbortSignal | undefined,
+  options: Omit<http2.ClientSessionRequestOptions, "signal">,
   onStream: (stream: http2.ClientHttp2Stream) => void
 ): void {
   const requestUrl = new URL(url);
@@ -321,7 +321,33 @@ function h2Request(
     session.off("error", sentinel.reject);
     session.off("error", h2SessionConnectError);
     session.on("error", sentinel.reject);
+    const stream = session.request(
+      {
+        ...headers,
+        ":method": method,
+        ":path": requestUrl.pathname,
+      },
+      options
+    );
     sentinel
+      .catch((reason) => {
+        return new Promise<void>((resolve) => {
+          if (stream.closed) {
+            return resolve();
+          }
+          // Node.js http2 streams that are aborted via an AbortSignal close with
+          // an RST_STREAM with code INTERNAL_ERROR.
+          // To comply with the mapping between gRPC and HTTP/2 codes, we need to
+          // close with code CANCEL.
+          // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
+          // See https://www.rfc-editor.org/rfc/rfc7540#section-7
+          if (reason instanceof ConnectError && reason.code == Code.Canceled) {
+            return stream.close(http2.constants.NGHTTP2_CANCEL, resolve);
+          }
+          // For other reasons, INTERNAL_ERROR is the best fit.
+          stream.close(http2.constants.NGHTTP2_INTERNAL_ERROR, resolve);
+        });
+      })
       .finally(() => {
         session.off("error", sentinel.reject);
         if (!sessionHolder.keepOpen) {
@@ -332,14 +358,6 @@ function h2Request(
         // We intentionally swallow sentinel rejection - errors must
         // propagate through the request or response iterables.
       });
-    const stream = session.request(
-      {
-        ...headers,
-        ":method": method,
-        ":path": requestUrl.pathname,
-      },
-      options
-    );
     stream.on("error", function h2StreamError(e: unknown) {
       if (
         stream.writableEnded &&
@@ -424,7 +442,7 @@ type Sentinel = Promise<void> & {
   race<T>(promise: PromiseLike<T>): Promise<Awaited<T>>;
 };
 
-function createSentinel(): Sentinel {
+function createSentinel(signal?: AbortSignal): Sentinel {
   let res: (() => void) | undefined;
   let rej: ((reason: ConnectError | unknown) => void) | undefined;
   let resolved = false;
@@ -463,5 +481,24 @@ function createSentinel(): Sentinel {
       return r as Awaited<T>;
     },
   };
-  return Object.assign(p, c);
+  const s = Object.assign(p, c);
+  function onSignalAbort() {
+    c.reject(
+      new ConnectError("operation was aborted via signal", Code.Canceled)
+    );
+  }
+  if (signal) {
+    if (signal.aborted) {
+      onSignalAbort();
+    } else {
+      signal.addEventListener("abort", onSignalAbort);
+    }
+    p.finally(() => signal.removeEventListener("abort", onSignalAbort)).catch(
+      () => {
+        // We intentionally swallow sentinel rejection - errors must
+        // propagate through the request or response iterables.
+      }
+    );
+  }
+  return s;
 }
