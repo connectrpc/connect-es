@@ -12,5 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* global module, require */
+
 // workaround for bundlers that do not support subpath exports.
-export * from "./dist/esm/protocol-grpc/index.js";
+module.exports = require("./dist/cjs/protocol-grpc/index.js");

@@ -71,6 +71,20 @@ module.exports = {
         "node/prefer-promises/dns": "error",
         "node/prefer-promises/fs": "error",
         "no-process-exit": "off",
+        "node/no-unsupported-features/es-builtins": [
+          "error",
+          {
+            version: ">=16.0.0",
+            ignores: [],
+          },
+        ],
+        "node/no-unsupported-features/node-builtins": [
+          "error",
+          {
+            version: ">=16.0.0",
+            ignores: [],
+          },
+        ],
       },
     },
   ],
