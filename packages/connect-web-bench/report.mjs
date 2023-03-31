@@ -1,5 +1,5 @@
-import { buildSync } from "esbuild";
-import { brotliCompressSync } from "zlib";
+import {buildSync} from "esbuild";
+import {compress} from "brotli";
 
 const connect = gather("src/entry-connect.ts");
 const grpcweb = gather("src/entry-grpcweb.ts");
@@ -45,10 +45,6 @@ function build(entryPoint, minify, format) {
     throw new Error();
   }
   return result.outputFiles[0].contents;
-}
-
-function compress(buf) {
-  return brotliCompressSync(buf);
 }
 
 function formatSize(bytes) {
