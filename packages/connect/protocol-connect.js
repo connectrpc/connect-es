@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// ESLint will complain that these are not defined unless specified here.
 /* global module, require */
 
 // Workaround for bundlers that do not support subpath exports.
