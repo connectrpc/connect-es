@@ -35,7 +35,7 @@ describe("validateUniversalHandlerOptions()", function () {
       jsonOptions: undefined,
       binaryOptions: undefined,
       maxDeadlineDurationMs: Number.MAX_SAFE_INTEGER,
-      shutdownSignal: new AbortController().signal,
+      shutdownSignal: undefined,
       requireConnectProtocolHeader: false,
     });
   });

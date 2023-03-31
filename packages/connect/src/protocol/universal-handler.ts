@@ -85,7 +85,7 @@ export interface UniversalHandlerOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
   maxDeadlineDurationMs: number; // TODO TCN-785
-  shutdownSignal: AbortSignal; // TODO TCN-919
+  shutdownSignal?: AbortSignal; // TODO TCN-919
 
   /**
    * Require requests using the Connect protocol to include the header
@@ -139,8 +139,6 @@ export interface UniversalHandler extends UniversalHandlerFn {
   supportedContentType: ContentTypeMatcher;
 }
 
-const neverSignal = new AbortController().signal;
-
 /**
  * Asserts that the options are within sane limits, and returns default values
  * where no value is provided.
@@ -156,7 +154,6 @@ export function validateUniversalHandlerOptions(
     : [];
   const requireConnectProtocolHeader =
     opt.requireConnectProtocolHeader ?? false;
-  const shutdownSignal = opt.shutdownSignal ?? neverSignal;
   const maxDeadlineDurationMs =
     opt.maxDeadlineDurationMs ?? Number.MAX_SAFE_INTEGER;
   return {
@@ -169,7 +166,7 @@ export function validateUniversalHandlerOptions(
     jsonOptions: opt.jsonOptions,
     binaryOptions: opt.binaryOptions,
     maxDeadlineDurationMs,
-    shutdownSignal,
+    shutdownSignal: opt.shutdownSignal,
     requireConnectProtocolHeader,
   };
 }
