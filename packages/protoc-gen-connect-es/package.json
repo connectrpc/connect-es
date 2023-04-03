@@ -25,7 +25,7 @@
   },
   "peerDependencies": {
     "@bufbuild/connect": "0.8.4",
-    "@bufbuild/protoc-gen-es": "^1.0.0"
+    "@bufbuild/protoc-gen-es": "^1.2.0"
   },
   "peerDependenciesMeta": {
     "@bufbuild/connect": {
