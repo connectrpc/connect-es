@@ -87,5 +87,14 @@ module.exports = {
         ],
       },
     },
+    {
+      // Our ESLint setup assumes all `.js` files are ESM, however these particular assets are CommonJS.
+      // Since for these files we cannot use `.cjs`, instead we override here to avoid having to override in each file
+      files: ["packages/connect/*.js"],
+      globals: {
+        module: "readonly",
+        require: "readonly",
+      },
+    },
   ],
 };
