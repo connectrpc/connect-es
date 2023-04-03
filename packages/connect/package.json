@@ -14,7 +14,7 @@
     "generate": "buf generate src/protocol-grpc/proto",
     "build": "npm run build:cjs && npm run build:esm+types",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
-    "build:esm+types": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types && echo >./dist/esm/package.json '{\"type\":\"module\"}'",
+    "build:esm+types": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm --declaration --declarationDir ./dist/types && echo >./dist/esm/package.json '{\"type\":\"module\", \"sideEffects\":false}'",
     "jasmine": "jasmine --config=jasmine.json"
   },
   "main": "./dist/cjs/index.js",
