@@ -13,4 +13,4 @@
 // limitations under the License.
 
 // workaround for bundlers that do not support subpath exports.
-module.exports = require("./dist/cjs/protocol-grpc-web/index.js"); // eslint-disable-next-line
+module.exports = require("./dist/cjs/protocol-grpc-web/index.js");
