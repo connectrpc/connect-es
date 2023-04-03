@@ -12,19 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable */
-
 // https://mathiasbynens.be/notes/globalthis
 
 (function () {
   if (typeof globalThis === "object") return;
-  // @ts-ignore
   Object.prototype.__defineGetter__("__magic__", function () {
-    // @ts-ignore
     return this;
   });
-  // @ts-ignore
-  __magic__.globalThis = __magic__;
-  // @ts-ignore
+  __magic__.globalThis = __magic__; // eslint-disable-line
   delete Object.prototype.__magic__;
 })();

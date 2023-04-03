@@ -13,4 +13,4 @@
 // limitations under the License.
 
 // workaround for bundlers that do not support subpath exports.
-export * from "./dist/esm/protocol/index.js";
+module.exports = require("./dist/cjs/protocol/index.js");

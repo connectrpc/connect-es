@@ -71,6 +71,29 @@ module.exports = {
         "node/prefer-promises/dns": "error",
         "node/prefer-promises/fs": "error",
         "no-process-exit": "off",
+        "node/no-unsupported-features/es-builtins": [
+          "error",
+          {
+            version: ">=16.0.0",
+            ignores: [],
+          },
+        ],
+        "node/no-unsupported-features/node-builtins": [
+          "error",
+          {
+            version: ">=16.0.0",
+            ignores: [],
+          },
+        ],
+      },
+    },
+    {
+      // Our ESLint setup assumes all `.js` files are ESM, however these particular assets are CommonJS.
+      // Since for these files we cannot use `.cjs`, instead we override here to avoid having to override in each file
+      files: ["packages/connect/*.js"],
+      globals: {
+        module: "readonly",
+        require: "readonly",
       },
     },
   ],
