@@ -19,7 +19,7 @@
     "@bufbuild/connect-fastify": "0.8.4",
     "@bufbuild/connect-node": "0.8.4",
     "@bufbuild/connect-web": "0.8.4",
-    "@grpc/grpc-js": "^1.8.7",
+    "@grpc/grpc-js": "^1.8.13",
     "@types/express": "^4.17.17",
     "@types/jasmine": "^4.3.0",
     "@types/long": "^5.0.0",
