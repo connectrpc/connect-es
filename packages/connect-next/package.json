@@ -30,7 +30,7 @@
     "@bufbuild/connect-node": "^0.8.4"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.0.0",
+    "@bufbuild/protobuf": "^1.2.0",
     "next": "^13.2.4"
   },
   "files": [
