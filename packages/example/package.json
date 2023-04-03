@@ -13,8 +13,8 @@
   "dependencies": {
     "@bufbuild/connect-node": "^0.8.4",
     "@bufbuild/connect-web": "^0.8.4",
-    "@bufbuild/protobuf": "^1.0.0",
-    "tsx": "^3.12.6"
+    "@bufbuild/protobuf": "^1.2.0",
+    "tsx": "^3.12.2"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.15.0",
