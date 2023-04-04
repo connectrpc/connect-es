@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * @private Internal code, does not follow semantic versioning.
+ */
 export const headerContentType = "Content-Type";
 export const headerEncoding = "Grpc-Encoding";
 export const headerAcceptEncoding = "Grpc-Accept-Encoding";

@@ -86,6 +86,8 @@ export interface UniversalServerResponse {
  * the union type. A failure in such a call-sites indicates that
  * the contract between a server framework and the connect-node \
  * handler is broken.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function assertByteStreamRequest(
   req: UniversalServerRequest
@@ -104,18 +106,24 @@ export function assertByteStreamRequest(
 
 /**
  * HTTP 200 OK
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const uResponseOk: Readonly<UniversalServerResponse> = {
   status: 200,
 };
 /**
  * HTTP 404 Not Found
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const uResponseNotFound: Readonly<UniversalServerResponse> = {
   status: 404,
 };
 /**
  * HTTP 415 Unsupported Media Type
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const uResponseUnsupportedMediaType: Readonly<UniversalServerResponse> =
   {
@@ -123,12 +131,16 @@ export const uResponseUnsupportedMediaType: Readonly<UniversalServerResponse> =
   };
 /**
  * HTTP 405 Method Not Allowed
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const uResponseMethodNotAllowed: Readonly<UniversalServerResponse> = {
   status: 405,
 };
 /**
  * HTTP 505 Version Not Supported
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const uResponseVersionNotSupported: Readonly<UniversalServerResponse> = {
   status: 505,

@@ -41,6 +41,8 @@ import { Code } from "../code.js";
 
 /**
  * Common options for handlers.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export interface UniversalHandlerOptions {
   /**
@@ -144,6 +146,8 @@ export interface UniversalHandler extends UniversalHandlerFn {
  * where no value is provided.
  *
  * Note that this function does not set default values for `acceptCompression`.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function validateUniversalHandlerOptions(
   opt: Partial<UniversalHandlerOptions> | undefined
@@ -176,6 +180,8 @@ export function validateUniversalHandlerOptions(
  * RPC. The handler serves the given protocols.
  *
  * At least one protocol is required.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createUniversalServiceHandlers(
   spec: ServiceImplSpec,
@@ -191,6 +197,8 @@ export function createUniversalServiceHandlers(
  * The handler serves the given protocols.
  *
  * At least one protocol is required.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createUniversalMethodHandler(
   spec: MethodImplSpec,
@@ -209,6 +217,8 @@ export function createUniversalMethodHandler(
  *
  * Raises an error if no protocol handlers were provided, or if they do not
  * handle exactly the same RPC.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function negotiateProtocol(
   protocolHandlers: UniversalHandler[]

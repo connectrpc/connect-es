@@ -29,6 +29,8 @@ import { assertReadMaxBytes, assertWriteMaxBytes } from "./limit-io.js";
 /**
  * Serialization provides methods to serialize or parse data with a certain
  * format.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export interface Serialization<T> {
   /**
@@ -45,6 +47,8 @@ export interface Serialization<T> {
 /**
  * Create an object that provides convenient access to request and response
  * message serialization for a given method.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createMethodSerializationLookup<
   I extends Message<I>,
@@ -87,6 +91,8 @@ export function createMethodSerializationLookup<
 /**
  * MethodSerializationLookup provides convenient access to request and response
  * message serialization for a given method.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export interface MethodSerializationLookup<
   I extends Message<I>,
@@ -105,6 +111,8 @@ export interface MethodSerializationLookup<
 /**
  * Returns functions to normalize and serialize the input message
  * of an RPC, and to parse the output message of an RPC.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createClientMethodSerializers<
   I extends Message<I>,
@@ -129,6 +137,8 @@ export function createClientMethodSerializers<
 
 /**
  * Apply I/O limits to a Serialization object, returning a new object.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function limitSerialization<T>(
   serialization: Serialization<T>,

@@ -16,6 +16,8 @@ import { Code } from "../code.js";
 
 /**
  * codeToString returns the string representation of a Code.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function codeToString(value: Code): string {
   const name = Code[value] as string | undefined;
@@ -35,6 +37,8 @@ let stringToCode: Record<string, Code> | undefined;
  * For example, the string "permission_denied" parses into Code.PermissionDenied.
  *
  * If the given string cannot be parsed, the function returns undefined.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function codeFromString(value: string): Code | undefined {
   if (!stringToCode) {

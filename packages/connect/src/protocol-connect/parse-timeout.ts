@@ -17,6 +17,8 @@ import { ConnectError } from "../connect-error.js";
 
 /**
  * Parse a Connect Timeout (Deadline) header.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function parseTimeout(
   value: string | null

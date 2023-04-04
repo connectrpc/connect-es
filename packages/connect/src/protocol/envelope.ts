@@ -20,6 +20,8 @@ import type { Compression } from "./compression.js";
 /**
  * Represents an Enveloped-Message of the Connect protocol.
  * https://connect.build/docs/protocol#streaming-rpcs
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export interface EnvelopedMessage {
   /**
@@ -39,6 +41,8 @@ export interface EnvelopedMessage {
  *
  * Ideally, this would simply be a TransformStream, but ReadableStream.pipeThrough
  * does not have the necessary availability at this time.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createEnvelopeReadableStream(
   stream: ReadableStream<Uint8Array>
@@ -100,6 +104,8 @@ export function createEnvelopeReadableStream(
  * Compress an EnvelopedMessage.
  *
  * Raises Internal if an enveloped message is already compressed.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export async function envelopeCompress(
   envelope: EnvelopedMessage,
@@ -128,6 +134,8 @@ export async function envelopeCompress(
  * Relies on the provided Compression to raise ResourceExhausted if the
  * *decompressed* message size is larger than readMaxBytes. If the envelope is
  * not compressed, readMaxBytes is not honored.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export async function envelopeDecompress(
   envelope: EnvelopedMessage,
@@ -150,6 +158,8 @@ export async function envelopeDecompress(
 
 /**
  * Encode a single enveloped message.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function encodeEnvelope(flags: number, data: Uint8Array): Uint8Array {
   const bytes = new Uint8Array(data.length + 5);
@@ -162,6 +172,8 @@ export function encodeEnvelope(flags: number, data: Uint8Array): Uint8Array {
 
 /**
  * Encode a set of enveloped messages.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function encodeEnvelopes(...envelopes: EnvelopedMessage[]): Uint8Array {
   const len = envelopes.reduce(

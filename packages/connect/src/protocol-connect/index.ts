@@ -12,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+export { createHandlerFactory } from "./handler-factory.js";
+export { createTransport } from "./transport.js";
+
+// All exports below are private — internal code that does not follow semantic
+// versioning.
+// We will try hard to avoid breaking changes, but if you depend on the
+// following exports, we recommend that you do so with an exact version
+// constraint (no ~ or ^).
+
 export { codeFromHttpStatus, codeToHttpStatus } from "./http-status.js";
 export {
   requestHeader,
@@ -50,5 +59,3 @@ export * from "./headers.js";
 export { protocolVersion } from "./version.js";
 export { codeFromString } from "./code-string.js";
 export { codeToString } from "./code-string.js";
-export { createHandlerFactory } from "./handler-factory.js";
-export { createTransport } from "./transport.js";

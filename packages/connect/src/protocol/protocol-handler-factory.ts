@@ -18,6 +18,8 @@ import type { UniversalHandler } from "./universal-handler.js";
 /**
  * Creates a handler function for an RPC definition and an RPC implementation,
  * for one specific protocol.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export interface ProtocolHandlerFactory {
   /**

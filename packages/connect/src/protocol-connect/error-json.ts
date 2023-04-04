@@ -25,6 +25,8 @@ import { codeFromString, codeToString } from "./code-string.js";
 /**
  * Parse a Connect error from a JSON value.
  * Will return a ConnectError, and throw the provided fallback if parsing failed.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function errorFromJson(
   jsonValue: JsonValue,
@@ -83,6 +85,8 @@ export function errorFromJson(
 /**
  * Parse a Connect error from a serialized JSON value.
  * Will return a ConnectError, and throw the provided fallback if parsing failed.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function errorFromJsonBytes(
   bytes: Uint8Array,
@@ -107,6 +111,8 @@ export function errorFromJsonBytes(
  * is silently disregarded.
  *
  * See https://connect.build/docs/protocol#error-end-stream
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function errorToJson(
   error: ConnectError,
@@ -154,6 +160,8 @@ export function errorToJson(
 /**
  * Serialize the given error to JSON. This calls errorToJson(), but stringifies
  * the result, and converts it into a UInt8Array.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function errorToJsonBytes(
   error: ConnectError,
