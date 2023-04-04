@@ -12,11 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ConnectRouter,
-  ConnectRouterOptions,
-  createConnectRouter,
-} from "@bufbuild/connect";
+import { createConnectRouter } from "@bufbuild/connect";
+import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import type { UniversalHandler } from "@bufbuild/connect/protocol";
 import {
   compressionBrotli,

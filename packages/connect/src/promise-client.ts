@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+import { Message, MethodKind } from "@bufbuild/protobuf";
+import type {
+  PartialMessage,
+  ServiceType,
   MethodInfo,
   MethodInfoBiDiStreaming,
   MethodInfoClientStreaming,
   MethodInfoServerStreaming,
   MethodInfoUnary,
-  PartialMessage,
-  ServiceType,
-  Message,
-  MethodKind,
 } from "@bufbuild/protobuf";
 import { createAsyncIterable } from "./protocol/index.js";
 import type { Transport } from "./transport.js";

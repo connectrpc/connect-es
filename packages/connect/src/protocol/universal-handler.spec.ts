@@ -16,9 +16,11 @@ import type { ServiceType } from "@bufbuild/protobuf";
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import {
   negotiateProtocol,
+  validateUniversalHandlerOptions,
+} from "./universal-handler.js";
+import type {
   UniversalHandler,
   UniversalHandlerOptions,
-  validateUniversalHandlerOptions,
 } from "./universal-handler.js";
 import type { Compression } from "./compression.js";
 import { contentTypeMatcher } from "./content-type-matcher.js";

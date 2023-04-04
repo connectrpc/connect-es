@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import {
-  CallOptions,
   Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
   connectErrorFromReason,
 } from "@bufbuild/connect";
+import type { CallOptions } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";

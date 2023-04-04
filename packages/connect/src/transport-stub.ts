@@ -20,10 +20,9 @@ import type {
 } from "@bufbuild/protobuf";
 import type { Transport } from "./transport.js";
 import type { ConnectError } from "./connect-error.js";
-import {
+import { runStreaming, runUnary } from "./interceptor.js";
+import type {
   Interceptor,
-  runStreaming,
-  runUnary,
   StreamResponse,
   StreamRequest,
   UnaryRequest,

@@ -28,8 +28,8 @@ import {
 } from "@bufbuild/connect-node";
 import { fastifyConnectPlugin } from "@bufbuild/connect-fastify";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
-import {
-  fastify,
+import { fastify } from "fastify";
+import type {
   FastifyBaseLogger,
   FastifyInstance,
   FastifyTypeProviderDefault,

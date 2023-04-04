@@ -15,11 +15,10 @@
 import {
   Code,
   ConnectError,
-  ConnectRouter,
   decodeBinaryHeader,
   encodeBinaryHeader,
-  ServiceImpl,
 } from "@bufbuild/connect";
+import type { ConnectRouter, ServiceImpl } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import type { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { interop } from "./interop.js";
