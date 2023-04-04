@@ -21,6 +21,8 @@ import type { AsyncIterableTransform } from "./async-iterable.js";
 /**
  * Invoke a user-provided implementation of a unary RPC. Returns a normalized
  * output message.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export async function invokeUnaryImplementation<
   I extends Message<I>,
@@ -38,6 +40,8 @@ export async function invokeUnaryImplementation<
  * Return an AsyncIterableTransform that invokes a user-provided implementation,
  * giving it input from an asynchronous iterable, and returning its output as an
  * asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformInvokeImplementation<
   I extends Message<I>,

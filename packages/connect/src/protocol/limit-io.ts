@@ -34,6 +34,8 @@ const defaultCompressMinBytes = 1024;
  * Asserts that the options writeMaxBytes, readMaxBytes, and compressMinBytes
  * are within sane limits, and returns default values where no value is
  * provided.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function validateReadWriteMaxBytes(
   readMaxBytes: number | undefined,
@@ -64,6 +66,8 @@ export function validateReadWriteMaxBytes(
 
 /**
  * Raise an error ResourceExhausted if more than writeMaxByte are written.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function assertWriteMaxBytes(
   writeMaxBytes: number,
@@ -79,6 +83,8 @@ export function assertWriteMaxBytes(
 
 /**
  * Raise an error ResourceExhausted if more than readMaxBytes are read.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function assertReadMaxBytes(
   readMaxBytes: number,

@@ -18,6 +18,8 @@
  *
  * This function demuxes headers and trailers into two separate Headers
  * objects.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function trailerDemux(
   header: Headers
@@ -39,6 +41,8 @@ export function trailerDemux(
  * fields, prefixed with "trailer-".
  *
  * This function muxes a header and a trailer into a single Headers object.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function trailerMux(header: Headers, trailer: Headers): Headers {
   const h = new Headers(header);

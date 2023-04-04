@@ -33,6 +33,8 @@ import {
 
 /**
  * Creates headers for a Connect request.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function requestHeader(
   methodKind: MethodKind,
@@ -65,6 +67,8 @@ export function requestHeader(
  * It is up to the caller to decide whether to apply compression - and remove
  * the header if compression is not used, for example because the payload is
  * too small to make compression effective.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function requestHeaderWithCompression(
   methodKind: MethodKind,

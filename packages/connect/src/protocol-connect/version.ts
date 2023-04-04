@@ -18,12 +18,16 @@ import { Code } from "../code.js";
 
 /**
  * The only know value for the header Connect-Protocol-Version.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const protocolVersion = "1";
 
 /**
  * Requires the Connect-Protocol-Version header to be present with the expected
  * value. Raises a ConnectError with Code.InvalidArgument otherwise.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function requireProtocolVersion(requestHeader: Headers) {
   const v = requestHeader.get(headerProtocolVersion);

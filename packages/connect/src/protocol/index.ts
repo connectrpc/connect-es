@@ -13,6 +13,24 @@
 // limitations under the License.
 
 export { createMethodUrl } from "./create-method-url.js";
+export type {
+  UniversalClientFn,
+  UniversalClientRequest,
+  UniversalClientResponse,
+  UniversalHandlerFn,
+  UniversalServerRequest,
+  UniversalServerResponse,
+} from "./universal.js";
+export type { Compression } from "./compression.js";
+export type { UniversalHandler } from "./universal-handler.js";
+export { createUniversalHandlerClient } from "./universal-handler-client.js";
+
+// All exports below are private — internal code that does not follow semantic
+// versioning.
+// We will try hard to avoid breaking changes, but if you depend on the
+// following exports, we recommend that you do so with an exact version
+// constraint (no ~ or ^).
+
 export {
   createMethodSerializationLookup,
   createClientMethodSerializers,
@@ -32,7 +50,6 @@ export {
 } from "./envelope.js";
 export type { EnvelopedMessage } from "./envelope.js";
 export { compressedFlag, compressionNegotiate } from "./compression.js";
-export type { Compression } from "./compression.js";
 export {
   pipe,
   transformCatch,
@@ -74,23 +91,11 @@ export {
   uResponseMethodNotAllowed,
   uResponseVersionNotSupported,
 } from "./universal.js";
-export type {
-  UniversalClientFn,
-  UniversalClientRequest,
-  UniversalClientResponse,
-  UniversalHandlerFn,
-  UniversalServerRequest,
-  UniversalServerResponse,
-} from "./universal.js";
-export { createUniversalHandlerClient } from "./universal-handler-client.js";
 export {
   validateUniversalHandlerOptions,
   createUniversalServiceHandlers,
   createUniversalMethodHandler,
 } from "./universal-handler.js";
-export type {
-  UniversalHandler,
-  UniversalHandlerOptions,
-} from "./universal-handler.js";
+export type { UniversalHandlerOptions } from "./universal-handler.js";
 export type { ProtocolHandlerFactory } from "./protocol-handler-factory.js";
 export type { CommonTransportOptions } from "./transport-options.js";

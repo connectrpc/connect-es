@@ -22,6 +22,9 @@ import type { UniversalClientFn } from "./universal.js";
 import type { Interceptor } from "../interceptor.js";
 import type { Compression } from "./compression.js";
 
+/**
+ * @private Internal code, does not follow semantic versioning.
+ */
 export interface CommonTransportOptions {
   /**
    * The HTTP client to use.

@@ -35,6 +35,8 @@ import {
  * Returns an object that indicates whether a gRPC status was found
  * in the response header. In this case, clients can not expect a
  * trailer.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function validateResponse(
   useBinaryFormat: boolean,
@@ -77,6 +79,8 @@ export function validateResponse(
  * Returns an object with the response compression, and a boolean
  * indicating whether a gRPC status was found in the response header
  * (in this case, clients can not expect a trailer).
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function validateResponseWithCompression(
   useBinaryFormat: boolean,

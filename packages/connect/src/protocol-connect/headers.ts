@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * @private Internal code, does not follow semantic versioning.
+ */
 export const headerContentType = "Content-Type";
 export const headerUnaryContentLength = "Content-Length";
 export const headerUnaryEncoding = "Content-Encoding";
