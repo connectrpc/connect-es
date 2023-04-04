@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/protoc-gen-connect-es",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "description": "Code generator for Connect",
   "license": "Apache-2.0",
   "repository": {
@@ -24,7 +24,7 @@
     "@bufbuild/protoplugin": "^1.2.0"
   },
   "peerDependencies": {
-    "@bufbuild/connect": "0.8.4",
+    "@bufbuild/connect": "0.8.5",
     "@bufbuild/protoc-gen-es": "^1.2.0"
   },
   "peerDependenciesMeta": {
