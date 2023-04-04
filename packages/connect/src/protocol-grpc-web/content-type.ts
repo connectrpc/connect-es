@@ -16,6 +16,8 @@
  * Regular Expression that matches any valid gRPC-web Content-Type header value.
  * Note that this includes application/grpc-web-text with the additional base64
  * encoding.
+ *
+ * @private
  */
 export const contentTypeRegExp =
   /^application\/grpc-web(-text)?(?:\+(?:(json)(?:; ?charset=utf-?8)?|proto))?$/i;
@@ -25,6 +27,8 @@ export const contentTypeJson = "application/grpc-web+json";
 
 /**
  * Parse a gRPC-web Content-Type header value.
+ *
+ * @private
  */
 export function parseContentType(
   contentType: string | null

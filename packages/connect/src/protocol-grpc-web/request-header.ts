@@ -25,6 +25,8 @@ import { contentTypeJson, contentTypeProto } from "./content-type.js";
 
 /**
  * Creates headers for a gRPC-web request.
+ *
+ * @private
  */
 export function requestHeader(
   useBinaryFormat: boolean,
@@ -51,6 +53,8 @@ export function requestHeader(
 
 /**
  * Creates headers for a gRPC-web request with compression.
+ *
+ * @private
  */
 export function requestHeaderWithCompression(
   useBinaryFormat: boolean,

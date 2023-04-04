@@ -26,6 +26,8 @@ import {
 /**
  * The value of the Grpc-Status header or trailer in case of success.
  * Used by the gRPC and gRPC-web protocols.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const grpcStatusOk = "0";
 
@@ -35,6 +37,8 @@ export const grpcStatusOk = "0";
  * If an error is given and contains error details, the function
  * will also set the field "grpc-status-details-bin" with an encoded
  * google.rpc.Status message including the error details.
+ *
+ * @private
  */
 export function setTrailerStatus(
   target: Headers,
@@ -70,6 +74,8 @@ export function setTrailerStatus(
  * The field "grpc-status-details-bin" is inspected, and if not present,
  * the fields "grpc-status" and "grpc-message" are used.
  * Returns an error only if the gRPC status code is > 0.
+ *
+ * @private
  */
 export function findTrailerError(
   headerOrTrailer: Headers

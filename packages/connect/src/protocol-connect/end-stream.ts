@@ -26,11 +26,15 @@ import type { Serialization } from "../protocol";
 /**
  * endStreamFlag indicates that the data in a EnvelopedMessage
  * is a EndStreamResponse of the Connect protocol.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const endStreamFlag = 0b00000010;
 
 /**
  * Represents the EndStreamResponse of the Connect protocol.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export interface EndStreamResponse {
   metadata: Headers;
@@ -40,6 +44,8 @@ export interface EndStreamResponse {
 /**
  * Parse an EndStreamResponse of the Connect protocol.
  * Throws a ConnectError on malformed input.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function endStreamFromJson(
   data: Uint8Array | string
@@ -97,6 +103,8 @@ export function endStreamFromJson(
  * google.protobuf.Any.
  *
  * See https://connect.build/docs/protocol#error-end-stream
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function endStreamToJson(
   metadata: Headers,
@@ -123,6 +131,8 @@ export function endStreamToJson(
 
 /**
  * Create a Serialization object that serializes a Connect EndStreamResponse.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createEndStreamSerialization(
   options: Partial<JsonWriteOptions> | undefined

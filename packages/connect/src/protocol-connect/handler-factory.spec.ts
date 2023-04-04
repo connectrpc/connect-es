@@ -21,12 +21,9 @@ import {
   StringValue,
 } from "@bufbuild/protobuf";
 import { createHandlerFactory } from "./handler-factory.js";
-import {
-  createMethodImplSpec,
-  HandlerContext,
-  MethodImpl,
-} from "../implementation.js";
+import type { HandlerContext, MethodImpl } from "../implementation.js";
 import type { UniversalHandlerOptions } from "../protocol/index.js";
+import { createMethodImplSpec } from "../implementation.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";

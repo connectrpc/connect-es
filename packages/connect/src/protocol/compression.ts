@@ -19,6 +19,8 @@ import { Code } from "../code.js";
  * compressedFlag indicates that the data in a EnvelopedMessage is
  * compressed. It has the same meaning in the gRPC-Web, gRPC-HTTP2,
  * and Connect protocols.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const compressedFlag = 0b00000001;
 
@@ -52,6 +54,8 @@ export interface Compression {
  * Returns the request and response compression to use. If the client requested
  * an encoding that is not available, the returned object contains an error that
  * must be used for the response.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function compressionNegotiate(
   available: Compression[],

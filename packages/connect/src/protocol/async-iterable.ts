@@ -50,6 +50,8 @@ import { assertReadMaxBytes } from "./limit-io.js";
  * ```
  *
  * Transformation functions can be passed to pipe() and pipeTo().
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export type AsyncIterableTransform<I, O = I> = (
   data: AsyncIterable<I>
@@ -60,6 +62,8 @@ export type AsyncIterableTransform<I, O = I> = (
  * to the end, optionally returning a cumulative value.
  *
  * Sinks are the used with pipeTo().
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export type AsyncIterableSink<T, R = void> = (
   iterable: AsyncIterable<T>
@@ -68,7 +72,7 @@ export type AsyncIterableSink<T, R = void> = (
 /**
  * Options for pipe() and pipeTo().
  *
- *
+ * @private Internal code, does not follow semantic versioning.
  */
 interface PipeOptions {
   /**
@@ -126,6 +130,8 @@ interface PipeOptions {
  *
  * It is either a deserialized message M, or a deserialized end-of-stream
  * message E, typically distinguished by a flag on an enveloped message.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 type ParsedEnvelopedMessage<M, E> =
   | { end: false; value: M }
@@ -133,6 +139,8 @@ type ParsedEnvelopedMessage<M, E> =
 
 /**
  * Takes an asynchronous iterable as a source, and passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2>(
   iterable: AsyncIterable<T1>,
@@ -142,6 +150,8 @@ export function pipeTo<T1, T2>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3>(
   iterable: AsyncIterable<T1>,
@@ -152,6 +162,8 @@ export function pipeTo<T1, T2, T3>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4>(
   iterable: AsyncIterable<T1>,
@@ -163,6 +175,8 @@ export function pipeTo<T1, T2, T3, T4>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5>(
   iterable: AsyncIterable<T1>,
@@ -175,6 +189,8 @@ export function pipeTo<T1, T2, T3, T4, T5>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6>(
   iterable: AsyncIterable<T1>,
@@ -188,6 +204,8 @@ export function pipeTo<T1, T2, T3, T4, T5, T6>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6, T7>(
   iterable: AsyncIterable<T1>,
@@ -202,6 +220,8 @@ export function pipeTo<T1, T2, T3, T4, T5, T6, T7>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8>(
   iterable: AsyncIterable<T1>,
@@ -217,6 +237,8 @@ export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
   iterable: AsyncIterable<T1>,
@@ -233,6 +255,8 @@ export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
   iterable: AsyncIterable<T1>,
@@ -251,40 +275,44 @@ export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
-  iterable: AsyncIterable<T1>,
-  transform1: AsyncIterableTransform<T1, T2>,
-  transform2: AsyncIterableTransform<T2, T3>,
-  transform3: AsyncIterableTransform<T3, T4>,
-  transform4: AsyncIterableTransform<T4, T5>,
-  transform5: AsyncIterableTransform<T5, T6>,
-  transform6: AsyncIterableTransform<T6, T7>,
-  transform7: AsyncIterableTransform<T7, T8>,
-  transform8: AsyncIterableTransform<T8, T9>,
-  transform9: AsyncIterableTransform<T9, T10>,
-  sink: AsyncIterableSink<T10, T11>,
-  options?: PipeOptions
+    iterable: AsyncIterable<T1>,
+    transform1: AsyncIterableTransform<T1, T2>,
+    transform2: AsyncIterableTransform<T2, T3>,
+    transform3: AsyncIterableTransform<T3, T4>,
+    transform4: AsyncIterableTransform<T4, T5>,
+    transform5: AsyncIterableTransform<T5, T6>,
+    transform6: AsyncIterableTransform<T6, T7>,
+    transform7: AsyncIterableTransform<T7, T8>,
+    transform8: AsyncIterableTransform<T8, T9>,
+    transform9: AsyncIterableTransform<T9, T10>,
+    sink: AsyncIterableSink<T10, T11>,
+    options?: PipeOptions
 ): Promise<T11>;
 // prettier-ignore
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
-  iterable: AsyncIterable<T1>,
-  transform1: AsyncIterableTransform<T1, T2>,
-  transform2: AsyncIterableTransform<T2, T3>,
-  transform3: AsyncIterableTransform<T3, T4>,
-  transform4: AsyncIterableTransform<T4, T5>,
-  transform5: AsyncIterableTransform<T5, T6>,
-  transform6: AsyncIterableTransform<T6, T7>,
-  transform7: AsyncIterableTransform<T7, T8>,
-  transform8: AsyncIterableTransform<T8, T9>,
-  transform9: AsyncIterableTransform<T9, T10>,
-  transform10: AsyncIterableTransform<T10, T11>,
-  sink: AsyncIterableSink<T11, T12>,
-  options?: PipeOptions
+    iterable: AsyncIterable<T1>,
+    transform1: AsyncIterableTransform<T1, T2>,
+    transform2: AsyncIterableTransform<T2, T3>,
+    transform3: AsyncIterableTransform<T3, T4>,
+    transform4: AsyncIterableTransform<T4, T5>,
+    transform5: AsyncIterableTransform<T5, T6>,
+    transform6: AsyncIterableTransform<T6, T7>,
+    transform7: AsyncIterableTransform<T7, T8>,
+    transform8: AsyncIterableTransform<T8, T9>,
+    transform9: AsyncIterableTransform<T9, T10>,
+    transform10: AsyncIterableTransform<T10, T11>,
+    sink: AsyncIterableSink<T11, T12>,
+    options?: PipeOptions
 ): Promise<T12>;
 export function pipeTo(
   source: AsyncIterable<unknown>,
@@ -328,6 +356,8 @@ function pickTransformsAndSink(
 
 /**
  * Creates an AsyncIterableSink that concatenates all elements from the input.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function sinkAll<T>(): AsyncIterableSink<T, T[]> {
   return async function (iterable: AsyncIterable<T>) {
@@ -350,6 +380,8 @@ export function sinkAll<T>(): AsyncIterableSink<T, T[]> {
  * and error is raised.
  * If the length hint is larger than readMaxBytes, an error is raised.
  * If the length hint is not a positive integer, it is ignored.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function sinkAllBytes(
   readMaxBytes: number,
@@ -362,6 +394,8 @@ export function sinkAllBytes(
 
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2>(
   iterable: AsyncIterable<T1>,
@@ -370,6 +404,8 @@ export function pipe<T1, T2>(
 ): AsyncIterable<T2>;
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3>(
   iterable: AsyncIterable<T1>,
@@ -379,6 +415,8 @@ export function pipe<T1, T2, T3>(
 ): AsyncIterable<T3>;
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4>(
   iterable: AsyncIterable<T1>,
@@ -389,6 +427,8 @@ export function pipe<T1, T2, T3, T4>(
 ): AsyncIterable<T4>;
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5>(
   iterable: AsyncIterable<T1>,
@@ -400,6 +440,8 @@ export function pipe<T1, T2, T3, T4, T5>(
 ): AsyncIterable<T5>;
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6>(
   iterable: AsyncIterable<T1>,
@@ -412,6 +454,8 @@ export function pipe<T1, T2, T3, T4, T5, T6>(
 ): AsyncIterable<T6>;
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6, T7>(
   iterable: AsyncIterable<T1>,
@@ -425,6 +469,8 @@ export function pipe<T1, T2, T3, T4, T5, T6, T7>(
 ): AsyncIterable<T7>;
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6, T7, T8>(
   iterable: AsyncIterable<T1>,
@@ -439,6 +485,8 @@ export function pipe<T1, T2, T3, T4, T5, T6, T7, T8>(
 ): AsyncIterable<T8>;
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
   iterable: AsyncIterable<T1>,
@@ -454,6 +502,8 @@ export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9>(
 ): AsyncIterable<T9>;
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
   iterable: AsyncIterable<T1>,
@@ -471,39 +521,43 @@ export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
 // prettier-ignore
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
-  iterable: AsyncIterable<T1>,
-  transform1: AsyncIterableTransform<T1, T2>,
-  transform2: AsyncIterableTransform<T2, T3>,
-  transform3: AsyncIterableTransform<T3, T4>,
-  transform4: AsyncIterableTransform<T4, T5>,
-  transform5: AsyncIterableTransform<T5, T6>,
-  transform6: AsyncIterableTransform<T6, T7>,
-  transform7: AsyncIterableTransform<T7, T8>,
-  transform8: AsyncIterableTransform<T8, T9>,
-  transform9: AsyncIterableTransform<T9, T10>,
-  transform10: AsyncIterableTransform<T10, T11>,
-  options?: PipeOptions
+    iterable: AsyncIterable<T1>,
+    transform1: AsyncIterableTransform<T1, T2>,
+    transform2: AsyncIterableTransform<T2, T3>,
+    transform3: AsyncIterableTransform<T3, T4>,
+    transform4: AsyncIterableTransform<T4, T5>,
+    transform5: AsyncIterableTransform<T5, T6>,
+    transform6: AsyncIterableTransform<T6, T7>,
+    transform7: AsyncIterableTransform<T7, T8>,
+    transform8: AsyncIterableTransform<T8, T9>,
+    transform9: AsyncIterableTransform<T9, T10>,
+    transform10: AsyncIterableTransform<T10, T11>,
+    options?: PipeOptions
 ): AsyncIterable<T11>;
 // prettier-ignore
 /**
  * Apply one or more transformations to an asynchronous iterable.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
-  iterable: AsyncIterable<T1>,
-  transform1: AsyncIterableTransform<T1, T2>,
-  transform2: AsyncIterableTransform<T2, T3>,
-  transform3: AsyncIterableTransform<T3, T4>,
-  transform4: AsyncIterableTransform<T4, T5>,
-  transform5: AsyncIterableTransform<T5, T6>,
-  transform6: AsyncIterableTransform<T6, T7>,
-  transform7: AsyncIterableTransform<T7, T8>,
-  transform8: AsyncIterableTransform<T8, T9>,
-  transform9: AsyncIterableTransform<T9, T10>,
-  transform10: AsyncIterableTransform<T10, T11>,
-  transform11: AsyncIterableTransform<T11, T12>,
-  options?: PipeOptions
+    iterable: AsyncIterable<T1>,
+    transform1: AsyncIterableTransform<T1, T2>,
+    transform2: AsyncIterableTransform<T2, T3>,
+    transform3: AsyncIterableTransform<T3, T4>,
+    transform4: AsyncIterableTransform<T4, T5>,
+    transform5: AsyncIterableTransform<T5, T6>,
+    transform6: AsyncIterableTransform<T6, T7>,
+    transform7: AsyncIterableTransform<T7, T8>,
+    transform8: AsyncIterableTransform<T8, T9>,
+    transform9: AsyncIterableTransform<T9, T10>,
+    transform10: AsyncIterableTransform<T10, T11>,
+    transform11: AsyncIterableTransform<T11, T12>,
+    options?: PipeOptions
 ): AsyncIterable<T12>;
 export async function* pipe<I, O>(
   source: AsyncIterable<I>,
@@ -552,6 +606,8 @@ function pickTransforms(
  * passes it to the given catchError function.
  *
  * The catchError function may return a final value.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformCatch<T>(
   catchError: TransformCatchErrorFn<T>
@@ -588,6 +644,8 @@ type TransformCatchErrorFn<C> =
  * Creates an AsyncIterableTransform that catches any error from the input, and
  * passes it to the given function. Unlike transformCatch(), the given function
  * is also called when no error is raised.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformCatchFinally<T>(
   catchFinally: TransformCatchFinallyFn<T>
@@ -626,6 +684,8 @@ type TransformCatchFinallyFn<C> =
  *
  * The element to append is provided by a function. If the function returns
  * undefined, no element is appended.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformAppend<T>(
   provide: TransformXpendProvide<T>
@@ -646,6 +706,8 @@ export function transformAppend<T>(
  *
  * The element to prepend is provided by a function. If the function returns
  * undefined, no element is appended.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformPrepend<T>(
   provide: TransformXpendProvide<T>
@@ -676,6 +738,8 @@ type TransformXpendProvide<T> = T extends undefined
  * and error is raised.
  * If the length hint is larger than readMaxBytes, an error is raised.
  * If the length hint is not a positive integer, it is ignored.
+ *
+ * @private
  */
 export function transformReadAllBytes(
   readMaxBytes: number,
@@ -689,6 +753,8 @@ export function transformReadAllBytes(
 /**
  * Creates an AsyncIterableTransform that takes partial protobuf messages of the
  * specified message type as input, and yields full instances.
+ *
+ * @private
  */
 export function transformNormalizeMessage<T extends Message<T>>(
   messageType: MessageType<T>
@@ -711,6 +777,8 @@ export function transformNormalizeMessage<T extends Message<T>>(
  * Note that this function has an override that lets the input stream
  * distinguish between regular messages, and end-of-stream messages, as used
  * by the RPP-web and Connect protocols.
+ *
+ * @private
  */
 export function transformSerializeEnvelope<T>(
   serialization: Serialization<T>
@@ -726,6 +794,8 @@ export function transformSerializeEnvelope<T>(
  * A source with { end: false, value: ... } is serialized using the given
  * serialization, and the resulting enveloped message does not have the given
  * endStreamFlag.
+ *
+ * @private
  */
 export function transformSerializeEnvelope<T, E>(
   serialization: Serialization<T>,
@@ -773,6 +843,8 @@ export function transformSerializeEnvelope<T, E>(
  * Note that this function has overrides that let the stream distinguish
  * between regular messages, and end-of-stream messages, as used by the
  * gRPP-web and Connect protocols.
+ *
+ * @private
  */
 export function transformParseEnvelope<T>(
   serialization: Serialization<T>
@@ -783,6 +855,8 @@ export function transformParseEnvelope<T>(
  *
  * Note that this override will look for the given endStreamFlag, and silently
  * ignore envelopes with this flag.
+ *
+ * @private
  */
 export function transformParseEnvelope<T>(
   serialization: Serialization<T>,
@@ -794,6 +868,8 @@ export function transformParseEnvelope<T>(
  *
  * Note that this override will look for the given endStreamFlag, and raise
  * and error if it is set.
+ *
+ * @private
  */
 export function transformParseEnvelope<T>(
   serialization: Serialization<T>,
@@ -810,6 +886,8 @@ export function transformParseEnvelope<T>(
  *
  * If the endStreamFlag is not set, the payload is parsed using the given
  * serialization, and an object with { end: false, value: ... } is returned.
+ *
+ * @private
  */
 export function transformParseEnvelope<T, E>(
   serialization: Serialization<T>,
@@ -860,6 +938,8 @@ export function transformParseEnvelope<T, E>(
 /**
  * Creates an AsyncIterableTransform that takes enveloped messages as a source,
  * and compresses them if they are larger than compressMinBytes.
+ *
+ * @private
  */
 export function transformCompressEnvelope(
   compression: Compression | null,
@@ -877,7 +957,9 @@ export function transformCompressEnvelope(
  * and decompresses them using the given compression.
  *
  * The iterable raises an error if the decompressed payload of an enveloped
- * message is larger than readMaxBytes,
+ * message is larger than readMaxBytes, or if no compression is provided.
+ *
+ * @private
  */
 export function transformDecompressEnvelope(
   compression: Compression | null,
@@ -893,6 +975,8 @@ export function transformDecompressEnvelope(
 /**
  * Create an AsyncIterableTransform that takes enveloped messages as a source,
  * and joins them into a stream of raw bytes.
+ *
+ * @private
  */
 export function transformJoinEnvelopes(): AsyncIterableTransform<
   EnvelopedMessage,
@@ -913,6 +997,8 @@ export function transformJoinEnvelopes(): AsyncIterableTransform<
  * - if the payload of an enveloped message is larger than readMaxBytes,
  * - if the stream ended before an enveloped message fully arrived,
  * - or if the stream ended with extraneous data.
+ *
+ * @private
  */
 export function transformSplitEnvelope(
   readMaxBytes: number
@@ -996,6 +1082,8 @@ export function transformSplitEnvelope(
  * - lengthHint is a positive integer, but larger than readMaxBytes
  * - lengthHint is a positive integer, and the source contains more or less bytes
  *   than promised
+ *
+ * @private
  */
 export async function readAllBytes(
   iterable: AsyncIterable<Uint8Array>,
@@ -1097,6 +1185,8 @@ type AbortState = "rethrown" | "completed" | "caught";
  *
  * Note that catching errors and yielding a value is problematic, and it should
  * be documented that this may leave the source in a dangling state.
+ *
+ * @private
  */
 export function makeIterableAbortable<T>(
   iterable: AsyncIterable<T>
@@ -1265,6 +1355,8 @@ export function createWritableIterable<T>(): WritableIterable<T> {
 
 /**
  * Create an asynchronous iterable from an array.
+ *
+ * @private
  */
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function* createAsyncIterable<T>(items: T[]): AsyncIterable<T> {

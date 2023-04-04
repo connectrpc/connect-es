@@ -14,18 +14,24 @@
 
 /**
  * Regular Expression that matches any valid Connect Content-Type header value.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const contentTypeRegExp =
   /^application\/(connect\+)?(?:(json)(?:; ?charset=utf-?8)?|(proto))$/i;
 
 /**
  * Regular Expression that matches a Connect unary Content-Type header value.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const contentTypeUnaryRegExp =
   /^application\/(?:json(?:; ?charset=utf-?8)?|proto)$/i;
 
 /**
  * Regular Expression that matches a Connect streaming Content-Type header value.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export const contentTypeStreamRegExp =
   /^application\/connect\+?(?:json(?:; ?charset=utf-?8)?|proto)$/i;
@@ -37,6 +43,8 @@ export const contentTypeStreamJson = "application/connect+json";
 
 /**
  * Parse a Connect Content-Type header.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function parseContentType(
   contentType: string | null

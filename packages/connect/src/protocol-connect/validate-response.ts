@@ -28,6 +28,8 @@ import { headerUnaryEncoding, headerStreamEncoding } from "./headers.js";
  * application/json, this returns an error derived from the HTTP
  * status instead of throwing it, giving an implementation a chance
  * to parse a Connect error from the wire.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function validateResponse(
   methodKind: MethodKind,
@@ -72,6 +74,8 @@ export function validateResponse(
  * Validates response status and header for the Connect protocol.
  * This function is identical to validateResponse(), but also verifies
  * that a given encoding header is acceptable.
+ *
+ * @private
  */
 export function validateResponseWithCompression(
   methodKind: MethodKind,
