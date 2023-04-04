@@ -24,6 +24,7 @@ export type {
 export type { Compression } from "./compression.js";
 export type { UniversalHandler } from "./universal-handler.js";
 export { createUniversalHandlerClient } from "./universal-handler-client.js";
+export { createFetchClient, createFetchHandler } from "./universal-fetch.js";
 
 // All exports below are private — internal code that does not follow semantic
 // versioning.
