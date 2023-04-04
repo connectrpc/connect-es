@@ -15,11 +15,8 @@
 import { createTransport } from "./protocol-connect/transport.js";
 import type { CommonTransportOptions } from "./protocol/transport-options.js";
 import { createUniversalHandlerClient } from "./protocol/universal-handler-client.js";
-import {
-  ConnectRouter,
-  ConnectRouterOptions,
-  createConnectRouter,
-} from "./router.js";
+import { createConnectRouter } from "./router.js";
+import type { ConnectRouter, ConnectRouterOptions } from "./router.js";
 
 /**
  * Creates a Transport that routes requests to the configured router. Useful for testing

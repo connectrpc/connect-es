@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+import { Message, protoBase64 } from "@bufbuild/protobuf";
+import type {
   JsonObject,
   JsonValue,
   JsonWriteOptions,
-  Message,
-  protoBase64,
 } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";

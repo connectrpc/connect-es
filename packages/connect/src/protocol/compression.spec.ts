@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Compression, compressionNegotiate } from "./compression.js";
+import { compressionNegotiate } from "./compression.js";
+import type { Compression } from "./compression.js";
 import { ConnectError } from "../connect-error.js";
 import { node16FetchHeadersPolyfill } from "../node16-polyfill-helper.spec.js";
 

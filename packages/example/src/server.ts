@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectRouter } from "@bufbuild/connect";
+import type { ConnectRouter } from "@bufbuild/connect";
 import { connectNodeAdapter } from "@bufbuild/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 import type {

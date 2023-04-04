@@ -17,8 +17,8 @@ import {
   encodeEnvelopes,
   envelopeCompress,
   envelopeDecompress,
-  EnvelopedMessage,
 } from "./envelope.js";
+import type { EnvelopedMessage } from "./envelope.js";
 import type { Compression } from "./compression.js";
 import { ConnectError, connectErrorFromReason } from "../connect-error.js";
 import { Code } from "../code.js";

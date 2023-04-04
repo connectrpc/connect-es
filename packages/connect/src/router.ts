@@ -18,16 +18,17 @@ import { Code } from "./code.js";
 import {
   createMethodImplSpec,
   createServiceImplSpec,
-  MethodImpl,
-  ServiceImpl,
 } from "./implementation.js";
+import type { MethodImpl, ServiceImpl } from "./implementation.js";
 import {
-  ProtocolHandlerFactory,
-  UniversalHandler,
-  UniversalHandlerOptions,
   validateUniversalHandlerOptions,
   createUniversalMethodHandler,
   createUniversalServiceHandlers,
+} from "./protocol/index.js";
+import type {
+  ProtocolHandlerFactory,
+  UniversalHandler,
+  UniversalHandlerOptions,
 } from "./protocol/index.js";
 import { createHandlerFactory as handlerFactoryGrpcWeb } from "./protocol-grpc-web/handler-factory.js";
 import { createHandlerFactory as handlerFactoryGrpc } from "./protocol-grpc/handler-factory.js";

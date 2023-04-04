@@ -19,11 +19,8 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import {
-  Code,
-  ConnectError,
-  runStreaming,
-  runUnary,
+import { Code, ConnectError, runStreaming, runUnary } from "../index.js";
+import type {
   StreamRequest,
   StreamResponse,
   Transport,
@@ -31,7 +28,6 @@ import {
   UnaryResponse,
 } from "../index.js";
 import {
-  CommonTransportOptions,
   createAsyncIterable,
   createMethodSerializationLookup,
   createMethodUrl,
@@ -45,6 +41,7 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
 } from "../protocol/index.js";
+import type { CommonTransportOptions } from "../protocol/index.js";
 import { validateTrailer } from "../protocol-grpc/validate-trailer.js";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { validateResponseWithCompression } from "./validate-response.js";

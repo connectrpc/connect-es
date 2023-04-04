@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+import { Message, MethodKind } from "@bufbuild/protobuf";
+import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
   JsonWriteOptions,
-  Message,
   MethodInfo,
-  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
@@ -28,9 +27,11 @@ import type { UnaryRequest } from "@bufbuild/connect";
 import {
   Code,
   connectErrorFromReason,
-  Interceptor,
   runStreaming,
   runUnary,
+} from "@bufbuild/connect";
+import type {
+  Interceptor,
   StreamResponse,
   Transport,
   UnaryResponse,

@@ -25,6 +25,8 @@ import {
   ConnectError,
   runStreaming,
   runUnary,
+} from "../index.js";
+import type {
   StreamRequest,
   StreamResponse,
   Transport,
@@ -32,7 +34,6 @@ import {
   UnaryResponse,
 } from "../index.js";
 import {
-  CommonTransportOptions,
   createAsyncIterable,
   createMethodSerializationLookup,
   createMethodUrl,
@@ -47,6 +48,7 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
 } from "../protocol/index.js";
+import type { CommonTransportOptions } from "../protocol/index.js";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { headerUnaryContentLength, headerUnaryEncoding } from "./headers.js";
 import { validateResponseWithCompression } from "./validate-response.js";

@@ -15,18 +15,13 @@
 import type { Message } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { MethodImplSpec, createHandlerContext } from "../implementation.js";
+import { createHandlerContext } from "../implementation.js";
+import type { MethodImplSpec } from "../implementation.js";
 import {
-  ProtocolHandlerFactory,
-  UniversalHandlerOptions,
   validateUniversalHandlerOptions,
-  UniversalServerRequest,
-  UniversalServerResponse,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
-  Serialization,
-  EnvelopedMessage,
   assertByteStreamRequest,
   compressionNegotiate,
   contentTypeMatcher,
@@ -42,6 +37,13 @@ import {
   transformSplitEnvelope,
   transformCatchFinally,
   transformInvokeImplementation,
+} from "../protocol/index.js";
+import type { Serialization, EnvelopedMessage } from "../protocol/index.js";
+import type {
+  ProtocolHandlerFactory,
+  UniversalHandlerOptions,
+  UniversalServerRequest,
+  UniversalServerResponse,
 } from "../protocol/index.js";
 import { grpcStatusOk, setTrailerStatus } from "../protocol-grpc/index.js";
 import { createTrailerSerialization, trailerFlag } from "./trailer.js";

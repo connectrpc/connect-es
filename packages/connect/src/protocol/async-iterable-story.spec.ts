@@ -32,8 +32,8 @@ import {
   transformParseEnvelope,
   createAsyncIterable,
   createWritableIterable,
-  WritableIterable,
 } from "./async-iterable.js";
+import type { WritableIterable } from "./async-iterable.js";
 
 // These tests aim to model the usage of iterable transforms in clients and servers.
 // Note that the tests were written as a proof of concept, and the coverage is
