@@ -739,7 +739,7 @@ type TransformXpendProvide<T> = T extends undefined
  * If the length hint is larger than readMaxBytes, an error is raised.
  * If the length hint is not a positive integer, it is ignored.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformReadAllBytes(
   readMaxBytes: number,
@@ -754,7 +754,7 @@ export function transformReadAllBytes(
  * Creates an AsyncIterableTransform that takes partial protobuf messages of the
  * specified message type as input, and yields full instances.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformNormalizeMessage<T extends Message<T>>(
   messageType: MessageType<T>
@@ -778,7 +778,7 @@ export function transformNormalizeMessage<T extends Message<T>>(
  * distinguish between regular messages, and end-of-stream messages, as used
  * by the RPP-web and Connect protocols.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformSerializeEnvelope<T>(
   serialization: Serialization<T>
@@ -795,7 +795,7 @@ export function transformSerializeEnvelope<T>(
  * serialization, and the resulting enveloped message does not have the given
  * endStreamFlag.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformSerializeEnvelope<T, E>(
   serialization: Serialization<T>,
@@ -844,7 +844,7 @@ export function transformSerializeEnvelope<T, E>(
  * between regular messages, and end-of-stream messages, as used by the
  * gRPP-web and Connect protocols.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformParseEnvelope<T>(
   serialization: Serialization<T>
@@ -856,7 +856,7 @@ export function transformParseEnvelope<T>(
  * Note that this override will look for the given endStreamFlag, and silently
  * ignore envelopes with this flag.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformParseEnvelope<T>(
   serialization: Serialization<T>,
@@ -869,7 +869,7 @@ export function transformParseEnvelope<T>(
  * Note that this override will look for the given endStreamFlag, and raise
  * and error if it is set.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformParseEnvelope<T>(
   serialization: Serialization<T>,
@@ -887,7 +887,7 @@ export function transformParseEnvelope<T>(
  * If the endStreamFlag is not set, the payload is parsed using the given
  * serialization, and an object with { end: false, value: ... } is returned.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformParseEnvelope<T, E>(
   serialization: Serialization<T>,
@@ -939,7 +939,7 @@ export function transformParseEnvelope<T, E>(
  * Creates an AsyncIterableTransform that takes enveloped messages as a source,
  * and compresses them if they are larger than compressMinBytes.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformCompressEnvelope(
   compression: Compression | null,
@@ -959,7 +959,7 @@ export function transformCompressEnvelope(
  * The iterable raises an error if the decompressed payload of an enveloped
  * message is larger than readMaxBytes, or if no compression is provided.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformDecompressEnvelope(
   compression: Compression | null,
@@ -976,7 +976,7 @@ export function transformDecompressEnvelope(
  * Create an AsyncIterableTransform that takes enveloped messages as a source,
  * and joins them into a stream of raw bytes.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformJoinEnvelopes(): AsyncIterableTransform<
   EnvelopedMessage,
@@ -998,7 +998,7 @@ export function transformJoinEnvelopes(): AsyncIterableTransform<
  * - if the stream ended before an enveloped message fully arrived,
  * - or if the stream ended with extraneous data.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function transformSplitEnvelope(
   readMaxBytes: number
@@ -1083,7 +1083,7 @@ export function transformSplitEnvelope(
  * - lengthHint is a positive integer, and the source contains more or less bytes
  *   than promised
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export async function readAllBytes(
   iterable: AsyncIterable<Uint8Array>,
@@ -1186,7 +1186,7 @@ type AbortState = "rethrown" | "completed" | "caught";
  * Note that catching errors and yielding a value is problematic, and it should
  * be documented that this may leave the source in a dangling state.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function makeIterableAbortable<T>(
   iterable: AsyncIterable<T>
@@ -1356,7 +1356,7 @@ export function createWritableIterable<T>(): WritableIterable<T> {
 /**
  * Create an asynchronous iterable from an array.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function* createAsyncIterable<T>(items: T[]): AsyncIterable<T> {

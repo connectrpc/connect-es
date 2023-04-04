@@ -38,7 +38,7 @@ export const grpcStatusOk = "0";
  * will also set the field "grpc-status-details-bin" with an encoded
  * google.rpc.Status message including the error details.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function setTrailerStatus(
   target: Headers,
@@ -75,7 +75,7 @@ export function setTrailerStatus(
  * the fields "grpc-status" and "grpc-message" are used.
  * Returns an error only if the gRPC status code is > 0.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function findTrailerError(
   headerOrTrailer: Headers

@@ -18,14 +18,14 @@ import type { Serialization } from "../protocol";
  * trailerFlag indicates that the data in a EnvelopedMessage
  * is a set of trailers of the gRPC-web protocol.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export const trailerFlag = 0b10000000;
 
 /**
  * Parse a gRPC-web trailer, a set of header fields separated by CRLF.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function trailerParse(data: Uint8Array): Headers {
   const headers = new Headers();
@@ -47,7 +47,7 @@ export function trailerParse(data: Uint8Array): Headers {
 /**
  * Serialize a Headers object as a gRPC-web trailer.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function trailerSerialize(trailer: Headers): Uint8Array {
   const lines: string[] = [];
@@ -61,7 +61,7 @@ export function trailerSerialize(trailer: Headers): Uint8Array {
  * Create a Serialization object that serializes a gRPC-web trailer, a Headers
  * object that is serialized as a set of header fields, separated by CRLF.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createTrailerSerialization(): Serialization<Headers> {
   return {

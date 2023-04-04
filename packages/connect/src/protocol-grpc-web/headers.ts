@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export {
   headerContentType,
@@ -28,7 +28,7 @@ export {
 /**
  * gRPC-web does not use the standard header User-Agent.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export const headerXUserAgent = "X-User-Agent";
 
@@ -39,6 +39,6 @@ export const headerXUserAgent = "X-User-Agent";
  * requests. For example the proxy by improbable:
  * https://github.com/improbable-eng/grpc-web/blob/53aaf4cdc0fede7103c1b06f0cfc560c003a5c41/go/grpcweb/wrapper.go#L231
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export const headerXGrpcWeb = "X-Grpc-Web";

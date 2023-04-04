@@ -73,7 +73,7 @@ export function validateResponse(
  * indicating whether a gRPC status was found in the response header
  * (in this case, clients can not expect a trailer).
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function validateResponseWithCompression(
   useBinaryFormat: boolean,

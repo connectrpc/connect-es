@@ -17,7 +17,7 @@
  * Note that this includes application/grpc-web-text with the additional base64
  * encoding.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export const contentTypeRegExp =
   /^application\/grpc-web(-text)?(?:\+(?:(json)(?:; ?charset=utf-?8)?|proto))?$/i;
@@ -28,7 +28,7 @@ export const contentTypeJson = "application/grpc-web+json";
 /**
  * Parse a gRPC-web Content-Type header value.
  *
- * @private
+ * @private Internal code, does not follow semantic versioning.
  */
 export function parseContentType(
   contentType: string | null
