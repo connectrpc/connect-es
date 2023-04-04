@@ -77,14 +77,9 @@ describe("createHandlerFactory()", function () {
         break;
       case MethodKind.ClientStreaming:
       case MethodKind.BiDiStreaming:
-        implDefault = function (
-          // eslint-disable-next-line
-          req: AsyncIterable<Message>,
-          // eslint-disable-next-line
-          ctx: HandlerContext
-        ) {
+        implDefault = (() => {
           throw new Error("not implemented");
-        } as unknown as MethodImpl<M>;
+        }) as unknown as MethodImpl<M>;
         break;
     }
     const spec = createMethodImplSpec(
