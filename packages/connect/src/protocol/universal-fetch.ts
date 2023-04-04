@@ -52,7 +52,7 @@ export function createFetchHandler(
   options?: FetchHandlerOptions
 ): FetchHandlerFn {
   async function handleFetch(req: Request) {
-    const uReq = universalServerRequestToFetch(req, options ?? {});
+    const uReq = universalServerRequestFromFetch(req, options ?? {});
     const uRes = await uHandler(uReq);
     return universalServerResponseToFetch(uRes);
   }
@@ -80,7 +80,7 @@ function universalClientResponseFromFetch(
   };
 }
 
-function universalServerRequestToFetch(
+function universalServerRequestFromFetch(
   req: Request,
   options: FetchHandlerOptions
 ): UniversalServerRequest {
