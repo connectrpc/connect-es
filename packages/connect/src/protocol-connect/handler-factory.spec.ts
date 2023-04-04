@@ -15,17 +15,13 @@
 import {
   Int32Value,
   Message,
-  MethodInfo,
   MethodKind,
-  ServiceType,
   StringValue,
 } from "@bufbuild/protobuf";
+import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { createHandlerFactory } from "./handler-factory.js";
-import {
-  createMethodImplSpec,
-  HandlerContext,
-  MethodImpl,
-} from "../implementation.js";
+import { createMethodImplSpec } from "../implementation.js";
+import type { HandlerContext, MethodImpl } from "../implementation.js";
 import type { UniversalHandlerOptions } from "../protocol/index.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { ConnectError } from "../connect-error.js";
@@ -79,8 +75,17 @@ describe("createHandlerFactory()", function () {
           yield new ctx.method.O();
         } as unknown as MethodImpl<M>;
         break;
-      default:
-        throw new Error("not implemented");
+      case MethodKind.ClientStreaming:
+      case MethodKind.BiDiStreaming:
+        implDefault = function (
+          // eslint-disable-next-line
+          req: AsyncIterable<Message>,
+          // eslint-disable-next-line
+          ctx: HandlerContext
+        ) {
+          throw new Error("not implemented");
+        } as unknown as MethodImpl<M>;
+        break;
     }
     const spec = createMethodImplSpec(
       opt.service ?? testService,

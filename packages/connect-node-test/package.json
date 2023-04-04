@@ -4,7 +4,7 @@
   "scripts": {
     "clean": "rm -rf ./dist/esm/*",
     "generate": "buf generate",
-    "build": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
+    "build": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm",
     "jasmine": "jasmine --config=jasmine.json"
   },
   "type": "module",

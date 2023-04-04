@@ -16,10 +16,9 @@ import type { JsonValue } from "@bufbuild/protobuf";
 import {
   Code,
   connectErrorFromReason,
-  ConnectRouter,
-  ConnectRouterOptions,
   createConnectRouter,
 } from "@bufbuild/connect";
+import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import * as protoConnect from "@bufbuild/connect/protocol-connect";
 import * as protoGrpcWeb from "@bufbuild/connect/protocol-grpc-web";
 import * as protoGrpc from "@bufbuild/connect/protocol-grpc";

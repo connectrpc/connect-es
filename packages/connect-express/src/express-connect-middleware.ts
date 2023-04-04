@@ -14,12 +14,11 @@
 
 import type { JsonValue } from "@bufbuild/protobuf";
 import {
-  ConnectRouter,
   createConnectRouter,
-  ConnectRouterOptions,
   Code,
   connectErrorFromReason,
 } from "@bufbuild/connect";
+import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import type { UniversalHandler } from "@bufbuild/connect/protocol";
 import { compressionBrotli, compressionGzip } from "@bufbuild/connect-node";
 import {

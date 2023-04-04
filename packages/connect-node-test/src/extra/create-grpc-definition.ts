@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+import { MethodKind } from "@bufbuild/protobuf";
+import type {
   AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
-  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";

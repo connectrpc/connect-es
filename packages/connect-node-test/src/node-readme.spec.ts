@@ -14,7 +14,8 @@
 
 import * as http2 from "http2";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
-import { ConnectRouter, createPromiseClient } from "@bufbuild/connect";
+import { createPromiseClient } from "@bufbuild/connect";
+import type { ConnectRouter } from "@bufbuild/connect";
 import {
   connectNodeAdapter,
   createGrpcTransport,

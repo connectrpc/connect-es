@@ -14,7 +14,8 @@
 
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { compressedFlag, Compression } from "./compression.js";
+import { compressedFlag } from "./compression.js";
+import type { Compression } from "./compression.js";
 
 /**
  * Represents an Enveloped-Message of the Connect protocol.

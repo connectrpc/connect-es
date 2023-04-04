@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, MethodKind, PartialMessage } from "@bufbuild/protobuf";
+import { Message, MethodKind } from "@bufbuild/protobuf";
+import type { PartialMessage } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { HandlerContext, MethodImplSpec } from "../implementation.js";

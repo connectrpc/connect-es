@@ -13,15 +13,12 @@
 // limitations under the License.
 
 import type { Message } from "@bufbuild/protobuf";
-import { createHandlerContext, MethodImplSpec } from "../implementation.js";
+import { createHandlerContext } from "../implementation.js";
+import type { MethodImplSpec } from "../implementation.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import {
-  ProtocolHandlerFactory,
-  UniversalHandlerOptions,
   validateUniversalHandlerOptions,
-  UniversalServerRequest,
-  UniversalServerResponse,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
@@ -40,6 +37,12 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
   transformInvokeImplementation,
+} from "../protocol/index.js";
+import type {
+  ProtocolHandlerFactory,
+  UniversalHandlerOptions,
+  UniversalServerRequest,
+  UniversalServerResponse,
 } from "../protocol/index.js";
 import {
   contentTypeJson,

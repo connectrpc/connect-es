@@ -12,25 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, MethodInfo, MethodKind } from "@bufbuild/protobuf";
+import { Message, MethodKind } from "@bufbuild/protobuf";
+import type { MethodInfo } from "@bufbuild/protobuf";
 import { ConnectError, connectErrorFromReason } from "../connect-error.js";
 import { Code } from "../code.js";
-import { createHandlerContext, MethodImplSpec } from "../implementation.js";
+import { createHandlerContext } from "../implementation.js";
+import type { MethodImplSpec } from "../implementation.js";
 import {
   assertByteStreamRequest,
-  Compression,
   compressionNegotiate,
   contentTypeMatcher,
   createMethodSerializationLookup,
   createMethodUrl,
-  EnvelopedMessage,
   invokeUnaryImplementation,
-  MethodSerializationLookup,
   validateUniversalHandlerOptions,
   pipe,
-  ProtocolHandlerFactory,
   readAllBytes,
-  Serialization,
   transformCatchFinally,
   transformCompressEnvelope,
   transformDecompressEnvelope,
@@ -40,13 +37,20 @@ import {
   transformPrepend,
   transformSerializeEnvelope,
   transformSplitEnvelope,
+  uResponseMethodNotAllowed,
+  uResponseOk,
+  uResponseUnsupportedMediaType,
+} from "../protocol/index.js";
+import type {
+  Compression,
+  EnvelopedMessage,
+  MethodSerializationLookup,
+  ProtocolHandlerFactory,
+  Serialization,
   UniversalHandlerFn,
   UniversalHandlerOptions,
   UniversalServerRequest,
   UniversalServerResponse,
-  uResponseMethodNotAllowed,
-  uResponseOk,
-  uResponseUnsupportedMediaType,
 } from "../protocol/index.js";
 import {
   contentTypeStreamJson,
@@ -57,11 +61,8 @@ import {
   contentTypeUnaryRegExp,
   parseContentType,
 } from "./content-type.js";
-import {
-  createEndStreamSerialization,
-  endStreamFlag,
-  EndStreamResponse,
-} from "./end-stream.js";
+import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
+import type { EndStreamResponse } from "./end-stream.js";
 import {
   headerContentType,
   headerStreamAcceptEncoding,

@@ -12,27 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+import { MethodKind } from "@bufbuild/protobuf";
+import type {
   BinaryReadOptions,
   BinaryWriteOptions,
   JsonReadOptions,
   JsonWriteOptions,
   MethodInfo,
-  MethodKind,
   ServiceType,
 } from "@bufbuild/protobuf";
 import type { MethodImplSpec, ServiceImplSpec } from "../implementation.js";
 import {
-  UniversalHandlerFn,
-  UniversalServerRequest,
   uResponseMethodNotAllowed,
   uResponseUnsupportedMediaType,
   uResponseVersionNotSupported,
 } from "./universal.js";
-import {
-  ContentTypeMatcher,
-  contentTypeMatcher,
-} from "./content-type-matcher.js";
+import type {
+  UniversalHandlerFn,
+  UniversalServerRequest,
+} from "./universal.js";
+import { contentTypeMatcher } from "./content-type-matcher.js";
+import type { ContentTypeMatcher } from "./content-type-matcher.js";
 import type { Compression } from "./compression.js";
 import type { ProtocolHandlerFactory } from "./protocol-handler-factory.js";
 import { validateReadWriteMaxBytes } from "./limit-io.js";

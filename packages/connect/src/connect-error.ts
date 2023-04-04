@@ -13,12 +13,11 @@
 // limitations under the License.
 
 import { Code } from "./code.js";
-import {
+import { createRegistry, Message } from "@bufbuild/protobuf";
+import type {
   AnyMessage,
-  createRegistry,
   IMessageTypeRegistry,
   JsonValue,
-  Message,
   MessageType,
 } from "@bufbuild/protobuf";
 import { codeToString } from "./protocol-connect/index.js";

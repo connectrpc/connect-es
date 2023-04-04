@@ -17,8 +17,8 @@ import {
   createBinarySerialization,
   createJsonSerialization,
   limitSerialization,
-  Serialization,
 } from "./serialization.js";
+import type { Serialization } from "./serialization.js";
 import { ConnectError, connectErrorFromReason } from "../connect-error.js";
 
 describe("createBinarySerialization()", function () {

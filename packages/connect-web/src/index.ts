@@ -21,8 +21,6 @@ export type { GrpcWebTransportOptions } from "./grpc-web-transport.js";
 // please please import from @bufbuild/connect instead
 // TODO(TCN-1261)
 import {
-  CallbackClient,
-  CallOptions,
   Code,
   ConnectError,
   connectErrorDetails,
@@ -31,6 +29,10 @@ import {
   createPromiseClient,
   decodeBinaryHeader,
   encodeBinaryHeader,
+} from "@bufbuild/connect";
+import type {
+  CallbackClient,
+  CallOptions,
   Interceptor,
   PromiseClient,
   StreamRequest,

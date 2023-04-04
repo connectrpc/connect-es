@@ -15,18 +15,19 @@
 import {
   Code,
   connectErrorFromReason,
-  ConnectRouter,
-  ConnectRouterOptions,
   createConnectRouter,
 } from "@bufbuild/connect";
+import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import type { UniversalHandler } from "@bufbuild/connect/protocol";
 import { uResponseNotFound } from "@bufbuild/connect/protocol";
 import {
+  universalRequestFromNodeRequest,
+  universalResponseToNodeResponse,
+} from "./node-universal-handler.js";
+import type {
   NodeHandlerFn,
   NodeServerRequest,
   NodeServerResponse,
-  universalRequestFromNodeRequest,
-  universalResponseToNodeResponse,
 } from "./node-universal-handler.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 

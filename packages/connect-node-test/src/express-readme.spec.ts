@@ -14,7 +14,8 @@
 
 import * as http from "http";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
-import { ConnectRouter, createPromiseClient } from "@bufbuild/connect";
+import { createPromiseClient } from "@bufbuild/connect";
+import type { ConnectRouter } from "@bufbuild/connect";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
 import { createGrpcWebTransport } from "@bufbuild/connect-node";
 import { importExpress } from "./helpers/import-express.js";
