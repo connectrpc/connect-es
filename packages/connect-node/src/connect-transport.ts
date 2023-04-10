@@ -111,6 +111,11 @@ type ConnectTransportOptions = NodeHttpClientOptions & {
    * The default limit is the maximum supported value of ~4GiB.
    */
   writeMaxBytes?: number;
+
+  /**
+   * Optional override of the fetch implementation used by the transport.
+   */
+  fetch?: typeof globalThis.fetch;
 };
 
 /**
