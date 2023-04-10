@@ -102,6 +102,11 @@ export interface ConnectTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Optional override of the fetch implementation used by the transport.
+   */
+  fetch?: typeof globalThis.fetch;
 }
 
 /**
@@ -114,6 +119,7 @@ export function createConnectTransport(
 ): Transport {
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? false;
+  const fetch = options.fetch ?? globalThis.fetch;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
