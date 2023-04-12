@@ -20,10 +20,10 @@ import type { HandlerContext } from "./implementation.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
-    log.push(`${name} sending request with headers: ${headerKeys(req.header)}`);
+    log.push(`${name} sending request with headers: ${listHeaderKeys(req.header)}`);
     const res = await next(req);
     log.push(
-      `${name} response received with headers: ${headerKeys(res.header)}`
+      `${name} response received with headers: ${listHeaderKeys(res.header)}`
     );
     if (res.stream) {
       return {
@@ -32,7 +32,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
       };
     } else {
       log.push(
-        `${name} response done with trailers: ${headerKeys(res.trailer)}`
+        `${name} response done with trailers: ${listHeaderKeys(res.trailer)}`
       );
     }
     return res;
@@ -45,7 +45,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
     }
     yield* res.message;
     log.push(
-      `${name} response stream done with trailers: ${headerKeys(res.trailer)}`
+      `${name} response stream done with trailers: ${listHeaderKeys(res.trailer)}`
     );
   }
 
@@ -53,9 +53,18 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
    * Return all keys of a Headers object, without needing
    * DOM.iterable for Headers.keys().
    */
-  function headerKeys(header: Headers): string {
+  function listHeaderKeys(header: Headers): string {
+    const fieldsToIgnore = [
+      "connect-protocol-version",
+      "content-type",
+      "content-length",
+    ];
     const keys: string[] = [];
-    header.forEach((_, key) => keys.push(key));
+    header.forEach((_, key) => {
+      if (!fieldsToIgnore.includes(key)) {
+        keys.push(key);
+      }
+    });
     return keys.join(", ");
   }
 }
@@ -80,11 +89,11 @@ const TestService = {
 
 describe("unary interceptors", () => {
   const wantLog = [
-    "outer sending request with headers: connect-protocol-version, content-type, unary-request-header",
-    "inner sending request with headers: connect-protocol-version, content-type, unary-request-header",
-    "inner response received with headers: content-length, content-type, unary-response-header",
+    "outer sending request with headers: unary-request-header",
+    "inner sending request with headers: unary-request-header",
+    "inner response received with headers: unary-response-header",
     "inner response done with trailers: unary-response-trailer",
-    "outer response received with headers: content-length, content-type, unary-response-header",
+    "outer response received with headers: unary-response-header",
     "outer response done with trailers: unary-response-trailer",
   ] as const;
 
