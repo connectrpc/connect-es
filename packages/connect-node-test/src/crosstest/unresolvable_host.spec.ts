@@ -188,16 +188,7 @@ describe("unresolvable_host", function () {
             );
           });
         });
-        xdescribe("for client-streaming", function () {
-          it("should raise code unavailable", function () {
-            // TODO(TCN-568, TCN-679) add methods for client-streaming and bidi-streaming
-          });
-        });
-        xdescribe("for bidi-streaming", function () {
-          it("should raise code unavailable", function () {
-            // TODO(TCN-568, TCN-679) add methods for client-streaming and bidi-streaming
-          });
-        });
+        // TODO(TCN-679) consider extending callback clients for client- and bidi-streaming
       });
     });
   }

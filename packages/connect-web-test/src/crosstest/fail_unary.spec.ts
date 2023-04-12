@@ -22,42 +22,32 @@ import {
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
 import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
+import { interop } from "../helpers/interop.js";
 
 describe("fail_unary", () => {
-  function expectError(err: unknown, transportName: string) {
-    const expectedErrorDetail = new ErrorDetail({
-      reason: "soirée 🎉",
-      domain: "connect-crosstest",
-    });
+  function expectError(err: unknown) {
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
       expect(err.code).toEqual(Code.ResourceExhausted);
-      expect(err.rawMessage).toEqual("soirée 🎉");
-      // the experimental gRPC transport does not implement error details
-      if (transportName !== "gRPC transport") {
-        const details = connectErrorDetails(err, ErrorDetail);
-        expect(details.length).toEqual(1);
-        expect(details[0]).toBeInstanceOf(ErrorDetail);
-        if (details[0] instanceof ErrorDetail) {
-          expect(expectedErrorDetail.equals(details[0])).toBeTrue();
-        }
-      }
+      expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
+      const details = connectErrorDetails(err, ErrorDetail);
+      expect(details).toEqual([interop.errorDetail]);
     }
   }
-  describeTransports((transport, transportName) => {
+  describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       try {
         await client.failUnaryCall({});
         fail("expected to catch an error");
       } catch (e) {
-        expectError(e, transportName);
+        expectError(e);
       }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
       client.failUnaryCall({}, (err: ConnectError | undefined) => {
-        expectError(err, transportName);
+        expectError(err);
         done();
       });
     });

@@ -22,26 +22,19 @@ import {
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
+import { interop } from "../helpers/interop.js";
 
 describe("fail_unary", () => {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
   function expectError(err: unknown) {
-    const expectedErrorDetail = new ErrorDetail({
-      reason: "soirée 🎉",
-      domain: "connect-crosstest",
-    });
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
       expect(err.code).toEqual(Code.ResourceExhausted);
-      expect(err.rawMessage).toEqual("soirée 🎉");
+      expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
       const details = connectErrorDetails(err, ErrorDetail);
-      expect(details.length).toEqual(1);
-      expect(details[0]).toBeInstanceOf(ErrorDetail);
-      if (details[0] instanceof ErrorDetail) {
-        expect(expectedErrorDetail.equals(details[0])).toBeTrue();
-      }
+      expect(details).toEqual([interop.errorDetail]);
     }
   }
   servers.describeTransports((transport) => {
