@@ -15,6 +15,8 @@
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import { stubTransport } from "./transport-stub.js";
 import type { Interceptor, StreamResponse } from "./interceptor.js";
+import { createRouterTransport } from "./router-transport.js";
+import type { HandlerContext } from "./implementation.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
@@ -78,29 +80,41 @@ const TestService = {
 
 describe("unary interceptors", () => {
   const wantLog = [
-    "outer sending request with headers: unary-request-header",
-    "inner sending request with headers: unary-request-header",
-    "inner response received with headers: unary-response-header",
+    "outer sending request with headers: connect-protocol-version, content-type, unary-request-header",
+    "inner sending request with headers: connect-protocol-version, content-type, unary-request-header",
+    "inner response received with headers: content-length, content-type, unary-response-header",
     "inner response done with trailers: unary-response-trailer",
-    "outer response received with headers: unary-response-header",
+    "outer response received with headers: content-length, content-type, unary-response-header",
     "outer response done with trailers: unary-response-trailer",
   ] as const;
+
   it("promise client", async () => {
     const log: string[] = [];
-    const transport = stubTransport({
-      interceptors: [
-        makeLoggingInterceptor("outer", log),
-        makeLoggingInterceptor("inner", log),
-      ],
-      unaryResponseHeader: new Headers({
-        "unary-response-header": "foo",
-      }),
-      unaryResponseTrailer: new Headers({
-        "unary-response-trailer": "foo",
-      }),
-    });
+    const input = { value: 9001 };
+    const output = new StringValue({ value: "output" });
 
-    await transport.unary(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- necessary for the matcher's types
+    const fakeUnary = (_input: Int32Value, context: HandlerContext) => {
+      context.responseHeader.set("unary-response-header", "foo");
+      context.responseTrailer.set("unary-response-trailer", "foo");
+      return output;
+    };
+    const unary = jasmine.createSpy("unary", fakeUnary).and.callFake(fakeUnary);
+    const transport = createRouterTransport(
+      ({ service }) => {
+        service(TestService, { unary });
+      },
+      {
+        transport: {
+          interceptors: [
+            makeLoggingInterceptor("outer", log),
+            makeLoggingInterceptor("inner", log),
+          ],
+        },
+      }
+    );
+
+    const response = await transport.unary(
       TestService,
       TestService.methods.unary,
       undefined,
@@ -108,8 +122,17 @@ describe("unary interceptors", () => {
       {
         "unary-request-header": "foo",
       },
-      {}
+      input
     );
+    expect(unary).toHaveBeenCalledOnceWith(new Int32Value(input), {
+      method: TestService.methods.unary,
+      requestHeader: jasmine.any(Headers),
+      responseHeader: jasmine.any(Headers),
+      responseTrailer: jasmine.any(Headers),
+      service: TestService,
+    });
+    expect(response.message).toEqual(output);
+
     expect(log).toEqual(wantLog);
   });
 });

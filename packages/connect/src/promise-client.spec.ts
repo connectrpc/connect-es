@@ -18,7 +18,9 @@ import {
   createClientStreamingFn,
   createServerStreamingFn,
 } from "./promise-client.js";
-import { stubTransport } from "./transport-stub.js";
+import { createAsyncIterable } from "./protocol/async-iterable.js";
+import { createRouterTransport } from "./router-transport.js";
+import type { HandlerContext } from './implementation';
 
 const TestService = {
   typeName: "handwritten.TestService",
@@ -45,68 +47,90 @@ const TestService = {
 } as const;
 
 describe("createClientStreamingFn()", function () {
-  const inputLog: string[] = [];
-
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async function* input() {
-    try {
-      inputLog.push("yield 1");
-      yield new Int32Value({
-        value: 1,
-      });
-    } finally {
-      inputLog.push("finally");
-    }
-  }
-
   it("works as expected on the happy path", async () => {
-    const transport = stubTransport({});
+    const input = new Int32Value({ value: 1 });
+
+    const output = new StringValue({ value: "yield 1" });
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars -- needed for inference
+        clientStream: (_?: AsyncIterable<Int32Value>) =>
+          Promise.resolve(output),
+      });
+    });
     const fn = createClientStreamingFn(
       transport,
       TestService,
       TestService.methods.clientStream
     );
-    const res = await fn(input());
+    const res = await fn(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      (async function* () {
+        yield input;
+      })()
+    );
     expect(res).toBeInstanceOf(StringValue);
-    expect(inputLog).toEqual(["yield 1", "finally"]);
+    expect(res.value).toEqual(output.value);
   });
 });
 
 describe("createServerStreamingFn()", function () {
   it("works as expected on the happy path", async () => {
-    const transport = stubTransport({
-      streamOutput: [null, null, null],
+    const output = [
+      new StringValue({ value: "input1" }),
+      new StringValue({ value: "input2" }),
+      new StringValue({ value: "input3" }),
+    ];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
+    const serverStreamImpl = (_input: Int32Value, _context: HandlerContext) =>
+      createAsyncIterable(output);
+    const serverStream = jasmine
+      .createSpy("serverStreamSpy", serverStreamImpl)
+      .and.callFake(serverStreamImpl);
+
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, { serverStream });
     });
+
     const fn = createServerStreamingFn(
       transport,
       TestService,
       TestService.methods.serverStream
     );
     const receivedMessages: StringValue[] = [];
-    for await (const res of fn(new Int32Value({ value: 123 }))) {
+    const input = new Int32Value({ value: 123 });
+    for await (const res of fn(input)) {
       receivedMessages.push(res);
     }
-    expect(receivedMessages.length).toBe(3);
+    expect(receivedMessages).toEqual(output);
+    expect(serverStream).toHaveBeenCalledOnceWith(
+      input,
+      {
+        method: TestService.methods.serverStream,
+        service: TestService,
+        requestHeader: jasmine.any(Headers),
+        responseHeader: jasmine.any(Headers),
+        responseTrailer: jasmine.any(Headers),
+      }
+    );
   });
 });
 
 describe("createBiDiStreamingFn()", () => {
   it("works as expected on the happy path", async () => {
-    const inputLog: string[] = [];
-
     // eslint-disable-next-line @typescript-eslint/require-await
     async function* input() {
-      try {
-        inputLog.push("yield 1");
-        yield new Int32Value({
-          value: 1,
-        });
-      } finally {
-        inputLog.push("finally");
-      }
+      yield new Int32Value({
+        value: 1,
+      });
     }
 
-    const transport = stubTransport({});
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        bidiStream: () =>
+          createAsyncIterable([new StringValue({ value: "yield 1" })]),
+      });
+    });
     const fn = createBiDiStreamingFn(
       transport,
       TestService,
@@ -115,8 +139,7 @@ describe("createBiDiStreamingFn()", () => {
 
     for await (const res of fn(input())) {
       expect(res).toBeInstanceOf(StringValue);
+      expect(res.value).toEqual("yield 1");
     }
-
-    expect(inputLog).toEqual(["yield 1", "finally"]);
   });
 });
