@@ -51,12 +51,17 @@ describe("createClientStreamingFn()", function () {
     const input = new Int32Value({ value: 1 });
 
     const output = new StringValue({ value: "yield 1" });
+
+    const fakeClientStream = (
+      _input: AsyncIterable<Int32Value>,
+      _context: HandlerContext
+    ) => Promise.resolve(output);
+    const clientStream = jasmine
+      .createSpy("clientStream", fakeClientStream)
+      .and.callFake(fakeClientStream);
+
     const transport = createRouterTransport(({ service }) => {
-      service(TestService, {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars -- needed for inference
-        clientStream: (_?: AsyncIterable<Int32Value>) =>
-          Promise.resolve(output),
-      });
+      service(TestService, { clientStream });
     });
     const fn = createClientStreamingFn(
       transport,
@@ -68,6 +73,14 @@ describe("createClientStreamingFn()", function () {
       (async function* () {
         yield input;
       })()
+    );
+    const called = createAsyncIterable([new Int32Value(input)]);
+    expect(clientStream).toHaveBeenCalledOnceWith(
+      called,
+      jasmine.objectContaining({
+        method: TestService.methods.clientStream,
+        service: TestService,
+      })
     );
     expect(res).toBeInstanceOf(StringValue);
     expect(res.value).toEqual(output.value);
