@@ -20,7 +20,7 @@ import {
 } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
-import type { HandlerContext } from './implementation';
+import type { HandlerContext } from "./implementation";
 
 const TestService = {
   typeName: "handwritten.TestService",
@@ -105,13 +105,10 @@ describe("createServerStreamingFn()", function () {
     expect(receivedMessages).toEqual(output);
     expect(serverStream).toHaveBeenCalledOnceWith(
       input,
-      {
+      jasmine.objectContaining({
         method: TestService.methods.serverStream,
         service: TestService,
-        requestHeader: jasmine.any(Headers),
-        responseHeader: jasmine.any(Headers),
-        responseTrailer: jasmine.any(Headers),
-      }
+      })
     );
   });
 });

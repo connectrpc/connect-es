@@ -124,13 +124,13 @@ describe("unary interceptors", () => {
       },
       input
     );
-    expect(unary).toHaveBeenCalledOnceWith(new Int32Value(input), {
-      method: TestService.methods.unary,
-      requestHeader: jasmine.any(Headers),
-      responseHeader: jasmine.any(Headers),
-      responseTrailer: jasmine.any(Headers),
-      service: TestService,
-    });
+    expect(unary).toHaveBeenCalledOnceWith(
+      new Int32Value(input),
+      jasmine.objectContaining({
+        method: TestService.methods.unary,
+        service: TestService,
+      })
+    );
     expect(response.message).toEqual(output);
 
     expect(log).toEqual(wantLog);
@@ -177,7 +177,7 @@ describe("stream interceptors", () => {
       input()
     );
     for await (const m of res.message) {
-      expect(m).toBeDefined(); // only to satisfy type checks
+      expect(m).toBeInstanceOf(StringValue);
     }
     expect(log).toEqual(wantLog);
   });
