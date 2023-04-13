@@ -24,14 +24,15 @@ import {
   SimpleRequest,
   SimpleResponse,
 } from "../gen/grpc/testing/messages_pb.js";
+import { interop } from "../helpers/interop.js";
 
 describe("custom_metadata", function () {
   describeTransports((transport) => {
     const size = 314159;
     const binaryValue = new Uint8Array([0xab, 0xab, 0xab]);
     const requestHeaders = {
-      "x-grpc-test-echo-initial": "test_initial_metadata_value",
-      "x-grpc-test-echo-trailing-bin": encodeBinaryHeader(binaryValue),
+      [interop.leadingMetadataKey]: "test_initial_metadata_value",
+      [interop.trailingMetadataKey]: encodeBinaryHeader(binaryValue),
     };
     const request = new SimpleRequest({
       responseSize: size,
@@ -44,12 +45,12 @@ describe("custom_metadata", function () {
       expect(response.payload?.body.length).toEqual(size);
     }
     function expectResponseHeaders(responseHeaders: Headers | undefined) {
-      const want = requestHeaders["x-grpc-test-echo-initial"];
-      const got = responseHeaders?.get("x-grpc-test-echo-initial");
+      const want = requestHeaders[interop.leadingMetadataKey];
+      const got = responseHeaders?.get(interop.leadingMetadataKey);
       expect(got).toBe(want);
     }
     function expectResponseTrailers(responseTrailers: Headers | undefined) {
-      const gotRaw = responseTrailers?.get("x-grpc-test-echo-trailing-bin");
+      const gotRaw = responseTrailers?.get(interop.trailingMetadataKey);
       expect(gotRaw).toBeDefined();
       expect(gotRaw).not.toBeNull();
       if (gotRaw != null) {

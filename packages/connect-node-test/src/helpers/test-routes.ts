@@ -21,6 +21,10 @@ import {
 import type { ConnectRouter, ServiceImpl } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import type { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
+import {
+  EchoStatus,
+  ResponseParameters,
+} from "../gen/grpc/testing/messages_pb.js";
 import { interop } from "./interop.js";
 
 export default function (router: ConnectRouter) {
@@ -33,17 +37,12 @@ const testService: ServiceImpl<typeof TestService> = {
   },
 
   unaryCall(request, context) {
-    if (request.responseStatus?.code !== undefined) {
-      throw new ConnectError(
-        request.responseStatus.message,
-        request.responseStatus.code
-      );
-    }
     echoMetadata(
       context.requestHeader,
       context.responseHeader,
       context.responseTrailer
     );
+    maybeRaiseError(request.responseStatus);
     return {
       payload: interop.makeServerPayload(
         request.responseType,
@@ -69,25 +68,37 @@ const testService: ServiceImpl<typeof TestService> = {
       context.responseTrailer
     );
     for (const param of request.responseParameters) {
-      if (param.intervalUs > 0) {
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, param.intervalUs / 1000);
-        });
-      }
+      await maybeDelayResponse(param);
       yield {
         payload: interop.makeServerPayload(request.responseType, param.size),
       };
     }
+    maybeRaiseError(request.responseStatus);
   },
 
-  // eslint-disable-next-line @typescript-eslint/require-await,require-yield
-  async *failStreamingOutputCall() {
+  async *failStreamingOutputCall(request, context) {
+    echoMetadata(
+      context.requestHeader,
+      context.responseHeader,
+      context.responseTrailer
+    );
+    for (const param of request.responseParameters) {
+      await maybeDelayResponse(param);
+      yield {
+        payload: interop.makeServerPayload(request.responseType, param.size),
+      };
+    }
     throw new ConnectError(interop.nonASCIIErrMsg, Code.ResourceExhausted, {}, [
       interop.errorDetail,
     ]);
   },
 
-  async streamingInputCall(requests) {
+  async streamingInputCall(requests, context) {
+    echoMetadata(
+      context.requestHeader,
+      context.responseHeader,
+      context.responseTrailer
+    );
     let total = 0;
     for await (const req of requests) {
       total += req.payload?.body.length ?? 0;
@@ -104,47 +115,34 @@ const testService: ServiceImpl<typeof TestService> = {
       context.responseTrailer
     );
     for await (const req of requests) {
-      if (req.responseStatus?.code !== undefined) {
-        throw new ConnectError(
-          req.responseStatus.message,
-          req.responseStatus.code
-        );
-      }
       for (const param of req.responseParameters) {
-        if (param.intervalUs > 0) {
-          await new Promise<void>((resolve) => {
-            setTimeout(resolve, param.intervalUs / 1000);
-          });
-        }
+        await maybeDelayResponse(param);
         yield {
           payload: interop.makeServerPayload(req.responseType, param.size),
         };
       }
+      maybeRaiseError(req.responseStatus);
     }
   },
 
-  async *halfDuplexCall(requests) {
+  async *halfDuplexCall(requests, context) {
+    echoMetadata(
+      context.requestHeader,
+      context.responseHeader,
+      context.responseTrailer
+    );
     const buffer: StreamingOutputCallRequest[] = [];
     for await (const req of requests) {
       buffer.push(req);
     }
     for await (const req of buffer) {
-      if (req.responseStatus?.code !== undefined) {
-        throw new ConnectError(
-          req.responseStatus.message,
-          req.responseStatus.code
-        );
-      }
       for (const param of req.responseParameters) {
-        if (param.intervalUs > 0) {
-          await new Promise<void>((resolve) => {
-            setTimeout(resolve, param.intervalUs / 1000);
-          });
-        }
+        await maybeDelayResponse(param);
         yield {
           payload: interop.makeServerPayload(req.responseType, param.size),
         };
       }
+      maybeRaiseError(req.responseStatus);
     }
   },
 
@@ -163,6 +161,21 @@ const testService: ServiceImpl<typeof TestService> = {
     );
   },
 };
+
+async function maybeDelayResponse(param: ResponseParameters) {
+  if (param.intervalUs > 0) {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, param.intervalUs / 1000);
+    });
+  }
+}
+
+function maybeRaiseError(status: EchoStatus | undefined): void {
+  if (!status || status.code <= 0) {
+    return;
+  }
+  throw new ConnectError(status.message, status.code);
+}
 
 function echoMetadata(
   requestHeader: Headers,

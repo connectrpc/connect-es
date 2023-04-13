@@ -42,10 +42,7 @@ describe("client_streaming", () => {
       );
       expect(aggregatedPayloadSize).toBe(sizes.reduce((p, c) => p + c, 0));
     });
-    it("with callback client", function (done) {
-      // TODO(TCN-679, TCN-568) need callback clients
-      done();
-    });
+    // TODO(TCN-679) consider extending callback clients for client- and bidi-streaming
   });
 
   afterAll(async () => await servers.stop());
