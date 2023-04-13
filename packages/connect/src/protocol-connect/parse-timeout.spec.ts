@@ -19,6 +19,7 @@ describe("parseTimeout()", function () {
   it("should parse proper timeout", () => {
     expect(parseTimeout("1")).toEqual(1);
     expect(parseTimeout("1234567890")).toEqual(1234567890);
+    expect(parseTimeout("0")).toEqual(0);
   });
   it("should should return undefined for null value", () => {
     expect(parseTimeout(null)).toEqual(undefined);
