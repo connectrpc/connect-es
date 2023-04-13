@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { CallOptions } from "@bufbuild/connect";
 import {
   Code,
   ConnectError,
+  connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
-  connectErrorFromReason,
 } from "@bufbuild/connect";
-import type { CallOptions } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
-// TODO(TCN-918)
-xdescribe("timeout_on_sleeping_server", function () {
+describe("timeout_on_sleeping_server", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
@@ -36,25 +35,58 @@ xdescribe("timeout_on_sleeping_server", function () {
     responseParameters: [
       {
         size: 31415,
-        intervalUs: 5000,
+        intervalUs: 50 * 1000, // 50ms
       },
     ],
   });
   const options: CallOptions = {
-    timeoutMs: 1, // 1ms
+    timeoutMs: 5,
   };
-  function expectError(err: unknown) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
-      // and will return an HTTP status code 408 when stream max duration time reached, which
-      // cannot be translated to a connect error code, so connect-web client throws an Unknown.
-      expect(err.code === Code.DeadlineExceeded).toBeTrue();
-    }
-  }
+  // TODO(TCN-761) support deadlines in connect-es handlers
   servers.describeTransportsExcluding(
-    // TODO(TCN-918)
-    ["@bufbuild/connect-node (gRPC, binary, http2) against grpc-go (h2)"],
+    [
+      "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2)",
+      "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (gRPC, JSON, http2) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (gRPC, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (gRPC, JSON, http2, gzip) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (gRPC, binary, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC, JSON, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC, JSON, https) against @bufbuild/connect-node (h1 + tls)",
+      "@bufbuild/connect-node (gRPC, binary, https) against @bufbuild/connect-node (h1 + tls)",
+      "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-fastify (h2c)",
+      "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)",
+      "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-express (h1)",
+      "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-express (h1)",
+      "@bufbuild/connect-node (Connect, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (Connect, JSON, http2, gzip) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (Connect, binary, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (Connect, binary, https) against @bufbuild/connect-node (h1 + tls)",
+      "@bufbuild/connect-node (Connect, JSON, https) against @bufbuild/connect-node (h1 + tls)",
+      "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)",
+      "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-fastify (h2c)",
+      "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-express (h1)",
+      "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-express (h1)",
+      "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (gRPC-web, JSON, http2) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (gRPC-web, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (gRPC-web, JSON, http2, gzip) against @bufbuild/connect-node (h2c)",
+      "@bufbuild/connect-node (gRPC-web, binary, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC-web, JSON, http) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC-web, JSON, https) against @bufbuild/connect-node (h1 + tls)",
+      "@bufbuild/connect-node (gRPC-web, binary, https) against @bufbuild/connect-node (h1 + tls)",
+      "@bufbuild/connect-node (gRPC-web, binary, http, gzip) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC-web, JSON, http, gzip) against @bufbuild/connect-node (h1)",
+      "@bufbuild/connect-node (gRPC-web, binary, http, gzip against @bufbuild/connect-fastify (h2c)",
+      "@bufbuild/connect-node (gRPC-web, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)",
+      "@bufbuild/connect-node (gRPC-web, JSON, http, gzip) against @bufbuild/connect-express (h1)",
+      "@bufbuild/connect-node (gRPC-web, binary, http, gzip) against @bufbuild/connect-express (h1)",
+    ],
     (transport) => {
       it("with promise client", async function () {
         const client = createPromiseClient(TestService, transport());
@@ -69,6 +101,7 @@ xdescribe("timeout_on_sleeping_server", function () {
           }
           fail("expected to catch an error");
         } catch (e) {
+          expect(e).toBeInstanceOf(ConnectError);
           expect(connectErrorFromReason(e).code).toBe(Code.DeadlineExceeded);
         }
       });
@@ -82,7 +115,7 @@ xdescribe("timeout_on_sleeping_server", function () {
             );
           },
           (err: ConnectError | undefined) => {
-            expectError(err);
+            expect(err?.code).toBe(Code.DeadlineExceeded);
             done();
           },
           options
