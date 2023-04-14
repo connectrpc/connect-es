@@ -17,6 +17,7 @@ import { stubTransport } from "./transport-stub.js";
 import type { Interceptor, StreamResponse } from "./interceptor.js";
 import { createRouterTransport } from "./router-transport.js";
 import type { HandlerContext } from "./implementation.js";
+import { createAsyncIterable } from "./protocol/async-iterable.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
@@ -171,10 +172,11 @@ describe("stream interceptors", () => {
         "stream-response-trailer": "foo",
       }),
     });
-    // eslint-disable-next-line @typescript-eslint/require-await
-    async function* input() {
-      yield new TestService.methods.serverStream.I();
-    }
+
+    const input = createAsyncIterable([
+      new TestService.methods.serverStream.I()
+    ]);
+
     const res = await transport.stream(
       TestService,
       TestService.methods.serverStream,
@@ -183,10 +185,10 @@ describe("stream interceptors", () => {
       {
         "stream-request-header": "foo",
       },
-      input()
+      input
     );
     for await (const m of res.message) {
-      expect(m).toBeInstanceOf(StringValue);
+      expect(m).toEqual(new StringValue({ value: '' }));
     }
     expect(log).toEqual(wantLog);
   });
