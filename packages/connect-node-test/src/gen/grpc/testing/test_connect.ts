@@ -105,7 +105,9 @@ export const TestService = {
       kind: MethodKind.ServerStreaming,
     },
     /**
-     * One request followed by a sequence of responses (streamed download). This RPC always fails.
+     * One request followed by a sequence of responses (streamed download).
+     * The server returns the payload with client desired type and sizes.
+     * This RPC always responds with an error status.
      *
      * @generated from rpc grpc.testing.TestService.FailStreamingOutputCall
      */

@@ -13,21 +13,22 @@
 // limitations under the License.
 
 import {
+  Code,
   ConnectError,
+  connectErrorDetails,
   createCallbackClient,
   createPromiseClient,
-  connectErrorDetails,
-  Code,
-} from "@bufbuild/connect";
+} from "@bufbuild/connect-web";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
 import {
   ErrorDetail,
   StreamingOutputCallRequest,
+  StreamingOutputCallResponse,
 } from "../gen/grpc/testing/messages_pb.js";
 import { interop } from "../helpers/interop.js";
 
-describe("fail_server_streaming", () => {
+describe("fail_server_streaming_after_response", () => {
   function expectError(err: unknown) {
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
@@ -37,32 +38,42 @@ describe("fail_server_streaming", () => {
       expect(details).toEqual([interop.errorDetail]);
     }
   }
-  const request = new StreamingOutputCallRequest();
+  const request = new StreamingOutputCallRequest({
+    responseParameters: [
+      { size: 64, intervalUs: 0 },
+      { size: 64, intervalUs: 0 },
+      { size: 64, intervalUs: 0 },
+    ],
+  });
   describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
+      const receivedResponses: StreamingOutputCallResponse[] = [];
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for await (const response of client.failStreamingOutputCall(request)) {
-          expect(response)
-            .withContext("did not expect any response message")
-            .toBeUndefined();
+          receivedResponses.push(response);
         }
+        fail("expected to catch an error");
       } catch (e) {
         expectError(e);
+        expect(receivedResponses.length).toBe(
+          request.responseParameters.length
+        );
       }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
+      const receivedResponses: StreamingOutputCallResponse[] = [];
       client.failStreamingOutputCall(
         request,
         (response) => {
-          expect(response)
-            .withContext("did not expect any response message")
-            .toBeUndefined();
+          receivedResponses.push(response);
         },
         (err: ConnectError | undefined) => {
           expectError(err);
+          expect(receivedResponses.length).toBe(
+            request.responseParameters.length
+          );
           done();
         }
       );

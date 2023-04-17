@@ -24,6 +24,8 @@ describe("parseTimeout()", function () {
     expect(parseTimeout("1m")).toEqual(1);
     expect(parseTimeout("1000u")).toEqual(1);
     expect(parseTimeout("1000000n")).toEqual(1);
+    expect(parseTimeout("0n")).toEqual(0);
+    expect(parseTimeout("0H")).toEqual(0);
   });
   it("should should return undefined for null value", () => {
     expect(parseTimeout(null)).toEqual(undefined);
