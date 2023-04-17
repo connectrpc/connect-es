@@ -21,7 +21,9 @@ import { createAsyncIterable } from "./protocol/async-iterable.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
-    log.push(`${name} sending request with headers: ${listHeaderKeys(req.header)}`);
+    log.push(
+      `${name} sending request with headers: ${listHeaderKeys(req.header)}`
+    );
     const res = await next(req);
     log.push(
       `${name} response received with headers: ${listHeaderKeys(res.header)}`
@@ -46,7 +48,9 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
     }
     yield* res.message;
     log.push(
-      `${name} response stream done with trailers: ${listHeaderKeys(res.trailer)}`
+      `${name} response stream done with trailers: ${listHeaderKeys(
+        res.trailer
+      )}`
     );
   }
 
@@ -100,19 +104,16 @@ describe("unary interceptors", () => {
 
   it("promise client", async () => {
     const log: string[] = [];
-    const input = { value: 9001 };
-    const output = new StringValue({ value: "output" });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- necessary for the matcher's types
-    const fakeUnary = (_input: Int32Value, context: HandlerContext) => {
-      context.responseHeader.set("unary-response-header", "foo");
-      context.responseTrailer.set("unary-response-trailer", "foo");
-      return output;
-    };
-    const unary = jasmine.createSpy("unary", fakeUnary).and.callFake(fakeUnary);
     const transport = createRouterTransport(
       ({ service }) => {
-        service(TestService, { unary });
+        service(TestService, {
+          unary: (input: Int32Value, context: HandlerContext) => {
+            context.responseHeader.set("unary-response-header", "foo");
+            context.responseTrailer.set("unary-response-trailer", "foo");
+            return { value: input.value.toString() };
+          },
+        });
       },
       {
         transport: {
@@ -132,16 +133,9 @@ describe("unary interceptors", () => {
       {
         "unary-request-header": "foo",
       },
-      input
+      { value: 9001 }
     );
-    expect(unary).toHaveBeenCalledOnceWith(
-      new Int32Value(input),
-      jasmine.objectContaining({
-        method: TestService.methods.unary,
-        service: TestService,
-      })
-    );
-    expect(response.message).toEqual(output);
+    expect(response.message).toEqual(new StringValue({ value: "9001" }));
 
     expect(log).toEqual(wantLog);
   });
@@ -174,7 +168,7 @@ describe("stream interceptors", () => {
     });
 
     const input = createAsyncIterable([
-      new TestService.methods.serverStream.I()
+      new TestService.methods.serverStream.I(),
     ]);
 
     const res = await transport.stream(
@@ -188,7 +182,7 @@ describe("stream interceptors", () => {
       input
     );
     for await (const m of res.message) {
-      expect(m).toEqual(new StringValue({ value: '' }));
+      expect(m).toEqual(new StringValue({ value: "" }));
     }
     expect(log).toEqual(wantLog);
   });

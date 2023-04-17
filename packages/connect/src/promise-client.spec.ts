@@ -55,7 +55,9 @@ describe("createClientStreamingFn()", function () {
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
         clientStream: (
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
           _input: AsyncIterable<Int32Value>,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
           _context: HandlerContext
         ) => Promise.resolve(output),
       });
@@ -85,8 +87,8 @@ describe("createServerStreamingFn()", function () {
     ];
 
     const transport = createRouterTransport(({ service }) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
       service(TestService, {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
         serverStream: (_input: Int32Value, _context: HandlerContext) =>
           createAsyncIterable(output),
       });
@@ -118,7 +120,6 @@ describe("createBiDiStreamingFn()", () => {
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
         bidiStream: async function* (input: AsyncIterable<Int32Value>) {
-
           for await (const thing of input) {
             expect(thing.value).toBe(values[bidiIndex]);
             bidiIndex += 1;
