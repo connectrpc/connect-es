@@ -21,7 +21,7 @@ import {
   createNodeHttp1Client,
   createNodeHttp2Client,
 } from "./node-universal-client.js";
-import type { CommonTransportOptions } from "@bufbuild/connect/src/protocol";
+import type { CommonTransportOptions } from "@bufbuild/connect/protocol";
 
 /**
  * Options specific to the Node.js built in http and https modules.

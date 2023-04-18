@@ -23,47 +23,33 @@ import { TestService } from "../gen/grpc/testing/test_connect.js";
 import {
   ErrorDetail,
   StreamingOutputCallRequest,
-  StreamingOutputCallResponse,
 } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
+import { interop } from "../helpers/interop.js";
 
 describe("fail_server_streaming", () => {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
   function expectError(err: unknown) {
-    const expectedErrorDetail = new ErrorDetail({
-      reason: "soirée 🎉",
-      domain: "connect-crosstest",
-    });
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
       expect(err.code).toEqual(Code.ResourceExhausted);
-      expect(err.rawMessage).toEqual("soirée 🎉");
+      expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
       const details = connectErrorDetails(err, ErrorDetail);
-      expect(details.length).toEqual(1);
-      expect(details[0]).toBeInstanceOf(ErrorDetail);
-      if (details[0] instanceof ErrorDetail) {
-        expect(expectedErrorDetail.equals(details[0])).toBeTrue();
-      }
+      expect(details).toEqual([interop.errorDetail]);
     }
   }
-  const size = 314159;
-  function expectResponseSize(response: StreamingOutputCallResponse) {
-    expect(response.payload).toBeDefined();
-    expect(response.payload?.body.length).toEqual(size);
-  }
-  const request = new StreamingOutputCallRequest({
-    responseParameters: [{ size }],
-  });
+  const request = new StreamingOutputCallRequest();
   servers.describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       try {
         for await (const response of client.failStreamingOutputCall(request)) {
-          expectResponseSize(response);
+          expect(response)
+            .withContext("did not expect any response message")
+            .toBeUndefined();
         }
-        fail("expected to catch an error");
       } catch (e) {
         expectError(e);
       }
@@ -73,7 +59,9 @@ describe("fail_server_streaming", () => {
       client.failStreamingOutputCall(
         request,
         (response) => {
-          expectResponseSize(response);
+          expect(response)
+            .withContext("did not expect any response message")
+            .toBeUndefined();
         },
         (err: ConnectError | undefined) => {
           expectError(err);

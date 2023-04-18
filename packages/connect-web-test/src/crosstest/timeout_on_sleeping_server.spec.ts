@@ -37,9 +37,9 @@ describe("timeout_on_sleeping_server", function () {
     ],
   });
   const options: CallOptions = {
-    timeoutMs: 1, // 1ms
+    timeoutMs: 5,
   };
-  // TODO(TCN-761)
+  // TODO(TCN-761) support deadlines in connect-es handlers
   describeTransportsExcluding(
     [
       "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)",
@@ -61,14 +61,8 @@ describe("timeout_on_sleeping_server", function () {
           }
           fail("expected to catch an error");
         } catch (e) {
-          // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
-          // and will return an HTTP status code 408 when stream max duration time reached, which
-          // cannot be translated to a connect error code, so connect-web client throws an Unknown.
-          const got = connectErrorFromReason(e).code;
-          expect(
-            got === Code.DeadlineExceeded || got === Code.Unknown
-          ).toBeTrue();
           expect(e).toBeInstanceOf(ConnectError);
+          expect(connectErrorFromReason(e).code).toBe(Code.DeadlineExceeded);
         }
       });
       it("with callback client", function (done) {
@@ -81,13 +75,7 @@ describe("timeout_on_sleeping_server", function () {
             );
           },
           (err: ConnectError | undefined) => {
-            // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
-            // and will return an HTTP status code 408 when stream max duration time reached, which
-            // cannot be translated to a connect error code, so connect-web client throws an Unknown.
-            expect(
-              err?.code === Code.DeadlineExceeded || err?.code === Code.Unknown
-            ).toBeTrue();
-            expect(err).toBeInstanceOf(ConnectError);
+            expect(err?.code).toBe(Code.DeadlineExceeded);
             done();
           },
           options

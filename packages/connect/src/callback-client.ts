@@ -50,7 +50,6 @@ export type CallbackClient<T extends ServiceType> = {
   [P in keyof T["methods"]]:
     T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: CallOptions) => CancelFn
   : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
-  // TODO(TCN-568, TCN-679) add methods for client-streaming and bidi-streaming
   : never;
 };
 
