@@ -39,6 +39,9 @@ interface StubTransportOptions {
   streamResponseTrailer?: HeadersInit;
 }
 
+/**
+ * @deprecated do not use.  Use `createRouterTransport` instead.
+ */
 export function stubTransport(options: StubTransportOptions): Transport {
   return {
     unary(service, method, signal, timeoutMs, header, message) {
