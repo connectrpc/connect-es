@@ -2,6 +2,6 @@
 # For details, see https://docs.buf.build/configuration/v1/buf-gen-yaml
 version: v1
 plugins:
-  - name: es
+  - plugin: es
     out: src/protocol-grpc/gen
     opt: target=ts

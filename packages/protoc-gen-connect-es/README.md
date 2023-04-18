@@ -46,11 +46,11 @@ Add a new configuration file `buf.gen.yaml`:
 version: v1
 plugins:
   # This will invoke protoc-gen-es and write output to src/gen
-  - name: es
+  - plugin: es
     out: src/gen
     opt: target=ts
   # This will invoke protoc-gen-connect-es
-  - name: connect-es
+  - plugin: connect-es
     out: src/gen
     opt:
       # Add more plugin options here

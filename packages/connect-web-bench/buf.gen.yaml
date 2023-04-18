@@ -1,9 +1,9 @@
 version: v1
 plugins:
-  - name: es
+  - plugin: es
     out: src/gen/connectweb
     opt: ts_nocheck=false,target=ts
-  - name: connect-es
+  - plugin: connect-es
     out: src/gen/connectweb
     opt: ts_nocheck=false,target=ts
   - plugin: buf.build/protocolbuffers/js:v3.21.2
