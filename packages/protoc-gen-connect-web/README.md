@@ -23,10 +23,10 @@ Update your `buf.gen.yaml`:
 ```diff
 version: v1
 plugins:
-  - name: es
+  - plugin: es
     out: src/gen
--  - name: connect-web
-+  - name: connect-es
+-  - plugin: connect-web
++  - plugin: connect-es
     out: src/gen
 ```
 
