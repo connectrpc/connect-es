@@ -252,7 +252,6 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
   serialization: MethodSerializationLookup<I, O>,
   endStreamSerialization: Serialization<EndStreamResponse>
 ) {
-  // eslint-disable-next-line @typescript-eslint/require-await
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
