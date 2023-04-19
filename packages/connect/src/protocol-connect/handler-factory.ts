@@ -37,6 +37,7 @@ import {
   transformPrepend,
   transformSerializeEnvelope,
   transformSplitEnvelope,
+  untilFirst,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
@@ -327,7 +328,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     );
     return {
       ...uResponseOk,
-      body: outputIt,
+      body: await untilFirst(outputIt),
       header: context.responseHeader,
     };
   };

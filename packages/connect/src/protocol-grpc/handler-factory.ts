@@ -37,6 +37,7 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
   transformInvokeImplementation,
+  untilFirst,
 } from "../protocol/index.js";
 import type {
   ProtocolHandlerFactory,
@@ -158,7 +159,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     );
     return {
       ...uResponseOk,
-      body: outputIt,
+      body: await untilFirst(outputIt),
       header: context.responseHeader,
       trailer: context.responseTrailer,
     };

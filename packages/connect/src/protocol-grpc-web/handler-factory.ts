@@ -37,6 +37,7 @@ import {
   transformSplitEnvelope,
   transformCatchFinally,
   transformInvokeImplementation,
+  untilFirst,
 } from "../protocol/index.js";
 import type { Serialization, EnvelopedMessage } from "../protocol/index.js";
 import type {
@@ -175,7 +176,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     );
     return {
       ...uResponseOk,
-      body: outputIt,
+      body: await untilFirst(outputIt),
       header: context.responseHeader,
     };
   };

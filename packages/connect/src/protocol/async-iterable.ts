@@ -676,6 +676,7 @@ export function transformCatchFinally<T>(
 }
 
 type TransformCatchFinallyFn<C> =
+  | ((reason: unknown | undefined) => void)
   | ((reason: unknown | undefined) => C | undefined)
   | ((reason: unknown | undefined) => Promise<C | undefined>);
 
@@ -1146,6 +1147,42 @@ function parseLengthHint(
     return [false, n];
   }
   return [true, n];
+}
+
+/**
+ * Wait for the first element of an iterable without modifying the iterable.
+ * This consumes the first element, but pushes it back on the stack.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export async function untilFirst<T>(
+  iterable: AsyncIterable<T>
+): Promise<AsyncIterable<T>> {
+  const it = iterable[Symbol.asyncIterator]();
+  let first: IteratorResult<T> | null = await it.next();
+  return {
+    [Symbol.asyncIterator]() {
+      const w: AsyncIterator<T> = {
+        async next() {
+          if (first !== null) {
+            const n = first;
+            first = null;
+            return n;
+          }
+          return await it.next();
+        },
+      };
+      if (it.throw !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- can't handle mutated object sensibly
+        w.throw = (e: unknown) => it.throw!(e);
+      }
+      if (it.return !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion,@typescript-eslint/no-explicit-any -- can't handle mutated object sensibly
+        w.return = (value?: any) => it.return!(value);
+      }
+      return w;
+    },
+  };
 }
 
 interface Abortable {
