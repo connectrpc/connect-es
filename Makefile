@@ -117,6 +117,12 @@ $(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUI
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-edge-test: $(BUILD)/connect $(BUILD)/connect-web $(GEN)/connect-edge-test packages/connect-edge-test/tsconfig.json $(shell find packages/connect-edge-test/src -name '*.ts')
+	npm run -w packages/connect-edge-test clean
+	npm run -w packages/connect-edge-test build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.json $(shell find packages/example/src -name '*.ts')
 	npm run -w packages/example lint
 	@mkdir -p $(@D)
@@ -138,6 +144,12 @@ $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-con
 $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-node-test/src/gen/*
 	npm run -w packages/connect-node-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(GEN)/connect-edge-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-edge-test/buf.gen.yaml Makefile
+	rm -rf packages/connect-edge-test/src/gen/*
+	npm run -w packages/connect-edge-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -170,7 +182,7 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/protoc-gen-connect-web $(BUILD)/example ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testnode testwebnode testwebbrowser ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testnode testwebnode testwebbrowser testedge ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
@@ -216,6 +228,10 @@ testwebbrowserlocal: $(BUILD)/connect-web-test
 .PHONY: testwebbrowserstack
 testwebbrowserstack: $(BUILD)/connect-web-test
 	npm run -w packages/connect-web-test karma-browserstack
+
+.PHONY: testedge
+testedge: $(BUILD)/connect-edge-test $(BIN)/node18
+	cd packages/connect-edge-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 
 .PHONY: lint
 lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files

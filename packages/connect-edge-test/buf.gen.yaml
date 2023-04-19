@@ -1,0 +1,8 @@
+version: v1
+plugins:
+  - name: es
+    out: src/gen
+    opt: ts_nocheck=false,target=ts
+  - name: connect-es
+    out: src/gen
+    opt: ts_nocheck=false,target=ts
