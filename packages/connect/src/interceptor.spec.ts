@@ -108,8 +108,8 @@ describe("unary interceptors", () => {
       ({ service }) => {
         service(TestService, {
           unary: (request: Int32Value, context: HandlerContext) => {
-            context.responseHeader.set("unary-response-header", "foo");
-            context.responseTrailer.set("unary-response-trailer", "foo");
+            context.responseHeader.set("unary-response-header", "response-header");
+            context.responseTrailer.set("unary-response-trailer", "response-trailer");
             return { value: request.value.toString() };
           },
         });
@@ -130,11 +130,14 @@ describe("unary interceptors", () => {
       undefined,
       undefined,
       {
-        "unary-request-header": "foo",
+        "unary-request-header": "request-header",
       },
       { value: 9001 }
     );
+
     expect(response.message).toEqual(new StringValue({ value: "9001" }));
+    expect(response.header.get("unary-response-header")).toEqual("response-header");
+    expect(response.trailer.get("unary-response-trailer")).toEqual("response-trailer");
 
     expect(log).toEqual(wantLog);
   });
@@ -158,8 +161,8 @@ describe("stream interceptors", () => {
       ({ service }) => {
         service(TestService, {
           serverStream: (request: Int32Value, context: HandlerContext) => {
-            context.responseHeader.set("stream-response-header", "foo");
-            context.responseTrailer.set("stream-response-trailer", "foo");
+            context.responseHeader.set("stream-response-header", "response-header");
+            context.responseTrailer.set("stream-response-trailer", "response-trailer");
             return createAsyncIterable([{ value: request.value.toString() }]);
           },
         });
@@ -174,21 +177,23 @@ describe("stream interceptors", () => {
       }
     );
 
-    const input = createAsyncIterable([new Int32Value({ value: 42 })]);
-
-    const res = await transport.stream(
+    const response = await transport.stream(
       TestService,
       TestService.methods.serverStream,
       undefined,
       undefined,
       {
-        "stream-request-header": "foo",
+        "stream-request-header": "request-header",
       },
-      input
+      createAsyncIterable([new Int32Value({ value: 42 })])
     );
-    for await (const m of res.message) {
-      expect(m).toEqual(new StringValue({ value: "42" }));
+
+    for await (const message of response.message) {
+      expect(message).toEqual(new StringValue({ value: "42" }));
     }
+
     expect(log).toEqual(wantLog);
+    expect(response.header.get("stream-response-header")).toEqual("response-header");
+    expect(response.trailer.get("stream-response-trailer")).toEqual("response-trailer");
   });
 });
