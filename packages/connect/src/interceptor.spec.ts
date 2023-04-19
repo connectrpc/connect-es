@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
-import { stubTransport } from "./transport-stub.js";
 import type { Interceptor, StreamResponse } from "./interceptor.js";
 import { createRouterTransport } from "./router-transport.js";
 import type { HandlerContext } from "./implementation.js";
@@ -108,10 +107,10 @@ describe("unary interceptors", () => {
     const transport = createRouterTransport(
       ({ service }) => {
         service(TestService, {
-          unary: (input: Int32Value, context: HandlerContext) => {
+          unary: (request: Int32Value, context: HandlerContext) => {
             context.responseHeader.set("unary-response-header", "foo");
             context.responseTrailer.set("unary-response-trailer", "foo");
-            return { value: input.value.toString() };
+            return { value: request.value.toString() };
           },
         });
       },
@@ -154,22 +153,28 @@ describe("stream interceptors", () => {
   ] as const;
   it("promise client", async () => {
     const log: string[] = [];
-    const transport = stubTransport({
-      interceptors: [
-        makeLoggingInterceptor("outer", log),
-        makeLoggingInterceptor("inner", log),
-      ],
-      streamResponseHeader: new Headers({
-        "stream-response-header": "foo",
-      }),
-      streamResponseTrailer: new Headers({
-        "stream-response-trailer": "foo",
-      }),
-    });
 
-    const input = createAsyncIterable([
-      new TestService.methods.serverStream.I(),
-    ]);
+    const transport = createRouterTransport(
+      ({ service }) => {
+        service(TestService, {
+          serverStream: (request: Int32Value, context: HandlerContext) => {
+            context.responseHeader.set("stream-response-header", "foo");
+            context.responseTrailer.set("stream-response-trailer", "foo");
+            return createAsyncIterable([{ value: request.value.toString() }]);
+          },
+        });
+      },
+      {
+        transport: {
+          interceptors: [
+            makeLoggingInterceptor("outer", log),
+            makeLoggingInterceptor("inner", log),
+          ],
+        },
+      }
+    );
+
+    const input = createAsyncIterable([new Int32Value({ value: 42 })]);
 
     const res = await transport.stream(
       TestService,
@@ -182,7 +187,7 @@ describe("stream interceptors", () => {
       input
     );
     for await (const m of res.message) {
-      expect(m).toEqual(new StringValue({ value: "" }));
+      expect(m).toEqual(new StringValue({ value: "42" }));
     }
     expect(log).toEqual(wantLog);
   });
