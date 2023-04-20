@@ -108,8 +108,14 @@ describe("unary interceptors", () => {
       ({ service }) => {
         service(TestService, {
           unary: (request: Int32Value, context: HandlerContext) => {
-            context.responseHeader.set("unary-response-header", "response-header");
-            context.responseTrailer.set("unary-response-trailer", "response-trailer");
+            context.responseHeader.set(
+              "unary-response-header",
+              "response-header"
+            );
+            context.responseTrailer.set(
+              "unary-response-trailer",
+              "response-trailer"
+            );
             return { value: request.value.toString() };
           },
         });
@@ -136,8 +142,12 @@ describe("unary interceptors", () => {
     );
 
     expect(response.message).toEqual(new StringValue({ value: "9001" }));
-    expect(response.header.get("unary-response-header")).toEqual("response-header");
-    expect(response.trailer.get("unary-response-trailer")).toEqual("response-trailer");
+    expect(response.header.get("unary-response-header")).toEqual(
+      "response-header"
+    );
+    expect(response.trailer.get("unary-response-trailer")).toEqual(
+      "response-trailer"
+    );
 
     expect(log).toEqual(wantLog);
   });
@@ -161,8 +171,14 @@ describe("stream interceptors", () => {
       ({ service }) => {
         service(TestService, {
           serverStream: (request: Int32Value, context: HandlerContext) => {
-            context.responseHeader.set("stream-response-header", "response-header");
-            context.responseTrailer.set("stream-response-trailer", "response-trailer");
+            context.responseHeader.set(
+              "stream-response-header",
+              "response-header"
+            );
+            context.responseTrailer.set(
+              "stream-response-trailer",
+              "response-trailer"
+            );
             return createAsyncIterable([{ value: request.value.toString() }]);
           },
         });
@@ -193,7 +209,11 @@ describe("stream interceptors", () => {
     }
 
     expect(log).toEqual(wantLog);
-    expect(response.header.get("stream-response-header")).toEqual("response-header");
-    expect(response.trailer.get("stream-response-trailer")).toEqual("response-trailer");
+    expect(response.header.get("stream-response-header")).toEqual(
+      "response-header"
+    );
+    expect(response.trailer.get("stream-response-trailer")).toEqual(
+      "response-trailer"
+    );
   });
 });
