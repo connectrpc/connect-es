@@ -30,7 +30,7 @@ export function createTestServers() {
     | undefined;
 
   const servers = {
-    "vercel-edge-runtime": {
+    "vercel edge-runtime on node": {
       getUrl() {
         const url = vercelEdgeRuntimeServer?.url;
         if (url === undefined) {
@@ -101,37 +101,37 @@ export function createTestServers() {
 
   const transports = {
     // Connect
-    "@bufbuild/connect-node (Connect, JSON, http) against vercel-edge-runtime":
+    "@bufbuild/connect-node (Connect, JSON, http) against vercel edge-runtime on node":
       (options?: Record<string, unknown>) =>
         createConnectTransport({
           ...options,
-          baseUrl: servers["vercel-edge-runtime"].getUrl(),
+          baseUrl: servers["vercel edge-runtime on node"].getUrl(),
           httpVersion: "1.1",
           useBinaryFormat: false,
         }),
-    "@bufbuild/connect-node (Connect, binary, http) against vercel-edge-runtime":
+    "@bufbuild/connect-node (Connect, binary, http) against vercel edge-runtime on node":
       (options?: Record<string, unknown>) =>
         createConnectTransport({
           ...options,
-          baseUrl: servers["vercel-edge-runtime"].getUrl(),
+          baseUrl: servers["vercel edge-runtime on node"].getUrl(),
           httpVersion: "1.1",
           useBinaryFormat: true,
         }),
 
     // gRPC-web
-    "@bufbuild/connect-node (gRPC-web, binary, http) against vercel-edge-runtime":
+    "@bufbuild/connect-node (gRPC-web, binary, http) against vercel edge-runtime on node":
       (options?: Record<string, unknown>) =>
         createGrpcWebTransport({
           ...options,
-          baseUrl: servers["vercel-edge-runtime"].getUrl(),
+          baseUrl: servers["vercel edge-runtime on node"].getUrl(),
           httpVersion: "1.1",
           useBinaryFormat: true,
         }),
-    "@bufbuild/connect-node (gRPC-web, JSON, http) against vercel-edge-runtime":
+    "@bufbuild/connect-node (gRPC-web, JSON, http) against vercel edge-runtime on node":
       (options?: Record<string, unknown>) =>
         createGrpcWebTransport({
           ...options,
-          baseUrl: servers["vercel-edge-runtime"].getUrl(),
+          baseUrl: servers["vercel edge-runtime on node"].getUrl(),
           httpVersion: "1.1",
           useBinaryFormat: false,
         }),
