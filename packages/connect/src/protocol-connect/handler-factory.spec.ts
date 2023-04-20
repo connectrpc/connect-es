@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MethodInfo } from "@bufbuild/protobuf";
+import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import { createHandlerFactory } from "./handler-factory.js";
 import type { MethodImpl } from "../implementation.js";
