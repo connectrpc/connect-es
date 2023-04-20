@@ -37,6 +37,7 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
   transformInvokeImplementation,
+  untilFirst,
 } from "../protocol/index.js";
 import type {
   ProtocolHandlerFactory,
@@ -94,7 +95,6 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     opt.jsonOptions,
     opt
   );
-  // eslint-disable-next-line @typescript-eslint/require-await
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
@@ -158,7 +158,10 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     );
     return {
       ...uResponseOk,
-      body: outputIt,
+      // We wait for the first response body bytes before resolving, so that
+      // implementations have a chance to add headers before an adapter commits
+      // them to the wire.
+      body: await untilFirst(outputIt),
       header: context.responseHeader,
       trailer: context.responseTrailer,
     };

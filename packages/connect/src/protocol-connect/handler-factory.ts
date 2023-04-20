@@ -37,6 +37,7 @@ import {
   transformPrepend,
   transformSerializeEnvelope,
   transformSplitEnvelope,
+  untilFirst,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
@@ -251,7 +252,6 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
   serialization: MethodSerializationLookup<I, O>,
   endStreamSerialization: Serialization<EndStreamResponse>
 ) {
-  // eslint-disable-next-line @typescript-eslint/require-await
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
@@ -327,7 +327,10 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     );
     return {
       ...uResponseOk,
-      body: outputIt,
+      // We wait for the first response body bytes before resolving, so that
+      // implementations have a chance to add headers before an adapter commits
+      // them to the wire.
+      body: await untilFirst(outputIt),
       header: context.responseHeader,
     };
   };

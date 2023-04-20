@@ -72,6 +72,7 @@ export {
   createWritableIterable,
   createAsyncIterable,
   readAllBytes,
+  untilFirst,
 } from "./async-iterable.js";
 export type {
   AsyncIterableTransform,
