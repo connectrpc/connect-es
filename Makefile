@@ -117,7 +117,7 @@ $(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUI
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-edge-test: $(BUILD)/connect $(BUILD)/connect-web $(GEN)/connect-edge-test packages/connect-edge-test/tsconfig.json $(shell find packages/connect-edge-test/src -name '*.ts')
+$(BUILD)/connect-edge-test: $(BUILD)/connect $(BUILD)/connect-node $(GEN)/connect-edge-test packages/connect-edge-test/tsconfig.json $(shell find packages/connect-edge-test/src -name '*.ts')
 	npm run -w packages/connect-edge-test clean
 	npm run -w packages/connect-edge-test build
 	@mkdir -p $(@D)
