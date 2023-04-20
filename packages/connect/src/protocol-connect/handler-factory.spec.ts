@@ -12,28 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Int32Value,
-  Message,
-  MethodKind,
-  StringValue,
-} from "@bufbuild/protobuf";
 import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
+import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import { createHandlerFactory } from "./handler-factory.js";
+import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
-import type { HandlerContext, MethodImpl } from "../implementation.js";
 import type { UniversalHandlerOptions } from "../protocol/index.js";
-import { errorFromJsonBytes } from "./error-json.js";
+import {
+  createAsyncIterable,
+  createUniversalHandlerClient,
+  pipeTo,
+  sinkAll,
+} from "../protocol/index.js";
 import { ConnectError } from "../connect-error.js";
-import { Code } from "../code.js";
-import { endStreamFromJson } from "./end-stream.js";
 import {
   createAsyncIterableBytes,
   readAllBytes,
 } from "../protocol/async-iterable-helper.spec.js";
+import { Code } from "../code.js";
+import { errorFromJsonBytes } from "./error-json.js";
+import { endStreamFromJson } from "./end-stream.js";
+import { createTransport } from "./transport.js";
 
 describe("createHandlerFactory()", function () {
-  const testService: ServiceType = {
+  const testService = {
     typeName: "TestService",
     methods: {
       foo: {
@@ -49,53 +51,91 @@ describe("createHandlerFactory()", function () {
         kind: MethodKind.ServerStreaming,
       },
     },
-  } as const;
+  } satisfies ServiceType;
 
-  function stub<M extends MethodInfo>(
-    opt: {
-      service?: ServiceType;
-      method?: M;
-      impl?: MethodImpl<M>;
-    } & Partial<UniversalHandlerOptions>
+  function setupTestHandler<M extends MethodInfo>(
+    method: M,
+    opt: Partial<UniversalHandlerOptions>,
+    impl: MethodImpl<M>
   ) {
-    const method = opt.method ?? testService.methods.foo;
-    let implDefault: MethodImpl<M>;
-    switch (method.kind) {
-      case MethodKind.Unary:
-        // eslint-disable-next-line @typescript-eslint/require-await
-        implDefault = async function (req: Message, ctx: HandlerContext) {
-          ctx.responseHeader.set("stub-handler", "1");
-          return new ctx.method.O();
-        } as unknown as MethodImpl<M>;
-        break;
-      case MethodKind.ServerStreaming:
-        // eslint-disable-next-line @typescript-eslint/require-await
-        implDefault = async function* (req: Message, ctx: HandlerContext) {
-          ctx.responseHeader.set("stub-handler", "1");
-          yield new ctx.method.O();
-        } as unknown as MethodImpl<M>;
-        break;
-      case MethodKind.ClientStreaming:
-      case MethodKind.BiDiStreaming:
-        implDefault = (() => {
-          throw new Error("not implemented");
-        }) as unknown as MethodImpl<M>;
-        break;
-    }
-    const spec = createMethodImplSpec(
-      opt.service ?? testService,
-      method,
-      opt.impl ?? implDefault
+    const h = createHandlerFactory(opt)(
+      createMethodImplSpec(testService, method, impl)
     );
-    const f = createHandlerFactory(opt);
-    return f(spec);
+    const t = createTransport({
+      httpClient: createUniversalHandlerClient([h]),
+      baseUrl: "https://example.com",
+      readMaxBytes: 0xffffff,
+      writeMaxBytes: 0xffffff,
+      compressMinBytes: 0xffffff,
+      useBinaryFormat: true,
+      interceptors: [],
+      acceptCompression: [],
+      sendCompression: null,
+    });
+    return {
+      service: testService,
+      method: method,
+      handler: h,
+      transport: t,
+    };
   }
+
+  describe("returned handler", function () {
+    it("should surface headers for unary", async function () {
+      const { transport, service, method } = setupTestHandler(
+        testService.methods.foo,
+        {},
+        (req, ctx) => {
+          ctx.responseHeader.set("implementation-called", "yes");
+          return { value: req.value.toString(10) };
+        }
+      );
+      const r = await transport.unary(
+        service,
+        method,
+        undefined,
+        undefined,
+        undefined,
+        new Int32Value({ value: 123 })
+      );
+      expect(r.header.get("implementation-called")).toBe("yes");
+      expect(r.message.value).toBe("123");
+    });
+
+    it("should surface headers for server-streaming", async function () {
+      const { transport, service, method } = setupTestHandler(
+        testService.methods.bar,
+        {},
+        // eslint-disable-next-line @typescript-eslint/require-await
+        async function* (req, ctx) {
+          ctx.responseHeader.set("implementation-called", "yes");
+          yield { value: req.value.toString(10) };
+        }
+      );
+      const r = await transport.stream(
+        service,
+        method,
+        undefined,
+        undefined,
+        undefined,
+        createAsyncIterable([new Int32Value({ value: 123 })])
+      );
+      expect(r.header.get("implementation-called")).toBe("yes");
+      const all = await pipeTo(r.message, sinkAll());
+      expect(all.length).toBe(1);
+      expect(all[0].value).toBe("123");
+    });
+  });
 
   describe("requireConnectProtocolHeader", function () {
     describe("with unary RPC", function () {
-      const h = stub({ requireConnectProtocolHeader: true });
+      const { handler } = setupTestHandler(
+        testService.methods.foo,
+        { requireConnectProtocolHeader: true },
+        (req) => ({ value: req.value.toString(10) })
+      );
       it("should raise error for missing header", async function () {
-        const res = await h({
+        const res = await handler({
           httpVersion: "1.1",
           method: "POST",
           url: new URL("https://example.com"),
@@ -116,7 +156,7 @@ describe("createHandlerFactory()", function () {
         }
       });
       it("should raise error for wrong header", async function () {
-        const res = await h({
+        const res = await handler({
           httpVersion: "1.1",
           method: "POST",
           url: new URL("https://example.com"),
@@ -141,12 +181,16 @@ describe("createHandlerFactory()", function () {
       });
     });
     describe("with streaming RPC", function () {
-      const h = stub({
-        requireConnectProtocolHeader: true,
-        method: testService.methods.bar,
-      });
+      const { handler } = setupTestHandler(
+        testService.methods.bar,
+        { requireConnectProtocolHeader: true },
+        // eslint-disable-next-line @typescript-eslint/require-await
+        async function* (req) {
+          yield { value: req.value.toString(10) };
+        }
+      );
       it("should raise error for missing header", async function () {
-        const res = await h({
+        const res = await handler({
           httpVersion: "1.1",
           method: "POST",
           url: new URL("https://example.com"),
@@ -166,7 +210,7 @@ describe("createHandlerFactory()", function () {
         }
       });
       it("should raise error for wrong header", async function () {
-        const res = await h({
+        const res = await handler({
           httpVersion: "1.1",
           method: "POST",
           url: new URL("https://example.com"),
