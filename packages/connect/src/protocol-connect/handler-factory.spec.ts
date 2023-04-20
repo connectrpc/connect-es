@@ -51,7 +51,7 @@ describe("createHandlerFactory()", function () {
         kind: MethodKind.ServerStreaming,
       },
     },
-  } as const;
+  } satisfies ServiceType;
 
   function setupTestHandler<M extends MethodInfo>(
     method: M,
