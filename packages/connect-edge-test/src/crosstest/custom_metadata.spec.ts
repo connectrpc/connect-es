@@ -29,47 +29,67 @@ describe("custom_metadata", function () {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
-  servers.describeTransportsOnly(
-    [
-      // "@bufbuild/connect-node (Connect, binary, http) against vercel-edge-runtime",
-      // "@bufbuild/connect-node (Connect, JSON, http) against vercel-edge-runtime",
-      "@bufbuild/connect-node (gRPC-web, JSON, http) against vercel-edge-runtime",
-    ],
-    (transport) => {
-      const size = 314159;
-      const binaryValue = new Uint8Array([0xab, 0xab, 0xab]);
-      const requestHeaders = {
-        "x-grpc-test-echo-initial": "test_initial_metadata_value",
-        "x-grpc-test-echo-trailing-bin": encodeBinaryHeader(binaryValue),
-      };
-      const request = new SimpleRequest({
-        responseSize: size,
-        payload: {
-          body: new Uint8Array(271828).fill(0),
+  servers.describeTransports((transport) => {
+    const size = 314159;
+    const binaryValue = new Uint8Array([0xab, 0xab, 0xab]);
+    const requestHeaders = {
+      "x-grpc-test-echo-initial": "test_initial_metadata_value",
+      "x-grpc-test-echo-trailing-bin": encodeBinaryHeader(binaryValue),
+    };
+    const request = new SimpleRequest({
+      responseSize: size,
+      payload: {
+        body: new Uint8Array(271828).fill(0),
+      },
+    });
+    function expectResponseSize(response: SimpleResponse) {
+      expect(response.payload).toBeDefined();
+      expect(response.payload?.body.length).toEqual(size);
+    }
+    function expectResponseHeaders(responseHeaders: Headers | undefined) {
+      const want = requestHeaders["x-grpc-test-echo-initial"];
+      const got = responseHeaders?.get("x-grpc-test-echo-initial");
+      expect(got).toBe(want);
+    }
+    function expectResponseTrailers(responseTrailers: Headers | undefined) {
+      const gotRaw = responseTrailers?.get("x-grpc-test-echo-trailing-bin");
+      expect(gotRaw).toBeDefined();
+      expect(gotRaw).not.toBeNull();
+      if (gotRaw != null) {
+        expect(decodeBinaryHeader(gotRaw)).toEqual(binaryValue);
+      }
+    }
+    it("with promise client", async function () {
+      const client = createPromiseClient(TestService, transport());
+      let responseHeaders: Headers | undefined;
+      let responseTrailers: Headers | undefined;
+      const response = await client.unaryCall(request, {
+        headers: requestHeaders,
+        onHeader(header) {
+          responseHeaders = header;
+        },
+        onTrailer(trailer) {
+          responseTrailers = trailer;
         },
       });
-      function expectResponseSize(response: SimpleResponse) {
-        expect(response.payload).toBeDefined();
-        expect(response.payload?.body.length).toEqual(size);
-      }
-      function expectResponseHeaders(responseHeaders: Headers | undefined) {
-        const want = requestHeaders["x-grpc-test-echo-initial"];
-        const got = responseHeaders?.get("x-grpc-test-echo-initial");
-        expect(got).toBe(want);
-      }
-      function expectResponseTrailers(responseTrailers: Headers | undefined) {
-        const gotRaw = responseTrailers?.get("x-grpc-test-echo-trailing-bin");
-        expect(gotRaw).toBeDefined();
-        expect(gotRaw).not.toBeNull();
-        if (gotRaw != null) {
-          expect(decodeBinaryHeader(gotRaw)).toEqual(binaryValue);
-        }
-      }
-      it("with promise client", async function () {
-        const client = createPromiseClient(TestService, transport());
-        let responseHeaders: Headers | undefined;
-        let responseTrailers: Headers | undefined;
-        const response = await client.unaryCall(request, {
+      expectResponseSize(response);
+      expectResponseHeaders(responseHeaders);
+      expectResponseTrailers(responseTrailers);
+    });
+    it("with callback client", function (done) {
+      const client = createCallbackClient(TestService, transport());
+      let responseHeaders: Headers | undefined;
+      let responseTrailers: Headers | undefined;
+      client.unaryCall(
+        request,
+        (err, response) => {
+          expect(err).toBeUndefined();
+          expectResponseSize(response);
+          expectResponseHeaders(responseHeaders);
+          expectResponseTrailers(responseTrailers);
+          done();
+        },
+        {
           headers: requestHeaders,
           onHeader(header) {
             responseHeaders = header;
@@ -77,37 +97,10 @@ describe("custom_metadata", function () {
           onTrailer(trailer) {
             responseTrailers = trailer;
           },
-        });
-        expectResponseSize(response);
-        expectResponseHeaders(responseHeaders);
-        expectResponseTrailers(responseTrailers);
-      });
-      it("with callback client", function (done) {
-        const client = createCallbackClient(TestService, transport());
-        let responseHeaders: Headers | undefined;
-        let responseTrailers: Headers | undefined;
-        client.unaryCall(
-          request,
-          (err, response) => {
-            expect(err).toBeUndefined();
-            expectResponseSize(response);
-            expectResponseHeaders(responseHeaders);
-            expectResponseTrailers(responseTrailers);
-            done();
-          },
-          {
-            headers: requestHeaders,
-            onHeader(header) {
-              responseHeaders = header;
-            },
-            onTrailer(trailer) {
-              responseTrailers = trailer;
-            },
-          }
-        );
-      });
-    }
-  );
+        }
+      );
+    });
+  });
 
   afterAll(async () => await servers.stop());
 });
