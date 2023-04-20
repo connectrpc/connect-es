@@ -327,6 +327,9 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     );
     return {
       ...uResponseOk,
+      // We wait for the first response body bytes before resolving, so that
+      // implementations have a chance to add headers before an adapter commits
+      // them to the wire.
       body: await untilFirst(outputIt),
       header: context.responseHeader,
     };
