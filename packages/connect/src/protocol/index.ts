@@ -85,6 +85,8 @@ export {
   invokeUnaryImplementation,
   transformInvokeImplementation,
 } from "./invoke-implementation.js";
+export type { ParseDeadlineFn } from "./deadline-factory.js";
+export { createDeadlineParser } from "./deadline-factory.js";
 export {
   assertByteStreamRequest,
   uResponseOk,

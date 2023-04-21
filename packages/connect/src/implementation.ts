@@ -71,6 +71,9 @@ export interface HandlerContext {
    */
   readonly service: ServiceType;
 
+  // TODO
+  readonly deadline?: AbortSignal;
+
   /**
    * Incoming request headers.
    */
@@ -95,13 +98,15 @@ export interface HandlerContext {
  */
 export function createHandlerContext(
   spec: { service: ServiceType; method: MethodInfo },
+  deadline: AbortSignal | undefined, // TODO
   requestHeader: HeadersInit,
   responseHeader: HeadersInit,
-  responseTrailer?: HeadersInit
+  responseTrailer: HeadersInit
 ): HandlerContext {
   return {
     method: spec.method,
     service: spec.service,
+    deadline,
     requestHeader: new Headers(requestHeader),
     responseHeader: new Headers(responseHeader),
     responseTrailer: new Headers(responseTrailer),

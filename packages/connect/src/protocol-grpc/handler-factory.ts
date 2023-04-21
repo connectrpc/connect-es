@@ -28,7 +28,7 @@ import {
   createMethodSerializationLookup,
   createMethodUrl,
   pipe,
-  transformCatch,
+  transformCatchFinally,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,
@@ -38,6 +38,7 @@ import {
   transformSplitEnvelope,
   transformInvokeImplementation,
   untilFirst,
+  createDeadlineParser,
 } from "../protocol/index.js";
 import type {
   ProtocolHandlerFactory,
@@ -56,8 +57,10 @@ import {
   headerContentType,
   headerEncoding,
   headerGrpcStatus,
+  headerTimeout,
 } from "./headers.js";
 import { grpcStatusOk, setTrailerStatus } from "./trailer-status.js";
+import { parseTimeout } from "./parse-timeout.js";
 
 const protocolName = "grpc";
 const methodPost = "POST";
@@ -95,6 +98,12 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     opt.jsonOptions,
     opt
   );
+  const parseDeadline = createDeadlineParser(
+    parseTimeout,
+    opt.maxDeadlineDurationMs,
+    opt.shutdownSignal
+  );
+
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
@@ -106,8 +115,10 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     if (req.method !== methodPost) {
       return uResponseMethodNotAllowed;
     }
+    const deadline = parseDeadline(req.header.get(headerTimeout));
     const context = createHandlerContext(
       spec,
+      deadline.signal,
       req.header,
       {
         [headerContentType]: type.binary ? contentTypeProto : contentTypeJson,
@@ -130,6 +141,8 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformPrepend<Uint8Array>(() => {
         // raise compression error to serialize it as a trailer status
         if (compression.error) throw compression.error;
+        // raise timeout parsing error to serialize it as a trailer status
+        if (deadline.error) throw deadline.error;
         return undefined;
       }),
       transformSplitEnvelope(opt.readMaxBytes),
@@ -139,10 +152,11 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
       transformJoinEnvelopes(),
-      transformCatch<Uint8Array>((e): void => {
+      transformCatchFinally<Uint8Array>((e): void => {
+        deadline.cleanup?.();
         if (e instanceof ConnectError) {
           setTrailerStatus(context.responseTrailer, e);
-        } else {
+        } else if (e !== undefined) {
           setTrailerStatus(
             context.responseTrailer,
             new ConnectError(
@@ -156,6 +170,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
         }
       })
     );
+
     return {
       ...uResponseOk,
       // We wait for the first response body bytes before resolving, so that

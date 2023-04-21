@@ -38,6 +38,7 @@ import {
   transformCatchFinally,
   transformInvokeImplementation,
   untilFirst,
+  createDeadlineParser,
 } from "../protocol/index.js";
 import type { Serialization, EnvelopedMessage } from "../protocol/index.js";
 import type {
@@ -46,7 +47,12 @@ import type {
   UniversalServerRequest,
   UniversalServerResponse,
 } from "../protocol/index.js";
-import { grpcStatusOk, setTrailerStatus } from "../protocol-grpc/index.js";
+import {
+  grpcStatusOk,
+  headerTimeout,
+  parseTimeout,
+  setTrailerStatus,
+} from "../protocol-grpc/index.js";
 import { createTrailerSerialization, trailerFlag } from "./trailer.js";
 import {
   headerAcceptEncoding,
@@ -100,6 +106,12 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     opt.jsonOptions,
     opt
   );
+  const parseDeadline = createDeadlineParser(
+    parseTimeout,
+    opt.maxDeadlineDurationMs,
+    opt.shutdownSignal
+  );
+
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
@@ -111,8 +123,10 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     if (req.method !== methodPost) {
       return uResponseMethodNotAllowed;
     }
+    const deadline = parseDeadline(req.header.get(headerTimeout));
     const context = createHandlerContext(
       spec,
+      deadline.signal,
       req.header,
       {
         [headerContentType]: type.binary ? contentTypeProto : contentTypeJson,
@@ -135,6 +149,8 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformPrepend<Uint8Array>(() => {
         // raise compression error to serialize it as a trailer status
         if (compression.error) throw compression.error;
+        // raise timeout parsing error to serialize it as a trailer status
+        if (deadline.error) throw deadline.error;
         return undefined;
       }),
       transformSplitEnvelope(opt.readMaxBytes),
@@ -148,26 +164,24 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformInvokeImplementation<I, O>(spec, context),
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
-        const trailer = context.responseTrailer;
-        if (e !== undefined) {
-          if (e instanceof ConnectError) {
-            setTrailerStatus(trailer, e);
-          } else {
-            setTrailerStatus(
-              trailer,
-              new ConnectError(
-                "internal error",
-                Code.Internal,
-                undefined,
-                undefined,
-                e
-              )
-            );
-          }
+        deadline.cleanup?.();
+        if (e instanceof ConnectError) {
+          setTrailerStatus(context.responseTrailer, e);
+        } else if (e !== undefined) {
+          setTrailerStatus(
+            context.responseTrailer,
+            new ConnectError(
+              "internal error" + String(e),
+              Code.Internal,
+              undefined,
+              undefined,
+              e
+            )
+          );
         }
         return {
           flags: trailerFlag,
-          data: trailerSerialization.serialize(trailer),
+          data: trailerSerialization.serialize(context.responseTrailer),
         };
       }),
       transformCompressEnvelope(compression.response, opt.compressMinBytes),

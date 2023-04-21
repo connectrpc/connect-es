@@ -42,87 +42,41 @@ describe("timeout_on_sleeping_server", function () {
   const options: CallOptions = {
     timeoutMs: 5,
   };
-  // TODO(TCN-761) support deadlines in connect-es handlers
-  servers.describeTransportsExcluding(
-    [
-      "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2)",
-      "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (gRPC, JSON, http2) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (gRPC, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (gRPC, JSON, http2, gzip) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (gRPC, binary, http) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (gRPC, JSON, http) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (gRPC, JSON, https) against @bufbuild/connect-node (h1 + tls)",
-      "@bufbuild/connect-node (gRPC, binary, https) against @bufbuild/connect-node (h1 + tls)",
-      "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-fastify (h2c)",
-      "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)",
-      "@bufbuild/connect-node (gRPC, binary, http, gzip) against @bufbuild/connect-express (h1)",
-      "@bufbuild/connect-node (gRPC, JSON, http, gzip) against @bufbuild/connect-express (h1)",
-      "@bufbuild/connect-node (Connect, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (Connect, JSON, http2, gzip) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (Connect, binary, http) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (Connect, binary, https) against @bufbuild/connect-node (h1 + tls)",
-      "@bufbuild/connect-node (Connect, JSON, https) against @bufbuild/connect-node (h1 + tls)",
-      "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)",
-      "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-fastify (h2c)",
-      "@bufbuild/connect-node (Connect, JSON, http, gzip) against @bufbuild/connect-express (h1)",
-      "@bufbuild/connect-node (Connect, binary, http, gzip) against @bufbuild/connect-express (h1)",
-      "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (gRPC-web, JSON, http2) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (gRPC-web, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (gRPC-web, JSON, http2, gzip) against @bufbuild/connect-node (h2c)",
-      "@bufbuild/connect-node (gRPC-web, binary, http) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (gRPC-web, JSON, http) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (gRPC-web, JSON, https) against @bufbuild/connect-node (h1 + tls)",
-      "@bufbuild/connect-node (gRPC-web, binary, https) against @bufbuild/connect-node (h1 + tls)",
-      "@bufbuild/connect-node (gRPC-web, binary, http, gzip) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (gRPC-web, JSON, http, gzip) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-node (gRPC-web, binary, http, gzip against @bufbuild/connect-fastify (h2c)",
-      "@bufbuild/connect-node (gRPC-web, JSON, http, gzip) against @bufbuild/connect-fastify (h2c)",
-      "@bufbuild/connect-node (gRPC-web, JSON, http, gzip) against @bufbuild/connect-express (h1)",
-      "@bufbuild/connect-node (gRPC-web, binary, http, gzip) against @bufbuild/connect-express (h1)",
-    ],
-    (transport) => {
-      it("with promise client", async function () {
-        const client = createPromiseClient(TestService, transport());
-        try {
-          for await (const response of client.streamingOutputCall(
-            request,
-            options
-          )) {
-            fail(
-              `expecting no response from sleeping server, got: ${response.toJsonString()}`
-            );
-          }
-          fail("expected to catch an error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).code).toBe(Code.DeadlineExceeded);
-        }
-      });
-      it("with callback client", function (done) {
-        const client = createCallbackClient(TestService, transport());
-        client.streamingOutputCall(
+  servers.describeTransports((transport) => {
+    it("with promise client", async function () {
+      const client = createPromiseClient(TestService, transport());
+      try {
+        for await (const response of client.streamingOutputCall(
           request,
-          (response) => {
-            fail(
-              `expecting no response from sleeping server, got: ${response.toJsonString()}`
-            );
-          },
-          (err: ConnectError | undefined) => {
-            expect(err?.code).toBe(Code.DeadlineExceeded);
-            done();
-          },
           options
-        );
-      });
-    }
-  );
+        )) {
+          fail(
+            `expecting no response from sleeping server, got: ${response.toJsonString()}`
+          );
+        }
+        fail("expected to catch an error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(connectErrorFromReason(e).code).toBe(Code.DeadlineExceeded);
+      }
+    });
+    it("with callback client", function (done) {
+      const client = createCallbackClient(TestService, transport());
+      client.streamingOutputCall(
+        request,
+        (response) => {
+          fail(
+            `expecting no response from sleeping server, got: ${response.toJsonString()}`
+          );
+        },
+        (err: ConnectError | undefined) => {
+          expect(err?.code).toBe(Code.DeadlineExceeded);
+          done();
+        },
+        options
+      );
+    });
+  });
 
   afterAll(async () => await servers.stop());
 });
