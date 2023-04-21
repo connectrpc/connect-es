@@ -100,7 +100,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
   );
   const parseDeadline = createDeadlineParser(
     parseTimeout,
-    opt.maxDeadlineDurationMs,
+    opt.maxTimeoutMs,
     opt.shutdownSignal
   );
 

@@ -40,7 +40,7 @@ export type ParseDeadlineFn = (timeoutValue: string | null) =>
  */
 export function createDeadlineParser(
   parser: (value: string | null) => number | undefined | ConnectError,
-  maxDeadlineDurationMs: number,
+  maxTimeoutMs: number,
   shutdownSignal: AbortSignal | undefined
 ): ParseDeadlineFn {
   return function parseDeadline(value: string | null) {
@@ -49,10 +49,10 @@ export function createDeadlineParser(
       return { error: timeoutMs };
     }
     if (timeoutMs !== undefined) {
-      if (timeoutMs > maxDeadlineDurationMs) {
+      if (timeoutMs > maxTimeoutMs) {
         return {
           error: new ConnectError(
-            `timeout ${timeoutMs}ms must be <= ${maxDeadlineDurationMs}ms`,
+            `timeout ${timeoutMs}ms must be <= ${maxTimeoutMs}ms`,
             Code.InvalidArgument
           ),
         };

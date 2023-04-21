@@ -104,7 +104,7 @@ export function createHandlerFactory(
     );
     const parseDeadline = createDeadlineParser(
       parseTimeout,
-      opt.maxDeadlineDurationMs,
+      opt.maxTimeoutMs,
       opt.shutdownSignal
     );
     switch (spec.kind) {
