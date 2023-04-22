@@ -17,12 +17,17 @@ import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import { createHandlerFactory } from "./handler-factory.js";
 import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
-import type { UniversalHandlerOptions } from "../protocol/index.js";
+import type {
+  UniversalHandlerOptions,
+  UniversalServerResponse,
+} from "../protocol/index.js";
 import {
   createAsyncIterable,
   createUniversalHandlerClient,
+  encodeEnvelope,
   pipeTo,
   sinkAll,
+  transformSplitEnvelope,
 } from "../protocol/index.js";
 import { ConnectError } from "../connect-error.js";
 import {
@@ -33,6 +38,7 @@ import { Code } from "../code.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
+import { requestHeader } from "./request-header.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
@@ -230,6 +236,100 @@ describe("createHandlerFactory()", function () {
           expect(end.error?.message).toBe(
             '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"'
           );
+        }
+      });
+    });
+  });
+
+  describe("deadlines", function () {
+    describe("unary", function () {
+      it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
+        const timeoutMs = 1;
+        const { handler, service, method } = setupTestHandler(
+          testService.methods.foo,
+          {},
+          async (req, ctx) => {
+            await new Promise((r) => setTimeout(r, timeoutMs + 50));
+            ctx.deadline?.throwIfAborted();
+            return { value: req.value.toString(10) };
+          }
+        );
+        const res = await handler({
+          httpVersion: "2.0",
+          method: "POST",
+          url: new URL(
+            `https://example.com/${service.typeName}/${method.name}`
+          ),
+          header: requestHeader(method.kind, true, timeoutMs, undefined),
+          body: createAsyncIterable([new Uint8Array(0)]),
+        });
+        expect(res.status).toBe(408);
+        expect(res.body).toBeDefined();
+        if (res.body !== undefined) {
+          const bodyBytes =
+            res.body instanceof Uint8Array
+              ? res.body
+              : await readAllBytes(res.body);
+          const err = errorFromJsonBytes(
+            bodyBytes,
+            undefined,
+            new ConnectError("error parse failed")
+          );
+          expect(err.code).toBe(Code.DeadlineExceeded);
+          expect(err.message).toBe(
+            "[deadline_exceeded] the operation timed out"
+          );
+        }
+      });
+    });
+    describe("streaming", function () {
+      async function getLastEnvelope(res: UniversalServerResponse) {
+        expect(res.body).toBeDefined();
+        expect(res.body).not.toBeInstanceOf(Uint8Array);
+        if (res.body !== undefined && Symbol.asyncIterator in res.body) {
+          const envelopes = await pipeTo(
+            res.body,
+            transformSplitEnvelope(0xffffff),
+            sinkAll()
+          );
+          const last = envelopes.pop();
+          expect(last).toBeDefined();
+          return last;
+        }
+        return undefined;
+      }
+
+      it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
+        const timeoutMs = 1;
+        const { handler, service, method } = setupTestHandler(
+          testService.methods.bar,
+          {},
+          async function* (req, ctx) {
+            await new Promise((r) => setTimeout(r, timeoutMs + 50));
+            ctx.deadline?.throwIfAborted();
+            yield { value: req.value.toString(10) };
+          }
+        );
+        const res = await handler({
+          httpVersion: "2.0",
+          method: "POST",
+          url: new URL(
+            `https://example.com/${service.typeName}/${method.name}`
+          ),
+          header: requestHeader(method.kind, true, timeoutMs, undefined),
+          body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
+        });
+        expect(res.status).toBe(200);
+        expect(res.body).toBeDefined();
+        if (res.body !== undefined) {
+          const lastEnv = await getLastEnvelope(res);
+          if (lastEnv !== undefined) {
+            const end = endStreamFromJson(lastEnv.data);
+            expect(end.error?.code).toBe(Code.DeadlineExceeded);
+            expect(end.error?.message).toBe(
+              "[deadline_exceeded] the operation timed out"
+            );
+          }
         }
       });
     });

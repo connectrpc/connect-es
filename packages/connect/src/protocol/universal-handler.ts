@@ -86,8 +86,20 @@ export interface UniversalHandlerOptions {
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
-  maxDeadlineDurationMs: number; // TODO TCN-785
-  shutdownSignal?: AbortSignal; // TODO TCN-919
+  /**
+   * The maximum value for timeouts that clients may specify.
+   * If a clients requests a timeout that is greater than maxTimeoutMs,
+   * the server responds with the error code InvalidArgument.
+   */
+  maxTimeoutMs: number;
+
+  /**
+   * To shut down servers gracefully, this option takes an AbortSignal.
+   * If this signal is aborted, all `deadline` AbortSignals in handler contexts
+   * will be aborted as well. This gives implementations a chance to wrap up
+   * work before the server process is killed.
+   */
+  shutdownSignal?: AbortSignal;
 
   /**
    * Require requests using the Connect protocol to include the header
@@ -158,8 +170,7 @@ export function validateUniversalHandlerOptions(
     : [];
   const requireConnectProtocolHeader =
     opt.requireConnectProtocolHeader ?? false;
-  const maxDeadlineDurationMs =
-    opt.maxDeadlineDurationMs ?? Number.MAX_SAFE_INTEGER;
+  const maxTimeoutMs = opt.maxTimeoutMs ?? Number.MAX_SAFE_INTEGER;
   return {
     acceptCompression,
     ...validateReadWriteMaxBytes(
@@ -169,7 +180,7 @@ export function validateUniversalHandlerOptions(
     ),
     jsonOptions: opt.jsonOptions,
     binaryOptions: opt.binaryOptions,
-    maxDeadlineDurationMs,
+    maxTimeoutMs,
     shutdownSignal: opt.shutdownSignal,
     requireConnectProtocolHeader,
   };

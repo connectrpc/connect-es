@@ -36,7 +36,7 @@ describe("validateUniversalHandlerOptions()", function () {
       writeMaxBytes: 0xffffffff,
       jsonOptions: undefined,
       binaryOptions: undefined,
-      maxDeadlineDurationMs: Number.MAX_SAFE_INTEGER,
+      maxTimeoutMs: Number.MAX_SAFE_INTEGER,
       shutdownSignal: undefined,
       requireConnectProtocolHeader: false,
     });
@@ -60,7 +60,7 @@ describe("validateUniversalHandlerOptions()", function () {
         readUnknownFields: true,
         writeUnknownFields: false,
       },
-      maxDeadlineDurationMs: 888,
+      maxTimeoutMs: 888,
       shutdownSignal: new AbortController().signal,
       requireConnectProtocolHeader: true,
     };

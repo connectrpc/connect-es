@@ -20,11 +20,15 @@ import type { UniversalHandlerOptions } from "../protocol/index.js";
 import {
   createAsyncIterable,
   createUniversalHandlerClient,
+  encodeEnvelope,
   pipeTo,
   sinkAll,
 } from "../protocol/index.js";
 import { createHandlerFactory } from "./handler-factory.js";
 import { createTransport } from "./transport.js";
+import { requestHeader } from "./request-header.js";
+import { findTrailerError } from "./trailer-status.js";
+import { Code } from "../code.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
@@ -115,6 +119,37 @@ describe("createHandlerFactory()", function () {
       const all = await pipeTo(r.message, sinkAll());
       expect(all.length).toBe(1);
       expect(all[0].value).toBe("123");
+    });
+  });
+
+  describe("deadlines", function () {
+    it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
+      const timeoutMs = 1;
+      const { handler, service, method } = setupTestHandler(
+        testService.methods.foo,
+        {},
+        async (req, ctx) => {
+          await new Promise((r) => setTimeout(r, timeoutMs + 50));
+          ctx.deadline?.throwIfAborted();
+          return { value: req.value.toString(10) };
+        }
+      );
+      const res = await handler({
+        httpVersion: "2.0",
+        method: "POST",
+        url: new URL(`https://example.com/${service.typeName}/${method.name}`),
+        header: requestHeader(true, timeoutMs, undefined),
+        body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
+      });
+      expect(res.status).toBe(200);
+      if (res.body instanceof Uint8Array) {
+        for await (const b of res.body) {
+          expect(b).toBeDefined();
+        }
+      }
+      const err = findTrailerError(new Headers(res.trailer));
+      expect(err?.code).toBe(Code.DeadlineExceeded);
+      expect(err?.message).toBe("[deadline_exceeded] the operation timed out");
     });
   });
 });
