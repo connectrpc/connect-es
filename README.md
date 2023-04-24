@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/github/license/bufbuild/connect-es?color=blue)](./LICENSE) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/connect/latest?color=green&label=%40bufbuild%2Fconnect)](https://www.npmjs.com/package/@bufbuild/connect) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protoc-gen-connect-es/latest?color=green&label=%40bufbuild%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
 
-Connect is a family of libraries for building type-safe APIs with different languages and platforms.  
+Connect is a family of libraries for building type-safe APIs with different languages and platforms.
 [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings them to TypeScript,
 the web browser, and to Node.js.
 
@@ -24,8 +24,8 @@ console.log(answer);
 // {sentence: 'When you feel happy, what do you do?'}
 ```
 
-Unlike REST, the Remote Procedure Call are type-safe, but they are regular HTTP 
-under the hood. You can see all requests in the network inspector, and you 
+Unlike REST, the Remote Procedure Call are type-safe, but they are regular HTTP
+under the hood. You can see all requests in the network inspector, and you
 can `curl` them if you want:
 
 ```shell
@@ -35,8 +35,10 @@ curl \
     https://demo.connect.build/buf.connect.demo.eliza.v1.ElizaService/Say
 ```
 
-Connect uses [Protocol Buffers](https://github.com/bufbuild/protobuf-es) for the 
-schema, and implements RPC with three protocols: The widely available gRPC and 
+Connect uses [Protobuf-ES](https://github.com/bufbuild/protobuf-es), the only
+[fully-compliant](https://buf.build/blog/protobuf-conformance) Protobuf JavaScript library.
+
+Connect implements RPC three protocols: The widely available gRPC and
 gRPC-web protocols, and Connect's [own protocol](https://connect.build/docs/protocol/),
 optimized for the web. This gives you unparalleled interoperability across many
 platforms and languages, with type-safety end-to-end.
@@ -48,7 +50,7 @@ Follow our [10 minute tutorial](https://connect.build/docs/web/getting-started) 
 we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
 web interface for ELIZA.
 
-**React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/bufbuild/connect-es-integration)), 
+**React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/bufbuild/connect-es-integration)),
 and we have an expansion pack for [TanStack Query](https://github.com/bufbuild/connect-query).
 We support all modern web browsers that implement the widely available
 [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
@@ -58,11 +60,11 @@ and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding
 ## Get started on Node.js
 
 Follow our [10 minute tutorial](https://connect.build/docs/node/getting-started)
-to spin up a service in Node.js, and call it from the web, and from a gRPC client 
+to spin up a service in Node.js, and call it from the web, and from a gRPC client
 in your terminal.
 
 You can serve your Connect RPCs with vanilla Node.js, or use our [server plugins](https://connect.build/docs/node/server-plugins)
-for **Fastify**, **Next.js**, and **Express**. We support Node.js v16 and later with 
+for **Fastify**, **Next.js**, and **Express**. We support Node.js v16 and later with
 the builtin `http` and `http2` modules.
 
 
