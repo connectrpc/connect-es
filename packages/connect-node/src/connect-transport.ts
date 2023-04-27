@@ -21,21 +21,15 @@ import type {
 import type { Interceptor, Transport } from "@bufbuild/connect";
 import type { Compression } from "@bufbuild/connect/protocol";
 import { createTransport } from "@bufbuild/connect/protocol-connect";
-import { validateNodeTransportOptions } from "./validate-node-transport-options.js";
-import type {
-  NodeHttp1TransportOptions,
-  NodeHttp2TransportOptions,
-} from "./validate-node-transport-options.js";
+import { validateNodeTransportOptions } from "./node-transport-options.js";
+import type { NodeHttpClientOptions } from "./node-universal-client.js";
 
 /**
  * Options used to configure the Connect transport.
  *
  * See createConnectTransport().
  */
-type ConnectTransportOptions = (
-  | NodeHttp1TransportOptions
-  | NodeHttp2TransportOptions
-) & {
+type ConnectTransportOptions = NodeHttpClientOptions & {
   /**
    * Base URI for all HTTP requests.
    *
@@ -126,9 +120,5 @@ type ConnectTransportOptions = (
 export function createConnectTransport(
   options: ConnectTransportOptions
 ): Transport {
-  const { client, ...opt } = validateNodeTransportOptions(options);
-  return createTransport({
-    ...opt,
-    httpClient: client,
-  });
+  return createTransport(validateNodeTransportOptions(options));
 }

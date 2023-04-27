@@ -21,21 +21,15 @@ import type {
   JsonReadOptions,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import type {
-  NodeHttp1TransportOptions,
-  NodeHttp2TransportOptions,
-} from "./validate-node-transport-options.js";
-import { validateNodeTransportOptions } from "./validate-node-transport-options.js";
+import { validateNodeTransportOptions } from "./node-transport-options.js";
+import type { NodeHttpClientOptions } from "./node-universal-client.js";
 
 /**
  * Options used to configure the gRPC-web transport.
  *
  * See createGrpcTransport().
  */
-type GrpcTransportOptions = (
-  | NodeHttp1TransportOptions
-  | NodeHttp2TransportOptions
-) & {
+type GrpcTransportOptions = NodeHttpClientOptions & {
   /**
    * Base URI for all HTTP requests.
    *
@@ -125,9 +119,5 @@ type GrpcTransportOptions = (
  * or `http2` module.
  */
 export function createGrpcTransport(options: GrpcTransportOptions): Transport {
-  const { client, ...opt } = validateNodeTransportOptions(options);
-  return createTransport({
-    ...opt,
-    httpClient: client,
-  });
+  return createTransport(validateNodeTransportOptions(options));
 }

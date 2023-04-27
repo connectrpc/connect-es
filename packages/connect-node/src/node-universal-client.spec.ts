@@ -15,7 +15,7 @@
 import * as http2 from "http2";
 import type * as net from "net";
 import { createAsyncIterable } from "@bufbuild/connect/protocol";
-import { createNodeHttp2Client } from "./node-universal-client.js";
+import { createNodeHttpClient } from "./node-universal-client.js";
 import { encodeEnvelope } from "@bufbuild/connect/protocol";
 
 describe("Node.js http2 API", function () {
@@ -54,11 +54,11 @@ describe("universal node http2 client", function () {
   describe("with a signal that is already aborted", function () {
     it("should raise error with code canceled", async function () {
       const signal = AbortSignal.abort();
-      const client = createNodeHttp2Client(
-        "http://example.com",
-        false,
-        undefined
-      );
+      const client = createNodeHttpClient({
+        httpVersion: "2",
+        baseUrl: "http://example.com",
+        keepSessionAlive: false,
+      });
       try {
         await client({
           url: "http://example.com",
@@ -81,7 +81,11 @@ describe("universal node http2 client", function () {
 
       // set up a client that aborts while still streaming the request body
       const ac = new AbortController();
-      const client = createNodeHttp2Client(server.baseUrl, false, undefined);
+      const client = createNodeHttpClient({
+        httpVersion: "2",
+        baseUrl: server.baseUrl,
+        keepSessionAlive: false,
+      });
       async function* body() {
         await new Promise<void>((resolve) => setTimeout(resolve, 50));
         ac.abort();
