@@ -25,3 +25,5 @@ export {
   universalRequestFromNodeRequest,
   universalResponseToNodeResponse,
 } from "./node-universal-handler.js";
+
+export { createNodeHttpClient } from "./node-universal-client.js";

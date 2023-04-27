@@ -35,13 +35,82 @@ import type {
 import { pipeTo } from "@bufbuild/connect/protocol";
 
 /**
+ * Options for creating an UniversalClientFn using the Node.js `http`, `https`,
+ * or `http2` module.
+ */
+export type NodeHttpClientOptions =
+  | {
+      /**
+       * Use the Node.js `http` or `https` module.
+       */
+      httpVersion: "1.1";
+
+      /**
+       * Options passed to the request() call of the Node.js built-in
+       * http or https module.
+       */
+      nodeOptions?:
+        | Omit<http.RequestOptions, "signal">
+        | Omit<https.RequestOptions, "signal">;
+    }
+  | {
+      /**
+       * Use the Node.js `http2` module.
+       */
+      httpVersion: "2";
+
+      /**
+       * Base URI for all HTTP requests.
+       *
+       * Requests will be made to <baseUrl>/<package>.<service>/method
+       *
+       * Example: `baseUrl: "https://example.com/my-api"`
+       *
+       * This will make a `POST /my-api/my_package.MyService/Foo` to
+       * `example.com` via HTTPS.
+       */
+      baseUrl: string;
+
+      /**
+       * Options passed to the connect() call of the Node.js built-in
+       * http2 module.
+       */
+      nodeOptions?:
+        | http2.ClientSessionOptions
+        | http2.SecureClientSessionOptions;
+
+      /**
+       * By default, HTTP/2 sessions are terminated after each request.
+       * Set this option to true to keep sessions alive across multiple
+       * requests.
+       */
+      keepSessionAlive?: boolean;
+    };
+
+/**
+ * Create a universal client function, a minimal abstraction of an HTTP client,
+ * using the Node.js `http`, `https`, or `http2` module.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function createNodeHttpClient(options: NodeHttpClientOptions) {
+  return options.httpVersion == "2"
+    ? createNodeHttp2Client(
+        options.baseUrl,
+        options.keepSessionAlive ?? false,
+        options.nodeOptions
+      )
+    : createNodeHttp1Client(options.nodeOptions);
+}
+
+/**
  * Create an HTTP client using the Node.js `http` or `https` package.
  *
  * The HTTP client is a simple function conforming to the type UniversalClientFn.
  * It takes an UniversalClientRequest as an argument, and returns a promise for
  * an UniversalClientResponse.
  */
-export function createNodeHttp1Client(
+function createNodeHttp1Client(
   httpOptions:
     | Omit<http.RequestOptions, "signal">
     | Omit<https.RequestOptions, "signal">
@@ -105,7 +174,7 @@ export function createNodeHttp1Client(
  * It takes an UniversalClientRequest as an argument, and returns a promise for
  * an UniversalClientResponse.
  */
-export function createNodeHttp2Client(
+function createNodeHttp2Client(
   authority: URL | string,
   keepSessionOpen: boolean,
   http2SessionOptions:
@@ -184,61 +253,6 @@ function h1Request(
       socket.on("connect", onSocketConnect);
     }
   });
-}
-
-function sinkRequest(
-  sentinel: Sentinel,
-  request: http.ClientRequest | http2.ClientHttp2Stream
-): AsyncIterableSink<Uint8Array> {
-  return function write(iterable: AsyncIterable<Uint8Array>): Promise<void> {
-    const it = iterable[Symbol.asyncIterator]();
-    return new Promise((resolve, reject) => {
-      sentinel.catch(reject);
-      writeNext();
-
-      function writeNext() {
-        if (sentinel.isRejected()) {
-          return;
-        }
-        it.next().then(
-          (r) => {
-            if (r.done === true) {
-              request.end(resolve);
-              return;
-            }
-            request.write(r.value, "binary", function (e) {
-              if (e) {
-                if (
-                  request.writableEnded &&
-                  unwrapNodeErrorChain(e)
-                    .map(getNodeErrorProps)
-                    .some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END") &&
-                  it.throw !== undefined
-                ) {
-                  // If the server responds and closes the connection before the client has written the entire response
-                  // body, we get an ERR_STREAM_WRITE_AFTER_END error code from Node.js here.
-                  // We do want to notify the iterable of the error condition, but we do not want to reject our sentinel,
-                  // because that would also affect the reading side.
-                  it.throw(
-                    new ConnectError("stream closed", Code.Aborted)
-                  ).catch(() => {
-                    //
-                  });
-                  return;
-                }
-                sentinel.reject(e);
-              } else {
-                writeNext();
-              }
-            });
-          },
-          (e) => {
-            sentinel.reject(e);
-          }
-        );
-      }
-    });
-  };
 }
 
 function h1ResponseIterable(
@@ -414,6 +428,61 @@ function h2ResponseIterable(
   };
 }
 
+function sinkRequest(
+  sentinel: Sentinel,
+  request: http.ClientRequest | http2.ClientHttp2Stream
+): AsyncIterableSink<Uint8Array> {
+  return function write(iterable: AsyncIterable<Uint8Array>): Promise<void> {
+    const it = iterable[Symbol.asyncIterator]();
+    return new Promise((resolve, reject) => {
+      sentinel.catch(reject);
+      writeNext();
+
+      function writeNext() {
+        if (sentinel.isRejected()) {
+          return;
+        }
+        it.next().then(
+          (r) => {
+            if (r.done === true) {
+              request.end(resolve);
+              return;
+            }
+            request.write(r.value, "binary", function (e) {
+              if (e) {
+                if (
+                  request.writableEnded &&
+                  unwrapNodeErrorChain(e)
+                    .map(getNodeErrorProps)
+                    .some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END") &&
+                  it.throw !== undefined
+                ) {
+                  // If the server responds and closes the connection before the client has written the entire response
+                  // body, we get an ERR_STREAM_WRITE_AFTER_END error code from Node.js here.
+                  // We do want to notify the iterable of the error condition, but we do not want to reject our sentinel,
+                  // because that would also affect the reading side.
+                  it.throw(
+                    new ConnectError("stream closed", Code.Aborted)
+                  ).catch(() => {
+                    //
+                  });
+                  return;
+                }
+                sentinel.reject(e);
+              } else {
+                writeNext();
+              }
+            });
+          },
+          (e) => {
+            sentinel.reject(e);
+          }
+        );
+      }
+    });
+  };
+}
+
 type Sentinel = Promise<void> & {
   /**
    * Resolve the sentinel.
@@ -482,11 +551,13 @@ function createSentinel(signal?: AbortSignal): Sentinel {
     },
   };
   const s = Object.assign(p, c);
+
   function onSignalAbort() {
     c.reject(
       new ConnectError("operation was aborted via signal", Code.Canceled)
     );
   }
+
   if (signal) {
     if (signal.aborted) {
       onSignalAbort();
