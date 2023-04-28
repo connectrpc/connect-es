@@ -23,9 +23,6 @@ import {
 
 export function generateDts(schema: Schema) {
   for (const protoFile of schema.files) {
-    if (protoFile.services.length == 0) {
-      continue;
-    }
     const file = schema.generateFile(protoFile.name + "_connect.d.ts");
     file.preamble(protoFile);
     for (const service of protoFile.services) {
