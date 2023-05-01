@@ -28,7 +28,7 @@
   "dependencies": {
     "@bufbuild/connect": "0.8.6",
     "@bufbuild/connect-node": "^0.8.6",
-    "fastify": "^4.15.0"
+    "fastify": "^4.17.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.0"
