@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
-import { stubTransport } from "./transport-stub.js";
 import type { Interceptor, StreamResponse } from "./interceptor.js";
 import { createRouterTransport } from "./router-transport.js";
 import type { HandlerContext } from "./implementation.js";
@@ -108,10 +107,16 @@ describe("unary interceptors", () => {
     const transport = createRouterTransport(
       ({ service }) => {
         service(TestService, {
-          unary: (input: Int32Value, context: HandlerContext) => {
-            context.responseHeader.set("unary-response-header", "foo");
-            context.responseTrailer.set("unary-response-trailer", "foo");
-            return { value: input.value.toString() };
+          unary: (request: Int32Value, context: HandlerContext) => {
+            context.responseHeader.set(
+              "unary-response-header",
+              "response-header"
+            );
+            context.responseTrailer.set(
+              "unary-response-trailer",
+              "response-trailer"
+            );
+            return { value: request.value.toString() };
           },
         });
       },
@@ -131,11 +136,18 @@ describe("unary interceptors", () => {
       undefined,
       undefined,
       {
-        "unary-request-header": "foo",
+        "unary-request-header": "request-header",
       },
       { value: 9001 }
     );
+
     expect(response.message).toEqual(new StringValue({ value: "9001" }));
+    expect(response.header.get("unary-response-header")).toEqual(
+      "response-header"
+    );
+    expect(response.trailer.get("unary-response-trailer")).toEqual(
+      "response-trailer"
+    );
 
     expect(log).toEqual(wantLog);
   });
@@ -154,36 +166,54 @@ describe("stream interceptors", () => {
   ] as const;
   it("promise client", async () => {
     const log: string[] = [];
-    const transport = stubTransport({
-      interceptors: [
-        makeLoggingInterceptor("outer", log),
-        makeLoggingInterceptor("inner", log),
-      ],
-      streamResponseHeader: new Headers({
-        "stream-response-header": "foo",
-      }),
-      streamResponseTrailer: new Headers({
-        "stream-response-trailer": "foo",
-      }),
-    });
 
-    const input = createAsyncIterable([
-      new TestService.methods.serverStream.I(),
-    ]);
+    const transport = createRouterTransport(
+      ({ service }) => {
+        service(TestService, {
+          serverStream: (request: Int32Value, context: HandlerContext) => {
+            context.responseHeader.set(
+              "stream-response-header",
+              "response-header"
+            );
+            context.responseTrailer.set(
+              "stream-response-trailer",
+              "response-trailer"
+            );
+            return createAsyncIterable([{ value: request.value.toString() }]);
+          },
+        });
+      },
+      {
+        transport: {
+          interceptors: [
+            makeLoggingInterceptor("outer", log),
+            makeLoggingInterceptor("inner", log),
+          ],
+        },
+      }
+    );
 
-    const res = await transport.stream(
+    const response = await transport.stream(
       TestService,
       TestService.methods.serverStream,
       undefined,
       undefined,
       {
-        "stream-request-header": "foo",
+        "stream-request-header": "request-header",
       },
-      input
+      createAsyncIterable([new Int32Value({ value: 42 })])
     );
-    for await (const m of res.message) {
-      expect(m).toEqual(new StringValue({ value: "" }));
+
+    for await (const message of response.message) {
+      expect(message).toEqual(new StringValue({ value: "42" }));
     }
+
     expect(log).toEqual(wantLog);
+    expect(response.header.get("stream-response-header")).toEqual(
+      "response-header"
+    );
+    expect(response.trailer.get("stream-response-trailer")).toEqual(
+      "response-trailer"
+    );
   });
 });

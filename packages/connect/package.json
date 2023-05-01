@@ -69,6 +69,6 @@
     "@bufbuild/protoc-gen-es": "^1.2.0",
     "@types/jasmine": "^4.3.0",
     "jasmine": "^4.5.0",
-    "undici": "^5.16.0"
+    "undici": "^5.22.0"
   }
 }
