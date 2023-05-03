@@ -23,8 +23,8 @@
     "require": "./dist/cjs/index.js"
   },
   "engines": {
-    "node": ">=18",
-    "npm": ">=9"
+    "node": ">=16",
+    "npm": ">=8"
   },
   "dependencies": {
     "@bufbuild/connect": "0.8.6",

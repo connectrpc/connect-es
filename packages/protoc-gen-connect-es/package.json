@@ -12,8 +12,8 @@
     "protoc-gen-connect-es": "bin/protoc-gen-connect-es"
   },
   "engines": {
-    "node": ">=18",
-    "npm": ">=9"
+    "node": ">=16",
+    "npm": ">=8"
   },
   "scripts": {
     "clean": "rm -rf ./dist/cjs/*",

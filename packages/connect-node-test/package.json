@@ -2,8 +2,8 @@
   "name": "@bufbuild/connect-node-test",
   "private": true,
   "engines": {
-    "node": ">=18",
-    "npm": ">=9"
+    "node": ">=16",
+    "npm": ">=8"
   },
   "scripts": {
     "clean": "rm -rf ./dist/esm/*",

@@ -4,8 +4,8 @@
   "description": "Type-safe APIs with Protobuf and TypeScript.",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=18",
-    "npm": ">=9"
+    "node": ">=16",
+    "npm": ">=8"
   },
   "repository": {
     "type": "git",

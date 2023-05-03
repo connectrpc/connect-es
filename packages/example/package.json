@@ -9,8 +9,8 @@
     "generate": "buf generate"
   },
   "engines": {
-    "node": ">=18",
-    "npm": ">=9"
+    "node": ">=16",
+    "npm": ">=8"
   },
   "dependencies": {
     "@bufbuild/connect-node": "^0.8.6",
