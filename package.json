@@ -17,8 +17,8 @@
   "type": "module",
   "engineStrict": true,
   "engines": {
-    "node": ">=16",
-    "npm": ">=8"
+    "node": ">=18",
+    "npm": ">=9"
   },
   "devDependencies": {
     "typescript": "^5.0.3",
