@@ -11,7 +11,8 @@
     "protoc-gen-connect-web": "bin/protoc-gen-connect-web"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18",
+    "npm": ">=9"
   },
   "scripts": {
     "clean": "rm -rf ./dist/cjs/*",
