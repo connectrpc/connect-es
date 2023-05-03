@@ -29,6 +29,13 @@ $(BIN)/license-header: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@v1.1.0
 
+$(BIN)/node20: Makefile
+	@mkdir -p $(@D)
+	curl -sSL https://nodejs.org/dist/$(NODE20_VERSION)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
+	mv $(TMP)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
+	rm -r $(TMP)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)
+	@touch $(@)
+
 $(BIN)/node19: Makefile
 	@mkdir -p $(@D)
 	curl -sSL https://nodejs.org/dist/$(NODE19_VERSION)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
@@ -41,13 +48,6 @@ $(BIN)/node18: Makefile
 	curl -sSL https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
 	mv $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
 	rm -r $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)
-	@touch $(@)
-
-$(BIN)/node20: Makefile
-	@mkdir -p $(@D)
-	curl -sSL https://nodejs.org/dist/$(NODE20_VERSION)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
-	mv $(TMP)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
-	rm -r $(TMP)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)
 	@touch $(@)
 
 $(BIN)/node16: Makefile
