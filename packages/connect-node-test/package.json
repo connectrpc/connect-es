@@ -1,6 +1,10 @@
 {
   "name": "@bufbuild/connect-node-test",
   "private": true,
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  },
   "scripts": {
     "clean": "rm -rf ./dist/esm/*",
     "generate": "buf generate",

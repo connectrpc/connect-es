@@ -1,6 +1,10 @@
 {
   "name": "@bufbuild/connect-web-bench",
   "private": true,
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  },
   "scripts": {
     "generate": "buf generate",
     "report": "node report.mjs > README.md",
