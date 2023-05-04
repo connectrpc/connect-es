@@ -10,13 +10,13 @@ TMP   = .tmp
 BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
-CROSSTEST_VERSION := 35f013f2f543646f4a40579993e7bb68cfb03133
+CROSSTEST_VERSION := 538426871c217f16bf6171dccab0a58e11b39daa
 LICENSE_HEADER_YEAR_RANGE := 2021-2023
 LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
-NODE19_VERSION ?= v19.2.0
-NODE18_VERSION ?= v18.2.0
-NODE17_VERSION ?= v17.0.0
-NODE16_VERSION ?= v16.0.0
+NODE20_VERSION ?= v20.0.0
+NODE19_VERSION ?= v19.9.0
+NODE18_VERSION ?= v18.16.0
+NODE16_VERSION ?= v16.20.0
 NODE_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
 
@@ -28,6 +28,13 @@ node_modules/.bin/protoc-gen-es: node_modules
 $(BIN)/license-header: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@v1.1.0
+
+$(BIN)/node20: Makefile
+	@mkdir -p $(@D)
+	curl -sSL https://nodejs.org/dist/$(NODE20_VERSION)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
+	mv $(TMP)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
+	rm -r $(TMP)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)
+	@touch $(@)
 
 $(BIN)/node19: Makefile
 	@mkdir -p $(@D)
@@ -41,13 +48,6 @@ $(BIN)/node18: Makefile
 	curl -sSL https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
 	mv $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
 	rm -r $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)
-	@touch $(@)
-
-$(BIN)/node17: Makefile
-	@mkdir -p $(@D)
-	curl -sSL https://nodejs.org/dist/$(NODE17_VERSION)/node-$(NODE17_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz | tar xJ -C $(TMP) node-$(NODE17_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
-	mv $(TMP)/node-$(NODE17_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
-	rm -r $(TMP)/node-$(NODE17_VERSION)-$(NODE_OS)-$(NODE_ARCH)
 	@touch $(@)
 
 $(BIN)/node16: Makefile
@@ -181,12 +181,12 @@ testconnectnodepackage: $(BUILD)/connect-node
 	npm run -w packages/connect-node jasmine
 
 .PHONY: testnode
-testnode: $(BIN)/node16 $(BIN)/node17 $(BIN)/node18 $(BIN)/node19 $(BUILD)/connect-node-test
+testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 $(BUILD)/connect-node-test
 	$(MAKE) crosstestserverrun
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node17 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node19 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) crosstestserverstop
 
 .PHONY: testwebnode
