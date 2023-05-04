@@ -51,6 +51,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
       "access-control-allow-headers",
       "access-control-allow-methods",
       "access-control-max-age",
+      "request-protocol",
     ];
     const keys: string[] = [];
     header.forEach((_, key) => {
