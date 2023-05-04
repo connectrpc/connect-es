@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, MethodKind } from "@bufbuild/protobuf";
+import { Message, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -51,6 +51,7 @@ import {
   errorFromJson,
   trailerDemux,
   validateResponse,
+  transformConnectPostToGetRequest,
 } from "@bufbuild/connect/protocol-connect";
 import { assertFetchApi } from "./assert-fetch-api.js";
 
@@ -102,6 +103,13 @@ export interface ConnectTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Controls whether or not the fetch client should use Connect GET
+   * requests when available, on side-effect free methods. Defaults
+   * to false.
+   */
+  useHttpGet?: boolean;
 }
 
 /**
@@ -155,11 +163,24 @@ export function createConnectTransport(
             signal: signal ?? new AbortController().signal,
           },
           async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
+            const useGet =
+              options.useHttpGet === true &&
+              method.idempotency === MethodIdempotency.NoSideEffects;
+            let body: BodyInit | null = null;
+            if (useGet) {
+              req = transformConnectPostToGetRequest(
+                req,
+                serialize(req.message),
+                useBinaryFormat
+              );
+            } else {
+              body = serialize(req.message);
+            }
             const response = await fetch(req.url, {
               ...req.init,
               headers: req.header,
               signal: req.signal,
-              body: serialize(req.message),
+              body,
             });
             const { isUnaryError, unaryError } = validateResponse(
               method.kind,

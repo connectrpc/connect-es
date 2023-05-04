@@ -113,4 +113,11 @@ export interface CommonTransportOptions {
    * The default limit is the maximum supported value of ~4GiB.
    */
   writeMaxBytes: number;
+
+  /**
+   * Controls whether or not the fetch client should use Connect GET
+   * requests when available, on side-effect free methods. Defaults
+   * to false.
+   */
+  useHttpGet?: boolean;
 }
