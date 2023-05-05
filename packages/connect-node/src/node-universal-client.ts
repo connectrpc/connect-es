@@ -233,6 +233,9 @@ function h1Request(
   sentinel.catch((reason) =>
     request.destroy(connectErrorFromNodeReason(reason))
   );
+  // Node.js will only send headers with the first request body byte by default.
+  // We force it to send headers right away for consistent behavior between
+  // HTTP/1.1 and HTTP/2.2 clients.
   request.flushHeaders();
 
   request.on("error", sentinel.reject);
