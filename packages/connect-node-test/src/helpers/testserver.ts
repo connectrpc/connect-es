@@ -1007,7 +1007,7 @@ export function createTestServers() {
     },
     describeTransports(
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {
@@ -1020,7 +1020,7 @@ export function createTestServers() {
     describeTransportsExcluding(
       exclude: Array<keyof typeof transports>,
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {
@@ -1036,7 +1036,7 @@ export function createTestServers() {
     describeTransportsOnly(
       only: Array<keyof typeof transports>,
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {
