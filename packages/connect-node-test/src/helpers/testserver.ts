@@ -189,12 +189,16 @@ export function createTestServers() {
               // used in tests
               "X-Grpc-Test-Echo-Initial",
               "X-Grpc-Test-Echo-Trailing-Bin",
+              "Request-Protocol",
+              "Get-Request",
             ].join(", "),
             "Access-Control-Expose-Headers": [
               ...cors.exposedHeaders,
               "X-Grpc-Test-Echo-Initial",
               "X-Grpc-Test-Echo-Trailing-Bin",
               "Trailer-X-Grpc-Test-Echo-Trailing-Bin", // unary trailer in Connect
+              "Request-Protocol",
+              "Get-Request",
             ],
             "Access-Control-Max-Age": 2 * 3600,
           };
