@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MethodInfo } from "@bufbuild/protobuf";
+import { MethodIdempotency, protoBase64 } from "@bufbuild/protobuf";
+import type { JsonValue, MethodInfo } from "@bufbuild/protobuf";
 import { Message, MethodKind } from "@bufbuild/protobuf";
 import { ConnectError, connectErrorFromReason } from "../connect-error.js";
 import { Code } from "../code.js";
@@ -63,7 +64,14 @@ import {
   contentTypeUnaryProto,
   contentTypeUnaryRegExp,
   parseContentType,
+  parseEncodingQuery,
 } from "./content-type.js";
+import {
+  decodeQueryRaw,
+  paramCompression,
+  paramEncoding,
+  parseQueryRaw,
+} from "./query-params.js";
 import type { EndStreamResponse } from "./end-stream.js";
 import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
 import {
@@ -78,11 +86,16 @@ import {
 import { codeToHttpStatus } from "./http-status.js";
 import { errorToJsonBytes } from "./error-json.js";
 import { trailerMux } from "./trailer-mux.js";
-import { requireProtocolVersion } from "./version.js";
+import {
+  requireProtocolVersionHeader,
+  requireProtocolVersionParam,
+} from "./version.js";
 import { parseTimeout } from "./parse-timeout.js";
+import { paramMessage, paramBase64 } from "./query-params.js";
 
 const protocolName = "connect";
 const methodPost = "POST";
+const methodGet = "GET";
 
 /**
  * Create a factory that creates Connect handlers.
@@ -123,10 +136,14 @@ export function createHandlerFactory(
         );
         break;
     }
+    const allowedMethods = [methodPost];
+    if (spec.method.idempotency === MethodIdempotency.NoSideEffects) {
+      allowedMethods.push(methodGet);
+    }
     return Object.assign(h, {
       protocolNames: [protocolName],
       supportedContentType: contentTypeMatcher(contentTypeRegExp),
-      allowedMethods: [methodPost],
+      allowedMethods,
       requestPath: createMethodUrl("/", spec.service, spec.method),
       service: spec.service,
       method: spec.method,
@@ -146,12 +163,26 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
-    const type = parseContentType(req.header.get(headerContentType));
+    const queryParams = parseQueryRaw(req.url.search);
+    let useGet: boolean;
+    let compressionRequested: string | null;
+    if (
+      req.method === methodGet &&
+      spec.method.idempotency === MethodIdempotency.NoSideEffects
+    ) {
+      useGet = true;
+      compressionRequested = queryParams.get(paramCompression) ?? null;
+    } else if (req.method === methodPost) {
+      useGet = false;
+      compressionRequested = req.header.get(headerUnaryEncoding);
+    } else {
+      return uResponseMethodNotAllowed;
+    }
+    const type = useGet
+      ? parseEncodingQuery(queryParams.get(paramEncoding))
+      : parseContentType(req.header.get(headerContentType));
     if (type == undefined || type.stream) {
       return uResponseUnsupportedMediaType;
-    }
-    if (req.method !== methodPost) {
-      return uResponseMethodNotAllowed;
     }
     const deadline = parseDeadline(req.header.get(headerTimeout));
     const context = createHandlerContext(
@@ -167,7 +198,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     );
     const compression = compressionNegotiate(
       opt.acceptCompression,
-      req.header.get(headerUnaryEncoding),
+      compressionRequested,
       req.header.get(headerUnaryAcceptEncoding),
       headerUnaryAcceptEncoding
     );
@@ -175,7 +206,11 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     let body: Uint8Array;
     try {
       if (opt.requireConnectProtocolHeader) {
-        requireProtocolVersion(req.header);
+        if (useGet) {
+          requireProtocolVersionParam(queryParams);
+        } else {
+          requireProtocolVersionHeader(req.header);
+        }
       }
       // raise compression error to serialize it as a error response
       if (compression.error) {
@@ -185,13 +220,25 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       if (deadline.error) {
         throw deadline.error;
       }
-      const input = await parseUnaryInput(
+      let reqBody: Uint8Array | JsonValue;
+      if (useGet) {
+        reqBody = await readUnaryMessageFromQuery(
+          opt.readMaxBytes,
+          compression.request,
+          queryParams
+        );
+      } else {
+        reqBody = await readUnaryMessageFromBody(
+          opt.readMaxBytes,
+          compression.request,
+          req
+        );
+      }
+      const input = parseUnaryMessage(
         spec.method,
-        serialization,
-        compression.request,
-        opt.readMaxBytes,
         type.binary,
-        req
+        serialization,
+        reqBody
       );
       const output = await invokeUnaryImplementation(spec, context, input);
       body = serialization.getO(type.binary).serialize(output);
@@ -234,14 +281,11 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
   };
 }
 
-async function parseUnaryInput<I extends Message<I>, O extends Message<O>>(
-  method: MethodInfo<I, O>,
-  serialization: MethodSerializationLookup<I, O>,
-  compression: Compression | null,
+async function readUnaryMessageFromBody(
   readMaxBytes: number,
-  useBinaryFormat: boolean,
+  compression: Compression | null,
   request: UniversalServerRequest
-): Promise<I> {
+): Promise<Uint8Array | JsonValue> {
   if (
     typeof request.body == "object" &&
     request.body !== null &&
@@ -255,7 +299,38 @@ async function parseUnaryInput<I extends Message<I>, O extends Message<O>>(
     if (compression) {
       reqBytes = await compression.decompress(reqBytes, readMaxBytes);
     }
-    return serialization.getI(useBinaryFormat).parse(reqBytes);
+    return reqBytes;
+  }
+  return request.body;
+}
+
+async function readUnaryMessageFromQuery(
+  readMaxBytes: number,
+  compression: Compression | null,
+  queryParams: Map<string, string>
+): Promise<Uint8Array> {
+  const base64 = queryParams.get(paramBase64);
+  const message = queryParams.get(paramMessage) ?? "";
+  let decoded: Uint8Array;
+  if (base64 === "1") {
+    decoded = protoBase64.dec(message);
+  } else {
+    decoded = decodeQueryRaw(message);
+  }
+  if (compression) {
+    decoded = await compression.decompress(decoded, readMaxBytes);
+  }
+  return decoded;
+}
+
+function parseUnaryMessage<I extends Message<I>, O extends Message<O>>(
+  method: MethodInfo<I, O>,
+  useBinaryFormat: boolean,
+  serialization: MethodSerializationLookup<I, O>,
+  input: Uint8Array | JsonValue
+): I {
+  if (input instanceof Uint8Array) {
+    return serialization.getI(useBinaryFormat).parse(input);
   }
   if (useBinaryFormat) {
     throw new ConnectError(
@@ -264,7 +339,7 @@ async function parseUnaryInput<I extends Message<I>, O extends Message<O>>(
     );
   }
   try {
-    return method.I.fromJson(request.body);
+    return method.I.fromJson(input);
   } catch (e) {
     throw connectErrorFromReason(e, Code.InvalidArgument);
   }
@@ -316,7 +391,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       req.body,
       transformPrepend<Uint8Array>(() => {
         if (opt.requireConnectProtocolHeader) {
-          requireProtocolVersion(req.header);
+          requireProtocolVersionHeader(req.header);
         }
         // raise compression error to serialize it as the end stream response
         if (compression.error) throw compression.error;

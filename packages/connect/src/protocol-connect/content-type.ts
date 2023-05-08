@@ -41,6 +41,9 @@ export const contentTypeUnaryJson = "application/json";
 export const contentTypeStreamProto = "application/connect+proto";
 export const contentTypeStreamJson = "application/connect+json";
 
+const encodingProto = "proto";
+const encodingJson = "json";
+
 /**
  * Parse a Connect Content-Type header.
  *
@@ -56,4 +59,22 @@ export function parseContentType(
   const stream = !!match[1];
   const binary = !!match[3];
   return { stream, binary };
+}
+
+/**
+ * Parse a Connect Get encoding query parameter.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function parseEncodingQuery(
+  encoding: string | undefined
+): { stream: boolean; binary: boolean } | undefined {
+  switch (encoding) {
+    case encodingProto:
+      return { stream: false, binary: true };
+    case encodingJson:
+      return { stream: false, binary: false };
+    default:
+      return undefined;
+  }
 }
