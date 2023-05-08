@@ -54,8 +54,8 @@ export function validateResponse(
   const parsedType = parseContentType(mimeType);
   if (!parsedType || parsedType.binary != useBinaryFormat) {
     throw new ConnectError(
-      `unexpected response content type ${mimeType ?? "?"}`,
-      Code.Internal
+      `unexpected response content type "${mimeType ?? "?"}"`,
+      Code.InvalidArgument
     );
   }
   if (parsedType.text) {
