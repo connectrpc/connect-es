@@ -73,7 +73,7 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
   }
 
   async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const requestPath = req.url ?? "";
+    const requestPath = req.url?.split("?", 2)[0] ?? "";
     const uHandler = paths.get(requestPath);
     if (!uHandler) {
       res.writeHead(404);

@@ -74,7 +74,7 @@ export function expressConnectMiddleware(
     res: express.Response,
     next: express.NextFunction
   ) {
-    const uHandler = paths.get(req.url);
+    const uHandler = paths.get(req.url.split("?", 2)[0]);
     if (!uHandler) {
       return next();
     }
