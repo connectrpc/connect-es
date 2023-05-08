@@ -15,7 +15,7 @@
 import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
 import type { Interceptor } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransportsExcluding } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
 const ensureGetRequest: Interceptor = (next) => async (req) => {
@@ -28,44 +28,35 @@ const ensureGetRequest: Interceptor = (next) => async (req) => {
 };
 
 describe("cacheable_unary", function () {
-  describeTransportsExcluding(
-    // connect-node servers currently do not support HTTP GET.
-    [
-      "@bufbuild/connect-web (gRPC-web, binary) gRPC-web against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-web (Connect, binary) against @bufbuild/connect-node (h1)",
-      "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)",
-    ],
-    (transportFactory) => {
-      const request = new SimpleRequest({
-        responseSize: 1,
-        payload: {
-          body: new Uint8Array(1).fill(0),
-        },
+  describeTransports((transportFactory) => {
+    const request = new SimpleRequest({
+      responseSize: 1,
+      payload: {
+        body: new Uint8Array(1).fill(0),
+      },
+    });
+    it("with promise client", async function () {
+      const transport = transportFactory({
+        useHttpGet: true,
+        interceptors: [ensureGetRequest],
       });
-      it("with promise client", async function () {
-        const transport = transportFactory({
-          useHttpGet: true,
-          interceptors: [ensureGetRequest],
-        });
-        const client = createPromiseClient(TestService, transport);
-        const response = await client.cacheableUnaryCall(request);
+      const client = createPromiseClient(TestService, transport);
+      const response = await client.cacheableUnaryCall(request);
+      expect(response.payload).toBeDefined();
+      expect(response.payload?.body.length).toEqual(request.responseSize);
+    });
+    it("with callback client", function (done) {
+      const transport = transportFactory({
+        useHttpGet: true,
+        interceptors: [ensureGetRequest],
+      });
+      const client = createCallbackClient(TestService, transport);
+      client.cacheableUnaryCall(request, (err, response) => {
+        expect(err).toBeUndefined();
         expect(response.payload).toBeDefined();
         expect(response.payload?.body.length).toEqual(request.responseSize);
+        done();
       });
-      it("with callback client", function (done) {
-        const transport = transportFactory({
-          useHttpGet: true,
-          interceptors: [ensureGetRequest],
-        });
-        const client = createCallbackClient(TestService, transport);
-        client.cacheableUnaryCall(request, (err, response) => {
-          expect(err).toBeUndefined();
-          expect(response.payload).toBeDefined();
-          expect(response.payload?.body.length).toEqual(request.responseSize);
-          done();
-        });
-      });
-    }
-  );
+    });
+  });
 });

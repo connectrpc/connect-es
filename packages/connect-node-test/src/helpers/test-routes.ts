@@ -57,8 +57,10 @@ const testService: ServiceImpl<typeof TestService> = {
     ]);
   },
 
-  cacheableUnaryCall(/*request*/) {
-    throw new ConnectError("TODO", Code.Unimplemented);
+  cacheableUnaryCall(request, context) {
+    // TODO: Need to be able to determine request protocol/HTTP method.
+    context.responseHeader.set("request-protocol", "unknown");
+    return this.unaryCall(request, context);
   },
 
   async *streamingOutputCall(request, context) {
