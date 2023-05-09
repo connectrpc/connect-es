@@ -25,7 +25,10 @@ import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./node-universal-header.js";
-import { connectErrorFromNodeReason } from "./node-error.js";
+import {
+  connectErrorFromH2ResetCode,
+  connectErrorFromNodeReason,
+} from "./node-error.js";
 
 /**
  * NodeHandlerFn is compatible with http.RequestListener and its equivalent
@@ -90,7 +93,20 @@ export function universalRequestFromNodeRequest(
       ? parsedJsonBody
       : asyncIterableFromNodeServerRequest(nodeRequest);
   const abortController = new AbortController();
-  nodeRequest.on("close", () => abortController.abort());
+  if ("stream" in nodeRequest) {
+    // HTTP/2 has error codes we want to honor
+    nodeRequest.on("close", () => {
+      const err = connectErrorFromH2ResetCode(nodeRequest.stream.rstCode);
+      if (err !== undefined) {
+        abortController.abort(err);
+      } else {
+        abortController.abort();
+      }
+    });
+  } else {
+    // HTTP/1.1 does not
+    nodeRequest.on("close", () => abortController.abort());
+  }
   return {
     httpVersion: nodeRequest.httpVersion,
     method: nodeRequest.method ?? "",
