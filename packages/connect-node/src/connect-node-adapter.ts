@@ -83,6 +83,7 @@ export function connectNodeAdapter(
     req: NodeServerRequest,
     res: NodeServerResponse
   ): void {
+    // Strip the query parameter when matching paths.
     const uHandler = paths.get(req.url?.split("?", 2)[0] ?? "");
     if (!uHandler) {
       (options.fallback ?? fallback)(req, res);

@@ -73,6 +73,7 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
   }
 
   async function handler(req: NextApiRequest, res: NextApiResponse) {
+    // Strip the query parameter when matching paths.
     const requestPath = req.url?.split("?", 2)[0] ?? "";
     const uHandler = paths.get(requestPath);
     if (!uHandler) {
