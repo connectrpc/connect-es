@@ -108,12 +108,10 @@ export function createHandlerContext(
   responseHeader: HeadersInit,
   responseTrailer: HeadersInit
 ): HandlerContext {
-  const linkedAbortcontroller = createLinkedAbortController(deadline, signal);
-
   return {
     method: spec.method,
     service: spec.service,
-    signal: linkedAbortcontroller.signal,
+    signal: createLinkedAbortController(deadline, signal).signal,
     requestHeader: new Headers(requestHeader),
     responseHeader: new Headers(responseHeader),
     responseTrailer: new Headers(responseTrailer),
