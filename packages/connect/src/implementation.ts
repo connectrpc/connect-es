@@ -73,7 +73,7 @@ export interface HandlerContext {
   readonly service: ServiceType;
 
   /**
-   * An AbortSignal to know when the connection with the client is closed.
+   * An AbortSignal that is aborted when the connection with the client is closed or when the deadline is reached.
    */
   readonly signal: AbortSignal;
 
