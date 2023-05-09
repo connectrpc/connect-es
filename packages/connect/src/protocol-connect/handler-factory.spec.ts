@@ -254,7 +254,7 @@ describe("createHandlerFactory()", function () {
           {},
           async (req, ctx) => {
             await new Promise((r) => setTimeout(r, timeoutMs + 50));
-            ctx.deadline?.throwIfAborted();
+            ctx.signal.throwIfAborted();
             return { value: req.value.toString(10) };
           }
         );
@@ -311,7 +311,7 @@ describe("createHandlerFactory()", function () {
           {},
           async function* (req, ctx) {
             await new Promise((r) => setTimeout(r, timeoutMs + 50));
-            ctx.deadline?.throwIfAborted();
+            ctx.signal.throwIfAborted();
             yield { value: req.value.toString(10) };
           }
         );

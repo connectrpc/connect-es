@@ -130,7 +130,7 @@ describe("createHandlerFactory()", function () {
         {},
         async (req, ctx) => {
           await new Promise((r) => setTimeout(r, timeoutMs + 50));
-          ctx.deadline?.throwIfAborted();
+          ctx.signal.throwIfAborted();
           return { value: req.value.toString(10) };
         }
       );
