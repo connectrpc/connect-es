@@ -66,12 +66,7 @@ import {
   parseContentType,
   parseEncodingQuery,
 } from "./content-type.js";
-import {
-  decodeQueryRaw,
-  paramCompression,
-  paramEncoding,
-  parseQueryRaw,
-} from "./query-params.js";
+import { paramCompression, paramEncoding } from "./query-params.js";
 import type { EndStreamResponse } from "./end-stream.js";
 import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
 import {
@@ -163,7 +158,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
-    const queryParams = parseQueryRaw(req.url.search);
+    const queryParams = req.url.searchParams;
     let useGet: boolean;
     let compressionRequested: string | null;
     if (
@@ -307,7 +302,7 @@ async function readUnaryMessageFromBody(
 async function readUnaryMessageFromQuery(
   readMaxBytes: number,
   compression: Compression | null,
-  queryParams: Map<string, string>
+  queryParams: URLSearchParams
 ): Promise<Uint8Array> {
   const base64 = queryParams.get(paramBase64);
   const message = queryParams.get(paramMessage) ?? "";
@@ -315,7 +310,7 @@ async function readUnaryMessageFromQuery(
   if (base64 === "1") {
     decoded = protoBase64.dec(message);
   } else {
-    decoded = decodeQueryRaw(message);
+    decoded = new TextEncoder().encode(message);
   }
   if (compression) {
     decoded = await compression.decompress(decoded, readMaxBytes);

@@ -51,9 +51,9 @@ export function requireProtocolVersionHeader(requestHeader: Headers) {
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export function requireProtocolVersionParam(queryParams: Map<string, string>) {
+export function requireProtocolVersionParam(queryParams: URLSearchParams) {
   const v = queryParams.get(paramConnectVersion);
-  if (v === undefined) {
+  if (v === null) {
     throw new ConnectError(
       `missing required parameter: set ${paramConnectVersion} to "v${protocolVersion}"`,
       Code.InvalidArgument

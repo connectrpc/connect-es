@@ -67,7 +67,7 @@ export function parseContentType(
  * @private Internal code, does not follow semantic versioning.
  */
 export function parseEncodingQuery(
-  encoding: string | undefined
+  encoding: string | null
 ): { stream: boolean; binary: boolean } | undefined {
   switch (encoding) {
     case encodingProto:
