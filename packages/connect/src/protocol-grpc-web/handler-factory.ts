@@ -171,7 +171,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
           setTrailerStatus(
             context.responseTrailer,
             new ConnectError(
-              "internal error" + String(e),
+              "internal error",
               Code.Internal,
               undefined,
               undefined,

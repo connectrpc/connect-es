@@ -13,10 +13,21 @@
 // limitations under the License.
 
 import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
+import {
+  Int32Value,
+  MethodKind,
+  proto3,
+  ScalarType,
+  StringValue,
+} from "@bufbuild/protobuf";
+import type { MethodImpl } from "../index.js";
+import {
+  Code,
+  ConnectError,
+  connectErrorFromReason,
+  createMethodImplSpec,
+} from "../index.js";
 import { createHandlerFactory } from "./handler-factory.js";
-import type { MethodImpl } from "../implementation.js";
-import { createMethodImplSpec } from "../implementation.js";
 import type {
   UniversalHandlerOptions,
   UniversalServerResponse,
@@ -28,13 +39,8 @@ import {
   pipeTo,
   sinkAll,
   transformSplitEnvelope,
+  readAllBytes
 } from "../protocol/index.js";
-import { ConnectError } from "../connect-error.js";
-import {
-  createAsyncIterableBytes,
-  readAllBytes,
-} from "../protocol/async-iterable-helper.spec.js";
-import { Code } from "../code.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
@@ -201,14 +207,14 @@ describe("createHandlerFactory()", function () {
           method: "POST",
           url: new URL("https://example.com"),
           header: new Headers({ "Content-Type": "application/connect+json" }),
-          body: createAsyncIterableBytes(new Uint8Array()),
+          body: createAsyncIterable([new Uint8Array()]),
         });
         expect(res.status).toBe(200);
         expect(res.body).not.toBeInstanceOf(Uint8Array);
         expect(res.body).not.toBeUndefined();
         if (res.body !== undefined && Symbol.asyncIterator in res.body) {
           const end = endStreamFromJson(
-            (await readAllBytes(res.body)).slice(5)
+            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5)
           );
           expect(end.error?.message).toBe(
             '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"'
@@ -224,14 +230,14 @@ describe("createHandlerFactory()", function () {
             "Content-Type": "application/connect+json",
             "Connect-Protocol-Version": "UNEXPECTED",
           }),
-          body: createAsyncIterableBytes(new Uint8Array()),
+          body: createAsyncIterable([new Uint8Array()]),
         });
         expect(res.status).toBe(200);
         expect(res.body).not.toBeInstanceOf(Uint8Array);
         expect(res.body).not.toBeUndefined();
         if (res.body !== undefined && Symbol.asyncIterator in res.body) {
           const end = endStreamFromJson(
-            (await readAllBytes(res.body)).slice(5)
+            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5)
           );
           expect(end.error?.message).toBe(
             '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"'
@@ -269,7 +275,7 @@ describe("createHandlerFactory()", function () {
           const bodyBytes =
             res.body instanceof Uint8Array
               ? res.body
-              : await readAllBytes(res.body);
+              : await readAllBytes(res.body, Number.MAX_SAFE_INTEGER);
           const err = errorFromJsonBytes(
             bodyBytes,
             undefined,
@@ -332,6 +338,103 @@ describe("createHandlerFactory()", function () {
           }
         }
       });
+    });
+  });
+
+  describe("receiving a new JSON field in a request", function () {
+    const OldService = {
+      typeName: "OldService",
+      methods: {
+        unary: {
+          name: "Unary",
+          I: proto3.makeMessageType("TestMessage", [
+            { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
+          ]),
+          O: StringValue,
+          kind: MethodKind.Unary,
+        },
+      },
+    } as const;
+    const NewService = {
+      typeName: "OldService",
+      methods: {
+        unary: {
+          name: "Unary",
+          I: proto3.makeMessageType("TestMessage", [
+            { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
+            { no: 2, name: "b", kind: "scalar", T: ScalarType.STRING },
+          ]),
+          O: StringValue,
+          kind: MethodKind.Unary,
+        },
+      },
+    } as const;
+
+    function setupTestHandler(opt: Partial<UniversalHandlerOptions>) {
+      const h = createHandlerFactory(opt)(
+        createMethodImplSpec(NewService, OldService.methods.unary, () => {
+          return new StringValue({ value: "server ok" });
+        })
+      );
+      const t = createTransport({
+        httpClient: createUniversalHandlerClient([h]),
+        baseUrl: "https://example.com",
+        readMaxBytes: 0xffffff,
+        writeMaxBytes: 0xffffff,
+        compressMinBytes: 0xffffff,
+        useBinaryFormat: false,
+        interceptors: [],
+        acceptCompression: [],
+        sendCompression: null,
+      });
+      return {
+        handler: h,
+        transport: t,
+      };
+    }
+
+    it("should ignore unknown field by default", async function () {
+      const { transport } = setupTestHandler({
+        jsonOptions: {},
+      });
+      const res = await transport.unary(
+        NewService,
+        NewService.methods.unary,
+        undefined,
+        undefined,
+        undefined,
+        new NewService.methods.unary.I({
+          a: "A",
+          b: "B",
+        })
+      );
+      expect(res.message).toBeInstanceOf(StringValue);
+    });
+    it("should reject unknown field if explicitly asked for", async function () {
+      const { transport } = setupTestHandler({
+        jsonOptions: {
+          ignoreUnknownFields: false,
+        },
+      });
+      try {
+        await transport.unary(
+          NewService,
+          NewService.methods.unary,
+          undefined,
+          undefined,
+          undefined,
+          new NewService.methods.unary.I({
+            a: "A",
+            b: "B",
+          })
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(connectErrorFromReason(e).message).toBe(
+          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown'
+        );
+      }
     });
   });
 });
