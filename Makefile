@@ -177,8 +177,11 @@ testconnectpackage: $(BUILD)/connect
 	npm run -w packages/connect jasmine
 
 .PHONY: testconnectnodepackage
-testconnectnodepackage: $(BUILD)/connect-node
-	npm run -w packages/connect-node jasmine
+testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 $(BUILD)/connect-node
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node19 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 $(BUILD)/connect-node-test
