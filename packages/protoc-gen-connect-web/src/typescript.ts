@@ -61,7 +61,7 @@ function generateService(
     );
     if (method.idempotency !== undefined) {
       f.print(
-        "    idempotency: ",
+        "      idempotency: ",
         rtMethodIdempotency,
         ".",
         MethodIdempotency[method.idempotency],

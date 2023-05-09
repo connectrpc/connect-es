@@ -132,8 +132,6 @@ export function createTestServers() {
             return;
           }
           nodeH2SecureServer.close((err) => (err ? reject(err) : resolve()));
-          // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
-          resolve(); // the server.close() callback above slows down our tests
         });
       },
     },
@@ -166,8 +164,6 @@ export function createTestServers() {
             return;
           }
           nodeH2cServer.close((err) => (err ? reject(err) : resolve()));
-          // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
-          resolve(); // the server.close() callback above slows down our tests
         });
       },
     },
@@ -291,12 +287,11 @@ export function createTestServers() {
         });
         await fastifyH2cServer.listen();
       },
-      stop() {
+      async stop() {
         if (!fastifyH2cServer) {
           throw new Error("fastifyH2cServer not started");
         }
-        void fastifyH2cServer.close(); // await close() slows down our tests
-        return Promise.resolve();
+        await fastifyH2cServer.close();
       },
     },
     // connect-express
