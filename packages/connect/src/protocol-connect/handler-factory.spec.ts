@@ -26,15 +26,11 @@ import {
   createUniversalHandlerClient,
   encodeEnvelope,
   pipeTo,
+  readAllBytes,
   sinkAll,
   transformSplitEnvelope,
 } from "../protocol/index.js";
-import { ConnectError } from "../connect-error.js";
-import {
-  createAsyncIterableBytes,
-  readAllBytes,
-} from "../protocol/async-iterable-helper.spec.js";
-import { Code } from "../code.js";
+import { Code, ConnectError } from "../index.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
@@ -147,6 +143,7 @@ describe("createHandlerFactory()", function () {
           url: new URL("https://example.com"),
           header: new Headers({ "Content-Type": "application/json" }),
           body: 777,
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
         expect(res.body).toBeInstanceOf(Uint8Array);
@@ -171,6 +168,7 @@ describe("createHandlerFactory()", function () {
             "Connect-Protocol-Version": "UNEXPECTED",
           }),
           body: 777,
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
         expect(res.body).toBeInstanceOf(Uint8Array);
@@ -201,14 +199,15 @@ describe("createHandlerFactory()", function () {
           method: "POST",
           url: new URL("https://example.com"),
           header: new Headers({ "Content-Type": "application/connect+json" }),
-          body: createAsyncIterableBytes(new Uint8Array()),
+          body: createAsyncIterable([new Uint8Array()]),
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(200);
         expect(res.body).not.toBeInstanceOf(Uint8Array);
         expect(res.body).not.toBeUndefined();
         if (res.body !== undefined && Symbol.asyncIterator in res.body) {
           const end = endStreamFromJson(
-            (await readAllBytes(res.body)).slice(5)
+            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5)
           );
           expect(end.error?.message).toBe(
             '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"'
@@ -224,14 +223,15 @@ describe("createHandlerFactory()", function () {
             "Content-Type": "application/connect+json",
             "Connect-Protocol-Version": "UNEXPECTED",
           }),
-          body: createAsyncIterableBytes(new Uint8Array()),
+          body: createAsyncIterable([new Uint8Array()]),
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(200);
         expect(res.body).not.toBeInstanceOf(Uint8Array);
         expect(res.body).not.toBeUndefined();
         if (res.body !== undefined && Symbol.asyncIterator in res.body) {
           const end = endStreamFromJson(
-            (await readAllBytes(res.body)).slice(5)
+            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5)
           );
           expect(end.error?.message).toBe(
             '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"'
@@ -242,7 +242,7 @@ describe("createHandlerFactory()", function () {
   });
 
   describe("deadlines", function () {
-    describe("unary", function () {
+    describe("with unary RPC", function () {
       it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
         const timeoutMs = 1;
         const { handler, service, method } = setupTestHandler(
@@ -250,7 +250,7 @@ describe("createHandlerFactory()", function () {
           {},
           async (req, ctx) => {
             await new Promise((r) => setTimeout(r, timeoutMs + 50));
-            ctx.deadline?.throwIfAborted();
+            ctx.signal.throwIfAborted();
             return { value: req.value.toString(10) };
           }
         );
@@ -262,6 +262,7 @@ describe("createHandlerFactory()", function () {
           ),
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([new Uint8Array(0)]),
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(408);
         expect(res.body).toBeDefined();
@@ -269,7 +270,7 @@ describe("createHandlerFactory()", function () {
           const bodyBytes =
             res.body instanceof Uint8Array
               ? res.body
-              : await readAllBytes(res.body);
+              : await readAllBytes(res.body, Number.MAX_SAFE_INTEGER);
           const err = errorFromJsonBytes(
             bodyBytes,
             undefined,
@@ -282,7 +283,7 @@ describe("createHandlerFactory()", function () {
         }
       });
     });
-    describe("streaming", function () {
+    describe("with streaming RPC", function () {
       async function getLastEnvelope(res: UniversalServerResponse) {
         expect(res.body).toBeDefined();
         expect(res.body).not.toBeInstanceOf(Uint8Array);
@@ -306,7 +307,7 @@ describe("createHandlerFactory()", function () {
           {},
           async function* (req, ctx) {
             await new Promise((r) => setTimeout(r, timeoutMs + 50));
-            ctx.deadline?.throwIfAborted();
+            ctx.signal.throwIfAborted();
             yield { value: req.value.toString(10) };
           }
         );
@@ -318,6 +319,7 @@ describe("createHandlerFactory()", function () {
           ),
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
+          signal: new AbortController().signal,
         });
         expect(res.status).toBe(200);
         expect(res.body).toBeDefined();
@@ -331,6 +333,74 @@ describe("createHandlerFactory()", function () {
             );
           }
         }
+      });
+    });
+  });
+
+  describe("request abort signal", function () {
+    describe("with unary RPC", function () {
+      it("should trigger handler context signal", async function () {
+        let handlerContextSignal: AbortSignal | undefined;
+        const { handler, service, method } = setupTestHandler(
+          testService.methods.foo,
+          {},
+          async (req, ctx) => {
+            handlerContextSignal = ctx.signal;
+            for (;;) {
+              await new Promise((r) => setTimeout(r, 1));
+              ctx.signal.throwIfAborted();
+            }
+          }
+        );
+        const ac = new AbortController();
+        const resPromise = handler({
+          httpVersion: "2.0",
+          method: "POST",
+          url: new URL(
+            `https://example.com/${service.typeName}/${method.name}`
+          ),
+          header: requestHeader(method.kind, true, undefined, undefined),
+          body: createAsyncIterable([new Uint8Array(0)]),
+          signal: ac.signal,
+        });
+        ac.abort("test-reason");
+        await resPromise;
+        expect(handlerContextSignal).toBeDefined();
+        expect(handlerContextSignal?.aborted).toBeTrue();
+        expect(handlerContextSignal?.reason).toBe("test-reason");
+      });
+    });
+    describe("with streaming RPC", function () {
+      it("should trigger handler context signal", async function () {
+        let handlerContextSignal: AbortSignal | undefined;
+        const { handler, service, method } = setupTestHandler(
+          testService.methods.bar,
+          {},
+          // eslint-disable-next-line require-yield
+          async function* (req, ctx) {
+            handlerContextSignal = ctx.signal;
+            for (;;) {
+              await new Promise((r) => setTimeout(r, 1));
+              ctx.signal.throwIfAborted();
+            }
+          }
+        );
+        const ac = new AbortController();
+        const resPromise = handler({
+          httpVersion: "2.0",
+          method: "POST",
+          url: new URL(
+            `https://example.com/${service.typeName}/${method.name}`
+          ),
+          header: requestHeader(method.kind, true, undefined, undefined),
+          body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
+          signal: ac.signal,
+        });
+        ac.abort("test-reason");
+        await resPromise;
+        expect(handlerContextSignal).toBeDefined();
+        expect(handlerContextSignal?.aborted).toBeTrue();
+        expect(handlerContextSignal?.reason).toBe("test-reason");
       });
     });
   });
