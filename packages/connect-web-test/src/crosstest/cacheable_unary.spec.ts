@@ -13,19 +13,16 @@
 // limitations under the License.
 
 import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
-import type { Interceptor } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
-const ensureGetRequest: Interceptor = (next) => async (req) => {
-  const res = await next(req);
-  expect(res.header.has("request-protocol")).toBeTrue();
-  if (res.header.get("request-protocol") === "connect") {
-    expect(res.header.has("get-request")).toBeTrue();
+function ensureGetRequest(header: Headers) {
+  expect(header.has("request-protocol")).toBeTrue();
+  if (header.get("request-protocol") === "connect") {
+    expect(header.has("get-request")).toBeTrue();
   }
-  return res;
-};
+}
 
 describe("cacheable_unary", function () {
   describeTransports((transportFactory) => {
@@ -36,27 +33,27 @@ describe("cacheable_unary", function () {
       },
     });
     it("with promise client", async function () {
-      const transport = transportFactory({
-        useHttpGet: true,
-        interceptors: [ensureGetRequest],
-      });
+      const transport = transportFactory({ useHttpGet: true });
       const client = createPromiseClient(TestService, transport);
-      const response = await client.cacheableUnaryCall(request);
+      const response = await client.cacheableUnaryCall(request, {
+        onHeader: ensureGetRequest,
+      });
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
-      const transport = transportFactory({
-        useHttpGet: true,
-        interceptors: [ensureGetRequest],
-      });
+      const transport = transportFactory({ useHttpGet: true });
       const client = createCallbackClient(TestService, transport);
-      client.cacheableUnaryCall(request, (err, response) => {
-        expect(err).toBeUndefined();
-        expect(response.payload).toBeDefined();
-        expect(response.payload?.body.length).toEqual(request.responseSize);
-        done();
-      });
+      client.cacheableUnaryCall(
+        request,
+        (err, response) => {
+          expect(err).toBeUndefined();
+          expect(response.payload).toBeDefined();
+          expect(response.payload?.body.length).toEqual(request.responseSize);
+          done();
+        },
+        { onHeader: ensureGetRequest }
+      );
     });
   });
 });

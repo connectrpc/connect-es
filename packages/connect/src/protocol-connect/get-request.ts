@@ -22,6 +22,7 @@ import {
   headerUnaryContentLength,
   headerUnaryEncoding,
 } from "./headers.js";
+import { protocolVersion } from "./version.js";
 
 const contentTypePrefix = "application/";
 
@@ -50,7 +51,7 @@ export function transformConnectPostToGetRequest<
   message: Uint8Array,
   useBase64: boolean
 ): UnaryRequest<I, O> {
-  let query = "?connect=v1";
+  let query = `?connect=v${protocolVersion}`;
   const contentType = request.header.get(headerContentType);
   if (contentType?.indexOf(contentTypePrefix) === 0) {
     query +=

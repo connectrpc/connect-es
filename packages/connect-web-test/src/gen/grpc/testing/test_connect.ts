@@ -91,7 +91,7 @@ export const TestService = {
       I: SimpleRequest,
       O: SimpleResponse,
       kind: MethodKind.Unary,
-    idempotency: MethodIdempotency.NoSideEffects,
+      idempotency: MethodIdempotency.NoSideEffects,
     },
     /**
      * One request followed by a sequence of responses (streamed download).
