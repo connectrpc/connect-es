@@ -64,6 +64,7 @@ export interface UniversalServerRequest {
    * handled efficiently.
    */
   body: AsyncIterable<Uint8Array> | JsonValue;
+  signal: AbortSignal;
 }
 
 /**

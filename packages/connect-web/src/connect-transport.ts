@@ -105,9 +105,8 @@ export interface ConnectTransportOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
   /**
-   * Controls whether or not the fetch client should use Connect GET
-   * requests when available, on side-effect free methods. Defaults
-   * to false.
+   * Controls whether or not Connect GET requests should be used when
+   * available, on side-effect free methods. Defaults to false.
    */
   useHttpGet?: boolean;
 }
