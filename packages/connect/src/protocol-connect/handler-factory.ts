@@ -12,9 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodIdempotency, protoBase64 } from "@bufbuild/protobuf";
 import type { JsonValue, MethodInfo } from "@bufbuild/protobuf";
-import { Message, MethodKind } from "@bufbuild/protobuf";
+import {
+  MethodIdempotency,
+  protoBase64,
+  Message,
+  MethodKind,
+} from "@bufbuild/protobuf";
 import { ConnectError, connectErrorFromReason } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { MethodImplSpec } from "../implementation.js";
