@@ -127,6 +127,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     const context = createHandlerContext(
       spec,
       deadline.signal,
+      req.signal,
       req.header,
       {
         [headerContentType]: type.binary ? contentTypeProto : contentTypeJson,

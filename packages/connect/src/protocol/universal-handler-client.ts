@@ -44,6 +44,7 @@ export function createUniversalHandlerClient(
       method: uClientReq.method,
       url: reqUrl,
       header: uClientReq.header,
+      signal: uClientReq.signal ?? new AbortController().signal,
     });
     let body = uServerRes.body ?? new Uint8Array();
     if (body instanceof Uint8Array) {

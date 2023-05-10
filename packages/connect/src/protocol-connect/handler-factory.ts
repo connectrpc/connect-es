@@ -157,6 +157,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     const context = createHandlerContext(
       spec,
       deadline.signal,
+      req.signal,
       req.header,
       {
         [headerContentType]: type.binary
@@ -292,6 +293,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     const context = createHandlerContext(
       spec,
       deadline.signal,
+      req.signal,
       req.header,
       {
         [headerContentType]: type.binary

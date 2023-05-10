@@ -155,6 +155,7 @@ describe("negotiateProtocol()", function () {
         url: new URL("https://example.com"),
         header: new Headers({ "Content-Type": "UNSUPPORTED" }),
         body: null,
+        signal: new AbortController().signal,
       });
       expect(r.status).toBe(415);
     });
@@ -165,6 +166,7 @@ describe("negotiateProtocol()", function () {
         url: new URL("https://example.com"),
         header: new Headers({ "Content-Type": "application/x" }),
         body: null,
+        signal: new AbortController().signal,
       });
       expect(r.status).toBe(405);
     });
@@ -175,6 +177,7 @@ describe("negotiateProtocol()", function () {
         url: new URL("https://example.com"),
         header: new Headers({ "Content-Type": "application/x" }),
         body: null,
+        signal: new AbortController().signal,
       });
       expect(r.status).toBe(200);
       expect(r.header?.get("stub-handler")).toBe("1");
@@ -196,6 +199,7 @@ describe("negotiateProtocol()", function () {
           url: new URL("https://example.com"),
           header: new Headers({ "Content-Type": "application/x" }),
           body: null,
+          signal: new AbortController().signal,
         });
         expect(r.status).toBe(505);
         expect(r.header?.get("Connection")).toBe("close");
@@ -208,6 +212,7 @@ describe("negotiateProtocol()", function () {
           url: new URL("https://example.com"),
           header: new Headers({ "Content-Type": "application/x" }),
           body: null,
+          signal: new AbortController().signal,
         });
         expect(r.status).toBe(200);
         expect(r.header?.get("stub-handler")).toBe("1");

@@ -24,6 +24,7 @@ import type {
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
+import { createLinkedAbortController } from "./protocol/linked-abort-controller.js";
 
 // prettier-ignore
 /**
@@ -71,8 +72,11 @@ export interface HandlerContext {
    */
   readonly service: ServiceType;
 
-  // TODO
-  readonly deadline?: AbortSignal;
+  /**
+   * An AbortSignal that is aborted when the connection with the client is closed
+   * or when the deadline is reached.
+   */
+  readonly signal: AbortSignal;
 
   /**
    * Incoming request headers.
@@ -99,6 +103,7 @@ export interface HandlerContext {
 export function createHandlerContext(
   spec: { service: ServiceType; method: MethodInfo },
   deadline: AbortSignal | undefined, // TODO
+  signal: AbortSignal,
   requestHeader: HeadersInit,
   responseHeader: HeadersInit,
   responseTrailer: HeadersInit
@@ -106,7 +111,7 @@ export function createHandlerContext(
   return {
     method: spec.method,
     service: spec.service,
-    deadline,
+    signal: createLinkedAbortController(deadline, signal).signal,
     requestHeader: new Headers(requestHeader),
     responseHeader: new Headers(responseHeader),
     responseTrailer: new Headers(responseTrailer),
