@@ -69,7 +69,7 @@ const testService: ServiceImpl<typeof TestService> = {
     );
     for (const param of request.responseParameters) {
       await maybeDelayResponse(param);
-      context.deadline?.throwIfAborted();
+      context.signal.throwIfAborted();
       yield {
         payload: interop.makeServerPayload(request.responseType, param.size),
       };
@@ -85,7 +85,7 @@ const testService: ServiceImpl<typeof TestService> = {
     );
     for (const param of request.responseParameters) {
       await maybeDelayResponse(param);
-      context.deadline?.throwIfAborted();
+      context.signal.throwIfAborted();
       yield {
         payload: interop.makeServerPayload(request.responseType, param.size),
       };
@@ -119,7 +119,7 @@ const testService: ServiceImpl<typeof TestService> = {
     for await (const req of requests) {
       for (const param of req.responseParameters) {
         await maybeDelayResponse(param);
-        context.deadline?.throwIfAborted();
+        context.signal.throwIfAborted();
         yield {
           payload: interop.makeServerPayload(req.responseType, param.size),
         };
@@ -141,7 +141,7 @@ const testService: ServiceImpl<typeof TestService> = {
     for await (const req of buffer) {
       for (const param of req.responseParameters) {
         await maybeDelayResponse(param);
-        context.deadline?.throwIfAborted();
+        context.signal.throwIfAborted();
         yield {
           payload: interop.makeServerPayload(req.responseType, param.size),
         };
