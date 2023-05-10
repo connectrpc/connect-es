@@ -16,23 +16,17 @@ import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
-import type {
-  UniversalHandlerOptions,
-  UniversalServerResponse,
-} from "../protocol/index.js";
+import { ConnectError, connectErrorFromReason } from "../index.js";
+import type { UniversalHandlerOptions } from "../protocol/index.js";
 import {
   createAsyncIterable,
   createUniversalHandlerClient,
   encodeEnvelope,
   pipeTo,
   sinkAll,
-  transformSplitEnvelope,
 } from "../protocol/index.js";
-import { Code } from "../code.js";
 import { createHandlerFactory } from "./handler-factory.js";
 import { createTransport } from "./transport.js";
-import { trailerParse } from "./trailer.js";
-import { findTrailerError } from "../protocol-grpc/index.js";
 import { requestHeader } from "./request-header.js";
 
 describe("createHandlerFactory()", function () {
@@ -129,34 +123,21 @@ describe("createHandlerFactory()", function () {
   });
 
   describe("deadlines", function () {
-    async function getLastEnvelope(res: UniversalServerResponse) {
-      expect(res.body).toBeDefined();
-      expect(res.body).not.toBeInstanceOf(Uint8Array);
-      if (res.body !== undefined && Symbol.asyncIterator in res.body) {
-        const envelopes = await pipeTo(
-          res.body,
-          transformSplitEnvelope(0xffffff),
-          sinkAll()
-        );
-        const last = envelopes.pop();
-        expect(last).toBeDefined();
-        return last;
-      }
-      return undefined;
-    }
-
-    it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
+    it("should trigger handler context signal", async function () {
       const timeoutMs = 1;
+      let handlerContextSignal: AbortSignal | undefined;
       const { handler, service, method } = setupTestHandler(
         testService.methods.foo,
         {},
         async (req, ctx) => {
-          await new Promise((r) => setTimeout(r, timeoutMs + 50));
-          ctx.signal.throwIfAborted();
-          return { value: req.value.toString(10) };
+          handlerContextSignal = ctx.signal;
+          for (;;) {
+            await new Promise((r) => setTimeout(r, 1));
+            ctx.signal.throwIfAborted();
+          }
         }
       );
-      const res = await handler({
+      await handler({
         httpVersion: "2.0",
         method: "POST",
         url: new URL(`https://example.com/${service.typeName}/${method.name}`),
@@ -164,16 +145,43 @@ describe("createHandlerFactory()", function () {
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: new AbortController().signal,
       });
-      expect(res.status).toBe(200);
-      const lastEnv = await getLastEnvelope(res);
-      if (lastEnv !== undefined) {
-        const trailer = trailerParse(lastEnv.data);
-        const err = findTrailerError(trailer);
-        expect(err?.code).toBe(Code.DeadlineExceeded);
-        expect(err?.message).toBe(
-          "[deadline_exceeded] the operation timed out"
-        );
-      }
+      expect(handlerContextSignal).toBeDefined();
+      expect(handlerContextSignal?.aborted).toBeTrue();
+      expect(handlerContextSignal?.reason).toBeInstanceOf(ConnectError);
+      expect(connectErrorFromReason(handlerContextSignal?.reason).message).toBe(
+        "[deadline_exceeded] the operation timed out"
+      );
+    });
+  });
+
+  describe("request abort signal", function () {
+    it("should trigger handler context signal", async function () {
+      let handlerContextSignal: AbortSignal | undefined;
+      const { handler, service, method } = setupTestHandler(
+        testService.methods.foo,
+        {},
+        async (req, ctx) => {
+          handlerContextSignal = ctx.signal;
+          for (;;) {
+            await new Promise((r) => setTimeout(r, 1));
+            ctx.signal.throwIfAborted();
+          }
+        }
+      );
+      const ac = new AbortController();
+      const resPromise = handler({
+        httpVersion: "2.0",
+        method: "POST",
+        url: new URL(`https://example.com/${service.typeName}/${method.name}`),
+        header: requestHeader(true, undefined, undefined),
+        body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
+        signal: ac.signal,
+      });
+      ac.abort("test-reason");
+      await resPromise;
+      expect(handlerContextSignal).toBeDefined();
+      expect(handlerContextSignal?.aborted).toBeTrue();
+      expect(handlerContextSignal?.reason).toBe("test-reason");
     });
   });
 });
