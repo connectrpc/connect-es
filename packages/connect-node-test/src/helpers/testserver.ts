@@ -185,12 +185,16 @@ export function createTestServers() {
               // used in tests
               "X-Grpc-Test-Echo-Initial",
               "X-Grpc-Test-Echo-Trailing-Bin",
+              "Request-Protocol",
+              "Get-Request",
             ].join(", "),
             "Access-Control-Expose-Headers": [
               ...cors.exposedHeaders,
               "X-Grpc-Test-Echo-Initial",
               "X-Grpc-Test-Echo-Trailing-Bin",
               "Trailer-X-Grpc-Test-Echo-Trailing-Bin", // unary trailer in Connect
+              "Request-Protocol",
+              "Get-Request",
             ],
             "Access-Control-Max-Age": 2 * 3600,
           };
@@ -1002,7 +1006,7 @@ export function createTestServers() {
     },
     describeTransports(
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {
@@ -1015,7 +1019,7 @@ export function createTestServers() {
     describeTransportsExcluding(
       exclude: Array<keyof typeof transports>,
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {
@@ -1031,7 +1035,7 @@ export function createTestServers() {
     describeTransportsOnly(
       only: Array<keyof typeof transports>,
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {

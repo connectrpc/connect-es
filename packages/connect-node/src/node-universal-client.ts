@@ -338,7 +338,7 @@ function h2Request(
       {
         ...headers,
         ":method": method,
-        ":path": requestUrl.pathname,
+        ":path": requestUrl.pathname + requestUrl.search,
       },
       options
     );

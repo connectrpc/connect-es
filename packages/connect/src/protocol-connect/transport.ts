@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { MethodIdempotency } from "@bufbuild/protobuf";
 import type {
   AnyMessage,
   Message,
@@ -57,6 +58,7 @@ import { validateResponseWithCompression } from "./validate-response.js";
 import { trailerDemux } from "./trailer-mux.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
+import { transformConnectPostToGetRequest } from "./get-request.js";
 
 /**
  * Create a Transport for the Connect protocol.
@@ -113,12 +115,26 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           } else {
             req.header.delete(headerUnaryEncoding);
           }
+          const useGet =
+            opt.useHttpGet === true &&
+            method.idempotency === MethodIdempotency.NoSideEffects;
+          let body: AsyncIterable<Uint8Array>;
+          if (useGet) {
+            req = transformConnectPostToGetRequest(
+              req,
+              requestBody,
+              opt.useBinaryFormat
+            );
+            body = createAsyncIterable([]);
+          } else {
+            body = createAsyncIterable([requestBody]);
+          }
           const universalResponse = await opt.httpClient({
             url: req.url,
-            method: "POST",
+            method: req.init.method ?? "POST",
             header: req.header,
             signal: req.signal,
-            body: createAsyncIterable([requestBody]),
+            body,
           });
           try {
             const { compression, isUnaryError, unaryError } =

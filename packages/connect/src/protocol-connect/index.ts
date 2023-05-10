@@ -56,6 +56,7 @@ export {
 } from "./validate-response.js";
 export { trailerMux, trailerDemux } from "./trailer-mux.js";
 export * from "./headers.js";
+export { transformConnectPostToGetRequest } from "./get-request.js";
 export { protocolVersion } from "./version.js";
 export { codeFromString } from "./code-string.js";
 export { codeToString } from "./code-string.js";
