@@ -105,6 +105,11 @@ export interface ConnectTransportOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
   /**
+   * Optional override of the fetch implementation used by the transport.
+   */
+  fetch?: typeof globalThis.fetch;
+
+  /**
    * Controls whether or not Connect GET requests should be used when
    * available, on side-effect free methods. Defaults to false.
    */
@@ -121,6 +126,7 @@ export function createConnectTransport(
 ): Transport {
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? false;
+  const fetch = options.fetch ?? globalThis.fetch;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
