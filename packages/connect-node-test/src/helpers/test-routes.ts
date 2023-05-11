@@ -42,6 +42,7 @@ const testService: ServiceImpl<typeof TestService> = {
       context.responseHeader,
       context.responseTrailer
     );
+    context.responseHeader.set("request-protocol", context.protocolName);
     maybeRaiseError(request.responseStatus);
     return {
       payload: interop.makeServerPayload(
@@ -58,8 +59,9 @@ const testService: ServiceImpl<typeof TestService> = {
   },
 
   cacheableUnaryCall(request, context) {
-    // TODO: Need to be able to determine request protocol/HTTP method.
-    context.responseHeader.set("request-protocol", "unknown");
+    if (context.requestMethod == "GET") {
+      context.responseHeader.set("get-request", "true");
+    }
     return this.unaryCall(request, context);
   },
 

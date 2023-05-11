@@ -188,13 +188,15 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       spec,
       deadline.signal,
       req.signal,
+      req.method,
       req.header,
       {
         [headerContentType]: type.binary
           ? contentTypeUnaryProto
           : contentTypeUnaryJson,
       },
-      {}
+      {},
+      protocolName
     );
     const compression = compressionNegotiate(
       opt.acceptCompression,
@@ -368,13 +370,15 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       spec,
       deadline.signal,
       req.signal,
+      req.method,
       req.header,
       {
         [headerContentType]: type.binary
           ? contentTypeStreamProto
           : contentTypeStreamJson,
       },
-      {}
+      {},
+      protocolName
     );
     const compression = compressionNegotiate(
       opt.acceptCompression,

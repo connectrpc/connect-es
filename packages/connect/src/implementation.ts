@@ -79,6 +79,12 @@ export interface HandlerContext {
   readonly signal: AbortSignal;
 
   /**
+   * HTTP method of incoming request, usually "POST", but "GET" in the case of
+   * Connect Get.
+   */
+  readonly requestMethod: string;
+
+  /**
    * Incoming request headers.
    */
   readonly requestHeader: Headers;
@@ -95,6 +101,11 @@ export interface HandlerContext {
    * Outgoing response trailers.
    */
   readonly responseTrailer: Headers;
+
+  /**
+   * Name of the RPC protocol in use; one of "connect", "grpc" or "grpc-web".
+   */
+  readonly protocolName: string;
 }
 
 /**
@@ -104,17 +115,21 @@ export function createHandlerContext(
   spec: { service: ServiceType; method: MethodInfo },
   deadline: AbortSignal | undefined, // TODO
   signal: AbortSignal,
+  requestMethod: string,
   requestHeader: HeadersInit,
   responseHeader: HeadersInit,
-  responseTrailer: HeadersInit
+  responseTrailer: HeadersInit,
+  protocolName: string
 ): HandlerContext {
   return {
     method: spec.method,
     service: spec.service,
     signal: createLinkedAbortController(deadline, signal).signal,
+    requestMethod,
     requestHeader: new Headers(requestHeader),
     responseHeader: new Headers(responseHeader),
     responseTrailer: new Headers(responseTrailer),
+    protocolName,
   };
 }
 
