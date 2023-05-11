@@ -30,14 +30,14 @@ export function useNodeServer(
     | http2.Http2SecureServer
     | undefined;
 
-  beforeAll(function (doneFn) {
+  beforeEach(function (doneFn) {
     server = createServer();
     server.listen(0, function listenCallback() {
       doneFn();
     });
   });
 
-  afterAll(async function () {
+  afterEach(async function () {
     if (server === undefined) {
       throw new Error("server not defined");
     }

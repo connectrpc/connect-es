@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "../connect-error.js";
-import { Code } from "../code.js";
-
 /**
  * Create an AbortController that is automatically aborted if one of the given
  * signals is aborted.
@@ -41,11 +38,7 @@ export function createLinkedAbortController(
 
   function onAbort(this: AbortSignal) {
     if (!controller.signal.aborted) {
-      // AbortSignal.reason was added in Node.js 17.2.0, we cannot rely on it.
-      controller.abort(
-        this.reason ??
-          new ConnectError("This operation was aborted", Code.Canceled)
-      );
+      controller.abort(getAbortSignalReason(this));
     }
     for (const signal of sa) {
       signal.removeEventListener("abort", onAbort);
@@ -53,4 +46,27 @@ export function createLinkedAbortController(
   }
 
   return controller;
+}
+
+/**
+ * Returns the reason why an AbortSignal was aborted. Returns undefined if the
+ * signal has not been aborted.
+ *
+ * The property AbortSignal.reason is not widely available. This function
+ * returns an AbortError if the signal is aborted, but reason is undefined.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function getAbortSignalReason(signal: AbortSignal): unknown {
+  if (!signal.aborted) {
+    return undefined;
+  }
+  if (signal.reason !== undefined) {
+    return signal.reason;
+  }
+  // AbortSignal.reason is available in Node.js v16, v18, and later,
+  // and in all browsers since early 2022.
+  const e = new Error("This operation was aborted");
+  e.name = "AbortError";
+  return e;
 }

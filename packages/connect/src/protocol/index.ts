@@ -87,7 +87,10 @@ export {
 } from "./invoke-implementation.js";
 export type { ParseDeadlineFn } from "./deadline-factory.js";
 export { createDeadlineParser } from "./deadline-factory.js";
-export { createLinkedAbortController } from "./linked-abort-controller.js";
+export {
+  createLinkedAbortController,
+  getAbortSignalReason,
+} from "./signals.js";
 export {
   assertByteStreamRequest,
   uResponseOk,

@@ -101,7 +101,6 @@ export function createDeadlineSignal(
       );
     }
   }
-  polyfillThrowIfAborted(controller.signal, shutdownSignal);
   return {
     signal: controller.signal,
     cleanup: () => cleanups.map((fn) => fn()),
@@ -120,24 +119,4 @@ function errShutdown(cause?: unknown) {
     undefined,
     cause
   );
-}
-
-// Polyfill missing throwIfAborted for Node.js < 17.3.0.
-function polyfillThrowIfAborted(
-  signal: AbortSignal,
-  shutdownSignal: AbortSignal | undefined
-) {
-  if ("throwIfAborted" in signal) {
-    return;
-  }
-  const s = signal as AbortSignal;
-  s.throwIfAborted = function () {
-    if (s.aborted) {
-      // AbortSignal.reason was added in Node.js 17.2.0, we cannot rely on it either.
-      throw (
-        s.reason ??
-        (shutdownSignal?.aborted === true ? errShutdown() : errTimeout())
-      );
-    }
-  };
 }

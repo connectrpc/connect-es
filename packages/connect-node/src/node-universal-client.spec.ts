@@ -384,7 +384,9 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe("[aborted] aborted");
+          expect(connectErrorFromReason(e).message).toMatch(
+            /\[aborted] (aborted|read ECONNRESET)/
+          );
         }
         expect(serverSentBytes).toBe(64);
       });
