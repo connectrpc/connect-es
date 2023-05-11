@@ -59,7 +59,6 @@ describe("cancel_after_begin", function () {
         expectError(e);
       }
     });
-    // TODO(TCN-679) consider extending callback clients for client- and bidi-streaming
   });
 
   afterAll(async () => await servers.stop());

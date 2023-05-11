@@ -188,7 +188,6 @@ describe("unresolvable_host", function () {
             );
           });
         });
-        // TODO(TCN-679) consider extending callback clients for client- and bidi-streaming
       });
     });
   }

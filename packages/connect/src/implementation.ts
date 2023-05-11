@@ -24,7 +24,7 @@ import type {
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
-import { createLinkedAbortController } from "./protocol/linked-abort-controller.js";
+import { createLinkedAbortController } from "./protocol/index.js";
 
 // prettier-ignore
 /**
