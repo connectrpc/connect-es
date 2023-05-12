@@ -14,26 +14,26 @@
 
 import type { JsonValue, MethodInfo } from "@bufbuild/protobuf";
 import {
-  MethodIdempotency,
-  protoBase64,
   Message,
+  MethodIdempotency,
   MethodKind,
+  protoBase64,
 } from "@bufbuild/protobuf";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
 import { Code } from "../code.js";
+import { ConnectError, connectErrorFromReason } from "../connect-error.js";
 import type { MethodImplSpec } from "../implementation.js";
 import { createHandlerContext } from "../implementation.js";
 import type {
   Compression,
   EnvelopedMessage,
   MethodSerializationLookup,
+  ParseDeadlineFn,
   ProtocolHandlerFactory,
   Serialization,
   UniversalHandlerFn,
   UniversalHandlerOptions,
   UniversalServerRequest,
   UniversalServerResponse,
-  ParseDeadlineFn,
 } from "../protocol/index.js";
 import {
   assertByteStreamRequest,
@@ -54,10 +54,10 @@ import {
   transformPrepend,
   transformSerializeEnvelope,
   transformSplitEnvelope,
-  untilFirst,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
+  untilFirst,
   validateUniversalHandlerOptions,
 } from "../protocol/index.js";
 import {
@@ -70,27 +70,26 @@ import {
   parseContentType,
   parseEncodingQuery,
 } from "./content-type.js";
-import { paramCompression, paramEncoding } from "./query-params.js";
 import type { EndStreamResponse } from "./end-stream.js";
 import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
+import { errorToJsonBytes } from "./error-json.js";
 import {
   headerContentType,
   headerStreamAcceptEncoding,
   headerStreamEncoding,
+  headerTimeout,
   headerUnaryAcceptEncoding,
   headerUnaryContentLength,
   headerUnaryEncoding,
-  headerTimeout,
 } from "./headers.js";
 import { codeToHttpStatus } from "./http-status.js";
-import { errorToJsonBytes } from "./error-json.js";
+import { parseTimeout } from "./parse-timeout.js";
+import { paramBase64, paramCompression, paramEncoding, paramMessage } from "./query-params.js";
 import { trailerMux } from "./trailer-mux.js";
 import {
   requireProtocolVersionHeader,
   requireProtocolVersionParam,
 } from "./version.js";
-import { parseTimeout } from "./parse-timeout.js";
-import { paramMessage, paramBase64 } from "./query-params.js";
 
 const protocolName = "connect";
 const methodPost = "POST";
