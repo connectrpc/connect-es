@@ -15,11 +15,9 @@
 import {
   Code,
   ConnectError,
-  type ConnectRouter,
   connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
-  createRouterTransport,
 } from "@bufbuild/connect";
 import {
   createConnectTransport,
@@ -41,20 +39,6 @@ describe("unresolvable_host", function () {
     ...baseOptions,
     httpVersion: "1.1" as const,
   };
-  const unresolvableRouter = ({ service }: ConnectRouter) => {
-    const unavailableRoute = () => {
-      throw new ConnectError(
-        "getaddrinfo ENOTFOUND unresolvable-host.some.domain",
-        Code.Unavailable
-      );
-    };
-    service(TestService, {
-      streamingOutputCall: unavailableRoute,
-      unaryCall: unavailableRoute,
-      streamingInputCall: unavailableRoute,
-      fullDuplexCall: unavailableRoute,
-    });
-  };
   const transports = [
     [
       "@bufbuild/connect-node (gRPC-web, http2)",
@@ -74,10 +58,6 @@ describe("unresolvable_host", function () {
     ],
     ["@bufbuild/connect-node (gRPC, http2)", createGrpcTransport(optionsHttp2)],
     ["@bufbuild/connect-node (gRPC, http)", createGrpcTransport(optionsHttp1)],
-    [
-      "@bufbuild/connect (ConnectRouter)",
-      createRouterTransport(unresolvableRouter, { transport: baseOptions }),
-    ],
   ] as const;
   for (const [name, transport] of transports) {
     describe(`${name} against unresolvable domain`, function () {
