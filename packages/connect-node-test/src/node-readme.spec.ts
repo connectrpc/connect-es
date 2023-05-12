@@ -74,7 +74,7 @@ describe("node readme", function () {
     // A transport for clients using the gRPC protocol with Node.js `http` module
     const transport = createConnectTransport({
       baseUrl: "https://demo.connect.build",
-      httpVersion: "1.1" as const,
+      httpVersion: "1.1",
     });
     const client = createPromiseClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
