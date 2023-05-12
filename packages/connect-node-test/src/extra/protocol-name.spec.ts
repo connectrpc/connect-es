@@ -13,38 +13,38 @@
 // limitations under the License.
 
 import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
+import type { Transport } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
+import { createTestServers } from "../helpers/testserver.js";
 
-function ensureGetRequest(header: Headers) {
-  expect(header.has("request-protocol")).toBeTrue();
-  if (header.get("request-protocol") === "connect") {
-    expect(header.has("get-request")).toBeTrue();
-  }
+function ensureProtocolName(expectedName: string) {
+  return (header: Headers) => {
+    expect(header.get("request-protocol")).toEqual(expectedName);
+  };
 }
 
-describe("cacheable_unary", function () {
-  describeTransports((transportFactory) => {
+function testForProtocol(expectedProtocolName: string) {
+  return (transportFactory: () => Transport) => {
     const request = new SimpleRequest({
-      responseSize: 1,
+      responseSize: 1024,
       payload: {
-        body: new Uint8Array(1).fill(0),
+        body: new Uint8Array(1024).fill(0),
       },
     });
     it("with promise client", async function () {
-      const transport = transportFactory({ useHttpGet: true });
+      const transport = transportFactory();
       const client = createPromiseClient(TestService, transport);
-      const response = await client.cacheableUnaryCall(request, {
-        onHeader: ensureGetRequest,
+      const response = await client.unaryCall(request, {
+        onHeader: ensureProtocolName(expectedProtocolName),
       });
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
-      const transport = transportFactory({ useHttpGet: true });
+      const transport = transportFactory();
       const client = createCallbackClient(TestService, transport);
-      client.cacheableUnaryCall(
+      client.unaryCall(
         request,
         (err, response) => {
           expect(err).toBeUndefined();
@@ -52,8 +52,36 @@ describe("cacheable_unary", function () {
           expect(response.payload?.body.length).toEqual(request.responseSize);
           done();
         },
-        { onHeader: ensureGetRequest }
+        { onHeader: ensureProtocolName(expectedProtocolName) }
       );
     });
-  });
+  };
+}
+
+describe("protocolName", function () {
+  const servers = createTestServers();
+  beforeAll(async () => await servers.start());
+
+  servers.describeTransportsOnly(
+    [
+      "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2)",
+    ],
+    testForProtocol("grpc")
+  );
+
+  servers.describeTransportsOnly(
+    [
+      "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)",
+    ],
+    testForProtocol("grpc-web")
+  );
+
+  servers.describeTransportsOnly(
+    [
+      "@bufbuild/connect-node (Connect, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
+    ],
+    testForProtocol("connect")
+  );
+
+  afterAll(async () => await servers.stop());
 });

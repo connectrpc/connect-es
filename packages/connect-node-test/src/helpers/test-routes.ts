@@ -42,6 +42,7 @@ const testService: ServiceImpl<typeof TestService> = {
       context.responseHeader,
       context.responseTrailer
     );
+    context.responseHeader.set("request-protocol", context.protocolName);
     maybeRaiseError(request.responseStatus);
     return {
       payload: interop.makeServerPayload(
@@ -57,8 +58,11 @@ const testService: ServiceImpl<typeof TestService> = {
     ]);
   },
 
-  cacheableUnaryCall(/*request*/) {
-    throw new ConnectError("TODO", Code.Unimplemented);
+  cacheableUnaryCall(request, context) {
+    if (context.requestMethod == "GET") {
+      context.responseHeader.set("get-request", "true");
+    }
+    return this.unaryCall(request, context);
   },
 
   async *streamingOutputCall(request, context) {

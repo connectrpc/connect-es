@@ -120,13 +120,15 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       spec,
       deadline.signal,
       req.signal,
+      req.method,
       req.header,
       {
         [headerContentType]: type.binary ? contentTypeProto : contentTypeJson,
       },
       {
         [headerGrpcStatus]: grpcStatusOk,
-      }
+      },
+      protocolName
     );
     const compression = compressionNegotiate(
       opt.acceptCompression,
