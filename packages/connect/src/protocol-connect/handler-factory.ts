@@ -162,22 +162,15 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
-    const queryParams = req.url.searchParams;
-    let useGet: boolean;
-    let compressionRequested: string | null;
-    if (
-      req.method === methodGet &&
-      spec.method.idempotency === MethodIdempotency.NoSideEffects
-    ) {
-      useGet = true;
-      compressionRequested = queryParams.get(paramCompression) ?? null;
-    } else if (req.method === methodPost) {
-      useGet = false;
-      compressionRequested = req.header.get(headerUnaryEncoding);
-    } else {
+    const isGet = req.method == methodGet;
+    if (isGet && spec.method.idempotency != MethodIdempotency.NoSideEffects) {
       return uResponseMethodNotAllowed;
     }
-    const type = useGet
+    const queryParams = req.url.searchParams;
+    const compressionRequested = isGet
+      ? queryParams.get(paramCompression)
+      : req.header.get(headerUnaryEncoding);
+    const type = isGet
       ? parseEncodingQuery(queryParams.get(paramEncoding))
       : parseContentType(req.header.get(headerContentType));
     if (type == undefined || type.stream) {
