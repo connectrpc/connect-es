@@ -84,7 +84,12 @@ import {
 } from "./headers.js";
 import { codeToHttpStatus } from "./http-status.js";
 import { parseTimeout } from "./parse-timeout.js";
-import { paramBase64, paramCompression, paramEncoding, paramMessage } from "./query-params.js";
+import {
+  paramBase64,
+  paramCompression,
+  paramEncoding,
+  paramMessage,
+} from "./query-params.js";
 import { trailerMux } from "./trailer-mux.js";
 import {
   requireProtocolVersionHeader,
@@ -200,7 +205,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     let body: Uint8Array;
     try {
       if (opt.requireConnectProtocolHeader) {
-        if (useGet) {
+        if (isGet) {
           requireProtocolVersionParam(queryParams);
         } else {
           requireProtocolVersionHeader(req.header);
@@ -215,7 +220,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
         throw deadline.error;
       }
       let reqBody: Uint8Array | JsonValue;
-      if (useGet) {
+      if (isGet) {
         reqBody = await readUnaryMessageFromQuery(
           opt.readMaxBytes,
           compression.request,
