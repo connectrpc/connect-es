@@ -12,12 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
+import {
+  Int32Value,
+  MethodIdempotency,
+  MethodKind,
+  StringValue,
+} from "@bufbuild/protobuf";
 import type {
+  UniversalClientFn,
   UniversalClientRequest,
   UniversalClientResponse,
 } from "../protocol/universal.js";
-import { createAsyncIterable } from "../protocol/async-iterable.js";
+import {
+  createAsyncIterable,
+  readAllBytes,
+} from "../protocol/async-iterable.js";
 import { ConnectError, connectErrorFromReason } from "../connect-error.js";
 import { createTransport } from "./transport.js";
 import { encodeEnvelope } from "../protocol/envelope.js";
@@ -38,6 +47,13 @@ const TestService = {
       I: Int32Value,
       O: StringValue,
       kind: MethodKind.Unary,
+    },
+    unaryNoSideEffects: {
+      name: "UnaryNoSideEffects",
+      I: Int32Value,
+      O: StringValue,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
     },
     server: {
       name: "Server",
@@ -235,6 +251,86 @@ describe("Connect transport", function () {
         }
         expect(messagesReceived.length).toBe(1);
         expect(httpRequestAborted).toBeTrue();
+      });
+    });
+  });
+
+  describe("useHttpGet", function () {
+    const httpClientResponse: UniversalClientResponse = {
+      status: 200,
+      header: new Headers({
+        "Content-Type": contentTypeUnaryProto,
+      }),
+      body: createAsyncIterable([new StringValue({ value: "abc" }).toBinary()]),
+      trailer: new Headers(),
+    };
+    const expectGet: UniversalClientFn = async (request) => {
+      expect(request.method).toBe("GET");
+      expect(request.url).toBe(
+        "http://example.com/TestService/UnaryNoSideEffects?connect=v1&encoding=proto&base64=1&message=CHs"
+      );
+      // no headers
+      const headerFields: string[] = [];
+      request.header.forEach((_, key) => headerFields.push(key));
+      expect(headerFields).toEqual([]);
+      // no body
+      const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
+      expect(body.byteLength).toBe(0);
+      return httpClientResponse;
+    };
+    const expectPost: UniversalClientFn = async (request) => {
+      expect(request.method).toBe("POST");
+      expect(new URL(request.url).search).toBe("");
+      const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
+      expect(body.byteLength).toBeGreaterThan(0);
+      return httpClientResponse;
+    };
+    describe("disabled", function () {
+      it("should issue POST for eligible RPC", async function () {
+        const t = createTransport({
+          ...defaultOptions,
+          httpClient: expectPost,
+        });
+        await t.unary(
+          TestService,
+          TestService.methods.unaryNoSideEffects,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value({ value: 123 })
+        );
+      });
+    });
+    describe("enabled", function () {
+      it("should issue GET for eligible RPC", async function () {
+        const t = createTransport({
+          ...defaultOptions,
+          useHttpGet: true,
+          httpClient: expectGet,
+        });
+        await t.unary(
+          TestService,
+          TestService.methods.unaryNoSideEffects,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value({ value: 123 })
+        );
+      });
+      it("should issue POST for RPC with side effects", async function () {
+        const t = createTransport({
+          ...defaultOptions,
+          useHttpGet: true,
+          httpClient: expectPost,
+        });
+        await t.unary(
+          TestService,
+          TestService.methods.unary,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value({ value: 123 })
+        );
       });
     });
   });
