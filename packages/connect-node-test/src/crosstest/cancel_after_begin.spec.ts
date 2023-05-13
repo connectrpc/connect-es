@@ -28,38 +28,44 @@ describe("cancel_after_begin", function () {
     }
   }
 
-  servers.describeTransports((transport) => {
-    const servers = createTestServers();
-    beforeAll(async () => await servers.start());
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
-      const controller = new AbortController();
-      async function* input() {
-        yield {
-          payload: {
-            body: new Uint8Array(),
-            type: PayloadType.COMPRESSABLE,
-          },
-        };
-        await new Promise((resolve) => setTimeout(resolve, 1));
-        controller.abort();
-        yield {
-          payload: {
-            body: new Uint8Array(),
-            type: PayloadType.COMPRESSABLE,
-          },
-        };
-      }
-      try {
-        await client.streamingInputCall(input(), {
-          signal: controller.signal,
-        });
-        fail("expected error");
-      } catch (e) {
-        expectError(e);
-      }
-    });
-  });
+  servers.describeTransportsExcluding(
+    [
+      "@bufbuild/connect (ConnectRouter, binary)",
+      "@bufbuild/connect (ConnectRouter, JSON)",
+    ],
+    (transport) => {
+      const servers = createTestServers();
+      beforeAll(async () => await servers.start());
+      it("with promise client", async function () {
+        const client = createPromiseClient(TestService, transport());
+        const controller = new AbortController();
+        async function* input() {
+          yield {
+            payload: {
+              body: new Uint8Array(),
+              type: PayloadType.COMPRESSABLE,
+            },
+          };
+          await new Promise((resolve) => setTimeout(resolve, 1));
+          controller.abort();
+          yield {
+            payload: {
+              body: new Uint8Array(),
+              type: PayloadType.COMPRESSABLE,
+            },
+          };
+        }
+        try {
+          await client.streamingInputCall(input(), {
+            signal: controller.signal,
+          });
+          fail("expected error");
+        } catch (e) {
+          expectError(e);
+        }
+      });
+    }
+  );
 
   afterAll(async () => await servers.stop());
 });

@@ -22,6 +22,7 @@ import {
   createGrpcWebTransport,
   createConnectTransport,
 } from "@bufbuild/connect-node";
+import { createRouterTransport } from "@bufbuild/connect";
 
 /* eslint-disable @typescript-eslint/require-await */
 
@@ -60,6 +61,15 @@ describe("node readme", function () {
     },
   } as const;
 
+  const optionsHttp2 = {
+    baseUrl: "https://demo.connect.build",
+    httpVersion: "2" as const,
+  };
+  const optionsHttp1 = {
+    baseUrl: "https://demo.connect.build",
+    httpVersion: "1.1" as const,
+  };
+
   it("createConnectTransport()", async function () {
     // A transport for clients using the gRPC protocol with Node.js `http` module
     const transport = createConnectTransport({
@@ -73,10 +83,7 @@ describe("node readme", function () {
 
   it("createGrpcTransport()", async function () {
     // A transport for clients using the gRPC protocol with Node.js `http2` module
-    const transport = createGrpcTransport({
-      baseUrl: "https://demo.connect.build",
-      httpVersion: "2",
-    });
+    const transport = createGrpcTransport(optionsHttp2);
     const client = createPromiseClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
     expect(sentence).toBeDefined();
@@ -84,10 +91,26 @@ describe("node readme", function () {
 
   it("createGrpcWebTransport()", async function () {
     // A transport for clients using the gRPC-web protocol with Node.js `http` module
-    const transport = createGrpcWebTransport({
-      baseUrl: "https://demo.connect.build",
-      httpVersion: "1.1",
-    });
+    const transport = createGrpcWebTransport(optionsHttp1);
+    const client = createPromiseClient(ElizaService, transport);
+    const { sentence } = await client.say({ sentence: "I feel happy." });
+    expect(sentence).toBeDefined();
+  });
+
+  it("createRouterTransport()", async function () {
+    // A transport for clients using the in-memory createRouterTransport
+    const transport = createRouterTransport(
+      ({ service }) => {
+        service(ElizaService, {
+          say: async () => ({
+            sentence: "server response",
+          }),
+        });
+      },
+      {
+        transport: optionsHttp1,
+      }
+    );
     const client = createPromiseClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
     expect(sentence).toBeDefined();

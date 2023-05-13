@@ -28,12 +28,15 @@ import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 
 describe("unresolvable_host", function () {
-  const optionsHttp2 = {
+  const baseOptions = {
     baseUrl: "https://unresolvable-host.some.domain",
+  };
+  const optionsHttp2 = {
+    ...baseOptions,
     httpVersion: "2" as const,
   };
   const optionsHttp1 = {
-    baseUrl: "https://unresolvable-host.some.domain",
+    ...baseOptions,
     httpVersion: "1.1" as const,
   };
   const transports = [

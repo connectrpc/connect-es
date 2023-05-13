@@ -17,7 +17,7 @@ import * as http from "http";
 import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
-import type { Transport } from "@bufbuild/connect";
+import { createRouterTransport, type Transport } from "@bufbuild/connect";
 import { cors } from "@bufbuild/connect";
 import {
   compressionGzip,
@@ -772,7 +772,7 @@ export function createTestServers() {
           sendCompression: compressionGzip,
         }),
 
-    //gRPC-web
+    // gRPC-web
     "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
         createGrpcWebTransport({
@@ -993,7 +993,27 @@ export function createTestServers() {
           useBinaryFormat: true,
           sendCompression: compressionGzip,
         }),
-  } as const;
+
+    // ConnectRouter
+    "@bufbuild/connect (ConnectRouter, binary)": (
+      options?: Record<string, unknown>
+    ) =>
+      createRouterTransport(testRoutes, {
+        transport: {
+          ...options,
+          useBinaryFormat: true,
+        },
+      }),
+    "@bufbuild/connect (ConnectRouter, JSON)": (
+      options?: Record<string, unknown>
+    ) =>
+      createRouterTransport(testRoutes, {
+        transport: {
+          ...options,
+          useBinaryFormat: false,
+        },
+      }),
+  };
 
   return {
     servers,
