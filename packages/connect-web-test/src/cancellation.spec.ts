@@ -30,6 +30,7 @@ describe("explicit cancellation with AbortController", function () {
   };
   describeTransportsExcluding(
     [
+      // TODO(TCN-1763) support client-side cancellation in createRouterTransport()
       "@bufbuild/connect-web (ConnectRouter, JSON)",
       "@bufbuild/connect-web (ConnectRouter, binary)",
     ],
