@@ -85,11 +85,10 @@ export {
   invokeUnaryImplementation,
   transformInvokeImplementation,
 } from "./invoke-implementation.js";
-export type { ParseDeadlineFn } from "./deadline-factory.js";
-export { createDeadlineParser } from "./deadline-factory.js";
 export {
   createLinkedAbortController,
   getAbortSignalReason,
+  createDeadlineSignal,
 } from "./signals.js";
 export {
   assertByteStreamRequest,
