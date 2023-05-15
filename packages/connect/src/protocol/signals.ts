@@ -62,6 +62,8 @@ export function createLinkedAbortController(
  *
  * Ideally, we would simply use AbortSignal.timeout(), but it is not widely
  * available yet.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createDeadlineSignal(timeoutMs: number | undefined): {
   signal: AbortSignal;
