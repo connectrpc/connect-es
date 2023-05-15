@@ -35,7 +35,7 @@ import type {
   FastifyTypeProviderDefault,
 } from "fastify";
 import { importExpress } from "./import-express.js";
-import testRoutes from "./test-routes.js";
+import { testRoutes } from "./test-routes.js";
 
 export function createTestServers() {
   // TODO http2 server with TLS and allow http1

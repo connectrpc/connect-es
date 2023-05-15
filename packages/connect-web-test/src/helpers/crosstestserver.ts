@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Transport } from "@bufbuild/connect";
+import { type Transport, createRouterTransport } from "@bufbuild/connect";
 import {
   createConnectTransport,
   createGrpcWebTransport,
 } from "@bufbuild/connect-web";
+import { testRoutes } from "./test-routes.js";
 
 // The following servers are available through crosstests:
 //
@@ -95,6 +96,27 @@ const crosstestTransports = {
       ...options,
       baseUrl: connectNodeH1BaseUrl,
       useBinaryFormat: false,
+    }),
+
+  // ConnectRouter
+  "@bufbuild/connect-web (ConnectRouter, binary)": (
+    options?: Record<string, unknown>
+  ) =>
+    createRouterTransport(testRoutes, {
+      transport: {
+        ...options,
+        useBinaryFormat: true,
+      },
+    }),
+
+  "@bufbuild/connect-web (ConnectRouter, JSON)": (
+    options?: Record<string, unknown>
+  ) =>
+    createRouterTransport(testRoutes, {
+      transport: {
+        ...options,
+        useBinaryFormat: false,
+      },
     }),
 };
 
