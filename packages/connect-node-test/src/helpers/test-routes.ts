@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// TODO(TCN-1771) keep in sync with `connect-web-test`'s `test-routes` until we share code between test packages
 import {
   Code,
   ConnectError,
