@@ -27,7 +27,6 @@ import type {
   Compression,
   EnvelopedMessage,
   MethodSerializationLookup,
-  ParseDeadlineFn,
   ProtocolHandlerFactory,
   Serialization,
   UniversalHandlerFn,
@@ -39,7 +38,6 @@ import {
   assertByteStreamRequest,
   compressionNegotiate,
   contentTypeMatcher,
-  createDeadlineParser,
   createMethodSerializationLookup,
   createMethodUrl,
   invokeUnaryImplementation,
@@ -54,10 +52,10 @@ import {
   transformPrepend,
   transformSerializeEnvelope,
   transformSplitEnvelope,
+  untilFirst,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
-  untilFirst,
   validateUniversalHandlerOptions,
 } from "../protocol/index.js";
 import {
@@ -118,22 +116,16 @@ export function createHandlerFactory(
       opt.jsonOptions,
       opt
     );
-    const parseDeadline = createDeadlineParser(
-      parseTimeout,
-      opt.maxTimeoutMs,
-      opt.shutdownSignal
-    );
     switch (spec.kind) {
       case MethodKind.Unary:
         contentTypeRegExp = contentTypeUnaryRegExp;
-        h = createUnaryHandler(opt, spec, parseDeadline, serialization);
+        h = createUnaryHandler(opt, spec, serialization);
         break;
       default:
         contentTypeRegExp = contentTypeStreamRegExp;
         h = createStreamHandler(
           opt,
           spec,
-          parseDeadline,
           serialization,
           endStreamSerialization
         );
@@ -160,7 +152,6 @@ export function createHandlerFactory(
 function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
   opt: UniversalHandlerOptions,
   spec: MethodImplSpec<I, O> & { kind: MethodKind.Unary },
-  parseDeadline: ParseDeadlineFn,
   serialization: MethodSerializationLookup<I, O>
 ) {
   return async function handle(
@@ -180,21 +171,24 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     if (type == undefined || type.stream) {
       return uResponseUnsupportedMediaType;
     }
-    const deadline = parseDeadline(req.header.get(headerTimeout));
-    const context = createHandlerContext(
-      spec,
-      deadline.signal,
-      req.signal,
-      req.method,
-      req.header,
-      {
+    const timeout = parseTimeout(
+      req.header.get(headerTimeout),
+      opt.maxTimeoutMs
+    );
+    const context = createHandlerContext({
+      ...spec,
+      requestMethod: req.method,
+      protocolName,
+      timeoutMs: timeout.timeoutMs,
+      shutdownSignal: opt.shutdownSignal,
+      requestSignal: req.signal,
+      requestHeader: req.header,
+      responseHeader: {
         [headerContentType]: type.binary
           ? contentTypeUnaryProto
           : contentTypeUnaryJson,
       },
-      {},
-      protocolName
-    );
+    });
     const compression = compressionNegotiate(
       opt.acceptCompression,
       compressionRequested,
@@ -216,8 +210,8 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
         throw compression.error;
       }
       // raise timeout parsing error to serialize it as a trailer status
-      if (deadline.error) {
-        throw deadline.error;
+      if (timeout.error) {
+        throw timeout.error;
       }
       let reqBody: Uint8Array | JsonValue;
       if (isGet) {
@@ -261,7 +255,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       });
       body = errorToJsonBytes(error, opt.jsonOptions);
     } finally {
-      deadline.cleanup?.();
+      context.abort();
     }
     if (compression.response && body.byteLength >= opt.compressMinBytes) {
       body = await compression.response.compress(body);
@@ -347,7 +341,6 @@ function parseUnaryMessage<I extends Message<I>, O extends Message<O>>(
 function createStreamHandler<I extends Message<I>, O extends Message<O>>(
   opt: UniversalHandlerOptions,
   spec: MethodImplSpec<I, O>,
-  parseDeadline: ParseDeadlineFn,
   serialization: MethodSerializationLookup<I, O>,
   endStreamSerialization: Serialization<EndStreamResponse>
 ) {
@@ -362,21 +355,24 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     if (req.method !== methodPost) {
       return uResponseMethodNotAllowed;
     }
-    const deadline = parseDeadline(req.header.get(headerTimeout));
-    const context = createHandlerContext(
-      spec,
-      deadline.signal,
-      req.signal,
-      req.method,
-      req.header,
-      {
+    const timeout = parseTimeout(
+      req.header.get(headerTimeout),
+      opt.maxTimeoutMs
+    );
+    const context = createHandlerContext({
+      ...spec,
+      requestMethod: req.method,
+      protocolName,
+      timeoutMs: timeout.timeoutMs,
+      shutdownSignal: opt.shutdownSignal,
+      requestSignal: req.signal,
+      requestHeader: req.header,
+      responseHeader: {
         [headerContentType]: type.binary
           ? contentTypeStreamProto
           : contentTypeStreamJson,
       },
-      {},
-      protocolName
-    );
+    });
     const compression = compressionNegotiate(
       opt.acceptCompression,
       req.header.get(headerStreamEncoding),
@@ -398,7 +394,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
         // raise compression error to serialize it as the end stream response
         if (compression.error) throw compression.error;
         // raise timeout parsing error to serialize it as a trailer status
-        if (deadline.error) throw deadline.error;
+        if (timeout.error) throw timeout.error;
         return undefined;
       }),
       transformSplitEnvelope(opt.readMaxBytes),
@@ -412,7 +408,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       transformInvokeImplementation<I, O>(spec, context),
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
-        deadline.cleanup?.();
+        context.abort();
         const end: EndStreamResponse = {
           metadata: context.responseTrailer,
         };

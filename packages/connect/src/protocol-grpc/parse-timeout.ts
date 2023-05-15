@@ -21,17 +21,22 @@ import { ConnectError } from "../connect-error.js";
  * @private Internal code, does not follow semantic versioning.
  */
 export function parseTimeout(
-  value: string | null
-): number | undefined | ConnectError {
+  value: string | null,
+  maxTimeoutMs: number
+):
+  | { timeoutMs?: number; error?: undefined }
+  | { timeoutMs?: number; error: ConnectError } {
   if (value === null) {
-    return undefined;
+    return {};
   }
   const results = /^(\d{1,8})([HMSmun])$/.exec(value);
   if (results === null) {
-    return new ConnectError(
-      `protocol error: invalid grpc timeout value: ${value}`,
-      Code.InvalidArgument
-    );
+    return {
+      error: new ConnectError(
+        `protocol error: invalid grpc timeout value: ${value}`,
+        Code.InvalidArgument
+      ),
+    };
   }
   const unitToMultiplicand = {
     H: 60 * 60 * 1000, // hour
@@ -41,8 +46,19 @@ export function parseTimeout(
     u: 0.001, // microsecond
     n: 0.000001, // nanosecond
   };
-  return (
+  const timeoutMs =
     unitToMultiplicand[results[2] as keyof typeof unitToMultiplicand] *
-    parseInt(results[1])
-  );
+    parseInt(results[1]);
+  if (timeoutMs > maxTimeoutMs) {
+    return {
+      timeoutMs: timeoutMs,
+      error: new ConnectError(
+        `timeout ${timeoutMs}ms must be <= ${maxTimeoutMs}`,
+        Code.InvalidArgument
+      ),
+    };
+  }
+  return {
+    timeoutMs,
+  };
 }

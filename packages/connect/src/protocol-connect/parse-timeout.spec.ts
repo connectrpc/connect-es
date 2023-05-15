@@ -17,20 +17,40 @@ import { parseTimeout } from "./parse-timeout.js";
 
 describe("parseTimeout()", function () {
   it("should parse proper timeout", () => {
-    expect(parseTimeout("1")).toEqual(1);
-    expect(parseTimeout("1234567890")).toEqual(1234567890);
-    expect(parseTimeout("0")).toEqual(0);
+    expect(parseTimeout("1", Number.MAX_SAFE_INTEGER)).toEqual({
+      timeoutMs: 1,
+    });
+    expect(parseTimeout("1234567890", Number.MAX_SAFE_INTEGER)).toEqual({
+      timeoutMs: 1234567890,
+    });
+    expect(parseTimeout("0", Number.MAX_SAFE_INTEGER)).toEqual({
+      timeoutMs: 0,
+    });
   });
   it("should should return undefined for null value", () => {
-    expect(parseTimeout(null)).toEqual(undefined);
+    const r = parseTimeout(null, Number.MAX_SAFE_INTEGER);
+    expect(r.timeoutMs).toBeUndefined();
+    expect(r.error).toBeUndefined();
   });
-  it("should should return a ConnectError for an incorrect value", () => {
-    expect(parseTimeout("100m")).toBeInstanceOf(ConnectError);
-    expect(parseTimeout("1H")).toBeInstanceOf(ConnectError);
-    expect(parseTimeout("-1")).toBeInstanceOf(ConnectError);
-    expect(parseTimeout("1e+10")).toBeInstanceOf(ConnectError);
-    expect(parseTimeout("")).toBeInstanceOf(ConnectError);
-    expect(parseTimeout("12345678901")).toBeInstanceOf(ConnectError);
-    expect(parseTimeout("foo")).toBeInstanceOf(ConnectError);
+  it("should return a ConnectError for a value exceeding maxTimeoutMs", function () {
+    expect(parseTimeout("1", 0).error?.message).toBe(
+      "[invalid_argument] timeout 1ms must be <= 0"
+    );
+    expect(parseTimeout("1024", 1000).error?.message).toBe(
+      "[invalid_argument] timeout 1024ms must be <= 1000"
+    );
   });
+  const invalidValues = ["100m", "1H", "-1", "1e+10", "", "12345678901", "foo"];
+  for (const invalidValue of invalidValues) {
+    it(`should should return a ConnectError for an incorrect value "${invalidValue}"`, () => {
+      const r = parseTimeout(invalidValue, Number.MAX_SAFE_INTEGER);
+      expect(r.timeoutMs).toBeUndefined();
+      expect(r.error).toBeInstanceOf(ConnectError);
+      if (r instanceof ConnectError) {
+        expect(r.message).toBe(
+          `protocol error: invalid connect timeout value: ${invalidValue}`
+        );
+      }
+    });
+  }
 });

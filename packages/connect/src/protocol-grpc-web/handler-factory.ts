@@ -15,37 +15,37 @@
 import type { Message } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { createHandlerContext } from "../implementation.js";
 import type { MethodImplSpec } from "../implementation.js";
+import { createHandlerContext } from "../implementation.js";
+import type {
+  EnvelopedMessage,
+  ProtocolHandlerFactory,
+  Serialization,
+  UniversalHandlerOptions,
+  UniversalServerRequest,
+  UniversalServerResponse,
+} from "../protocol/index.js";
 import {
-  validateUniversalHandlerOptions,
-  uResponseMethodNotAllowed,
-  uResponseOk,
-  uResponseUnsupportedMediaType,
   assertByteStreamRequest,
   compressionNegotiate,
   contentTypeMatcher,
   createMethodSerializationLookup,
   createMethodUrl,
   pipe,
+  transformCatchFinally,
   transformCompressEnvelope,
   transformDecompressEnvelope,
+  transformInvokeImplementation,
   transformJoinEnvelopes,
   transformParseEnvelope,
   transformPrepend,
   transformSerializeEnvelope,
   transformSplitEnvelope,
-  transformCatchFinally,
-  transformInvokeImplementation,
   untilFirst,
-  createDeadlineParser,
-} from "../protocol/index.js";
-import type { Serialization, EnvelopedMessage } from "../protocol/index.js";
-import type {
-  ProtocolHandlerFactory,
-  UniversalHandlerOptions,
-  UniversalServerRequest,
-  UniversalServerResponse,
+  uResponseMethodNotAllowed,
+  uResponseOk,
+  uResponseUnsupportedMediaType,
+  validateUniversalHandlerOptions,
 } from "../protocol/index.js";
 import {
   grpcStatusOk,
@@ -106,12 +106,6 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     opt.jsonOptions,
     opt
   );
-  const parseDeadline = createDeadlineParser(
-    parseTimeout,
-    opt.maxTimeoutMs,
-    opt.shutdownSignal
-  );
-
   return async function handle(
     req: UniversalServerRequest
   ): Promise<UniversalServerResponse> {
@@ -123,21 +117,25 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     if (req.method !== methodPost) {
       return uResponseMethodNotAllowed;
     }
-    const deadline = parseDeadline(req.header.get(headerTimeout));
-    const context = createHandlerContext(
-      spec,
-      deadline.signal,
-      req.signal,
-      req.method,
-      req.header,
-      {
+    const timeout = parseTimeout(
+      req.header.get(headerTimeout),
+      opt.maxTimeoutMs
+    );
+    const context = createHandlerContext({
+      ...spec,
+      requestMethod: req.method,
+      protocolName,
+      timeoutMs: timeout.timeoutMs,
+      shutdownSignal: opt.shutdownSignal,
+      requestSignal: req.signal,
+      requestHeader: req.header,
+      responseHeader: {
         [headerContentType]: type.binary ? contentTypeProto : contentTypeJson,
       },
-      {
+      responseTrailer: {
         [headerGrpcStatus]: grpcStatusOk,
       },
-      protocolName
-    );
+    });
     const compression = compressionNegotiate(
       opt.acceptCompression,
       req.header.get(headerEncoding),
@@ -153,7 +151,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
         // raise compression error to serialize it as a trailer status
         if (compression.error) throw compression.error;
         // raise timeout parsing error to serialize it as a trailer status
-        if (deadline.error) throw deadline.error;
+        if (timeout.error) throw timeout.error;
         return undefined;
       }),
       transformSplitEnvelope(opt.readMaxBytes),
@@ -167,7 +165,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformInvokeImplementation<I, O>(spec, context),
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
-        deadline.cleanup?.();
+        context.abort();
         if (e instanceof ConnectError) {
           setTrailerStatus(context.responseTrailer, e);
         } else if (e !== undefined) {
