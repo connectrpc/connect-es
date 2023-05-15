@@ -30,6 +30,7 @@ describe("cancel_after_begin", function () {
 
   servers.describeTransportsExcluding(
     [
+      // TODO(TCN-1763) support client-side cancellation in createRouterTransport()
       "@bufbuild/connect (ConnectRouter, binary)",
       "@bufbuild/connect (ConnectRouter, JSON)",
     ],

@@ -42,9 +42,9 @@ export type {
   MethodImpl,
   HandlerContext,
 } from "./implementation.js";
-
 export { createConnectRouter } from "./router.js";
 export type { ConnectRouter, ConnectRouterOptions } from "./router.js";
+export { createHandlerContext } from "./implementation.js";
 export { cors } from "./cors.js";
 
 // TODO(TCN-1261)
