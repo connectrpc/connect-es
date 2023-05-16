@@ -37,9 +37,9 @@ export function useNodeServer(
     server = createServer();
     if (log) {
       console.log("[useNodeServer] beforeEach useNodeServer");
-      server.on("close", () => console.log("[useNodeServer] beforeEach close"))
-      server.on("listen", () => console.log("[useNodeServer] beforeEach listen"))
-      server.on("timeout", () => console.log("[useNodeServer] beforeEach timeout"))
+      server.on("close", () => console.log("[useNodeServer] beforeEach close event"))
+      server.on("listen", () => console.log("[useNodeServer] beforeEach listen event"))
+      server.on("timeout", () => console.log("[useNodeServer] beforeEach timeout event"))
     }
     server.listen(0, function listenCallback() {
       if (log) {

@@ -119,61 +119,70 @@ describe("universalRequestFromNodeRequest()", function () {
 
     if (skip === false || skip === undefined) {
       request.on("close", () =>
-        console.log(`[HEY!] close event with ${message}`)
+        console.log(`[EVENT(close)]: ${message}`)
       );
       request.on("data", (chunk) =>
-        console.log(`[HEY!] data event with ${message}`, chunk)
+        console.log(`[EVENT(data)]: ${message}`, chunk)
       );
-      request.on("end", () => console.log(`[HEY!] end event with ${message}`));
+      request.on("end", () => console.log(`[EVENT(end)]: ${message}`));
       request.on("error", (err) =>
-        console.log(`[HEY!] error event with ${message}`, err)
+        console.log(`[EVENT(error)]: ${message}`, err)
       );
       request.on("pause", () =>
-        console.log(`[HEY!] pause event with ${message}`)
+        console.log(`[EVENT(pause)]: ${message}`)
       );
       request.on("readable", () =>
-        console.log(`[HEY!] readable event with ${message}`)
+        console.log(`[EVENT(readable)]: ${message}`)
       );
       request.on("resume", () =>
-        console.log(`[HEY!] resume event with ${message}`)
+        console.log(`[EVENT(resume)]: ${message}`)
       );
 
       if (request instanceof http.ClientRequest) {
         request.on("abort", () =>
-          console.log(`[HEY!] abort event with ${message}`)
+          console.log(`[EVENT(abort)]: ${message}`)
         );
         request.on("connect", (response, socket, head) =>
-          console.log(`[HEY!] connect event with ${message}`)
+          console.log(`[EVENT(connect)]: ${message}`)
         );
         request.on("continue", () =>
-          console.log(`[HEY!] continue event with ${message}`)
+          console.log(`[EVENT(continue)]: ${message}`)
         );
         request.on("drain", () =>
-          console.log(`[HEY!] drain event with ${message}`)
+          console.log(`[EVENT(drain)]: ${message}`)
         );
         request.on("finish", () =>
-          console.log(`[HEY!] finish event with ${message}`)
+          console.log(`[EVENT(finish)]: ${message}`)
         );
         request.on("information", (info) =>
-          console.log(`[HEY!] information event with ${message}`)
+          console.log(`[EVENT(information)]: ${message}`)
         );
         request.on("pipe", (src) =>
-          console.log(`[HEY!] pipe event with ${message}`)
+          console.log(`[EVENT(pipe)]: ${message}`)
         );
         request.on("response", (response) =>
-          console.log(`[HEY!] response event with ${message}`)
+          console.log(`[EVENT(response)]: ${message}`, {
+            statusCode: response.statusCode,
+            destroyed: response.destroyed,
+            closed: response.closed,
+            complete: response.complete,
+            errored: response.errored,
+            statusMessage: response.statusMessage,
+            method: response.method,
+            readable: response.readable,
+          })
         );
         request.on("socket", (socket) =>
-          console.log(`[HEY!] socket event with ${message}`)
+          console.log(`[EVENT(socket)]: ${message}`)
         );
         request.on("timeout", () =>
-          console.log(`[HEY!] timeout event with ${message}`)
+          console.log(`[EVENT(timeout)]: ${message}`)
         );
         request.on("unpipe", (src) =>
-          console.log(`[HEY!] unpipe event with ${message}`)
+          console.log(`[EVENT(unpipe)]: ${message}`)
         );
         request.on("upgrade", (response, socket, head) =>
-          console.log(`[HEY!] upgrade event with ${message}`)
+          console.log(`[EVENT(upgrade)]: ${message}`)
         );
       }
     }
