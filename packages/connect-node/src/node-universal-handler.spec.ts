@@ -159,6 +159,7 @@ describe("universalRequestFromNodeRequest()", function () {
           request.on("close", () => console.log('with HTTP/1.1 request finishing got event CLOSE'))
           request.on("error", (e) => console.log('with HTTP/1.1 request finishing got event ERROR', e))
           request.on("abort", () => console.log('with HTTP/1.1 request finishing got event ABORT'))
+          response.on("close", () => console.log('with HTTP/1.1 request finishing got RESP event CLOSE'))
           const uReq = universalRequestFromNodeRequest(request, undefined);
           universalRequestSignal = uReq.signal;
           response.writeHead(200);
