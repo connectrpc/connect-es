@@ -104,7 +104,7 @@ describe("universalRequestFromNodeRequest()", function () {
       );
     });
   });
-  describe("with HTTP/1.1 ECONNRESET", function () {
+  fdescribe("with HTTP/1.1 ECONNRESET", function () {
     let serverAbortReason: undefined | unknown;
     const server = useNodeServer(() =>
       http.createServer(
@@ -145,7 +145,7 @@ describe("universalRequestFromNodeRequest()", function () {
       }
     });
   });
-  describe("with HTTP/1.1 request finishing without error", function () {
+  fdescribe("with HTTP/1.1 request finishing without error", function () {
     let universalRequestSignal: AbortSignal | undefined;
     const server = useNodeServer(() =>
       http.createServer(

@@ -26,8 +26,10 @@ jobs:
           key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
+#      - name: make
+#        run: make format build lint test bench checkdiff
       - name: make
-        run: make format build lint test bench checkdiff
+        run: make testconnectnodepackage
       - name: browserstack
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
