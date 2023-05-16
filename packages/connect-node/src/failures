@@ -1,23 +1,29 @@
-fail 3 https://github.com/bufbuild/connect-es/actions/runs/4997120451/jobs/8951496470
+fail 4 https://github.com/bufbuild/connect-es/actions/runs/4997120451/jobs/8951526714
 
 { entropyCounter: 3 }
 [useNodeServer] during useNodeServer
-Randomized with seed 79305
+Randomized with seed 62484
 Started
-....................[HEY!] start: should abort request signal with ConnectError and Code.Aborted
-[HEY!] start: HTTP/1.1 ECONNRESET
-[HEY!] done: HTTP/1.1 ECONNRESET
+....[HEY!] start: should abort request signal with ConnectError and Code.Aborted
 [HEY!] done: should abort request signal with ConnectError and Code.Aborted
-.inside: creating server
+Finside: creating server
 [useNodeServer] beforeEach useNodeServer
 [useNodeServer] beforeEach closing
 [HEY!] start: with HTTP/1.1 request finishing client starting request
 [HEY!] socket event with with HTTP/1.1 request finishing client starting request
 [HEY!] finish event with with HTTP/1.1 request finishing client starting request
+[HEY!] start: HTTP/1.1 request finishing server handler
+done: creating server
+[HEY!] done: HTTP/1.1 request finishing server handler
+[HEY!] resume event with HTTP/1.1 request finishing server handler
+[HEY!] readable event with HTTP/1.1 request finishing server handler
+[HEY!] end event with HTTP/1.1 request finishing server handler
+[HEY!] resume event with HTTP/1.1 request finishing server handler
+[HEY!] close event with HTTP/1.1 request finishing server handler
 [HEY!] response event with with HTTP/1.1 request finishing client starting request
 [HEY!] done: with HTTP/1.1 request finishing client starting request
 [useNodeServer] afterEach useNodeServer
 [useNodeServer] afterEach closing
-F[useNodeServer] beforeEach close
+..[useNodeServer] beforeEach close
 [HEY!] close event with with HTTP/1.1 request finishing client starting request
-....
+...................
