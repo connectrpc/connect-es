@@ -51,7 +51,7 @@ export { cors } from "./cors.js";
 
 // Symbols above should be relevant to end users.
 // Symbols below should only be relevant for other libraries.
-export { runUnary, runStreaming } from "./interceptor.js";
+export { runUnary, runStreaming } from "./legacy-interceptor.js";
 export { makeAnyClient } from "./any-client.js";
 export type { AnyClient } from "./any-client.js";
 

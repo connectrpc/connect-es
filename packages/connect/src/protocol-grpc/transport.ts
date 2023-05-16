@@ -26,16 +26,16 @@ import type {
   UnaryRequest,
   UnaryResponse,
 } from "../index.js";
-import { Code, ConnectError, runStreaming, runUnary } from "../index.js";
+import { Code, ConnectError } from "../index.js";
 import type { CommonTransportOptions } from "../protocol/index.js";
 import {
   createAsyncIterable,
-  createLinkedAbortController,
   createMethodSerializationLookup,
   createMethodUrl,
   pipe,
   pipeTo,
-  transformCatchFinally,
+  runStreamingCall,
+  runUnaryCall,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,
@@ -70,9 +70,11 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt
       );
-      const ac = createLinkedAbortController(signal);
-      return await runUnary<I, O>(
-        {
+      return await runUnaryCall<I, O>({
+        interceptors: opt.interceptors,
+        signal,
+        timeoutMs,
+        req: {
           stream: false,
           service,
           method,
@@ -86,9 +88,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.sendCompression
           ),
           message: input instanceof method.I ? input : new method.I(input),
-          signal: ac.signal,
         },
-        async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
+        next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const uRes = await opt.httpClient({
             url: req.url,
             method: "POST",
@@ -109,60 +110,49 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               }
             ),
           });
-          try {
-            const { compression } = validateResponseWithCompression(
-              opt.useBinaryFormat,
-              opt.acceptCompression,
-              uRes.status,
-              uRes.header
-            );
-            const message = await pipeTo(
-              uRes.body,
-              transformSplitEnvelope(opt.readMaxBytes),
-              transformDecompressEnvelope(
-                compression ?? null,
-                opt.readMaxBytes
-              ),
-              transformParseEnvelope<O>(
-                serialization.getO(opt.useBinaryFormat)
-              ),
-              async (iterable) => {
-                let message: O | undefined;
-                for await (const chunk of iterable) {
-                  if (message !== undefined) {
-                    throw new ConnectError(
-                      "protocol error: received extra output message for unary method",
-                      Code.InvalidArgument
-                    );
-                  }
-                  message = chunk;
+          const { compression } = validateResponseWithCompression(
+            opt.useBinaryFormat,
+            opt.acceptCompression,
+            uRes.status,
+            uRes.header
+          );
+          const message = await pipeTo(
+            uRes.body,
+            transformSplitEnvelope(opt.readMaxBytes),
+            transformDecompressEnvelope(compression ?? null, opt.readMaxBytes),
+            transformParseEnvelope<O>(serialization.getO(opt.useBinaryFormat)),
+            async (iterable) => {
+              let message: O | undefined;
+              for await (const chunk of iterable) {
+                if (message !== undefined) {
+                  throw new ConnectError(
+                    "protocol error: received extra output message for unary method",
+                    Code.InvalidArgument
+                  );
                 }
-                return message;
-              },
-              { propagateDownStreamError: false }
+                message = chunk;
+              }
+              return message;
+            },
+            { propagateDownStreamError: false }
+          );
+          validateTrailer(uRes.trailer);
+          if (message === undefined) {
+            throw new ConnectError(
+              "protocol error: missing output message for unary method",
+              Code.InvalidArgument
             );
-            validateTrailer(uRes.trailer);
-            if (message === undefined) {
-              throw new ConnectError(
-                "protocol error: missing output message for unary method",
-                Code.InvalidArgument
-              );
-            }
-            return <UnaryResponse<I, O>>{
-              stream: false,
-              service,
-              method,
-              header: uRes.header,
-              message,
-              trailer: uRes.trailer,
-            };
-          } catch (e) {
-            ac.abort(e);
-            throw e;
           }
+          return <UnaryResponse<I, O>>{
+            stream: false,
+            service,
+            method,
+            header: uRes.header,
+            message,
+            trailer: uRes.trailer,
+          };
         },
-        opt.interceptors
-      );
+      });
     },
     async stream<
       I extends Message<I> = AnyMessage,
@@ -181,15 +171,16 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt
       );
-      const ac = createLinkedAbortController(signal);
-      return runStreaming<I, O>(
-        {
+      return runStreamingCall<I, O>({
+        interceptors: opt.interceptors,
+        signal,
+        timeoutMs,
+        req: {
           stream: true,
           service,
           method,
           url: createMethodUrl(opt.baseUrl, service, method),
           init: {},
-          signal: ac.signal,
           header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
@@ -201,7 +192,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             propagateDownStreamError: true,
           }),
         },
-        async (req: StreamRequest<I, O>) => {
+        next: async (req: StreamRequest<I, O>) => {
           const uRes = await opt.httpClient({
             url: req.url,
             method: "POST",
@@ -221,49 +212,36 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               { propagateDownStreamError: true }
             ),
           });
-          try {
-            const { compression, foundStatus } =
-              validateResponseWithCompression(
-                opt.useBinaryFormat,
-                opt.acceptCompression,
-                uRes.status,
-                uRes.header
-              );
-            const res: StreamResponse<I, O> = {
-              ...req,
-              header: uRes.header,
-              trailer: uRes.trailer,
-              message: pipe(
-                uRes.body,
-                transformSplitEnvelope(opt.readMaxBytes),
-                transformDecompressEnvelope(
-                  compression ?? null,
-                  opt.readMaxBytes
-                ),
-                transformParseEnvelope(serialization.getO(opt.useBinaryFormat)),
-                async function* (iterable) {
-                  yield* iterable;
-                  if (!foundStatus) {
-                    validateTrailer(uRes.trailer);
-                  }
-                },
-                transformCatchFinally<O>((e): void => {
-                  if (e !== undefined) {
-                    ac.abort(e);
-                    throw e;
-                  }
-                }),
-                { propagateDownStreamError: true }
+          const { compression, foundStatus } = validateResponseWithCompression(
+            opt.useBinaryFormat,
+            opt.acceptCompression,
+            uRes.status,
+            uRes.header
+          );
+          const res: StreamResponse<I, O> = {
+            ...req,
+            header: uRes.header,
+            trailer: uRes.trailer,
+            message: pipe(
+              uRes.body,
+              transformSplitEnvelope(opt.readMaxBytes),
+              transformDecompressEnvelope(
+                compression ?? null,
+                opt.readMaxBytes
               ),
-            };
-            return res;
-          } catch (e) {
-            ac.abort(e);
-            throw e;
-          }
+              transformParseEnvelope(serialization.getO(opt.useBinaryFormat)),
+              async function* (iterable) {
+                yield* iterable;
+                if (!foundStatus) {
+                  validateTrailer(uRes.trailer);
+                }
+              },
+              { propagateDownStreamError: true }
+            ),
+          };
+          return res;
         },
-        opt.interceptors
-      );
+      });
     },
   };
 }

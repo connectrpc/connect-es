@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, MethodKind } from "@bufbuild/protobuf";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -23,24 +22,22 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { UnaryRequest } from "@bufbuild/connect";
-import {
-  Code,
-  connectErrorFromReason,
-  runStreaming,
-  runUnary,
-} from "@bufbuild/connect";
+import { Message, MethodKind } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamResponse,
   Transport,
+  UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect";
+import { connectErrorFromReason } from "@bufbuild/connect";
 import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
   encodeEnvelope,
+  runStreamingCall,
+  runUnaryCall,
 } from "@bufbuild/connect/protocol";
 import {
   requestHeader,
@@ -141,83 +138,76 @@ export function createGrpcWebTransport(
         options.jsonOptions,
         options.binaryOptions
       );
-      try {
-        return await runUnary<I, O>(
-          {
+      return await runUnaryCall<I, O>({
+        interceptors: options.interceptors,
+        signal,
+        timeoutMs,
+        req: {
+          stream: false,
+          service,
+          method,
+          url: createMethodUrl(options.baseUrl, service, method),
+          init: {
+            method: "POST",
+            credentials: options.credentials ?? "same-origin",
+            redirect: "error",
+            mode: "cors",
+          },
+          header: requestHeader(useBinaryFormat, timeoutMs, header),
+          message: normalize(message),
+        },
+        next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
+          const response = await fetch(req.url, {
+            ...req.init,
+            headers: req.header,
+            signal: req.signal,
+            body: encodeEnvelope(0, serialize(req.message)),
+          });
+          validateResponse(useBinaryFormat, response.status, response.headers);
+          if (!response.body) {
+            throw "missing response body";
+          }
+          const reader = createEnvelopeReadableStream(
+            response.body
+          ).getReader();
+          let trailer: Headers | undefined;
+          let message: O | undefined;
+          for (;;) {
+            const r = await reader.read();
+            if (r.done) {
+              break;
+            }
+            const { flags, data } = r.value;
+            if (flags === trailerFlag) {
+              if (trailer !== undefined) {
+                throw "extra trailer";
+              }
+              // Unary responses require exactly one response message, but in
+              // case of an error, it is perfectly valid to have a response body
+              // that only contains error trailers.
+              trailer = trailerParse(data);
+              continue;
+            }
+            if (message !== undefined) {
+              throw "extra message";
+            }
+            message = parse(data);
+          }
+          if (trailer === undefined) {
+            throw "missing trailer";
+          }
+          validateTrailer(trailer);
+          if (message === undefined) {
+            throw "missing message";
+          }
+          return <UnaryResponse<I, O>>{
             stream: false,
-            service,
-            method,
-            url: createMethodUrl(options.baseUrl, service, method),
-            init: {
-              method: "POST",
-              credentials: options.credentials ?? "same-origin",
-              redirect: "error",
-              mode: "cors",
-            },
-            header: requestHeader(useBinaryFormat, timeoutMs, header),
-            message: normalize(message),
-            signal: signal ?? new AbortController().signal,
-          },
-          async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
-            const response = await fetch(req.url, {
-              ...req.init,
-              headers: req.header,
-              signal: req.signal,
-              body: encodeEnvelope(0, serialize(req.message)),
-            });
-            validateResponse(
-              useBinaryFormat,
-              response.status,
-              response.headers
-            );
-            if (!response.body) {
-              throw "missing response body";
-            }
-            const reader = createEnvelopeReadableStream(
-              response.body
-            ).getReader();
-            let trailer: Headers | undefined;
-            let message: O | undefined;
-            for (;;) {
-              const r = await reader.read();
-              if (r.done) {
-                break;
-              }
-              const { flags, data } = r.value;
-              if (flags === trailerFlag) {
-                if (trailer !== undefined) {
-                  throw "extra trailer";
-                }
-                // Unary responses require exactly one response message, but in
-                // case of an error, it is perfectly valid to have a response body
-                // that only contains error trailers.
-                trailer = trailerParse(data);
-                continue;
-              }
-              if (message !== undefined) {
-                throw "extra message";
-              }
-              message = parse(data);
-            }
-            if (trailer === undefined) {
-              throw "missing trailer";
-            }
-            validateTrailer(trailer);
-            if (message === undefined) {
-              throw "missing message";
-            }
-            return <UnaryResponse<I, O>>{
-              stream: false,
-              header: response.headers,
-              message,
-              trailer,
-            };
-          },
-          options.interceptors
-        );
-      } catch (e) {
-        throw connectErrorFromReason(e, Code.Internal);
-      }
+            header: response.headers,
+            message,
+            trailer,
+          };
+        },
+      });
     },
 
     async stream<
@@ -237,6 +227,7 @@ export function createGrpcWebTransport(
         options.jsonOptions,
         options.binaryOptions
       );
+
       async function* parseResponseBody(
         body: ReadableStream<Uint8Array>,
         foundStatus: boolean,
@@ -288,6 +279,7 @@ export function createGrpcWebTransport(
           throw connectErrorFromReason(e);
         }
       }
+
       async function createRequestBody(
         input: AsyncIterable<I>
       ): Promise<Uint8Array> {
@@ -300,8 +292,12 @@ export function createGrpcWebTransport(
         }
         return encodeEnvelope(0, serialize(r.value));
       }
-      return runStreaming<I, O>(
-        {
+
+      return runStreamingCall<I, O>({
+        interceptors: options.interceptors,
+        signal,
+        timeoutMs,
+        req: {
           stream: true,
           service,
           method,
@@ -312,11 +308,10 @@ export function createGrpcWebTransport(
             redirect: "error",
             mode: "cors",
           },
-          signal: signal ?? new AbortController().signal,
           header: requestHeader(useBinaryFormat, timeoutMs, header),
           message: input,
         },
-        async (req) => {
+        next: async (req) => {
           const fRes = await fetch(req.url, {
             ...req.init,
             headers: req.header,
@@ -340,8 +335,7 @@ export function createGrpcWebTransport(
           };
           return res;
         },
-        options.interceptors
-      ).catch((e: unknown) => Promise.reject(connectErrorFromReason(e)));
+      });
     },
   };
 }
