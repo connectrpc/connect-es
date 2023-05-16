@@ -21,7 +21,8 @@ export function useNodeServer(
     | http.Server
     | https.Server
     | http2.Http2Server
-    | http2.Http2SecureServer
+    | http2.Http2SecureServer,
+  log?: true,
 ) {
   let server:
     | http.Server
@@ -31,6 +32,9 @@ export function useNodeServer(
     | undefined;
 
   beforeEach(function (doneFn) {
+    if (log) {
+      console.log("beforeEach useNodeServer");
+    }
     server = createServer();
     server.listen(0, function listenCallback() {
       doneFn();
@@ -38,6 +42,9 @@ export function useNodeServer(
   });
 
   afterEach(async function () {
+    if (log) {
+      console.log("afterEach useNodeServer");
+    }
     if (server === undefined) {
       throw new Error("server not defined");
     }
@@ -59,6 +66,10 @@ export function useNodeServer(
     s.close();
   });
 
+
+  if (log) {
+    console.log("during useNodeServer");
+  }
   return {
     getUrl(): string {
       if (server === undefined) {
