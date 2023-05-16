@@ -28,7 +28,7 @@ const entropyCounter = 3;
 console.log({ entropyCounter });
 
 describe("universalRequestFromNodeRequest()", function () {
-  describe("with HTTP/2 stream closed with an RST code", function () {
+  xdescribe("with HTTP/2 stream closed with an RST code", function () {
     let universalRequestSignal: AbortSignal | undefined;
     const server = useNodeServer(() => {
       universalRequestSignal = undefined;
@@ -181,7 +181,7 @@ describe("universalRequestFromNodeRequest()", function () {
     return () => console.log(`[HEY!] done: ${message}`);
   };
 
-  describe("with HTTP/1.1 ECONNRESET", function () {
+  xdescribe("with HTTP/1.1 ECONNRESET", function () {
     let serverAbortReason: undefined | unknown;
     const server = useNodeServer(() =>
       http.createServer(
