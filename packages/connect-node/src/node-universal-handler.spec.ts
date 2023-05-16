@@ -254,7 +254,7 @@ describe("universalRequestFromNodeRequest()", function () {
           done();
         }
       )
-    });
+    }, true);
     
     // this one too
     it("should abort request signal with AbortError", async function () {
