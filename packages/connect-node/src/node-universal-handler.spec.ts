@@ -112,6 +112,7 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
         },
         function (request) {
+          console.log('with HTTP/1.1 ECONNRESET server handler')
           request.on("close", () => console.log('with HTTP/1.1 ECONNRESET got event CLOSE'))
           request.on("error", (e) => console.log('with HTTP/1.1 ECONNRESET got event ERROR', e))
           request.on("abort", () => console.log('with HTTP/1.1 ECONNRESET got event ABORT'))
@@ -119,6 +120,7 @@ describe("universalRequestFromNodeRequest()", function () {
           uReq.signal.addEventListener("abort", () => {
             serverAbortReason = uReq.signal.reason;
           });
+          console.log('with HTTP/1.1 ECONNRESET server handler done')
         }
       )
     );
