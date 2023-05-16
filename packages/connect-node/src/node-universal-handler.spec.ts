@@ -102,7 +102,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(ce.message).toBe(
         "[internal] http/2 stream closed with RST code FRAME_SIZE_ERROR (0x6)"
       );
-    });333
+    });
   });
   describe("with HTTP/1.1 ECONNRESET", function () {
     let serverAbortReason: undefined | unknown;
