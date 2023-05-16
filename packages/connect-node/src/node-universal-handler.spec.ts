@@ -102,7 +102,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(ce.message).toBe(
         "[internal] http/2 stream closed with RST code FRAME_SIZE_ERROR (0x6)"
       );
-    });
+    });333
   });
   describe("with HTTP/1.1 ECONNRESET", function () {
     let serverAbortReason: undefined | unknown;
@@ -112,6 +112,9 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
         },
         function (request) {
+          request.on("close", () => console.log('with HTTP/1.1 ECONNRESET got event CLOSE'))
+          request.on("error", (e) => console.log('with HTTP/1.1 ECONNRESET got event ERROR', e))
+          request.on("abort", () => console.log('with HTTP/1.1 ECONNRESET got event ABORT'))
           const uReq = universalRequestFromNodeRequest(request, undefined);
           uReq.signal.addEventListener("abort", () => {
             serverAbortReason = uReq.signal.reason;
