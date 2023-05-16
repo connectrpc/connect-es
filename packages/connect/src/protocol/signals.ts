@@ -70,15 +70,15 @@ export function createDeadlineSignal(timeoutMs: number | undefined): {
   cleanup: () => void;
 } {
   const controller = new AbortController();
-  const listener = () =>
+  const listener = () => {
     controller.abort(
       new ConnectError("the operation timed out", Code.DeadlineExceeded)
     );
+  };
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  if (timeoutMs === 0) {
-    listener();
-  } else if (timeoutMs !== undefined) {
-    timeoutId = setTimeout(listener, timeoutMs);
+  if (timeoutMs !== undefined) {
+    if (timeoutMs <= 0) listener();
+    else timeoutId = setTimeout(listener, timeoutMs);
   }
   return {
     signal: controller.signal,

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import type {
   AnyMessage,
   BinaryReadOptions,
@@ -24,13 +23,7 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import {
-  appendHeaders,
-  Code,
-  connectErrorFromReason,
-  runStreaming,
-  runUnary,
-} from "@bufbuild/connect";
+import { Message, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamResponse,
@@ -38,20 +31,23 @@ import type {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect";
+import { appendHeaders } from "@bufbuild/connect";
 import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
   encodeEnvelope,
+  runStreamingCall,
+  runUnaryCall,
 } from "@bufbuild/connect/protocol";
 import {
-  requestHeader,
   endStreamFlag,
   endStreamFromJson,
   errorFromJson,
+  requestHeader,
   trailerDemux,
-  validateResponse,
   transformConnectPostToGetRequest,
+  validateResponse,
 } from "@bufbuild/connect/protocol-connect";
 import { assertFetchApi } from "./assert-fetch-api.js";
 
@@ -145,78 +141,75 @@ export function createConnectTransport(
         options.jsonOptions,
         options.binaryOptions
       );
-      try {
-        return await runUnary<I, O>(
-          {
+      return await runUnaryCall<I, O>({
+        interceptors: options.interceptors,
+        signal,
+        timeoutMs,
+        req: {
+          stream: false,
+          service,
+          method,
+          url: createMethodUrl(options.baseUrl, service, method),
+          init: {
+            method: "POST",
+            credentials: options.credentials ?? "same-origin",
+            redirect: "error",
+            mode: "cors",
+          },
+          header: requestHeader(
+            method.kind,
+            useBinaryFormat,
+            timeoutMs,
+            header
+          ),
+          message: normalize(message),
+        },
+        next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
+          const useGet =
+            options.useHttpGet === true &&
+            method.idempotency === MethodIdempotency.NoSideEffects;
+          let body: BodyInit | null = null;
+          if (useGet) {
+            req = transformConnectPostToGetRequest(
+              req,
+              serialize(req.message),
+              useBinaryFormat
+            );
+          } else {
+            body = serialize(req.message);
+          }
+          const response = await fetch(req.url, {
+            ...req.init,
+            headers: req.header,
+            signal: req.signal,
+            body,
+          });
+          const { isUnaryError, unaryError } = validateResponse(
+            method.kind,
+            useBinaryFormat,
+            response.status,
+            response.headers
+          );
+          if (isUnaryError) {
+            throw errorFromJson(
+              (await response.json()) as JsonValue,
+              appendHeaders(...trailerDemux(response.headers)),
+              unaryError
+            );
+          }
+          const [demuxedHeader, demuxedTrailer] = trailerDemux(
+            response.headers
+          );
+          return <UnaryResponse<I, O>>{
             stream: false,
             service,
             method,
-            url: createMethodUrl(options.baseUrl, service, method),
-            init: {
-              method: "POST",
-              credentials: options.credentials ?? "same-origin",
-              redirect: "error",
-              mode: "cors",
-            },
-            header: requestHeader(
-              method.kind,
-              useBinaryFormat,
-              timeoutMs,
-              header
-            ),
-            message: normalize(message),
-            signal: signal ?? new AbortController().signal,
-          },
-          async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
-            const useGet =
-              options.useHttpGet === true &&
-              method.idempotency === MethodIdempotency.NoSideEffects;
-            let body: BodyInit | null = null;
-            if (useGet) {
-              req = transformConnectPostToGetRequest(
-                req,
-                serialize(req.message),
-                useBinaryFormat
-              );
-            } else {
-              body = serialize(req.message);
-            }
-            const response = await fetch(req.url, {
-              ...req.init,
-              headers: req.header,
-              signal: req.signal,
-              body,
-            });
-            const { isUnaryError, unaryError } = validateResponse(
-              method.kind,
-              useBinaryFormat,
-              response.status,
-              response.headers
-            );
-            if (isUnaryError) {
-              throw errorFromJson(
-                (await response.json()) as JsonValue,
-                appendHeaders(...trailerDemux(response.headers)),
-                unaryError
-              );
-            }
-            const [demuxedHeader, demuxedTrailer] = trailerDemux(
-              response.headers
-            );
-            return <UnaryResponse<I, O>>{
-              stream: false,
-              service,
-              method,
-              header: demuxedHeader,
-              message: parse(new Uint8Array(await response.arrayBuffer())),
-              trailer: demuxedTrailer,
-            };
-          },
-          options.interceptors
-        );
-      } catch (e) {
-        throw connectErrorFromReason(e, Code.Internal);
-      }
+            header: demuxedHeader,
+            message: parse(new Uint8Array(await response.arrayBuffer())),
+            trailer: demuxedTrailer,
+          };
+        },
+      });
     },
 
     async stream<
@@ -242,32 +235,28 @@ export function createConnectTransport(
         trailerTarget: Headers
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
-        try {
-          let endStreamReceived = false;
-          for (;;) {
-            const result = await reader.read();
-            if (result.done) {
-              break;
-            }
-            const { flags, data } = result.value;
-            if ((flags & endStreamFlag) === endStreamFlag) {
-              endStreamReceived = true;
-              const endStream = endStreamFromJson(data);
-              if (endStream.error) {
-                throw endStream.error;
-              }
-              endStream.metadata.forEach((value, key) =>
-                trailerTarget.set(key, value)
-              );
-              continue;
-            }
-            yield parse(data);
+        let endStreamReceived = false;
+        for (;;) {
+          const result = await reader.read();
+          if (result.done) {
+            break;
           }
-          if (!endStreamReceived) {
-            throw "missing EndStreamResponse";
+          const { flags, data } = result.value;
+          if ((flags & endStreamFlag) === endStreamFlag) {
+            endStreamReceived = true;
+            const endStream = endStreamFromJson(data);
+            if (endStream.error) {
+              throw endStream.error;
+            }
+            endStream.metadata.forEach((value, key) =>
+              trailerTarget.set(key, value)
+            );
+            continue;
           }
-        } catch (e) {
-          throw connectErrorFromReason(e);
+          yield parse(data);
+        }
+        if (!endStreamReceived) {
+          throw "missing EndStreamResponse";
         }
       }
 
@@ -283,9 +272,11 @@ export function createConnectTransport(
         }
         return encodeEnvelope(0, serialize(r.value));
       }
-
-      return runStreaming<I, O>(
-        {
+      return await runStreamingCall<I, O>({
+        interceptors: options.interceptors,
+        timeoutMs,
+        signal,
+        req: {
           stream: true,
           service,
           method,
@@ -296,7 +287,6 @@ export function createConnectTransport(
             redirect: "error",
             mode: "cors",
           },
-          signal: signal ?? new AbortController().signal,
           header: requestHeader(
             method.kind,
             useBinaryFormat,
@@ -305,37 +295,32 @@ export function createConnectTransport(
           ),
           message: input,
         },
-        async (req) => {
-          try {
-            const fRes = await fetch(req.url, {
-              ...req.init,
-              headers: req.header,
-              signal: req.signal,
-              body: await createRequestBody(req.message),
-            });
-            validateResponse(
-              method.kind,
-              useBinaryFormat,
-              fRes.status,
-              fRes.headers
-            );
-            if (fRes.body === null) {
-              throw "missing response body";
-            }
-            const trailer = new Headers();
-            const res: StreamResponse<I, O> = {
-              ...req,
-              header: fRes.headers,
-              trailer,
-              message: parseResponseBody(fRes.body, trailer),
-            };
-            return res;
-          } catch (e) {
-            throw connectErrorFromReason(e, Code.Internal);
+        next: async (req) => {
+          const fRes = await fetch(req.url, {
+            ...req.init,
+            headers: req.header,
+            signal: req.signal,
+            body: await createRequestBody(req.message),
+          });
+          validateResponse(
+            method.kind,
+            useBinaryFormat,
+            fRes.status,
+            fRes.headers
+          );
+          if (fRes.body === null) {
+            throw "missing response body";
           }
+          const trailer = new Headers();
+          const res: StreamResponse<I, O> = {
+            ...req,
+            header: fRes.headers,
+            trailer,
+            message: parseResponseBody(fRes.body, trailer),
+          };
+          return res;
         },
-        options.interceptors
-      ).catch((e: unknown) => Promise.reject(connectErrorFromReason(e)));
+      });
     },
   };
 }

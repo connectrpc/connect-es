@@ -66,6 +66,12 @@ describe("createDeadlineSignal()", function () {
       expect(d.signal.aborted).toBeTrue();
     });
   });
+  describe("with -1 timeout", function () {
+    it("should be aborted immediately", function () {
+      const d = createDeadlineSignal(-1);
+      expect(d.signal.aborted).toBeTrue();
+    });
+  });
   describe("with undefined timeout", function () {
     it("should still return a signal", function () {
       const d = createDeadlineSignal(undefined);
