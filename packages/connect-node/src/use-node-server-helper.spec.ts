@@ -16,6 +16,8 @@ import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";
 
+/* eslint-disable no-console */
+
 export function useNodeServer(
   createServer: () =>
     | http.Server
@@ -56,6 +58,9 @@ export function useNodeServer(
     }
     for (;;) {
       const count = await new Promise<number>((resolve, reject) => {
+        if (server === undefined) {
+          throw new Error("server not defined");
+        }
         server.getConnections((err, count) => {
           if (err) {
             return reject(err);
