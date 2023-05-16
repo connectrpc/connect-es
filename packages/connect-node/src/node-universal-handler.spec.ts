@@ -123,8 +123,8 @@ describe("universalRequestFromNodeRequest()", function () {
       request.on('finish', () => console.log(`[HEY!] finish event with ${message}`));
       request.on('information', (info) => console.log(`[HEY!] information event with ${message}`));
       request.on('pipe', (src) => console.log(`[HEY!] pipe event with ${message}`));
-      request.on('response', (response) => console.log(`[HEY!] response event with ${message}`));
-      request.on('socket', (socket) => console.log(`[HEY!] socket event with ${message}`));
+      request.on('response', (response) => console.log(`[HEY!] response event with ${message}`, response));
+      request.on('socket', (socket) => console.log(`[HEY!] socket event with ${message}`, socket));
       request.on('timeout', () => console.log(`[HEY!] timeout event with ${message}`));
       request.on('unpipe', (src) => console.log(`[HEY!] unpipe event with ${message}`));
       request.on('upgrade', (response, socket, head) => console.log(`[HEY!] upgrade event with ${message}`));
@@ -150,12 +150,14 @@ describe("universalRequestFromNodeRequest()", function () {
         }
       )
     );
+
+    // this one is the stinker
     it("should abort request signal with ConnectError and Code.Aborted", async function () {
       await new Promise<void>((resolve) => {
         const request = http.request(server.getUrl(), {
           method: "POST",
         });
-        const done = logEvents(request, "should abort request");
+        const done = logEvents(request, "should abort request signal with ConnectError and Code.Aborted");
         request.on("error", () => {
           // we need this event lister so that Node.js does not raise the error
           // we trigger by calling destroy()
@@ -178,6 +180,7 @@ describe("universalRequestFromNodeRequest()", function () {
       }
     });
   });
+
   describe("with HTTP/1.1 request finishing without error", function () {
     let universalRequestSignal: AbortSignal | undefined;
     const server = useNodeServer(() =>
@@ -195,6 +198,8 @@ describe("universalRequestFromNodeRequest()", function () {
         }
       )
     );
+
+    // this one too
     it("should abort request signal with AbortError", async function () {
       await new Promise<void>((resolve) => {
         const request = http.request(server.getUrl(), {
