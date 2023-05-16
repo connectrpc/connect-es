@@ -35,10 +35,6 @@ describe("cancel_after_first_response", function () {
 
   servers.describeTransportsExcluding(
     [
-      // TODO(TCN-1763) support client-side cancellation in createRouterTransport()
-      "@bufbuild/connect (ConnectRouter, binary)",
-      "@bufbuild/connect (ConnectRouter, JSON)",
-
       // All following Transports run over HTTP/1, which cannot support full-duplex.
       "@bufbuild/connect-node (Connect, JSON, http) against @bufbuild/connect-node (h1)",
       "@bufbuild/connect-node (Connect, binary, http) against @bufbuild/connect-node (h1)",
