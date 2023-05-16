@@ -1,0 +1,90 @@
+(failing run)
+
+# NODE 16
+
+cd packages/connect-node && PATH="/home/runner/work/connect-es/connect-es/.tmp/bin:/opt/hostedtoolcache/buf/1.17.0/x64/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+{ entropyCounter: 3 }
+[useNodeServer] during useNodeServer
+Randomized with seed 53985
+Started
+.....inside: creating server
+[useNodeServer] beforeEach useNodeServer
+[useNodeServer] beforeEach closing
+[HEY!] start: with HTTP/1.1 request finishing client starting request
+[HEY!] socket event with with HTTP/1.1 request finishing client starting request
+[HEY!] finish event with with HTTP/1.1 request finishing client starting request
+[HEY!] start: HTTP/1.1 request finishing server handler
+done: creating server
+[HEY!] done: HTTP/1.1 request finishing server handler
+[HEY!] resume event with HTTP/1.1 request finishing server handler
+[HEY!] readable event with HTTP/1.1 request finishing server handler
+[HEY!] end event with HTTP/1.1 request finishing server handler
+[HEY!] resume event with HTTP/1.1 request finishing server handler
+[HEY!] close event with HTTP/1.1 request finishing server handler
+[HEY!] response event with with HTTP/1.1 request finishing client starting request
+[HEY!] done: with HTTP/1.1 request finishing client starting request
+[useNodeServer] afterEach useNodeServer
+[HEY!] abort event with with HTTP/1.1 request finishing client starting request
+[useNodeServer] afterEach closing
+.[useNodeServer] beforeEach close
+[HEY!] start: should abort request signal with ConnectError and Code.Aborted
+[HEY!] close event with with HTTP/1.1 request finishing client starting request
+[HEY!] start: HTTP/1.1 ECONNRESET
+[HEY!] done: HTTP/1.1 ECONNRESET
+[HEY!] done: should abort request signal with ConnectError and Code.Aborted
+....................
+
+
+26 specs, 0 failures
+Finished in 0.564 seconds
+Randomized with seed 53985 (jasmine --random=true --seed=53985)
+
+# NODE 18
+
+cd packages/connect-node && PATH="/home/runner/work/connect-es/connect-es/.tmp/bin:/opt/hostedtoolcache/buf/1.17.0/x64/bin:/home/runner/.local/bin:/opt/pipx_bin:/home/runner/.cargo/bin:/home/runner/.config/composer/vendor/bin:/usr/local/.ghcup/bin:/home/runner/.dotnet/tools:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+{ entropyCounter: 3 }
+[useNodeServer] during useNodeServer
+Randomized with seed 66765
+Started
+.inside: creating server
+[useNodeServer] beforeEach useNodeServer
+[useNodeServer] beforeEach closing
+[HEY!] start: with HTTP/1.1 request finishing client starting request
+[HEY!] socket event with with HTTP/1.1 request finishing client starting request
+[HEY!] finish event with with HTTP/1.1 request finishing client starting request
+[HEY!] response event with with HTTP/1.1 request finishing client starting request
+[HEY!] done: with HTTP/1.1 request finishing client starting request
+[useNodeServer] afterEach useNodeServer
+[useNodeServer] afterEach closing
+F[useNodeServer] beforeEach close
+[HEY!] start: should abort request signal with ConnectError and Code.Aborted
+[HEY!] close event with with HTTP/1.1 request finishing client starting request
+[HEY!] start: HTTP/1.1 ECONNRESET
+[HEY!] done: HTTP/1.1 ECONNRESET
+[HEY!] done: should abort request signal with ConnectError and Code.Aborted
+........................
+
+Failures:
+1) universalRequestFromNodeRequest() with HTTP/1.1 request finishing without error should abort request signal with AbortError
+  Message:
+    Expected instance of undefined to be an instance of AbortSignal
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/runner/work/connect-es/connect-es/packages/connect-node/dist/esm/node-universal-handler.spec.js:196:44)
+        at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  Message:
+    Expected undefined to be true.
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/runner/work/connect-es/connect-es/packages/connect-node/dist/esm/node-universal-handler.spec.js:197:132)
+        at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  Message:
+    Expected instance of undefined to be an instance of Error
+  Stack:
+        at <Jasmine>
+        at UserContext.<anonymous> (file:///home/runner/work/connect-es/connect-es/packages/connect-node/dist/esm/node-universal-handler.spec.js:198:131)
+        at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+26 specs, 1 failure
+Finished in 0.526 seconds
+Randomized with seed 66765 (jasmine --random=true --seed=66765)
