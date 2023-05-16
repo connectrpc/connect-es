@@ -494,7 +494,7 @@ type Sentinel = Promise<void> & {
 
   /**
    * Reject the sentinel. All errors are converted to ConnectError via
-   * connectErrorFromReason().
+   * ConnectError.from().
    */
   reject: (reason: ConnectError | unknown) => void;
 

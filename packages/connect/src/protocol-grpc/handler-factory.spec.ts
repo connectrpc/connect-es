@@ -27,7 +27,7 @@ import {
 import { createHandlerFactory } from "./handler-factory.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
-import { ConnectError, connectErrorFromReason } from "../index.js";
+import { ConnectError } from "../index.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
@@ -148,7 +148,7 @@ describe("createHandlerFactory()", function () {
       expect(handlerContextSignal).toBeDefined();
       expect(handlerContextSignal?.aborted).toBeTrue();
       expect(handlerContextSignal?.reason).toBeInstanceOf(ConnectError);
-      expect(connectErrorFromReason(handlerContextSignal?.reason).message).toBe(
+      expect(ConnectError.from(handlerContextSignal?.reason).message).toBe(
         "[deadline_exceeded] the operation timed out"
       );
     });

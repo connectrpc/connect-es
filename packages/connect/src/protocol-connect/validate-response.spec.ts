@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { MethodKind } from "@bufbuild/protobuf";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import { validateResponse } from "./validate-response.js";
 
 describe("validateResponse() Connect", function () {
@@ -42,7 +42,7 @@ describe("validateResponse() Connect", function () {
       fail("expected error");
     } catch (e) {
       expect(e).toBeInstanceOf(ConnectError);
-      expect(connectErrorFromReason(e).message).toBe(
+      expect(ConnectError.from(e).message).toBe(
         '[invalid_argument] unexpected response content type "application/csv"'
       );
     }
@@ -60,7 +60,7 @@ describe("validateResponse() Connect", function () {
       fail("expected error");
     } catch (e) {
       expect(e).toBeInstanceOf(ConnectError);
-      expect(connectErrorFromReason(e).message).toBe(
+      expect(ConnectError.from(e).message).toBe(
         '[invalid_argument] unexpected response content type "application/connect+proto"'
       );
     }
@@ -78,7 +78,7 @@ describe("validateResponse() Connect", function () {
       fail("expected error");
     } catch (e) {
       expect(e).toBeInstanceOf(ConnectError);
-      expect(connectErrorFromReason(e).message).toBe(
+      expect(ConnectError.from(e).message).toBe(
         '[invalid_argument] unexpected response content type "application/proto"'
       );
     }

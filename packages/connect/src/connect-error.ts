@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { Code } from "./code.js";
-import { createRegistry, Message } from "@bufbuild/protobuf";
 import type {
   AnyMessage,
   IMessageTypeRegistry,
   JsonValue,
   MessageType,
 } from "@bufbuild/protobuf";
+import { createRegistry, Message } from "@bufbuild/protobuf";
 import { codeToString } from "./protocol-connect/index.js";
 
 /**
@@ -94,6 +94,69 @@ export class ConnectError extends Error {
     this.metadata = new Headers(metadata ?? {});
     this.details = outgoingDetails ?? [];
     this.cause = cause;
+  }
+
+  /**
+   * Convert any value - typically a caught error into a ConnectError,
+   * following these rules:
+   * - If the value is already a ConnectError, return it as is.
+   * - If the value is an AbortError from the fetch API, return the message
+   *   of the AbortError with code Canceled.
+   * - For other Errors, return the error message with code Unknown by default.
+   * - For other values, return the values String representation as a message,
+   *   with the code Unknown by default.
+   */
+  static from(reason: unknown, code = Code.Unknown): ConnectError {
+    if (reason instanceof ConnectError) {
+      return reason;
+    }
+    if (reason instanceof Error) {
+      if (reason.name == "AbortError") {
+        // Fetch requests can only be canceled with an AbortController.
+        // We detect that condition by looking at the name of the raised
+        // error object, and translate to the appropriate status code.
+        return new ConnectError(reason.message, Code.Canceled);
+      }
+      return new ConnectError(reason.message, code);
+    }
+    return new ConnectError(String(reason), code);
+  }
+
+  /**
+   * Retrieve error details from a ConnectError. On the wire, error details are
+   * wrapped with google.protobuf.Any, so that a server or middleware can attach
+   * arbitrary data to an error. This function decodes the array of error details
+   * from the ConnectError object, and returns an array with the decoded
+   * messages. Any decoding errors are ignored, and the detail will simply be
+   * omitted from the list.
+   */
+  findDetails<T extends Message<T>>(type: MessageType<T>): T[];
+  findDetails(registry: IMessageTypeRegistry): AnyMessage[];
+  findDetails(
+    typeOrRegistry: MessageType | IMessageTypeRegistry
+  ): AnyMessage[] {
+    const registry =
+      "typeName" in typeOrRegistry
+        ? createRegistry(typeOrRegistry)
+        : typeOrRegistry;
+    const details: AnyMessage[] = [];
+    for (const data of this.details) {
+      if (data instanceof Message) {
+        if (registry.findMessage(data.getType().typeName)) {
+          details.push(data);
+        }
+        continue;
+      }
+      const type = registry.findMessage(data.type);
+      if (type) {
+        try {
+          details.push(type.fromBinary(data.value));
+        } catch (_) {
+          //
+        }
+      }
+    }
+    return details;
   }
 }
 

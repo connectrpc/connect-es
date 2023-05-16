@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { StringValue } from "@bufbuild/protobuf";
+import type { Serialization } from "./serialization.js";
 import {
   createBinarySerialization,
   createJsonSerialization,
   limitSerialization,
 } from "./serialization.js";
-import type { Serialization } from "./serialization.js";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 
 describe("createBinarySerialization()", function () {
   const goldenMessage = new StringValue({ value: "abc" });
@@ -43,7 +43,7 @@ describe("createBinarySerialization()", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        const c = connectErrorFromReason(e);
+        const c = ConnectError.from(e);
         expect(c.message).toBe(
           "[invalid_argument] parse binary: premature EOF"
         );
@@ -62,7 +62,7 @@ describe("createBinarySerialization()", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        const c = connectErrorFromReason(e);
+        const c = ConnectError.from(e);
         expect(c.message).toBe("[internal] serialize binary: x");
       }
     });
@@ -91,7 +91,7 @@ describe("createJsonSerialization()", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        const c = connectErrorFromReason(e);
+        const c = ConnectError.from(e);
         expect(c.message).toMatch(
           /^\[invalid_argument] cannot decode google.protobuf.StringValue from JSON: Unexpected token/
         );
@@ -110,7 +110,7 @@ describe("createJsonSerialization()", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        const c = connectErrorFromReason(e);
+        const c = ConnectError.from(e);
         expect(c.message).toBe("[internal] x");
       }
     });

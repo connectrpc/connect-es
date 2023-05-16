@@ -20,11 +20,10 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { Message, MethodKind } from "@bufbuild/protobuf";
-import type { ConnectError } from "./connect-error.js";
+import { ConnectError } from "./connect-error.js";
 import type { Transport } from "./transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
-import { connectErrorFromReason } from "./connect-error.js";
 import type { CallOptions } from "./call-options.js";
 import { createAsyncIterable } from "./protocol/index.js";
 
@@ -108,7 +107,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
           callback(undefined, response.message);
         },
         (reason) => {
-          const err = connectErrorFromReason(reason, Code.Internal);
+          const err = ConnectError.from(reason, Code.Internal);
           if (err.code === Code.Canceled && abort.signal.aborted) {
             // As documented, discard Canceled errors if canceled by the user.
             return;
@@ -158,7 +157,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
       onClose(undefined);
     }
     run().catch((reason) => {
-      const err = connectErrorFromReason(reason, Code.Internal);
+      const err = ConnectError.from(reason, Code.Internal);
       if (err.code === Code.Canceled && abort.signal.aborted) {
         // As documented, discard Canceled errors if canceled by the user,
         // but do invoke the close-callback.

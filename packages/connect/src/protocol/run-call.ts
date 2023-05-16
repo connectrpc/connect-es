@@ -20,7 +20,7 @@ import type {
   UnaryRequest,
   UnaryResponse,
 } from "../interceptor.js";
-import { connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import {
   createDeadlineSignal,
   createLinkedAbortController,
@@ -150,7 +150,7 @@ function setupSignal(opt: {
     function abort(reason: unknown): Promise<never> {
       // We peek at the deadline signal because fetch() will throw an error on
       // abort that discards the signal reason.
-      const e = connectErrorFromReason(
+      const e = ConnectError.from(
         signal.aborted ? getAbortSignalReason(signal) : reason
       );
       controller.abort(e);

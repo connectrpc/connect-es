@@ -18,7 +18,7 @@ import { parseContentType } from "./content-type.js";
 import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
 import type { Compression } from "../protocol/index.js";
-import { headerUnaryEncoding, headerStreamEncoding } from "./headers.js";
+import { headerStreamEncoding, headerUnaryEncoding } from "./headers.js";
 
 /**
  * Validates response status and header for the Connect protocol.

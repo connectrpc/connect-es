@@ -51,6 +51,68 @@ describe("ConnectError", () => {
       expect(e.metadata.get("foo")).toBe("bar");
     });
   });
+  describe("findDetails()", function () {
+    type ErrorDetail = Message<ErrorDetail> & {
+      reason: string;
+      domain: string;
+    };
+    const ErrorDetail = proto3.makeMessageType<ErrorDetail>(
+      "handwritten.ErrorDetail",
+      [
+        { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
+        { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
+      ]
+    );
+    describe("on error without details", () => {
+      const err = new ConnectError("foo");
+      it("with empty TypeRegistry produces no details", () => {
+        const details = err.findDetails(createRegistry());
+        expect(details.length).toBe(0);
+      });
+      it("with non-empty TypeRegistry produces no details", () => {
+        const details = err.findDetails(createRegistry(ErrorDetail));
+        expect(details.length).toBe(0);
+      });
+      it("with MessageType produces no details", () => {
+        const details = err.findDetails(ErrorDetail);
+        expect(details.length).toBe(0);
+      });
+    });
+    describe("on error with Any details", () => {
+      const err = new ConnectError("foo");
+      err.details.push(
+        new ErrorDetail({
+          reason: "soirée 🎉",
+          domain: "example.com",
+        })
+      );
+      it("with empty TypeRegistry produces no details", () => {
+        const details = err.findDetails(createRegistry());
+        expect(details.length).toBe(0);
+      });
+      it("with non-empty TypeRegistry produces detail", () => {
+        const details = err.findDetails(createRegistry(ErrorDetail));
+        expect(details.length).toBe(1);
+      });
+      it("with MessageType produces detail", () => {
+        const details = err.findDetails(ErrorDetail);
+        expect(details.length).toBe(1);
+        if (details[0] instanceof ErrorDetail) {
+          expect(details[0].domain).toBe("example.com");
+          expect(details[0].reason).toBe("soirée 🎉");
+        } else {
+          fail();
+        }
+      });
+      it("with multiple MessageTypes produces detail", () => {
+        const details = err.findDetails(
+          createRegistry(Struct, ErrorDetail, BoolValue)
+        );
+        expect(details.length).toBe(1);
+        expect(details[0]).toBeInstanceOf(ErrorDetail);
+      });
+    });
+  });
 });
 
 describe("connectErrorDetails()", () => {
