@@ -32,26 +32,31 @@ export function useNodeServer(
     | undefined;
 
   beforeEach(function (doneFn) {
-    if (log) {
-      console.log("beforeEach useNodeServer");
-    }
     server = createServer();
+    if (log) {
+      console.log("[useNodeServer] beforeEach useNodeServer");
+      server.on("close", () => console.log("[useNodeServer] beforeEach close"))
+      server.on("listen", () => console.log("[useNodeServer] beforeEach listen"))
+      server.on("timeout", () => console.log("[useNodeServer] beforeEach timeout"))
+    }
     server.listen(0, function listenCallback() {
+      if (log) {
+        console.log("[useNodeServer] beforeEach closing");
+      }
       doneFn();
     });
   });
 
   afterEach(async function () {
-    if (log) {
-      console.log("afterEach useNodeServer");
-    }
     if (server === undefined) {
       throw new Error("server not defined");
     }
-    const s = server;
+    if (log) {
+      console.log("[useNodeServer] afterEach useNodeServer");
+    }
     for (;;) {
       const count = await new Promise<number>((resolve, reject) => {
-        s.getConnections((err, count) => {
+        server.getConnections((err, count) => {
           if (err) {
             return reject(err);
           }
@@ -63,12 +68,15 @@ export function useNodeServer(
       }
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
-    s.close();
+    if (log) {
+      console.log("[useNodeServer] afterEach closing");
+    }
+    server.close();
   });
 
 
   if (log) {
-    console.log("during useNodeServer");
+    console.log("[useNodeServer] during useNodeServer");
   }
   return {
     getUrl(): string {
