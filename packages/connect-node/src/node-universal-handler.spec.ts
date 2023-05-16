@@ -23,7 +23,7 @@ import { readAllBytes } from "@bufbuild/connect/protocol";
 import "./node-headers-polyfill.js";
 
 // a tribute to the CI celestial beings.  increment once for good luck.
-const entropyCounter = 2;
+const entropyCounter = 3;
 /* eslint-disable no-console */
 console.log({ entropyCounter });
 
