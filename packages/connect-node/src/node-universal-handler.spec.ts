@@ -156,6 +156,7 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
         },
         function (request, response) {
+          console.log('with HTTP/1.1 request finishing server handler')
           request.on("close", () => console.log('with HTTP/1.1 request finishing got event CLOSE'))
           request.on("error", (e) => console.log('with HTTP/1.1 request finishing got event ERROR', e))
           request.on("abort", () => console.log('with HTTP/1.1 request finishing got event ABORT'))
@@ -164,10 +165,12 @@ describe("universalRequestFromNodeRequest()", function () {
           universalRequestSignal = uReq.signal;
           response.writeHead(200);
           response.end();
+          console.log('with HTTP/1.1 request finishing server handler done')
         }
       )
     );
     it("should abort request signal with AbortError", async function () {
+      console.log('with HTTP/1.1 request finishing client starting request')
       await new Promise<void>((resolve) => {
         const request = http.request(server.getUrl(), {
           method: "POST",
@@ -182,6 +185,7 @@ describe("universalRequestFromNodeRequest()", function () {
           );
         });
       });
+      console.log('with HTTP/1.1 request finishing client request done')
       expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
       expect(universalRequestSignal?.aborted).toBeTrue();
       expect(universalRequestSignal?.reason).toBeInstanceOf(Error);
