@@ -55,30 +55,6 @@ type AnyFn = (
 ) => Promise<UnaryResponse | StreamResponse>;
 
 /**
- * UnaryFn represents the client-side invocation of a unary RPC - a method
- * that takes a single input message, and responds with a single output
- * message.
- * A Transport implements such a function, and makes it available to
- * interceptors.
- */
-type UnaryFn<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
-> = (req: UnaryRequest<I, O>) => Promise<UnaryResponse<I, O>>;
-
-/**
- * StreamingFn represents the client-side invocation of a streaming RPC - a
- * method that takes zero or more input messages, and responds with zero or
- * more output messages.
- * A Transport implements such a function, and makes it available to
- * interceptors.
- */
-type StreamingFn<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
-> = (req: StreamRequest<I, O>) => Promise<StreamResponse<I, O>>;
-
-/**
  * UnaryRequest is used in interceptors to represent a request with a
  * single input message.
  */
@@ -212,50 +188,4 @@ interface ResponseCommon<I extends Message<I>, O extends Message<O>> {
    * has been read.
    */
   readonly trailer: Headers;
-}
-
-/**
- * applyInterceptors takes the given UnaryFn or ServerStreamingFn, and wraps
- * it with each of the given interceptors, returning a new UnaryFn or
- * ServerStreamingFn.
- */
-function applyInterceptors<T>(next: T, interceptors: Interceptor[]): T {
-  return interceptors
-    .concat()
-    .reverse()
-    .reduce(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      (n, i) => i(n),
-      next as any // eslint-disable-line @typescript-eslint/no-explicit-any
-    ) as T;
-}
-
-/**
- * Runs a unary method with the given interceptors. Note that this function
- * is only used when implementing a Transport.
- */
-export function runUnary<I extends Message<I>, O extends Message<O>>(
-  req: UnaryRequest<I, O>,
-  next: UnaryFn<I, O>,
-  interceptors: Interceptor[] | undefined
-): Promise<UnaryResponse<I, O>> {
-  if (interceptors) {
-    next = applyInterceptors(next, interceptors);
-  }
-  return next(req);
-}
-
-/**
- * Runs a server-streaming method with the given interceptors. Note that this
- * function is only used when implementing a Transport.
- */
-export function runStreaming<I extends Message<I>, O extends Message<O>>(
-  req: StreamRequest<I, O>,
-  next: StreamingFn<I, O>,
-  interceptors: Interceptor[] | undefined
-): Promise<StreamResponse<I, O>> {
-  if (interceptors) {
-    next = applyInterceptors(next, interceptors);
-  }
-  return next(req);
 }

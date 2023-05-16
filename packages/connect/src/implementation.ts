@@ -24,7 +24,10 @@ import type {
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
-import { createLinkedAbortController } from "./protocol/index.js";
+import {
+  createLinkedAbortController,
+  createDeadlineSignal,
+} from "./protocol/index.js";
 
 // prettier-ignore
 /**
@@ -75,8 +78,16 @@ export interface HandlerContext {
   /**
    * An AbortSignal that is aborted when the connection with the client is closed
    * or when the deadline is reached.
+   *
+   * The signal can be used to automatically cancel downstream calls.
    */
   readonly signal: AbortSignal;
+
+  /**
+   * If the current request has a timeout, this function returns the remaining
+   * time.
+   */
+  readonly timeoutMs: () => number | undefined;
 
   /**
    * HTTP method of incoming request, usually "POST", but "GET" in the case of
@@ -109,27 +120,59 @@ export interface HandlerContext {
 }
 
 /**
+ * Options for creating a HandlerContext.
+ */
+interface HandlerContextInit {
+  service: ServiceType;
+  method: MethodInfo;
+  protocolName: string;
+  requestMethod: string;
+  timeoutMs?: number;
+  shutdownSignal?: AbortSignal;
+  requestSignal?: AbortSignal;
+  requestHeader?: HeadersInit;
+  responseHeader?: HeadersInit;
+  responseTrailer?: HeadersInit;
+}
+
+interface HandlerContextController extends HandlerContext {
+  abort(reason?: unknown): void;
+}
+
+/**
  * Create a new HandlerContext.
+ *
+ * The context is usually automatically created by handlers, but if a service
+ * implementation is used in unit tests, this function can be used to create
+ * a context.
  */
 export function createHandlerContext(
-  spec: { service: ServiceType; method: MethodInfo },
-  deadline: AbortSignal | undefined, // TODO
-  signal: AbortSignal,
-  requestMethod: string,
-  requestHeader: HeadersInit,
-  responseHeader: HeadersInit,
-  responseTrailer: HeadersInit,
-  protocolName: string
-): HandlerContext {
+  init: HandlerContextInit
+): HandlerContextController {
+  let timeoutMs: () => undefined | number;
+  if (init.timeoutMs !== undefined) {
+    const date = new Date(Date.now() + init.timeoutMs);
+    timeoutMs = () => date.getTime() - Date.now();
+  } else {
+    timeoutMs = () => undefined;
+  }
+  const deadline = createDeadlineSignal(init.timeoutMs);
+  const abortController = createLinkedAbortController(
+    deadline.signal,
+    init.requestSignal,
+    init.shutdownSignal
+  );
   return {
-    method: spec.method,
-    service: spec.service,
-    signal: createLinkedAbortController(deadline, signal).signal,
-    requestMethod,
-    requestHeader: new Headers(requestHeader),
-    responseHeader: new Headers(responseHeader),
-    responseTrailer: new Headers(responseTrailer),
-    protocolName,
+    ...init,
+    signal: abortController.signal,
+    timeoutMs,
+    requestHeader: new Headers(init.requestHeader),
+    responseHeader: new Headers(init.responseHeader),
+    responseTrailer: new Headers(init.responseTrailer),
+    abort(reason?: unknown) {
+      deadline.cleanup();
+      abortController.abort(reason);
+    },
   };
 }
 

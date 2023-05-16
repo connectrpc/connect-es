@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { ConnectError } from "../connect-error.js";
+import { Code } from "../code.js";
+
 /**
  * Create an AbortController that is automatically aborted if one of the given
  * signals is aborted.
@@ -33,6 +36,10 @@ export function createLinkedAbortController(
     .concat(controller.signal) as AbortSignal[];
 
   for (const signal of sa) {
+    if (signal.aborted) {
+      onAbort.apply(signal);
+      break;
+    }
     signal.addEventListener("abort", onAbort);
   }
 
@@ -46,6 +53,37 @@ export function createLinkedAbortController(
   }
 
   return controller;
+}
+
+/**
+ * Create a deadline signal. The returned object contains an AbortSignal, but
+ * also a cleanup function to stop the timer, which must be called once the
+ * calling code is no longer interested in the signal.
+ *
+ * Ideally, we would simply use AbortSignal.timeout(), but it is not widely
+ * available yet.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function createDeadlineSignal(timeoutMs: number | undefined): {
+  signal: AbortSignal;
+  cleanup: () => void;
+} {
+  const controller = new AbortController();
+  const listener = () => {
+    controller.abort(
+      new ConnectError("the operation timed out", Code.DeadlineExceeded)
+    );
+  };
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  if (timeoutMs !== undefined) {
+    if (timeoutMs <= 0) listener();
+    else timeoutId = setTimeout(listener, timeoutMs);
+  }
+  return {
+    signal: controller.signal,
+    cleanup: () => clearTimeout(timeoutId),
+  };
 }
 
 /**
