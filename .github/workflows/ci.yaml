@@ -1,13 +1,6 @@
 name: ci
-on:
-  push:
-    branches: [main]
-    tags: ['v*']
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
-permissions:
-  contents: read
+on: push
+permissions: read-all
 jobs:
   ci:
     runs-on: ubuntu-20.04
