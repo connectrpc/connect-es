@@ -30,7 +30,6 @@ import type {
   UnaryRequest,
   UnaryResponse,
 } from "@bufbuild/connect";
-import { connectErrorFromReason } from "@bufbuild/connect";
 import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
@@ -234,49 +233,45 @@ export function createGrpcWebTransport(
         trailerTarget: Headers
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
-        try {
-          if (foundStatus) {
-            // A grpc-status: 0 response header was present. This is a "trailers-only"
-            // response (a response without a body and no trailers).
-            //
-            // The spec seems to disallow a trailers-only response for status 0 - we are
-            // lenient and only verify that the body is empty.
-            //
-            // > [...] Trailers-Only is permitted for calls that produce an immediate error.
-            // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
-            if (!(await reader.read()).done) {
-              throw "extra data for trailers-only";
-            }
-            return;
+        if (foundStatus) {
+          // A grpc-status: 0 response header was present. This is a "trailers-only"
+          // response (a response without a body and no trailers).
+          //
+          // The spec seems to disallow a trailers-only response for status 0 - we are
+          // lenient and only verify that the body is empty.
+          //
+          // > [...] Trailers-Only is permitted for calls that produce an immediate error.
+          // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+          if (!(await reader.read()).done) {
+            throw "extra data for trailers-only";
           }
-          let trailerReceived = false;
-          for (;;) {
-            const result = await reader.read();
-            if (result.done) {
-              break;
-            }
-            const { flags, data } = result.value;
-            if ((flags & trailerFlag) === trailerFlag) {
-              if (trailerReceived) {
-                throw "extra trailer";
-              }
-              trailerReceived = true;
-              const trailer = trailerParse(data);
-              validateTrailer(trailer);
-              trailer.forEach((value, key) => trailerTarget.set(key, value));
-              continue;
-            }
+          return;
+        }
+        let trailerReceived = false;
+        for (;;) {
+          const result = await reader.read();
+          if (result.done) {
+            break;
+          }
+          const { flags, data } = result.value;
+          if ((flags & trailerFlag) === trailerFlag) {
             if (trailerReceived) {
-              throw "extra message";
+              throw "extra trailer";
             }
-            yield parse(data);
+            trailerReceived = true;
+            const trailer = trailerParse(data);
+            validateTrailer(trailer);
+            trailer.forEach((value, key) => trailerTarget.set(key, value));
             continue;
           }
-          if (!trailerReceived) {
-            throw "missing trailer";
+          if (trailerReceived) {
+            throw "extra message";
           }
-        } catch (e) {
-          throw connectErrorFromReason(e);
+          yield parse(data);
+          continue;
+        }
+        if (!trailerReceived) {
+          throw "missing trailer";
         }
       }
 
