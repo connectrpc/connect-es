@@ -24,6 +24,7 @@ import "./node-headers-polyfill.js";
 
 // a tribute to the CI celestial beings.  increment once for good luck.
 const entropyCounter = 1;
+console.log({ entropyCounter });
 
 describe("universalRequestFromNodeRequest()", function () {
   describe("with HTTP/2 stream closed with an RST code", function () {
