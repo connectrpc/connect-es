@@ -105,7 +105,7 @@ describe("universalRequestFromNodeRequest()", function () {
     });
   });
 
-  const logEvents = (request: http.IncomingMessage, message: string) => {
+  const logEvents = (request: http.IncomingMessage | http.ClientRequest, message: string) => {
     console.log(`[HEY!] start: ${message}`);
     request.on('close', () => console.log(`[HEY!] close event with ${message}`));
     request.on('data', (chunk) => console.log(`[HEY!] data event with ${message}`, chunk));
@@ -114,6 +114,22 @@ describe("universalRequestFromNodeRequest()", function () {
     request.on('pause', () => console.log(`[HEY!] pause event with ${message}`));
     request.on('readable', () => console.log(`[HEY!] readable event with ${message}`));
     request.on('resume', () => console.log(`[HEY!] resume event with ${message}`));
+
+    if (request instanceof http.ClientRequest) {
+      request.on('abort', () => console.log(`[HEY!] abort event with ${message}`));
+      request.on('connect', (response, socket, head) => console.log(`[HEY!] connect event with ${message}`));
+      request.on('continue', () => console.log(`[HEY!] continue event with ${message}`));
+      request.on('drain', () => console.log(`[HEY!] drain event with ${message}`));
+      request.on('finish', () => console.log(`[HEY!] finish event with ${message}`));
+      request.on('information', (info) => console.log(`[HEY!] information event with ${message}`));
+      request.on('pipe', (src) => console.log(`[HEY!] pipe event with ${message}`));
+      request.on('response', (response) => console.log(`[HEY!] response event with ${message}`));
+      request.on('socket', (socket) => console.log(`[HEY!] socket event with ${message}`));
+      request.on('timeout', () => console.log(`[HEY!] timeout event with ${message}`));
+      request.on('unpipe', (src) => console.log(`[HEY!] unpipe event with ${message}`));
+      request.on('upgrade', (response, socket, head) => console.log(`[HEY!] upgrade event with ${message}`));
+    }
+
     return () => console.log(`[HEY!] done: ${message}`);
   }
 
@@ -125,7 +141,7 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
         },
         function (request) {
-          const done = logEvents(request, "with HTTP/1.1 ECONNRESET");
+          const done = logEvents(request, "HTTP/1.1 ECONNRESET");
           const uReq = universalRequestFromNodeRequest(request, undefined);
           uReq.signal.addEventListener("abort", () => {
             serverAbortReason = uReq.signal.reason;
@@ -139,6 +155,7 @@ describe("universalRequestFromNodeRequest()", function () {
         const request = http.request(server.getUrl(), {
           method: "POST",
         });
+        const done = logEvents(request, "should abort request");
         request.on("error", () => {
           // we need this event lister so that Node.js does not raise the error
           // we trigger by calling destroy()
@@ -146,6 +163,7 @@ describe("universalRequestFromNodeRequest()", function () {
         request.flushHeaders();
         setTimeout(() => {
           request.destroy();
+          done();
           resolve();
         }, 20);
       });
@@ -168,7 +186,7 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
         },
         function (request, response) {
-          const done = logEvents(request, "with HTTP/1.1 request finishing server handler");
+          const done = logEvents(request, "HTTP/1.1 request finishing server handler");
           const uReq = universalRequestFromNodeRequest(request, undefined);
           universalRequestSignal = uReq.signal;
           response.writeHead(200);
@@ -178,22 +196,22 @@ describe("universalRequestFromNodeRequest()", function () {
       )
     );
     it("should abort request signal with AbortError", async function () {
-      console.log('[HEY!] with HTTP/1.1 request finishing client starting request')
       await new Promise<void>((resolve) => {
         const request = http.request(server.getUrl(), {
           method: "POST",
           // close TCP connection after we're done so that the server shuts down cleanly
           agent: new http.Agent({ keepAlive: false }),
         });
+        const done = logEvents(request, "with HTTP/1.1 request finishing client starting request")
         request.flushHeaders();
         request.end();
         request.on("response", (response) => {
-          void readAllBytes(response, Number.MAX_SAFE_INTEGER).then(() =>
-            resolve()
-          );
+          void readAllBytes(response, Number.MAX_SAFE_INTEGER).then(() => {
+            done();
+            resolve();
+          });
         });
       });
-      console.log('[HEY!] with HTTP/1.1 request finishing client request done')
       expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
       expect(universalRequestSignal?.aborted).toBeTrue();
       expect(universalRequestSignal?.reason).toBeInstanceOf(Error);
