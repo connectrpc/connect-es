@@ -191,7 +191,7 @@ describe("universalRequestFromNodeRequest()", function () {
 
   describe("with HTTP/1.1 request finishing without error", function () {
     let universalRequestSignal: AbortSignal | undefined;
-    const server = useNodeServer(() =>
+    const server = () => useNodeServer(() =>
       http.createServer(
         {
           connectionsCheckingInterval: 1,
@@ -210,7 +210,7 @@ describe("universalRequestFromNodeRequest()", function () {
     // this one too
     it("should abort request signal with AbortError", async function () {
       await new Promise<void>((resolve) => {
-        const request = http.request(server.getUrl(), {
+        const request = http.request(server().getUrl(), {
           method: "POST",
           // close TCP connection after we're done so that the server shuts down cleanly
           agent: new http.Agent({ keepAlive: false }),
