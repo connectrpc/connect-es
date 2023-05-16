@@ -127,8 +127,8 @@ describe("universalRequestFromNodeRequest()", function () {
       request.on('finish', () => console.log(`[HEY!] finish event with ${message}`));
       request.on('information', (info) => console.log(`[HEY!] information event with ${message}`));
       request.on('pipe', (src) => console.log(`[HEY!] pipe event with ${message}`));
-      request.on('response', (response) => console.log(`[HEY!] response event with ${message}`, response));
-      request.on('socket', (socket) => console.log(`[HEY!] socket event with ${message}`, socket));
+      request.on('response', (response) => console.log(`[HEY!] response event with ${message}`));
+      request.on('socket', (socket) => console.log(`[HEY!] socket event with ${message}`));
       request.on('timeout', () => console.log(`[HEY!] timeout event with ${message}`));
       request.on('unpipe', (src) => console.log(`[HEY!] unpipe event with ${message}`));
       request.on('upgrade', (response, socket, head) => console.log(`[HEY!] upgrade event with ${message}`));
