@@ -74,7 +74,8 @@ export function expressConnectMiddleware(
     res: express.Response,
     next: express.NextFunction
   ) {
-    const uHandler = paths.get(req.url);
+    // Strip the query parameter when matching paths.
+    const uHandler = paths.get(req.url.split("?", 2)[0]);
     if (!uHandler) {
       return next();
     }

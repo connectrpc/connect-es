@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// TODO(TCN-1771) keep in sync with `connect-web-test`'s `test-routes` until we share code between test packages
 import {
   Code,
   ConnectError,
@@ -27,9 +28,9 @@ import {
 } from "../gen/grpc/testing/messages_pb.js";
 import { interop } from "./interop.js";
 
-export default function (router: ConnectRouter) {
+export const testRoutes = (router: ConnectRouter) => {
   router.service(TestService, testService);
-}
+};
 
 const testService: ServiceImpl<typeof TestService> = {
   emptyCall() {
@@ -42,6 +43,7 @@ const testService: ServiceImpl<typeof TestService> = {
       context.responseHeader,
       context.responseTrailer
     );
+    context.responseHeader.set("request-protocol", context.protocolName);
     maybeRaiseError(request.responseStatus);
     return {
       payload: interop.makeServerPayload(
@@ -57,8 +59,11 @@ const testService: ServiceImpl<typeof TestService> = {
     ]);
   },
 
-  cacheableUnaryCall(/*request*/) {
-    throw new ConnectError("TODO", Code.Unimplemented);
+  cacheableUnaryCall(request, context) {
+    if (context.requestMethod == "GET") {
+      context.responseHeader.set("get-request", "true");
+    }
+    return this.unaryCall(request, context);
   },
 
   async *streamingOutputCall(request, context) {
@@ -69,7 +74,7 @@ const testService: ServiceImpl<typeof TestService> = {
     );
     for (const param of request.responseParameters) {
       await maybeDelayResponse(param);
-      context.deadline?.throwIfAborted();
+      context.signal.throwIfAborted();
       yield {
         payload: interop.makeServerPayload(request.responseType, param.size),
       };
@@ -85,7 +90,7 @@ const testService: ServiceImpl<typeof TestService> = {
     );
     for (const param of request.responseParameters) {
       await maybeDelayResponse(param);
-      context.deadline?.throwIfAborted();
+      context.signal.throwIfAborted();
       yield {
         payload: interop.makeServerPayload(request.responseType, param.size),
       };
@@ -119,7 +124,7 @@ const testService: ServiceImpl<typeof TestService> = {
     for await (const req of requests) {
       for (const param of req.responseParameters) {
         await maybeDelayResponse(param);
-        context.deadline?.throwIfAborted();
+        context.signal.throwIfAborted();
         yield {
           payload: interop.makeServerPayload(req.responseType, param.size),
         };
@@ -141,7 +146,7 @@ const testService: ServiceImpl<typeof TestService> = {
     for await (const req of buffer) {
       for (const param of req.responseParameters) {
         await maybeDelayResponse(param);
-        context.deadline?.throwIfAborted();
+        context.signal.throwIfAborted();
         yield {
           payload: interop.makeServerPayload(req.responseType, param.size),
         };

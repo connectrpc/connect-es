@@ -17,7 +17,7 @@ import * as http from "http";
 import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
-import type { Transport } from "@bufbuild/connect";
+import { createRouterTransport, type Transport } from "@bufbuild/connect";
 import { cors } from "@bufbuild/connect";
 import {
   compressionGzip,
@@ -35,7 +35,7 @@ import type {
   FastifyTypeProviderDefault,
 } from "fastify";
 import { importExpress } from "./import-express.js";
-import testRoutes from "./test-routes.js";
+import { testRoutes } from "./test-routes.js";
 
 export function createTestServers() {
   // TODO http2 server with TLS and allow http1
@@ -132,8 +132,6 @@ export function createTestServers() {
             return;
           }
           nodeH2SecureServer.close((err) => (err ? reject(err) : resolve()));
-          // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
-          resolve(); // the server.close() callback above slows down our tests
         });
       },
     },
@@ -166,8 +164,6 @@ export function createTestServers() {
             return;
           }
           nodeH2cServer.close((err) => (err ? reject(err) : resolve()));
-          // TODO this resolve is only there because we currently don't manage http2 sessions in the client, and the server doesn't shut down with an open connection
-          resolve(); // the server.close() callback above slows down our tests
         });
       },
     },
@@ -189,12 +185,16 @@ export function createTestServers() {
               // used in tests
               "X-Grpc-Test-Echo-Initial",
               "X-Grpc-Test-Echo-Trailing-Bin",
+              "Request-Protocol",
+              "Get-Request",
             ].join(", "),
             "Access-Control-Expose-Headers": [
               ...cors.exposedHeaders,
               "X-Grpc-Test-Echo-Initial",
               "X-Grpc-Test-Echo-Trailing-Bin",
               "Trailer-X-Grpc-Test-Echo-Trailing-Bin", // unary trailer in Connect
+              "Request-Protocol",
+              "Get-Request",
             ],
             "Access-Control-Max-Age": 2 * 3600,
           };
@@ -287,12 +287,11 @@ export function createTestServers() {
         });
         await fastifyH2cServer.listen();
       },
-      stop() {
+      async stop() {
         if (!fastifyH2cServer) {
           throw new Error("fastifyH2cServer not started");
         }
-        void fastifyH2cServer.close(); // await close() slows down our tests
-        return Promise.resolve();
+        await fastifyH2cServer.close();
       },
     },
     // connect-express
@@ -773,7 +772,7 @@ export function createTestServers() {
           sendCompression: compressionGzip,
         }),
 
-    //gRPC-web
+    // gRPC-web
     "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)":
       (options?: Record<string, unknown>) =>
         createGrpcWebTransport({
@@ -994,7 +993,27 @@ export function createTestServers() {
           useBinaryFormat: true,
           sendCompression: compressionGzip,
         }),
-  } as const;
+
+    // ConnectRouter
+    "@bufbuild/connect (ConnectRouter, binary)": (
+      options?: Record<string, unknown>
+    ) =>
+      createRouterTransport(testRoutes, {
+        transport: {
+          ...options,
+          useBinaryFormat: true,
+        },
+      }),
+    "@bufbuild/connect (ConnectRouter, JSON)": (
+      options?: Record<string, unknown>
+    ) =>
+      createRouterTransport(testRoutes, {
+        transport: {
+          ...options,
+          useBinaryFormat: false,
+        },
+      }),
+  };
 
   return {
     servers,
@@ -1007,7 +1026,7 @@ export function createTestServers() {
     },
     describeTransports(
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {
@@ -1020,7 +1039,7 @@ export function createTestServers() {
     describeTransportsExcluding(
       exclude: Array<keyof typeof transports>,
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {
@@ -1036,7 +1055,7 @@ export function createTestServers() {
     describeTransportsOnly(
       only: Array<keyof typeof transports>,
       specDefinitions: (
-        transport: () => Transport,
+        transport: (options?: Record<string, unknown>) => Transport,
         transportName: keyof typeof transports
       ) => void
     ) {

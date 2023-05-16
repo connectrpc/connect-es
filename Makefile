@@ -10,7 +10,7 @@ TMP   = .tmp
 BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
-CROSSTEST_VERSION := 538426871c217f16bf6171dccab0a58e11b39daa
+CROSSTEST_VERSION := 162d496c009e2ffb1a638b4a2ea789e9cc3331bb
 LICENSE_HEADER_YEAR_RANGE := 2021-2023
 LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
 NODE20_VERSION ?= v20.0.0
@@ -177,8 +177,11 @@ testconnectpackage: $(BUILD)/connect
 	npm run -w packages/connect jasmine
 
 .PHONY: testconnectnodepackage
-testconnectnodepackage: $(BUILD)/connect-node
-	npm run -w packages/connect-node jasmine
+testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 $(BUILD)/connect-node
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node19 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 $(BUILD)/connect-node-test

@@ -37,7 +37,9 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
   } else if (
     chain.some(
       (p) =>
-        p.code == "ERR_STREAM_DESTROYED" || p.code == "ERR_HTTP2_INVALID_STREAM"
+        p.code == "ERR_STREAM_DESTROYED" ||
+        p.code == "ERR_HTTP2_INVALID_STREAM" ||
+        p.code == "ECONNRESET"
     )
   ) {
     // A handler whose stream is suddenly destroyed usually means the client
@@ -110,4 +112,83 @@ export function getNodeErrorProps(reason: unknown): {
     }
   }
   return props;
+}
+
+/**
+ * Returns a ConnectError for a HTTP/2 error code.
+ */
+export function connectErrorFromH2ResetCode(
+  rstCode: number
+): ConnectError | undefined {
+  switch (rstCode) {
+    case H2Code.PROTOCOL_ERROR:
+    case H2Code.INTERNAL_ERROR:
+    case H2Code.FLOW_CONTROL_ERROR:
+    case H2Code.SETTINGS_TIMEOUT:
+    case H2Code.FRAME_SIZE_ERROR:
+    case H2Code.COMPRESSION_ERROR:
+    case H2Code.CONNECT_ERROR:
+      return new ConnectError(
+        `http/2 stream closed with RST code ${
+          H2Code[rstCode]
+        } (0x${rstCode.toString(16)})`,
+        Code.Internal
+      );
+    case H2Code.REFUSED_STREAM:
+      return new ConnectError(
+        `http/2 stream closed with RST code ${
+          H2Code[rstCode]
+        } (0x${rstCode.toString(16)})`,
+        Code.Unavailable
+      );
+    case H2Code.CANCEL:
+      return new ConnectError(
+        `http/2 stream closed with RST code ${
+          H2Code[rstCode]
+        } (0x${rstCode.toString(16)})`,
+        Code.Canceled
+      );
+    case H2Code.ENHANCE_YOUR_CALM:
+      return new ConnectError(
+        `http/2 stream closed with RST code ${
+          H2Code[rstCode]
+        } (0x${rstCode.toString(16)})`,
+        Code.ResourceExhausted
+      );
+    case H2Code.INADEQUATE_SECURITY:
+      return new ConnectError(
+        `http/2 stream closed with RST code ${
+          H2Code[rstCode]
+        } (0x${rstCode.toString(16)})`,
+        Code.PermissionDenied
+      );
+    case H2Code.HTTP_1_1_REQUIRED:
+      return new ConnectError(
+        `http/2 stream closed with RST code ${
+          H2Code[rstCode]
+        } (0x${rstCode.toString(16)})`,
+        Code.PermissionDenied
+      );
+    case H2Code.STREAM_CLOSED:
+    default:
+      // Intentionally not mapping STREAM_CLOSED (0x5), see https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
+      break;
+  }
+  return undefined;
+}
+
+export enum H2Code {
+  PROTOCOL_ERROR = 0x1,
+  INTERNAL_ERROR = 0x2,
+  FLOW_CONTROL_ERROR = 0x3,
+  SETTINGS_TIMEOUT = 0x4,
+  STREAM_CLOSED = 0x5,
+  FRAME_SIZE_ERROR = 0x6,
+  REFUSED_STREAM = 0x7,
+  CANCEL = 0x8,
+  COMPRESSION_ERROR = 0x9,
+  CONNECT_ERROR = 0xa,
+  ENHANCE_YOUR_CALM = 0xb,
+  INADEQUATE_SECURITY = 0xc,
+  HTTP_1_1_REQUIRED = 0xd,
 }

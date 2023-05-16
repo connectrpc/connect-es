@@ -29,7 +29,7 @@ type CommonNodeTransportOptions = NodeHttpClientOptions &
  * Asserts that the options are within sane limits, and returns default values
  * where no value is provided.
  *
- * @internal
+ * @private Internal code, does not follow semantic versioning.
  */
 export function validateNodeTransportOptions(
   options: CommonNodeTransportOptions

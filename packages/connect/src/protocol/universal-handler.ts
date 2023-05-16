@@ -268,19 +268,24 @@ export function negotiateProtocol(
       };
     }
     const contentType = request.header.get("Content-Type") ?? "";
-    const matchingContentTypes = protocolHandlers.filter((h) =>
-      h.supportedContentType(contentType)
-    );
-    if (matchingContentTypes.length == 0) {
-      return uResponseUnsupportedMediaType;
-    }
-    const matchingMethod = matchingContentTypes.filter((h) =>
+    const matchingMethod = protocolHandlers.filter((h) =>
       h.allowedMethods.includes(request.method)
     );
     if (matchingMethod.length == 0) {
       return uResponseMethodNotAllowed;
     }
-    const firstMatch = matchingMethod[0];
+    // If Content-Type is unset but only one handler matches, use it.
+    if (matchingMethod.length == 1 && contentType === "") {
+      const onlyMatch = matchingMethod[0];
+      return onlyMatch(request);
+    }
+    const matchingContentTypes = matchingMethod.filter((h) =>
+      h.supportedContentType(contentType)
+    );
+    if (matchingContentTypes.length == 0) {
+      return uResponseUnsupportedMediaType;
+    }
+    const firstMatch = matchingContentTypes[0];
     return firstMatch(request);
   }
 

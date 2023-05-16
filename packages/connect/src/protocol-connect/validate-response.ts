@@ -24,10 +24,9 @@ import { headerUnaryEncoding, headerStreamEncoding } from "./headers.js";
  * Validates response status and header for the Connect protocol.
  * Throws a ConnectError if the header indicates an error, or if
  * the content type is unexpected, with the following exception:
- * For unary RPCs with an HTTP error status and content type
- * application/json, this returns an error derived from the HTTP
- * status instead of throwing it, giving an implementation a chance
- * to parse a Connect error from the wire.
+ * For unary RPCs with an HTTP error status, this returns an error
+ * derived from the HTTP status instead of throwing it, giving an
+ * implementation a chance to parse a Connect error from the wire.
  *
  * @private Internal code, does not follow semantic versioning.
  */
@@ -46,12 +45,7 @@ export function validateResponse(
       `HTTP ${status}`,
       codeFromHttpStatus(status)
     );
-    if (
-      methodKind == MethodKind.Unary &&
-      parsedType &&
-      !parsedType.stream &&
-      !parsedType.binary
-    ) {
+    if (methodKind == MethodKind.Unary && parsedType && !parsedType.stream) {
       return { isUnaryError: true, unaryError: errorFromStatus };
     }
     throw errorFromStatus;

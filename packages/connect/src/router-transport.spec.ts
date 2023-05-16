@@ -16,6 +16,7 @@ import { Int32Value, StringValue, MethodKind } from "@bufbuild/protobuf";
 import { createPromiseClient } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
+import { ConnectError, connectErrorFromReason } from "./connect-error.js";
 
 describe("createRoutesTransport", function () {
   const testService = {
@@ -101,5 +102,20 @@ describe("createRoutesTransport", function () {
       count++;
     }
     expect(count).toBe(payload.length);
+  });
+  it("should handle calling an RPC on a router transport that isn't registered", async function () {
+    const transport = createRouterTransport(() => {
+      // intentionally not registering any transports
+    });
+    const client = createPromiseClient(testService, transport);
+    try {
+      await client.unary({});
+      fail("expected error");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConnectError);
+      expect(connectErrorFromReason(e).message).toBe(
+        "[unimplemented] RouterHttpClient: no handler registered for /TestService/Unary"
+      );
+    }
   });
 });

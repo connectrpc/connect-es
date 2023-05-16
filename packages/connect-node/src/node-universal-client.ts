@@ -22,8 +22,10 @@ import {
   webHeaderToNodeHeaders,
 } from "./node-universal-header.js";
 import {
+  connectErrorFromH2ResetCode,
   connectErrorFromNodeReason,
   getNodeErrorProps,
+  H2Code,
   unwrapNodeErrorChain,
 } from "./node-error.js";
 import type {
@@ -32,7 +34,7 @@ import type {
   UniversalClientRequest,
   UniversalClientResponse,
 } from "@bufbuild/connect/protocol";
-import { pipeTo } from "@bufbuild/connect/protocol";
+import { getAbortSignalReason, pipeTo } from "@bufbuild/connect/protocol";
 
 /**
  * Options for creating an UniversalClientFn using the Node.js `http`, `https`,
@@ -119,7 +121,7 @@ function createNodeHttp1Client(
   return async function request(
     req: UniversalClientRequest
   ): Promise<UniversalClientResponse> {
-    const sentinel = createSentinel();
+    const sentinel = createSentinel(req.signal);
     return new Promise<UniversalClientResponse>((resolve, reject) => {
       sentinel.catch((e) => {
         reject(e);
@@ -132,7 +134,6 @@ function createNodeHttp1Client(
           ...httpOptions,
           headers: webHeaderToNodeHeaders(req.header),
           method: req.method,
-          signal: req.signal,
         },
         (request) => {
           pipeTo(req.body, sinkRequest(sentinel, request), {
@@ -140,15 +141,8 @@ function createNodeHttp1Client(
           }).catch(sentinel.reject);
           request.on("response", (response) => {
             response.on("error", sentinel.reject);
-            response.on("abort", () =>
-              sentinel.reject(
-                new ConnectError("node response aborted", Code.Aborted)
-              )
-            );
-            response.on("timeout", () =>
-              sentinel.reject(
-                new ConnectError("node response timed out", Code.Aborted)
-              )
+            sentinel.catch((reason) =>
+              response.destroy(connectErrorFromNodeReason(reason))
             );
             const trailer = new Headers();
             resolve({
@@ -202,7 +196,6 @@ function createNodeHttp2Client(
         req.url,
         req.method,
         webHeaderToNodeHeaders(req.header),
-        req.signal,
         {},
         (stream) => {
           void pipeTo(req.body, sinkRequest(sentinel, stream), {
@@ -226,7 +219,9 @@ function createNodeHttp2Client(
 function h1Request(
   sentinel: Sentinel,
   url: string,
-  options: http.RequestOptions | https.RequestOptions,
+  options:
+    | Omit<http.RequestOptions, "signal">
+    | Omit<https.RequestOptions, "signal">,
   onRequest: (request: http.ClientRequest) => void
 ): void {
   let request: http.ClientRequest;
@@ -235,10 +230,15 @@ function h1Request(
   } else {
     request = http.request(url, options);
   }
-  request.on("error", sentinel.reject);
-  request.on("abort", () =>
-    sentinel.reject(new ConnectError("node request aborted", Code.Aborted))
+  sentinel.catch((reason) =>
+    request.destroy(connectErrorFromNodeReason(reason))
   );
+  // Node.js will only send headers with the first request body byte by default.
+  // We force it to send headers right away for consistent behavior between
+  // HTTP/1.1 and HTTP/2.2 clients.
+  request.flushHeaders();
+
+  request.on("error", sentinel.reject);
   request.on("socket", function onRequestSocket(socket: net.Socket) {
     function onSocketConnect() {
       socket.off("connect", onSocketConnect);
@@ -300,7 +300,6 @@ function h2Request(
   url: string,
   method: string,
   headers: http2.OutgoingHttpHeaders,
-  signal: AbortSignal | undefined,
   options: Omit<http2.ClientSessionRequestOptions, "signal">,
   onStream: (stream: http2.ClientHttp2Stream) => void
 ): void {
@@ -339,28 +338,26 @@ function h2Request(
       {
         ...headers,
         ":method": method,
-        ":path": requestUrl.pathname,
+        ":path": requestUrl.pathname + requestUrl.search,
       },
       options
     );
     sentinel
       .catch((reason) => {
-        return new Promise<void>((resolve) => {
-          if (stream.closed) {
-            return resolve();
-          }
-          // Node.js http2 streams that are aborted via an AbortSignal close with
-          // an RST_STREAM with code INTERNAL_ERROR.
-          // To comply with the mapping between gRPC and HTTP/2 codes, we need to
-          // close with code CANCEL.
-          // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
-          // See https://www.rfc-editor.org/rfc/rfc7540#section-7
-          if (reason instanceof ConnectError && reason.code == Code.Canceled) {
-            return stream.close(http2.constants.NGHTTP2_CANCEL, resolve);
-          }
-          // For other reasons, INTERNAL_ERROR is the best fit.
-          stream.close(http2.constants.NGHTTP2_INTERNAL_ERROR, resolve);
-        });
+        if (stream.closed) {
+          return;
+        }
+        // Node.js http2 streams that are aborted via an AbortSignal close with
+        // an RST_STREAM with code INTERNAL_ERROR.
+        // To comply with the mapping between gRPC and HTTP/2 codes, we need to
+        // close with code CANCEL.
+        // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
+        // See https://www.rfc-editor.org/rfc/rfc7540#section-7
+        const rstCode =
+          reason instanceof ConnectError && reason.code == Code.Canceled
+            ? H2Code.CANCEL
+            : H2Code.INTERNAL_ERROR;
+        return new Promise<void>((resolve) => stream.close(rstCode, resolve));
       })
       .finally(() => {
         session.off("error", sentinel.reject);
@@ -383,8 +380,12 @@ function h2Request(
       }
       sentinel.reject(e);
     });
-    stream.on("abort", function h2StreamAbort() {
-      sentinel.reject(new ConnectError("node request aborted", Code.Aborted));
+
+    stream.on("close", function h2StreamClose() {
+      const err = connectErrorFromH2ResetCode(stream.rstCode);
+      if (err) {
+        sentinel.reject(err);
+      }
     });
     onStream(stream);
   }
@@ -552,15 +553,13 @@ function createSentinel(signal?: AbortSignal): Sentinel {
   };
   const s = Object.assign(p, c);
 
-  function onSignalAbort() {
-    c.reject(
-      new ConnectError("operation was aborted via signal", Code.Canceled)
-    );
+  function onSignalAbort(this: AbortSignal) {
+    c.reject(getAbortSignalReason(this));
   }
 
   if (signal) {
     if (signal.aborted) {
-      onSignalAbort();
+      c.reject(getAbortSignalReason(signal));
     } else {
       signal.addEventListener("abort", onSignalAbort);
     }

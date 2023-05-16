@@ -25,7 +25,10 @@ import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./node-universal-header.js";
-import { connectErrorFromNodeReason } from "./node-error.js";
+import {
+  connectErrorFromH2ResetCode,
+  connectErrorFromNodeReason,
+} from "./node-error.js";
 
 /**
  * NodeHandlerFn is compatible with http.RequestListener and its equivalent
@@ -89,12 +92,39 @@ export function universalRequestFromNodeRequest(
     parsedJsonBody !== undefined
       ? parsedJsonBody
       : asyncIterableFromNodeServerRequest(nodeRequest);
+  const abortController = new AbortController();
+  if ("stream" in nodeRequest) {
+    // HTTP/2 has error codes we want to honor
+    nodeRequest.once("close", () => {
+      const err = connectErrorFromH2ResetCode(nodeRequest.stream.rstCode);
+      if (err !== undefined) {
+        abortController.abort(err);
+      } else {
+        abortController.abort();
+      }
+    });
+  } else {
+    // HTTP/1.1 does not have error codes, but Node.js has ECONNRESET
+    const onH1Error = (e: Error) => {
+      nodeRequest.off("error", onH1Error);
+      nodeRequest.off("close", onH1Close);
+      abortController.abort(connectErrorFromNodeReason(e));
+    };
+    const onH1Close = () => {
+      nodeRequest.off("error", onH1Error);
+      nodeRequest.off("close", onH1Close);
+      abortController.abort();
+    };
+    nodeRequest.once("error", onH1Error);
+    nodeRequest.once("close", onH1Close);
+  }
   return {
     httpVersion: nodeRequest.httpVersion,
     method: nodeRequest.method ?? "",
     url: new URL(pathname, `${protocol}://${authority}`),
     header: nodeHeaderToWebHeader(nodeRequest.headers),
     body,
+    signal: abortController.signal,
   };
 }
 

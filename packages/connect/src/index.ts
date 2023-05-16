@@ -42,16 +42,16 @@ export type {
   MethodImpl,
   HandlerContext,
 } from "./implementation.js";
-
 export { createConnectRouter } from "./router.js";
 export type { ConnectRouter, ConnectRouterOptions } from "./router.js";
+export { createHandlerContext } from "./implementation.js";
 export { cors } from "./cors.js";
 
 // TODO(TCN-1261)
 
 // Symbols above should be relevant to end users.
 // Symbols below should only be relevant for other libraries.
-export { runUnary, runStreaming } from "./interceptor.js";
+export { runUnary, runStreaming } from "./legacy-interceptor.js";
 export { makeAnyClient } from "./any-client.js";
 export type { AnyClient } from "./any-client.js";
 

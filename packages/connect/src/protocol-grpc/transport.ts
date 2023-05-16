@@ -19,7 +19,6 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { Code, ConnectError, runStreaming, runUnary } from "../index.js";
 import type {
   StreamRequest,
   StreamResponse,
@@ -27,12 +26,16 @@ import type {
   UnaryRequest,
   UnaryResponse,
 } from "../index.js";
+import { Code, ConnectError } from "../index.js";
+import type { CommonTransportOptions } from "../protocol/index.js";
 import {
   createAsyncIterable,
   createMethodSerializationLookup,
   createMethodUrl,
   pipe,
   pipeTo,
+  runStreamingCall,
+  runUnaryCall,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,
@@ -41,7 +44,6 @@ import {
   transformSerializeEnvelope,
   transformSplitEnvelope,
 } from "../protocol/index.js";
-import type { CommonTransportOptions } from "../protocol/index.js";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { validateResponseWithCompression } from "./validate-response.js";
 import { validateTrailer } from "./validate-trailer.js";
@@ -68,8 +70,11 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt
       );
-      return await runUnary<I, O>(
-        {
+      return await runUnaryCall<I, O>({
+        interceptors: opt.interceptors,
+        signal,
+        timeoutMs,
+        req: {
           stream: false,
           service,
           method,
@@ -83,9 +88,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.sendCompression
           ),
           message: input instanceof method.I ? input : new method.I(input),
-          signal: signal ?? new AbortController().signal,
         },
-        async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
+        next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const uRes = await opt.httpClient({
             url: req.url,
             method: "POST",
@@ -148,8 +152,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             trailer: uRes.trailer,
           };
         },
-        opt.interceptors
-      );
+      });
     },
     async stream<
       I extends Message<I> = AnyMessage,
@@ -168,14 +171,16 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt
       );
-      return runStreaming<I, O>(
-        {
+      return runStreamingCall<I, O>({
+        interceptors: opt.interceptors,
+        signal,
+        timeoutMs,
+        req: {
           stream: true,
           service,
           method,
           url: createMethodUrl(opt.baseUrl, service, method),
           init: {},
-          signal: signal ?? new AbortController().signal,
           header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
@@ -187,7 +192,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             propagateDownStreamError: true,
           }),
         },
-        async (req: StreamRequest<I, O>) => {
+        next: async (req: StreamRequest<I, O>) => {
           const uRes = await opt.httpClient({
             url: req.url,
             method: "POST",
@@ -236,8 +241,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           };
           return res;
         },
-        opt.interceptors
-      );
+      });
     },
   };
 }

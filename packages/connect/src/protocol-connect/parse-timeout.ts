@@ -21,17 +21,34 @@ import { ConnectError } from "../connect-error.js";
  * @private Internal code, does not follow semantic versioning.
  */
 export function parseTimeout(
-  value: string | null
-): number | undefined | ConnectError {
+  value: string | null,
+  maxTimeoutMs: number
+):
+  | { timeoutMs?: number; error?: undefined }
+  | { timeoutMs?: number; error: ConnectError } {
   if (value === null) {
-    return undefined;
+    return {};
   }
   const results = /^\d{1,10}$/.exec(value);
   if (results === null) {
-    return new ConnectError(
-      `protocol error: invalid connect timeout value: ${value}`,
-      Code.InvalidArgument
-    );
+    return {
+      error: new ConnectError(
+        `protocol error: invalid connect timeout value: ${value}`,
+        Code.InvalidArgument
+      ),
+    };
   }
-  return parseInt(results[0]);
+  const timeoutMs = parseInt(results[0]);
+  if (timeoutMs > maxTimeoutMs) {
+    return {
+      timeoutMs: timeoutMs,
+      error: new ConnectError(
+        `timeout ${timeoutMs}ms must be <= ${maxTimeoutMs}`,
+        Code.InvalidArgument
+      ),
+    };
+  }
+  return {
+    timeoutMs: parseInt(results[0]),
+  };
 }

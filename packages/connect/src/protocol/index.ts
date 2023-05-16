@@ -25,6 +25,7 @@ export type { Compression } from "./compression.js";
 export type { UniversalHandler } from "./universal-handler.js";
 export { createUniversalHandlerClient } from "./universal-handler-client.js";
 export { createFetchClient, createFetchHandler } from "./universal-fetch.js";
+export { runUnaryCall, runStreamingCall } from "./run-call.js";
 
 // All exports below are private — internal code that does not follow semantic
 // versioning.
@@ -85,8 +86,11 @@ export {
   invokeUnaryImplementation,
   transformInvokeImplementation,
 } from "./invoke-implementation.js";
-export type { ParseDeadlineFn } from "./deadline-factory.js";
-export { createDeadlineParser } from "./deadline-factory.js";
+export {
+  createLinkedAbortController,
+  getAbortSignalReason,
+  createDeadlineSignal,
+} from "./signals.js";
 export {
   assertByteStreamRequest,
   uResponseOk,
