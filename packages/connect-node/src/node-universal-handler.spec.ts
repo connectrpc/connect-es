@@ -104,6 +104,19 @@ describe("universalRequestFromNodeRequest()", function () {
       );
     });
   });
+
+  const logEvents = (request: http.IncomingMessage, message: string) => {
+    console.log(`[HEY!] start: ${message}`);
+    request.on('close', () => console.log(`[HEY!] close event with ${message}`));
+    request.on('data', (chunk) => console.log(`[HEY!] data event with ${message}`, chunk));
+    request.on('end', () => console.log(`[HEY!] end event with ${message}`));
+    request.on('error', (err) => console.log(`[HEY!] error event with ${message}`, err));
+    request.on('pause', () => console.log(`[HEY!] pause event with ${message}`));
+    request.on('readable', () => console.log(`[HEY!] readable event with ${message}`));
+    request.on('resume', () => console.log(`[HEY!] resume event with ${message}`));
+    return () => console.log(`[HEY!] done: ${message}`);
+  }
+
   describe("with HTTP/1.1 ECONNRESET", function () {
     let serverAbortReason: undefined | unknown;
     const server = useNodeServer(() =>
@@ -112,15 +125,12 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
         },
         function (request) {
-          console.log('with HTTP/1.1 ECONNRESET server handler')
-          request.on("close", () => console.log('with HTTP/1.1 ECONNRESET got event CLOSE'))
-          request.on("error", (e) => console.log('with HTTP/1.1 ECONNRESET got event ERROR', e))
-          request.on("abort", () => console.log('with HTTP/1.1 ECONNRESET got event ABORT'))
+          const done = logEvents(request, "with HTTP/1.1 ECONNRESET");
           const uReq = universalRequestFromNodeRequest(request, undefined);
           uReq.signal.addEventListener("abort", () => {
             serverAbortReason = uReq.signal.reason;
           });
-          console.log('with HTTP/1.1 ECONNRESET server handler done')
+          done();
         }
       )
     );
@@ -158,21 +168,17 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
         },
         function (request, response) {
-          console.log('with HTTP/1.1 request finishing server handler')
-          request.on("close", () => console.log('with HTTP/1.1 request finishing got event CLOSE'))
-          request.on("error", (e) => console.log('with HTTP/1.1 request finishing got event ERROR', e))
-          request.on("abort", () => console.log('with HTTP/1.1 request finishing got event ABORT'))
-          response.on("close", () => console.log('with HTTP/1.1 request finishing got RESP event CLOSE'))
+          const done = logEvents(request, "with HTTP/1.1 request finishing server handler");
           const uReq = universalRequestFromNodeRequest(request, undefined);
           universalRequestSignal = uReq.signal;
           response.writeHead(200);
           response.end();
-          console.log('with HTTP/1.1 request finishing server handler done')
+          done()
         }
       )
     );
     it("should abort request signal with AbortError", async function () {
-      console.log('with HTTP/1.1 request finishing client starting request')
+      console.log('[HEY!] with HTTP/1.1 request finishing client starting request')
       await new Promise<void>((resolve) => {
         const request = http.request(server.getUrl(), {
           method: "POST",
@@ -187,7 +193,7 @@ describe("universalRequestFromNodeRequest()", function () {
           );
         });
       });
-      console.log('with HTTP/1.1 request finishing client request done')
+      console.log('[HEY!] with HTTP/1.1 request finishing client request done')
       expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
       expect(universalRequestSignal?.aborted).toBeTrue();
       expect(universalRequestSignal?.reason).toBeInstanceOf(Error);
