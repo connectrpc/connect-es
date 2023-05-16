@@ -22,6 +22,9 @@ import { readAllBytes } from "@bufbuild/connect/protocol";
 // Polyfill the Headers API for Node versions < 18
 import "./node-headers-polyfill.js";
 
+// a tribute to the CI celestial beings.  increment once for good luck.
+const entropyCounter = 1;
+
 describe("universalRequestFromNodeRequest()", function () {
   describe("with HTTP/2 stream closed with an RST code", function () {
     let universalRequestSignal: AbortSignal | undefined;
