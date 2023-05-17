@@ -249,7 +249,6 @@ describe("universalRequestFromNodeRequest()", function () {
       return http.createServer(
         {
           connectionsCheckingInterval: 1,
-          requestTimeout: 300_000,
         },
         function (request, response) {
           const done = logEvents(
