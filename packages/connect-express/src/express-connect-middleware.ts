@@ -13,11 +13,7 @@
 // limitations under the License.
 
 import type { JsonValue } from "@bufbuild/protobuf";
-import {
-  createConnectRouter,
-  Code,
-  connectErrorFromReason,
-} from "@bufbuild/connect";
+import { createConnectRouter, Code, ConnectError } from "@bufbuild/connect";
 import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import type { UniversalHandler } from "@bufbuild/connect/protocol";
 import { compressionBrotli, compressionGzip } from "@bufbuild/connect-node";
@@ -74,7 +70,8 @@ export function expressConnectMiddleware(
     res: express.Response,
     next: express.NextFunction
   ) {
-    const uHandler = paths.get(req.url);
+    // Strip the query parameter when matching paths.
+    const uHandler = paths.get(req.url.split("?", 2)[0]);
     if (!uHandler) {
       return next();
     }
@@ -82,7 +79,7 @@ export function expressConnectMiddleware(
     uHandler(uReq)
       .then((uRes) => universalResponseToNodeResponse(uRes, res))
       .catch((reason) => {
-        if (connectErrorFromReason(reason).code == Code.Aborted) {
+        if (ConnectError.from(reason).code == Code.Aborted) {
           return;
         }
         // eslint-disable-next-line no-console

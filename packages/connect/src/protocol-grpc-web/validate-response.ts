@@ -16,8 +16,10 @@ import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { parseContentType } from "./content-type.js";
 import type { Compression } from "../protocol/index.js";
-import { codeFromHttpStatus } from "../protocol-grpc/index.js";
-import { findTrailerError } from "../protocol-grpc/index.js";
+import {
+  codeFromHttpStatus,
+  findTrailerError,
+} from "../protocol-grpc/index.js";
 import {
   headerContentType,
   headerEncoding,

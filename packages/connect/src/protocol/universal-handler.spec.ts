@@ -182,6 +182,18 @@ describe("negotiateProtocol()", function () {
       expect(r.status).toBe(200);
       expect(r.header?.get("stub-handler")).toBe("1");
     });
+    it("should call implementation for matching method if no content-type is set", async function () {
+      const r = await h({
+        httpVersion: "1.1",
+        method: "POST",
+        url: new URL("https://example.com"),
+        header: new Headers(),
+        body: null,
+        signal: new AbortController().signal,
+      });
+      expect(r.status).toBe(200);
+      expect(r.header?.get("stub-handler")).toBe("1");
+    });
 
     describe("for bidi stream", function () {
       const h = negotiateProtocol([

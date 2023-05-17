@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code, ConnectError, connectErrorFromReason } from "@bufbuild/connect";
+import { Code, ConnectError } from "@bufbuild/connect";
 
 /**
- * Similar to connectErrorFromReason(), this function turns any value into
+ * Similar to ConnectError.from(), this function turns any value into
  * a ConnectError, but special cases some Node.js specific error codes and
  * sets an appropriate Connect error code.
  */
@@ -58,7 +58,7 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
     // This behavior is covered by the crosstest "unresolvable_host".
     code = Code.Unavailable;
   }
-  const ce = connectErrorFromReason(reason, code);
+  const ce = ConnectError.from(reason, code);
   if (ce !== reason) {
     ce.cause = reason;
   }

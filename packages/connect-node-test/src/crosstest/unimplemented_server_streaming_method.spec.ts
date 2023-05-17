@@ -15,7 +15,6 @@
 import {
   Code,
   ConnectError,
-  connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect";
@@ -40,13 +39,13 @@ describe("unimplemented_server_streaming_method", function () {
         fail("expected to catch an error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).code).toBe(Code.Unimplemented);
+        expect(ConnectError.from(e).code).toBe(Code.Unimplemented);
         if (transportName.includes("against grpc-go")) {
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[unimplemented] method UnimplementedStreamingOutputCall not implemented"
           );
         } else {
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented"
           );
         }

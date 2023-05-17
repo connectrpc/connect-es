@@ -18,7 +18,6 @@ import {
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-  connectErrorFromReason,
 } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
@@ -54,7 +53,7 @@ describe("timeout_on_sleeping_server", function () {
         fail("expected to catch an error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).code).toBe(Code.DeadlineExceeded);
+        expect(ConnectError.from(e).code).toBe(Code.DeadlineExceeded);
       }
     });
     it("with callback client", function (done) {

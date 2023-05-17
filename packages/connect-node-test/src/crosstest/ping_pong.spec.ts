@@ -92,7 +92,6 @@ describe("ping_pong", () => {
         }
         expect(i).toBe(sizes.length);
       });
-      // TODO(TCN-679) consider extending callback clients for client- and bidi-streaming
     }
   );
 

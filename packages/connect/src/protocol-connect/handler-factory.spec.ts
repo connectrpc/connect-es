@@ -15,19 +15,15 @@
 import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import {
   Int32Value,
+  MethodIdempotency,
   MethodKind,
   proto3,
   ScalarType,
   StringValue,
 } from "@bufbuild/protobuf";
-import type { MethodImpl } from "../index.js";
-import {
-  Code,
-  ConnectError,
-  connectErrorFromReason,
-  createMethodImplSpec,
-} from "../index.js";
 import { createHandlerFactory } from "./handler-factory.js";
+import type { MethodImpl } from "../implementation.js";
+import { createMethodImplSpec } from "../implementation.js";
 import type {
   UniversalHandlerOptions,
   UniversalServerResponse,
@@ -41,6 +37,7 @@ import {
   sinkAll,
   transformSplitEnvelope,
 } from "../protocol/index.js";
+import { Code, ConnectError } from "../index.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
@@ -50,14 +47,21 @@ describe("createHandlerFactory()", function () {
   const testService = {
     typeName: "TestService",
     methods: {
-      foo: {
-        name: "Foo",
+      unary: {
+        name: "Unary",
         I: Int32Value,
         O: StringValue,
         kind: MethodKind.Unary,
       },
-      bar: {
-        name: "Bar",
+      unaryNoSideEffects: {
+        name: "UnaryNoSideEffects",
+        I: Int32Value,
+        O: StringValue,
+        kind: MethodKind.Unary,
+        idempotency: MethodIdempotency.NoSideEffects,
+      },
+      serverStreaming: {
+        name: "ServerStreaming",
         I: Int32Value,
         O: StringValue,
         kind: MethodKind.ServerStreaming,
@@ -93,9 +97,25 @@ describe("createHandlerFactory()", function () {
   }
 
   describe("returned handler", function () {
+    it("should allow POST for unary RPC", function () {
+      const { handler } = setupTestHandler(testService.methods.unary, {}, () =>
+        Promise.reject()
+      );
+      expect(handler.allowedMethods).toEqual(["POST"]);
+      expect(handler.protocolNames).toEqual(["connect"]);
+    });
+    it("should allow GET,POST for eligible RPC", function () {
+      const { handler } = setupTestHandler(
+        testService.methods.unaryNoSideEffects,
+        {},
+        () => Promise.reject()
+      );
+      expect(handler.allowedMethods).toEqual(["POST", "GET"]);
+      expect(handler.protocolNames).toEqual(["connect"]);
+    });
     it("should surface headers for unary", async function () {
       const { transport, service, method } = setupTestHandler(
-        testService.methods.foo,
+        testService.methods.unary,
         {},
         (req, ctx) => {
           ctx.responseHeader.set("implementation-called", "yes");
@@ -116,7 +136,7 @@ describe("createHandlerFactory()", function () {
 
     it("should surface headers for server-streaming", async function () {
       const { transport, service, method } = setupTestHandler(
-        testService.methods.bar,
+        testService.methods.serverStreaming,
         {},
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, ctx) {
@@ -142,7 +162,7 @@ describe("createHandlerFactory()", function () {
   describe("requireConnectProtocolHeader", function () {
     describe("with unary RPC", function () {
       const { handler } = setupTestHandler(
-        testService.methods.foo,
+        testService.methods.unary,
         { requireConnectProtocolHeader: true },
         (req) => ({ value: req.value.toString(10) })
       );
@@ -196,7 +216,7 @@ describe("createHandlerFactory()", function () {
     });
     describe("with streaming RPC", function () {
       const { handler } = setupTestHandler(
-        testService.methods.bar,
+        testService.methods.serverStreaming,
         { requireConnectProtocolHeader: true },
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req) {
@@ -256,7 +276,7 @@ describe("createHandlerFactory()", function () {
       it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
         const timeoutMs = 1;
         const { handler, service, method } = setupTestHandler(
-          testService.methods.foo,
+          testService.methods.unary,
           {},
           async (req, ctx) => {
             await new Promise((r) => setTimeout(r, timeoutMs + 50));
@@ -313,7 +333,7 @@ describe("createHandlerFactory()", function () {
       it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
         const timeoutMs = 1;
         const { handler, service, method } = setupTestHandler(
-          testService.methods.bar,
+          testService.methods.serverStreaming,
           {},
           async function* (req, ctx) {
             await new Promise((r) => setTimeout(r, timeoutMs + 50));
@@ -346,12 +366,13 @@ describe("createHandlerFactory()", function () {
       });
     });
   });
+
   describe("request abort signal", function () {
     describe("with unary RPC", function () {
       it("should trigger handler context signal", async function () {
         let handlerContextSignal: AbortSignal | undefined;
         const { handler, service, method } = setupTestHandler(
-          testService.methods.foo,
+          testService.methods.unary,
           {},
           async (req, ctx) => {
             handlerContextSignal = ctx.signal;
@@ -383,7 +404,7 @@ describe("createHandlerFactory()", function () {
       it("should trigger handler context signal", async function () {
         let handlerContextSignal: AbortSignal | undefined;
         const { handler, service, method } = setupTestHandler(
-          testService.methods.bar,
+          testService.methods.serverStreaming,
           {},
           // eslint-disable-next-line require-yield
           async function* (req, ctx) {
@@ -411,6 +432,32 @@ describe("createHandlerFactory()", function () {
         expect(handlerContextSignal?.aborted).toBeTrue();
         expect(handlerContextSignal?.reason).toBe("test-reason");
       });
+    });
+  });
+
+  describe("GET requests", function () {
+    it("should be accepted for eligible RPC", async function () {
+      const { handler, service, method } = setupTestHandler(
+        testService.methods.unaryNoSideEffects,
+        {},
+        // eslint-disable-next-line @typescript-eslint/require-await
+        async (req, ctx) => {
+          expect(ctx.requestMethod).toBe("GET");
+          expect(ctx.protocolName).toBe("connect");
+          return { value: "abc" };
+        }
+      );
+      const res = await handler({
+        httpVersion: "2.0",
+        method: "GET",
+        url: new URL(
+          `https://example.com/${service.typeName}/${method.name}?connect=v1&encoding=proto&base64=1&message=CHs`
+        ),
+        header: new Headers(),
+        body: createAsyncIterable([]),
+        signal: new AbortController().signal,
+      });
+      expect(res.status).toBe(200);
     });
   });
 
@@ -504,7 +551,7 @@ describe("createHandlerFactory()", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown'
         );
       }

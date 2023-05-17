@@ -15,7 +15,6 @@
 import {
   Code,
   ConnectError,
-  connectErrorDetails,
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect";
@@ -37,7 +36,7 @@ describe("fail_server_streaming_after_response", () => {
     if (err instanceof ConnectError) {
       expect(err.code).toEqual(Code.ResourceExhausted);
       expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
-      const details = connectErrorDetails(err, ErrorDetail);
+      const details = err.findDetails(ErrorDetail);
       expect(details).toEqual([interop.errorDetail]);
     }
   }

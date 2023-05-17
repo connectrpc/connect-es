@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { EnvelopedMessage } from "./envelope.js";
 import {
   createEnvelopeReadableStream,
   encodeEnvelopes,
   envelopeCompress,
   envelopeDecompress,
 } from "./envelope.js";
-import type { EnvelopedMessage } from "./envelope.js";
 import type { Compression } from "./compression.js";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { node16WhatwgStreamPolyfill } from "../node16-polyfill-helper.spec.js";
 
@@ -200,7 +200,7 @@ describe("envelope compression", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression"
         );
       }
@@ -232,7 +232,7 @@ describe("envelope compression", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[invalid_argument] received compressed envelope, but do not know how to decompress"
           );
         }
@@ -267,7 +267,7 @@ describe("envelope compression", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           "[internal] invalid envelope, already compressed"
         );
       }

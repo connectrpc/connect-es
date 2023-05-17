@@ -34,7 +34,7 @@ import type {
   UniversalClientRequest,
   UniversalClientResponse,
 } from "@bufbuild/connect/protocol";
-import { pipeTo } from "@bufbuild/connect/protocol";
+import { getAbortSignalReason, pipeTo } from "@bufbuild/connect/protocol";
 
 /**
  * Options for creating an UniversalClientFn using the Node.js `http`, `https`,
@@ -338,7 +338,7 @@ function h2Request(
       {
         ...headers,
         ":method": method,
-        ":path": requestUrl.pathname,
+        ":path": requestUrl.pathname + requestUrl.search,
       },
       options
     );
@@ -494,7 +494,7 @@ type Sentinel = Promise<void> & {
 
   /**
    * Reject the sentinel. All errors are converted to ConnectError via
-   * connectErrorFromReason().
+   * ConnectError.from().
    */
   reject: (reason: ConnectError | unknown) => void;
 
@@ -553,17 +553,13 @@ function createSentinel(signal?: AbortSignal): Sentinel {
   };
   const s = Object.assign(p, c);
 
-  function onSignalAbort() {
-    // AbortSignal.reason was added in Node.js 17.2.0, we cannot rely on it.
-    c.reject(
-      signal?.reason ??
-        new ConnectError("This operation was aborted", Code.Canceled)
-    );
+  function onSignalAbort(this: AbortSignal) {
+    c.reject(getAbortSignalReason(this));
   }
 
   if (signal) {
     if (signal.aborted) {
-      onSignalAbort();
+      c.reject(getAbortSignalReason(signal));
     } else {
       signal.addEventListener("abort", onSignalAbort);
     }

@@ -13,11 +13,7 @@
 // limitations under the License.
 
 import type { JsonValue } from "@bufbuild/protobuf";
-import {
-  Code,
-  connectErrorFromReason,
-  createConnectRouter,
-} from "@bufbuild/connect";
+import { Code, ConnectError, createConnectRouter } from "@bufbuild/connect";
 import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import * as protoConnect from "@bufbuild/connect/protocol-connect";
 import * as protoGrpcWeb from "@bufbuild/connect/protocol-grpc-web";
@@ -99,7 +95,7 @@ export function fastifyConnectPlugin(
           }
           await universalResponseToNodeResponse(uRes, reply.raw);
         } catch (e) {
-          if (connectErrorFromReason(e).code == Code.Aborted) {
+          if (ConnectError.from(e).code == Code.Aborted) {
             return;
           }
           // eslint-disable-next-line no-console

@@ -15,7 +15,6 @@
 import {
   Code,
   ConnectError,
-  connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect";
@@ -28,12 +27,15 @@ import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 
 describe("unresolvable_host", function () {
-  const optionsHttp2 = {
+  const baseOptions = {
     baseUrl: "https://unresolvable-host.some.domain",
+  };
+  const optionsHttp2 = {
+    ...baseOptions,
     httpVersion: "2" as const,
   };
   const optionsHttp1 = {
-    baseUrl: "https://unresolvable-host.some.domain",
+    ...baseOptions,
     httpVersion: "1.1" as const,
   };
   const transports = [
@@ -66,7 +68,7 @@ describe("unresolvable_host", function () {
               await client.unaryCall({});
               fail("expected an error");
             } catch (e) {
-              expect(connectErrorFromReason(e).message).toBe(
+              expect(ConnectError.from(e).message).toBe(
                 "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
               );
               expect(e).toBeInstanceOf(ConnectError);
@@ -82,7 +84,7 @@ describe("unresolvable_host", function () {
               }
               fail("expected to catch an error");
             } catch (e) {
-              expect(connectErrorFromReason(e).message).toBe(
+              expect(ConnectError.from(e).message).toBe(
                 "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
               );
               expect(e).toBeInstanceOf(ConnectError);
@@ -118,7 +120,7 @@ describe("unresolvable_host", function () {
               fail("expected error");
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
-              const err = connectErrorFromReason(e);
+              const err = ConnectError.from(e);
               expect(err.code).toBe(Code.Unavailable);
             }
           });
@@ -158,7 +160,7 @@ describe("unresolvable_host", function () {
               fail("expected to catch an error");
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
-              const err = connectErrorFromReason(e);
+              const err = ConnectError.from(e);
               expect(err.code).toBe(Code.Unavailable);
             }
           });
@@ -188,7 +190,6 @@ describe("unresolvable_host", function () {
             );
           });
         });
-        // TODO(TCN-679) consider extending callback clients for client- and bidi-streaming
       });
     });
   }

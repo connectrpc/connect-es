@@ -14,7 +14,7 @@
 
 import * as http2 from "http2";
 import * as http from "http";
-import { ConnectError, connectErrorFromReason } from "@bufbuild/connect";
+import { ConnectError } from "@bufbuild/connect";
 import { createAsyncIterable } from "@bufbuild/connect/protocol";
 import { createNodeHttpClient } from "./node-universal-client.js";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
@@ -80,7 +80,7 @@ describe("universal node http client", function () {
               body: createAsyncIterable([]),
             });
           } catch (e) {
-            expect(connectErrorFromReason(e).message).toBe(
+            expect(ConnectError.from(e).message).toBe(
               "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
             );
           }
@@ -113,7 +113,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
           );
         }
@@ -142,9 +142,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[aborted] socket hang up"
-          );
+          expect(ConnectError.from(e).message).toBe("[aborted] socket hang up");
         }
         expect(serverReceivedRequest).toBeTrue();
       });
@@ -183,7 +181,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
           );
         }
@@ -216,7 +214,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe("[aborted] aborted");
+          expect(ConnectError.from(e).message).toBe("[aborted] aborted");
         }
       });
     });
@@ -259,7 +257,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
           );
         }
@@ -301,9 +299,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[aborted] socket hang up"
-          );
+          expect(ConnectError.from(e).message).toBe("[aborted] socket hang up");
         }
         expect(serverReceivedBytes).toBe(32);
       });
@@ -346,7 +342,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
           );
         }
@@ -384,7 +380,9 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe("[aborted] aborted");
+          expect(ConnectError.from(e).message).toMatch(
+            /\[aborted] (aborted|read ECONNRESET)/
+          );
         }
         expect(serverSentBytes).toBe(64);
       });
@@ -416,7 +414,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] This operation was aborted"
           );
         }
@@ -446,7 +444,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] This operation was aborted"
           );
         }
@@ -500,7 +498,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] This operation was aborted"
           );
         }
@@ -565,7 +563,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] This operation was aborted"
           );
         }
@@ -633,7 +631,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] This operation was aborted"
           );
         }
@@ -699,7 +697,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] This operation was aborted"
           );
         }
@@ -766,7 +764,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] This operation was aborted"
           );
         }
@@ -822,7 +820,7 @@ describe("universal node http client", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[canceled] This operation was aborted"
           );
         }

@@ -14,9 +14,10 @@
 
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
-import { createAsyncIterable } from "./async-iterable.js";
+import { createAsyncIterable, pipe } from "./async-iterable.js";
 import type { UniversalHandler } from "./universal-handler.js";
 import type { UniversalClientFn } from "./universal.js";
+import { getAbortSignalReason } from "./signals.js";
 
 /**
  * An in-memory UniversalClientFn that can be used to route requests to a ConnectRouter
@@ -38,23 +39,64 @@ export function createUniversalHandlerClient(
         Code.Unimplemented
       );
     }
-    const uServerRes = await handler({
-      body: uClientReq.body,
-      httpVersion: "2.0",
-      method: uClientReq.method,
-      url: reqUrl,
-      header: uClientReq.header,
-      signal: uClientReq.signal ?? new AbortController().signal,
-    });
+    const reqSignal = uClientReq.signal ?? new AbortController().signal;
+    const uServerRes = await raceSignal(
+      reqSignal,
+      handler({
+        body: uClientReq.body,
+        httpVersion: "2.0",
+        method: uClientReq.method,
+        url: reqUrl,
+        header: uClientReq.header,
+        signal: reqSignal,
+      })
+    );
     let body = uServerRes.body ?? new Uint8Array();
     if (body instanceof Uint8Array) {
       body = createAsyncIterable([body]);
     }
     return {
-      body: body,
+      body: pipe(body, (iterable) => {
+        return {
+          [Symbol.asyncIterator]() {
+            const it = iterable[Symbol.asyncIterator]();
+            const w: AsyncIterator<Uint8Array> = {
+              next() {
+                return raceSignal(reqSignal, it.next());
+              },
+            };
+            if (it.throw !== undefined) {
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- can't handle mutated object sensibly
+              w.throw = (e: unknown) => it.throw!(e);
+            }
+            if (it.return !== undefined) {
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion,@typescript-eslint/no-explicit-any -- can't handle mutated object sensibly
+              w.return = (value?: any) => it.return!(value);
+            }
+            return w;
+          },
+        };
+      }),
       header: new Headers(uServerRes.header),
       status: uServerRes.status,
       trailer: new Headers(uServerRes.trailer),
     };
   };
+}
+
+/**
+ * Wrap a promise, and reject early if the given signal triggers before the
+ * promise is settled.
+ */
+function raceSignal<T>(signal: AbortSignal, promise: Promise<T>): Promise<T> {
+  let cleanup: (() => void) | undefined;
+  const signalPromise = new Promise<never>((_, reject) => {
+    const onAbort = () => reject(getAbortSignalReason(signal));
+    if (signal.aborted) {
+      return onAbort();
+    }
+    signal.addEventListener("abort", onAbort);
+    cleanup = () => signal.removeEventListener("abort", onAbort);
+  });
+  return Promise.race([signalPromise, promise]).finally(cleanup);
 }

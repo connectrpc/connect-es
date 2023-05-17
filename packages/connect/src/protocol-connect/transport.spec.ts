@@ -14,31 +14,35 @@
 
 import {
   Int32Value,
+  MethodIdempotency,
   MethodKind,
   proto3,
   ScalarType,
   StringValue,
 } from "@bufbuild/protobuf";
 import type {
+  UniversalClientFn,
   UniversalClientRequest,
   UniversalClientResponse,
-} from "../protocol/index.js";
+} from "../protocol/universal.js";
 import {
   createAsyncIterable,
-  createUniversalHandlerClient,
-  encodeEnvelope,
-} from "../protocol/index.js";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
-import type { Transport } from "../index.js";
-import { Code, createMethodImplSpec } from "../index.js";
+  readAllBytes,
+} from "../protocol/async-iterable.js";
+import { ConnectError } from "../connect-error.js";
 import { createTransport } from "./transport.js";
+import { encodeEnvelope } from "../protocol/envelope.js";
 import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
+import { Code } from "../code.js";
 import {
   contentTypeStreamProto,
   contentTypeUnaryProto,
 } from "./content-type.js";
+import type { Transport } from "../transport.js";
 import { errorToJsonBytes } from "./error-json.js";
 import { createHandlerFactory } from "./handler-factory.js";
+import { createMethodImplSpec } from "../implementation.js";
+import { createUniversalHandlerClient } from "../protocol/index.js";
 
 const TestService = {
   typeName: "TestService",
@@ -48,6 +52,13 @@ const TestService = {
       I: Int32Value,
       O: StringValue,
       kind: MethodKind.Unary,
+    },
+    unaryNoSideEffects: {
+      name: "UnaryNoSideEffects",
+      I: Int32Value,
+      O: StringValue,
+      kind: MethodKind.Unary,
+      idempotency: MethodIdempotency.NoSideEffects,
     },
     server: {
       name: "Server",
@@ -119,7 +130,7 @@ describe("Connect transport", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           '[invalid_argument] unexpected response content type "application/csv"'
         );
       }
@@ -138,7 +149,7 @@ describe("Connect transport", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           '[invalid_argument] unexpected response content type "application/csv"'
         );
       }
@@ -185,9 +196,7 @@ describe("Connect transport", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[resource_exhausted] foo"
-          );
+          expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
         }
         expect(httpRequestAborted).toBeTrue();
       });
@@ -239,12 +248,90 @@ describe("Connect transport", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[resource_exhausted] foo"
-          );
+          expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
         }
         expect(messagesReceived.length).toBe(1);
         expect(httpRequestAborted).toBeTrue();
+      });
+    });
+  });
+
+  describe("useHttpGet", function () {
+    const httpClientResponse: UniversalClientResponse = {
+      status: 200,
+      header: new Headers({
+        "Content-Type": contentTypeUnaryProto,
+      }),
+      body: createAsyncIterable([new StringValue({ value: "abc" }).toBinary()]),
+      trailer: new Headers(),
+    };
+    const expectGet: UniversalClientFn = async (request) => {
+      expect(request.method).toBe("GET");
+      expect(request.url).toBe(
+        "http://example.com/TestService/UnaryNoSideEffects?connect=v1&encoding=proto&base64=1&message=CHs"
+      );
+      // no headers
+      const headerFields: string[] = [];
+      request.header.forEach((_, key) => headerFields.push(key));
+      expect(headerFields).toEqual([]);
+      // no body
+      const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
+      expect(body.byteLength).toBe(0);
+      return httpClientResponse;
+    };
+    const expectPost: UniversalClientFn = async (request) => {
+      expect(request.method).toBe("POST");
+      expect(new URL(request.url).search).toBe("");
+      const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
+      expect(body.byteLength).toBeGreaterThan(0);
+      return httpClientResponse;
+    };
+    describe("disabled", function () {
+      it("should issue POST for eligible RPC", async function () {
+        const t = createTransport({
+          ...defaultTransportOptions,
+          httpClient: expectPost,
+        });
+        await t.unary(
+          TestService,
+          TestService.methods.unaryNoSideEffects,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value({ value: 123 })
+        );
+      });
+    });
+    describe("enabled", function () {
+      it("should issue GET for eligible RPC", async function () {
+        const t = createTransport({
+          ...defaultTransportOptions,
+          useHttpGet: true,
+          httpClient: expectGet,
+        });
+        await t.unary(
+          TestService,
+          TestService.methods.unaryNoSideEffects,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value({ value: 123 })
+        );
+      });
+      it("should issue POST for RPC with side effects", async function () {
+        const t = createTransport({
+          ...defaultTransportOptions,
+          useHttpGet: true,
+          httpClient: expectPost,
+        });
+        await t.unary(
+          TestService,
+          TestService.methods.unary,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value({ value: 123 })
+        );
       });
     });
   });
@@ -327,7 +414,7 @@ describe("Connect transport", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown'
         );
       }

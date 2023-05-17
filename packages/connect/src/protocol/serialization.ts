@@ -22,7 +22,7 @@ import type {
   MethodInfo,
   PartialMessage,
 } from "@bufbuild/protobuf";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { assertReadMaxBytes, assertWriteMaxBytes } from "./limit-io.js";
 
@@ -223,7 +223,7 @@ export function createJsonSerialization<T extends Message<T>>(
         const json = textDecoder.decode(data);
         return messageType.fromJsonString(json, o);
       } catch (e) {
-        throw connectErrorFromReason(e, Code.InvalidArgument);
+        throw ConnectError.from(e, Code.InvalidArgument);
       }
     },
     serialize(data: T): Uint8Array {
@@ -231,7 +231,7 @@ export function createJsonSerialization<T extends Message<T>>(
         const json = data.toJsonString(o);
         return textEncoder.encode(json);
       } catch (e) {
-        throw connectErrorFromReason(e, Code.Internal);
+        throw ConnectError.from(e, Code.Internal);
       }
     },
   };

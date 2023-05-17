@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Code,
-  connectErrorFromReason,
-  createConnectRouter,
-} from "@bufbuild/connect";
+import { Code, ConnectError, createConnectRouter } from "@bufbuild/connect";
 import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import type { UniversalHandler } from "@bufbuild/connect/protocol";
 import { uResponseNotFound } from "@bufbuild/connect/protocol";
@@ -83,7 +79,8 @@ export function connectNodeAdapter(
     req: NodeServerRequest,
     res: NodeServerResponse
   ): void {
-    const uHandler = paths.get(req.url ?? "");
+    // Strip the query parameter when matching paths.
+    const uHandler = paths.get(req.url?.split("?", 2)[0] ?? "");
     if (!uHandler) {
       (options.fallback ?? fallback)(req, res);
       return;
@@ -92,7 +89,7 @@ export function connectNodeAdapter(
     uHandler(uReq)
       .then((uRes) => universalResponseToNodeResponse(uRes, res))
       .catch((reason) => {
-        if (connectErrorFromReason(reason).code == Code.Aborted) {
+        if (ConnectError.from(reason).code == Code.Aborted) {
           return;
         }
         // eslint-disable-next-line no-console
