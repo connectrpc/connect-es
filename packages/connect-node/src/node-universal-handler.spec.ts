@@ -259,7 +259,6 @@ describe("universalRequestFromNodeRequest()", function () {
           universalRequestSignal = uReq.signal;
           response.writeHead(200);
           response.end();
-          console.log("done: creating server");
           done();
         }
       )

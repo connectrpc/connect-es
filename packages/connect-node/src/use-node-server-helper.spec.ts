@@ -39,18 +39,18 @@ export function useNodeServer(
     server = createServer();
     console.log("[useNodeServer] beforeEach");
     server.on("close", () => {
+      activeConnections -= 1;
       if (log) {
         console.log("[useNodeServer EVENT(close)]:", activeConnections);
       }
-      activeConnections -= 1;
     });
     server.on("listen", () => console.log("[useNodeServer EVENT(listen)]"));
     server.on("timeout", () => console.log("[useNodeServer EVENT(timeout)]"));
     server.on("connection", () => {
+      activeConnections += 1;
       if (log) {
         console.log("[useNodeServer EVENT(connection)]:", activeConnections);
       }
-      activeConnections += 1;
     });
     server.listen(0, function listenCallback() {
       if (log) {
