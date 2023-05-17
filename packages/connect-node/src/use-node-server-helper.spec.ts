@@ -91,13 +91,24 @@ export function useNodeServer(
     // }
     // server.close();
 
-    await new Promise<void>((resolve) => {
-      if (activeConnections === 0) {
-        resolve();
-      } else {
-        server?.once("close", resolve);
+    let shouldCloseServer = false;
+    while (!shouldCloseServer) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          if (activeConnections === 0) {
+            resolve();
+          } else {
+            server?.once("close", resolve);
+          }
+          reject();
+        });
+        console.log("[useNodeServer] shouldCloseServer = true")
+        shouldCloseServer = true;
+      } catch (e) {
+        console.log("[useNodeServer] shouldCloseServer = false")
+        shouldCloseServer = false;
       }
-    });
+    }
     server?.close();
   });
 
