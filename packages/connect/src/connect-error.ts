@@ -177,20 +177,31 @@ type IncomingDetail = { type: string; value: Uint8Array; debug?: JsonValue };
  * from the ConnectError object, and returns an array with the decoded
  * messages. Any decoding errors are ignored, and the detail will simply be
  * omitted from the list.
+ *
+ * @deprecated use ConnectError.findDetails() instead
  */
 export function connectErrorDetails<T extends Message<T>>(
   error: ConnectError,
   type: MessageType<T>
 ): T[];
+/**
+ * @deprecated use ConnectError.findDetails() instead
+ */
 export function connectErrorDetails(
   error: ConnectError,
   type: MessageType,
   ...moreTypes: MessageType[]
 ): AnyMessage[];
+/**
+ * @deprecated use ConnectError.findDetails() instead
+ */
 export function connectErrorDetails(
   error: ConnectError,
   registry: IMessageTypeRegistry
 ): AnyMessage[];
+/**
+ * @deprecated use ConnectError.findDetails() instead
+ */
 export function connectErrorDetails(
   error: ConnectError,
   typeOrRegistry: MessageType | IMessageTypeRegistry,
