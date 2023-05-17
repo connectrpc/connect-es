@@ -16,6 +16,8 @@ import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /* eslint-disable no-console */
 
 export function useNodeServer(
@@ -94,6 +96,7 @@ export function useNodeServer(
     let shouldCloseServer = false;
     while (!shouldCloseServer) {
       try {
+        await sleep(1000);
         await new Promise<void>((resolve, reject) => {
           if (activeConnections === 0) {
             resolve();
@@ -102,10 +105,11 @@ export function useNodeServer(
           }
           reject();
         });
-        console.log("[useNodeServer] shouldCloseServer = true")
+        
+        console.log("[useNodeServer] shouldCloseServer = true, activeCOnnections === ", activeConnections)
         shouldCloseServer = true;
       } catch (e) {
-        console.log("[useNodeServer] shouldCloseServer = false")
+        console.log("[useNodeServer] shouldCloseServer = false, activeCOnnections === ", activeConnections)
         shouldCloseServer = false;
       }
     }
