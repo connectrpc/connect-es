@@ -33,7 +33,7 @@ import { codeToString } from "./protocol-connect/index.js";
  *
  * Error details are wrapped with google.protobuf.Any on the wire, so that
  * a server or middleware can attach arbitrary data to an error. Use the
- * function connectErrorDetails() to retrieve the details.
+ * method findDetails() to retrieve the details.
  */
 export class ConnectError extends Error {
   /**
@@ -48,7 +48,7 @@ export class ConnectError extends Error {
 
   /**
    * When an error is parsed from the wire, incoming error details are stored
-   * in this property. They can be retrieved using connectErrorDetails().
+   * in this property. They can be retrieved using findDetails().
    *
    * When an error is constructed to be sent over the wire, outgoing error
    * details are stored in this property as well.
