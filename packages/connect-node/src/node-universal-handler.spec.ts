@@ -16,7 +16,7 @@ import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "http2";
 import * as http from "http";
 import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
-import { ConnectError, connectErrorFromReason } from "@bufbuild/connect";
+import { ConnectError } from "@bufbuild/connect";
 import { readAllBytes } from "@bufbuild/connect/protocol";
 
 // Polyfill the Headers API for Node versions < 18
@@ -78,7 +78,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
       expect(universalRequestSignal?.aborted).toBeTrue();
       expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
-      const ce = connectErrorFromReason(universalRequestSignal?.reason);
+      const ce = ConnectError.from(universalRequestSignal?.reason);
       expect(ce.message).toBe(
         "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
       );
@@ -88,7 +88,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
       expect(universalRequestSignal?.aborted).toBeTrue();
       expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
-      const ce = connectErrorFromReason(universalRequestSignal?.reason);
+      const ce = ConnectError.from(universalRequestSignal?.reason);
       expect(ce.message).toBe(
         "[resource_exhausted] http/2 stream closed with RST code ENHANCE_YOUR_CALM (0xb)"
       );
@@ -98,7 +98,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
       expect(universalRequestSignal?.aborted).toBeTrue();
       expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
-      const ce = connectErrorFromReason(universalRequestSignal?.reason);
+      const ce = ConnectError.from(universalRequestSignal?.reason);
       expect(ce.message).toBe(
         "[internal] http/2 stream closed with RST code FRAME_SIZE_ERROR (0x6)"
       );
@@ -140,7 +140,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverAbortReason).toBeInstanceOf(Error);
       if (serverAbortReason instanceof Error) {
         expect(serverAbortReason).toBeInstanceOf(ConnectError);
-        const ce = connectErrorFromReason(serverAbortReason);
+        const ce = ConnectError.from(serverAbortReason);
         expect(ce.message).toBe("[aborted] aborted");
       }
     });

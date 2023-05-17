@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ConnectError,
-  connectErrorDetails,
-  connectErrorFromReason,
-} from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
 import { errorFromJson, errorToJson } from "./error-json.js";
@@ -129,10 +125,8 @@ describe("errorFromJson()", () => {
       fail("expected error");
     } catch (e) {
       expect(e).toBeInstanceOf(ConnectError);
-      expect(connectErrorFromReason(e).message).toBe(
-        "[resource_exhausted] foo"
-      );
-      expect(connectErrorFromReason(e).metadata.get("foo")).toBe("bar");
+      expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
+      expect(ConnectError.from(e).metadata.get("foo")).toBe("bar");
     }
   });
   it("with code Ok throws fallback", () => {
@@ -193,13 +187,13 @@ describe("errorFromJson()", () => {
       );
       expect(error.details.length).toBe(1);
     });
-    it("works with connectErrorDetails()", () => {
+    it("works with findDetails()", () => {
       const error = errorFromJson(
         json,
         undefined,
         new ConnectError("foo", Code.ResourceExhausted)
       );
-      const details = connectErrorDetails(error, ErrorDetail);
+      const details = error.findDetails(ErrorDetail);
       expect(details.length).toBe(1);
       expect(details[0]?.reason).toBe("soirée 🎉");
       expect(details[0]?.domain).toBe("example.com");

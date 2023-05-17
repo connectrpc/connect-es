@@ -20,7 +20,7 @@ import {
   protoBase64,
 } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import type { MethodImplSpec } from "../implementation.js";
 import { createHandlerContext } from "../implementation.js";
 import type {
@@ -334,7 +334,7 @@ function parseUnaryMessage<I extends Message<I>, O extends Message<O>>(
   try {
     return method.I.fromJson(input);
   } catch (e) {
-    throw connectErrorFromReason(e, Code.InvalidArgument);
+    throw ConnectError.from(e, Code.InvalidArgument);
   }
 }
 

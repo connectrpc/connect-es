@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Int32Value, StringValue, MethodKind } from "@bufbuild/protobuf";
+import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import { createPromiseClient } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
-import { ConnectError, connectErrorFromReason } from "./connect-error.js";
+import { ConnectError } from "./connect-error.js";
 
 describe("createRoutesTransport", function () {
   const testService = {
@@ -113,7 +113,7 @@ describe("createRoutesTransport", function () {
       fail("expected error");
     } catch (e) {
       expect(e).toBeInstanceOf(ConnectError);
-      expect(connectErrorFromReason(e).message).toBe(
+      expect(ConnectError.from(e).message).toBe(
         "[unimplemented] RouterHttpClient: no handler registered for /TestService/Unary"
       );
     }

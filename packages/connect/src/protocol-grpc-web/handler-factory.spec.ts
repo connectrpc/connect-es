@@ -16,7 +16,7 @@ import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
-import { ConnectError, connectErrorFromReason } from "../index.js";
+import { ConnectError } from "../index.js";
 import type { UniversalHandlerOptions } from "../protocol/index.js";
 import {
   createAsyncIterable,
@@ -148,7 +148,7 @@ describe("createHandlerFactory()", function () {
       expect(handlerContextSignal).toBeDefined();
       expect(handlerContextSignal?.aborted).toBeTrue();
       expect(handlerContextSignal?.reason).toBeInstanceOf(ConnectError);
-      expect(connectErrorFromReason(handlerContextSignal?.reason).message).toBe(
+      expect(ConnectError.from(handlerContextSignal?.reason).message).toBe(
         "[deadline_exceeded] the operation timed out"
       );
     });

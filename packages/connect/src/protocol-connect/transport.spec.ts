@@ -27,7 +27,7 @@ import {
   createAsyncIterable,
   readAllBytes,
 } from "../protocol/async-iterable.js";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import { createTransport } from "./transport.js";
 import { encodeEnvelope } from "../protocol/envelope.js";
 import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
@@ -125,7 +125,7 @@ describe("Connect transport", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           '[invalid_argument] unexpected response content type "application/csv"'
         );
       }
@@ -144,7 +144,7 @@ describe("Connect transport", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           '[invalid_argument] unexpected response content type "application/csv"'
         );
       }
@@ -191,9 +191,7 @@ describe("Connect transport", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[resource_exhausted] foo"
-          );
+          expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
         }
         expect(httpRequestAborted).toBeTrue();
       });
@@ -245,9 +243,7 @@ describe("Connect transport", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
-            "[resource_exhausted] foo"
-          );
+          expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
         }
         expect(messagesReceived.length).toBe(1);
         expect(httpRequestAborted).toBeTrue();

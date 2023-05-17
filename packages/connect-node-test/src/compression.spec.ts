@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { connectErrorFromReason } from "@bufbuild/connect";
+import { ConnectError } from "@bufbuild/connect";
 import { compressionBrotli, compressionGzip } from "@bufbuild/connect-node";
 import * as zlib from "zlib";
-import { ConnectError } from "@bufbuild/connect";
 
 describe("compression", () => {
   const payload = new TextEncoder().encode(
@@ -47,7 +46,7 @@ describe("compression", () => {
           fail("excepted an error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[resource_exhausted] message is larger than configured readMaxBytes 2 after decompression"
           );
         }
@@ -61,7 +60,7 @@ describe("compression", () => {
           fail("excepted an error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[invalid_argument] decompression failed"
           );
         }
@@ -75,7 +74,7 @@ describe("compression", () => {
           fail("excepted an error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[internal] decompression failed"
           );
         }
