@@ -84,17 +84,19 @@ export function createUniversalHandlerClient(
   };
 }
 
+/**
+ * Wrap a promise, and reject early if the given signal triggers before the
+ * promise is settled.
+ */
 function raceSignal<T>(signal: AbortSignal, promise: Promise<T>): Promise<T> {
   let cleanup: (() => void) | undefined;
   const signalPromise = new Promise<never>((_, reject) => {
+    const onAbort = () => reject(getAbortSignalReason(signal));
     if (signal.aborted) {
-      reject(getAbortSignalReason(signal));
-      return;
+      return onAbort();
     }
-    function onAbort() {
-      reject(getAbortSignalReason(signal));
-    }
-    cleanup = () => signal.addEventListener("abort", onAbort);
+    signal.addEventListener("abort", onAbort);
+    cleanup = () => signal.removeEventListener("abort", onAbort);
   });
   return Promise.race([signalPromise, promise]).finally(cleanup);
 }
