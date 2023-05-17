@@ -238,6 +238,8 @@ function createMessage(message: string, code: Code) {
  * - For other Errors, return the error message with code Unknown by default.
  * - For other values, return the values String representation as a message,
  *   with the code Unknown by default.
+ *
+ * @deprecated use ConnectError.from() instead
  */
 export function connectErrorFromReason(
   reason: unknown,
