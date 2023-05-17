@@ -27,220 +27,220 @@ const entropyCounter = 3;
 /* eslint-disable no-console */
 console.log({ entropyCounter });
 
-describe("universalRequestFromNodeRequest()", function () {
-  xdescribe("with HTTP/2 stream closed with an RST code", function () {
-    let universalRequestSignal: AbortSignal | undefined;
-    const server = useNodeServer(() => {
-      universalRequestSignal = undefined;
-      return http2.createServer(function (request) {
-        universalRequestSignal = universalRequestFromNodeRequest(
-          request,
-          undefined
-        ).signal;
-      });
-    });
-    async function request(rstCode: number) {
-      await new Promise<void>((resolve) => {
-        http2.connect(server.getUrl(), (session: http2.ClientHttp2Session) => {
-          const stream = session.request(
-            {
-              ":method": "POST",
-              ":path": "/",
-            },
-            {}
-          );
-          setTimeout(() => {
-            stream.on("error", () => {
-              // Closing with _some_ codes raises an ERR_HTTP2_STREAM_ERROR
-              // error here.
-            });
-            stream.close(rstCode, () => {
-              // We are seeing a race condition in Node v16.20.0, where closing
-              // the session right after closing a stream with an RST code
-              // _sometimes_ sends an INTERNAL_ERROR code.
-              // Simply delaying the session close until the next tick like
-              // we do here seems to work around the issue.
-              setTimeout(() => session.close(resolve), 0);
-            });
-          }, 0);
-        });
-      });
-    }
-    it("should abort request signal with ConnectError and Code.Canceled for NO_ERROR", async function () {
-      await request(http2.constants.NGHTTP2_NO_ERROR);
-      expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
-      expect(universalRequestSignal?.aborted).toBeTrue();
-      expect(universalRequestSignal?.reason).toBeInstanceOf(Error);
-      if (universalRequestSignal?.reason instanceof Error) {
-        expect(universalRequestSignal.reason.name).toBe("AbortError");
-        expect(universalRequestSignal.reason.message).toBe(
-          "This operation was aborted"
-        );
-      }
-    });
-    it("should abort request signal with ConnectError and Code.Canceled for CANCEL", async function () {
-      await request(http2.constants.NGHTTP2_CANCEL);
-      expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
-      expect(universalRequestSignal?.aborted).toBeTrue();
-      expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
-      const ce = connectErrorFromReason(universalRequestSignal?.reason);
-      expect(ce.message).toBe(
-        "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
-      );
-    });
-    it("should abort request signal with ConnectError and Code.ResourceExhausted for ENHANCE_YOUR_CALM", async function () {
-      await request(http2.constants.NGHTTP2_ENHANCE_YOUR_CALM);
-      expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
-      expect(universalRequestSignal?.aborted).toBeTrue();
-      expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
-      const ce = connectErrorFromReason(universalRequestSignal?.reason);
-      expect(ce.message).toBe(
-        "[resource_exhausted] http/2 stream closed with RST code ENHANCE_YOUR_CALM (0xb)"
-      );
-    });
-    it("should abort request signal with ConnectError and Code.Internal for FRAME_SIZE_ERROR", async function () {
-      await request(http2.constants.NGHTTP2_FRAME_SIZE_ERROR);
-      expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
-      expect(universalRequestSignal?.aborted).toBeTrue();
-      expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
-      const ce = connectErrorFromReason(universalRequestSignal?.reason);
-      expect(ce.message).toBe(
-        "[internal] http/2 stream closed with RST code FRAME_SIZE_ERROR (0x6)"
-      );
-    });
-  });
+const logEvents = (
+  request: http.IncomingMessage | http.ClientRequest,
+  message: string,
+  skip?: boolean
+) => {
+  console.log(`[HEY!] start: ${message}`);
 
-  const logEvents = (
-    request: http.IncomingMessage | http.ClientRequest,
-    message: string,
-    skip?: boolean
-  ) => {
-    console.log(`[HEY!] start: ${message}`);
-
-    if (skip === false || skip === undefined) {
-      request.on("close", () =>
-        console.log(`[EVENT(close)]: ${message}`)
-      );
-      request.on("data", (chunk) =>
-        console.log(`[EVENT(data)]: ${message}`, chunk)
-      );
-      request.on("end", () => console.log(`[EVENT(end)]: ${message}`));
-      request.on("error", (err) =>
-        console.log(`[EVENT(error)]: ${message}`, err)
-      );
-      request.on("pause", () =>
-        console.log(`[EVENT(pause)]: ${message}`)
-      );
-      request.on("readable", () =>
-        console.log(`[EVENT(readable)]: ${message}`)
-      );
-      request.on("resume", () =>
-        console.log(`[EVENT(resume)]: ${message}`)
-      );
-
-      if (request instanceof http.ClientRequest) {
-        request.on("abort", () =>
-          console.log(`[EVENT(abort)]: ${message}`)
-        );
-        request.on("connect", (response, socket, head) =>
-          console.log(`[EVENT(connect)]: ${message}`)
-        );
-        request.on("continue", () =>
-          console.log(`[EVENT(continue)]: ${message}`)
-        );
-        request.on("drain", () =>
-          console.log(`[EVENT(drain)]: ${message}`)
-        );
-        request.on("finish", () =>
-          console.log(`[EVENT(finish)]: ${message}`)
-        );
-        request.on("information", (info) =>
-          console.log(`[EVENT(information)]: ${message}`)
-        );
-        request.on("pipe", (src) =>
-          console.log(`[EVENT(pipe)]: ${message}`)
-        );
-        request.on("response", (response) =>
-          console.log(`[EVENT(response)]: ${message}`, {
-            statusCode: response.statusCode,
-            destroyed: response.destroyed,
-            closed: response.closed,
-            complete: response.complete,
-            errored: response.errored,
-            statusMessage: response.statusMessage,
-            method: response.method,
-            readable: response.readable,
-          })
-        );
-        request.on("socket", (socket) =>
-          console.log(`[EVENT(socket)]: ${message}`)
-        );
-        request.on("timeout", () =>
-          console.log(`[EVENT(timeout)]: ${message}`)
-        );
-        request.on("unpipe", (src) =>
-          console.log(`[EVENT(unpipe)]: ${message}`)
-        );
-        request.on("upgrade", (response, socket, head) =>
-          console.log(`[EVENT(upgrade)]: ${message}`)
-        );
-      }
-    }
-
-    return () => console.log(`[HEY!] done: ${message}`);
-  };
-
-  xdescribe("with HTTP/1.1 ECONNRESET", function () {
-    let serverAbortReason: undefined | unknown;
-    const server = useNodeServer(() =>
-      http.createServer(
-        {
-          connectionsCheckingInterval: 1,
-        },
-        function (request) {
-          const done = logEvents(request, "HTTP/1.1 ECONNRESET", true);
-          const uReq = universalRequestFromNodeRequest(request, undefined);
-          uReq.signal.addEventListener("abort", () => {
-            serverAbortReason = uReq.signal.reason;
-          });
-          done();
-        }
-      )
+  if (skip === false || skip === undefined) {
+    request.on("close", () =>
+      console.log(`[EVENT(close)]: ${message}`)
+    );
+    request.on("data", (chunk) =>
+      console.log(`[EVENT(data)]: ${message}`, chunk)
+    );
+    request.on("end", () => console.log(`[EVENT(end)]: ${message}`));
+    request.on("error", (err) =>
+      console.log(`[EVENT(error)]: ${message}`, err)
+    );
+    request.on("pause", () =>
+      console.log(`[EVENT(pause)]: ${message}`)
+    );
+    request.on("readable", () =>
+      console.log(`[EVENT(readable)]: ${message}`)
+    );
+    request.on("resume", () =>
+      console.log(`[EVENT(resume)]: ${message}`)
     );
 
-    // this one is the stinker
-    it("should abort request signal with ConnectError and Code.Aborted", async function () {
-      await new Promise<void>((resolve) => {
-        const request = http.request(server.getUrl(), {
-          method: "POST",
-        });
-        const done = logEvents(
-          request,
-          "should abort request signal with ConnectError and Code.Aborted",
-          true
-        );
-        request.on("error", () => {
-          // we need this event lister so that Node.js does not raise the error
-          // we trigger by calling destroy()
-        });
-        request.flushHeaders();
-        setTimeout(() => {
-          request.destroy();
-          done();
-          resolve();
-        }, 20);
-      });
-      while (serverAbortReason === undefined) {
-        await new Promise((r) => setTimeout(r, 1));
-      }
-      expect(serverAbortReason).toBeInstanceOf(Error);
-      if (serverAbortReason instanceof Error) {
-        expect(serverAbortReason).toBeInstanceOf(ConnectError);
-        const ce = connectErrorFromReason(serverAbortReason);
-        expect(ce.message).toBe("[aborted] aborted");
-      }
-    });
-  });
+    if (request instanceof http.ClientRequest) {
+      request.on("abort", () =>
+        console.log(`[EVENT(abort)]: ${message}`)
+      );
+      request.on("connect", (response, socket, head) =>
+        console.log(`[EVENT(connect)]: ${message}`)
+      );
+      request.on("continue", () =>
+        console.log(`[EVENT(continue)]: ${message}`)
+      );
+      request.on("drain", () =>
+        console.log(`[EVENT(drain)]: ${message}`)
+      );
+      request.on("finish", () =>
+        console.log(`[EVENT(finish)]: ${message}`)
+      );
+      request.on("information", (info) =>
+        console.log(`[EVENT(information)]: ${message}`)
+      );
+      request.on("pipe", (src) =>
+        console.log(`[EVENT(pipe)]: ${message}`)
+      );
+      request.on("response", (response) =>
+        console.log(`[EVENT(response)]: ${message}`, {
+          statusCode: response.statusCode,
+          destroyed: response.destroyed,
+          closed: response.closed,
+          complete: response.complete,
+          errored: response.errored,
+          statusMessage: response.statusMessage,
+          method: response.method,
+          readable: response.readable,
+        })
+      );
+      request.on("socket", (socket) =>
+        console.log(`[EVENT(socket)]: ${message}`)
+      );
+      request.on("timeout", () =>
+        console.log(`[EVENT(timeout)]: ${message}`)
+      );
+      request.on("unpipe", (src) =>
+        console.log(`[EVENT(unpipe)]: ${message}`)
+      );
+      request.on("upgrade", (response, socket, head) =>
+        console.log(`[EVENT(upgrade)]: ${message}`)
+      );
+    }
+  }
+
+  return () => console.log(`[HEY!] done: ${message}`);
+};
+
+describe("universalRequestFromNodeRequest()", function () {
+  // xdescribe("with HTTP/2 stream closed with an RST code", function () {
+  //   let universalRequestSignal: AbortSignal | undefined;
+  //   const server = useNodeServer(() => {
+  //     universalRequestSignal = undefined;
+  //     return http2.createServer(function (request) {
+  //       universalRequestSignal = universalRequestFromNodeRequest(
+  //         request,
+  //         undefined
+  //       ).signal;
+  //     });
+  //   });
+  //   async function request(rstCode: number) {
+  //     await new Promise<void>((resolve) => {
+  //       http2.connect(server.getUrl(), (session: http2.ClientHttp2Session) => {
+  //         const stream = session.request(
+  //           {
+  //             ":method": "POST",
+  //             ":path": "/",
+  //           },
+  //           {}
+  //         );
+  //         setTimeout(() => {
+  //           stream.on("error", () => {
+  //             // Closing with _some_ codes raises an ERR_HTTP2_STREAM_ERROR
+  //             // error here.
+  //           });
+  //           stream.close(rstCode, () => {
+  //             // We are seeing a race condition in Node v16.20.0, where closing
+  //             // the session right after closing a stream with an RST code
+  //             // _sometimes_ sends an INTERNAL_ERROR code.
+  //             // Simply delaying the session close until the next tick like
+  //             // we do here seems to work around the issue.
+  //             setTimeout(() => session.close(resolve), 0);
+  //           });
+  //         }, 0);
+  //       });
+  //     });
+  //   }
+  //   it("should abort request signal with ConnectError and Code.Canceled for NO_ERROR", async function () {
+  //     await request(http2.constants.NGHTTP2_NO_ERROR);
+  //     expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
+  //     expect(universalRequestSignal?.aborted).toBeTrue();
+  //     expect(universalRequestSignal?.reason).toBeInstanceOf(Error);
+  //     if (universalRequestSignal?.reason instanceof Error) {
+  //       expect(universalRequestSignal.reason.name).toBe("AbortError");
+  //       expect(universalRequestSignal.reason.message).toBe(
+  //         "This operation was aborted"
+  //       );
+  //     }
+  //   });
+  //   it("should abort request signal with ConnectError and Code.Canceled for CANCEL", async function () {
+  //     await request(http2.constants.NGHTTP2_CANCEL);
+  //     expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
+  //     expect(universalRequestSignal?.aborted).toBeTrue();
+  //     expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
+  //     const ce = connectErrorFromReason(universalRequestSignal?.reason);
+  //     expect(ce.message).toBe(
+  //       "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
+  //     );
+  //   });
+  //   it("should abort request signal with ConnectError and Code.ResourceExhausted for ENHANCE_YOUR_CALM", async function () {
+  //     await request(http2.constants.NGHTTP2_ENHANCE_YOUR_CALM);
+  //     expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
+  //     expect(universalRequestSignal?.aborted).toBeTrue();
+  //     expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
+  //     const ce = connectErrorFromReason(universalRequestSignal?.reason);
+  //     expect(ce.message).toBe(
+  //       "[resource_exhausted] http/2 stream closed with RST code ENHANCE_YOUR_CALM (0xb)"
+  //     );
+  //   });
+  //   it("should abort request signal with ConnectError and Code.Internal for FRAME_SIZE_ERROR", async function () {
+  //     await request(http2.constants.NGHTTP2_FRAME_SIZE_ERROR);
+  //     expect(universalRequestSignal).toBeInstanceOf(AbortSignal);
+  //     expect(universalRequestSignal?.aborted).toBeTrue();
+  //     expect(universalRequestSignal?.reason).toBeInstanceOf(ConnectError);
+  //     const ce = connectErrorFromReason(universalRequestSignal?.reason);
+  //     expect(ce.message).toBe(
+  //       "[internal] http/2 stream closed with RST code FRAME_SIZE_ERROR (0x6)"
+  //     );
+  //   });
+  // });
+
+  // xdescribe("with HTTP/1.1 ECONNRESET", function () {
+  //   let serverAbortReason: undefined | unknown;
+  //   const server = useNodeServer(() =>
+  //     http.createServer(
+  //       {
+  //         connectionsCheckingInterval: 1,
+  //       },
+  //       function (request) {
+  //         const done = logEvents(request, "HTTP/1.1 ECONNRESET", true);
+  //         const uReq = universalRequestFromNodeRequest(request, undefined);
+  //         uReq.signal.addEventListener("abort", () => {
+  //           serverAbortReason = uReq.signal.reason;
+  //         });
+  //         done();
+  //       }
+  //     )
+  //   );
+
+  //   // this one is the stinker
+  //   it("should abort request signal with ConnectError and Code.Aborted", async function () {
+  //     await new Promise<void>((resolve) => {
+  //       const request = http.request(server.getUrl(), {
+  //         method: "POST",
+  //       });
+  //       const done = logEvents(
+  //         request,
+  //         "should abort request signal with ConnectError and Code.Aborted",
+  //         true
+  //       );
+  //       request.on("error", () => {
+  //         // we need this event lister so that Node.js does not raise the error
+  //         // we trigger by calling destroy()
+  //       });
+  //       request.flushHeaders();
+  //       setTimeout(() => {
+  //         request.destroy();
+  //         done();
+  //         resolve();
+  //       }, 20);
+  //     });
+  //     while (serverAbortReason === undefined) {
+  //       await new Promise((r) => setTimeout(r, 1));
+  //     }
+  //     expect(serverAbortReason).toBeInstanceOf(Error);
+  //     if (serverAbortReason instanceof Error) {
+  //       expect(serverAbortReason).toBeInstanceOf(ConnectError);
+  //       const ce = connectErrorFromReason(serverAbortReason);
+  //       expect(ce.message).toBe("[aborted] aborted");
+  //     }
+  //   });
+  // });
 
   describe("with HTTP/1.1 request finishing without error", function () {
     let universalRequestSignal: AbortSignal | undefined;

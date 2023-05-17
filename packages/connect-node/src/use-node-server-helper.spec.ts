@@ -48,7 +48,7 @@ export function useNodeServer(
     server.on("timeout", () => console.log("[useNodeServer EVENT(timeout)]"));
     server.on("connection", () => {
       if (log) {
-        console.log("useNodeServer EVENT(connection):", activeConnections);
+        console.log("[useNodeServer EVENT(connection)]:", activeConnections);
       }
       activeConnections += 1;
     });
