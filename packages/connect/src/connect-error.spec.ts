@@ -116,8 +116,8 @@ describe("ConnectError", () => {
   describe("from()", () => {
     it("accepts ConnectError as unknown", () => {
       const error: unknown = new ConnectError(
-          "Not permitted",
-          Code.PermissionDenied
+        "Not permitted",
+        Code.PermissionDenied
       );
       const got = ConnectError.from(error);
       expect(got as unknown).toBe(error);
