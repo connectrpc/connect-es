@@ -1,0 +1,23 @@
+{
+  "name": "@bufbuild/connect-edge-test",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf ./dist/esm/*",
+    "generate": "buf generate",
+    "build": "tsc --project tsconfig.json --outDir ./dist/esm",
+    "jasmine": "jasmine --config=jasmine.json"
+  },
+  "type": "module",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "import": "./dist/esm/index.js",
+    "default": "./dist/esm/index.js"
+  },
+  "dependencies": {
+    "@bufbuild/connect": "0.8.6",
+    "@types/jasmine": "^4.3.1",
+    "edge-runtime": "^2.1.2",
+    "esbuild": "^0.17.16",
+    "jasmine": "^4.6.0"
+  }
+}

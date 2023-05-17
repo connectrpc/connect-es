@@ -1,0 +1,10 @@
+{
+  "include": ["src/**/*.ts"],
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": ["webworker", "es2019"],
+    "module": "es2020",
+    "verbatimModuleSyntax": true
+  }
+}
