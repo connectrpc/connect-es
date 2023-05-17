@@ -13,11 +13,10 @@
 // limitations under the License.
 
 import {
+  Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-  connectErrorDetails,
-  Code,
 } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
@@ -30,7 +29,7 @@ describe("fail_unary", () => {
     if (err instanceof ConnectError) {
       expect(err.code).toEqual(Code.ResourceExhausted);
       expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
-      const details = connectErrorDetails(err, ErrorDetail);
+      const details = err.findDetails(ErrorDetail);
       expect(details).toEqual([interop.errorDetail]);
     }
   }
