@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { useNodeServer } from "./use-node-server-helper.spec.js";
-import * as http2 from "http2";
+// import * as http2 from "http2";
 import * as http from "http";
 import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
-import { ConnectError, connectErrorFromReason } from "@bufbuild/connect";
+// import { ConnectError, connectErrorFromReason } from "@bufbuild/connect";
 import { readAllBytes } from "@bufbuild/connect/protocol";
 
 // Polyfill the Headers API for Node versions < 18
