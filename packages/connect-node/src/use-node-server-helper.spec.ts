@@ -24,7 +24,7 @@ export function useNodeServer(
     | https.Server
     | http2.Http2Server
     | http2.Http2SecureServer,
-  log?: true,
+  log?: true
 ) {
   let server:
     | http.Server
@@ -33,14 +33,25 @@ export function useNodeServer(
     | http2.Http2SecureServer
     | undefined;
 
+  let activeConnections = 0;
+
   beforeEach(function (doneFn) {
     server = createServer();
-    if (log) {
-      console.log("[useNodeServer] beforeEach");
-      server.on("close", () => console.log("[useNodeServer EVENT(close)]"))
-      server.on("listen", () => console.log("[useNodeServer EVENT(listen)]"))
-      server.on("timeout", () => console.log("[useNodeServer EVENT(timeout)]"))
-    }
+    console.log("[useNodeServer] beforeEach");
+    server.on("close", () => {
+      if (log) {
+        console.log("[useNodeServer EVENT(close)]:", activeConnections);
+      }
+      activeConnections -= 1;
+    });
+    server.on("listen", () => console.log("[useNodeServer EVENT(listen)]"));
+    server.on("timeout", () => console.log("[useNodeServer EVENT(timeout)]"));
+    server.on("connection", () => {
+      if (log) {
+        console.log("useNodeServer EVENT(connection):", activeConnections);
+      }
+      activeConnections += 1;
+    });
     server.listen(0, function listenCallback() {
       if (log) {
         console.log("[useNodeServer] server listening");
@@ -50,37 +61,45 @@ export function useNodeServer(
   });
 
   afterEach(async function () {
-    if (server === undefined) {
-      throw new Error("server not defined");
-    }
-    if (log) {
-      console.log("[useNodeServer] afterEach starting");
-    }
-    for (;;) {
-      const count = await new Promise<number>((resolve, reject) => {
-        if (server === undefined) {
-          throw new Error("server not defined");
-        }
-        server.getConnections((err, count) => {
-          if (err) {
-            return reject(err);
-          }
-          return resolve(count);
-        });
-      });
+    // if (server === undefined) {
+    //   throw new Error("server not defined");
+    // }
+    // if (log) {
+    //   console.log("[useNodeServer] afterEach starting");
+    // }
+    // for (;;) {
+    //   const count = await new Promise<number>((resolve, reject) => {
+    //     if (server === undefined) {
+    //       throw new Error("server not defined");
+    //     }
+    //     server.getConnections((err, count) => {
+    //       if (err) {
+    //         return reject(err);
+    //       }
+    //       return resolve(count);
+    //     });
+    //   });
 
-      console.log(`[useNodeServer] connections count: ${count}`);
-      if (count === 0) {
-        break;
+    //   console.log(`[useNodeServer] connections count: ${count}`);
+    //   if (count === 0) {
+    //     break;
+    //   }
+    //   await new Promise((resolve) => setTimeout(resolve, 10));
+    // }
+    // if (log) {
+    //   console.log("[useNodeServer] server closing");
+    // }
+    // server.close();
+
+    await new Promise<void>((resolve) => {
+      if (activeConnections === 0) {
+        resolve();
+      } else {
+        server?.once("close", resolve);
       }
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-    if (log) {
-      console.log("[useNodeServer] server closing");
-    }
-    server.close();
+    });
+    server?.close();
   });
-
 
   if (log) {
     console.log("[useNodeServer] during useNodeServer");
