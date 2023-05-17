@@ -36,14 +36,14 @@ export function useNodeServer(
   beforeEach(function (doneFn) {
     server = createServer();
     if (log) {
-      console.log("[useNodeServer] beforeEach useNodeServer");
-      server.on("close", () => console.log("[useNodeServer] beforeEach close event"))
-      server.on("listen", () => console.log("[useNodeServer] beforeEach listen event"))
-      server.on("timeout", () => console.log("[useNodeServer] beforeEach timeout event"))
+      console.log("[useNodeServer] beforeEach");
+      server.on("close", () => console.log("[useNodeServer EVENT(close)]"))
+      server.on("listen", () => console.log("[useNodeServer EVENT(listen)]"))
+      server.on("timeout", () => console.log("[useNodeServer EVENT(timeout)]"))
     }
     server.listen(0, function listenCallback() {
       if (log) {
-        console.log("[useNodeServer] beforeEach closing");
+        console.log("[useNodeServer] server listening");
       }
       doneFn();
     });
@@ -54,7 +54,7 @@ export function useNodeServer(
       throw new Error("server not defined");
     }
     if (log) {
-      console.log("[useNodeServer] afterEach useNodeServer");
+      console.log("[useNodeServer] afterEach starting");
     }
     for (;;) {
       const count = await new Promise<number>((resolve, reject) => {
@@ -68,13 +68,15 @@ export function useNodeServer(
           return resolve(count);
         });
       });
+
+      console.log(`[useNodeServer] connections count: ${count}`);
       if (count === 0) {
         break;
       }
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
     if (log) {
-      console.log("[useNodeServer] afterEach closing");
+      console.log("[useNodeServer] server closing");
     }
     server.close();
   });
