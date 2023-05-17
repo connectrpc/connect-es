@@ -137,7 +137,10 @@ export class ConnectError extends Error {
   ): AnyMessage[] {
     const registry =
       "typeName" in typeOrRegistry
-        ? createRegistry(typeOrRegistry)
+        ? {
+            findMessage: (typeName: string): MessageType | undefined =>
+              typeName === typeOrRegistry.typeName ? typeOrRegistry : undefined,
+          }
         : typeOrRegistry;
     const details: AnyMessage[] = [];
     for (const data of this.details) {
