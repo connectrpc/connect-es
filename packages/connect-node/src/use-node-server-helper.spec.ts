@@ -35,23 +35,19 @@ export function useNodeServer(
     | http2.Http2SecureServer
     | undefined;
 
-  let activeConnections = 0;
-
   beforeEach(function (doneFn) {
     server = createServer();
     console.log("[useNodeServer] beforeEach");
     server.on("close", () => {
-      activeConnections -= 1;
       if (log) {
-        console.log("[useNodeServer EVENT(close)]:", activeConnections);
+        console.log("[useNodeServer EVENT(close)]");
       }
     });
     server.on("listen", () => console.log("[useNodeServer EVENT(listen)]"));
     server.on("timeout", () => console.log("[useNodeServer EVENT(timeout)]"));
     server.on("connection", () => {
-      activeConnections += 1;
       if (log) {
-        console.log("[useNodeServer EVENT(connection)]:", activeConnections);
+        console.log("[useNodeServer EVENT(connection)]");
       }
     });
     server.listen(0, function listenCallback() {
@@ -66,23 +62,30 @@ export function useNodeServer(
     if (server === undefined) {
       throw new Error("cannot get server");
     }
-    const waitForServerToClose = () => new Promise<void>((resolve) => {
+    const waitForServerToClose = () =>
+      new Promise<void>((resolve) => {
         const checkConnections = () => {
           server?.getConnections((error, count) => {
             if (error) {
-              console.error('Error retrieving connection count:', error);
+              console.error("Error retrieving connection count:", error);
               resolve(); // Resolve the promise to avoid waiting indefinitely
             } else if (count > 0) {
-              setTimeout(checkConnections, 100); // Retry after 100 milliseconds
+              if (log) {
+                console.log(`[useNodeServer] still ${count} active connections`);
+              }
+              setTimeout(checkConnections, 100); // retry
             } else {
-              resolve(); // All connections have been closed
+              if (log) {
+                console.log("[useNodeServer] all connections have been closed");
+              }
+              resolve();
             }
           });
-        }
-        server?.once('close', checkConnections);
+        };
+        server?.once("close", checkConnections);
         server?.close();
       });
-    
+
     await waitForServerToClose();
   });
 
