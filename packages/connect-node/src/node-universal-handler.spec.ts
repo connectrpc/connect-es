@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { useNodeServer } from "./use-node-server-helper.spec.js";
-// import * as http2 from "http2";
+import * as http2 from "http2";
 import * as http from "http";
 import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
-// import { ConnectError, connectErrorFromReason } from "@bufbuild/connect";
+import { ConnectError, connectErrorFromReason } from "@bufbuild/connect";
 import { readAllBytes } from "@bufbuild/connect/protocol";
 
 // Polyfill the Headers API for Node versions < 18
@@ -190,57 +190,57 @@ describe("universalRequestFromNodeRequest()", function () {
   //   });
   // });
 
-  // xdescribe("with HTTP/1.1 ECONNRESET", function () {
-  //   let serverAbortReason: undefined | unknown;
-  //   const server = useNodeServer(() =>
-  //     http.createServer(
-  //       {
-  //         connectionsCheckingInterval: 1,
-  //       },
-  //       function (request) {
-  //         const done = logEvents(request, "HTTP/1.1 ECONNRESET", true);
-  //         const uReq = universalRequestFromNodeRequest(request, undefined);
-  //         uReq.signal.addEventListener("abort", () => {
-  //           serverAbortReason = uReq.signal.reason;
-  //         });
-  //         done();
-  //       }
-  //     )
-  //   );
+  describe("with HTTP/1.1 ECONNRESET", function () {
+    let serverAbortReason: undefined | unknown;
+    const server = useNodeServer(() =>
+      http.createServer(
+        {
+          connectionsCheckingInterval: 1,
+        },
+        function (request) {
+          const done = logEvents(request, "HTTP/1.1 ECONNRESET", true);
+          const uReq = universalRequestFromNodeRequest(request, undefined);
+          uReq.signal.addEventListener("abort", () => {
+            serverAbortReason = uReq.signal.reason;
+          });
+          done();
+        }
+      )
+    );
 
-  //   // this one is the stinker
-  //   it("should abort request signal with ConnectError and Code.Aborted", async function () {
-  //     await new Promise<void>((resolve) => {
-  //       const request = http.request(server.getUrl(), {
-  //         method: "POST",
-  //       });
-  //       const done = logEvents(
-  //         request,
-  //         "should abort request signal with ConnectError and Code.Aborted",
-  //         true
-  //       );
-  //       request.on("error", () => {
-  //         // we need this event lister so that Node.js does not raise the error
-  //         // we trigger by calling destroy()
-  //       });
-  //       request.flushHeaders();
-  //       setTimeout(() => {
-  //         request.destroy();
-  //         done();
-  //         resolve();
-  //       }, 20);
-  //     });
-  //     while (serverAbortReason === undefined) {
-  //       await new Promise((r) => setTimeout(r, 1));
-  //     }
-  //     expect(serverAbortReason).toBeInstanceOf(Error);
-  //     if (serverAbortReason instanceof Error) {
-  //       expect(serverAbortReason).toBeInstanceOf(ConnectError);
-  //       const ce = connectErrorFromReason(serverAbortReason);
-  //       expect(ce.message).toBe("[aborted] aborted");
-  //     }
-  //   });
-  // });
+    // this one is the stinker
+    it("should abort request signal with ConnectError and Code.Aborted", async function () {
+      await new Promise<void>((resolve) => {
+        const request = http.request(server.getUrl(), {
+          method: "POST",
+        });
+        const done = logEvents(
+          request,
+          "should abort request signal with ConnectError and Code.Aborted",
+          true
+        );
+        request.on("error", () => {
+          // we need this event lister so that Node.js does not raise the error
+          // we trigger by calling destroy()
+        });
+        request.flushHeaders();
+        setTimeout(() => {
+          request.destroy();
+          done();
+          resolve();
+        }, 20);
+      });
+      while (serverAbortReason === undefined) {
+        await new Promise((r) => setTimeout(r, 1));
+      }
+      expect(serverAbortReason).toBeInstanceOf(Error);
+      if (serverAbortReason instanceof Error) {
+        expect(serverAbortReason).toBeInstanceOf(ConnectError);
+        const ce = connectErrorFromReason(serverAbortReason);
+        expect(ce.message).toBe("[aborted] aborted");
+      }
+    });
+  });
 
   describe("with HTTP/1.1 request finishing without error", function () {
     let universalRequestSignal: AbortSignal | undefined;

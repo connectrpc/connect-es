@@ -66,8 +66,7 @@ export function useNodeServer(
     if (server === undefined) {
       throw new Error("cannot get server");
     }
-    const waitForServerToClose = () => {
-      return new Promise<void>((resolve) => {
+    const waitForServerToClose = () => new Promise<void>((resolve) => {
         const checkConnections = () => {
           server?.getConnections((error, count) => {
             if (error) {
@@ -83,7 +82,7 @@ export function useNodeServer(
         server?.once('close', checkConnections);
         server?.close();
       });
-    }
+    
     await waitForServerToClose();
   });
 
