@@ -155,7 +155,11 @@ export class ConnectError extends Error {
         try {
           details.push(type.fromBinary(data.value));
         } catch (_) {
-          //
+          // We silently give up if we are unable to parse the detail, because
+          // that appears to be the least worst behavior.
+          // It is very unlikely that a user surrounds a catch body handling the
+          // error with another try-catch statement, and we do not want to
+          // recommend doing so.
         }
       }
     }
@@ -224,7 +228,11 @@ export function connectErrorDetails(
       try {
         details.push(type.fromBinary(data.value));
       } catch (_) {
-        //
+        // We silently give up if we are unable to parse the detail, because
+        // that appears to be the least worst behavior.
+        // It is very unlikely that a user surrounds a catch body handling the
+        // error with another try-catch statement, and we do not want to
+        // recommend doing so.
       }
     }
   }
