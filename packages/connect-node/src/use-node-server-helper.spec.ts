@@ -63,57 +63,28 @@ export function useNodeServer(
   });
 
   afterEach(async function () {
-    // if (server === undefined) {
-    //   throw new Error("server not defined");
-    // }
-    // if (log) {
-    //   console.log("[useNodeServer] afterEach starting");
-    // }
-    // for (;;) {
-    //   const count = await new Promise<number>((resolve, reject) => {
-    //     if (server === undefined) {
-    //       throw new Error("server not defined");
-    //     }
-    //     server.getConnections((err, count) => {
-    //       if (err) {
-    //         return reject(err);
-    //       }
-    //       return resolve(count);
-    //     });
-    //   });
-
-    //   console.log(`[useNodeServer] connections count: ${count}`);
-    //   if (count === 0) {
-    //     break;
-    //   }
-    //   await new Promise((resolve) => setTimeout(resolve, 10));
-    // }
-    // if (log) {
-    //   console.log("[useNodeServer] server closing");
-    // }
-    // server.close();
-
-    let shouldCloseServer = false;
-    while (!shouldCloseServer) {
-      try {
-        await sleep(1000);
-        await new Promise<void>((resolve, reject) => {
-          if (activeConnections === 0) {
-            resolve();
-          } else {
-            server?.once("close", resolve);
-          }
-          reject();
-        });
-        
-        console.log("[useNodeServer] shouldCloseServer = true, activeCOnnections === ", activeConnections)
-        shouldCloseServer = true;
-      } catch (e) {
-        console.log("[useNodeServer] shouldCloseServer = false, activeCOnnections === ", activeConnections)
-        shouldCloseServer = false;
-      }
+    if (server === undefined) {
+      throw new Error("cannot get server");
     }
-    server?.close();
+    const waitForServerToClose = () => {
+      return new Promise<void>((resolve) => {
+        const checkConnections = () => {
+          server?.getConnections((error, count) => {
+            if (error) {
+              console.error('Error retrieving connection count:', error);
+              resolve(); // Resolve the promise to avoid waiting indefinitely
+            } else if (count > 0) {
+              setTimeout(checkConnections, 100); // Retry after 100 milliseconds
+            } else {
+              resolve(); // All connections have been closed
+            }
+          });
+        }
+        server?.once('close', checkConnections);
+        server?.close();
+      });
+    }
+    await waitForServerToClose();
   });
 
   if (log) {
