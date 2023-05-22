@@ -21,7 +21,7 @@ import {
   headerGrpcMessage,
   headerGrpcStatus,
 } from "./headers.js";
-import { codeFromHttpStatus } from "../protocol-connect/http-status.js";
+import { codeFromHttpStatus } from "../protocol-grpc/http-status.js";
 import { findTrailerError } from "../protocol-grpc/trailer-status.js";
 import type { Compression } from "../protocol/compression.js";
 
