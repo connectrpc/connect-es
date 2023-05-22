@@ -61,11 +61,13 @@ export function createFetchHandler(
 }
 
 function universalClientRequestToFetch(req: UniversalClientRequest): Request {
+  const body =
+    req.body === undefined ? null : iterableToReadableStream(req.body);
   return new Request(req.url, {
     method: req.method,
     headers: req.header,
     signal: req.signal,
-    body: iterableToReadableStream(req.body),
+    body,
   });
 }
 

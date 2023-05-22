@@ -43,7 +43,7 @@ export function createUniversalHandlerClient(
     const uServerRes = await raceSignal(
       reqSignal,
       handler({
-        body: uClientReq.body,
+        body: uClientReq.body ?? createAsyncIterable([]),
         httpVersion: "2.0",
         method: uClientReq.method,
         url: uClientReq.url,

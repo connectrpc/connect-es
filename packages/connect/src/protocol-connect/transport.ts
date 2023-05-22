@@ -113,14 +113,13 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           const useGet =
             opt.useHttpGet === true &&
             method.idempotency === MethodIdempotency.NoSideEffects;
-          let body: AsyncIterable<Uint8Array>;
+          let body: AsyncIterable<Uint8Array> | undefined;
           if (useGet) {
             req = transformConnectPostToGetRequest(
               req,
               requestBody,
               opt.useBinaryFormat
             );
-            body = createAsyncIterable([]);
           } else {
             body = createAsyncIterable([requestBody]);
           }

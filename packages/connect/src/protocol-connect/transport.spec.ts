@@ -260,6 +260,7 @@ describe("Connect transport", function () {
       body: createAsyncIterable([new StringValue({ value: "abc" }).toBinary()]),
       trailer: new Headers(),
     };
+    // eslint-disable-next-line @typescript-eslint/require-await
     const expectGet: UniversalClientFn = async (request) => {
       expect(request.method).toBe("GET");
       expect(request.url).toBe(
@@ -270,15 +271,17 @@ describe("Connect transport", function () {
       request.header.forEach((_, key) => headerFields.push(key));
       expect(headerFields).toEqual([]);
       // no body
-      const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
-      expect(body.byteLength).toBe(0);
+      expect(request.body).toBeUndefined();
       return httpClientResponse;
     };
     const expectPost: UniversalClientFn = async (request) => {
       expect(request.method).toBe("POST");
       expect(new URL(request.url).search).toBe("");
-      const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
-      expect(body.byteLength).toBeGreaterThan(0);
+      expect(request.body).toBeDefined();
+      if (request.body !== undefined) {
+        const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
+        expect(body.byteLength).toBeGreaterThan(0);
+      }
       return httpClientResponse;
     };
     describe("disabled", function () {

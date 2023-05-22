@@ -29,12 +29,11 @@ import {
   unwrapNodeErrorChain,
 } from "./node-error.js";
 import type {
-  AsyncIterableSink,
   UniversalClientFn,
   UniversalClientRequest,
   UniversalClientResponse,
 } from "@bufbuild/connect/protocol";
-import { getAbortSignalReason, pipeTo } from "@bufbuild/connect/protocol";
+import { getAbortSignalReason } from "@bufbuild/connect/protocol";
 
 /**
  * Options for creating an UniversalClientFn using the Node.js `http`, `https`,
@@ -136,9 +135,7 @@ function createNodeHttp1Client(
           method: req.method,
         },
         (request) => {
-          void pipeTo(req.body, sinkRequest(sentinel, request), {
-            propagateDownStreamError: true,
-          }).catch(sentinel.reject);
+          void sinkRequest(req, request, sentinel);
           request.on("response", (response) => {
             response.on("error", sentinel.reject);
             sentinel.catch((reason) =>
@@ -198,9 +195,7 @@ function createNodeHttp2Client(
         webHeaderToNodeHeaders(req.header),
         {},
         (stream) => {
-          void pipeTo(req.body, sinkRequest(sentinel, stream), {
-            propagateDownStreamError: true,
-          }).catch(sentinel.reject);
+          void sinkRequest(req, stream, sentinel);
           stream.on("response", (headers) => {
             const response: UniversalClientResponse = {
               status: headers[":status"] ?? 0,
@@ -429,59 +424,61 @@ function h2ResponseIterable(
   };
 }
 
-function sinkRequest(
-  sentinel: Sentinel,
-  request: http.ClientRequest | http2.ClientHttp2Stream
-): AsyncIterableSink<Uint8Array> {
-  return function write(iterable: AsyncIterable<Uint8Array>): Promise<void> {
-    const it = iterable[Symbol.asyncIterator]();
-    return new Promise((resolve, reject) => {
-      sentinel.catch(reject);
-      writeNext();
+async function sinkRequest(
+  request: UniversalClientRequest,
+  nodeRequest: http.ClientRequest | http2.ClientHttp2Stream,
+  sentinel: Sentinel
+) {
+  if (request.body === undefined) {
+    await new Promise<void>((resolve) => nodeRequest.end(resolve));
+    return;
+  }
+  const it = request.body[Symbol.asyncIterator]();
+  return new Promise<void>((resolve) => {
+    writeNext();
 
-      function writeNext() {
-        if (sentinel.isRejected()) {
-          return;
-        }
-        it.next().then(
-          (r) => {
-            if (r.done === true) {
-              request.end(resolve);
-              return;
-            }
-            request.write(r.value, "binary", function (e) {
-              if (e) {
-                if (
-                  request.writableEnded &&
-                  unwrapNodeErrorChain(e)
-                    .map(getNodeErrorProps)
-                    .some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END") &&
-                  it.throw !== undefined
-                ) {
-                  // If the server responds and closes the connection before the client has written the entire response
-                  // body, we get an ERR_STREAM_WRITE_AFTER_END error code from Node.js here.
-                  // We do want to notify the iterable of the error condition, but we do not want to reject our sentinel,
-                  // because that would also affect the reading side.
-                  it.throw(
-                    new ConnectError("stream closed", Code.Aborted)
-                  ).catch(() => {
-                    //
-                  });
-                  return;
-                }
-                sentinel.reject(e);
-              } else {
-                writeNext();
-              }
-            });
-          },
-          (e) => {
-            sentinel.reject(e);
-          }
-        );
+    function writeNext() {
+      if (sentinel.isRejected()) {
+        return;
       }
-    });
-  };
+      it.next().then(
+        (r) => {
+          if (r.done === true) {
+            nodeRequest.end(resolve);
+            return;
+          }
+          nodeRequest.write(r.value, "binary", function (e) {
+            if (e) {
+              if (
+                nodeRequest.writableEnded &&
+                unwrapNodeErrorChain(e)
+                  .map(getNodeErrorProps)
+                  .some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END") &&
+                it.throw !== undefined
+              ) {
+                // If the server responds and closes the connection before the client has written the entire response
+                // body, we get an ERR_STREAM_WRITE_AFTER_END error code from Node.js here.
+                // We do want to notify the iterable of the error condition, but we do not want to reject our sentinel,
+                // because that would also affect the reading side.
+                it.throw(new ConnectError("stream closed", Code.Aborted)).catch(
+                  () => {
+                    //
+                  }
+                );
+                return;
+              }
+              sentinel.reject(e);
+            } else {
+              writeNext();
+            }
+          });
+        },
+        (e) => {
+          sentinel.reject(e);
+        }
+      );
+    }
+  });
 }
 
 type Sentinel = Promise<void> & {
