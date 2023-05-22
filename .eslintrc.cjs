@@ -15,7 +15,7 @@ module.exports = {
     "packages/*/dist/**",
     "node_modules/**",
   ],
-  plugins: ["@typescript-eslint", "node"],
+  plugins: ["@typescript-eslint", "node", "import"],
   // Rules and settings that do not require a non-default parser
   extends: ["eslint:recommended"],
   rules: {
@@ -35,9 +35,18 @@ module.exports = {
             project: "./tsconfig.json",
             tsconfigRootDir: dir,
           },
+          settings: {
+            "import/resolver": {
+              "typescript": {
+                "project": "packages/*/tsconfig.json",
+              }
+            }
+          },
           extends: [
             "plugin:@typescript-eslint/recommended",
             "plugin:@typescript-eslint/recommended-requiring-type-checking",
+            "plugin:import/recommended",
+            "plugin:import/typescript",
           ],
           rules: {
             "@typescript-eslint/strict-boolean-expressions": "error",
@@ -49,6 +58,8 @@ module.exports = {
               "error",
             "@typescript-eslint/no-invalid-void-type": "error",
             "@typescript-eslint/no-base-to-string": "error",
+            "import/no-cycle": "error",
+            "import/no-duplicates": "error",
           },
         };
       }),
