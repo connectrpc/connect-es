@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Compression } from "../protocol/index.js";
 import {
   headerAcceptEncoding,
   headerContentType,
@@ -21,6 +20,7 @@ import {
   headerUserAgent,
 } from "./headers.js";
 import { contentTypeJson, contentTypeProto } from "./content-type.js";
+import { Compression } from "../protocol/compression.js";
 
 /**
  * Creates headers for a gRPC request.

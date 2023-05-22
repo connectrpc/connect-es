@@ -14,7 +14,6 @@
 
 import { Message, protoBase64 } from "@bufbuild/protobuf";
 import type { AnyMessage } from "@bufbuild/protobuf";
-import type { UnaryRequest } from "../index.js";
 import {
   headerContentType,
   headerProtocolVersion,
@@ -23,6 +22,7 @@ import {
   headerUnaryEncoding,
 } from "./headers.js";
 import { protocolVersion } from "./version.js";
+import { UnaryRequest } from "../interceptor.js";
 
 const contentTypePrefix = "application/";
 

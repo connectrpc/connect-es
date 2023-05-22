@@ -24,10 +24,7 @@ import type {
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
-import {
-  createLinkedAbortController,
-  createDeadlineSignal,
-} from "./protocol/index.js";
+import { createDeadlineSignal, createLinkedAbortController } from "./protocol/signals.js";
 
 // prettier-ignore
 /**
