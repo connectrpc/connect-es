@@ -98,10 +98,8 @@ function universalServerRequestFromFetch(
 function universalServerResponseToFetch(
   res: UniversalServerResponse
 ): Response {
-  let body: ReadableStream<Uint8Array> | Uint8Array | null = null;
-  if (res.body instanceof Uint8Array) {
-    body = res.body;
-  } else if (res.body !== undefined) {
+  let body: ReadableStream<Uint8Array> | null = null;
+  if (res.body !== undefined) {
     body = iterableToReadableStream(res.body);
   }
   return new Response(body, {

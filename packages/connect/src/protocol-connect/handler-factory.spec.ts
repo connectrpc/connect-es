@@ -40,6 +40,7 @@ import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
+import { readAll } from "../protocol/async-iterable-helper.spec.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
@@ -174,10 +175,12 @@ describe("createHandlerFactory()", function () {
           signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
-        expect(res.body).toBeInstanceOf(Uint8Array);
-        if (res.body instanceof Uint8Array) {
+        expect(res.body).toBeDefined();
+        if (res.body !== undefined) {
+          const body = await readAll(res.body);
+          expect(body.length).toBe(1);
           const err = errorFromJsonBytes(
-            res.body,
+            body[0],
             undefined,
             new ConnectError("failed to parse connect err", Code.Internal)
           );
@@ -199,10 +202,12 @@ describe("createHandlerFactory()", function () {
           signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
-        expect(res.body).toBeInstanceOf(Uint8Array);
-        if (res.body instanceof Uint8Array) {
+        expect(res.body).toBeDefined();
+        if (res.body !== undefined) {
+          const body = await readAll(res.body);
+          expect(body.length).toBe(1);
           const err = errorFromJsonBytes(
-            res.body,
+            body[0],
             undefined,
             new ConnectError("failed to parse connect err", Code.Internal)
           );

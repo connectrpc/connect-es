@@ -136,7 +136,7 @@ function createNodeHttp1Client(
           method: req.method,
         },
         (request) => {
-          pipeTo(req.body, sinkRequest(sentinel, request), {
+          void pipeTo(req.body, sinkRequest(sentinel, request), {
             propagateDownStreamError: true,
           }).catch(sentinel.reject);
           request.on("response", (response) => {

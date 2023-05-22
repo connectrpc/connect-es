@@ -38,6 +38,7 @@ import {
   assertByteStreamRequest,
   compressionNegotiate,
   contentTypeMatcher,
+  createAsyncIterable,
   createMethodSerializationLookup,
   createMethodUrl,
   invokeUnaryImplementation,
@@ -268,7 +269,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     header.set(headerUnaryContentLength, body.byteLength.toString(10));
     return {
       status,
-      body,
+      body: createAsyncIterable([body]),
       header,
     };
   };

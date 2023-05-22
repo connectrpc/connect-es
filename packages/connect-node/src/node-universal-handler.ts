@@ -139,13 +139,7 @@ export async function universalResponseToNodeResponse(
   nodeResponse: NodeServerResponse
 ): Promise<void> {
   try {
-    if (universalResponse.body instanceof Uint8Array) {
-      nodeResponse.writeHead(
-        universalResponse.status,
-        webHeaderToNodeHeaders(universalResponse.header)
-      );
-      await write(nodeResponse, universalResponse.body);
-    } else if (universalResponse.body !== undefined) {
+    if (universalResponse.body !== undefined) {
       for await (const chunk of universalResponse.body) {
         // we deliberately send headers *in* this loop, not before,
         // because we have to give the implementation a chance to
