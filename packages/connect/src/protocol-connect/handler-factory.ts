@@ -58,7 +58,10 @@ import {
   requireProtocolVersionHeader,
   requireProtocolVersionParam,
 } from "./version.js";
-import { type Compression, compressionNegotiate } from "../protocol/compression.js";
+import {
+  type Compression,
+  compressionNegotiate,
+} from "../protocol/compression.js";
 import {
   type MethodSerializationLookup,
   type Serialization,
