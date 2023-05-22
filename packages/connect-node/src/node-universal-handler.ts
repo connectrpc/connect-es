@@ -178,7 +178,6 @@ export async function universalResponseToNodeResponse(
       nodeResponse.addTrailers(
         webHeaderToNodeHeaders(universalResponse.trailer)
       );
-      universalResponse.trailer;
     }
     await new Promise<void>((resolve) => {
       // The npm package "compression" crashes when a callback is passed to end()
