@@ -121,7 +121,7 @@ export function universalRequestFromNodeRequest(
   return {
     httpVersion: nodeRequest.httpVersion,
     method: nodeRequest.method ?? "",
-    url: new URL(pathname, `${protocol}://${authority}`),
+    url: new URL(pathname, `${protocol}://${authority}`).toString(),
     header: nodeHeaderToWebHeader(nodeRequest.headers),
     body,
     signal: abortController.signal,

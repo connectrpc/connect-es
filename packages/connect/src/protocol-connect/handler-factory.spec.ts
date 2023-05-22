@@ -169,7 +169,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({ "Content-Type": "application/json" }),
           body: 777,
           signal: new AbortController().signal,
@@ -193,7 +193,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({
             "Content-Type": "application/json",
             "Connect-Protocol-Version": "UNEXPECTED",
@@ -230,7 +230,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({ "Content-Type": "application/connect+json" }),
           body: createAsyncIterable([new Uint8Array()]),
           signal: new AbortController().signal,
@@ -251,7 +251,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({
             "Content-Type": "application/connect+json",
             "Connect-Protocol-Version": "UNEXPECTED",
@@ -290,9 +290,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([new Uint8Array(0)]),
           signal: new AbortController().signal,
@@ -347,9 +345,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
           signal: new AbortController().signal,
@@ -389,9 +385,7 @@ describe("createHandlerFactory()", function () {
         const resPromise = handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, undefined, undefined),
           body: createAsyncIterable([new Uint8Array(0)]),
           signal: ac.signal,
@@ -422,9 +416,7 @@ describe("createHandlerFactory()", function () {
         const resPromise = handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, undefined, undefined),
           body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
           signal: ac.signal,
@@ -453,9 +445,7 @@ describe("createHandlerFactory()", function () {
       const res = await handler({
         httpVersion: "2.0",
         method: "GET",
-        url: new URL(
-          `https://example.com/${service.typeName}/${method.name}?connect=v1&encoding=proto&base64=1&message=CHs`
-        ),
+        url: `https://example.com/${service.typeName}/${method.name}?connect=v1&encoding=proto&base64=1&message=CHs`,
         header: new Headers(),
         body: createAsyncIterable([]),
         signal: new AbortController().signal,

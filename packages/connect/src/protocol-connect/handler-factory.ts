@@ -162,7 +162,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     if (isGet && spec.method.idempotency != MethodIdempotency.NoSideEffects) {
       return uResponseMethodNotAllowed;
     }
-    const queryParams = req.url.searchParams;
+    const queryParams = new URL(req.url).searchParams;
     const compressionRequested = isGet
       ? queryParams.get(paramCompression)
       : req.header.get(headerUnaryEncoding);

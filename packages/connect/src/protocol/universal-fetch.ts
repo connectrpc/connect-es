@@ -84,11 +84,10 @@ function universalServerRequestFromFetch(
   req: Request,
   options: FetchHandlerOptions
 ): UniversalServerRequest {
-  const url = new URL(req.url);
   return {
     httpVersion: options.httpVersion ?? "",
     method: req.method,
-    url,
+    url: req.url,
     header: req.headers,
     body: iterableFromReadableStream(req.body),
     signal: req.signal,

@@ -54,7 +54,7 @@ export type UniversalHandlerFn = (
  */
 export interface UniversalServerRequest {
   httpVersion: string;
-  url: URL;
+  url: string;
   method: string;
   header: Headers;
   /**
