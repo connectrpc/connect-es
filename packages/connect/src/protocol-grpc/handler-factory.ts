@@ -48,15 +48,15 @@ import { compressionNegotiate } from "../protocol/compression.js";
 import { contentTypeMatcher } from "../protocol/content-type-matcher.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { transformInvokeImplementation } from "../protocol/invoke-implementation.js";
-import { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
+import type { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
 import {
-  UniversalHandlerOptions,
+  type UniversalHandlerOptions,
   validateUniversalHandlerOptions,
 } from "../protocol/universal-handler.js";
 import {
-  UniversalServerRequest,
-  UniversalServerResponse,
+  type UniversalServerRequest,
+  type UniversalServerResponse,
   assertByteStreamRequest,
   uResponseUnsupportedMediaType,
   uResponseMethodNotAllowed,

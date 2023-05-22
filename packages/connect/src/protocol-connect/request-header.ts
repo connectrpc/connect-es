@@ -29,7 +29,7 @@ import {
   contentTypeUnaryJson,
   contentTypeUnaryProto,
 } from "./content-type.js";
-import { Compression } from "../protocol/compression.js";
+import type { Compression } from "../protocol/compression.js";
 
 /**
  * Creates headers for a Connect request.

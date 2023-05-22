@@ -24,13 +24,13 @@ import { createHandlerFactory as handlerFactoryGrpcWeb } from "./protocol-grpc-w
 import { createHandlerFactory as handlerFactoryGrpc } from "./protocol-grpc/handler-factory.js";
 import { createHandlerFactory as handlerFactoryConnect } from "./protocol-connect/handler-factory.js";
 import {
-  UniversalHandler,
-  UniversalHandlerOptions,
+  type UniversalHandler,
+  type UniversalHandlerOptions,
   createUniversalMethodHandler,
   createUniversalServiceHandlers,
   validateUniversalHandlerOptions,
 } from "./protocol/universal-handler.js";
-import { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
+import type { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
 
 /**
  * ConnectRouter is your single registration point for RPCs.

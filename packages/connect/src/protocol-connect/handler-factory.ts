@@ -58,20 +58,20 @@ import {
   requireProtocolVersionHeader,
   requireProtocolVersionParam,
 } from "./version.js";
-import { Compression, compressionNegotiate } from "../protocol/compression.js";
+import { type Compression, compressionNegotiate } from "../protocol/compression.js";
 import {
-  MethodSerializationLookup,
-  Serialization,
+  type MethodSerializationLookup,
+  type Serialization,
   createMethodSerializationLookup,
 } from "../protocol/serialization.js";
 import {
-  UniversalHandlerOptions,
+  type UniversalHandlerOptions,
   validateUniversalHandlerOptions,
 } from "../protocol/universal-handler.js";
 import {
-  UniversalHandlerFn,
-  UniversalServerRequest,
-  UniversalServerResponse,
+  type UniversalHandlerFn,
+  type UniversalServerRequest,
+  type UniversalServerResponse,
   assertByteStreamRequest,
   uResponseMethodNotAllowed,
   uResponseOk,
@@ -92,12 +92,12 @@ import {
 } from "../protocol/async-iterable.js";
 import { contentTypeMatcher } from "../protocol/content-type-matcher.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
-import { EnvelopedMessage } from "../protocol/envelope.js";
+import type { EnvelopedMessage } from "../protocol/envelope.js";
 import {
   invokeUnaryImplementation,
   transformInvokeImplementation,
 } from "../protocol/invoke-implementation.js";
-import { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
+import type { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
 
 const protocolName = "connect";
 const methodPost = "POST";

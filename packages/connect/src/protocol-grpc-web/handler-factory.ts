@@ -51,20 +51,20 @@ import {
 import { compressionNegotiate } from "../protocol/compression.js";
 import { contentTypeMatcher } from "../protocol/content-type-matcher.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
-import { EnvelopedMessage } from "../protocol/envelope.js";
+import type { EnvelopedMessage } from "../protocol/envelope.js";
 import { transformInvokeImplementation } from "../protocol/invoke-implementation.js";
-import { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
+import type { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
 import {
-  Serialization,
+  type Serialization,
   createMethodSerializationLookup,
 } from "../protocol/serialization.js";
 import {
-  UniversalHandlerOptions,
+  type UniversalHandlerOptions,
   validateUniversalHandlerOptions,
 } from "../protocol/universal-handler.js";
 import {
-  UniversalServerRequest,
-  UniversalServerResponse,
+  type UniversalServerRequest,
+  type UniversalServerResponse,
   assertByteStreamRequest,
   uResponseUnsupportedMediaType,
   uResponseMethodNotAllowed,

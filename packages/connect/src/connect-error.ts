@@ -18,9 +18,10 @@ import type {
   IMessageTypeRegistry,
   JsonValue,
   MessageType,
-  createRegistry,
-  Message,
 } from "@bufbuild/protobuf";
+import { 
+  createRegistry, 
+  Message } from '@bufbuild/protobuf'
 import { codeToString } from "./protocol-connect/code-string.js";
 
 /**

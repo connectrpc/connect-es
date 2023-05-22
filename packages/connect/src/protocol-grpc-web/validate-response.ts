@@ -23,7 +23,7 @@ import {
 } from "./headers.js";
 import { codeFromHttpStatus } from "../protocol-connect/http-status.js";
 import { findTrailerError } from "../protocol-grpc/trailer-status.js";
-import { Compression } from "../protocol/compression.js";
+import type { Compression } from "../protocol/compression.js";
 
 /**
  * Validates response status and header for the gRPC-web protocol.

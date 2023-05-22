@@ -27,11 +27,11 @@ import { trailerDemux } from "./trailer-mux.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
 import { transformConnectPostToGetRequest } from "./get-request.js";
-import { CommonTransportOptions } from "../protocol/transport-options.js";
+import type { CommonTransportOptions } from "../protocol/transport-options.js";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import { appendHeaders } from "../http-headers.js";
-import {
+import type {
   UnaryResponse,
   UnaryRequest,
   StreamResponse,
@@ -53,7 +53,7 @@ import {
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
-import { Transport } from "../transport.js";
+import type { Transport } from "../transport.js";
 
 /**
  * Create a Transport for the Connect protocol.

@@ -23,7 +23,7 @@ import {
   headerGrpcMessage,
   headerGrpcStatus,
 } from "./headers.js";
-import { Compression } from "../protocol/compression.js";
+import type { Compression } from "../protocol/compression.js";
 
 /**
  * Validates response status and header for the gRPC protocol.

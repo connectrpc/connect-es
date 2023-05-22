@@ -20,7 +20,7 @@ import {
   headerUserAgent,
 } from "./headers.js";
 import { contentTypeJson, contentTypeProto } from "./content-type.js";
-import { Compression } from "../protocol/compression.js";
+import type { Compression } from "../protocol/compression.js";
 
 /**
  * Creates headers for a gRPC request.

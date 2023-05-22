@@ -22,7 +22,7 @@ import {
   headerUnaryEncoding,
 } from "./headers.js";
 import { protocolVersion } from "./version.js";
-import { UnaryRequest } from "../interceptor.js";
+import type { UnaryRequest } from "../interceptor.js";
 
 const contentTypePrefix = "application/";
 
