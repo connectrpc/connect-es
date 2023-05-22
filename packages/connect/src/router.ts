@@ -23,7 +23,13 @@ import type { MethodImpl, ServiceImpl } from "./implementation.js";
 import { createHandlerFactory as handlerFactoryGrpcWeb } from "./protocol-grpc-web/handler-factory.js";
 import { createHandlerFactory as handlerFactoryGrpc } from "./protocol-grpc/handler-factory.js";
 import { createHandlerFactory as handlerFactoryConnect } from "./protocol-connect/handler-factory.js";
-import { UniversalHandler, UniversalHandlerOptions, createUniversalMethodHandler, createUniversalServiceHandlers, validateUniversalHandlerOptions } from "./protocol/universal-handler.js";
+import {
+  UniversalHandler,
+  UniversalHandlerOptions,
+  createUniversalMethodHandler,
+  createUniversalServiceHandlers,
+  validateUniversalHandlerOptions,
+} from "./protocol/universal-handler.js";
 import { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
 
 /**

@@ -32,15 +32,36 @@ import {
 } from "./headers.js";
 import { grpcStatusOk, setTrailerStatus } from "./trailer-status.js";
 import { parseTimeout } from "./parse-timeout.js";
-import { pipe, transformPrepend, transformSplitEnvelope, transformDecompressEnvelope, transformParseEnvelope, transformSerializeEnvelope, transformCompressEnvelope, transformJoinEnvelopes, transformCatchFinally, untilFirst } from "../protocol/async-iterable.js";
+import {
+  pipe,
+  transformPrepend,
+  transformSplitEnvelope,
+  transformDecompressEnvelope,
+  transformParseEnvelope,
+  transformSerializeEnvelope,
+  transformCompressEnvelope,
+  transformJoinEnvelopes,
+  transformCatchFinally,
+  untilFirst,
+} from "../protocol/async-iterable.js";
 import { compressionNegotiate } from "../protocol/compression.js";
 import { contentTypeMatcher } from "../protocol/content-type-matcher.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { transformInvokeImplementation } from "../protocol/invoke-implementation.js";
 import { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
-import { UniversalHandlerOptions, validateUniversalHandlerOptions } from "../protocol/universal-handler.js";
-import { UniversalServerRequest, UniversalServerResponse, assertByteStreamRequest, uResponseUnsupportedMediaType, uResponseMethodNotAllowed, uResponseOk } from "../protocol/universal.js";
+import {
+  UniversalHandlerOptions,
+  validateUniversalHandlerOptions,
+} from "../protocol/universal-handler.js";
+import {
+  UniversalServerRequest,
+  UniversalServerResponse,
+  assertByteStreamRequest,
+  uResponseUnsupportedMediaType,
+  uResponseMethodNotAllowed,
+  uResponseOk,
+} from "../protocol/universal.js";
 
 const protocolName = "grpc";
 const methodPost = "POST";

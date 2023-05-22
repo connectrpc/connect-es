@@ -31,8 +31,25 @@ import { CommonTransportOptions } from "../protocol/transport-options.js";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import { appendHeaders } from "../http-headers.js";
-import { UnaryResponse, UnaryRequest, StreamResponse, StreamRequest } from "../interceptor.js";
-import { createAsyncIterable, pipeTo, sinkAllBytes, pipe, transformNormalizeMessage, transformSerializeEnvelope, transformCompressEnvelope, transformJoinEnvelopes, transformSplitEnvelope, transformDecompressEnvelope, transformParseEnvelope } from "../protocol/async-iterable.js";
+import {
+  UnaryResponse,
+  UnaryRequest,
+  StreamResponse,
+  StreamRequest,
+} from "../interceptor.js";
+import {
+  createAsyncIterable,
+  pipeTo,
+  sinkAllBytes,
+  pipe,
+  transformNormalizeMessage,
+  transformSerializeEnvelope,
+  transformCompressEnvelope,
+  transformJoinEnvelopes,
+  transformSplitEnvelope,
+  transformDecompressEnvelope,
+  transformParseEnvelope,
+} from "../protocol/async-iterable.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";

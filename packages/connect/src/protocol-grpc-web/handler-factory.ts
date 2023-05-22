@@ -32,17 +32,44 @@ import {
   parseContentType,
 } from "./content-type.js";
 import { parseTimeout } from "../protocol-grpc/parse-timeout.js";
-import { grpcStatusOk, setTrailerStatus } from "../protocol-grpc/trailer-status.js";
-import { pipe, transformPrepend, transformSplitEnvelope, transformDecompressEnvelope, transformParseEnvelope, transformSerializeEnvelope, transformCatchFinally, transformCompressEnvelope, transformJoinEnvelopes, untilFirst } from "../protocol/async-iterable.js";
+import {
+  grpcStatusOk,
+  setTrailerStatus,
+} from "../protocol-grpc/trailer-status.js";
+import {
+  pipe,
+  transformPrepend,
+  transformSplitEnvelope,
+  transformDecompressEnvelope,
+  transformParseEnvelope,
+  transformSerializeEnvelope,
+  transformCatchFinally,
+  transformCompressEnvelope,
+  transformJoinEnvelopes,
+  untilFirst,
+} from "../protocol/async-iterable.js";
 import { compressionNegotiate } from "../protocol/compression.js";
 import { contentTypeMatcher } from "../protocol/content-type-matcher.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { EnvelopedMessage } from "../protocol/envelope.js";
 import { transformInvokeImplementation } from "../protocol/invoke-implementation.js";
 import { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
-import { Serialization, createMethodSerializationLookup } from "../protocol/serialization.js";
-import { UniversalHandlerOptions, validateUniversalHandlerOptions } from "../protocol/universal-handler.js";
-import { UniversalServerRequest, UniversalServerResponse, assertByteStreamRequest, uResponseUnsupportedMediaType, uResponseMethodNotAllowed, uResponseOk } from "../protocol/universal.js";
+import {
+  Serialization,
+  createMethodSerializationLookup,
+} from "../protocol/serialization.js";
+import {
+  UniversalHandlerOptions,
+  validateUniversalHandlerOptions,
+} from "../protocol/universal-handler.js";
+import {
+  UniversalServerRequest,
+  UniversalServerResponse,
+  assertByteStreamRequest,
+  uResponseUnsupportedMediaType,
+  uResponseMethodNotAllowed,
+  uResponseOk,
+} from "../protocol/universal.js";
 
 const protocolName = "grpc-web";
 const methodPost = "POST";

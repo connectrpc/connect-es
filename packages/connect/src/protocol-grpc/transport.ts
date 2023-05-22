@@ -24,8 +24,24 @@ import { validateResponseWithCompression } from "./validate-response.js";
 import { validateTrailer } from "./validate-trailer.js";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
-import { UnaryResponse, UnaryRequest, StreamResponse, StreamRequest } from "../interceptor.js";
-import { pipe, createAsyncIterable, transformSerializeEnvelope, transformCompressEnvelope, transformJoinEnvelopes, pipeTo, transformSplitEnvelope, transformDecompressEnvelope, transformParseEnvelope, transformNormalizeMessage } from "../protocol/async-iterable.js";
+import {
+  UnaryResponse,
+  UnaryRequest,
+  StreamResponse,
+  StreamRequest,
+} from "../interceptor.js";
+import {
+  pipe,
+  createAsyncIterable,
+  transformSerializeEnvelope,
+  transformCompressEnvelope,
+  transformJoinEnvelopes,
+  pipeTo,
+  transformSplitEnvelope,
+  transformDecompressEnvelope,
+  transformParseEnvelope,
+  transformNormalizeMessage,
+} from "../protocol/async-iterable.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
