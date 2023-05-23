@@ -19,6 +19,7 @@ import * as https from "https";
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 export function useNodeServer(
   createServer: () =>
