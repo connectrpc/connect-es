@@ -106,11 +106,13 @@ export function universalRequestFromNodeRequest(
   } else {
     // HTTP/1.1 does not have error codes, but Node.js has ECONNRESET
     const onH1Error = (e: Error) => {
+      console.log("on h1 error");
       nodeRequest.off("error", onH1Error);
       nodeRequest.off("close", onH1Close);
       abortController.abort(connectErrorFromNodeReason(e));
     };
     const onH1Close = () => {
+      console.log("on h1 close");
       nodeRequest.off("error", onH1Error);
       nodeRequest.off("close", onH1Close);
       abortController.abort();
