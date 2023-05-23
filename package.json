@@ -21,11 +21,13 @@
     "npm": ">=8"
   },
   "devDependencies": {
-    "typescript": "^5.0.3",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.2",
     "eslint": "^8.39.0",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-node": "^11.1.0",
-    "prettier": "^2.8.8"
+    "prettier": "^2.8.8",
+    "typescript": "^5.0.3"
   }
 }

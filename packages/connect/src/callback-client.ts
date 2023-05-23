@@ -25,7 +25,7 @@ import type { Transport } from "./transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
 import type { CallOptions } from "./call-options.js";
-import { createAsyncIterable } from "./protocol/index.js";
+import { createAsyncIterable } from "./protocol/async-iterable.js";
 
 // prettier-ignore
 /**

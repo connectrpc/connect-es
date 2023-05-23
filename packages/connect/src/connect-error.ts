@@ -20,7 +20,7 @@ import type {
   MessageType,
 } from "@bufbuild/protobuf";
 import { createRegistry, Message } from "@bufbuild/protobuf";
-import { codeToString } from "./protocol-connect/index.js";
+import { codeToString } from "./protocol-connect/code-string.js";
 
 /**
  * ConnectError captures four pieces of information: a Code, an error

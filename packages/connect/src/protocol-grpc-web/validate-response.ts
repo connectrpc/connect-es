@@ -15,17 +15,15 @@
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { parseContentType } from "./content-type.js";
-import type { Compression } from "../protocol/index.js";
-import {
-  codeFromHttpStatus,
-  findTrailerError,
-} from "../protocol-grpc/index.js";
 import {
   headerContentType,
   headerEncoding,
   headerGrpcMessage,
   headerGrpcStatus,
 } from "./headers.js";
+import { codeFromHttpStatus } from "../protocol-grpc/http-status.js";
+import { findTrailerError } from "../protocol-grpc/trailer-status.js";
+import type { Compression } from "../protocol/compression.js";
 
 /**
  * Validates response status and header for the gRPC-web protocol.
