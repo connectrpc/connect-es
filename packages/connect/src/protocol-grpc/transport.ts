@@ -19,34 +19,34 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type {
-  StreamRequest,
-  StreamResponse,
-  Transport,
-  UnaryRequest,
-  UnaryResponse,
-} from "../index.js";
-import { Code, ConnectError } from "../index.js";
-import type { CommonTransportOptions } from "../protocol/index.js";
-import {
-  createAsyncIterable,
-  createMethodSerializationLookup,
-  createMethodUrl,
-  pipe,
-  pipeTo,
-  runStreamingCall,
-  runUnaryCall,
-  transformCompressEnvelope,
-  transformDecompressEnvelope,
-  transformJoinEnvelopes,
-  transformNormalizeMessage,
-  transformParseEnvelope,
-  transformSerializeEnvelope,
-  transformSplitEnvelope,
-} from "../protocol/index.js";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { validateResponseWithCompression } from "./validate-response.js";
 import { validateTrailer } from "./validate-trailer.js";
+import { Code } from "../code.js";
+import { ConnectError } from "../connect-error.js";
+import type {
+  UnaryResponse,
+  UnaryRequest,
+  StreamResponse,
+  StreamRequest,
+} from "../interceptor.js";
+import {
+  pipe,
+  createAsyncIterable,
+  transformSerializeEnvelope,
+  transformCompressEnvelope,
+  transformJoinEnvelopes,
+  pipeTo,
+  transformSplitEnvelope,
+  transformDecompressEnvelope,
+  transformParseEnvelope,
+  transformNormalizeMessage,
+} from "../protocol/async-iterable.js";
+import { createMethodUrl } from "../protocol/create-method-url.js";
+import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
+import { createMethodSerializationLookup } from "../protocol/serialization.js";
+import type { CommonTransportOptions } from "../protocol/transport-options.js";
+import type { Transport } from "../transport.js";
 
 /**
  * Create a Transport for the gRPC protocol.

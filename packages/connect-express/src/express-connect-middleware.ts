@@ -16,8 +16,9 @@ import type { JsonValue } from "@bufbuild/protobuf";
 import { createConnectRouter, Code, ConnectError } from "@bufbuild/connect";
 import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import type { UniversalHandler } from "@bufbuild/connect/protocol";
-import { compressionBrotli, compressionGzip } from "@bufbuild/connect-node";
 import {
+  compressionBrotli,
+  compressionGzip,
   universalRequestFromNodeRequest,
   universalResponseToNodeResponse,
 } from "@bufbuild/connect-node";

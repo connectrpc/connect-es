@@ -17,48 +17,13 @@ import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { MethodImplSpec } from "../implementation.js";
 import { createHandlerContext } from "../implementation.js";
-import type {
-  EnvelopedMessage,
-  ProtocolHandlerFactory,
-  Serialization,
-  UniversalHandlerOptions,
-  UniversalServerRequest,
-  UniversalServerResponse,
-} from "../protocol/index.js";
-import {
-  assertByteStreamRequest,
-  compressionNegotiate,
-  contentTypeMatcher,
-  createMethodSerializationLookup,
-  createMethodUrl,
-  pipe,
-  transformCatchFinally,
-  transformCompressEnvelope,
-  transformDecompressEnvelope,
-  transformInvokeImplementation,
-  transformJoinEnvelopes,
-  transformParseEnvelope,
-  transformPrepend,
-  transformSerializeEnvelope,
-  transformSplitEnvelope,
-  untilFirst,
-  uResponseMethodNotAllowed,
-  uResponseOk,
-  uResponseUnsupportedMediaType,
-  validateUniversalHandlerOptions,
-} from "../protocol/index.js";
-import {
-  grpcStatusOk,
-  headerTimeout,
-  parseTimeout,
-  setTrailerStatus,
-} from "../protocol-grpc/index.js";
 import { createTrailerSerialization, trailerFlag } from "./trailer.js";
 import {
   headerAcceptEncoding,
   headerContentType,
   headerEncoding,
   headerGrpcStatus,
+  headerTimeout,
 } from "./headers.js";
 import {
   contentTypeJson,
@@ -66,6 +31,45 @@ import {
   contentTypeRegExp,
   parseContentType,
 } from "./content-type.js";
+import { parseTimeout } from "../protocol-grpc/parse-timeout.js";
+import {
+  grpcStatusOk,
+  setTrailerStatus,
+} from "../protocol-grpc/trailer-status.js";
+import {
+  pipe,
+  transformPrepend,
+  transformSplitEnvelope,
+  transformDecompressEnvelope,
+  transformParseEnvelope,
+  transformSerializeEnvelope,
+  transformCatchFinally,
+  transformCompressEnvelope,
+  transformJoinEnvelopes,
+  untilFirst,
+} from "../protocol/async-iterable.js";
+import { compressionNegotiate } from "../protocol/compression.js";
+import { contentTypeMatcher } from "../protocol/content-type-matcher.js";
+import { createMethodUrl } from "../protocol/create-method-url.js";
+import type { EnvelopedMessage } from "../protocol/envelope.js";
+import { transformInvokeImplementation } from "../protocol/invoke-implementation.js";
+import type { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
+import {
+  type Serialization,
+  createMethodSerializationLookup,
+} from "../protocol/serialization.js";
+import {
+  type UniversalHandlerOptions,
+  validateUniversalHandlerOptions,
+} from "../protocol/universal-handler.js";
+import {
+  type UniversalServerRequest,
+  type UniversalServerResponse,
+  assertByteStreamRequest,
+  uResponseUnsupportedMediaType,
+  uResponseMethodNotAllowed,
+  uResponseOk,
+} from "../protocol/universal.js";
 
 const protocolName = "grpc-web";
 const methodPost = "POST";
