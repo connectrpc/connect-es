@@ -33,6 +33,7 @@ const logEvents = (
   skip?: boolean
 ) => {
   console.log(`[HEY!] start: ${message}`);
+  console.log("Node version: " + process.versions.node);
 
   if (skip === false || skip === undefined) {
     request.on("close", () => console.log(`[EVENT(close)]: ${message}`));
