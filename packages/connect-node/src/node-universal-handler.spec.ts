@@ -230,7 +230,7 @@ describe("universalRequestFromNodeRequest()", function () {
     let universalRequestSignal: AbortSignal | undefined;
     const server = useNodeServer(() => {
       console.log("inside: creating server");
-      return http.createServer(
+      const s = http.createServer(
         {
           connectionsCheckingInterval: 1,
         },
@@ -246,6 +246,9 @@ describe("universalRequestFromNodeRequest()", function () {
           done();
         }
       );
+      s.requestTimeout = 0;
+      s.headersTimeout = 0;
+      return s;
     }, true);
 
     // this one too
