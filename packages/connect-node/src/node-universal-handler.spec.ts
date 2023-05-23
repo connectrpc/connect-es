@@ -173,8 +173,8 @@ describe("universalRequestFromNodeRequest()", function () {
 
   describe("with HTTP/1.1 ECONNRESET", function () {
     let serverAbortReason: undefined | unknown;
-    const server = useNodeServer(() =>
-      http.createServer(
+    const server = useNodeServer(() => {
+      const s = http.createServer(
         {
           connectionsCheckingInterval: 1,
         },
@@ -186,8 +186,11 @@ describe("universalRequestFromNodeRequest()", function () {
           });
           done();
         }
-      )
-    );
+      );
+      s.requestTimeout = 0;
+      s.headersTimeout = 0;
+      return s;
+    });
 
     // this one is the stinker
     it("should abort request signal with ConnectError and Code.Aborted", async function () {

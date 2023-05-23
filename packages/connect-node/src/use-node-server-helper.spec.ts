@@ -51,6 +51,7 @@ export function useNodeServer(
         console.log("[useNodeServer EVENT(connection)]");
       }
     });
+
     server.listen(0, function listenCallback() {
       if (log) {
         console.log("[useNodeServer] server listening");
