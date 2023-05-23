@@ -13,6 +13,8 @@
 // limitations under the License.
 
 import {
+  createAsyncIterable,
+  makeIterableAbortable,
   pipe,
   pipeTo,
   transformCatch,
@@ -23,11 +25,9 @@ import {
   transformReadAllBytes,
   transformSerializeEnvelope,
   transformSplitEnvelope,
-  makeIterableAbortable,
-  createAsyncIterable,
 } from "./async-iterable.js";
 import type { Serialization } from "./serialization.js";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { EnvelopedMessage } from "./envelope.js";
 import type { Compression } from "./compression.js";
@@ -558,7 +558,7 @@ describe("transforming asynchronous iterables", () => {
             fail("expected error");
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
-            expect(connectErrorFromReason(e).message).toBe(
+            expect(ConnectError.from(e).message).toBe(
               "[invalid_argument] unexpected end flag"
             );
           }
@@ -625,7 +625,7 @@ describe("transforming asynchronous iterables", () => {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[resource_exhausted] message size 4 is larger than configured readMaxBytes 3"
           );
         }
@@ -703,7 +703,7 @@ describe("transforming asynchronous iterables", () => {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[internal] invalid envelope, already compressed"
           );
         }
@@ -735,7 +735,7 @@ describe("transforming asynchronous iterables", () => {
             fail("expected error");
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
-            expect(connectErrorFromReason(e).message).toBe(
+            expect(ConnectError.from(e).message).toBe(
               "[internal] invalid envelope, already compressed"
             );
           }
@@ -776,7 +776,7 @@ describe("transforming asynchronous iterables", () => {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          expect(connectErrorFromReason(e).message).toBe(
+          expect(ConnectError.from(e).message).toBe(
             "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression"
           );
         }
@@ -800,7 +800,7 @@ describe("transforming asynchronous iterables", () => {
             fail("expected error");
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
-            expect(connectErrorFromReason(e).message).toBe(
+            expect(ConnectError.from(e).message).toBe(
               "[invalid_argument] received compressed envelope, but do not know how to decompress"
             );
           }
@@ -962,7 +962,7 @@ describe("transforming asynchronous iterables", () => {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(connectErrorFromReason(e).message).toBe(
+        expect(ConnectError.from(e).message).toBe(
           "[resource_exhausted] message size is larger than configured readMaxBytes 4"
         );
       }
@@ -992,7 +992,7 @@ describe("transforming asynchronous iterables", () => {
             fail("expected error");
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
-            expect(connectErrorFromReason(e).message).toBe(
+            expect(ConnectError.from(e).message).toBe(
               "[resource_exhausted] message size 5 is larger than configured readMaxBytes 4"
             );
           }
@@ -1042,7 +1042,7 @@ describe("transforming asynchronous iterables", () => {
             fail("expected error");
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
-            expect(connectErrorFromReason(e).message).toBe(
+            expect(ConnectError.from(e).message).toBe(
               "[invalid_argument] protocol error: promised 116 bytes, received 16"
             );
           }
@@ -1062,7 +1062,7 @@ describe("transforming asynchronous iterables", () => {
             fail("expected error");
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
-            expect(connectErrorFromReason(e).message).toBe(
+            expect(ConnectError.from(e).message).toBe(
               "[invalid_argument] protocol error: promised 6 bytes, received 8"
             );
           }

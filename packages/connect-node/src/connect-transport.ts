@@ -111,6 +111,12 @@ type ConnectTransportOptions = NodeHttpClientOptions & {
    * The default limit is the maximum supported value of ~4GiB.
    */
   writeMaxBytes?: number;
+
+  /**
+   * Controls whether or not Connect GET requests should be used when
+   * available, on side-effect free methods. Defaults to false.
+   */
+  useHttpGet?: boolean;
 };
 
 /**

@@ -16,7 +16,7 @@ import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "http2";
 import * as http from "http";
 import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
-import { ConnectError, connectErrorFromReason } from "@bufbuild/connect";
+import { ConnectError } from "@bufbuild/connect";
 import { readAllBytes } from "@bufbuild/connect/protocol";
 
 // Polyfill the Headers API for Node versions < 18
@@ -35,9 +35,7 @@ const logEvents = (
   console.log(`[HEY!] start: ${message}`);
 
   if (skip === false || skip === undefined) {
-    request.on("close", () =>
-      console.log(`[EVENT(close)]: ${message}`)
-    );
+    request.on("close", () => console.log(`[EVENT(close)]: ${message}`));
     request.on("data", (chunk) =>
       console.log(`[EVENT(data)]: ${message}`, chunk)
     );
@@ -45,38 +43,24 @@ const logEvents = (
     request.on("error", (err) =>
       console.log(`[EVENT(error)]: ${message}`, err)
     );
-    request.on("pause", () =>
-      console.log(`[EVENT(pause)]: ${message}`)
-    );
-    request.on("readable", () =>
-      console.log(`[EVENT(readable)]: ${message}`)
-    );
-    request.on("resume", () =>
-      console.log(`[EVENT(resume)]: ${message}`)
-    );
+    request.on("pause", () => console.log(`[EVENT(pause)]: ${message}`));
+    request.on("readable", () => console.log(`[EVENT(readable)]: ${message}`));
+    request.on("resume", () => console.log(`[EVENT(resume)]: ${message}`));
 
     if (request instanceof http.ClientRequest) {
-      request.on("abort", () =>
-        console.log(`[EVENT(abort)]: ${message}`)
-      );
+      request.on("abort", () => console.log(`[EVENT(abort)]: ${message}`));
       request.on("connect", (response, socket, head) =>
         console.log(`[EVENT(connect)]: ${message}`)
       );
       request.on("continue", () =>
         console.log(`[EVENT(continue)]: ${message}`)
       );
-      request.on("drain", () =>
-        console.log(`[EVENT(drain)]: ${message}`)
-      );
-      request.on("finish", () =>
-        console.log(`[EVENT(finish)]: ${message}`)
-      );
+      request.on("drain", () => console.log(`[EVENT(drain)]: ${message}`));
+      request.on("finish", () => console.log(`[EVENT(finish)]: ${message}`));
       request.on("information", (info) =>
         console.log(`[EVENT(information)]: ${message}`)
       );
-      request.on("pipe", (src) =>
-        console.log(`[EVENT(pipe)]: ${message}`)
-      );
+      request.on("pipe", (src) => console.log(`[EVENT(pipe)]: ${message}`));
       request.on("response", (response) =>
         console.log(`[EVENT(response)]: ${message}`, {
           statusCode: response.statusCode,
@@ -92,12 +76,8 @@ const logEvents = (
       request.on("socket", (socket) =>
         console.log(`[EVENT(socket)]: ${message}`)
       );
-      request.on("timeout", () =>
-        console.log(`[EVENT(timeout)]: ${message}`)
-      );
-      request.on("unpipe", (src) =>
-        console.log(`[EVENT(unpipe)]: ${message}`)
-      );
+      request.on("timeout", () => console.log(`[EVENT(timeout)]: ${message}`));
+      request.on("unpipe", (src) => console.log(`[EVENT(unpipe)]: ${message}`));
       request.on("upgrade", (response, socket, head) =>
         console.log(`[EVENT(upgrade)]: ${message}`)
       );
@@ -236,7 +216,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverAbortReason).toBeInstanceOf(Error);
       if (serverAbortReason instanceof Error) {
         expect(serverAbortReason).toBeInstanceOf(ConnectError);
-        const ce = connectErrorFromReason(serverAbortReason);
+        const ce = ConnectError.from(serverAbortReason);
         expect(ce.message).toBe("[aborted] aborted");
       }
     });
@@ -261,9 +241,9 @@ describe("universalRequestFromNodeRequest()", function () {
           response.end();
           done();
         }
-      )
+      );
     }, true);
-    
+
     // this one too
     it("should abort request signal with AbortError", async function () {
       await new Promise<void>((resolve) => {

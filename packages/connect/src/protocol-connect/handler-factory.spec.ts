@@ -40,6 +40,7 @@ import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
+import { readAll } from "../protocol/async-iterable-helper.spec.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
@@ -168,16 +169,18 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({ "Content-Type": "application/json" }),
           body: 777,
           signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
-        expect(res.body).toBeInstanceOf(Uint8Array);
-        if (res.body instanceof Uint8Array) {
+        expect(res.body).toBeDefined();
+        if (res.body !== undefined) {
+          const body = await readAll(res.body);
+          expect(body.length).toBe(1);
           const err = errorFromJsonBytes(
-            res.body,
+            body[0],
             undefined,
             new ConnectError("failed to parse connect err", Code.Internal)
           );
@@ -190,7 +193,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({
             "Content-Type": "application/json",
             "Connect-Protocol-Version": "UNEXPECTED",
@@ -199,10 +202,12 @@ describe("createHandlerFactory()", function () {
           signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
-        expect(res.body).toBeInstanceOf(Uint8Array);
-        if (res.body instanceof Uint8Array) {
+        expect(res.body).toBeDefined();
+        if (res.body !== undefined) {
+          const body = await readAll(res.body);
+          expect(body.length).toBe(1);
           const err = errorFromJsonBytes(
-            res.body,
+            body[0],
             undefined,
             new ConnectError("failed to parse connect err", Code.Internal)
           );
@@ -225,7 +230,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({ "Content-Type": "application/connect+json" }),
           body: createAsyncIterable([new Uint8Array()]),
           signal: new AbortController().signal,
@@ -246,7 +251,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({
             "Content-Type": "application/connect+json",
             "Connect-Protocol-Version": "UNEXPECTED",
@@ -285,9 +290,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([new Uint8Array(0)]),
           signal: new AbortController().signal,
@@ -342,9 +345,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
           signal: new AbortController().signal,
@@ -384,9 +385,7 @@ describe("createHandlerFactory()", function () {
         const resPromise = handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, undefined, undefined),
           body: createAsyncIterable([new Uint8Array(0)]),
           signal: ac.signal,
@@ -417,9 +416,7 @@ describe("createHandlerFactory()", function () {
         const resPromise = handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, undefined, undefined),
           body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
           signal: ac.signal,
@@ -448,9 +445,7 @@ describe("createHandlerFactory()", function () {
       const res = await handler({
         httpVersion: "2.0",
         method: "GET",
-        url: new URL(
-          `https://example.com/${service.typeName}/${method.name}?connect=v1&encoding=proto&base64=1&message=CHs`
-        ),
+        url: `https://example.com/${service.typeName}/${method.name}?connect=v1&encoding=proto&base64=1&message=CHs`,
         header: new Headers(),
         body: createAsyncIterable([]),
         signal: new AbortController().signal,

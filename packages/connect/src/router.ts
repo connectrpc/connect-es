@@ -20,19 +20,17 @@ import {
   createServiceImplSpec,
 } from "./implementation.js";
 import type { MethodImpl, ServiceImpl } from "./implementation.js";
-import {
-  validateUniversalHandlerOptions,
-  createUniversalMethodHandler,
-  createUniversalServiceHandlers,
-} from "./protocol/index.js";
-import type {
-  ProtocolHandlerFactory,
-  UniversalHandler,
-  UniversalHandlerOptions,
-} from "./protocol/index.js";
 import { createHandlerFactory as handlerFactoryGrpcWeb } from "./protocol-grpc-web/handler-factory.js";
 import { createHandlerFactory as handlerFactoryGrpc } from "./protocol-grpc/handler-factory.js";
 import { createHandlerFactory as handlerFactoryConnect } from "./protocol-connect/handler-factory.js";
+import {
+  type UniversalHandler,
+  type UniversalHandlerOptions,
+  createUniversalMethodHandler,
+  createUniversalServiceHandlers,
+  validateUniversalHandlerOptions,
+} from "./protocol/universal-handler.js";
+import type { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
 
 /**
  * ConnectRouter is your single registration point for RPCs.

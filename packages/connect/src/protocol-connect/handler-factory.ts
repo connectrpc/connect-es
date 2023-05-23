@@ -20,44 +20,9 @@ import {
   protoBase64,
 } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
-import { ConnectError, connectErrorFromReason } from "../connect-error.js";
+import { ConnectError } from "../connect-error.js";
 import type { MethodImplSpec } from "../implementation.js";
 import { createHandlerContext } from "../implementation.js";
-import type {
-  Compression,
-  EnvelopedMessage,
-  MethodSerializationLookup,
-  ProtocolHandlerFactory,
-  Serialization,
-  UniversalHandlerFn,
-  UniversalHandlerOptions,
-  UniversalServerRequest,
-  UniversalServerResponse,
-} from "../protocol/index.js";
-import {
-  assertByteStreamRequest,
-  compressionNegotiate,
-  contentTypeMatcher,
-  createMethodSerializationLookup,
-  createMethodUrl,
-  invokeUnaryImplementation,
-  pipe,
-  readAllBytes,
-  transformCatchFinally,
-  transformCompressEnvelope,
-  transformDecompressEnvelope,
-  transformInvokeImplementation,
-  transformJoinEnvelopes,
-  transformParseEnvelope,
-  transformPrepend,
-  transformSerializeEnvelope,
-  transformSplitEnvelope,
-  untilFirst,
-  uResponseMethodNotAllowed,
-  uResponseOk,
-  uResponseUnsupportedMediaType,
-  validateUniversalHandlerOptions,
-} from "../protocol/index.js";
 import {
   contentTypeStreamJson,
   contentTypeStreamProto,
@@ -93,6 +58,50 @@ import {
   requireProtocolVersionHeader,
   requireProtocolVersionParam,
 } from "./version.js";
+import {
+  type Compression,
+  compressionNegotiate,
+} from "../protocol/compression.js";
+import {
+  type MethodSerializationLookup,
+  type Serialization,
+  createMethodSerializationLookup,
+} from "../protocol/serialization.js";
+import {
+  type UniversalHandlerOptions,
+  validateUniversalHandlerOptions,
+} from "../protocol/universal-handler.js";
+import {
+  type UniversalHandlerFn,
+  type UniversalServerRequest,
+  type UniversalServerResponse,
+  assertByteStreamRequest,
+  uResponseMethodNotAllowed,
+  uResponseOk,
+  uResponseUnsupportedMediaType,
+} from "../protocol/universal.js";
+import {
+  createAsyncIterable,
+  pipe,
+  readAllBytes,
+  transformCatchFinally,
+  transformCompressEnvelope,
+  transformDecompressEnvelope,
+  transformJoinEnvelopes,
+  transformParseEnvelope,
+  transformPrepend,
+  transformSerializeEnvelope,
+  transformSplitEnvelope,
+  untilFirst,
+} from "../protocol/async-iterable.js";
+import { contentTypeMatcher } from "../protocol/content-type-matcher.js";
+import { createMethodUrl } from "../protocol/create-method-url.js";
+import type { EnvelopedMessage } from "../protocol/envelope.js";
+import {
+  invokeUnaryImplementation,
+  transformInvokeImplementation,
+} from "../protocol/invoke-implementation.js";
+import type { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
 
 const protocolName = "connect";
 const methodPost = "POST";
@@ -161,7 +170,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     if (isGet && spec.method.idempotency != MethodIdempotency.NoSideEffects) {
       return uResponseMethodNotAllowed;
     }
-    const queryParams = req.url.searchParams;
+    const queryParams = new URL(req.url).searchParams;
     const compressionRequested = isGet
       ? queryParams.get(paramCompression)
       : req.header.get(headerUnaryEncoding);
@@ -268,7 +277,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     header.set(headerUnaryContentLength, body.byteLength.toString(10));
     return {
       status,
-      body,
+      body: createAsyncIterable([body]),
       header,
     };
   };
@@ -334,7 +343,7 @@ function parseUnaryMessage<I extends Message<I>, O extends Message<O>>(
   try {
     return method.I.fromJson(input);
   } catch (e) {
-    throw connectErrorFromReason(e, Code.InvalidArgument);
+    throw ConnectError.from(e, Code.InvalidArgument);
   }
 }
 

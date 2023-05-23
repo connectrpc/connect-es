@@ -71,7 +71,9 @@ export function useNodeServer(
               resolve(); // Resolve the promise to avoid waiting indefinitely
             } else if (count > 0) {
               if (log) {
-                console.log(`[useNodeServer] still ${count} active connections`);
+                console.log(
+                  `[useNodeServer] still ${count} active connections`
+                );
               }
               setTimeout(checkConnections, 100); // retry
             } else {

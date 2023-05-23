@@ -15,7 +15,6 @@
 import {
   Code,
   ConnectError,
-  connectErrorFromReason,
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect";
@@ -69,7 +68,7 @@ describe("unresolvable_host", function () {
               await client.unaryCall({});
               fail("expected an error");
             } catch (e) {
-              expect(connectErrorFromReason(e).message).toBe(
+              expect(ConnectError.from(e).message).toBe(
                 "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
               );
               expect(e).toBeInstanceOf(ConnectError);
@@ -85,7 +84,7 @@ describe("unresolvable_host", function () {
               }
               fail("expected to catch an error");
             } catch (e) {
-              expect(connectErrorFromReason(e).message).toBe(
+              expect(ConnectError.from(e).message).toBe(
                 "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
               );
               expect(e).toBeInstanceOf(ConnectError);
@@ -121,7 +120,7 @@ describe("unresolvable_host", function () {
               fail("expected error");
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
-              const err = connectErrorFromReason(e);
+              const err = ConnectError.from(e);
               expect(err.code).toBe(Code.Unavailable);
             }
           });
@@ -161,7 +160,7 @@ describe("unresolvable_host", function () {
               fail("expected to catch an error");
             } catch (e) {
               expect(e).toBeInstanceOf(ConnectError);
-              const err = connectErrorFromReason(e);
+              const err = ConnectError.from(e);
               expect(err.code).toBe(Code.Unavailable);
             }
           });

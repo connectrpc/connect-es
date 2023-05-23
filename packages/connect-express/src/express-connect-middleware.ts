@@ -13,15 +13,12 @@
 // limitations under the License.
 
 import type { JsonValue } from "@bufbuild/protobuf";
-import {
-  createConnectRouter,
-  Code,
-  connectErrorFromReason,
-} from "@bufbuild/connect";
+import { createConnectRouter, Code, ConnectError } from "@bufbuild/connect";
 import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
 import type { UniversalHandler } from "@bufbuild/connect/protocol";
-import { compressionBrotli, compressionGzip } from "@bufbuild/connect-node";
 import {
+  compressionBrotli,
+  compressionGzip,
   universalRequestFromNodeRequest,
   universalResponseToNodeResponse,
 } from "@bufbuild/connect-node";
@@ -83,7 +80,7 @@ export function expressConnectMiddleware(
     uHandler(uReq)
       .then((uRes) => universalResponseToNodeResponse(uRes, res))
       .catch((reason) => {
-        if (connectErrorFromReason(reason).code == Code.Aborted) {
+        if (ConnectError.from(reason).code == Code.Aborted) {
           return;
         }
         // eslint-disable-next-line no-console

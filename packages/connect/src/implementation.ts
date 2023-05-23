@@ -25,9 +25,9 @@ import type {
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
-  createLinkedAbortController,
   createDeadlineSignal,
-} from "./protocol/index.js";
+  createLinkedAbortController,
+} from "./protocol/signals.js";
 
 // prettier-ignore
 /**
