@@ -222,7 +222,7 @@ describe("universalRequestFromNodeRequest()", function () {
     });
   });
 
-  fdescribe("with HTTP/1.1 request finishing without error", function () {
+  describe("with HTTP/1.1 request finishing without error", function () {
     let universalRequestSignal: AbortSignal | undefined;
     const server = useNodeServer(() => {
       console.log("inside: creating server");
