@@ -81,6 +81,7 @@ import {
   uResponseUnsupportedMediaType,
 } from "../protocol/universal.js";
 import {
+  createAsyncIterable,
   pipe,
   readAllBytes,
   transformCatchFinally,
@@ -169,7 +170,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     if (isGet && spec.method.idempotency != MethodIdempotency.NoSideEffects) {
       return uResponseMethodNotAllowed;
     }
-    const queryParams = req.url.searchParams;
+    const queryParams = new URL(req.url).searchParams;
     const compressionRequested = isGet
       ? queryParams.get(paramCompression)
       : req.header.get(headerUnaryEncoding);
@@ -276,7 +277,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     header.set(headerUnaryContentLength, body.byteLength.toString(10));
     return {
       status,
-      body,
+      body: createAsyncIterable([body]),
       header,
     };
   };

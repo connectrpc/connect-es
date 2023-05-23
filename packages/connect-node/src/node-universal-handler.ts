@@ -121,7 +121,7 @@ export function universalRequestFromNodeRequest(
   return {
     httpVersion: nodeRequest.httpVersion,
     method: nodeRequest.method ?? "",
-    url: new URL(pathname, `${protocol}://${authority}`),
+    url: new URL(pathname, `${protocol}://${authority}`).toString(),
     header: nodeHeaderToWebHeader(nodeRequest.headers),
     body,
     signal: abortController.signal,
@@ -139,13 +139,7 @@ export async function universalResponseToNodeResponse(
   nodeResponse: NodeServerResponse
 ): Promise<void> {
   try {
-    if (universalResponse.body instanceof Uint8Array) {
-      nodeResponse.writeHead(
-        universalResponse.status,
-        webHeaderToNodeHeaders(universalResponse.header)
-      );
-      await write(nodeResponse, universalResponse.body);
-    } else if (universalResponse.body !== undefined) {
+    if (universalResponse.body !== undefined) {
       for await (const chunk of universalResponse.body) {
         // we deliberately send headers *in* this loop, not before,
         // because we have to give the implementation a chance to
@@ -184,7 +178,6 @@ export async function universalResponseToNodeResponse(
       nodeResponse.addTrailers(
         webHeaderToNodeHeaders(universalResponse.trailer)
       );
-      universalResponse.trailer;
     }
     await new Promise<void>((resolve) => {
       // The npm package "compression" crashes when a callback is passed to end()

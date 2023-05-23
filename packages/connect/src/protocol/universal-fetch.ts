@@ -61,11 +61,13 @@ export function createFetchHandler(
 }
 
 function universalClientRequestToFetch(req: UniversalClientRequest): Request {
+  const body =
+    req.body === undefined ? null : iterableToReadableStream(req.body);
   return new Request(req.url, {
     method: req.method,
     headers: req.header,
     signal: req.signal,
-    body: iterableToReadableStream(req.body),
+    body,
   });
 }
 
@@ -84,11 +86,10 @@ function universalServerRequestFromFetch(
   req: Request,
   options: FetchHandlerOptions
 ): UniversalServerRequest {
-  const url = new URL(req.url);
   return {
     httpVersion: options.httpVersion ?? "",
     method: req.method,
-    url,
+    url: req.url,
     header: req.headers,
     body: iterableFromReadableStream(req.body),
     signal: req.signal,
@@ -98,10 +99,8 @@ function universalServerRequestFromFetch(
 function universalServerResponseToFetch(
   res: UniversalServerResponse
 ): Response {
-  let body: ReadableStream<Uint8Array> | Uint8Array | null = null;
-  if (res.body instanceof Uint8Array) {
-    body = res.body;
-  } else if (res.body !== undefined) {
+  let body: ReadableStream<Uint8Array> | null = null;
+  if (res.body !== undefined) {
     body = iterableToReadableStream(res.body);
   }
   return new Response(body, {

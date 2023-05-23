@@ -152,7 +152,7 @@ describe("negotiateProtocol()", function () {
       const r = await h({
         httpVersion: "1.1",
         method: "POST",
-        url: new URL("https://example.com"),
+        url: "https://example.com",
         header: new Headers({ "Content-Type": "UNSUPPORTED" }),
         body: null,
         signal: new AbortController().signal,
@@ -163,7 +163,7 @@ describe("negotiateProtocol()", function () {
       const r = await h({
         httpVersion: "1.1",
         method: "UNSUPPORTED",
-        url: new URL("https://example.com"),
+        url: "https://example.com",
         header: new Headers({ "Content-Type": "application/x" }),
         body: null,
         signal: new AbortController().signal,
@@ -174,7 +174,7 @@ describe("negotiateProtocol()", function () {
       const r = await h({
         httpVersion: "1.1",
         method: "POST",
-        url: new URL("https://example.com"),
+        url: "https://example.com",
         header: new Headers({ "Content-Type": "application/x" }),
         body: null,
         signal: new AbortController().signal,
@@ -186,7 +186,7 @@ describe("negotiateProtocol()", function () {
       const r = await h({
         httpVersion: "1.1",
         method: "POST",
-        url: new URL("https://example.com"),
+        url: "https://example.com",
         header: new Headers(),
         body: null,
         signal: new AbortController().signal,
@@ -208,7 +208,7 @@ describe("negotiateProtocol()", function () {
         const r = await h({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({ "Content-Type": "application/x" }),
           body: null,
           signal: new AbortController().signal,
@@ -221,7 +221,7 @@ describe("negotiateProtocol()", function () {
         const r = await h({
           httpVersion: "2",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({ "Content-Type": "application/x" }),
           body: null,
           signal: new AbortController().signal,

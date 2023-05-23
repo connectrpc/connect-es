@@ -31,11 +31,11 @@ export function createUniversalHandlerClient(
     handlerMap.set(handler.requestPath, handler);
   }
   return async (uClientReq) => {
-    const reqUrl = new URL(uClientReq.url);
-    const handler = handlerMap.get(reqUrl.pathname);
+    const pathname = new URL(uClientReq.url).pathname;
+    const handler = handlerMap.get(pathname);
     if (!handler) {
       throw new ConnectError(
-        `RouterHttpClient: no handler registered for ${reqUrl.pathname}`,
+        `RouterHttpClient: no handler registered for ${pathname}`,
         Code.Unimplemented
       );
     }
@@ -43,10 +43,10 @@ export function createUniversalHandlerClient(
     const uServerRes = await raceSignal(
       reqSignal,
       handler({
-        body: uClientReq.body,
+        body: uClientReq.body ?? createAsyncIterable([]),
         httpVersion: "2.0",
         method: uClientReq.method,
-        url: reqUrl,
+        url: uClientReq.url,
         header: uClientReq.header,
         signal: reqSignal,
       })

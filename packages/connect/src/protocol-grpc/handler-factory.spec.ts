@@ -140,7 +140,7 @@ describe("createHandlerFactory()", function () {
       await handler({
         httpVersion: "2.0",
         method: "POST",
-        url: new URL(`https://example.com/${service.typeName}/${method.name}`),
+        url: `https://example.com/${service.typeName}/${method.name}`,
         header: requestHeader(true, timeoutMs, undefined),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: new AbortController().signal,
@@ -172,7 +172,7 @@ describe("createHandlerFactory()", function () {
       const resPromise = handler({
         httpVersion: "2.0",
         method: "POST",
-        url: new URL(`https://example.com/${service.typeName}/${method.name}`),
+        url: `https://example.com/${service.typeName}/${method.name}`,
         header: requestHeader(true, undefined, undefined),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: ac.signal,

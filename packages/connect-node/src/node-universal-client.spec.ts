@@ -77,7 +77,6 @@ describe("universal node http client", function () {
               url: "https://unresolvable-host.some.domain",
               method: "POST",
               header: new Headers(),
-              body: createAsyncIterable([]),
             });
           } catch (e) {
             expect(ConnectError.from(e).message).toBe(
@@ -108,7 +107,6 @@ describe("universal node http client", function () {
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-            body: createAsyncIterable([]),
           });
           fail("expected error");
         } catch (e) {
@@ -137,7 +135,6 @@ describe("universal node http client", function () {
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-            body: createAsyncIterable([]),
           });
           fail("expected error");
         } catch (e) {
@@ -169,7 +166,6 @@ describe("universal node http client", function () {
           url: server.getUrl(),
           method: "POST",
           header: new Headers(),
-          body: createAsyncIterable([]),
         });
         try {
           for await (const chunk of res.body) {
@@ -203,7 +199,6 @@ describe("universal node http client", function () {
           url: server.getUrl(),
           method: "POST",
           header: new Headers(),
-          body: createAsyncIterable([]),
         });
         try {
           for await (const chunk of res.body) {
@@ -332,7 +327,6 @@ describe("universal node http client", function () {
           url: server.getUrl(),
           method: "POST",
           header: new Headers(),
-          body: createAsyncIterable([]),
         });
         try {
           for await (const chunk of res.body) {
@@ -371,7 +365,6 @@ describe("universal node http client", function () {
           url: server.getUrl(),
           method: "POST",
           header: new Headers(),
-          body: createAsyncIterable([]),
         });
         try {
           for await (const chunk of res.body) {
@@ -408,7 +401,6 @@ describe("universal node http client", function () {
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-            body: createAsyncIterable([]),
             signal,
           });
           fail("expected error");
@@ -438,7 +430,6 @@ describe("universal node http client", function () {
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-            body: createAsyncIterable([]),
             signal,
           });
           fail("expected error");
