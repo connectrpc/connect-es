@@ -106,10 +106,28 @@ describe("universalRequestFromNodeRequest()", function () {
   });
   describe("with HTTP/1.1 ECONNRESET", function () {
     let serverAbortReason: undefined | unknown;
-    const server = useNodeServer(() =>
-      http.createServer(
+    const server = useNodeServer(() => {
+      const s = http.createServer(
         {
+          // We want to test behavior when a connection is dropped, and we do
+          // not want to wait for the default check interval of 30 seconds,
+          // because it would make our test suite idle for 30 seconds, so we
+          // set it to a very low interval.
+          //
+          // Node 18 also enabled two timeouts by default: headersTimeout and
+          // requestTimeout, which are 60s and 5 mins respectively.
+          // https://github.com/nodejs/node/pull/41263
+          //
+          // However, this change seems to be buggy:
+          // https://github.com/nodejs/node/issues/44228
+          // https://github.com/b3nsn0w/koa-easy-ws/issues/36
+          //
+          // And coupled with our low check interval, it seems to be causing
+          // intermittent timeouts in our test server. So, we are disabling
+          // them by default.
+          //
           connectionsCheckingInterval: 1,
+          requestTimeout: 0,
         },
         function (request) {
           const uReq = universalRequestFromNodeRequest(request, undefined);
@@ -117,8 +135,14 @@ describe("universalRequestFromNodeRequest()", function () {
             serverAbortReason = uReq.signal.reason;
           });
         }
-      )
-    );
+      );
+      // For some reason, the type definitions for ServerOptions do not include
+      // headersTimeout:
+      // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/node/http.d.ts
+      // So, it must be added to the server property after construction.
+      s.headersTimeout = 0;
+      return s;
+    });
     it("should abort request signal with ConnectError and Code.Aborted", async function () {
       await new Promise<void>((resolve) => {
         const request = http.request(server.getUrl(), {
@@ -147,10 +171,28 @@ describe("universalRequestFromNodeRequest()", function () {
   });
   describe("with HTTP/1.1 request finishing without error", function () {
     let universalRequestSignal: AbortSignal | undefined;
-    const server = useNodeServer(() =>
-      http.createServer(
+    const server = useNodeServer(() => {
+      const s = http.createServer(
         {
+          // We want to test behavior when a connection is dropped, and we do
+          // not want to wait for the default check interval of 30 seconds,
+          // because it would make our test suite idle for 30 seconds, so we
+          // set it to a very low interval.
+          //
+          // Node 18 also enabled two timeouts by default: headersTimeout and
+          // requestTimeout, which are 60s and 5 mins respectively.
+          // https://github.com/nodejs/node/pull/41263
+          //
+          // However, this change seems to be buggy:
+          // https://github.com/nodejs/node/issues/44228
+          // https://github.com/b3nsn0w/koa-easy-ws/issues/36
+          //
+          // And coupled with our low check interval, it seems to be causing
+          // intermittent timeouts in our test server. So, we are disabling
+          // them by default.
+          //
           connectionsCheckingInterval: 1,
+          requestTimeout: 0,
         },
         function (request, response) {
           const uReq = universalRequestFromNodeRequest(request, undefined);
@@ -158,8 +200,14 @@ describe("universalRequestFromNodeRequest()", function () {
           response.writeHead(200);
           response.end();
         }
-      )
-    );
+      );
+      // For some reason, the type definitions for ServerOptions do not include
+      // headersTimeout:
+      // https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/node/http.d.ts
+      // So, it must be added to the server property after construction.
+      s.headersTimeout = 0;
+      return s;
+    });
     it("should abort request signal with AbortError", async function () {
       await new Promise<void>((resolve) => {
         const request = http.request(server.getUrl(), {
