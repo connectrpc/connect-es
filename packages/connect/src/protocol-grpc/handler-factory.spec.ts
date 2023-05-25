@@ -27,7 +27,7 @@ import {
 import { createHandlerFactory } from "./handler-factory.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
-import { ConnectError } from "../index.js";
+import { Code, ConnectError } from "../index.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
@@ -187,6 +187,40 @@ describe("createHandlerFactory()", function () {
           .withContext("did not expect implementation to be called")
           .toBeFalse();
       });
+    });
+  });
+
+  describe("shutdown", function () {
+    it("should raise the abort reason", async function () {
+      const shutdown = new AbortController();
+      const { transport, service, method } = setupTestHandler(
+        testService.methods.unary,
+        {
+          shutdownSignal: shutdown.signal,
+        },
+        async (_req, ctx) => {
+          shutdown.abort(new ConnectError("shutting down", Code.Unavailable));
+          expect(ctx.signal.aborted).toBeTrue();
+          ctx.signal.throwIfAborted();
+          return Promise.resolve(new StringValue());
+        }
+      );
+      try {
+        await transport.unary(
+          service,
+          method,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value()
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          "[unavailable] shutting down"
+        );
+      }
     });
   });
 

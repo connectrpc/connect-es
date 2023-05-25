@@ -397,6 +397,40 @@ describe("createHandlerFactory()", function () {
     });
   });
 
+  describe("shutdown", function () {
+    it("should raise the abort reason", async function () {
+      const shutdown = new AbortController();
+      const { transport, service, method } = setupTestHandler(
+        testService.methods.unary,
+        {
+          shutdownSignal: shutdown.signal,
+        },
+        async (_req, ctx) => {
+          shutdown.abort(new ConnectError("shutting down", Code.Unavailable));
+          expect(ctx.signal.aborted).toBeTrue();
+          ctx.signal.throwIfAborted();
+          return Promise.resolve(new StringValue());
+        }
+      );
+      try {
+        await transport.unary(
+          service,
+          method,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value()
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          "[unavailable] shutting down"
+        );
+      }
+    });
+  });
+
   describe("request abort signal", function () {
     describe("with unary RPC", function () {
       it("should trigger handler context signal", async function () {

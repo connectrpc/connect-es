@@ -16,7 +16,7 @@ import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
-import { ConnectError } from "../index.js";
+import { Code, ConnectError } from "../index.js";
 import type { UniversalHandlerOptions } from "../protocol/index.js";
 import {
   createAsyncIterable,
@@ -187,6 +187,40 @@ describe("createHandlerFactory()", function () {
           .withContext("did not expect implementation to be called")
           .toBeFalse();
       });
+    });
+  });
+
+  describe("shutdown", function () {
+    it("should raise the abort reason", async function () {
+      const shutdown = new AbortController();
+      const { transport, service, method } = setupTestHandler(
+        testService.methods.unary,
+        {
+          shutdownSignal: shutdown.signal,
+        },
+        async (_req, ctx) => {
+          shutdown.abort(new ConnectError("shutting down", Code.Unavailable));
+          expect(ctx.signal.aborted).toBeTrue();
+          ctx.signal.throwIfAborted();
+          return Promise.resolve(new StringValue());
+        }
+      );
+      try {
+        await transport.unary(
+          service,
+          method,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value()
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          "[unavailable] shutting down"
+        );
+      }
     });
   });
 
