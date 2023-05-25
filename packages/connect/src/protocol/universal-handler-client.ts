@@ -51,10 +51,7 @@ export function createUniversalHandlerClient(
         signal: reqSignal,
       })
     );
-    let body = uServerRes.body ?? new Uint8Array();
-    if (body instanceof Uint8Array) {
-      body = createAsyncIterable([body]);
-    }
+    const body = uServerRes.body ?? createAsyncIterable([]);
     return {
       body: pipe(body, (iterable) => {
         return {
