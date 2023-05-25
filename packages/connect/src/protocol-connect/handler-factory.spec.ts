@@ -132,7 +132,6 @@ describe("createHandlerFactory()", function () {
       expect(r.header.get("implementation-called")).toBe("yes");
       expect(r.message.value).toBe("123");
     });
-
     it("should surface headers for server-streaming", async function () {
       const { transport, service, method } = setupTestHandler(
         testService.methods.serverStreaming,
@@ -298,12 +297,8 @@ describe("createHandlerFactory()", function () {
         expect(res.status).toBe(408);
         expect(res.body).toBeDefined();
         if (res.body !== undefined) {
-          const bodyBytes =
-            res.body instanceof Uint8Array
-              ? res.body
-              : await readAllBytes(res.body, Number.MAX_SAFE_INTEGER);
           const err = errorFromJsonBytes(
-            bodyBytes,
+            await readAllBytes(res.body, Number.MAX_SAFE_INTEGER),
             undefined,
             new ConnectError("error parse failed")
           );
@@ -362,6 +357,42 @@ describe("createHandlerFactory()", function () {
             );
           }
         }
+      });
+    });
+    describe("exceeding configured maxTimeoutMs", function () {
+      it("should raise an error with code INVALID_ARGUMENT", async function () {
+        const maxTimeoutMs = 1000;
+        const timeoutMs = 2000;
+        let implementationCalled = false;
+        const { transport, service, method } = setupTestHandler(
+          testService.methods.unary,
+          {
+            maxTimeoutMs,
+          },
+          async () => {
+            implementationCalled = true;
+            return Promise.resolve(new StringValue());
+          }
+        );
+        try {
+          await transport.unary(
+            service,
+            method,
+            undefined,
+            timeoutMs,
+            undefined,
+            new Int32Value()
+          );
+          fail("expected error");
+        } catch (e) {
+          expect(e).toBeInstanceOf(ConnectError);
+          expect(ConnectError.from(e).message).toBe(
+            "[invalid_argument] timeout 2000ms must be <= 1000"
+          );
+        }
+        expect(implementationCalled)
+          .withContext("did not expect implementation to be called")
+          .toBeFalse();
       });
     });
   });
