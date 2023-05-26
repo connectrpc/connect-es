@@ -113,7 +113,6 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             ),
           });
           const { compression } = validateResponseWithCompression(
-            opt.useBinaryFormat,
             opt.acceptCompression,
             uRes.status,
             uRes.header
@@ -242,7 +241,6 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             ),
           });
           const { compression, foundStatus } = validateResponseWithCompression(
-            opt.useBinaryFormat,
             opt.acceptCompression,
             uRes.status,
             uRes.header
