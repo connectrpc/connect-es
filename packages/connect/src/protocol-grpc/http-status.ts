@@ -20,11 +20,8 @@ import { Code } from "../code.js";
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export function codeFromHttpStatus(httpStatus: number): Code | null {
-  // TODO we should treat HTTP 200 as unknown if the field grpc-status is not present
+export function codeFromHttpStatus(httpStatus: number): Code {
   switch (httpStatus) {
-    case 200: // Ok
-      return null;
     case 400: // Bad Request
       return Code.Internal;
     case 401: // Unauthorized
@@ -42,6 +39,7 @@ export function codeFromHttpStatus(httpStatus: number): Code | null {
     case 504: // Gateway Timeout
       return Code.Unavailable;
     default:
+      // 200 is UNKNOWN because there should be a grpc-status in case of truly OK response.
       return Code.Unknown;
   }
 }

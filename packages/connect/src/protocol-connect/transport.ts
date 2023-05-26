@@ -134,7 +134,6 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           const { compression, isUnaryError, unaryError } =
             validateResponseWithCompression(
               method.kind,
-              opt.useBinaryFormat,
               opt.acceptCompression,
               universalResponse.status,
               universalResponse.header
@@ -243,7 +242,6 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           });
           const { compression } = validateResponseWithCompression(
             method.kind,
-            opt.useBinaryFormat,
             opt.acceptCompression,
             uRes.status,
             uRes.header

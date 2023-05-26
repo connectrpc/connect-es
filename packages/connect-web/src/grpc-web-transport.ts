@@ -162,7 +162,7 @@ export function createGrpcWebTransport(
             signal: req.signal,
             body: encodeEnvelope(0, serialize(req.message)),
           });
-          validateResponse(useBinaryFormat, response.status, response.headers);
+          validateResponse(response.status, response.headers);
           if (!response.body) {
             throw "missing response body";
           }
@@ -313,11 +313,7 @@ export function createGrpcWebTransport(
             signal: req.signal,
             body: await createRequestBody(req.message),
           });
-          const { foundStatus } = validateResponse(
-            useBinaryFormat,
-            fRes.status,
-            fRes.headers
-          );
+          const { foundStatus } = validateResponse(fRes.status, fRes.headers);
           if (!fRes.body) {
             throw "missing response body";
           }

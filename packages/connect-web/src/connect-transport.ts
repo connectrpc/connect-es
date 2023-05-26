@@ -186,7 +186,6 @@ export function createConnectTransport(
           });
           const { isUnaryError, unaryError } = validateResponse(
             method.kind,
-            useBinaryFormat,
             response.status,
             response.headers
           );
@@ -302,12 +301,7 @@ export function createConnectTransport(
             signal: req.signal,
             body: await createRequestBody(req.message),
           });
-          validateResponse(
-            method.kind,
-            useBinaryFormat,
-            fRes.status,
-            fRes.headers
-          );
+          validateResponse(method.kind, fRes.status, fRes.headers);
           if (fRes.body === null) {
             throw "missing response body";
           }
