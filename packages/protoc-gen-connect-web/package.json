@@ -20,7 +20,7 @@
   "preferUnplugged": true,
   "dependencies": {
     "@bufbuild/protobuf": "^1.2.0",
-    "@bufbuild/protoplugin": "^1.2.0"
+    "@bufbuild/protoplugin": "^1.2.1"
   },
   "peerDependencies": {
     "@bufbuild/connect": "0.9.1",
