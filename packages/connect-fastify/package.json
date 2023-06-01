@@ -31,7 +31,7 @@
     "fastify": "^4.17.0"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.2.0"
+    "@bufbuild/protobuf": "^1.2.1"
   },
   "files": [
     "dist/**"
