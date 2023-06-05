@@ -204,7 +204,6 @@ export function createConnectTransport(
             service,
             method,
             header: demuxedHeader,
-            // message: parse(new Uint8Array(await response.arrayBuffer())),
             message: useBinaryFormat
               ? method.O.fromBinary(
                   new Uint8Array(await response.arrayBuffer()),
