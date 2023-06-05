@@ -135,7 +135,7 @@ export function createConnectTransport(
       header: HeadersInit | undefined,
       message: PartialMessage<I>
     ): Promise<UnaryResponse<I, O>> {
-      const { normalize, serialize, parse } = createClientMethodSerializers(
+      const { normalize, serialize } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
@@ -204,7 +204,16 @@ export function createConnectTransport(
             service,
             method,
             header: demuxedHeader,
-            message: parse(new Uint8Array(await response.arrayBuffer())),
+            // message: parse(new Uint8Array(await response.arrayBuffer())),
+            message: useBinaryFormat
+              ? method.O.fromBinary(
+                  new Uint8Array(await response.arrayBuffer()),
+                  options.binaryOptions
+                )
+              : method.O.fromJson(
+                  (await response.json()) as JsonValue,
+                  options.jsonOptions
+                ),
             trailer: demuxedTrailer,
           };
         },
