@@ -60,12 +60,23 @@ describe("custom_fetch", function () {
       }
     });
     it("with callback client", function (done) {
-      const { transport } = transportFactory({ fetch: customFetch });
+      const { transport, options, transportType } = transportFactory({
+        fetch: customFetch,
+      });
       const client = createCallbackClient(TestService, transport);
       client.unaryCall(request, (err, response) => {
         expect(err).toBeUndefined();
         expect(response.payload).toBeDefined();
         expect(response.payload?.body.length).toEqual(request.responseSize);
+        if (transportType === TransportType.CONNECT) {
+          if (options.useBinaryFormat as boolean) {
+            expect(result.json).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+            expect(result.arrayBuffer).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+          } else {
+            expect(result.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+            expect(result.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+          }
+        }
         done();
       });
     });
