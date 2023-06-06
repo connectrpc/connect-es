@@ -28,9 +28,10 @@ describe("unimplemented_method", function () {
       expect(err.code).toEqual(Code.Unimplemented);
     }
   }
-  describeTransports((transport) => {
+  describeTransports((transportFactory) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
+      const { transport } = transportFactory();
+      const client = createPromiseClient(TestService, transport);
       try {
         await client.unimplementedCall({});
         fail("expected to catch an error");
@@ -39,7 +40,8 @@ describe("unimplemented_method", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport());
+      const { transport } = transportFactory();
+      const client = createCallbackClient(TestService, transport);
       client.unimplementedCall({}, (err: ConnectError | undefined) => {
         expectError(err);
         done();

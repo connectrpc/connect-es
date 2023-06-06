@@ -38,9 +38,10 @@ describe("timeout_on_sleeping_server", function () {
   const options: CallOptions = {
     timeoutMs: 5,
   };
-  describeTransports((transport) => {
+  describeTransports((transportFactory) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
+      const { transport } = transportFactory();
+      const client = createPromiseClient(TestService, transport);
       try {
         for await (const response of client.streamingOutputCall(
           request,
@@ -57,7 +58,8 @@ describe("timeout_on_sleeping_server", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport());
+      const { transport } = transportFactory();
+      const client = createCallbackClient(TestService, transport);
       client.streamingOutputCall(
         request,
         (response) => {

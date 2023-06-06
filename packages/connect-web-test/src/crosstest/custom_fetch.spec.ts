@@ -15,21 +15,19 @@
 import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
-import {
-  SimpleRequest,
-  SimpleResponse,
-} from "../gen/grpc/testing/messages_pb.js";
+import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
-const customFetch = (
+let result: Response;
+
+const customFetch = async (
   input: RequestInfo | URL,
   init?: RequestInit | undefined
 ) => {
-  return new Promise((resolve) => {
-      const resp = new SimpleResponse({
-          payload:
-      });
-    resolve(resp);
-  });
+  result = await fetch(input, init);
+  spyOn(result, "arrayBuffer").and.callThrough();
+  spyOn(result, "json").and.callThrough();
+
+  return result;
 };
 
 describe("custom_fetch", function () {
@@ -41,14 +39,22 @@ describe("custom_fetch", function () {
       },
     });
     it("with promise client", async function () {
-      const transport = transportFactory({ fetch: customFetch });
+      const { transport } = transportFactory({ fetch: customFetch });
       const client = createPromiseClient(TestService, transport);
       const response = await client.unaryCall(request);
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
+
+      // if (transport.useBinaryFormat) {
+      //   expect(result.json).toHaveBeenCalledTimes(0);
+      //   expect(result.arrayBuffer).toHaveBeenCalledTimes(1);
+      // } else {
+      //   expect(result.json).toHaveBeenCalledTimes(1);
+      //   expect(result.arrayBuffer).toHaveBeenCalledTimes(0);
+      // }
     });
     it("with callback client", function (done) {
-      const transport = transportFactory({ fetch: customFetch });
+      const { transport } = transportFactory({ fetch: customFetch });
       const client = createCallbackClient(TestService, transport);
       client.unaryCall(request, (err, response) => {
         expect(err).toBeUndefined();

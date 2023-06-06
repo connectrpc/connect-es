@@ -36,88 +36,134 @@ const connectNodeH1BaseUrl = "http://127.0.0.1:8085";
 const crosstestTransports = {
   // gRPC-web
   "@bufbuild/connect-web (gRPC-web, binary) gRPC-web against connect-go (h1)": (
-    options?: Record<string, unknown>
-  ) =>
-    createGrpcWebTransport({
-      ...options,
+    opts?: Record<string, unknown>
+  ) => {
+    const options = {
+      ...opts,
       baseUrl: crossTestConnectGoH1BaseUrl,
       useBinaryFormat: true,
-    }),
+    };
+    return {
+      transport: createGrpcWebTransport(options),
+      options,
+    };
+  },
   "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against connect-go (h1)": (
-    options?: Record<string, unknown>
-  ) =>
-    createGrpcWebTransport({
-      ...options,
+    opts?: Record<string, unknown>
+  ) => {
+    const options = {
+      ...opts,
       baseUrl: crossTestConnectGoH1BaseUrl,
       useBinaryFormat: false,
-    }),
+    };
+    return {
+      transport: createGrpcWebTransport(options),
+      options,
+    };
+  },
   "@bufbuild/connect-web (gRPC-web, binary) gRPC-web against @bufbuild/connect-node (h1)":
-    (options?: Record<string, unknown>) =>
-      createGrpcWebTransport({
-        ...options,
+    (opts?: Record<string, unknown>) => {
+      const options = {
+        ...opts,
         baseUrl: connectNodeH1BaseUrl,
         useBinaryFormat: true,
-      }),
+      };
+      return {
+        transport: createGrpcWebTransport(options),
+        options,
+      };
+    },
   "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against @bufbuild/connect-node (h1)":
-    (options?: Record<string, unknown>) =>
-      createGrpcWebTransport({
-        ...options,
+    (opts?: Record<string, unknown>) => {
+      const options = {
+        ...opts,
         baseUrl: connectNodeH1BaseUrl,
         useBinaryFormat: false,
-      }),
+      };
+      return {
+        transport: createGrpcWebTransport(options),
+        options,
+      };
+    },
   // Connect
   "@bufbuild/connect-web (Connect, binary) against connect-go (h1)": (
-    options?: Record<string, unknown>
-  ) =>
-    createConnectTransport({
-      ...options,
+    opts?: Record<string, unknown>
+  ) => {
+    const options = {
+      ...opts,
       baseUrl: crossTestConnectGoH1BaseUrl,
       useBinaryFormat: true,
-    }),
+    };
+    return {
+      transport: createConnectTransport(options),
+      options,
+    };
+  },
   "@bufbuild/connect-web (Connect, JSON) against connect-go (h1)": (
-    options?: Record<string, unknown>
-  ) =>
-    createConnectTransport({
-      ...options,
+    opts?: Record<string, unknown>
+  ) => {
+    const options = {
+      ...opts,
       baseUrl: crossTestConnectGoH1BaseUrl,
       useBinaryFormat: false,
-    }),
+    };
+    return {
+      transport: createConnectTransport(options),
+      options,
+    };
+  },
   "@bufbuild/connect-web (Connect, binary) against @bufbuild/connect-node (h1)":
-    (options?: Record<string, unknown>) =>
-      createConnectTransport({
-        ...options,
+    (opts?: Record<string, unknown>) => {
+      const options = {
+        ...opts,
         baseUrl: connectNodeH1BaseUrl,
         useBinaryFormat: true,
-      }),
+      };
+      return {
+        transport: createConnectTransport(options),
+        options,
+      };
+    },
   "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)": (
-    options?: Record<string, unknown>
-  ) =>
-    createConnectTransport({
-      ...options,
+    opts?: Record<string, unknown>
+  ) => {
+    const options = {
+      ...opts,
       baseUrl: connectNodeH1BaseUrl,
       useBinaryFormat: false,
-    }),
+    };
+    return {
+      transport: createConnectTransport(options),
+      options,
+    };
+  },
 
   // ConnectRouter
   "@bufbuild/connect-web (ConnectRouter, binary)": (
-    options?: Record<string, unknown>
-  ) =>
-    createRouterTransport(testRoutes, {
-      transport: {
-        ...options,
-        useBinaryFormat: true,
-      },
-    }),
+    opts?: Record<string, unknown>
+  ) => {
+    const options = {
+      ...opts,
+      useBinaryFormat: true,
+    };
+    return {
+      transport: createRouterTransport(testRoutes, options),
+      options,
+    };
+  },
 
   "@bufbuild/connect-web (ConnectRouter, JSON)": (
-    options?: Record<string, unknown>
-  ) =>
-    createRouterTransport(testRoutes, {
-      transport: {
-        ...options,
-        useBinaryFormat: false,
-      },
-    }),
+    opts?: Record<string, unknown>
+  ) => {
+    const options = {
+      ...opts,
+      useBinaryFormat: false,
+    };
+    return {
+      transport: createRouterTransport(testRoutes, options),
+      options,
+    };
+  },
 };
 
 export function describeTransports(

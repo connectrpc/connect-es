@@ -32,9 +32,10 @@ describe("unimplemented_service", function () {
     }
   }
 
-  describeTransports((transport) => {
+  describeTransports((transportFactory) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(UnimplementedService, transport());
+      const { transport } = transportFactory();
+      const client = createPromiseClient(UnimplementedService, transport);
       try {
         await client.unimplementedCall({});
         fail("expected to catch an error");
@@ -43,7 +44,8 @@ describe("unimplemented_service", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(UnimplementedService, transport());
+      const { transport } = transportFactory();
+      const client = createCallbackClient(UnimplementedService, transport);
       client.unimplementedCall({}, (err: ConnectError | undefined) => {
         expectError(err);
         done();

@@ -18,16 +18,18 @@ import { describeTransports } from "../helpers/crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 
 describe("empty_unary_with_timeout", function () {
-  describeTransports((transport) => {
+  describeTransports((transportFactory) => {
     const empty = new Empty();
     const deadlineMs = 1000; // 1 second
     it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
+      const { transport } = transportFactory();
+      const client = createPromiseClient(TestService, transport);
       const response = await client.emptyCall(empty, { timeoutMs: deadlineMs });
       expect(response).toEqual(empty);
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport());
+      const { transport } = transportFactory();
+      const client = createCallbackClient(TestService, transport);
       client.emptyCall(
         empty,
         (err, response) => {
