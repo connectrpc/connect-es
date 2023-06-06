@@ -20,21 +20,20 @@ import {
 } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
-let result: Response;
-
-const customFetch = async (
-  input: RequestInfo | URL,
-  init?: RequestInit | undefined
-) => {
-  result = await fetch(input, init);
-  spyOn(result, "arrayBuffer").and.callThrough();
-  spyOn(result, "json").and.callThrough();
-
-  return result;
-};
-
 describe("custom_fetch", function () {
   describeTransports((transportFactory) => {
+    let result: Response;
+
+    const customFetch = async (
+      input: RequestInfo | URL,
+      init?: RequestInit | undefined
+    ) => {
+      result = await fetch(input, init);
+      spyOn(result, "arrayBuffer").and.callThrough();
+      spyOn(result, "json").and.callThrough();
+
+      return result;
+    };
     const request = new SimpleRequest({
       responseSize: 1,
       payload: {
@@ -51,12 +50,12 @@ describe("custom_fetch", function () {
       expect(response.payload?.body.length).toEqual(request.responseSize);
 
       if (transportType === TransportType.CONNECT) {
-        if (options.useBinaryFormat) {
-          expect(result.json).toHaveBeenCalledTimes(0);
-          expect(result.arrayBuffer).toHaveBeenCalledTimes(1);
+        if (options.useBinaryFormat as boolean) {
+          expect(result.json).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+          expect(result.arrayBuffer).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
         } else {
-          expect(result.json).toHaveBeenCalledTimes(1);
-          expect(result.arrayBuffer).toHaveBeenCalledTimes(0);
+          expect(result.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+          expect(result.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
         }
       }
     });
