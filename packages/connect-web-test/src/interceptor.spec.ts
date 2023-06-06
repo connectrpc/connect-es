@@ -111,18 +111,16 @@ describe("unary interceptors", () => {
     "outer response done with trailers: x-grpc-test-echo-trailing-bin",
   ] as const;
 
-  describeTransports((transport) => {
+  describeTransports((transportFactory) => {
     it("with promise client", async () => {
       const log: string[] = [];
-      const client = createPromiseClient(
-        TestService,
-        transport({
-          interceptors: [
-            makeLoggingInterceptor("outer", log),
-            makeLoggingInterceptor("inner", log),
-          ],
-        })
-      );
+      const { transport } = transportFactory({
+        interceptors: [
+          makeLoggingInterceptor("outer", log),
+          makeLoggingInterceptor("inner", log),
+        ],
+      });
+      const client = createPromiseClient(TestService, transport);
       await client.unaryCall(
         {
           responseSize: 314159,
@@ -136,15 +134,13 @@ describe("unary interceptors", () => {
     });
     it("with callback client", (done) => {
       const log: string[] = [];
-      const client = createCallbackClient(
-        TestService,
-        transport({
-          interceptors: [
-            makeLoggingInterceptor("outer", log),
-            makeLoggingInterceptor("inner", log),
-          ],
-        })
-      );
+      const { transport } = transportFactory({
+        interceptors: [
+          makeLoggingInterceptor("outer", log),
+          makeLoggingInterceptor("inner", log),
+        ],
+      });
+      const client = createCallbackClient(TestService, transport);
       client.unaryCall(
         {
           responseSize: 314159,
@@ -196,16 +192,16 @@ describe("server stream interceptors", () => {
     "inner response stream done with trailers: x-grpc-test-echo-trailing-bin",
     "outer response stream done with trailers: x-grpc-test-echo-trailing-bin",
   ] as const;
-  describeTransports((transport) => {
+  describeTransports((transportFactory) => {
     it("with promise client", async () => {
       const log: string[] = [];
-      const t = transport({
+      const { transport } = transportFactory({
         interceptors: [
           makeLoggingInterceptor("outer", log),
           makeLoggingInterceptor("inner", log),
         ],
       });
-      const client = createPromiseClient(TestService, t);
+      const client = createPromiseClient(TestService, transport);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const _response of client.streamingOutputCall(
         request,
@@ -217,13 +213,13 @@ describe("server stream interceptors", () => {
     });
     it("with callback client", (done) => {
       const log: string[] = [];
-      const t = transport({
+      const { transport } = transportFactory({
         interceptors: [
           makeLoggingInterceptor("outer", log),
           makeLoggingInterceptor("inner", log),
         ],
       });
-      const client = createCallbackClient(TestService, t);
+      const client = createCallbackClient(TestService, transport);
       client.streamingOutputCall(
         request,
         () => void 0,

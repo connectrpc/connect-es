@@ -46,6 +46,7 @@ const crosstestTransports = {
     return {
       transport: createGrpcWebTransport(options),
       options,
+      transportType: TransportType.GRPC_WEB,
     };
   },
   "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against connect-go (h1)": (
@@ -59,6 +60,7 @@ const crosstestTransports = {
     return {
       transport: createGrpcWebTransport(options),
       options,
+      transportType: TransportType.GRPC_WEB,
     };
   },
   "@bufbuild/connect-web (gRPC-web, binary) gRPC-web against @bufbuild/connect-node (h1)":
@@ -71,6 +73,7 @@ const crosstestTransports = {
       return {
         transport: createGrpcWebTransport(options),
         options,
+        transportType: TransportType.GRPC_WEB,
       };
     },
   "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against @bufbuild/connect-node (h1)":
@@ -83,6 +86,7 @@ const crosstestTransports = {
       return {
         transport: createGrpcWebTransport(options),
         options,
+        transportType: TransportType.GRPC_WEB,
       };
     },
   // Connect
@@ -97,6 +101,7 @@ const crosstestTransports = {
     return {
       transport: createConnectTransport(options),
       options,
+      transportType: TransportType.CONNECT,
     };
   },
   "@bufbuild/connect-web (Connect, JSON) against connect-go (h1)": (
@@ -110,6 +115,7 @@ const crosstestTransports = {
     return {
       transport: createConnectTransport(options),
       options,
+      transportType: TransportType.CONNECT,
     };
   },
   "@bufbuild/connect-web (Connect, binary) against @bufbuild/connect-node (h1)":
@@ -122,6 +128,7 @@ const crosstestTransports = {
       return {
         transport: createConnectTransport(options),
         options,
+        transportType: TransportType.CONNECT,
       };
     },
   "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)": (
@@ -135,6 +142,7 @@ const crosstestTransports = {
     return {
       transport: createConnectTransport(options),
       options,
+      transportType: TransportType.CONNECT,
     };
   },
 
@@ -147,8 +155,9 @@ const crosstestTransports = {
       useBinaryFormat: true,
     };
     return {
-      transport: createRouterTransport(testRoutes, options),
+      transport: createRouterTransport(testRoutes, { transport: options }),
       options,
+      transportType: TransportType.CONNECT_ROUTER,
     };
   },
 
@@ -160,15 +169,28 @@ const crosstestTransports = {
       useBinaryFormat: false,
     };
     return {
-      transport: createRouterTransport(testRoutes, options),
+      transport: createRouterTransport(testRoutes, { transport: options }),
       options,
+      transportType: TransportType.CONNECT_ROUTER,
     };
   },
 };
 
+export enum TransportType {
+  GRPC_WEB,
+  CONNECT,
+  CONNECT_ROUTER,
+}
+
+interface TransportDetail {
+  transport: Transport;
+  options: Record<string, unknown>;
+  transportType: TransportType;
+}
+
 export function describeTransports(
   specDefinitions: (
-    transport: (options?: Record<string, unknown>) => Transport,
+    transport: (options?: Record<string, unknown>) => TransportDetail,
     transportName: keyof typeof crosstestTransports
   ) => void
 ) {
@@ -185,7 +207,7 @@ export function describeTransports(
 export function describeTransportsExcluding(
   exclude: Array<keyof typeof crosstestTransports>,
   specDefinitions: (
-    transport: (options?: Record<string, unknown>) => Transport,
+    transport: (options?: Record<string, unknown>) => TransportDetail,
     transportName: keyof typeof crosstestTransports
   ) => void
 ) {

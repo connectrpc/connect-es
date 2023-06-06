@@ -28,9 +28,10 @@ describe("explicit cancellation with AbortController", function () {
   const options: Readonly<CallOptions> = {
     signal: abort.signal,
   };
-  describeTransports((transport) => {
+  describeTransports((transportFactory) => {
     describe("with promise client", () => {
-      const client = createPromiseClient(TestService, transport());
+      const { transport } = transportFactory();
+      const client = createPromiseClient(TestService, transport);
       it("works for unary method", async () => {
         let caughtError = false;
         try {
@@ -62,7 +63,8 @@ describe("explicit cancellation with AbortController", function () {
       });
     });
     describe("with callback client", () => {
-      const client = createCallbackClient(TestService, transport());
+      const { transport } = transportFactory();
+      const client = createCallbackClient(TestService, transport);
       it("works for unary method", (done) => {
         client.unaryCall(
           {},

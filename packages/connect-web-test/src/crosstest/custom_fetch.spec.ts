@@ -14,7 +14,10 @@
 
 import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import {
+  describeTransports,
+  TransportType,
+} from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
 let result: Response;
@@ -39,19 +42,23 @@ describe("custom_fetch", function () {
       },
     });
     it("with promise client", async function () {
-      const { transport } = transportFactory({ fetch: customFetch });
+      const { transport, options, transportType } = transportFactory({
+        fetch: customFetch,
+      });
       const client = createPromiseClient(TestService, transport);
       const response = await client.unaryCall(request);
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
 
-      // if (transport.useBinaryFormat) {
-      //   expect(result.json).toHaveBeenCalledTimes(0);
-      //   expect(result.arrayBuffer).toHaveBeenCalledTimes(1);
-      // } else {
-      //   expect(result.json).toHaveBeenCalledTimes(1);
-      //   expect(result.arrayBuffer).toHaveBeenCalledTimes(0);
-      // }
+      if (transportType === TransportType.CONNECT) {
+        if (options.useBinaryFormat) {
+          expect(result.json).toHaveBeenCalledTimes(0);
+          expect(result.arrayBuffer).toHaveBeenCalledTimes(1);
+        } else {
+          expect(result.json).toHaveBeenCalledTimes(1);
+          expect(result.arrayBuffer).toHaveBeenCalledTimes(0);
+        }
+      }
     });
     it("with callback client", function (done) {
       const { transport } = transportFactory({ fetch: customFetch });
