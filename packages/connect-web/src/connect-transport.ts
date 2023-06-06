@@ -205,10 +205,7 @@ export function createConnectTransport(
             method,
             header: demuxedHeader,
             message: useBinaryFormat
-              ? method.O.fromBinary(
-                  new Uint8Array(await response.arrayBuffer()),
-                  options.binaryOptions
-                )
+              ? parse(new Uint8Array(await response.arrayBuffer()))
               : method.O.fromJson(
                   (await response.json()) as JsonValue,
                   options.jsonOptions
