@@ -31,7 +31,7 @@ import { testRoutes } from "./test-routes.js";
 const crossTestConnectGoH1BaseUrl = "https://127.0.0.1:8080";
 
 // see connect-node-h1-server.mjs
-const connectNodeH1BaseUrl = "http://127.0.0.1:8085";
+export const connectNodeH1BaseUrl = "http://127.0.0.1:8085";
 
 const crosstestTransports = {
   // gRPC-web
