@@ -50,6 +50,8 @@ import {
   validateResponse,
 } from "@bufbuild/connect/protocol-connect";
 import { assertFetchApi } from "./assert-fetch-api.js";
+import { supportsRequestStreams } from "./supports-request-streams.js";
+import { ConnectEnvelopStream } from "./connect-envelop-stream.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -266,15 +268,39 @@ export function createConnectTransport(
 
       async function createRequestBody(
         input: AsyncIterable<I>
-      ): Promise<Uint8Array> {
-        if (method.kind != MethodKind.ServerStreaming) {
+      ): Promise<Uint8Array | ReadableStream> {
+        if (method.kind == MethodKind.ServerStreaming) {
+          const r = await input[Symbol.asyncIterator]().next();
+          if (r.done == true) {
+            throw "missing request message";
+          }
+          return encodeEnvelope(0, serialize(r.value));
+        } else if (
+          method.kind === MethodKind.ClientStreaming &&
+          supportsRequestStreams()
+        ) {
+          const inputStream = new ReadableStream({
+            async pull(controller) {
+              try {
+                const { value, done } = await input[
+                  Symbol.asyncIterator
+                ]().next();
+
+                if (done) {
+                  controller.close();
+                } else {
+                  controller.enqueue(value);
+                }
+              } catch (e) {
+                controller.error(e);
+              }
+            },
+          });
+
+          return inputStream.pipeThrough(new ConnectEnvelopStream(serialize));
+        } else {
           throw "The fetch API does not support streaming request bodies";
         }
-        const r = await input[Symbol.asyncIterator]().next();
-        if (r.done == true) {
-          throw "missing request message";
-        }
-        return encodeEnvelope(0, serialize(r.value));
       }
       return await runStreamingCall<I, O>({
         interceptors: options.interceptors,
