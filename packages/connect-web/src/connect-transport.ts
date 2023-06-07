@@ -204,7 +204,12 @@ export function createConnectTransport(
             service,
             method,
             header: demuxedHeader,
-            message: parse(new Uint8Array(await response.arrayBuffer())),
+            message: useBinaryFormat
+              ? parse(new Uint8Array(await response.arrayBuffer()))
+              : method.O.fromJson(
+                  (await response.json()) as JsonValue,
+                  options.jsonOptions
+                ),
             trailer: demuxedTrailer,
           };
         },
