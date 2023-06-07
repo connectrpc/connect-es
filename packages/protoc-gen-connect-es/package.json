@@ -20,12 +20,12 @@
   },
   "preferUnplugged": true,
   "dependencies": {
-    "@bufbuild/protobuf": "^1.2.0",
-    "@bufbuild/protoplugin": "^1.2.0"
+    "@bufbuild/protobuf": "^1.2.1",
+    "@bufbuild/protoplugin": "^1.2.1"
   },
   "peerDependencies": {
     "@bufbuild/connect": "0.9.1",
-    "@bufbuild/protoc-gen-es": "^1.2.0"
+    "@bufbuild/protoc-gen-es": "^1.2.1"
   },
   "peerDependenciesMeta": {
     "@bufbuild/connect": {
