@@ -12,34 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { connectNodeH1BaseUrl } from "./helpers/crosstestserver.js";
 import { TestService } from "./gen/grpc/testing/test_connect.js";
-import { SimpleRequest } from "./gen/grpc/testing/messages_pb.js";
+import {
+  SimpleRequest,
+  SimpleResponse,
+} from "./gen/grpc/testing/messages_pb.js";
 import { createConnectTransport } from "@bufbuild/connect-web";
 
 describe("custom fetch", function () {
   describe("with Connect transport", () => {
-    let result: Response;
-
-    const customFetch = async (
-      input: RequestInfo | URL,
-      init?: RequestInit | undefined
-    ) => {
-      result = await fetch(input, init);
-      spyOn(result, "arrayBuffer").and.callThrough();
-      spyOn(result, "json").and.callThrough();
-      return result;
-    };
-    const request = new SimpleRequest({
-      responseSize: 1,
-      payload: {
-        body: new Uint8Array(1).fill(0),
-      },
-    });
     it("should only call Response#json with the JSON format", async function () {
+      const response = new Response(
+        new SimpleResponse({ username: "donald" }).toJsonString(),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      spyOn(response, "arrayBuffer").and.callThrough();
+      spyOn(response, "json").and.callThrough();
       const transport = createConnectTransport({
-        fetch: customFetch,
-        baseUrl: connectNodeH1BaseUrl,
+        baseUrl: "https://example.com",
+        fetch: () => Promise.resolve(response),
       });
       await transport.unary(
         TestService,
@@ -47,15 +42,25 @@ describe("custom fetch", function () {
         undefined,
         undefined,
         undefined,
-        request
+        new SimpleRequest()
       );
-      expect(result.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
-      expect(result.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
     });
-    it("should only call Response#arrayBuffer with the binary format", async function () {
+    it("should only call Response#arrayBuffer with the binary format on the happy path", async function () {
+      const response = new Response(
+        new SimpleResponse({ username: "donald" }).toBinary(),
+        {
+          headers: {
+            "Content-Type": "application/proto",
+          },
+        }
+      );
+      spyOn(response, "arrayBuffer").and.callThrough();
+      spyOn(response, "json").and.callThrough();
       const transport = createConnectTransport({
-        fetch: customFetch,
-        baseUrl: connectNodeH1BaseUrl,
+        fetch: () => Promise.resolve(response),
+        baseUrl: "https://example.com",
         useBinaryFormat: true,
       });
       await transport.unary(
@@ -64,10 +69,43 @@ describe("custom fetch", function () {
         undefined,
         undefined,
         undefined,
-        request
+        new SimpleRequest()
       );
-      expect(result.json).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
-      expect(result.arrayBuffer).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.json).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+    });
+    it("should call Response#json with the binary format for an error response", async function () {
+      const response = new Response(
+        JSON.stringify({
+          code: "permission_denied",
+          message: "foobar",
+        }),
+        {
+          status: 403,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      spyOn(response, "arrayBuffer").and.callThrough();
+      spyOn(response, "json").and.callThrough();
+      const transport = createConnectTransport({
+        fetch: () => Promise.resolve(response),
+        baseUrl: "https://example.com",
+        useBinaryFormat: true,
+      });
+      await expectAsync(
+        transport.unary(
+          TestService,
+          TestService.methods.unaryCall,
+          undefined,
+          undefined,
+          undefined,
+          new SimpleRequest()
+        )
+      ).toBeRejectedWithError(/\[permission_denied] foobar/);
+      expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
     });
   });
 });
