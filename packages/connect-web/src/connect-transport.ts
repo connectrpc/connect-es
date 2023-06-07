@@ -279,23 +279,7 @@ export function createConnectTransport(
           method.kind === MethodKind.ClientStreaming &&
           supportsRequestStreams()
         ) {
-          const inputStream = new ReadableStream({
-            async pull(controller) {
-              try {
-                const { value, done } = await input[
-                  Symbol.asyncIterator
-                ]().next();
-
-                if (done) {
-                  controller.close();
-                } else {
-                  controller.enqueue(value);
-                }
-              } catch (e) {
-                controller.error(e);
-              }
-            },
-          });
+          const inputStream = iterableToReadableStream(input);
 
           return inputStream.pipeThrough(new ConnectEnvelopStream(serialize));
         } else {
@@ -348,4 +332,30 @@ export function createConnectTransport(
       });
     },
   };
+}
+
+function iterableToReadableStream<T>(
+  iterable: AsyncIterable<T>
+): ReadableStream<T> {
+  const it = iterable[Symbol.asyncIterator]();
+  return new ReadableStream<T>(<UnderlyingSource<T>>{
+    async pull(controller: ReadableStreamDefaultController<T>) {
+      const r = await it.next();
+      if (r.done === true) {
+        controller.close();
+        return;
+      }
+      controller.enqueue(r.value);
+    },
+    async cancel(reason) {
+      if (it.throw) {
+        try {
+          await it.throw(reason);
+        } catch {
+          // iterator.throw on a generator function rethrows unless the
+          // body catches and swallows.
+        }
+      }
+    },
+  });
 }
