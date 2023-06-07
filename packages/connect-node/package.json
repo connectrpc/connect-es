@@ -30,7 +30,7 @@
     "headers-polyfill": "^3.1.2"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.2.0"
+    "@bufbuild/protobuf": "^1.2.1"
   },
   "devDependencies": {
     "@types/jasmine": "^4.3.1",
