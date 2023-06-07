@@ -37,10 +37,9 @@ describe("fail_server_streaming", () => {
     }
   }
   const request = new StreamingOutputCallRequest();
-  describeTransports((transportFactory) => {
+  describeTransports((transport) => {
     it("with promise client", async function () {
-      const { transport } = transportFactory();
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for await (const response of client.failStreamingOutputCall(request)) {
@@ -53,8 +52,7 @@ describe("fail_server_streaming", () => {
       }
     });
     it("with callback client", function (done) {
-      const { transport } = transportFactory();
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.failStreamingOutputCall(
         request,
         (response) => {

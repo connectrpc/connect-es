@@ -33,7 +33,7 @@ describe("cacheable_unary", function () {
       },
     });
     it("with promise client", async function () {
-      const { transport } = transportFactory({ useHttpGet: true });
+      const transport = transportFactory({ useHttpGet: true });
       const client = createPromiseClient(TestService, transport);
       const response = await client.cacheableUnaryCall(request, {
         onHeader: ensureGetRequest,
@@ -42,7 +42,7 @@ describe("cacheable_unary", function () {
       expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
-      const { transport } = transportFactory({ useHttpGet: true });
+      const transport = transportFactory({ useHttpGet: true });
       const client = createCallbackClient(TestService, transport);
       client.cacheableUnaryCall(
         request,

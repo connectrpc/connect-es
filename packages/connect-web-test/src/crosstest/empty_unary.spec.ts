@@ -18,17 +18,15 @@ import { describeTransports } from "../helpers/crosstestserver.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 
 describe("empty_unary", function () {
-  describeTransports((transportFactory) => {
+  describeTransports((transport) => {
     const empty = new Empty();
     it("with promise client", async function () {
-      const { transport } = transportFactory();
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       const response = await client.emptyCall(empty);
       expect(response).toEqual(empty);
     });
     it("with callback client", function (done) {
-      const { transport } = transportFactory();
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.emptyCall(empty, (err, response) => {
         expect(err).toBeUndefined();
         expect(response).toEqual(empty);

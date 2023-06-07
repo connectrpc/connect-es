@@ -18,11 +18,10 @@ import { describeTransports } from "../helpers/crosstestserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 
 describe("empty_stream", function () {
-  describeTransports((transportFactory) => {
+  describeTransports((transport) => {
     const request = new StreamingOutputCallRequest();
     it("with promise client", async function () {
-      const { transport } = transportFactory();
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         for await (const response of client.streamingOutputCall(request)) {
           fail(
@@ -34,8 +33,7 @@ describe("empty_stream", function () {
       }
     });
     it("with callback client", function (done) {
-      const { transport } = transportFactory();
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.streamingOutputCall(
         request,
         () => {

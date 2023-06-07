@@ -18,7 +18,7 @@ import { describeTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
 describe("large_unary", function () {
-  describeTransports((transportFactory) => {
+  describeTransports((transport) => {
     const request = new SimpleRequest({
       responseSize: 314159,
       payload: {
@@ -26,15 +26,13 @@ describe("large_unary", function () {
       },
     });
     it("with promise client", async function () {
-      const { transport } = transportFactory();
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       const response = await client.unaryCall(request);
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
-      const { transport } = transportFactory();
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.unaryCall(request, (err, response) => {
         expect(err).toBeUndefined();
         expect(response.payload).toBeDefined();

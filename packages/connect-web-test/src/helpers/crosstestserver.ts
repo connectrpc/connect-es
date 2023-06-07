@@ -31,166 +31,98 @@ import { testRoutes } from "./test-routes.js";
 const crossTestConnectGoH1BaseUrl = "https://127.0.0.1:8080";
 
 // see connect-node-h1-server.mjs
-export const connectNodeH1BaseUrl = "http://127.0.0.1:8085";
+const connectNodeH1BaseUrl = "http://127.0.0.1:8085";
 
 const crosstestTransports = {
   // gRPC-web
   "@bufbuild/connect-web (gRPC-web, binary) gRPC-web against connect-go (h1)": (
-    opts?: Record<string, unknown>
-  ) => {
-    const options = {
-      ...opts,
+    options?: Record<string, unknown>
+  ) =>
+    createGrpcWebTransport({
+      ...options,
       baseUrl: crossTestConnectGoH1BaseUrl,
       useBinaryFormat: true,
-    };
-    return {
-      transport: createGrpcWebTransport(options),
-      options,
-      transportType: TransportType.GRPC_WEB,
-    };
-  },
+    }),
   "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against connect-go (h1)": (
-    opts?: Record<string, unknown>
-  ) => {
-    const options = {
-      ...opts,
+    options?: Record<string, unknown>
+  ) =>
+    createGrpcWebTransport({
+      ...options,
       baseUrl: crossTestConnectGoH1BaseUrl,
       useBinaryFormat: false,
-    };
-    return {
-      transport: createGrpcWebTransport(options),
-      options,
-      transportType: TransportType.GRPC_WEB,
-    };
-  },
+    }),
   "@bufbuild/connect-web (gRPC-web, binary) gRPC-web against @bufbuild/connect-node (h1)":
-    (opts?: Record<string, unknown>) => {
-      const options = {
-        ...opts,
+    (options?: Record<string, unknown>) =>
+      createGrpcWebTransport({
+        ...options,
         baseUrl: connectNodeH1BaseUrl,
         useBinaryFormat: true,
-      };
-      return {
-        transport: createGrpcWebTransport(options),
-        options,
-        transportType: TransportType.GRPC_WEB,
-      };
-    },
+      }),
   "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against @bufbuild/connect-node (h1)":
-    (opts?: Record<string, unknown>) => {
-      const options = {
-        ...opts,
+    (options?: Record<string, unknown>) =>
+      createGrpcWebTransport({
+        ...options,
         baseUrl: connectNodeH1BaseUrl,
         useBinaryFormat: false,
-      };
-      return {
-        transport: createGrpcWebTransport(options),
-        options,
-        transportType: TransportType.GRPC_WEB,
-      };
-    },
+      }),
   // Connect
   "@bufbuild/connect-web (Connect, binary) against connect-go (h1)": (
-    opts?: Record<string, unknown>
-  ) => {
-    const options = {
-      ...opts,
+    options?: Record<string, unknown>
+  ) =>
+    createConnectTransport({
+      ...options,
       baseUrl: crossTestConnectGoH1BaseUrl,
       useBinaryFormat: true,
-    };
-    return {
-      transport: createConnectTransport(options),
-      options,
-      transportType: TransportType.CONNECT,
-    };
-  },
+    }),
   "@bufbuild/connect-web (Connect, JSON) against connect-go (h1)": (
-    opts?: Record<string, unknown>
-  ) => {
-    const options = {
-      ...opts,
+    options?: Record<string, unknown>
+  ) =>
+    createConnectTransport({
+      ...options,
       baseUrl: crossTestConnectGoH1BaseUrl,
       useBinaryFormat: false,
-    };
-    return {
-      transport: createConnectTransport(options),
-      options,
-      transportType: TransportType.CONNECT,
-    };
-  },
+    }),
   "@bufbuild/connect-web (Connect, binary) against @bufbuild/connect-node (h1)":
-    (opts?: Record<string, unknown>) => {
-      const options = {
-        ...opts,
+    (options?: Record<string, unknown>) =>
+      createConnectTransport({
+        ...options,
         baseUrl: connectNodeH1BaseUrl,
         useBinaryFormat: true,
-      };
-      return {
-        transport: createConnectTransport(options),
-        options,
-        transportType: TransportType.CONNECT,
-      };
-    },
+      }),
   "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)": (
-    opts?: Record<string, unknown>
-  ) => {
-    const options = {
-      ...opts,
+    options?: Record<string, unknown>
+  ) =>
+    createConnectTransport({
+      ...options,
       baseUrl: connectNodeH1BaseUrl,
       useBinaryFormat: false,
-    };
-    return {
-      transport: createConnectTransport(options),
-      options,
-      transportType: TransportType.CONNECT,
-    };
-  },
+    }),
 
   // ConnectRouter
   "@bufbuild/connect-web (ConnectRouter, binary)": (
-    opts?: Record<string, unknown>
-  ) => {
-    const options = {
-      ...opts,
-      useBinaryFormat: true,
-    };
-    return {
-      transport: createRouterTransport(testRoutes, { transport: options }),
-      options,
-      transportType: TransportType.CONNECT_ROUTER,
-    };
-  },
+    options?: Record<string, unknown>
+  ) =>
+    createRouterTransport(testRoutes, {
+      transport: {
+        ...options,
+        useBinaryFormat: true,
+      },
+    }),
 
   "@bufbuild/connect-web (ConnectRouter, JSON)": (
-    opts?: Record<string, unknown>
-  ) => {
-    const options = {
-      ...opts,
-      useBinaryFormat: false,
-    };
-    return {
-      transport: createRouterTransport(testRoutes, { transport: options }),
-      options,
-      transportType: TransportType.CONNECT_ROUTER,
-    };
-  },
+    options?: Record<string, unknown>
+  ) =>
+    createRouterTransport(testRoutes, {
+      transport: {
+        ...options,
+        useBinaryFormat: false,
+      },
+    }),
 };
-
-export enum TransportType {
-  GRPC_WEB,
-  CONNECT,
-  CONNECT_ROUTER,
-}
-
-interface TransportDetail {
-  transport: Transport;
-  options: Record<string, unknown>;
-  transportType: TransportType;
-}
 
 export function describeTransports(
   specDefinitions: (
-    transport: (options?: Record<string, unknown>) => TransportDetail,
+    transport: (options?: Record<string, unknown>) => Transport,
     transportName: keyof typeof crosstestTransports
   ) => void
 ) {
@@ -207,7 +139,7 @@ export function describeTransports(
 export function describeTransportsExcluding(
   exclude: Array<keyof typeof crosstestTransports>,
   specDefinitions: (
-    transport: (options?: Record<string, unknown>) => TransportDetail,
+    transport: (options?: Record<string, unknown>) => Transport,
     transportName: keyof typeof crosstestTransports
   ) => void
 ) {

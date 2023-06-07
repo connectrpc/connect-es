@@ -27,7 +27,7 @@ import {
 import { interop } from "../helpers/interop.js";
 
 describe("custom_metadata_server_streaming", function () {
-  describeTransports((transportFactory) => {
+  describeTransports((transport) => {
     const size = 314159;
     const binaryValue = new Uint8Array([0xab, 0xab, 0xab]);
     const requestHeaders = {
@@ -55,8 +55,7 @@ describe("custom_metadata_server_streaming", function () {
       }
     }
     it("with promise client", async function () {
-      const { transport } = transportFactory();
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       let responseHeaders: Headers | undefined;
       let responseTrailers: Headers | undefined;
       for await (const response of client.streamingOutputCall(request, {
@@ -74,8 +73,7 @@ describe("custom_metadata_server_streaming", function () {
       expectResponseTrailers(responseTrailers);
     });
     it("with callback client", function (done) {
-      const { transport } = transportFactory();
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       let responseHeaders: Headers | undefined;
       let responseTrailers: Headers | undefined;
       client.streamingOutputCall(

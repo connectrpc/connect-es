@@ -33,10 +33,9 @@ describe("fail_unary", () => {
       expect(details).toEqual([interop.errorDetail]);
     }
   }
-  describeTransports((transportFactory) => {
+  describeTransports((transport) => {
     it("with promise client", async function () {
-      const { transport } = transportFactory();
-      const client = createPromiseClient(TestService, transport);
+      const client = createPromiseClient(TestService, transport());
       try {
         await client.failUnaryCall({});
         fail("expected to catch an error");
@@ -45,8 +44,7 @@ describe("fail_unary", () => {
       }
     });
     it("with callback client", function (done) {
-      const { transport } = transportFactory();
-      const client = createCallbackClient(TestService, transport);
+      const client = createCallbackClient(TestService, transport());
       client.failUnaryCall({}, (err: ConnectError | undefined) => {
         expectError(err);
         done();
