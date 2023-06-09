@@ -34,59 +34,126 @@ import type {
   UniversalClientResponse,
 } from "@bufbuild/connect/protocol";
 import { getAbortSignalReason } from "@bufbuild/connect/protocol";
+import {
+  Http2SessionManager,
+  type Http2SessionOptions,
+} from "./http2-session-manager.js";
 
 /**
  * Options for creating an UniversalClientFn using the Node.js `http`, `https`,
  * or `http2` module.
  */
 export type NodeHttpClientOptions =
-  | {
-      /**
-       * Use the Node.js `http` or `https` module.
-       */
-      httpVersion: "1.1";
+  | NodeHttp1Options
+  | NodeHttp2Options
+  | NodeHttp2OptionsWithSessionManager;
 
-      /**
-       * Options passed to the request() call of the Node.js built-in
-       * http or https module.
-       */
-      nodeOptions?:
-        | Omit<http.RequestOptions, "signal">
-        | Omit<https.RequestOptions, "signal">;
-    }
-  | {
-      /**
-       * Use the Node.js `http2` module.
-       */
-      httpVersion: "2";
+type NodeHttp1Options = {
+  /**
+   * Use the Node.js `http` or `https` module.
+   */
+  httpVersion: "1.1";
 
-      /**
-       * Base URI for all HTTP requests.
-       *
-       * Requests will be made to <baseUrl>/<package>.<service>/method
-       *
-       * Example: `baseUrl: "https://example.com/my-api"`
-       *
-       * This will make a `POST /my-api/my_package.MyService/Foo` to
-       * `example.com` via HTTPS.
-       */
-      baseUrl: string;
+  /**
+   * Base URI for all HTTP requests.
+   *
+   * Requests will be made to <baseUrl>/<package>.<service>/method
+   *
+   * Example: `baseUrl: "https://example.com/my-api"`
+   *
+   * This will make a `POST /my-api/my_package.MyService/Foo` to
+   * `example.com` via HTTPS.
+   */
+  baseUrl: string;
 
-      /**
-       * Options passed to the connect() call of the Node.js built-in
-       * http2 module.
-       */
-      nodeOptions?:
-        | http2.ClientSessionOptions
-        | http2.SecureClientSessionOptions;
+  /**
+   * Options passed to the request() call of the Node.js built-in
+   * http or https module.
+   */
+  nodeOptions?:
+    | Omit<http.RequestOptions, "signal">
+    | Omit<https.RequestOptions, "signal">;
+} & DeprecatedOptions;
 
-      /**
-       * By default, HTTP/2 sessions are terminated after each request.
-       * Set this option to true to keep sessions alive across multiple
-       * requests.
-       */
-      keepSessionAlive?: boolean;
-    };
+type NodeHttp2Options = {
+  /**
+   * Use the Node.js `http2` module.
+   */
+  httpVersion: "2";
+
+  /**
+   * Base URI for all HTTP requests.
+   *
+   * Requests will be made to <baseUrl>/<package>.<service>/method
+   *
+   * Example: `baseUrl: "https://example.com/my-api"`
+   *
+   * This will make a `POST /my-api/my_package.MyService/Foo` to
+   * `example.com` via HTTPS.
+   */
+  baseUrl: string;
+
+  /**
+   * Options passed to the connect() call of the Node.js built-in
+   * http2 module.
+   */
+  nodeOptions?: http2.ClientSessionOptions | http2.SecureClientSessionOptions;
+
+  // TODO document
+  sessionManager?: undefined;
+} & Http2SessionOptions &
+  DeprecatedOptions;
+
+type NodeHttp2OptionsWithSessionManager = DeprecatedOptions & {
+  /**
+   * Use the Node.js `http2` module.
+   */
+  httpVersion: "2";
+
+  // TODO document
+  sessionManager: NodeHttp2ClientSessionManager;
+
+  // TODO document
+  baseUrl?: undefined;
+  nodeOptions?: undefined;
+  pingIntervalMs?: undefined;
+  pingIdleConnection?: undefined;
+  pingTimeoutMs?: undefined;
+  idleConnectionTimeoutMs?: undefined;
+};
+
+type DeprecatedOptions = {
+  /**
+   * @deprecated use the Http2SessionManager instead for fine-grained control over sessions and keep-alive
+   *
+   * By default, HTTP/2 sessions are terminated after each request.
+   * Set this option to true to keep sessions alive across multiple
+   * requests.
+   */
+  keepSessionAlive?: boolean;
+};
+
+export interface NodeHttp2ClientSessionManager {
+  /**
+   * The host this session manager connect to.
+   */
+  authority: string;
+
+  /**
+   * Issue a request.
+   */
+  request(
+    method: string,
+    path: string,
+    headers: http2.OutgoingHttpHeaders,
+    options: Omit<http2.ClientSessionRequestOptions, "signal">
+  ): Promise<http2.ClientHttp2Stream>;
+
+  /**
+   * Notify the manager of a successful read from a http2.ClientHttp2Stream.
+   */
+  notifyResponseByteRead(stream: http2.ClientHttp2Stream): void;
+}
 
 /**
  * Create a universal client function, a minimal abstraction of an HTTP client,
@@ -95,13 +162,13 @@ export type NodeHttpClientOptions =
  * @private Internal code, does not follow semantic versioning.
  */
 export function createNodeHttpClient(options: NodeHttpClientOptions) {
-  return options.httpVersion == "2"
-    ? createNodeHttp2Client(
-        options.baseUrl,
-        options.keepSessionAlive ?? false,
-        options.nodeOptions
-      )
-    : createNodeHttp1Client(options.nodeOptions);
+  if (options.httpVersion == "2") {
+    return createNodeHttp2Client(
+      options.sessionManager ??
+        new Http2SessionManager(options.baseUrl, options, options.nodeOptions)
+    );
+  }
+  return createNodeHttp1Client(options.nodeOptions);
 }
 
 /**
@@ -166,20 +233,9 @@ function createNodeHttp1Client(
  * an UniversalClientResponse.
  */
 function createNodeHttp2Client(
-  authority: URL | string,
-  keepSessionOpen: boolean,
-  http2SessionOptions:
-    | http2.ClientSessionOptions
-    | http2.SecureClientSessionOptions
-    | undefined
+  sessionManager: NodeHttp2ClientSessionManager
 ): UniversalClientFn {
-  const sessionHolder: H2SessionHolder = {
-    options: http2SessionOptions,
-    authority: new URL(authority).origin,
-    keepOpen: keepSessionOpen,
-    lastSession: undefined,
-  };
-  return async function request(
+  return function request(
     req: UniversalClientRequest
   ): Promise<UniversalClientResponse> {
     const sentinel = createSentinel(req.signal);
@@ -189,7 +245,7 @@ function createNodeHttp2Client(
       });
       h2Request(
         sentinel,
-        sessionHolder,
+        sessionManager,
         req.url,
         req.method,
         webHeaderToNodeHeaders(req.header),
@@ -200,7 +256,7 @@ function createNodeHttp2Client(
             const response: UniversalClientResponse = {
               status: headers[":status"] ?? 0,
               header: nodeHeaderToWebHeader(headers),
-              body: h2ResponseIterable(sentinel, stream),
+              body: h2ResponseIterable(sentinel, stream, sessionManager),
               trailer: h2ResponseTrailer(stream),
             };
             resolve(response);
@@ -279,111 +335,74 @@ function h1ResponseIterable(
   };
 }
 
-interface H2SessionHolder {
-  readonly options:
-    | http2.ClientSessionOptions
-    | http2.SecureClientSessionOptions
-    | undefined;
-  readonly authority: string;
-  readonly keepOpen: boolean;
-  lastSession: http2.ClientHttp2Session | undefined;
-}
-
 function h2Request(
   sentinel: Sentinel,
-  sessionHolder: H2SessionHolder,
+  sm: NodeHttp2ClientSessionManager,
   url: string,
   method: string,
   headers: http2.OutgoingHttpHeaders,
   options: Omit<http2.ClientSessionRequestOptions, "signal">,
   onStream: (stream: http2.ClientHttp2Stream) => void
 ): void {
-  const requestUrl = new URL(url);
-  if (requestUrl.origin !== sessionHolder.authority) {
-    const message = `cannot make a request to ${requestUrl.origin}: the http2 session is connected to ${sessionHolder.authority}`;
+  const requestUrl = new URL(url, sm.authority);
+  if (requestUrl.origin !== sm.authority) {
+    const message = `cannot make a request to ${requestUrl.origin}: the http2 session is connected to ${sm.authority}`;
     sentinel.reject(new ConnectError(message, Code.Internal));
     return;
   }
-  if (
-    sessionHolder.keepOpen &&
-    sessionHolder.lastSession !== undefined &&
-    !sessionHolder.lastSession.closed &&
-    !sessionHolder.lastSession.destroyed
-  ) {
-    return h2ConnectedSession(sessionHolder.lastSession);
-  }
+  sm.request(method, requestUrl.pathname + requestUrl.search, headers, {}).then(
+    (stream) => {
+      stream.session.on("error", sentinel.reject);
 
-  const connectingSession = http2.connect(
-    sessionHolder.authority,
-    sessionHolder.options,
-    h2ConnectedSession
-  );
-  connectingSession.on("error", h2SessionConnectError);
+      sentinel
+        .catch((reason) => {
+          if (stream.closed) {
+            return;
+          }
+          // Node.js http2 streams that are aborted via an AbortSignal close with
+          // an RST_STREAM with code INTERNAL_ERROR.
+          // To comply with the mapping between gRPC and HTTP/2 codes, we need to
+          // close with code CANCEL.
+          // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
+          // See https://www.rfc-editor.org/rfc/rfc7540#section-7
+          const rstCode =
+            reason instanceof ConnectError && reason.code == Code.Canceled
+              ? H2Code.CANCEL
+              : H2Code.INTERNAL_ERROR;
+          return new Promise<void>((resolve) => stream.close(rstCode, resolve));
+        })
+        .finally(() => {
+          stream.session.off("error", sentinel.reject);
+        })
+        .catch(() => {
+          // We intentionally swallow sentinel rejection - errors must
+          // propagate through the request or response iterables.
+        });
 
-  function h2SessionConnectError(e: unknown) {
-    sentinel.reject(e);
-  }
-
-  function h2ConnectedSession(session: http2.ClientHttp2Session): void {
-    sessionHolder.lastSession = session;
-    session.off("error", sentinel.reject);
-    session.off("error", h2SessionConnectError);
-    session.on("error", sentinel.reject);
-    const stream = session.request(
-      {
-        ...headers,
-        ":method": method,
-        ":path": requestUrl.pathname + requestUrl.search,
-      },
-      options
-    );
-    sentinel
-      .catch((reason) => {
-        if (stream.closed) {
+      stream.on("error", function h2StreamError(e: unknown) {
+        if (
+          stream.writableEnded &&
+          unwrapNodeErrorChain(e)
+            .map(getNodeErrorProps)
+            .some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END")
+        ) {
           return;
         }
-        // Node.js http2 streams that are aborted via an AbortSignal close with
-        // an RST_STREAM with code INTERNAL_ERROR.
-        // To comply with the mapping between gRPC and HTTP/2 codes, we need to
-        // close with code CANCEL.
-        // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
-        // See https://www.rfc-editor.org/rfc/rfc7540#section-7
-        const rstCode =
-          reason instanceof ConnectError && reason.code == Code.Canceled
-            ? H2Code.CANCEL
-            : H2Code.INTERNAL_ERROR;
-        return new Promise<void>((resolve) => stream.close(rstCode, resolve));
-      })
-      .finally(() => {
-        session.off("error", sentinel.reject);
-        if (!sessionHolder.keepOpen) {
-          session.close();
-        }
-      })
-      .catch(() => {
-        // We intentionally swallow sentinel rejection - errors must
-        // propagate through the request or response iterables.
+        sentinel.reject(e);
       });
-    stream.on("error", function h2StreamError(e: unknown) {
-      if (
-        stream.writableEnded &&
-        unwrapNodeErrorChain(e)
-          .map(getNodeErrorProps)
-          .some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END")
-      ) {
-        return;
-      }
-      sentinel.reject(e);
-    });
 
-    stream.on("close", function h2StreamClose() {
-      const err = connectErrorFromH2ResetCode(stream.rstCode);
-      if (err) {
-        sentinel.reject(err);
-      }
-    });
-    onStream(stream);
-  }
+      stream.on("close", function h2StreamClose() {
+        const err = connectErrorFromH2ResetCode(stream.rstCode);
+        if (err) {
+          sentinel.reject(err);
+        }
+      });
+      onStream(stream);
+    },
+    (reason) => {
+      sentinel.reject(reason);
+    }
+  );
 }
 
 function h2ResponseTrailer(response: http2.ClientHttp2Stream): Headers {
@@ -401,7 +420,8 @@ function h2ResponseTrailer(response: http2.ClientHttp2Stream): Headers {
 
 function h2ResponseIterable(
   sentinel: Sentinel,
-  response: http2.ClientHttp2Stream
+  response: http2.ClientHttp2Stream,
+  sm?: NodeHttp2ClientSessionManager
 ): AsyncIterable<Uint8Array> {
   const inner: AsyncIterator<Uint8Array> = response[Symbol.asyncIterator]();
   return {
@@ -413,6 +433,7 @@ function h2ResponseIterable(
             sentinel.resolve();
             await sentinel;
           }
+          sm?.notifyResponseByteRead(response);
           return r;
         },
         throw(e?: unknown): Promise<IteratorResult<Uint8Array>> {

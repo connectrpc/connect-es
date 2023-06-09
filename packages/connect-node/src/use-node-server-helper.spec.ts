@@ -15,7 +15,16 @@
 import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";
+import type { UniversalClientFn } from "@bufbuild/connect/protocol";
+import { Http2SessionManager } from "./http2-session-manager.js";
+import { createNodeHttpClient } from "./node-universal-client.js";
 
+/**
+ * Before each test, spin up the given server, and tear it down again after the
+ * test.
+ * The teardown will wait for all connections to the server to be closed.
+ * The server is accessible via the getUrl method of the returned object, or
+ */
 export function useNodeServer(
   createServer: () =>
     | http.Server
@@ -30,6 +39,9 @@ export function useNodeServer(
     | http2.Http2SecureServer
     | undefined;
 
+  let client: UniversalClientFn | undefined;
+  let clientSessionManager: Http2SessionManager | undefined;
+
   beforeEach(function (doneFn) {
     server = createServer();
     server.listen(0, function listenCallback() {
@@ -43,6 +55,8 @@ export function useNodeServer(
     }
     const s = server;
     for (;;) {
+      // If open connections are dangling, this loop will not exit before
+      // afterEach runs into a timeout.
       const count = await new Promise<number>((resolve, reject) => {
         s.getConnections((err, count) => {
           if (err) {
@@ -54,24 +68,65 @@ export function useNodeServer(
       if (count === 0) {
         break;
       }
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 5));
     }
     s.close();
   });
 
   return {
+    getClient(): UniversalClientFn {
+      if (client === undefined) {
+        if (server === undefined) {
+          throw new Error("cannot get client");
+        }
+        if (server instanceof http.Server) {
+          client = createNodeHttpClient({
+            httpVersion: "1.1",
+            baseUrl: this.getUrl(),
+          });
+        } else {
+          clientSessionManager = new Http2SessionManager(
+            this.getUrl(),
+            {
+              // In tests, we typically want to make sure that we don't leave any
+              // open streams dangling. We configure the session manager to close
+              // idle connections after a very short amount if time.
+              // This way, the server shutdown in afterEach will not time out if
+              // we kept a clean house, and closed all our streams.
+              idleConnectionTimeoutMs: 5,
+            },
+            undefined
+          );
+          client = createNodeHttpClient({
+            httpVersion: "2",
+            sessionManager: clientSessionManager,
+          });
+        }
+      }
+      return client;
+    },
     getUrl(): string {
       if (server === undefined) {
-        throw new Error("cannot get server port");
+        throw new Error("cannot get server url");
       }
-      const address = server.address();
-      if (address == null || typeof address == "string") {
-        throw new Error("cannot get server port");
-      }
-      const secure =
-        typeof (server as unknown as Record<string, unknown>)
-          .setSecureContext == "function";
-      return `${secure ? "https" : "http"}://localhost:${address.port}`;
+      return getServerUrl(server);
     },
   };
+}
+
+function getServerUrl(
+  server:
+    | http.Server
+    | https.Server
+    | http2.Http2Server
+    | http2.Http2SecureServer
+): string {
+  const address = server.address();
+  if (address == null || typeof address == "string") {
+    throw new Error("cannot get server port");
+  }
+  const secure =
+    typeof (server as unknown as Record<string, unknown>).setSecureContext ==
+    "function";
+  return `${secure ? "https" : "http"}://localhost:${address.port}`;
 }
