@@ -82,7 +82,7 @@ export interface ConnectRouterOptions extends Partial<UniversalHandlerOptions> {
 
   /**
    * Enable the gRPC-web protocol and make your API available to all gRPC-web
-   * clients. gRCP-web is commonly used in web browsers, but there are client
+   * clients. gRPC-web is commonly used in web browsers, but there are client
    * implementations for other platforms as well, for example in Dart, Kotlin,
    * and Swift. See https://github.com/grpc/grpc-web
    *
