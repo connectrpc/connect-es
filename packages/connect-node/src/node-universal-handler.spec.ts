@@ -92,7 +92,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverRequest?.signal.reason).toBeInstanceOf(ConnectError);
       const ce = ConnectError.from(serverRequest?.signal.reason);
       expect(ce.message).toBe(
-        "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
+        "[canceled] http/2 stream closed with error code CANCEL (0x8)"
       );
     });
     it("should silently end request body stream for CANCEL", async function () {
@@ -112,7 +112,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverRequest?.signal.reason).toBeInstanceOf(ConnectError);
       const ce = ConnectError.from(serverRequest?.signal.reason);
       expect(ce.message).toBe(
-        "[resource_exhausted] http/2 stream closed with RST code ENHANCE_YOUR_CALM (0xb)"
+        "[resource_exhausted] http/2 stream closed with error code ENHANCE_YOUR_CALM (0xb)"
       );
     });
     it("should silently end request body stream for ENHANCE_YOUR_CALM", async function () {
@@ -132,7 +132,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverRequest?.signal.reason).toBeInstanceOf(ConnectError);
       const ce = ConnectError.from(serverRequest?.signal.reason);
       expect(ce.message).toBe(
-        "[internal] http/2 stream closed with RST code FRAME_SIZE_ERROR (0x6)"
+        "[internal] http/2 stream closed with error code FRAME_SIZE_ERROR (0x6)"
       );
     });
     it("should silently end request body stream for FRAME_SIZE_ERROR", async function () {

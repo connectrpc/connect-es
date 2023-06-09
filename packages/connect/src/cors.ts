@@ -76,7 +76,7 @@ export const cors = {
   exposedHeaders: [
     grpcWeb.headerGrpcStatus, // Crucial for gRPC-web
     grpcWeb.headerGrpcMessage, // Crucial for gRPC-web
-    grpcWeb.headerStatusDetailsBin, // Error details in gRCP, gRPC-web
+    grpcWeb.headerStatusDetailsBin, // Error details in gRPC, gRPC-web
     connect.headerUnaryEncoding, // Unused in web browsers, but added for future-proofing
     connect.headerStreamEncoding, // Unused in web browsers, but added for future-proofing
   ] as ReadonlyArray<string>,

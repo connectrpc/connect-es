@@ -27,7 +27,6 @@ describe("broken input", () => {
   const servers = createTestServers();
   beforeAll(async () => await servers.start());
 
-  // TODO(TCN-785) add @bufbuild/connect-node, cover gRPC and gRPC-web, cover invalid protobuf binary input
   servers.describeServers(
     ["connect-go (h2)", "@bufbuild/connect-node (h2c)"],
     (server, serverName) => {
