@@ -14,7 +14,7 @@
 
 import * as http2 from "http2";
 import { Code, ConnectError } from "@bufbuild/connect";
-import {connectErrorFromNodeReason} from "./node-error.js";
+import { connectErrorFromNodeReason } from "./node-error.js";
 
 export interface Http2SessionOptions {
   /**
