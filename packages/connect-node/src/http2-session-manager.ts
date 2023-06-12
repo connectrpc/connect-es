@@ -63,7 +63,7 @@ export interface Http2SessionOptions {
    * Automatically close a connection if the time since the last request stream
    * exceeds this value.
    *
-   * Defaults to 5 minutes.
+   * Defaults to 15 minutes.
    *
    * This option is equivalent to GRPC_ARG_CLIENT_IDLE_TIMEOUT_MS of gRPC core.
    */
@@ -159,12 +159,12 @@ export class Http2SessionManager {
       pingTimeoutMs: pingOptions?.pingTimeoutMs ?? 1000 * 15,
       pingIdleConnection: pingOptions?.pingIdleConnection ?? false,
       idleConnectionTimeoutMs:
-        pingOptions?.idleConnectionTimeoutMs ?? 1000 * 60 * 5,
+        pingOptions?.idleConnectionTimeoutMs ?? 1000 * 60 * 15,
     };
   }
 
   /**
-   * Open a connection if none exists, and verify and existing connection if
+   * Open a connection if none exists, verify an existing connection if
    * necessary.
    */
   async connect(): Promise<"open" | "idle" | "error"> {
