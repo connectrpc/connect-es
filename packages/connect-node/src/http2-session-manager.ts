@@ -466,7 +466,7 @@ interface StateReady extends StateCommon {
   /**
    * Returns true if the connection should be verified before use, because it
    * has not received a PING response or response bytes for longer than
-   * verifyAgeMs.
+   * pingIntervalMs.
    */
   requiresVerify(): boolean;
 
