@@ -164,6 +164,10 @@ export class Http2SessionManager {
     };
   }
 
+  /**
+   * Open a connection if none exists, and verify and existing connection if
+   * necessary.
+   */
   async connect(): Promise<"open" | "idle" | "error"> {
     try {
       const ready = await this.gotoReady();
