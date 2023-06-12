@@ -147,20 +147,19 @@ export class Http2SessionManager {
 
   public constructor(
     authority: URL | string,
-    pingOptions: Http2SessionOptions,
-    http2SessionOptions:
+    pingOptions?: Http2SessionOptions,
+    http2SessionOptions?:
       | http2.ClientSessionOptions
       | http2.SecureClientSessionOptions
-      | undefined
   ) {
     this.authority = new URL(authority).origin;
     this.http2SessionOptions = http2SessionOptions;
     this.options = {
-      pingIntervalMs: pingOptions.pingIntervalMs ?? Number.POSITIVE_INFINITY,
-      pingTimeoutMs: pingOptions.pingTimeoutMs ?? 1000 * 15,
-      pingIdleConnection: pingOptions.pingIdleConnection ?? false,
+      pingIntervalMs: pingOptions?.pingIntervalMs ?? Number.POSITIVE_INFINITY,
+      pingTimeoutMs: pingOptions?.pingTimeoutMs ?? 1000 * 15,
+      pingIdleConnection: pingOptions?.pingIdleConnection ?? false,
       idleConnectionTimeoutMs:
-        pingOptions.idleConnectionTimeoutMs ?? 1000 * 60 * 5,
+        pingOptions?.idleConnectionTimeoutMs ?? 1000 * 60 * 5,
     };
   }
 
