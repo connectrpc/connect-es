@@ -70,10 +70,14 @@ export interface Http2SessionOptions {
   idleConnectionTimeoutMs?: number;
 }
 
-// TODO document
 /**
- * Manages a HTTP/2 connection with Basic Keepalive as described in
+ * Manage a single HTTP/2 connection and keep it alive with PING frames.
+ *
+ * The logic is based on "Basic Keepalive" described in
  * https://github.com/grpc/proposal/blob/0ba0c1905050525f9b0aee46f3f23c8e1e515489/A8-client-side-keepalive.md#basic-keepalive
+ * as well as the client channel arguments described in
+ * https://github.com/grpc/grpc/blob/8e137e524a1b1da7bbf4603662876d5719563b57/doc/keepalive.md
+ *
  */
 export class Http2SessionManager {
   /**
