@@ -14,6 +14,7 @@
 
 import * as http2 from "http2";
 import { Code, ConnectError } from "@bufbuild/connect";
+import {connectErrorFromNodeReason} from "./node-error.js";
 
 export interface Http2SessionOptions {
   /**
@@ -395,7 +396,7 @@ function connect(
   }
 
   function onError(err: unknown) {
-    reject?.(err);
+    reject?.(connectErrorFromNodeReason(err));
     cleanup();
   }
 
@@ -690,7 +691,7 @@ function ready(
       );
       state.onError?.(ce);
     } else {
-      state.onError?.(err);
+      state.onError?.(connectErrorFromNodeReason(err));
     }
   }
 
