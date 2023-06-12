@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Code, ConnectError } from "@bufbuild/connect";
 import {
   createConnectTransport,
   Http2SessionManager,
 } from "@bufbuild/connect-node";
-import { Code, ConnectError } from "@bufbuild/connect";
 
 describe("createConnectTransport()", function () {
   it("should take just httpVersion and baseUrl", function () {
@@ -86,5 +86,25 @@ describe("using a session manager to open a connection before starting an applic
       }
     }
     // here we would enter the application logic, and start calling RPCs
+  });
+});
+
+describe("using a session manager to explicitly close all connections", function () {
+  it("should work", function () {
+    // create a client, keeping a reference to the session manage
+    const sessionManager = new Http2SessionManager(
+      "https://demo.connect.build"
+    );
+    createConnectTransport({
+      httpVersion: "2",
+      baseUrl: "https://demo.connect.build",
+      sessionManager,
+    });
+    // const client = createPromiseClient(..., transport);
+
+    // make calls with the client
+
+    // close the connection
+    sessionManager.abort();
   });
 });
