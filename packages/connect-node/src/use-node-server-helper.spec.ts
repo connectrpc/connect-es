@@ -82,7 +82,6 @@ export function useNodeServer(
         if (server instanceof http.Server) {
           client = createNodeHttpClient({
             httpVersion: "1.1",
-            baseUrl: this.getUrl(),
           });
         } else {
           clientSessionManager = new Http2SessionManager(
@@ -99,7 +98,26 @@ export function useNodeServer(
           );
           client = createNodeHttpClient({
             httpVersion: "2",
-            sessionManager: clientSessionManager,
+            sessionProvider: (authority) => {
+              if (authority !== this.getUrl()) {
+                throw new Error(
+                  "client from useNodeServer() can only be used for requests against the server URL"
+                );
+              }
+              clientSessionManager = new Http2SessionManager(
+                authority,
+                {
+                  // In tests, we typically want to make sure that we don't leave any
+                  // open streams dangling. We configure the session manager to close
+                  // idle connections after a very short amount if time.
+                  // This way, the server shutdown in afterEach will not time out if
+                  // we kept a clean house, and closed all our streams.
+                  idleConnectionTimeoutMs: 5,
+                },
+                undefined
+              );
+              return clientSessionManager;
+            },
           });
         }
       }

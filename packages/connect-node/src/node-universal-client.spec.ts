@@ -69,8 +69,6 @@ describe("universal node http client", function () {
         it("should raise Code.Unavailable", async function () {
           const client = createNodeHttpClient({
             httpVersion,
-            baseUrl: "https://unresolvable-host.some.domain",
-            keepSessionAlive: false,
           });
           try {
             await client({

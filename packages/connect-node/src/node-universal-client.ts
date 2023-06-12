@@ -34,105 +34,60 @@ import type {
   UniversalClientResponse,
 } from "@bufbuild/connect/protocol";
 import { getAbortSignalReason } from "@bufbuild/connect/protocol";
-import {
-  Http2SessionManager,
-  type Http2SessionOptions,
-} from "./http2-session-manager.js";
+import { Http2SessionManager } from "./http2-session-manager.js";
 
 /**
  * Options for creating an UniversalClientFn using the Node.js `http`, `https`,
  * or `http2` module.
  */
-export type NodeHttpClientOptions =
-  | NodeHttp1Options
-  | NodeHttp2Options
-  | NodeHttp2OptionsWithSessionManager;
+type NodeHttpClientOptions =
+  | {
+      /**
+       * Use the Node.js `http` or `https` module.
+       */
+      httpVersion: "1.1";
 
-type NodeHttp1Options = {
-  /**
-   * Use the Node.js `http` or `https` module.
-   */
-  httpVersion: "1.1";
+      /**
+       * Options passed to the request() call of the Node.js built-in
+       * http or https module.
+       */
+      nodeOptions?:
+        | Omit<http.RequestOptions, "signal">
+        | Omit<https.RequestOptions, "signal">;
+    }
+  | {
+      /**
+       * Use the Node.js `http2` module.
+       */
+      httpVersion: "2";
 
-  /**
-   * Base URI for all HTTP requests.
-   *
-   * Requests will be made to <baseUrl>/<package>.<service>/method
-   *
-   * Example: `baseUrl: "https://example.com/my-api"`
-   *
-   * This will make a `POST /my-api/my_package.MyService/Foo` to
-   * `example.com` via HTTPS.
-   */
-  baseUrl: string;
+      /**
+       * A function that must return a session manager for the given authority.
+       * The session manager may be taken from a pool.
+       * By default, a new Http2SessionManager is created for every request.
+       */
+      sessionProvider?: (authority: string) => NodeHttp2ClientSessionManager;
+    };
 
-  /**
-   * Options passed to the request() call of the Node.js built-in
-   * http or https module.
-   */
-  nodeOptions?:
-    | Omit<http.RequestOptions, "signal">
-    | Omit<https.RequestOptions, "signal">;
-} & DeprecatedOptions;
+/**
+ * Create a universal client function, a minimal abstraction of an HTTP client,
+ * using the Node.js `http`, `https`, or `http2` module.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function createNodeHttpClient(options: NodeHttpClientOptions) {
+  if (options.httpVersion == "1.1") {
+    return createNodeHttp1Client(options.nodeOptions);
+  }
+  const sessionProvider =
+    options.sessionProvider ??
+    ((authority: string) => new Http2SessionManager(authority));
+  return createNodeHttp2Client(sessionProvider);
+}
 
-type NodeHttp2Options = {
-  /**
-   * Use the Node.js `http2` module.
-   */
-  httpVersion: "2";
-
-  /**
-   * Base URI for all HTTP requests.
-   *
-   * Requests will be made to <baseUrl>/<package>.<service>/method
-   *
-   * Example: `baseUrl: "https://example.com/my-api"`
-   *
-   * This will make a `POST /my-api/my_package.MyService/Foo` to
-   * `example.com` via HTTPS.
-   */
-  baseUrl: string;
-
-  /**
-   * Options passed to the connect() call of the Node.js built-in
-   * http2 module.
-   */
-  nodeOptions?: http2.ClientSessionOptions | http2.SecureClientSessionOptions;
-
-  // TODO document
-  sessionManager?: undefined;
-} & Http2SessionOptions &
-  DeprecatedOptions;
-
-type NodeHttp2OptionsWithSessionManager = DeprecatedOptions & {
-  /**
-   * Use the Node.js `http2` module.
-   */
-  httpVersion: "2";
-
-  // TODO document
-  sessionManager: NodeHttp2ClientSessionManager;
-
-  // TODO document
-  baseUrl?: undefined;
-  nodeOptions?: undefined;
-  pingIntervalMs?: undefined;
-  pingIdleConnection?: undefined;
-  pingTimeoutMs?: undefined;
-  idleConnectionTimeoutMs?: undefined;
-};
-
-type DeprecatedOptions = {
-  /**
-   * @deprecated use the Http2SessionManager instead for fine-grained control over sessions and keep-alive
-   *
-   * By default, HTTP/2 sessions are terminated after each request.
-   * Set this option to true to keep sessions alive across multiple
-   * requests.
-   */
-  keepSessionAlive?: boolean;
-};
-
+/**
+ * Manager for a HTTP/2 session.
+ */
 export interface NodeHttp2ClientSessionManager {
   /**
    * The host this session manager connect to.
@@ -153,22 +108,6 @@ export interface NodeHttp2ClientSessionManager {
    * Notify the manager of a successful read from a http2.ClientHttp2Stream.
    */
   notifyResponseByteRead(stream: http2.ClientHttp2Stream): void;
-}
-
-/**
- * Create a universal client function, a minimal abstraction of an HTTP client,
- * using the Node.js `http`, `https`, or `http2` module.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export function createNodeHttpClient(options: NodeHttpClientOptions) {
-  if (options.httpVersion == "2") {
-    return createNodeHttp2Client(
-      options.sessionManager ??
-        new Http2SessionManager(options.baseUrl, options, options.nodeOptions)
-    );
-  }
-  return createNodeHttp1Client(options.nodeOptions);
 }
 
 /**
@@ -225,20 +164,18 @@ function createNodeHttp1Client(
 /**
  * Create an HTTP client using the Node.js `http2` package.
  *
- * Note that the client is bound to the authority, and by default, it will close
- * the HTTP/2 session after the response is read to the end.
- *
  * The HTTP client is a simple function conforming to the type UniversalClientFn.
  * It takes an UniversalClientRequest as an argument, and returns a promise for
  * an UniversalClientResponse.
  */
 function createNodeHttp2Client(
-  sessionManager: NodeHttp2ClientSessionManager
+  sessionProvider: (authority: string) => NodeHttp2ClientSessionManager
 ): UniversalClientFn {
   return function request(
     req: UniversalClientRequest
   ): Promise<UniversalClientResponse> {
     const sentinel = createSentinel(req.signal);
+    const sessionManager = sessionProvider(req.url);
     return new Promise<UniversalClientResponse>((resolve, reject) => {
       sentinel.catch((e) => {
         reject(e);
