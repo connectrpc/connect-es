@@ -28,7 +28,7 @@ export interface UniversalClientRequest {
   url: string;
   method: string;
   header: Headers;
-  body: AsyncIterable<Uint8Array>;
+  body?: AsyncIterable<Uint8Array>;
   signal?: AbortSignal;
 }
 
@@ -54,8 +54,8 @@ export type UniversalHandlerFn = (
  */
 export interface UniversalServerRequest {
   httpVersion: string;
+  url: string;
   method: string;
-  url: URL;
   header: Headers;
   /**
    * Many server frameworks parse request bodies with the mime type
@@ -73,7 +73,7 @@ export interface UniversalServerRequest {
 export interface UniversalServerResponse {
   status: number;
   header?: Headers;
-  body?: AsyncIterable<Uint8Array> | Uint8Array;
+  body?: AsyncIterable<Uint8Array>;
   trailer?: Headers;
 }
 

@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ServiceType } from "@bufbuild/protobuf";
-import type { MethodInfo } from "@bufbuild/protobuf";
+import type { ServiceType, MethodInfo } from "@bufbuild/protobuf";
 
 /**
  * AnyClient is an arbitrary service client with any method signature.

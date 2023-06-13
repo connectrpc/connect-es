@@ -77,7 +77,6 @@ describe("universal node http client", function () {
               url: "https://unresolvable-host.some.domain",
               method: "POST",
               header: new Headers(),
-              body: createAsyncIterable([]),
             });
           } catch (e) {
             expect(ConnectError.from(e).message).toBe(
@@ -108,13 +107,12 @@ describe("universal node http client", function () {
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-            body: createAsyncIterable([]),
           });
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
+            "[canceled] http/2 stream closed with error code CANCEL (0x8)"
           );
         }
         expect(serverReceivedRequest).toBeTrue();
@@ -137,7 +135,6 @@ describe("universal node http client", function () {
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-            body: createAsyncIterable([]),
           });
           fail("expected error");
         } catch (e) {
@@ -169,7 +166,6 @@ describe("universal node http client", function () {
           url: server.getUrl(),
           method: "POST",
           header: new Headers(),
-          body: createAsyncIterable([]),
         });
         try {
           for await (const chunk of res.body) {
@@ -182,7 +178,7 @@ describe("universal node http client", function () {
           expect(e).toBeInstanceOf(ConnectError);
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
+            "[canceled] http/2 stream closed with error code CANCEL (0x8)"
           );
         }
       });
@@ -203,7 +199,6 @@ describe("universal node http client", function () {
           url: server.getUrl(),
           method: "POST",
           header: new Headers(),
-          body: createAsyncIterable([]),
         });
         try {
           for await (const chunk of res.body) {
@@ -258,7 +253,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
+            "[canceled] http/2 stream closed with error code CANCEL (0x8)"
           );
         }
         expect(serverReceivedBytes).toBe(32);
@@ -332,7 +327,6 @@ describe("universal node http client", function () {
           url: server.getUrl(),
           method: "POST",
           header: new Headers(),
-          body: createAsyncIterable([]),
         });
         try {
           for await (const chunk of res.body) {
@@ -343,7 +337,7 @@ describe("universal node http client", function () {
           expect(e).toBeInstanceOf(ConnectError);
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with RST code CANCEL (0x8)"
+            "[canceled] http/2 stream closed with error code CANCEL (0x8)"
           );
         }
         expect(serverSentBytes).toBe(64);
@@ -371,7 +365,6 @@ describe("universal node http client", function () {
           url: server.getUrl(),
           method: "POST",
           header: new Headers(),
-          body: createAsyncIterable([]),
         });
         try {
           for await (const chunk of res.body) {
@@ -408,7 +401,6 @@ describe("universal node http client", function () {
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-            body: createAsyncIterable([]),
             signal,
           });
           fail("expected error");
@@ -438,7 +430,6 @@ describe("universal node http client", function () {
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-            body: createAsyncIterable([]),
             signal,
           });
           fail("expected error");

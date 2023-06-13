@@ -42,6 +42,7 @@ import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
+import { readAll } from "../protocol/async-iterable-helper.spec.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
@@ -133,7 +134,6 @@ describe("createHandlerFactory()", function () {
       expect(r.header.get("implementation-called")).toBe("yes");
       expect(r.message.value).toBe("123");
     });
-
     it("should surface headers for server-streaming", async function () {
       const { transport, service, method } = setupTestHandler(
         testService.methods.serverStreaming,
@@ -170,16 +170,18 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({ "Content-Type": "application/json" }),
           body: 777,
           signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
-        expect(res.body).toBeInstanceOf(Uint8Array);
-        if (res.body instanceof Uint8Array) {
+        expect(res.body).toBeDefined();
+        if (res.body !== undefined) {
+          const body = await readAll(res.body);
+          expect(body.length).toBe(1);
           const err = errorFromJsonBytes(
-            res.body,
+            body[0],
             undefined,
             new ConnectError("failed to parse connect err", Code.Internal)
           );
@@ -192,7 +194,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({
             "Content-Type": "application/json",
             "Connect-Protocol-Version": "UNEXPECTED",
@@ -201,10 +203,12 @@ describe("createHandlerFactory()", function () {
           signal: new AbortController().signal,
         });
         expect(res.status).toBe(400);
-        expect(res.body).toBeInstanceOf(Uint8Array);
-        if (res.body instanceof Uint8Array) {
+        expect(res.body).toBeDefined();
+        if (res.body !== undefined) {
+          const body = await readAll(res.body);
+          expect(body.length).toBe(1);
           const err = errorFromJsonBytes(
-            res.body,
+            body[0],
             undefined,
             new ConnectError("failed to parse connect err", Code.Internal)
           );
@@ -227,7 +231,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({ "Content-Type": "application/connect+json" }),
           body: createAsyncIterable([new Uint8Array()]),
           signal: new AbortController().signal,
@@ -248,7 +252,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
-          url: new URL("https://example.com"),
+          url: "https://example.com",
           header: new Headers({
             "Content-Type": "application/connect+json",
             "Connect-Protocol-Version": "UNEXPECTED",
@@ -287,9 +291,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([new Uint8Array(0)]),
           signal: new AbortController().signal,
@@ -297,12 +299,8 @@ describe("createHandlerFactory()", function () {
         expect(res.status).toBe(408);
         expect(res.body).toBeDefined();
         if (res.body !== undefined) {
-          const bodyBytes =
-            res.body instanceof Uint8Array
-              ? res.body
-              : await readAllBytes(res.body, Number.MAX_SAFE_INTEGER);
           const err = errorFromJsonBytes(
-            bodyBytes,
+            await readAllBytes(res.body, Number.MAX_SAFE_INTEGER),
             undefined,
             new ConnectError("error parse failed")
           );
@@ -344,9 +342,7 @@ describe("createHandlerFactory()", function () {
         const res = await handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, timeoutMs, undefined),
           body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
           signal: new AbortController().signal,
@@ -364,6 +360,76 @@ describe("createHandlerFactory()", function () {
           }
         }
       });
+    });
+    describe("exceeding configured maxTimeoutMs", function () {
+      it("should raise an error with code INVALID_ARGUMENT", async function () {
+        const maxTimeoutMs = 1000;
+        const timeoutMs = 2000;
+        let implementationCalled = false;
+        const { transport, service, method } = setupTestHandler(
+          testService.methods.unary,
+          {
+            maxTimeoutMs,
+          },
+          async () => {
+            implementationCalled = true;
+            return Promise.resolve(new StringValue());
+          }
+        );
+        try {
+          await transport.unary(
+            service,
+            method,
+            undefined,
+            timeoutMs,
+            undefined,
+            new Int32Value()
+          );
+          fail("expected error");
+        } catch (e) {
+          expect(e).toBeInstanceOf(ConnectError);
+          expect(ConnectError.from(e).message).toBe(
+            "[invalid_argument] timeout 2000ms must be <= 1000"
+          );
+        }
+        expect(implementationCalled)
+          .withContext("did not expect implementation to be called")
+          .toBeFalse();
+      });
+    });
+  });
+
+  describe("shutdown", function () {
+    it("should raise the abort reason", async function () {
+      const shutdown = new AbortController();
+      const { transport, service, method } = setupTestHandler(
+        testService.methods.unary,
+        {
+          shutdownSignal: shutdown.signal,
+        },
+        async (_req, ctx) => {
+          shutdown.abort(new ConnectError("shutting down", Code.Unavailable));
+          expect(ctx.signal.aborted).toBeTrue();
+          ctx.signal.throwIfAborted();
+          return Promise.resolve(new StringValue());
+        }
+      );
+      try {
+        await transport.unary(
+          service,
+          method,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value()
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          "[unavailable] shutting down"
+        );
+      }
     });
   });
 
@@ -386,9 +452,7 @@ describe("createHandlerFactory()", function () {
         const resPromise = handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, undefined, undefined),
           body: createAsyncIterable([new Uint8Array(0)]),
           signal: ac.signal,
@@ -419,9 +483,7 @@ describe("createHandlerFactory()", function () {
         const resPromise = handler({
           httpVersion: "2.0",
           method: "POST",
-          url: new URL(
-            `https://example.com/${service.typeName}/${method.name}`
-          ),
+          url: `https://example.com/${service.typeName}/${method.name}`,
           header: requestHeader(method.kind, true, undefined, undefined),
           body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
           signal: ac.signal,
@@ -450,9 +512,7 @@ describe("createHandlerFactory()", function () {
       const res = await handler({
         httpVersion: "2.0",
         method: "GET",
-        url: new URL(
-          `https://example.com/${service.typeName}/${method.name}?connect=v1&encoding=proto&base64=1&message=CHs`
-        ),
+        url: `https://example.com/${service.typeName}/${method.name}?connect=v1&encoding=proto&base64=1&message=CHs`,
         header: new Headers(),
         body: createAsyncIterable([]),
         signal: new AbortController().signal,

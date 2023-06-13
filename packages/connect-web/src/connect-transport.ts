@@ -187,7 +187,6 @@ export function createConnectTransport(
           });
           const { isUnaryError, unaryError } = validateResponse(
             method.kind,
-            useBinaryFormat,
             response.status,
             response.headers
           );
@@ -206,7 +205,12 @@ export function createConnectTransport(
             service,
             method,
             header: demuxedHeader,
-            message: parse(new Uint8Array(await response.arrayBuffer())),
+            message: useBinaryFormat
+              ? parse(new Uint8Array(await response.arrayBuffer()))
+              : method.O.fromJson(
+                  (await response.json()) as JsonValue,
+                  options.jsonOptions
+                ),
             trailer: demuxedTrailer,
           };
         },
@@ -303,12 +307,7 @@ export function createConnectTransport(
             signal: req.signal,
             body: await createRequestBody(req.message),
           });
-          validateResponse(
-            method.kind,
-            useBinaryFormat,
-            fRes.status,
-            fRes.headers
-          );
+          validateResponse(method.kind, fRes.status, fRes.headers);
           if (fRes.body === null) {
             throw "missing response body";
           }

@@ -20,32 +20,6 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import { MethodIdempotency } from "@bufbuild/protobuf";
-import type {
-  StreamRequest,
-  StreamResponse,
-  Transport,
-  UnaryRequest,
-  UnaryResponse,
-} from "../index.js";
-import { appendHeaders, Code, ConnectError } from "../index.js";
-import type { CommonTransportOptions } from "../protocol/index.js";
-import {
-  createAsyncIterable,
-  createMethodSerializationLookup,
-  createMethodUrl,
-  pipe,
-  pipeTo,
-  runStreamingCall,
-  runUnaryCall,
-  sinkAllBytes,
-  transformCompressEnvelope,
-  transformDecompressEnvelope,
-  transformJoinEnvelopes,
-  transformNormalizeMessage,
-  transformParseEnvelope,
-  transformSerializeEnvelope,
-  transformSplitEnvelope,
-} from "../protocol/index.js";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { headerUnaryContentLength, headerUnaryEncoding } from "./headers.js";
 import { validateResponseWithCompression } from "./validate-response.js";
@@ -53,6 +27,33 @@ import { trailerDemux } from "./trailer-mux.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
 import { transformConnectPostToGetRequest } from "./get-request.js";
+import type { CommonTransportOptions } from "../protocol/transport-options.js";
+import { Code } from "../code.js";
+import { ConnectError } from "../connect-error.js";
+import { appendHeaders } from "../http-headers.js";
+import type {
+  UnaryResponse,
+  UnaryRequest,
+  StreamResponse,
+  StreamRequest,
+} from "../interceptor.js";
+import {
+  createAsyncIterable,
+  pipeTo,
+  sinkAllBytes,
+  pipe,
+  transformNormalizeMessage,
+  transformSerializeEnvelope,
+  transformCompressEnvelope,
+  transformJoinEnvelopes,
+  transformSplitEnvelope,
+  transformDecompressEnvelope,
+  transformParseEnvelope,
+} from "../protocol/async-iterable.js";
+import { createMethodUrl } from "../protocol/create-method-url.js";
+import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
+import { createMethodSerializationLookup } from "../protocol/serialization.js";
+import type { Transport } from "../transport.js";
 
 /**
  * Create a Transport for the Connect protocol.
@@ -113,14 +114,13 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           const useGet =
             opt.useHttpGet === true &&
             method.idempotency === MethodIdempotency.NoSideEffects;
-          let body: AsyncIterable<Uint8Array>;
+          let body: AsyncIterable<Uint8Array> | undefined;
           if (useGet) {
             req = transformConnectPostToGetRequest(
               req,
               requestBody,
               opt.useBinaryFormat
             );
-            body = createAsyncIterable([]);
           } else {
             body = createAsyncIterable([requestBody]);
           }
@@ -134,7 +134,6 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           const { compression, isUnaryError, unaryError } =
             validateResponseWithCompression(
               method.kind,
-              opt.useBinaryFormat,
               opt.acceptCompression,
               universalResponse.status,
               universalResponse.header
@@ -243,7 +242,6 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           });
           const { compression } = validateResponseWithCompression(
             method.kind,
-            opt.useBinaryFormat,
             opt.acceptCompression,
             uRes.status,
             uRes.header

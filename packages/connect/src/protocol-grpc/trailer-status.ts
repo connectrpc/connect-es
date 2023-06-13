@@ -63,7 +63,7 @@ export function setTrailerStatus(
       target.set(headerStatusDetailsBin, encodeBinaryHeader(status));
     }
   } else {
-    target.set(headerGrpcStatus, grpcStatusOk);
+    target.set(headerGrpcStatus, grpcStatusOk.toString());
   }
   return target;
 }
@@ -80,6 +80,10 @@ export function setTrailerStatus(
 export function findTrailerError(
   headerOrTrailer: Headers
 ): ConnectError | undefined {
+  // TODO
+  // let code: Code;
+  // let message: string = "";
+
   // Prefer the protobuf-encoded data to the grpc-status header.
   const statusBytes = headerOrTrailer.get(headerStatusDetailsBin);
   if (statusBytes != null) {
@@ -113,7 +117,8 @@ export function findTrailerError(
     }
     return new ConnectError(
       `invalid grpc-status: ${grpcStatus}`,
-      Code.Internal
+      Code.Internal,
+      headerOrTrailer
     );
   }
   return undefined;

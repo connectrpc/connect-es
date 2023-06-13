@@ -27,20 +27,20 @@ import {
 import { createHandlerFactory } from "./handler-factory.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
-import { ConnectError } from "../index.js";
+import { Code, ConnectError } from "../index.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
     typeName: "TestService",
     methods: {
-      foo: {
-        name: "Foo",
+      unary: {
+        name: "Unary",
         I: Int32Value,
         O: StringValue,
         kind: MethodKind.Unary,
       },
-      bar: {
-        name: "Bar",
+      serverStreaming: {
+        name: "ServerStreaming",
         I: Int32Value,
         O: StringValue,
         kind: MethodKind.ServerStreaming,
@@ -78,7 +78,7 @@ describe("createHandlerFactory()", function () {
   describe("returned handler", function () {
     it("should surface headers for unary", async function () {
       const { transport, service, method } = setupTestHandler(
-        testService.methods.foo,
+        testService.methods.unary,
         {},
         (req, ctx) => {
           ctx.responseHeader.set("implementation-called", "yes");
@@ -99,7 +99,7 @@ describe("createHandlerFactory()", function () {
 
     it("should surface headers for server-streaming", async function () {
       const { transport, service, method } = setupTestHandler(
-        testService.methods.bar,
+        testService.methods.serverStreaming,
         {},
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, ctx) {
@@ -127,7 +127,7 @@ describe("createHandlerFactory()", function () {
       const timeoutMs = 1;
       let handlerContextSignal: AbortSignal | undefined;
       const { handler, service, method } = setupTestHandler(
-        testService.methods.foo,
+        testService.methods.unary,
         {},
         async (req, ctx) => {
           handlerContextSignal = ctx.signal;
@@ -140,7 +140,7 @@ describe("createHandlerFactory()", function () {
       await handler({
         httpVersion: "2.0",
         method: "POST",
-        url: new URL(`https://example.com/${service.typeName}/${method.name}`),
+        url: `https://example.com/${service.typeName}/${method.name}`,
         header: requestHeader(true, timeoutMs, undefined),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: new AbortController().signal,
@@ -152,13 +152,83 @@ describe("createHandlerFactory()", function () {
         "[deadline_exceeded] the operation timed out"
       );
     });
+    describe("exceeding configured maxTimeoutMs", function () {
+      it("should raise an error with code INVALID_ARGUMENT", async function () {
+        const maxTimeoutMs = 1000;
+        const timeoutMs = 2000;
+        let implementationCalled = false;
+        const { transport, service, method } = setupTestHandler(
+          testService.methods.unary,
+          {
+            maxTimeoutMs,
+          },
+          async () => {
+            implementationCalled = true;
+            return Promise.resolve(new StringValue());
+          }
+        );
+        try {
+          await transport.unary(
+            service,
+            method,
+            undefined,
+            timeoutMs,
+            undefined,
+            new Int32Value()
+          );
+          fail("expected error");
+        } catch (e) {
+          expect(e).toBeInstanceOf(ConnectError);
+          expect(ConnectError.from(e).message).toBe(
+            "[invalid_argument] timeout 2000ms must be <= 1000"
+          );
+        }
+        expect(implementationCalled)
+          .withContext("did not expect implementation to be called")
+          .toBeFalse();
+      });
+    });
+  });
+
+  describe("shutdown", function () {
+    it("should raise the abort reason", async function () {
+      const shutdown = new AbortController();
+      const { transport, service, method } = setupTestHandler(
+        testService.methods.unary,
+        {
+          shutdownSignal: shutdown.signal,
+        },
+        async (_req, ctx) => {
+          shutdown.abort(new ConnectError("shutting down", Code.Unavailable));
+          expect(ctx.signal.aborted).toBeTrue();
+          ctx.signal.throwIfAborted();
+          return Promise.resolve(new StringValue());
+        }
+      );
+      try {
+        await transport.unary(
+          service,
+          method,
+          undefined,
+          undefined,
+          undefined,
+          new Int32Value()
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          "[unavailable] shutting down"
+        );
+      }
+    });
   });
 
   describe("request abort signal", function () {
     it("should trigger handler context signal", async function () {
       let handlerContextSignal: AbortSignal | undefined;
       const { handler, service, method } = setupTestHandler(
-        testService.methods.foo,
+        testService.methods.unary,
         {},
         async (req, ctx) => {
           handlerContextSignal = ctx.signal;
@@ -172,7 +242,7 @@ describe("createHandlerFactory()", function () {
       const resPromise = handler({
         httpVersion: "2.0",
         method: "POST",
-        url: new URL(`https://example.com/${service.typeName}/${method.name}`),
+        url: `https://example.com/${service.typeName}/${method.name}`,
         header: requestHeader(true, undefined, undefined),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: ac.signal,

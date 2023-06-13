@@ -20,19 +20,17 @@ import {
   createServiceImplSpec,
 } from "./implementation.js";
 import type { MethodImpl, ServiceImpl } from "./implementation.js";
-import {
-  validateUniversalHandlerOptions,
-  createUniversalMethodHandler,
-  createUniversalServiceHandlers,
-} from "./protocol/index.js";
-import type {
-  ProtocolHandlerFactory,
-  UniversalHandler,
-  UniversalHandlerOptions,
-} from "./protocol/index.js";
 import { createHandlerFactory as handlerFactoryGrpcWeb } from "./protocol-grpc-web/handler-factory.js";
 import { createHandlerFactory as handlerFactoryGrpc } from "./protocol-grpc/handler-factory.js";
 import { createHandlerFactory as handlerFactoryConnect } from "./protocol-connect/handler-factory.js";
+import {
+  type UniversalHandler,
+  type UniversalHandlerOptions,
+  createUniversalMethodHandler,
+  createUniversalServiceHandlers,
+  validateUniversalHandlerOptions,
+} from "./protocol/universal-handler.js";
+import type { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
 
 /**
  * ConnectRouter is your single registration point for RPCs.
@@ -84,7 +82,7 @@ export interface ConnectRouterOptions extends Partial<UniversalHandlerOptions> {
 
   /**
    * Enable the gRPC-web protocol and make your API available to all gRPC-web
-   * clients. gRCP-web is commonly used in web browsers, but there are client
+   * clients. gRPC-web is commonly used in web browsers, but there are client
    * implementations for other platforms as well, for example in Dart, Kotlin,
    * and Swift. See https://github.com/grpc/grpc-web
    *

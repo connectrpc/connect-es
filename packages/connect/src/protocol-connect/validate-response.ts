@@ -14,11 +14,10 @@
 
 import { MethodKind } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
-import { parseContentType } from "./content-type.js";
 import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
-import type { Compression } from "../protocol/index.js";
 import { headerStreamEncoding, headerUnaryEncoding } from "./headers.js";
+import type { Compression } from "../protocol/compression.js";
 
 /**
  * Validates response status and header for the Connect protocol.
@@ -32,34 +31,21 @@ import { headerStreamEncoding, headerUnaryEncoding } from "./headers.js";
  */
 export function validateResponse(
   methodKind: MethodKind,
-  useBinaryFormat: boolean,
   status: number,
   headers: Headers
 ):
   | { isUnaryError: false; unaryError?: undefined }
   | { isUnaryError: true; unaryError: ConnectError } {
-  const mimeType = headers.get("Content-Type");
-  const parsedType = parseContentType(mimeType);
   if (status !== 200) {
     const errorFromStatus = new ConnectError(
       `HTTP ${status}`,
-      codeFromHttpStatus(status)
+      codeFromHttpStatus(status),
+      headers
     );
-    if (methodKind == MethodKind.Unary && parsedType && !parsedType.stream) {
+    if (methodKind == MethodKind.Unary) {
       return { isUnaryError: true, unaryError: errorFromStatus };
     }
     throw errorFromStatus;
-  }
-  const isStream = methodKind != MethodKind.Unary;
-  if (
-    !parsedType ||
-    parsedType.binary != useBinaryFormat ||
-    parsedType.stream != isStream
-  ) {
-    throw new ConnectError(
-      `unexpected response content type "${mimeType ?? "?"}"`,
-      Code.InvalidArgument
-    );
   }
   return { isUnaryError: false };
 }
@@ -73,7 +59,6 @@ export function validateResponse(
  */
 export function validateResponseWithCompression(
   methodKind: MethodKind,
-  useBinaryFormat: boolean,
   acceptCompression: Compression[],
   status: number,
   headers: Headers
@@ -89,12 +74,13 @@ export function validateResponseWithCompression(
     if (!compression) {
       throw new ConnectError(
         `unsupported response encoding "${encoding}"`,
-        Code.InvalidArgument
+        Code.InvalidArgument,
+        headers
       );
     }
   }
   return {
     compression,
-    ...validateResponse(methodKind, useBinaryFormat, status, headers),
+    ...validateResponse(methodKind, status, headers),
   };
 }

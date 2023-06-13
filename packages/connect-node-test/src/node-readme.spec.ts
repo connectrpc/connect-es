@@ -14,7 +14,7 @@
 
 import * as http2 from "http2";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
-import { createPromiseClient } from "@bufbuild/connect";
+import { createPromiseClient, createRouterTransport } from "@bufbuild/connect";
 import type { ConnectRouter } from "@bufbuild/connect";
 import {
   connectNodeAdapter,
@@ -22,7 +22,6 @@ import {
   createGrpcWebTransport,
   createConnectTransport,
 } from "@bufbuild/connect-node";
-import { createRouterTransport } from "@bufbuild/connect";
 
 /* eslint-disable @typescript-eslint/require-await */
 

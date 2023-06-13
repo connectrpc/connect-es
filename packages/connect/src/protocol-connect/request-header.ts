@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { MethodKind } from "@bufbuild/protobuf";
-import type { Compression } from "../protocol/index.js";
 import {
   headerContentType,
   headerStreamAcceptEncoding,
@@ -30,6 +29,7 @@ import {
   contentTypeUnaryJson,
   contentTypeUnaryProto,
 } from "./content-type.js";
+import type { Compression } from "../protocol/compression.js";
 
 /**
  * Creates headers for a Connect request.
