@@ -45,6 +45,17 @@ export interface Serialization<T> {
 }
 
 /**
+ * Returns a Json Options object with defaults set for any properties not provided
+ */
+export function getJsonOptions(
+  options: Partial<JsonReadOptions & JsonWriteOptions> | undefined
+) {
+  const o = { ...options };
+  o.ignoreUnknownFields ??= true;
+  return o;
+}
+
+/**
  * Create an object that provides convenient access to request and response
  * message serialization for a given method.
  *
@@ -215,8 +226,7 @@ export function createJsonSerialization<T extends Message<T>>(
 ): Serialization<T> {
   const textEncoder = options?.textEncoder ?? new TextEncoder();
   const textDecoder = options?.textDecoder ?? new TextDecoder();
-  const o = options ?? {};
-  o.ignoreUnknownFields ??= true;
+  const o = getJsonOptions(options);
   return {
     parse(data: Uint8Array): T {
       try {
