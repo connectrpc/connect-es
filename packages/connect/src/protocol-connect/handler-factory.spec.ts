@@ -17,6 +17,8 @@ import {
   Int32Value,
   MethodIdempotency,
   MethodKind,
+  proto3,
+  ScalarType,
   StringValue,
 } from "@bufbuild/protobuf";
 import { createHandlerFactory } from "./handler-factory.js";
@@ -516,6 +518,103 @@ describe("createHandlerFactory()", function () {
         signal: new AbortController().signal,
       });
       expect(res.status).toBe(200);
+    });
+  });
+
+  describe("receiving a new JSON field in a request", function () {
+    const OldService = {
+      typeName: "OldService",
+      methods: {
+        unary: {
+          name: "Unary",
+          I: proto3.makeMessageType("TestMessage", [
+            { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
+          ]),
+          O: StringValue,
+          kind: MethodKind.Unary,
+        },
+      },
+    } as const;
+    const NewService = {
+      typeName: "OldService",
+      methods: {
+        unary: {
+          name: "Unary",
+          I: proto3.makeMessageType("TestMessage", [
+            { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
+            { no: 2, name: "b", kind: "scalar", T: ScalarType.STRING },
+          ]),
+          O: StringValue,
+          kind: MethodKind.Unary,
+        },
+      },
+    } as const;
+
+    function setupTestHandler(opt: Partial<UniversalHandlerOptions>) {
+      const h = createHandlerFactory(opt)(
+        createMethodImplSpec(NewService, OldService.methods.unary, () => {
+          return new StringValue({ value: "server ok" });
+        })
+      );
+      const t = createTransport({
+        httpClient: createUniversalHandlerClient([h]),
+        baseUrl: "https://example.com",
+        readMaxBytes: 0xffffff,
+        writeMaxBytes: 0xffffff,
+        compressMinBytes: 0xffffff,
+        useBinaryFormat: false,
+        interceptors: [],
+        acceptCompression: [],
+        sendCompression: null,
+      });
+      return {
+        handler: h,
+        transport: t,
+      };
+    }
+
+    it("should ignore unknown field by default", async function () {
+      const { transport } = setupTestHandler({
+        jsonOptions: {},
+      });
+      const res = await transport.unary(
+        NewService,
+        NewService.methods.unary,
+        undefined,
+        undefined,
+        undefined,
+        new NewService.methods.unary.I({
+          a: "A",
+          b: "B",
+        })
+      );
+      expect(res.message).toBeInstanceOf(StringValue);
+    });
+    it("should reject unknown field if explicitly asked for", async function () {
+      const { transport } = setupTestHandler({
+        jsonOptions: {
+          ignoreUnknownFields: false,
+        },
+      });
+      try {
+        await transport.unary(
+          NewService,
+          NewService.methods.unary,
+          undefined,
+          undefined,
+          undefined,
+          new NewService.methods.unary.I({
+            a: "A",
+            b: "B",
+          })
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown'
+        );
+      }
     });
   });
 });

@@ -16,6 +16,8 @@ import {
   Int32Value,
   MethodIdempotency,
   MethodKind,
+  proto3,
+  ScalarType,
   StringValue,
 } from "@bufbuild/protobuf";
 import type {
@@ -37,6 +39,9 @@ import {
   contentTypeUnaryProto,
 } from "./content-type.js";
 import { errorToJsonBytes } from "./error-json.js";
+import { createHandlerFactory } from "./handler-factory.js";
+import { createMethodImplSpec } from "../implementation.js";
+import { createUniversalHandlerClient } from "../protocol/index.js";
 
 const TestService = {
   typeName: "TestService",
@@ -76,7 +81,7 @@ const TestService = {
 } as const;
 
 describe("Connect transport", function () {
-  const defaultOptions = {
+  const defaultTransportOptions = {
     baseUrl: "http://example.com",
     interceptors: [],
     acceptCompression: [],
@@ -111,7 +116,7 @@ describe("Connect transport", function () {
             trailer: new Headers(),
           });
         },
-        ...defaultOptions,
+        ...defaultTransportOptions,
       });
       it("should cancel the HTTP request", async function () {
         try {
@@ -159,7 +164,7 @@ describe("Connect transport", function () {
             trailer: new Headers(),
           });
         },
-        ...defaultOptions,
+        ...defaultTransportOptions,
       });
       it("should cancel the HTTP request", async function () {
         const res = await t.stream(
@@ -222,7 +227,7 @@ describe("Connect transport", function () {
     describe("disabled", function () {
       it("should issue POST for eligible RPC", async function () {
         const t = createTransport({
-          ...defaultOptions,
+          ...defaultTransportOptions,
           httpClient: expectPost,
         });
         await t.unary(
@@ -238,7 +243,7 @@ describe("Connect transport", function () {
     describe("enabled", function () {
       it("should issue GET for eligible RPC", async function () {
         const t = createTransport({
-          ...defaultOptions,
+          ...defaultTransportOptions,
           useHttpGet: true,
           httpClient: expectGet,
         });
@@ -253,7 +258,7 @@ describe("Connect transport", function () {
       });
       it("should issue POST for RPC with side effects", async function () {
         const t = createTransport({
-          ...defaultOptions,
+          ...defaultTransportOptions,
           useHttpGet: true,
           httpClient: expectPost,
         });
@@ -266,6 +271,91 @@ describe("Connect transport", function () {
           new Int32Value({ value: 123 })
         );
       });
+    });
+  });
+
+  describe("against server with new JSON field in response", function () {
+    const OldService = {
+      typeName: "OldService",
+      methods: {
+        unary: {
+          name: "Unary",
+          I: StringValue,
+          O: proto3.makeMessageType("TestMessage", [
+            { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
+          ]),
+          kind: MethodKind.Unary,
+        },
+      },
+    } as const;
+    const NewService = {
+      typeName: "OldService",
+      methods: {
+        unary: {
+          name: "Unary",
+          I: StringValue,
+          O: proto3.makeMessageType("TestMessage", [
+            { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
+            { no: 2, name: "b", kind: "scalar", T: ScalarType.STRING },
+          ]),
+          kind: MethodKind.Unary,
+        },
+      },
+    } as const;
+
+    const h = createHandlerFactory({})(
+      createMethodImplSpec(
+        NewService,
+        NewService.methods.unary,
+        (_req, ctx) => {
+          return new ctx.method.O({
+            a: "A",
+            b: "B",
+          });
+        }
+      )
+    );
+    const httpClient = createUniversalHandlerClient([h]);
+
+    it("should ignore unknown field by default", async function () {
+      const t = createTransport({
+        ...defaultTransportOptions,
+        httpClient,
+        useBinaryFormat: false,
+      });
+      const res = await t.unary(
+        OldService,
+        OldService.methods.unary,
+        undefined,
+        undefined,
+        undefined,
+        {}
+      );
+      expect(res.message).toBeInstanceOf(OldService.methods.unary.O);
+    });
+    it("should reject unknown field if explicitly asked for", async function () {
+      const t = createTransport({
+        ...defaultTransportOptions,
+        httpClient,
+        useBinaryFormat: false,
+        jsonOptions: { ignoreUnknownFields: false },
+      });
+      try {
+        await t.unary(
+          OldService,
+          OldService.methods.unary,
+          undefined,
+          undefined,
+          undefined,
+          {}
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown'
+        );
+      }
     });
   });
 });
