@@ -92,6 +92,7 @@ export interface ConnectTransportOptions {
 
   /**
    * Options for the JSON format.
+   * By default, unknown fields are ignored.
    */
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
 

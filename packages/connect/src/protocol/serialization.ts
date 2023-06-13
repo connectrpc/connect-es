@@ -206,6 +206,8 @@ type JsonSerializationOptions = Partial<JsonReadOptions & JsonWriteOptions> & {
 /**
  * Creates a Serialization object for serializing the given protobuf message
  * with the protobuf canonical JSON encoding.
+ *
+ * By default, unknown fields are ignored.
  */
 export function createJsonSerialization<T extends Message<T>>(
   messageType: MessageType<T>,
@@ -213,18 +215,20 @@ export function createJsonSerialization<T extends Message<T>>(
 ): Serialization<T> {
   const textEncoder = options?.textEncoder ?? new TextEncoder();
   const textDecoder = options?.textDecoder ?? new TextDecoder();
+  const o = options ?? {};
+  o.ignoreUnknownFields ??= true;
   return {
     parse(data: Uint8Array): T {
       try {
         const json = textDecoder.decode(data);
-        return messageType.fromJsonString(json, options);
+        return messageType.fromJsonString(json, o);
       } catch (e) {
         throw ConnectError.from(e, Code.InvalidArgument);
       }
     },
     serialize(data: T): Uint8Array {
       try {
-        const json = data.toJsonString(options);
+        const json = data.toJsonString(o);
         return textEncoder.encode(json);
       } catch (e) {
         throw ConnectError.from(e, Code.Internal);
