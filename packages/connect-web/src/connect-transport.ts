@@ -200,6 +200,14 @@ export function createConnectTransport(
           const [demuxedHeader, demuxedTrailer] = trailerDemux(
             response.headers
           );
+
+          // Ignore unknown fields by default if we need to parse JSON format.
+          // Note this is done automatically via the createClientMethodSerializers call above,
+          // but this is a special path that doesn't use that function so we need to set it
+          // explicitly here.
+          if (options.jsonOptions) {
+            options.jsonOptions.ignoreUnknownFields ??= true;
+          }
           return <UnaryResponse<I, O>>{
             stream: false,
             service,
