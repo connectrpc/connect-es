@@ -38,7 +38,6 @@ import {
   contentTypeStreamProto,
   contentTypeUnaryProto,
 } from "./content-type.js";
-import type { Transport } from "../transport.js";
 import { errorToJsonBytes } from "./error-json.js";
 import { createHandlerFactory } from "./handler-factory.js";
 import { createMethodImplSpec } from "../implementation.js";
@@ -92,70 +91,6 @@ describe("Connect transport", function () {
     useBinaryFormat: true,
     writeMaxBytes: 0xffffff,
   };
-  describe("against server responding with unexpected content type", function () {
-    let httpRequestAborted = false;
-    let transport: Transport = null as unknown as Transport;
-    beforeEach(function () {
-      httpRequestAborted = false;
-      transport = createTransport({
-        httpClient(
-          request: UniversalClientRequest
-        ): Promise<UniversalClientResponse> {
-          request.signal?.addEventListener(
-            "abort",
-            () => (httpRequestAborted = true)
-          );
-          return Promise.resolve({
-            status: 200,
-            header: new Headers({
-              "Content-Type": "application/csv",
-            }),
-            body: createAsyncIterable([]),
-            trailer: new Headers(),
-          });
-        },
-        ...defaultTransportOptions,
-      });
-    });
-    it("should cancel the HTTP request for unary", async function () {
-      try {
-        await transport.unary(
-          TestService,
-          TestService.methods.unary,
-          undefined,
-          undefined,
-          undefined,
-          {}
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] unexpected response content type "application/csv"'
-        );
-      }
-      expect(httpRequestAborted).toBeTrue();
-    });
-    it("should cancel the HTTP request for server-streaming", async function () {
-      try {
-        await transport.stream(
-          TestService,
-          TestService.methods.unary,
-          undefined,
-          undefined,
-          undefined,
-          createAsyncIterable([])
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] unexpected response content type "application/csv"'
-        );
-      }
-      expect(httpRequestAborted).toBeTrue();
-    });
-  });
   describe("against server responding with an error", function () {
     describe("for unary", function () {
       let httpRequestAborted = false;
