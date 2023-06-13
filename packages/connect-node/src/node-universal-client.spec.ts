@@ -69,8 +69,6 @@ describe("universal node http client", function () {
         it("should raise Code.Unavailable", async function () {
           const client = createNodeHttpClient({
             httpVersion,
-            baseUrl: "https://unresolvable-host.some.domain",
-            keepSessionAlive: false,
           });
           try {
             await client({
@@ -98,10 +96,7 @@ describe("universal node http client", function () {
         })
       );
       it("should reject the response promise with Code.Canceled", async function () {
-        const client = createNodeHttpClient({
-          httpVersion: "2",
-          baseUrl: server.getUrl(),
-        });
+        const client = server.getClient();
         try {
           await client({
             url: server.getUrl(),
@@ -127,9 +122,7 @@ describe("universal node http client", function () {
         })
       );
       it("should reject the response promise", async function () {
-        const client = createNodeHttpClient({
-          httpVersion: "1.1",
-        });
+        const client = server.getClient();
         try {
           await client({
             url: server.getUrl(),
@@ -158,10 +151,7 @@ describe("universal node http client", function () {
         })
       );
       it("should reject the response promise with Code.Canceled", async function () {
-        const client = createNodeHttpClient({
-          httpVersion: "2",
-          baseUrl: server.getUrl(),
-        });
+        const client = server.getClient();
         const res = await client({
           url: server.getUrl(),
           method: "POST",
@@ -192,9 +182,7 @@ describe("universal node http client", function () {
         })
       );
       it("should reject the response promise", async function () {
-        const client = createNodeHttpClient({
-          httpVersion: "1.1",
-        });
+        const client = server.getClient();
         const res = await client({
           url: server.getUrl(),
           method: "POST",
@@ -230,10 +218,7 @@ describe("universal node http client", function () {
         })
       );
       it("should reject the response promise with Code.Canceled", async function () {
-        const client = createNodeHttpClient({
-          httpVersion: "2",
-          baseUrl: server.getUrl(),
-        });
+        const client = server.getClient();
 
         async function* body() {
           yield new Uint8Array(32);
@@ -273,9 +258,7 @@ describe("universal node http client", function () {
         })
       );
       it("should reject the response promise", async function () {
-        const client = createNodeHttpClient({
-          httpVersion: "1.1",
-        });
+        const client = server.getClient();
 
         async function* body() {
           yield new Uint8Array(32);
@@ -319,10 +302,7 @@ describe("universal node http client", function () {
         })
       );
       it("should reject the response promise with Code.Canceled", async function () {
-        const client = createNodeHttpClient({
-          httpVersion: "2",
-          baseUrl: server.getUrl(),
-        });
+        const client = server.getClient();
         const res = await client({
           url: server.getUrl(),
           method: "POST",
@@ -358,9 +338,7 @@ describe("universal node http client", function () {
         })
       );
       it("should reject the response promise", async function () {
-        const client = createNodeHttpClient({
-          httpVersion: "1.1",
-        });
+        const client = server.getClient();
         const res = await client({
           url: server.getUrl(),
           method: "POST",
@@ -389,12 +367,8 @@ describe("universal node http client", function () {
         http2.createServer(() => (serverReceivedRequest = true))
       );
       it("should raise error with Code.Canceled and never hit the server", async function () {
+        const client = server.getClient();
         const signal = AbortSignal.abort();
-        const client = createNodeHttpClient({
-          httpVersion: "2",
-          baseUrl: server.getUrl(),
-          keepSessionAlive: false,
-        });
         // client should raise error
         try {
           await client({
@@ -420,10 +394,8 @@ describe("universal node http client", function () {
         http.createServer(() => (serverReceivedRequest = true))
       );
       it("should raise error with Code.Canceled and never hit the server", async function () {
+        const client = server.getClient();
         const signal = AbortSignal.abort();
-        const client = createNodeHttpClient({
-          httpVersion: "1.1",
-        });
         // client should raise error
         try {
           await client({
@@ -464,12 +436,8 @@ describe("universal node http client", function () {
       );
       it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
         // set up a client that aborts while still streaming the request body
+        const client = server.getClient();
         const ac = new AbortController();
-        const client = createNodeHttpClient({
-          httpVersion: "2",
-          baseUrl: server.getUrl(),
-          keepSessionAlive: false,
-        });
 
         async function* body() {
           await new Promise<void>((resolve) => setTimeout(resolve, 50));
@@ -531,10 +499,8 @@ describe("universal node http client", function () {
       );
       it("should raise error with code canceled", async function () {
         // set up a client that aborts while still streaming the request body
+        const client = server.getClient();
         const ac = new AbortController();
-        const client = createNodeHttpClient({
-          httpVersion: "1.1",
-        });
 
         async function* body() {
           await new Promise<void>((resolve) => setTimeout(resolve, 50));
@@ -596,12 +562,8 @@ describe("universal node http client", function () {
       );
       it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
         // set up a client that aborts while still streaming the request body
+        const client = server.getClient();
         const ac = new AbortController();
-        const client = createNodeHttpClient({
-          httpVersion: "2",
-          baseUrl: server.getUrl(),
-          keepSessionAlive: false,
-        });
 
         async function* body() {
           yield new Uint8Array(32);
@@ -664,10 +626,8 @@ describe("universal node http client", function () {
       );
       it("should raise error with code canceled", async function () {
         // set up a client that aborts while still streaming the request body
+        const client = server.getClient();
         const ac = new AbortController();
-        const client = createNodeHttpClient({
-          httpVersion: "1.1",
-        });
 
         async function* body() {
           yield new Uint8Array(32);
@@ -731,12 +691,8 @@ describe("universal node http client", function () {
       );
       it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
         // set up a client that aborts while still streaming the request body
+        const client = server.getClient();
         const ac = new AbortController();
-        const client = createNodeHttpClient({
-          httpVersion: "2",
-          baseUrl: server.getUrl(),
-          keepSessionAlive: false,
-        });
 
         const res = await client({
           url: server.getUrl(),
@@ -789,10 +745,8 @@ describe("universal node http client", function () {
       );
       it("should raise error with code canceled", async function () {
         // set up a client that aborts while still streaming the request body
+        const client = server.getClient();
         const ac = new AbortController();
-        const client = createNodeHttpClient({
-          httpVersion: "1.1",
-        });
 
         const res = await client({
           url: server.getUrl(),

@@ -12,18 +12,68 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CommonTransportOptions } from "@bufbuild/connect/protocol";
-import { compressionBrotli, compressionGzip } from "./compression.js";
-import { createNodeHttpClient } from "./node-universal-client.js";
-import type { NodeHttpClientOptions } from "./node-universal-client.js";
+import type {
+  CommonTransportOptions,
+  UniversalClientFn,
+} from "@bufbuild/connect/protocol";
 import { validateReadWriteMaxBytes } from "@bufbuild/connect/protocol";
+import { compressionBrotli, compressionGzip } from "./compression.js";
+import {
+  createNodeHttpClient,
+  type NodeHttp2ClientSessionManager,
+} from "./node-universal-client.js";
+import {
+  Http2SessionManager,
+  type Http2SessionOptions,
+} from "./http2-session-manager.js";
+import * as http2 from "http2";
+import * as http from "http";
+import * as https from "https";
+
+export type DeprecatedNodeTransportOptions = {
+  /**
+   * @deprecated use the Http2SessionManager instead for fine-grained control over sessions and keep-alive
+   *
+   * By default, HTTP/2 sessions are terminated after each request.
+   * Set this option to true to keep sessions alive across multiple
+   * requests.
+   */
+  keepSessionAlive?: boolean;
+};
 
 /**
- * Options that are common to all client transports for Node.js.
+ * Options specific to Node.js client transports.
  */
-type CommonNodeTransportOptions = NodeHttpClientOptions &
-  Partial<Omit<CommonTransportOptions, "baseUrl">> &
-  Pick<CommonTransportOptions, "baseUrl">;
+export type NodeTransportOptions =
+  | {
+      httpVersion: "1.1";
+      /**
+       * Options passed to the request() call of the Node.js built-in
+       * http or https module.
+       */
+      nodeOptions?:
+        | Omit<http.RequestOptions, "signal">
+        | Omit<https.RequestOptions, "signal">;
+    }
+  | ({
+      httpVersion: "2";
+
+      /**
+       * A manager for the HTTP/2 connection of the transport.
+       *
+       * Providing this option makes nodeOptions as well as the HTTP/2 session
+       * options (pingIntervalMs et cetera) ineffective.
+       */
+      sessionManager?: NodeHttp2ClientSessionManager;
+
+      /**
+       * Options passed to the connect() call of the Node.js built-in
+       * http2 module.
+       */
+      nodeOptions?:
+        | http2.ClientSessionOptions
+        | http2.SecureClientSessionOptions;
+    } & Http2SessionOptions);
 
 /**
  * Asserts that the options are within sane limits, and returns default values
@@ -32,11 +82,40 @@ type CommonNodeTransportOptions = NodeHttpClientOptions &
  * @private Internal code, does not follow semantic versioning.
  */
 export function validateNodeTransportOptions(
-  options: CommonNodeTransportOptions
+  options: NodeTransportOptions &
+    Partial<Omit<CommonTransportOptions, "baseUrl">> &
+    Pick<CommonTransportOptions, "baseUrl">
 ) {
+  let httpClient: UniversalClientFn;
+  if (options.httpVersion == "2") {
+    let sessionManager: NodeHttp2ClientSessionManager;
+    if (options.sessionManager) {
+      sessionManager = options.sessionManager;
+    } else {
+      sessionManager = new Http2SessionManager(
+        options.baseUrl,
+        {
+          pingIntervalMs: options.pingIntervalMs,
+          pingIdleConnection: options.pingIdleConnection,
+          pingTimeoutMs: options.pingTimeoutMs,
+          idleConnectionTimeoutMs: options.idleConnectionTimeoutMs,
+        },
+        options.nodeOptions
+      );
+    }
+    httpClient = createNodeHttpClient({
+      httpVersion: "2",
+      sessionProvider: () => sessionManager,
+    });
+  } else {
+    httpClient = createNodeHttpClient({
+      httpVersion: "1.1",
+      nodeOptions: options.nodeOptions,
+    });
+  }
   return {
     ...options,
-    httpClient: options.httpClient ?? createNodeHttpClient(options),
+    httpClient,
     useBinaryFormat: options.useBinaryFormat ?? true,
     interceptors: options.interceptors ?? [],
     sendCompression: options.sendCompression ?? null,

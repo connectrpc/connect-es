@@ -17,8 +17,7 @@ import * as http from "http";
 import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
-import { createRouterTransport, type Transport } from "@bufbuild/connect";
-import { cors } from "@bufbuild/connect";
+import { cors, createRouterTransport, type Transport } from "@bufbuild/connect";
 import {
   compressionGzip,
   connectNodeAdapter,
@@ -28,12 +27,12 @@ import {
 } from "@bufbuild/connect-node";
 import { fastifyConnectPlugin } from "@bufbuild/connect-fastify";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
-import { fastify } from "fastify";
 import type {
   FastifyBaseLogger,
   FastifyInstance,
   FastifyTypeProviderDefault,
 } from "fastify";
+import { fastify } from "fastify";
 import { importExpress } from "./import-express.js";
 import { testRoutes } from "./test-routes.js";
 
@@ -331,7 +330,6 @@ export function createTestServers() {
   };
 
   const transports = {
-    // TODO add http1.1 transports once implemented
     // gRPC
     "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2)":
       (options?: Record<string, unknown>) =>
@@ -339,6 +337,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             ca: certLocalhost.cert,
           },
@@ -350,6 +349,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: true,
         }),
     "@bufbuild/connect-node (gRPC, JSON, http2) against @bufbuild/connect-node (h2c)":
@@ -358,6 +358,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: false,
         }),
     "@bufbuild/connect-node (gRPC, binary, http2, gzip) against @bufbuild/connect-node (h2c)":
@@ -366,6 +367,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: true,
           sendCompression: compressionGzip,
         }),
@@ -375,6 +377,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
@@ -385,6 +388,7 @@ export function createTestServers() {
         ...options,
         baseUrl: servers["connect-go (h1)"].getUrl(),
         httpVersion: "2",
+        idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
         nodeOptions: {
           rejectUnauthorized: false, // TODO set up cert for go server correctly
         },
@@ -396,6 +400,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["connect-go (h1)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -408,6 +413,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["connect-go (h1)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -421,6 +427,7 @@ export function createTestServers() {
         ...options,
         baseUrl: servers["connect-go (h1)"].getUrl(),
         httpVersion: "2",
+        idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
         nodeOptions: {
           rejectUnauthorized: false, // TODO set up cert for go server correctly
         },
@@ -433,6 +440,7 @@ export function createTestServers() {
         ...options,
         baseUrl: servers["grpc-go (h2)"].getUrl(),
         httpVersion: "2",
+        idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
         nodeOptions: {
           rejectUnauthorized: false, // TODO set up cert for go server correctly
         },
@@ -549,6 +557,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: true,
           sendCompression: compressionGzip,
         }),
@@ -558,6 +567,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
@@ -588,6 +598,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: true,
           sendCompression: compressionGzip,
         }),
@@ -597,6 +608,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["connect-go (h1)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -609,6 +621,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
@@ -618,6 +631,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["connect-go (h1)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -740,6 +754,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),
@@ -749,6 +764,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: true,
           sendCompression: compressionGzip,
         }),
@@ -778,6 +794,7 @@ export function createTestServers() {
         createGrpcWebTransport({
           ...options,
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           useBinaryFormat: true,
         }),
@@ -787,6 +804,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: false,
         }),
     "@bufbuild/connect-node (gRPC-web, binary, http2) against connect-go (h1)":
@@ -795,6 +813,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["connect-go (h1)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -806,6 +825,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["connect-go (h1)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -818,6 +838,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["connect-go (h1)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -830,6 +851,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -842,6 +864,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-node (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           nodeOptions: {
             rejectUnauthorized: false, // TODO set up cert for go server correctly
           },
@@ -855,6 +878,7 @@ export function createTestServers() {
         ...options,
         baseUrl: servers["connect-go (h1)"].getUrl(),
         httpVersion: "2",
+        idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
         nodeOptions: {
           rejectUnauthorized: false, // TODO set up cert for go server correctly
         },
@@ -963,6 +987,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: true,
           sendCompression: compressionGzip,
         }),
@@ -972,6 +997,7 @@ export function createTestServers() {
           ...options,
           baseUrl: servers["@bufbuild/connect-fastify (h2c)"].getUrl(),
           httpVersion: "2",
+          idleConnectionTimeoutMs: 25, // automatically close connection without streams so the server shuts down quickly after tests
           useBinaryFormat: false,
           sendCompression: compressionGzip,
         }),

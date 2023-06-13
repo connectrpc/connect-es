@@ -27,3 +27,4 @@ export {
 } from "./node-universal-handler.js";
 
 export { createNodeHttpClient } from "./node-universal-client.js";
+export { Http2SessionManager } from "./http2-session-manager.js";
