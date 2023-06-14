@@ -45,6 +45,21 @@ export interface Serialization<T> {
 }
 
 /**
+ * Sets default JSON serialization options for connect-es.
+ *
+ * With standard protobuf JSON serialization, unknown JSON fields are
+ * rejected by default. In connect-es, unknown JSON fields are ignored
+ * by default.
+ */
+export function getJsonOptions(
+  options: Partial<JsonReadOptions & JsonWriteOptions> | undefined
+) {
+  const o = { ...options };
+  o.ignoreUnknownFields ??= true;
+  return o;
+}
+
+/**
  * Create an object that provides convenient access to request and response
  * message serialization for a given method.
  *
@@ -215,8 +230,7 @@ export function createJsonSerialization<T extends Message<T>>(
 ): Serialization<T> {
   const textEncoder = options?.textEncoder ?? new TextEncoder();
   const textDecoder = options?.textDecoder ?? new TextDecoder();
-  const o = options ?? {};
-  o.ignoreUnknownFields ??= true;
+  const o = getJsonOptions(options);
   return {
     parse(data: Uint8Array): T {
       try {

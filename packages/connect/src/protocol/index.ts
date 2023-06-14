@@ -36,6 +36,7 @@ export { runUnaryCall, runStreamingCall } from "./run-call.js";
 export {
   createMethodSerializationLookup,
   createClientMethodSerializers,
+  getJsonOptions,
   limitSerialization,
 } from "./serialization.js";
 export type {

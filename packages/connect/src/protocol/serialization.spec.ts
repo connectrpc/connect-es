@@ -17,6 +17,7 @@ import type { Serialization } from "./serialization.js";
 import {
   createBinarySerialization,
   createJsonSerialization,
+  getJsonOptions,
   limitSerialization,
 } from "./serialization.js";
 import { ConnectError } from "../connect-error.js";
@@ -151,5 +152,20 @@ describe("limitSerialization()", function () {
       ConnectError,
       "[resource_exhausted] message size 6 is larger than configured readMaxBytes 3"
     );
+  });
+});
+
+describe("getJsonOptions()", function () {
+  it("sets ignoreUnknownFields to true if not already set on options object", function () {
+    const opts = getJsonOptions({ emitDefaultValues: true });
+    expect(opts.ignoreUnknownFields).toBeTrue();
+  });
+  it("sets ignoreUnknownFields to true if undefined is passed", function () {
+    const opts = getJsonOptions(undefined);
+    expect(opts.ignoreUnknownFields).toBeTrue();
+  });
+  it("doesn't change ignoreUnknownFields if already set", function () {
+    const opts = getJsonOptions({ ignoreUnknownFields: false });
+    expect(opts.ignoreUnknownFields).toBeFalse();
   });
 });

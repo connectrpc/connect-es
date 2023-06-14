@@ -36,6 +36,7 @@ import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
+  getJsonOptions,
   encodeEnvelope,
   runStreamingCall,
   runUnaryCall,
@@ -200,6 +201,7 @@ export function createConnectTransport(
           const [demuxedHeader, demuxedTrailer] = trailerDemux(
             response.headers
           );
+
           return <UnaryResponse<I, O>>{
             stream: false,
             service,
@@ -209,7 +211,7 @@ export function createConnectTransport(
               ? parse(new Uint8Array(await response.arrayBuffer()))
               : method.O.fromJson(
                   (await response.json()) as JsonValue,
-                  options.jsonOptions
+                  getJsonOptions(options.jsonOptions)
                 ),
             trailer: demuxedTrailer,
           };
