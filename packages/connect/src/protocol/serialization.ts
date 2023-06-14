@@ -46,9 +46,9 @@ export interface Serialization<T> {
 
 /**
  * Sets default JSON serialization options for connect-es.
- * 
- * With standard protobuf JSON serialization, unknown JSON fields are 
- * rejected by default. In connect-es, unknown JSON fields are ignored 
+ *
+ * With standard protobuf JSON serialization, unknown JSON fields are
+ * rejected by default. In connect-es, unknown JSON fields are ignored
  * by default.
  */
 export function getJsonOptions(
