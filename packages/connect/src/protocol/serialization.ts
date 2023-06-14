@@ -45,7 +45,11 @@ export interface Serialization<T> {
 }
 
 /**
- * Returns a Json Options object with defaults set for any properties not provided
+ * Sets default JSON serialization options for connect-es.
+ * 
+ * With standard protobuf JSON serialization, unknown JSON fields are 
+ * rejected by default. In connect-es, unknown JSON fields are ignored 
+ * by default.
  */
 export function getJsonOptions(
   options: Partial<JsonReadOptions & JsonWriteOptions> | undefined
