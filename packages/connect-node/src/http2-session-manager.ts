@@ -72,13 +72,16 @@ export interface Http2SessionOptions {
 }
 
 /**
- * Manage a single HTTP/2 connection and keep it alive with PING frames.
+ * Manage an HTTP/2 connection and keep it alive with PING frames.
  *
  * The logic is based on "Basic Keepalive" described in
  * https://github.com/grpc/proposal/blob/0ba0c1905050525f9b0aee46f3f23c8e1e515489/A8-client-side-keepalive.md#basic-keepalive
  * as well as the client channel arguments described in
  * https://github.com/grpc/grpc/blob/8e137e524a1b1da7bbf4603662876d5719563b57/doc/keepalive.md
  *
+ * Usually, the managers tracks exactly one connection, but if a connection
+ * receives a GOAWAY frame with NO_ERROR, the connection is maintained until
+ * all streams have finished, and new requests will open a new connection.
  */
 export class Http2SessionManager {
   /**
@@ -276,7 +279,9 @@ export class Http2SessionManager {
       | StateVerifying
       | StateReady
   ): void {
+    this.s.onExitState?.();
     if (this.s.t == "ready" && this.s.isShuttingDown()) {
+      // Maintain connections that have been asked to shut down.
       const sd = this.s;
       this.shuttingDown.push(sd);
       sd.onClose = sd.onError = () => {
@@ -285,8 +290,6 @@ export class Http2SessionManager {
           this.shuttingDown.splice(i, 1);
         }
       };
-    } else {
-      this.s.onExitState?.();
     }
     switch (state.t) {
       case "connecting":
@@ -499,7 +502,12 @@ interface StateReady extends StateCommon {
    */
   requiresVerify(): boolean;
 
-  // TODO
+  /**
+   * This connection has received a GOAWAY frame with code NO_ERROR (0x0).
+   * Previously established streams are allowed to finish, but no new streams
+   * may be opened on this connection.
+   * Keep-alive continues for this connection.
+   */
   isShuttingDown(): boolean;
 
   /**
@@ -616,7 +624,9 @@ function ready(
     },
     onExitState() {
       if (state.isShuttingDown()) {
-        // TODO
+        // Per the interface, this method is called when the manager is leaving
+        // the state. We maintain this connection in the session manager until
+        // all streams have finished, so we do not detach event listeners here.
         return;
       }
       cleanup();
@@ -710,6 +720,8 @@ function ready(
       // Node.js v16 closes a connection on its own when it receives a GOAWAY
       // frame and there are no open streams (emitting a "close" event and
       // destroying the session), but more recent versions do not.
+      // Calling close() ourselves is ineffective here - it appears that the
+      // method is already being called, see https://github.com/nodejs/node/blob/198affc63973805ce5102d246f6b7822be57f5fc/lib/internal/http2/core.js#L681
       if (streamCount == 0 && nodeMajor >= 18) {
         conn.destroy(
           new ConnectError(
