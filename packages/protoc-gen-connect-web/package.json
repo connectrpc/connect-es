@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/protoc-gen-connect-web",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -23,7 +23,7 @@
     "@bufbuild/protoplugin": "^1.2.1"
   },
   "peerDependencies": {
-    "@bufbuild/connect": "0.10.0",
+    "@bufbuild/connect": "0.10.1",
     "@bufbuild/protoc-gen-es": "^1.2.1"
   },
   "peerDependenciesMeta": {
