@@ -124,7 +124,6 @@ export function createConnectTransport(
 ): Transport {
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? false;
-  const fetch = options.fetch ?? globalThis.fetch;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
@@ -180,6 +179,9 @@ export function createConnectTransport(
           } else {
             body = serialize(req.message);
           }
+          // Make sure to retrieve the fetch on request to make sure any polyfills/overrides
+          // are applied.
+          const fetch = options.fetch ?? globalThis.fetch;
           const response = await fetch(req.url, {
             ...req.init,
             headers: req.header,

@@ -107,5 +107,31 @@ describe("custom fetch", function () {
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
     });
+    it("should support polyfills", async function () {
+      const response = new Response(
+        new SimpleResponse({ username: "donald" }).toJsonString(),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      spyOn(response, "arrayBuffer").and.callThrough();
+      spyOn(response, "json").and.callThrough();
+      const transport = createConnectTransport({
+        baseUrl: "https://example.com",
+      });
+      globalThis.fetch = () => Promise.resolve(response);
+      await transport.unary(
+        TestService,
+        TestService.methods.unaryCall,
+        undefined,
+        undefined,
+        undefined,
+        new SimpleRequest()
+      );
+      expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+    });
   });
 });

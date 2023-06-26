@@ -119,7 +119,6 @@ export function createGrpcWebTransport(
 ): Transport {
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? true;
-  const fetch = options.fetch ?? globalThis.fetch;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
@@ -157,6 +156,9 @@ export function createGrpcWebTransport(
           message: normalize(message),
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
+          // Make sure to retrieve the fetch on request to make sure any polyfills/overrides
+          // are applied.
+          const fetch = options.fetch ?? globalThis.fetch;
           const response = await fetch(req.url, {
             ...req.init,
             headers: req.header,
