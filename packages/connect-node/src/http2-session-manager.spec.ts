@@ -209,24 +209,24 @@ describe("Http2SessionManager", function () {
   });
 
   describe("with idleConnectionTimeoutMs", function () {
-    it('should close an idle connection', async function () {
+    it("should close an idle connection", async function () {
       const sm = new Http2SessionManager(server.getUrl(), {
-        idleConnectionTimeoutMs: 5 // intentionally short for tests
+        idleConnectionTimeoutMs: 5, // intentionally short for tests
       });
       const req1 = await sm.request("POST", "/", {}, {});
-      await new Promise<void>(resolve => {
+      await new Promise<void>((resolve) => {
         req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve);
       });
       expect(sm.state()).toBe("idle");
-      await new Promise<void>(resolve => setTimeout(resolve, 15)); // wait for idle timeout
+      await new Promise<void>((resolve) => setTimeout(resolve, 15)); // wait for idle timeout
       expect(sm.state())
-          .withContext("connection state after waiting for idle timeout")
-          .toBe("closed");
+        .withContext("connection state after waiting for idle timeout")
+        .toBe("closed");
 
       // new request should open new connection without errors
       const req2 = await sm.request("POST", "/", {}, {});
       expect(sm.state()).toBe("open");
-      await new Promise<void>(resolve => {
+      await new Promise<void>((resolve) => {
         req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve);
       });
     });
