@@ -121,6 +121,8 @@ describe("custom fetch", function () {
       const transport = createConnectTransport({
         baseUrl: "https://example.com",
       });
+      const originFetch = globalThis.fetch;
+      // Patch globalThis.fetch to mimic a polyfill
       globalThis.fetch = () => Promise.resolve(response);
       await transport.unary(
         TestService,
@@ -130,6 +132,7 @@ describe("custom fetch", function () {
         undefined,
         new SimpleRequest()
       );
+      globalThis.fetch = originFetch;
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
     });
