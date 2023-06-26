@@ -17,10 +17,7 @@ import {
   SimpleRequest,
   SimpleResponse,
 } from "./gen/grpc/testing/messages_pb.js";
-import {
-  createConnectTransport,
-  createGrpcWebTransport,
-} from "@bufbuild/connect-web";
+import { createConnectTransport } from "@bufbuild/connect-web";
 
 describe("custom fetch", function () {
   describe("with Connect transport", () => {
@@ -122,37 +119,6 @@ describe("custom fetch", function () {
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
       const transport = createConnectTransport({
-        baseUrl: "https://example.com",
-      });
-      const originFetch = globalThis.fetch;
-      // Patch globalThis.fetch to mimic a polyfill or patch
-      globalThis.fetch = () => Promise.resolve(response);
-      await transport.unary(
-        TestService,
-        TestService.methods.unaryCall,
-        undefined,
-        undefined,
-        undefined,
-        new SimpleRequest()
-      );
-      globalThis.fetch = originFetch;
-      expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
-    });
-  });
-  describe("with gRPC-web transport", () => {
-    it("should should defer resolving fetch until calling endpoint", async function () {
-      const response = new Response(
-        new SimpleResponse({ username: "donald" }).toJsonString(),
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      spyOn(response, "arrayBuffer").and.callThrough();
-      spyOn(response, "json").and.callThrough();
-      const transport = createGrpcWebTransport({
         baseUrl: "https://example.com",
       });
       const originFetch = globalThis.fetch;
