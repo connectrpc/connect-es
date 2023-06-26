@@ -179,8 +179,6 @@ export function createConnectTransport(
           } else {
             body = serialize(req.message);
           }
-          // Make sure to retrieve the fetch on request to make sure any polyfills/overrides
-          // are applied.
           const fetch = options.fetch ?? globalThis.fetch;
           const response = await fetch(req.url, {
             ...req.init,
@@ -305,6 +303,7 @@ export function createConnectTransport(
           message: input,
         },
         next: async (req) => {
+          const fetch = options.fetch ?? globalThis.fetch;
           const fRes = await fetch(req.url, {
             ...req.init,
             headers: req.header,
