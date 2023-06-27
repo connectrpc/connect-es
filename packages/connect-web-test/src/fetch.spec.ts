@@ -17,9 +17,16 @@ import {
   SimpleRequest,
   SimpleResponse,
 } from "./gen/grpc/testing/messages_pb.js";
-import { createConnectTransport } from "@bufbuild/connect-web";
+import {
+  createConnectTransport,
+  createGrpcWebTransport,
+} from "@bufbuild/connect-web";
 
 describe("custom fetch", function () {
+  let originFetch: typeof fetch;
+  beforeEach(() => (originFetch = globalThis.fetch));
+  afterEach(() => (globalThis.fetch = originFetch));
+
   describe("with Connect transport", () => {
     it("should only call Response#json with the JSON format", async function () {
       const response = new Response(
@@ -106,6 +113,64 @@ describe("custom fetch", function () {
       ).toBeRejectedWithError(/\[permission_denied] foobar/);
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+    });
+    it("should should defer resolving fetch until calling endpoint", async function () {
+      const response = new Response(
+        new SimpleResponse({ username: "donald" }).toJsonString(),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      spyOn(response, "arrayBuffer").and.callThrough();
+      spyOn(response, "json").and.callThrough();
+      const transport = createConnectTransport({
+        baseUrl: "https://example.com",
+      });
+      // Patch globalThis.fetch to mimic a polyfill or patch
+      globalThis.fetch = () => Promise.resolve(response);
+      await transport.unary(
+        TestService,
+        TestService.methods.unaryCall,
+        undefined,
+        undefined,
+        undefined,
+        new SimpleRequest()
+      );
+      expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+    });
+  });
+  describe("with gRPC-web transport", () => {
+    it("should should defer resolving fetch until calling endpoint", async function () {
+      const response = new Response(
+        new SimpleResponse({ username: "donald" }).toJsonString(),
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      spyOn(response, "arrayBuffer").and.callThrough();
+      spyOn(response, "json").and.callThrough();
+      const transport = createGrpcWebTransport({
+        baseUrl: "https://example.com",
+        useBinaryFormat: false,
+      });
+      // Patch globalThis.fetch to mimic a polyfill or patch
+      globalThis.fetch = () =>
+        Promise.reject("test-error-raised-from-patched-fetch");
+      await expectAsync(
+        transport.unary(
+          TestService,
+          TestService.methods.unaryCall,
+          undefined,
+          undefined,
+          undefined,
+          new SimpleRequest()
+        )
+      ).toBeRejectedWithError(/test-error-raised-from-patched-fetch/);
     });
   });
 });
