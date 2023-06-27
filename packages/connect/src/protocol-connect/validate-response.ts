@@ -45,7 +45,7 @@ export function validateResponse(
       codeFromHttpStatus(status),
       headers
     );
-    if (methodKind == MethodKind.Unary && parsedType && !parsedType.stream) {
+    if (methodKind == MethodKind.Unary && parsedType && !parsedType.binary) {
       return { isUnaryError: true, unaryError: errorFromStatus };
     }
     throw errorFromStatus;
