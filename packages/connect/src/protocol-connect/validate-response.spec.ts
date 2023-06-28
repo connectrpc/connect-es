@@ -63,6 +63,7 @@ describe("Connect validateResponse()", function () {
             "Content-Type": "application/proto",
           })
         );
+        fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
