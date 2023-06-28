@@ -72,13 +72,16 @@ export interface Http2SessionOptions {
 }
 
 /**
- * Manage a single HTTP/2 connection and keep it alive with PING frames.
+ * Manage an HTTP/2 connection and keep it alive with PING frames.
  *
  * The logic is based on "Basic Keepalive" described in
  * https://github.com/grpc/proposal/blob/0ba0c1905050525f9b0aee46f3f23c8e1e515489/A8-client-side-keepalive.md#basic-keepalive
  * as well as the client channel arguments described in
  * https://github.com/grpc/grpc/blob/8e137e524a1b1da7bbf4603662876d5719563b57/doc/keepalive.md
  *
+ * Usually, the managers tracks exactly one connection, but if a connection
+ * receives a GOAWAY frame with NO_ERROR, the connection is maintained until
+ * all streams have finished, and new requests will open a new connection.
  */
 export class Http2SessionManager {
   /**
@@ -142,6 +145,8 @@ export class Http2SessionManager {
     | StateConnecting
     | StateVerifying
     | StateReady = closed();
+
+  private shuttingDown: StateReady[] = [];
 
   private readonly http2SessionOptions:
     | http2.ClientSessionOptions
@@ -222,6 +227,9 @@ export class Http2SessionManager {
     if (this.s.t == "ready") {
       this.s.responseByteRead(stream);
     }
+    for (const s of this.shuttingDown) {
+      s.responseByteRead(stream);
+    }
   }
 
   /**
@@ -230,12 +238,17 @@ export class Http2SessionManager {
   abort(reason?: Error): void {
     const err = reason ?? new ConnectError("connection aborted", Code.Canceled);
     this.s.abort?.(err);
+    for (const s of this.shuttingDown) {
+      s.abort?.(err);
+    }
     this.setState(closedOrError(err));
   }
 
   private async gotoReady() {
     if (this.s.t == "ready") {
-      if (this.s.requiresVerify()) {
+      if (this.s.isShuttingDown()) {
+        this.setState(connect(this.authority, this.http2SessionOptions));
+      } else if (this.s.requiresVerify()) {
         this.setState(
           verify(this.s, this.options, this.authority, this.http2SessionOptions)
         );
@@ -267,6 +280,17 @@ export class Http2SessionManager {
       | StateReady
   ): void {
     this.s.onExitState?.();
+    if (this.s.t == "ready" && this.s.isShuttingDown()) {
+      // Maintain connections that have been asked to shut down.
+      const sd = this.s;
+      this.shuttingDown.push(sd);
+      sd.onClose = sd.onError = () => {
+        const i = this.shuttingDown.indexOf(sd);
+        if (i !== -1) {
+          this.shuttingDown.splice(i, 1);
+        }
+      };
+    }
     switch (state.t) {
       case "connecting":
         state.conn.then(
@@ -479,6 +503,14 @@ interface StateReady extends StateCommon {
   requiresVerify(): boolean;
 
   /**
+   * This connection has received a GOAWAY frame with code NO_ERROR (0x0).
+   * Previously established streams are allowed to finish, but no new streams
+   * may be opened on this connection.
+   * Keep-alive continues for this connection.
+   */
+  isShuttingDown(): boolean;
+
+  /**
    * Register a stream, so that we can keep track of open streams, and keep the
    * connection alive with PING frames while streams are open.
    */
@@ -520,6 +552,8 @@ function ready(
   let pingIntervalId: ReturnType<typeof setTimeout> | undefined;
   // timer for waiting for a PING response
   let pingTimeoutId: ReturnType<typeof setTimeout> | undefined;
+  // keep track of GOAWAY with NO_ERROR - gracefully shut down open streams
+  let receivedGoAwayNoError = false;
   // keep track of GOAWAY with ENHANCE_YOUR_CALM and with debug data too_many_pings
   let receivedGoAwayEnhanceYourCalmTooManyPings = false;
   // timer for closing connections without open streams, must be initialized
@@ -535,6 +569,9 @@ function ready(
     requiresVerify(): boolean {
       const elapsedMs = Date.now() - lastAliveAt;
       return elapsedMs > options.pingIntervalMs;
+    },
+    isShuttingDown(): boolean {
+      return receivedGoAwayNoError;
     },
     onClose: undefined,
     onError: undefined,
@@ -586,6 +623,12 @@ function ready(
       }
     },
     onExitState() {
+      if (state.isShuttingDown()) {
+        // Per the interface, this method is called when the manager is leaving
+        // the state. We maintain this connection in the session manager until
+        // all streams have finished, so we do not detach event listeners here.
+        return;
+      }
       cleanup();
       this.onError = undefined;
       this.onClose = undefined;
@@ -653,22 +696,41 @@ function ready(
 
   function onIdleTimeout() {
     conn.close();
-    onClose(); // trigger a state change right away so we are not open to races
+    onClose(); // trigger a state change right away, so we are not open to races
   }
 
   function onGoaway(
     errorCode: number,
     lastStreamID: number,
-    opaqueData: Buffer
+    opaqueData: Buffer | undefined | null
   ) {
     const tooManyPingsAscii = Buffer.from("too_many_pings", "ascii");
     if (
       errorCode === http2.constants.NGHTTP2_ENHANCE_YOUR_CALM &&
+      opaqueData != null &&
       opaqueData.equals(tooManyPingsAscii)
     ) {
       // double pingIntervalMs, following the last paragraph of https://github.com/grpc/proposal/blob/0ba0c1905050525f9b0aee46f3f23c8e1e515489/A8-client-side-keepalive.md#basic-keepalive
       options.pingIntervalMs = options.pingIntervalMs * 2;
       receivedGoAwayEnhanceYourCalmTooManyPings = true;
+    }
+    if (errorCode === http2.constants.NGHTTP2_NO_ERROR) {
+      receivedGoAwayNoError = true;
+      const nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
+      // Node.js v16 closes a connection on its own when it receives a GOAWAY
+      // frame and there are no open streams (emitting a "close" event and
+      // destroying the session), but more recent versions do not.
+      // Calling close() ourselves is ineffective here - it appears that the
+      // method is already being called, see https://github.com/nodejs/node/blob/198affc63973805ce5102d246f6b7822be57f5fc/lib/internal/http2/core.js#L681
+      if (streamCount == 0 && nodeMajor >= 18) {
+        conn.destroy(
+          new ConnectError(
+            "received GOAWAY without any open streams",
+            Code.Canceled
+          ),
+          http2.constants.NGHTTP2_NO_ERROR
+        );
+      }
     }
   }
 

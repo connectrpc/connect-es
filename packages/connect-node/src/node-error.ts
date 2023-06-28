@@ -48,6 +48,7 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
   } else if (
     chain.some(
       (p) =>
+        p.code == "ETIMEDOUT" ||
         p.code == "ENOTFOUND" ||
         p.code == "EAI_AGAIN" ||
         p.code == "ECONNREFUSED"

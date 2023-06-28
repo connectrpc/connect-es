@@ -90,7 +90,7 @@ export function createNodeHttpClient(options: NodeHttpClientOptions) {
  */
 export interface NodeHttp2ClientSessionManager {
   /**
-   * The host this session manager connect to.
+   * The host this session manager connects to.
    */
   authority: string;
 
