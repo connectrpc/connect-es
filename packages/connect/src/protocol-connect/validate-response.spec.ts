@@ -82,59 +82,8 @@ describe("Connect validateResponse()", function () {
       expect(result.unaryError?.code).toBe(Code.InvalidArgument);
       expect(result.unaryError?.message).toBe("[invalid_argument] HTTP 400");
     });
-    it("should throw error for content type application/csv", function () {
-      try {
-        validateResponse(
-          MethodKind.Unary,
-          200,
-          new Headers({
-            "Content-Type": "application/csv",
-          })
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] unexpected response content type "application/csv"'
-        );
-      }
-    });
-    it("should throw error for streaming content type for unary RPC", function () {
-      try {
-        validateResponse(
-          MethodKind.Unary,
-          200,
-          new Headers({
-            "Content-Type": "application/connect+proto",
-          })
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] unexpected response content type "application/connect+proto"'
-        );
-      }
-    });
   });
   describe("with streaming", function () {
-    it("should throw error for unary content type for streaming RPC", function () {
-      try {
-        validateResponse(
-          MethodKind.BiDiStreaming,
-          200,
-          new Headers({
-            "Content-Type": "application/proto",
-          })
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] unexpected response content type "application/proto"'
-        );
-      }
-    });
     it("should include headers as error metadata", function () {
       try {
         validateResponse(

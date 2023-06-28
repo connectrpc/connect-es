@@ -51,13 +51,6 @@ export function validateResponse(
     }
     throw errorFromStatus;
   }
-  const isStream = methodKind != MethodKind.Unary;
-  if (!parsedType || parsedType.stream != isStream) {
-    throw new ConnectError(
-      `unexpected response content type "${mimeType ?? "?"}"`,
-      Code.InvalidArgument
-    );
-  }
   return { isUnaryError: false };
 }
 
