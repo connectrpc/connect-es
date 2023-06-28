@@ -135,7 +135,6 @@ describe("Connect transport", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
-          // expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
           // Body should not be parsed because the Content-Type response header is not application/json
           expect(ConnectError.from(e).code).toBe(Code.Unavailable);
           expect(ConnectError.from(e).message).toBe("[unavailable] HTTP 429");

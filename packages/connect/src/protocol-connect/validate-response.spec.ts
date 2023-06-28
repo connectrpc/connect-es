@@ -17,7 +17,7 @@ import { validateResponse } from "./validate-response.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 
-describe("validateResponse() Connect", function () {
+describe("Connect validateResponse()", function () {
   describe("with unary", function () {
     it("should be successful for HTTP 200 with proper unary JSON content type", function () {
       const r = validateResponse(
