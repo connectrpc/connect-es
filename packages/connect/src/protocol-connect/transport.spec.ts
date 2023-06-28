@@ -37,6 +37,7 @@ import { Code } from "../code.js";
 import {
   contentTypeStreamProto,
   contentTypeUnaryProto,
+  contentTypeUnaryJson,
 } from "./content-type.js";
 import { errorToJsonBytes } from "./error-json.js";
 import { createHandlerFactory } from "./handler-factory.js";
@@ -94,31 +95,34 @@ describe("Connect transport", function () {
   describe("against server responding with an error", function () {
     describe("for unary", function () {
       let httpRequestAborted = false;
-      const t = createTransport({
-        httpClient(
-          request: UniversalClientRequest
-        ): Promise<UniversalClientResponse> {
-          request.signal?.addEventListener(
-            "abort",
-            () => (httpRequestAborted = true)
-          );
-          return Promise.resolve({
-            status: 429,
-            header: new Headers({
-              "Content-Type": contentTypeUnaryProto,
-            }),
-            body: createAsyncIterable([
-              errorToJsonBytes(
-                new ConnectError("foo", Code.ResourceExhausted),
-                {}
-              ),
-            ]),
-            trailer: new Headers(),
-          });
-        },
-        ...defaultTransportOptions,
-      });
-      it("should cancel the HTTP request", async function () {
+      const getUnaryTransport = (opts: { contentType: string }) => {
+        return createTransport({
+          httpClient(
+            request: UniversalClientRequest
+          ): Promise<UniversalClientResponse> {
+            request.signal?.addEventListener(
+              "abort",
+              () => (httpRequestAborted = true)
+            );
+            return Promise.resolve({
+              status: 429,
+              header: new Headers({
+                "Content-Type": opts.contentType,
+              }),
+              body: createAsyncIterable([
+                errorToJsonBytes(
+                  new ConnectError("foo", Code.ResourceExhausted),
+                  {}
+                ),
+              ]),
+              trailer: new Headers(),
+            });
+          },
+          ...defaultTransportOptions,
+        });
+      };
+      it("should cancel the HTTP request and not parse the body", async function () {
+        const t = getUnaryTransport({ contentType: contentTypeUnaryProto });
         try {
           await t.unary(
             TestService,
@@ -131,6 +135,29 @@ describe("Connect transport", function () {
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
+          // expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
+          // Body should not be parsed because the Content-Type response header is not application/json
+          expect(ConnectError.from(e).code).toBe(Code.Unavailable);
+          expect(ConnectError.from(e).message).toBe("[unavailable] HTTP 429");
+        }
+        expect(httpRequestAborted).toBeTrue();
+      });
+      it("should cancel the HTTP request and parse the body", async function () {
+        const t = getUnaryTransport({ contentType: contentTypeUnaryJson });
+        try {
+          await t.unary(
+            TestService,
+            TestService.methods.unary,
+            undefined,
+            undefined,
+            undefined,
+            {}
+          );
+          fail("expected error");
+        } catch (e) {
+          expect(e).toBeInstanceOf(ConnectError);
+          // Body should be parsed because the Content-Type response header is application/json
+          expect(ConnectError.from(e).code).toBe(Code.ResourceExhausted);
           expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
         }
         expect(httpRequestAborted).toBeTrue();

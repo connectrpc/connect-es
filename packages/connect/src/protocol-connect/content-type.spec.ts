@@ -22,6 +22,8 @@ import {
 
 describe("parseContentType()", function () {
   it("should parse", function () {
+    expect(parseContentType("text/plain")).toBeUndefined();
+    expect(parseContentType("text/plain; charset=utf-8")).toBeUndefined();
     expect(parseContentType(contentTypeUnaryJson)).toEqual({
       stream: false,
       binary: false,

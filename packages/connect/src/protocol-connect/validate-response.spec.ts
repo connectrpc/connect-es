@@ -15,41 +15,54 @@
 import { MethodKind } from "@bufbuild/protobuf";
 import { validateResponse } from "./validate-response.js";
 import { ConnectError } from "../connect-error.js";
+import { Code } from "../code.js";
 
-describe("Connect validateResponse()", function () {
+describe("validateResponse() Connect", function () {
   describe("with unary", function () {
-    const methodKind = MethodKind.Unary;
-    it("should be successful for HTTP 200", function () {
-      const r = validateResponse(methodKind, 200, new Headers());
+    it("should be successful for HTTP 200 with proper unary JSON content type", function () {
+      const r = validateResponse(
+        MethodKind.Unary,
+        200,
+        new Headers({ "Content-Type": "application/json" })
+      );
       expect(r.isUnaryError).toBeFalse();
       expect(r.unaryError).toBeUndefined();
     });
     it("should return error for HTTP 204", function () {
-      const r = validateResponse(methodKind, 204, new Headers());
+      const r = validateResponse(
+        MethodKind.Unary,
+        204,
+        new Headers({ "Content-Type": "application/json" })
+      );
       expect(r.isUnaryError).toBeTrue();
       expect(r.unaryError?.message).toBe("[unknown] HTTP 204");
     });
-    it("should return error for HTTP error status", function () {
-      const r = validateResponse(methodKind, 400, new Headers());
-      expect(r.isUnaryError).toBeTrue();
-      expect(r.unaryError?.message).toBe("[invalid_argument] HTTP 400");
-    });
     it("should include headers as error metadata", function () {
-      const r = validateResponse(methodKind, 204, new Headers({ Foo: "Bar" }));
+      const r = validateResponse(
+        MethodKind.Unary,
+        204,
+        new Headers({ "Content-Type": "application/json", Foo: "Bar" })
+      );
       expect(r.unaryError?.metadata.get("Foo")).toBe("Bar");
     });
-  });
-  describe("with streaming", function () {
-    const methodKind = MethodKind.ServerStreaming;
-    it("should be successful for HTTP 200", function () {
-      const r = validateResponse(methodKind, 200, new Headers());
+    it("should be successful for HTTP 200 with proper unary proto content type", function () {
+      const r = validateResponse(
+        MethodKind.Unary,
+        200,
+        new Headers({ "Content-Type": "application/proto" })
+      );
       expect(r.isUnaryError).toBeFalse();
       expect(r.unaryError).toBeUndefined();
     });
-    it("should throw error for HTTP error status", function () {
+    it("should throw error for HTTP error status with binary response body", function () {
       try {
-        validateResponse(methodKind, 400, new Headers());
-        fail("expected error");
+        validateResponse(
+          MethodKind.Unary,
+          400,
+          new Headers({
+            "Content-Type": "application/proto",
+          })
+        );
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
@@ -57,9 +70,81 @@ describe("Connect validateResponse()", function () {
         );
       }
     });
+    it("should return an error for HTTP error status if content type is JSON", function () {
+      const result = validateResponse(
+        MethodKind.Unary,
+        400,
+        new Headers({
+          "Content-Type": "application/json",
+        })
+      );
+      expect(result.isUnaryError).toBeTrue();
+      expect(result.unaryError?.code).toBe(Code.InvalidArgument);
+      expect(result.unaryError?.message).toBe("[invalid_argument] HTTP 400");
+    });
+    it("should throw error for content type application/csv", function () {
+      try {
+        validateResponse(
+          MethodKind.Unary,
+          200,
+          new Headers({
+            "Content-Type": "application/csv",
+          })
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          '[invalid_argument] unexpected response content type "application/csv"'
+        );
+      }
+    });
+    it("should throw error for streaming content type for unary RPC", function () {
+      try {
+        validateResponse(
+          MethodKind.Unary,
+          200,
+          new Headers({
+            "Content-Type": "application/connect+proto",
+          })
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          '[invalid_argument] unexpected response content type "application/connect+proto"'
+        );
+      }
+    });
+  });
+  describe("with streaming", function () {
+    it("should throw error for unary content type for streaming RPC", function () {
+      try {
+        validateResponse(
+          MethodKind.BiDiStreaming,
+          200,
+          new Headers({
+            "Content-Type": "application/proto",
+          })
+        );
+        fail("expected error");
+      } catch (e) {
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).message).toBe(
+          '[invalid_argument] unexpected response content type "application/proto"'
+        );
+      }
+    });
     it("should include headers as error metadata", function () {
       try {
-        validateResponse(methodKind, 400, new Headers({ Foo: "Bar" }));
+        validateResponse(
+          MethodKind.BiDiStreaming,
+          400,
+          new Headers({
+            "Content-Type": "application/connect+proto",
+            Foo: "Bar",
+          })
+        );
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);

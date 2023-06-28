@@ -16,7 +16,7 @@ import { MethodKind } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
-import { parseContentType } from "../content-type.js";
+import { parseContentType } from "./content-type.js";
 import { headerStreamEncoding, headerUnaryEncoding } from "./headers.js";
 import type { Compression } from "../protocol/compression.js";
 
@@ -45,10 +45,18 @@ export function validateResponse(
       codeFromHttpStatus(status),
       headers
     );
+    // If parsedType is defined and it is not binary, then this is a unary JSON response
     if (methodKind == MethodKind.Unary && parsedType && !parsedType.binary) {
       return { isUnaryError: true, unaryError: errorFromStatus };
     }
     throw errorFromStatus;
+  }
+  const isStream = methodKind != MethodKind.Unary;
+  if (!parsedType || parsedType.stream != isStream) {
+    throw new ConnectError(
+      `unexpected response content type "${mimeType ?? "?"}"`,
+      Code.InvalidArgument
+    );
   }
   return { isUnaryError: false };
 }
