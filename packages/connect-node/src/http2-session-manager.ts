@@ -246,7 +246,7 @@ export class Http2SessionManager {
 
   private async gotoReady() {
     if (this.s.t == "ready") {
-      if (this.s.conn.destroyed || this.s.alreadyShutDown() || this.s.isShuttingDown()) {
+      if (this.s.conn.destroyed || this.s.conn.closed || this.s.isShuttingDown()) {
         this.setState(connect(this.authority, this.http2SessionOptions));
       } else if (this.s.requiresVerify()) {
         this.setState(
@@ -511,12 +511,6 @@ interface StateReady extends StateCommon {
   isShuttingDown(): boolean;
 
   /**
-   * This connection has received a GOAWAY frame with other codes except NO_ERROR (0x0).
-   * connection is destroyed by http2 core https://github.com/nodejs/node/blob/main/lib/internal/http2/core.js#L682
-   */
-  alreadyShutDown(): boolean;
-
-  /**
    * Register a stream, so that we can keep track of open streams, and keep the
    * connection alive with PING frames while streams are open.
    */
@@ -560,8 +554,6 @@ function ready(
   let pingTimeoutId: ReturnType<typeof setTimeout> | undefined;
   // keep track of GOAWAY with NO_ERROR - gracefully shut down open streams
   let receivedGoAwayNoError = false;
-  // keep track of GOAWAY with other error codes (exclude NO_ERROR)
-  let receivedGoAwayOtherErrors = false;
   // keep track of GOAWAY with ENHANCE_YOUR_CALM and with debug data too_many_pings
   let receivedGoAwayEnhanceYourCalmTooManyPings = false;
   // timer for closing connections without open streams, must be initialized
@@ -580,9 +572,6 @@ function ready(
     },
     isShuttingDown(): boolean {
       return receivedGoAwayNoError;
-    },
-    alreadyShutDown(): boolean {
-      return receivedGoAwayOtherErrors;
     },
     onClose: undefined,
     onError: undefined,
@@ -739,9 +728,6 @@ function ready(
           http2.constants.NGHTTP2_NO_ERROR
         );
       }
-    } else {
-      // Create new connection in case there's a race between on 'error' and 'goaway' event
-      receivedGoAwayOtherErrors = true;
     }
   }
 
