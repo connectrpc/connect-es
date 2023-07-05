@@ -246,7 +246,9 @@ export class Http2SessionManager {
 
   private async gotoReady() {
     if (this.s.t == "ready") {
-      if (this.s.isShuttingDown()) {
+      if (this.s.alreadyShutDown()) {
+        this.setState(connect(this.authority, this.http2SessionOptions));
+      } else if (this.s.isShuttingDown()) {
         this.setState(connect(this.authority, this.http2SessionOptions));
       } else if (this.s.requiresVerify()) {
         this.setState(
@@ -511,6 +513,12 @@ interface StateReady extends StateCommon {
   isShuttingDown(): boolean;
 
   /**
+   * This connection has received a GOAWAY frame with other codes except NO_ERROR (0x0).
+   * connection is destroyed by http2 core https://github.com/nodejs/node/blob/main/lib/internal/http2/core.js#L682
+   */
+  alreadyShutDown(): boolean;
+
+  /**
    * Register a stream, so that we can keep track of open streams, and keep the
    * connection alive with PING frames while streams are open.
    */
@@ -554,6 +562,8 @@ function ready(
   let pingTimeoutId: ReturnType<typeof setTimeout> | undefined;
   // keep track of GOAWAY with NO_ERROR - gracefully shut down open streams
   let receivedGoAwayNoError = false;
+  // keep track of GOAWAY with other error codes (exclude NO_ERROR)
+  let receivedGoAwayOtherErrors = false;
   // keep track of GOAWAY with ENHANCE_YOUR_CALM and with debug data too_many_pings
   let receivedGoAwayEnhanceYourCalmTooManyPings = false;
   // timer for closing connections without open streams, must be initialized
@@ -572,6 +582,9 @@ function ready(
     },
     isShuttingDown(): boolean {
       return receivedGoAwayNoError;
+    },
+    alreadyShutDown(): boolean {
+      return receivedGoAwayOtherErrors;
     },
     onClose: undefined,
     onError: undefined,
@@ -714,15 +727,12 @@ function ready(
       options.pingIntervalMs = options.pingIntervalMs * 2;
       receivedGoAwayEnhanceYourCalmTooManyPings = true;
     }
+
+    // Node.js closes a connection only when it receives a GOAWAY NO_ERROR, we need to destroy session ourself
+    // see https://github.com/nodejs/node/blob/v10.3.0/lib/internal/http2/core.js#L470 https://github.com/nodejs/node/blob/main/lib/internal/http2/core.js#L682
     if (errorCode === http2.constants.NGHTTP2_NO_ERROR) {
       receivedGoAwayNoError = true;
-      const nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
-      // Node.js v16 closes a connection on its own when it receives a GOAWAY
-      // frame and there are no open streams (emitting a "close" event and
-      // destroying the session), but more recent versions do not.
-      // Calling close() ourselves is ineffective here - it appears that the
-      // method is already being called, see https://github.com/nodejs/node/blob/198affc63973805ce5102d246f6b7822be57f5fc/lib/internal/http2/core.js#L681
-      if (streamCount == 0 && nodeMajor >= 18) {
+      if (streamCount == 0) {
         conn.destroy(
           new ConnectError(
             "received GOAWAY without any open streams",
@@ -731,6 +741,9 @@ function ready(
           http2.constants.NGHTTP2_NO_ERROR
         );
       }
+    } else {
+      // Create new connection in case there's a race between on 'error' and 'goaway' event
+      receivedGoAwayOtherErrors = true;
     }
   }
 
