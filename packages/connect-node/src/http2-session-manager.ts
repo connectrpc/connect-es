@@ -246,9 +246,7 @@ export class Http2SessionManager {
 
   private async gotoReady() {
     if (this.s.t == "ready") {
-      if (this.s.alreadyShutDown()) {
-        this.setState(connect(this.authority, this.http2SessionOptions));
-      } else if (this.s.isShuttingDown()) {
+      if (this.s.conn.destroyed || this.s.alreadyShutDown() || this.s.isShuttingDown()) {
         this.setState(connect(this.authority, this.http2SessionOptions));
       } else if (this.s.requiresVerify()) {
         this.setState(
