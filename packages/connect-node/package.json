@@ -33,7 +33,7 @@
     "@bufbuild/protobuf": "^1.2.1"
   },
   "devDependencies": {
-    "@types/jasmine": "^4.3.1",
+    "@types/jasmine": "^4.3.5",
     "jasmine": "^5.0.0"
   },
   "files": [
