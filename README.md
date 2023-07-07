@@ -111,7 +111,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
   demonstration service powering demo.connect.build
 * [connect-crosstest](https://github.com/bufbuild/connect-crosstest):
   gRPC-Web and Connect interoperability tests
-* [Buf Studio](https://studio.buf.build/): web UI for ad-hoc RPCs
+* [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
 
 
 
