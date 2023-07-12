@@ -305,11 +305,7 @@ export class Http2SessionManager {
       case "verifying":
         state.verified.then(
           (value) => {
-            if ("t" in value) {
-              this.setState(value);
-            } else {
-              this.setState(ready(value, this.options));
-            }
+            this.setState(value);
           },
           (reason) => {
             this.setState(closedOrError(reason));
@@ -543,6 +539,12 @@ function ready(
   conn: http2.ClientHttp2Session,
   options: Required<Http2SessionOptions>
 ): StateReady {
+  // Users have reported an error "The session has been destroyed" raised
+  // from H2SessionManager.request(), see https://github.com/bufbuild/connect-es/issues/683
+  // This assertion will show whether the session already died in the
+  // "connecting" state.
+  assertSessionOpen(conn);
+
   // the last time we were sure that the connection is alive, via a PING
   // response, or via received response bytes
   let lastAliveAt = Date.now();
@@ -784,4 +786,25 @@ function safeSetTimeout(
     return;
   }
   return setTimeout(callback, ms);
+}
+
+function assertSessionOpen(conn: http2.ClientHttp2Session) {
+  if (conn.connecting) {
+    throw new ConnectError(
+      "expected open session, but it is connecting",
+      Code.Internal
+    );
+  }
+  if (conn.destroyed) {
+    throw new ConnectError(
+      "expected open session, but it is destroyed",
+      Code.Internal
+    );
+  }
+  if (conn.closed) {
+    throw new ConnectError(
+      "expected open session, but it is closed",
+      Code.Internal
+    );
+  }
 }
