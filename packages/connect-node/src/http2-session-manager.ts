@@ -545,6 +545,11 @@ function ready(
   // "connecting" state.
   assertSessionOpen(conn);
 
+  // Do not block Node.js from exiting on an idle connection.
+  // Note that we ref() again for the first stream to open, and unref() again
+  // for the last stream to close.
+  conn.unref();
+
   // the last time we were sure that the connection is alive, via a PING
   // response, or via received response bytes
   let lastAliveAt = Date.now();
@@ -580,6 +585,7 @@ function ready(
     registerRequest(stream: http2.ClientHttp2Stream): void {
       streamCount++;
       if (streamCount == 1) {
+        conn.ref();
         resetPingInterval(); // reset to ping with the appropriate interval for "open"
         stopIdleTimeout();
       }
@@ -590,6 +596,7 @@ function ready(
       stream.once("close", () => {
         streamCount--;
         if (streamCount == 0) {
+          conn.unref();
           resetPingInterval(); // reset to ping with the appropriate interval for "idle"
           resetIdleTimeout();
         }
@@ -776,7 +783,8 @@ function ready(
 
 /**
  * setTimeout(), but simply ignores values larger than the maximum supported
- * value (signed 32-bit integer) instead of calling the callback right away.
+ * value (signed 32-bit integer) instead of calling the callback right away,
+ * and does not block Node.js from exiting.
  */
 function safeSetTimeout(
   callback: () => void,
@@ -785,7 +793,7 @@ function safeSetTimeout(
   if (ms > 0x7fffffff) {
     return;
   }
-  return setTimeout(callback, ms);
+  return setTimeout(callback, ms).unref();
 }
 
 function assertSessionOpen(conn: http2.ClientHttp2Session) {
