@@ -1,6 +1,6 @@
 {
   "name": "@bufbuild/connect-node",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -26,14 +26,14 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.10.1",
+    "@bufbuild/connect": "0.11.0",
     "headers-polyfill": "^3.1.2"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1"
   },
   "devDependencies": {
-    "@types/jasmine": "^4.3.1",
+    "@types/jasmine": "^4.3.5",
     "jasmine": "^5.0.0"
   },
   "files": [
