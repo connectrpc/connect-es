@@ -14,6 +14,7 @@
 
 import {
   createAsyncIterable,
+  createWritableIterable,
   makeIterableAbortable,
   pipe,
   pipeTo,
@@ -1069,5 +1070,59 @@ describe("transforming asynchronous iterables", () => {
         });
       });
     });
+  });
+});
+
+describe("createWritableIterable()", function () {
+  it("works like a regular iterable on the happy path", async () => {
+    const wIterable = createWritableIterable<number>();
+    let readCount = 0;
+    const read = (async () => {
+      for await (const next of wIterable) {
+        expect(next).toBe(readCount);
+        readCount++;
+      }
+    })();
+    const writCount = 5;
+    for (let i = 0; i < writCount; i++) {
+      await wIterable.write(i);
+    }
+    await wIterable.close();
+    await read;
+    expect(readCount).toEqual(writCount);
+    expect(wIterable.isClosed()).toBe(true);
+  });
+  it("write is interrupted when read fails", async () => {
+    const wIterable = createWritableIterable<number>();
+    (async () => {
+      const itr = wIterable[Symbol.asyncIterator]();
+      const next = await itr.next();
+      if (next.done === true) {
+        fail("expected at least one value");
+      } else {
+        await itr.throw?.(new Error("read failed"));
+      }
+    })();
+    // Ideally the first one has to be rejected, but there may not be a way to do that.
+    await expectAsync(wIterable.write(1)).toBeResolved();
+    await expectAsync(wIterable.write(2)).toBeRejected();
+  });
+  it("queues writes", async () => {
+    const wIterable = createWritableIterable<number>();
+    const writCount = 50;
+    for (let i = 0; i < writCount; i++) {
+      wIterable.write(i);
+    }
+    let readCount = 0;
+    const read = (async () => {
+      for await (const next of wIterable) {
+        expect(next).toBe(readCount);
+        readCount++;
+      }
+    })();
+    await wIterable.close();
+    await read;
+    expect(readCount).toEqual(writCount);
+    expect(wIterable.isClosed()).toBe(true);
   });
 });
