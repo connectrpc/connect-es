@@ -1100,12 +1100,20 @@ describe("createWritableIterable()", function () {
       if (next.done === true) {
         fail("expected at least one value");
       } else {
-        await itr.throw?.(new Error("read failed"));
+        expect(await itr.throw?.(new Error("read failed"))).toEqual({
+          done: true,
+          value: undefined,
+        });
       }
+      // All further calls to next should also result in done results.
+      expect(await itr.next()).toEqual({
+        done: true,
+        value: undefined,
+      });
     })();
-    // Ideally the first one has to be rejected, but there may not be a way to do that.
-    await expectAsync(wIterable.write(1)).toBeResolved();
+    await expectAsync(wIterable.write(1)).toBeRejected();
     await expectAsync(wIterable.write(2)).toBeRejected();
+    expect(wIterable.isClosed()).toBe(true);
   });
   it("queues writes", async () => {
     const wIterable = createWritableIterable<number>();
@@ -1123,6 +1131,56 @@ describe("createWritableIterable()", function () {
     await wIterable.close();
     await read;
     expect(readCount).toEqual(writCount);
+    expect(wIterable.isClosed()).toBe(true);
+  });
+  xit("queues reads", async () => {
+    const wIterable = createWritableIterable<number>();
+    const writCount = 50;
+    const read = (async () => {
+      const itr = wIterable[Symbol.asyncIterator]();
+      const readPromises: Promise<IteratorResult<number>>[] = [];
+      for (let i = 0; i < writCount; i++) {
+        readPromises.push(itr.next());
+      }
+      const reads = await Promise.all(readPromises);
+      expect(reads.find((r) => r.done === true)).toBeUndefined();
+      expect(reads.map((r) => r.value)).toEqual([...Array(writCount).keys()]);
+      await expectAsync(itr.next()).toBeResolvedTo({
+        done: true,
+        value: undefined,
+      });
+    })();
+    for (let i = 0; i < writCount; i++) {
+      await wIterable.write(i);
+    }
+    await wIterable.close();
+    await read;
+    expect(wIterable.isClosed()).toBe(true);
+  });
+  it("queues reads and writes", async () => {
+    const wIterable = createWritableIterable<number>();
+    const writCount = 50;
+    const read = (async () => {
+      const itr = wIterable[Symbol.asyncIterator]();
+      const readPromises: Promise<IteratorResult<number>>[] = [];
+      for (let i = 0; i < writCount; i++) {
+        readPromises.push(itr.next());
+      }
+      const reads = await Promise.all(readPromises);
+      expect(reads.find((r) => r.done === true)).toBeUndefined();
+      expect(reads.map((r) => r.value)).toEqual([...Array(writCount).keys()]);
+      await expectAsync(itr.next()).toBeResolvedTo({
+        done: true,
+        value: undefined,
+      });
+    })();
+    const writes: Promise<void>[] = [];
+    for (let i = 0; i < writCount; i++) {
+      writes.push(wIterable.write(i));
+    }
+    await wIterable.close();
+    await Promise.all(writes);
+    await read;
     expect(wIterable.isClosed()).toBe(true);
   });
 });

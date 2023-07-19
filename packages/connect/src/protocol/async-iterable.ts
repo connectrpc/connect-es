@@ -1283,107 +1283,86 @@ export function makeIterableAbortable<T>(
   };
 }
 
-// QueueElement represents an element in the writer queue, which consists of the payload being written as well as an
-// associated resolve function to be invoked/resolved when the written element is read from the queue via the async
-// iterator.
-interface QueueElement<T> {
-  payload: IteratorResult<T>;
-  resolve?: () => void;
-  reject?: (reason?: Error) => void;
-}
-
-// WritableIterable represents an AsyncIterable that is able to be written to.
+/**
+ * WritableIterable is an AsyncIterable that can be used
+ * to supply values imperatively to the reader of the
+ * AsyncIterable.
+ */
 export interface WritableIterable<T> extends AsyncIterable<T> {
   write: (payload: T) => Promise<void>;
   close: () => Promise<void>;
   isClosed: () => boolean;
 }
 
-// Create an instance of a WritableIterable of type T
+/**
+ * Create a new WritableIterable.
+ */
 export function createWritableIterable<T>(): WritableIterable<T> {
-  let queue: QueueElement<T>[] = [];
-  // Represents the resolve function of the promise returned by the async iterator if no values exist in the queue at
-  // the time of request.  It is resolved when a value is successfully received into the queue.
-  let queueResolve: ((val: IteratorResult<T>) => void) | undefined;
-  let error: Error | undefined = undefined;
-
-  const process = async (payload: IteratorResult<T, undefined>) => {
-    // // If the writer's internal error was set, then reject any attempts at processing a payload.
-    if (error) {
-      return Promise.reject(String(error));
-    }
-    // If there is an iterator resolver then a consumer of the async iterator is waiting on a value.  So resolve that
-    // promise with the new value being sent and return a promise that is immediately resolved
-    if (queueResolve) {
-      queueResolve(payload);
-      queueResolve = undefined;
-      return Promise.resolve();
-    }
-    const elem: QueueElement<T> = {
-      payload,
-    };
-    const prom = new Promise<void>((resolve, reject) => {
-      elem.resolve = resolve;
-      elem.reject = reject;
-    });
-    // Otherwise no one is waiting on a value yet so add it to the queue and return a promise that will be resolved
-    // when someone reads this value
-    queue.push(elem);
-
-    return prom;
-  };
+  const readQueue: ((result: IteratorResult<T>) => void)[] = [];
+  const writeQueue: T[] = [];
+  let err: unknown = undefined;
+  let nextResolve: () => void;
+  let nextReject: (err: unknown) => void;
+  let nextPromise = new Promise<void>((resolve, reject) => {
+    nextResolve = resolve;
+    nextReject = reject;
+  });
   let closed = false;
+  function drain() {
+    for (let next of readQueue.splice(0, readQueue.length)) {
+      next({ done: true, value: undefined });
+    }
+  }
   return {
+    async close() {
+      closed = true;
+      drain();
+    },
     isClosed() {
       return closed;
     },
-    async write(payload) {
+    async write(payload: T) {
       if (closed) {
-        throw new ConnectError("cannot write, already closed");
+        throw err ?? new Error("write failed: WritableIterable is closed");
       }
-      return process({ value: payload, done: false });
-    },
-    async close() {
-      if (closed) {
-        throw new ConnectError("cannot close, already closed");
+      const read = readQueue.shift();
+      if (read === undefined) {
+        writeQueue.push(payload);
+      } else {
+        read({ done: false, value: payload });
       }
-      closed = true;
-      return process({ value: undefined, done: true });
+      await nextPromise;
     },
     [Symbol.asyncIterator](): AsyncIterator<T> {
       return {
-        next: async () => {
-          // If the writer's internal error was set, then reject any attempts at processing a payload.
-          if (error) {
-            return Promise.reject(String(error));
-          }
-          const elem = queue.shift();
-          if (!elem) {
-            // We don't have any payloads ready to be sent (i.e. the consumer of the iterator is consuming faster than
-            // senders are sending).  So return a Promise ensuring we'll resolve it when we get something.
-            return new Promise<IteratorResult<T>>((resolve) => {
-              queueResolve = resolve;
-            });
-          }
-          // Resolve the send promise on a successful send/close.
-          if (elem.resolve) {
-            elem.resolve();
-          }
-          return elem.payload;
-        },
-        throw: async (e: Error) => {
-          error = e;
-          // The reader of this iterator has failed with the given error.  So anything left in the queue should be
-          // drained and rejected with the given error
-          for (const item of queue) {
-            if (item.reject) {
-              item.reject(e);
-            }
-          }
-          queue = [];
-          return new Promise<IteratorResult<T>>((resolve) => {
-            resolve({ value: undefined, done: true });
+        next() {
+          nextResolve();
+          nextPromise = new Promise<void>((resolve, reject) => {
+            nextResolve = resolve;
+            nextReject = reject;
           });
+          const write = writeQueue.shift();
+          if (write !== undefined) {
+            return Promise.resolve({ done: false, value: write });
+          }
+          if (closed) {
+            return Promise.resolve({ done: true, value: undefined });
+          }
+          // We return a promise immediately that is either resolved/rejected
+          // as writes happen.
+          let readResolve: (result: IteratorResult<T>) => void;
+          const readPromise = new Promise<IteratorResult<T>>(
+            (resolve) => (readResolve = resolve)
+          );
+          readQueue.push(readResolve!);
+          return readPromise;
+        },
+        throw(throwErr: unknown) {
+          err = throwErr;
+          closed = true;
+          nextReject(err);
+          drain();
+          return Promise.resolve({ done: true, value: undefined });
         },
       };
     },
