@@ -1329,7 +1329,7 @@ export function createWritableIterable<T>(): WritableIterable<T> {
     },
     async write(payload: T) {
       if (closed) {
-        throw err ?? new Error("write failed: WritableIterable is closed");
+        throw err ?? new Error("cannot write, WritableIterable already closed");
       }
       const read = readQueue.shift();
       if (read === undefined) {
@@ -1338,18 +1338,22 @@ export function createWritableIterable<T>(): WritableIterable<T> {
       } else {
         // We found a pending read so we respond with the payload.
         read({ done: false, value: payload });
+        if (readQueue.length > 0) {
+          // If there are more in the read queue we can mark the write as complete.
+          // as the error reporting is not guaranteed to be sequential and therefore cannot
+          // to linked to a specific write.
+          return;
+        }
       }
-      if (readQueue.length > 0) {
-        // If there are more in the read queue we can mark the write as complete.
-        // as the error reporting is not guaranteed to be sequential and therefore cannot
-        // to linked to a specific write.
-        return;
-      }
-      // Wait for the next read or throw to happen to mark the write as complete.
+      // We await the next call for as many times as there are items in the queue + 1
       //
-      // This will be the most common case of consumers calling `next` sequentially
-      // and reporting any error using `throw`.
-      await nextPromise;
+      // If there are no items in the write queue that means write happened and we just have
+      // to wait for one more call likewise if we are the nth write in the queue we
+      // have to wait for n writes to complete and one more.
+      const limit = writeQueue.length + 1;
+      for (let i = 0; i < limit; i++) {
+        await nextPromise;
+      }
     },
     [Symbol.asyncIterator](): AsyncIterator<T> {
       return {
@@ -1384,6 +1388,9 @@ export function createWritableIterable<T>(): WritableIterable<T> {
         throw(throwErr: unknown) {
           err = throwErr;
           closed = true;
+          // Empty the write queue only in the case of an error.
+          writeQueue.splice(0, writeQueue.length);
+          // This will reject all pending writes.
           nextReject(err);
           drain();
           return Promise.resolve({ done: true, value: undefined });

@@ -209,7 +209,9 @@ describe("full story", function () {
       writer
         .write({ value: "alpha", end: false })
         .catch((e) =>
-          expect(e).toEqual(new ConnectError("cannot write, already closed"))
+          expect(e).toEqual(
+            new Error("cannot write, WritableIterable already closed")
+          )
         );
     });
     it("should correctly behave when consumer fails and throw is invoked", async function () {
@@ -230,11 +232,11 @@ describe("full story", function () {
       )[] = [];
       try {
         // Iterate over the reader and purposely fail after the first read.
-        for (;;) {
-          const result = await readerIt[Symbol.asyncIterator]().next();
-          resp.push(result.value as { end: false; value: string });
-          throw "READER_ERROR";
-        }
+        const itr = readerIt[Symbol.asyncIterator]();
+        const result = await itr.next();
+        resp.push(result.value as { end: false; value: string });
+        await itr.next();
+        throw "READER_ERROR";
       } catch (e) {
         // Verify we got the first send only and then verify we caught the expected error.
         expect(resp).toEqual([{ value: "alpha", end: false }]);
@@ -265,11 +267,16 @@ describe("full story", function () {
         .then(() => fail("send was unexpectedly resolved."))
         .catch((e) => expect(e).toBe("READER_ERROR"));
 
-      // The reader's internal writer is closed so any future reads will be rejected.
+      // The reader's internal writer is closed so any future reads should result in the
+      // done.
       readerIt[Symbol.asyncIterator]()
         .next()
-        .then(() => fail("reads were unexpectedly resolved"))
-        .catch((e) => expect(e).toBe("READER_ERROR"));
+        .then((result) =>
+          expect(result).toEqual({ done: true, value: undefined })
+        )
+        .catch(() =>
+          fail("expected successful done result but unexpectedly rejected")
+        );
     });
   });
 
