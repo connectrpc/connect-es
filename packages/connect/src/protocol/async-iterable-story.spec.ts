@@ -160,7 +160,7 @@ describe("full story", function () {
         .then(() => writer.write({ value: "gamma", end: false }))
         .then(() => writer.write({ value: "delta", end: false }))
         .finally(() => {
-          void writer.close();
+          writer.close();
         });
 
       const resp = await readAll(readerIt);
@@ -194,17 +194,12 @@ describe("full story", function () {
         { value: "delta", end: false },
       ]);
     });
-    it("should throw if close is called on a writer that is already closed", function () {
-      void writer.close();
-
-      writer
-        .close()
-        .catch((e) =>
-          expect(e).toEqual(new ConnectError("cannot close, already closed"))
-        );
+    it("should allow close on a writer that is already closed", function () {
+      writer.close();
+      writer.close();
     });
     it("should throw if write is called on a writer that is closed", function () {
-      void writer.close();
+      writer.close();
 
       writer
         .write({ value: "alpha", end: false })

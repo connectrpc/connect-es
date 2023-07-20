@@ -1087,14 +1087,13 @@ describe("createWritableIterable()", function () {
     for (let i = 0; i < writCount; i++) {
       await wIterable.write(i);
     }
-    await wIterable.close();
+    wIterable.close();
     await read;
     expect(readCount).toEqual(writCount);
-    expect(wIterable.isClosed()).toBe(true);
   });
   it("write is interrupted when read fails", async () => {
     const wIterable = createWritableIterable<number>();
-    (async () => {
+    const read = (async () => {
       const itr = wIterable[Symbol.asyncIterator]();
       const next = await itr.next();
       if (next.done === true) {
@@ -1113,13 +1112,14 @@ describe("createWritableIterable()", function () {
     })();
     await expectAsync(wIterable.write(1)).toBeRejected();
     await expectAsync(wIterable.write(2)).toBeRejected();
-    expect(wIterable.isClosed()).toBe(true);
+    await read;
   });
   it("queues writes", async () => {
     const wIterable = createWritableIterable<number>();
     const writCount = 50;
+    const writes = [];
     for (let i = 0; i < writCount; i++) {
-      wIterable.write(i);
+      writes.push(wIterable.write(i));
     }
     let readCount = 0;
     const read = (async () => {
@@ -1128,17 +1128,17 @@ describe("createWritableIterable()", function () {
         readCount++;
       }
     })();
-    await wIterable.close();
+    wIterable.close();
     await read;
     expect(readCount).toEqual(writCount);
-    expect(wIterable.isClosed()).toBe(true);
+    await Promise.all(writes);
   });
   it("queues reads", async () => {
     const wIterable = createWritableIterable<number>();
     const writCount = 50;
     const read = (async () => {
       const itr = wIterable[Symbol.asyncIterator]();
-      const readPromises: Promise<IteratorResult<number>>[] = [];
+      const readPromises: Promise<IteratorResult<number, number>>[] = [];
       for (let i = 0; i < writCount; i++) {
         readPromises.push(itr.next());
       }
@@ -1153,16 +1153,15 @@ describe("createWritableIterable()", function () {
     for (let i = 0; i < writCount; i++) {
       await wIterable.write(i);
     }
-    await wIterable.close();
+    wIterable.close();
     await read;
-    expect(wIterable.isClosed()).toBe(true);
   });
   it("queues reads and writes", async () => {
     const wIterable = createWritableIterable<number>();
     const writCount = 50;
     const read = (async () => {
       const itr = wIterable[Symbol.asyncIterator]();
-      const readPromises: Promise<IteratorResult<number>>[] = [];
+      const readPromises: Promise<IteratorResult<number, number>>[] = [];
       for (let i = 0; i < writCount; i++) {
         readPromises.push(itr.next());
       }
@@ -1178,9 +1177,8 @@ describe("createWritableIterable()", function () {
     for (let i = 0; i < writCount; i++) {
       writes.push(wIterable.write(i));
     }
-    await wIterable.close();
+    wIterable.close();
     await Promise.all(writes);
     await read;
-    expect(wIterable.isClosed()).toBe(true);
   });
 });

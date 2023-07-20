@@ -1285,13 +1285,22 @@ export function makeIterableAbortable<T>(
 
 /**
  * WritableIterable is an AsyncIterable that can be used
- * to supply values imperatively to the reader of the
+ * to supply values imperatively to the consumer of the
  * AsyncIterable.
  */
 export interface WritableIterable<T> extends AsyncIterable<T> {
+  /**
+   * Makes the payload available to the consumer of the
+   * iterable.
+   */
   write: (payload: T) => Promise<void>;
-  close: () => Promise<void>;
-  isClosed: () => boolean;
+  /**
+   * Closes the writer indicating to its consumer that no further
+   * payloads will be received.
+   *
+   * Any writes that happen after close is called will return an error.
+   */
+  close: () => void;
 }
 
 /**
@@ -1302,7 +1311,7 @@ export function createWritableIterable<T>(): WritableIterable<T> {
   //
   // The writes and reads each check of their counterpart is
   // already available and either interact/add themselves to the queue.
-  const readQueue: ((result: IteratorResult<T>) => void)[] = [];
+  const readQueue: ((result: IteratorResult<T, undefined>) => void)[] = [];
   const writeQueue: T[] = [];
   let err: unknown = undefined;
   let nextResolve: () => void;
@@ -1315,17 +1324,14 @@ export function createWritableIterable<T>(): WritableIterable<T> {
   // drain the readQueue in case of error/writer is closed by sending a
   // done result.
   function drain() {
-    for (let next of readQueue.splice(0, readQueue.length)) {
+    for (const next of readQueue.splice(0, readQueue.length)) {
       next({ done: true, value: undefined });
     }
   }
   return {
-    async close() {
+    close() {
       closed = true;
       drain();
-    },
-    isClosed() {
-      return closed;
     },
     async write(payload: T) {
       if (closed) {
@@ -1382,7 +1388,7 @@ export function createWritableIterable<T>(): WritableIterable<T> {
           const readPromise = new Promise<IteratorResult<T>>(
             (resolve) => (readResolve = resolve)
           );
-          readQueue.push(readResolve!);
+          readQueue.push(readResolve!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
           return readPromise;
         },
         throw(throwErr: unknown) {
