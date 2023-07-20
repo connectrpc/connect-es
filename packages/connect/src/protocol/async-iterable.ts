@@ -1298,6 +1298,10 @@ export interface WritableIterable<T> extends AsyncIterable<T> {
  * Create a new WritableIterable.
  */
 export function createWritableIterable<T>(): WritableIterable<T> {
+  // We start with two queues to capture the read and write attempts.
+  //
+  // The writes and reads each check of their counterpart is
+  // already available and either interact/add themselves to the queue.
   const readQueue: ((result: IteratorResult<T>) => void)[] = [];
   const writeQueue: T[] = [];
   let err: unknown = undefined;
@@ -1308,6 +1312,8 @@ export function createWritableIterable<T>(): WritableIterable<T> {
     nextReject = reject;
   });
   let closed = false;
+  // drain the readQueue in case of error/writer is closed by sending a
+  // done result.
   function drain() {
     for (let next of readQueue.splice(0, readQueue.length)) {
       next({ done: true, value: undefined });
@@ -1327,15 +1333,32 @@ export function createWritableIterable<T>(): WritableIterable<T> {
       }
       const read = readQueue.shift();
       if (read === undefined) {
+        // We didn't find a pending read so we add the payload to the write queue.
         writeQueue.push(payload);
       } else {
+        // We found a pending read so we respond with the payload.
         read({ done: false, value: payload });
       }
+      if (readQueue.length > 0) {
+        // If there are more in the read queue we can mark the write as complete.
+        // as the error reporting is not guaranteed to be sequential and therefore cannot
+        // to linked to a specific write.
+        return;
+      }
+      // Wait for the next read or throw to happen to mark the write as complete.
+      //
+      // This will be the most common case of consumers calling `next` sequentially
+      // and reporting any error using `throw`.
       await nextPromise;
     },
     [Symbol.asyncIterator](): AsyncIterator<T> {
       return {
         next() {
+          // Resolve the nextPromise to indicate
+          // pending writes that a read attempt has been made
+          // after their write.
+          //
+          // We also need to reset the promise for future writes.
           nextResolve();
           nextPromise = new Promise<void>((resolve, reject) => {
             nextResolve = resolve;
@@ -1343,6 +1366,7 @@ export function createWritableIterable<T>(): WritableIterable<T> {
           });
           const write = writeQueue.shift();
           if (write !== undefined) {
+            // We found a pending write so response with the payload.
             return Promise.resolve({ done: false, value: write });
           }
           if (closed) {

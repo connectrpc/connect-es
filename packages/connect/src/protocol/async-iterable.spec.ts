@@ -1133,7 +1133,7 @@ describe("createWritableIterable()", function () {
     expect(readCount).toEqual(writCount);
     expect(wIterable.isClosed()).toBe(true);
   });
-  xit("queues reads", async () => {
+  it("queues reads", async () => {
     const wIterable = createWritableIterable<number>();
     const writCount = 50;
     const read = (async () => {
