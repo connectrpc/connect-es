@@ -289,32 +289,22 @@ function h2Request(
   }
   sm.request(method, requestUrl.pathname + requestUrl.search, headers, {}).then(
     (stream) => {
-      stream.session.on("error", sentinel.reject);
-
-      sentinel
-        .catch((reason) => {
-          if (stream.closed) {
-            return;
-          }
-          // Node.js http2 streams that are aborted via an AbortSignal close with
-          // an RST_STREAM with code INTERNAL_ERROR.
-          // To comply with the mapping between gRPC and HTTP/2 codes, we need to
-          // close with code CANCEL.
-          // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
-          // See https://www.rfc-editor.org/rfc/rfc7540#section-7
-          const rstCode =
-            reason instanceof ConnectError && reason.code == Code.Canceled
-              ? H2Code.CANCEL
-              : H2Code.INTERNAL_ERROR;
-          return new Promise<void>((resolve) => stream.close(rstCode, resolve));
-        })
-        .finally(() => {
-          stream.session.off("error", sentinel.reject);
-        })
-        .catch(() => {
-          // We intentionally swallow sentinel rejection - errors must
-          // propagate through the request or response iterables.
-        });
+      sentinel.catch((reason) => {
+        if (stream.closed) {
+          return;
+        }
+        // Node.js http2 streams that are aborted via an AbortSignal close with
+        // an RST_STREAM with code INTERNAL_ERROR.
+        // To comply with the mapping between gRPC and HTTP/2 codes, we need to
+        // close with code CANCEL.
+        // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
+        // See https://www.rfc-editor.org/rfc/rfc7540#section-7
+        const rstCode =
+          reason instanceof ConnectError && reason.code == Code.Canceled
+            ? H2Code.CANCEL
+            : H2Code.INTERNAL_ERROR;
+        return new Promise<void>((resolve) => stream.close(rstCode, resolve));
+      });
 
       stream.on("error", function h2StreamError(e: unknown) {
         if (
