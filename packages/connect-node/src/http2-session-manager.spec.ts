@@ -428,6 +428,80 @@ describe("Http2SessionManager", function () {
         sm.abort();
       });
     });
+    describe("with INTERNAL_ERROR and open stream", function () {
+      it("should eventually go to the error state", async function () {
+        const sm = new Http2SessionManager(server.getUrl());
+
+        // issue a request to open a connection
+        const req1 = await sm.request("POST", "/", {}, {});
+        const req1ErrorPromise = new Promise<unknown>((resolve) =>
+          req1.on("error", resolve)
+        );
+        expect(sm.state())
+          .withContext("connection state after issuing a request")
+          .toBe("open");
+        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+
+        // on the server, send a GOAWAY frame
+        expect(serverSessions.length).toBe(1);
+        serverSessions[0].goaway(http2.constants.NGHTTP2_INTERNAL_ERROR);
+
+        // wait for the request to error
+        const req1Error = await req1ErrorPromise;
+        expect(String(req1Error)).toBe(
+          "Error [ERR_HTTP2_SESSION_ERROR]: Session closed with error code 2"
+        );
+
+        // the "error" event on the session is raised after the "error" event on
+        // the stream, so the connection has not errored yet
+        expect(sm.state())
+          .withContext("connection state immediately after receiving GOAWAY")
+          .toBe("idle");
+
+        // wait for the "error" event on the session
+        await new Promise<void>((resolve) => setTimeout(resolve, 50));
+        expect(sm.state()).toBe("error");
+      });
+      it("should open a new connection for a second request", async function () {
+        const sm = new Http2SessionManager(server.getUrl());
+
+        // issue a request to open a connection
+        const req1 = await sm.request("POST", "/", {}, {});
+        const req1ErrorPromise = new Promise<unknown>((resolve) =>
+          req1.on("error", resolve)
+        );
+        expect(sm.state())
+          .withContext("connection state after issuing a request")
+          .toBe("open");
+        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+
+        // on the server, send a GOAWAY frame
+        expect(serverSessions.length).toBe(1);
+        serverSessions[0].goaway(http2.constants.NGHTTP2_INTERNAL_ERROR);
+
+        // wait for the request to error
+        const req1Error = await req1ErrorPromise;
+        expect(String(req1Error)).toBe(
+          "Error [ERR_HTTP2_SESSION_ERROR]: Session closed with error code 2"
+        );
+
+        // the connection has not errored yet
+        expect(sm.state()).toBe("idle");
+
+        // issue a second request
+        const req2 = await sm.request("POST", "/", {}, {});
+        expect(sm.state()).toBe("open");
+        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+        expect(serverSessions.length).toBe(2);
+
+        // clean up
+        await new Promise<void>((resolve) =>
+          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        );
+        sm.abort();
+        expect(sm.state()).toBe("closed");
+      });
+    });
   });
 
   describe("ping frames", function () {
