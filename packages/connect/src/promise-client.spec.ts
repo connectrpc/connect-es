@@ -181,4 +181,38 @@ describe("createBiDiStreamingFn()", () => {
     expect(index).toBe(3);
     expect(bidiIndex).toBe(3);
   });
+  it("closes the request iterable when response is received", async () => {
+    const values = [123, 456, 789];
+
+    const input = createAsyncIterable(
+      values.map((value) => new Int32Value({ value }))
+    );
+
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        bidiStream: async function* (input: AsyncIterable<Int32Value>) {
+          for await (const next of input) {
+            yield { value: `yield ${next.value}` };
+            break;
+          }
+        },
+      });
+    });
+    const fn = createBiDiStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.bidiStream
+    );
+
+    let count = 0;
+    for await (const res of fn(input)) {
+      expect(res).toEqual(new StringValue({ value: "yield 123" }));
+      count += 1;
+    }
+    expect(count).toBe(1);
+    expect(await input[Symbol.asyncIterator]().next()).toEqual({
+      done: true,
+      value: undefined,
+    });
+  });
 });
