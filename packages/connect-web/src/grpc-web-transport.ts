@@ -46,6 +46,7 @@ import {
   validateTrailer,
 } from "@bufbuild/connect/protocol-grpc-web";
 import { assertFetchApi } from "./assert-fetch-api.js";
+import { normalizeMessage } from "./normalize-message.js";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -219,7 +220,7 @@ export function createGrpcWebTransport(
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<I>
+      input: AsyncIterable<PartialMessage<I>>
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -305,7 +306,7 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           header: requestHeader(useBinaryFormat, timeoutMs, header),
-          message: input,
+          message: normalizeMessage(input, method.I),
         },
         next: async (req) => {
           const fetch = options.fetch ?? globalThis.fetch;

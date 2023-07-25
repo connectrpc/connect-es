@@ -573,20 +573,30 @@ export async function* pipe<I, O>(
     iterable = t(iterable);
   }
   const it = iterable[Symbol.asyncIterator]();
-  for (;;) {
-    const r = await it.next();
-    if (r.done === true) {
-      break;
+  try {
+    for (;;) {
+      const r = await it.next();
+      if (r.done === true) {
+        break;
+      }
+      if (!abortable) {
+        yield r.value as O;
+        continue;
+      }
+      try {
+        yield r.value as O;
+      } catch (e) {
+        await abortable.abort(e); // propagate downstream error to the source
+        throw e;
+      }
     }
-    if (!abortable) {
-      yield r.value as O;
-      continue;
-    }
-    try {
-      yield r.value as O;
-    } catch (e) {
-      await abortable.abort(e); // propagate downstream error to the source
-      throw e;
+  } finally {
+    if (opt?.propagateDownStreamError === true) {
+      source[Symbol.asyncIterator]()
+        .return?.()
+        .catch(() => {
+          //
+        });
     }
   }
 }
@@ -1246,7 +1256,7 @@ export function makeIterableAbortable<T>(
       return inner.throw(e);
     },
   };
-  if (innerCandidate.return === undefined) {
+  if (innerCandidate.return !== undefined) {
     it = {
       ...it,
       return(value?: unknown): Promise<IteratorResult<T>> {

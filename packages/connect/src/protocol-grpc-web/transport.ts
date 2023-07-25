@@ -187,7 +187,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<I>
+      input: AsyncIterable<PartialMessage<I>>
     ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,

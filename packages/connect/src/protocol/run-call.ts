@@ -94,6 +94,13 @@ export function runStreamingCall<
     ...opt.req,
     signal,
   };
+  signal.addEventListener("abort", function () {
+    opt.req.message[Symbol.asyncIterator]()
+      .return?.()
+      .catch(() => {
+        //
+      });
+  });
   return next(req).then((res) => {
     return {
       ...res,

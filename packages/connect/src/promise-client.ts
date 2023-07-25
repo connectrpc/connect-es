@@ -114,15 +114,13 @@ export function createServerStreamingFn<
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
   return async function* (input, options): AsyncIterable<O> {
-    const inputMessage =
-      input instanceof method.I ? input : new method.I(input);
     const response = await transport.stream<I, O>(
       service,
       method,
       options?.signal,
       options?.timeoutMs,
       options?.headers,
-      createAsyncIterable([inputMessage])
+      createAsyncIterable([input])
     );
     options?.onHeader?.(response.header);
     yield* response.message;
@@ -151,18 +149,13 @@ export function createClientStreamingFn<
     request: AsyncIterable<PartialMessage<I>>,
     options?: CallOptions
   ): Promise<O> {
-    async function* input() {
-      for await (const partial of request) {
-        yield partial instanceof method.I ? partial : new method.I(partial);
-      }
-    }
     const response = await transport.stream<I, O>(
       service,
       method,
       options?.signal,
       options?.timeoutMs,
       options?.headers,
-      input()
+      request
     );
     options?.onHeader?.(response.header);
     let singleMessage: O | undefined;
@@ -201,18 +194,13 @@ export function createBiDiStreamingFn<
     request: AsyncIterable<PartialMessage<I>>,
     options?: CallOptions
   ): AsyncIterable<O> {
-    async function* input() {
-      for await (const partial of request) {
-        yield partial instanceof method.I ? partial : new method.I(partial);
-      }
-    }
     const response = await transport.stream<I, O>(
       service,
       method,
       options?.signal,
       options?.timeoutMs,
       options?.headers,
-      input()
+      request
     );
     options?.onHeader?.(response.header);
     yield* response.message;

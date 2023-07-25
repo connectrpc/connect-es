@@ -51,6 +51,7 @@ import {
   validateResponse,
 } from "@bufbuild/connect/protocol-connect";
 import { assertFetchApi } from "./assert-fetch-api.js";
+import { normalizeMessage } from "./normalize-message.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -228,7 +229,7 @@ export function createConnectTransport(
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<I>
+      input: AsyncIterable<PartialMessage<I>>
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -300,7 +301,7 @@ export function createConnectTransport(
             timeoutMs,
             header
           ),
-          message: input,
+          message: normalizeMessage(input, method.I),
         },
         next: async (req) => {
           const fetch = options.fetch ?? globalThis.fetch;
