@@ -563,7 +563,7 @@ function ready(
   let pingIntervalId: ReturnType<typeof setTimeout> | undefined;
   // timer for waiting for a PING response
   let pingTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  // keep track of GOAWAY with NO_ERROR - gracefully shut down open streams
+  // keep track of GOAWAY - gracefully shut down open streams / wait for connection to error
   let receivedGoAway = false;
   // keep track of GOAWAY with ENHANCE_YOUR_CALM and with debug data too_many_pings
   let receivedGoAwayEnhanceYourCalmTooManyPings = false;
