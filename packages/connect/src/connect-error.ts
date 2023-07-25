@@ -105,6 +105,8 @@ export class ConnectError extends Error {
    * - For other Errors, return the error message with code Unknown by default.
    * - For other values, return the values String representation as a message,
    *   with the code Unknown by default.
+   * The original value will be used for the "cause" property for the new
+   * ConnectError.
    */
   static from(reason: unknown, code = Code.Unknown): ConnectError {
     if (reason instanceof ConnectError) {
@@ -117,9 +119,15 @@ export class ConnectError extends Error {
         // error object, and translate to the appropriate status code.
         return new ConnectError(reason.message, Code.Canceled);
       }
-      return new ConnectError(reason.message, code);
+      return new ConnectError(
+        reason.message,
+        code,
+        undefined,
+        undefined,
+        reason
+      );
     }
-    return new ConnectError(String(reason), code);
+    return new ConnectError(String(reason), code, undefined, undefined, reason);
   }
 
   /**

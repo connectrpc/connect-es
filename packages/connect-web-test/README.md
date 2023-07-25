@@ -23,7 +23,7 @@ decent coverage quickly.
 ### Running tests in a local browser
 
 To run the test suite in local browsers, start the karma server with 
-`make testlocalbrowser` from the project root. If you encounter a CORS 
+`make testwebbrowserlocal` from the project root. If you encounter a CORS 
 error in your local browser, this is most likely because you need to 
 explicitly trust the self-signed certificate of the test server. 
 Open one of the failed requests from the browsers network inspector, 
