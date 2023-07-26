@@ -591,10 +591,16 @@ export async function* pipe<I, O>(
     }
   } finally {
     if (opt?.propagateDownStreamError === true) {
+      // Call return on the source iterable to indicate
+      // that we will no longer consume it and it should
+      // cleanup any allocated resources.
       source[Symbol.asyncIterator]()
         .return?.()
         .catch(() => {
+          // return returns a promise, which we don't care about.
           //
+          // Uncaught promises are thrown at sometime/somewhere by the event loop,
+          // this is to ensure error is caught and ignored.
         });
     }
   }
