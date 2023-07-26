@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { AnyMessage, Message } from "@bufbuild/protobuf";
+import type {
+  AnyMessage,
+  Message,
+  MessageType,
+  PartialMessage,
+} from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamRequest,
@@ -44,7 +49,9 @@ type UnaryFn<
  * is only used when implementing a Transport.
  */
 export function runUnaryCall<I extends Message<I>, O extends Message<O>>(opt: {
-  req: Omit<UnaryRequest<I, O>, "signal">;
+  req: Omit<UnaryRequest<I, O>, "signal" | "message"> & {
+    message: PartialMessage<I>;
+  };
   next: UnaryFn<I, O>;
   timeoutMs?: number;
   signal?: AbortSignal;
@@ -54,6 +61,7 @@ export function runUnaryCall<I extends Message<I>, O extends Message<O>>(opt: {
   const [signal, abort, done] = setupSignal(opt);
   const req = {
     ...opt.req,
+    message: normalize(opt.req.method.I, opt.req.message),
     signal,
   };
   return next(req).then((res) => {
@@ -82,7 +90,9 @@ export function runStreamingCall<
   I extends Message<I>,
   O extends Message<O>
 >(opt: {
-  req: Omit<StreamRequest<I, O>, "signal">;
+  req: Omit<StreamRequest<I, O>, "signal" | "message"> & {
+    message: AsyncIterable<PartialMessage<I>>;
+  };
   next: StreamingFn<I, O>;
   timeoutMs?: number;
   signal?: AbortSignal;
@@ -92,6 +102,7 @@ export function runStreamingCall<
   const [signal, abort, done] = setupSignal(opt);
   const req = {
     ...opt.req,
+    message: normalizeIterable(opt.req.method.I, opt.req.message),
     signal,
   };
   signal.addEventListener("abort", function () {
@@ -107,7 +118,7 @@ export function runStreamingCall<
       message: {
         [Symbol.asyncIterator]() {
           const it = res.message[Symbol.asyncIterator]();
-          const w: AsyncIterator<O> = {
+          return {
             next() {
               return it.next().then((r) => {
                 if (r.done == true) {
@@ -116,16 +127,8 @@ export function runStreamingCall<
                 return r;
               }, abort);
             },
+            // We deliberately omit throw/return.
           };
-          if (it.throw !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- can't handle mutated object sensibly
-            w.throw = (e: unknown) => it.throw!(e);
-          }
-          if (it.return !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion,@typescript-eslint/no-explicit-any -- can't handle mutated object sensibly
-            w.return = (value?: any) => it.return!(value);
-          }
-          return w;
         },
       },
     };
@@ -190,4 +193,49 @@ function applyInterceptors<T>(
         next as any // eslint-disable-line @typescript-eslint/no-explicit-any
       ) as T) ?? next
   );
+}
+
+/**
+ *  Takes a partial protobuf messages of the
+ *  specified message type as input, and returns full instances.
+ */
+function normalize<T extends Message<T>>(
+  type: MessageType<T>,
+  message: PartialMessage<T>
+) {
+  return message instanceof type ? message : new type(message);
+}
+
+/**
+ * Takes an AsyncIterable of partial protobuf messages of the
+ * specified message type as input, and yields full instances.
+ */
+export function normalizeIterable<T extends Message<T>>(
+  messageType: MessageType<T>,
+  input: AsyncIterable<PartialMessage<T>>
+): AsyncIterable<T> {
+  function transform(result: IteratorResult<PartialMessage<T>>) {
+    if (result.done === true) {
+      return result;
+    }
+    return {
+      done: result.done,
+      value: normalize(messageType, result.value),
+    };
+  }
+  return {
+    [Symbol.asyncIterator]() {
+      const it = input[Symbol.asyncIterator]();
+      const res: AsyncIterator<T> = {
+        next: () => it.next().then(transform),
+      };
+      if (it.throw !== undefined) {
+        res.throw = (e) => it.throw!(e).then(transform); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      }
+      if (it.return !== undefined) {
+        res.return = (v) => it.return!(v).then(transform); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      }
+      return res;
+    },
+  };
 }

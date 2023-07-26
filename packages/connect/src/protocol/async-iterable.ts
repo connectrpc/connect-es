@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Message, MessageType, PartialMessage } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import type { EnvelopedMessage } from "./envelope.js";
@@ -758,26 +757,6 @@ export function transformReadAllBytes(
 ): AsyncIterableTransform<Uint8Array> {
   return async function* (iterable) {
     yield await readAllBytes(iterable, readMaxBytes, lengthHint);
-  };
-}
-
-/**
- * Creates an AsyncIterableTransform that takes partial protobuf messages of the
- * specified message type as input, and yields full instances.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export function transformNormalizeMessage<T extends Message<T>>(
-  messageType: MessageType<T>
-): AsyncIterableTransform<T | PartialMessage<T>, T> {
-  return async function* (iterable) {
-    for await (const chunk of iterable) {
-      if (chunk instanceof messageType) {
-        yield chunk;
-      } else {
-        yield new messageType(chunk as PartialMessage<T>);
-      }
-    }
   };
 }
 

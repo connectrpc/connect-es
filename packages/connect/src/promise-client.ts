@@ -28,6 +28,7 @@ import type { CallOptions } from "./call-options.js";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
+import type { StreamResponse } from "./interceptor.js";
 
 // prettier-ignore
 /**
@@ -113,18 +114,18 @@ export function createServerStreamingFn<
   service: ServiceType,
   method: MethodInfo<I, O>
 ): ServerStreamingFn<I, O> {
-  return async function* (input, options): AsyncIterable<O> {
-    const response = await transport.stream<I, O>(
-      service,
-      method,
-      options?.signal,
-      options?.timeoutMs,
-      options?.headers,
-      createAsyncIterable([input])
+  return function (input, options): AsyncIterable<O> {
+    return handleStreamResponse(
+      transport.stream<I, O>(
+        service,
+        method,
+        options?.signal,
+        options?.timeoutMs,
+        options?.headers,
+        createAsyncIterable([input])
+      ),
+      options
     );
-    options?.onHeader?.(response.header);
-    yield* response.message;
-    options?.onTrailer?.(response.trailer);
   };
 }
 
@@ -190,20 +191,38 @@ export function createBiDiStreamingFn<
   service: ServiceType,
   method: MethodInfo<I, O>
 ): BiDiStreamingFn<I, O> {
-  return async function* (
+  return function (
     request: AsyncIterable<PartialMessage<I>>,
     options?: CallOptions
   ): AsyncIterable<O> {
-    const response = await transport.stream<I, O>(
-      service,
-      method,
-      options?.signal,
-      options?.timeoutMs,
-      options?.headers,
-      request
+    return handleStreamResponse(
+      transport.stream<I, O>(
+        service,
+        method,
+        options?.signal,
+        options?.timeoutMs,
+        options?.headers,
+        request
+      ),
+      options
     );
+  };
+}
+
+function handleStreamResponse<I extends Message<I>, O extends Message<O>>(
+  stream: Promise<StreamResponse<I, O>>,
+  options?: CallOptions
+): AsyncIterable<O> {
+  const it = (async function* () {
+    const response = await stream;
     options?.onHeader?.(response.header);
     yield* response.message;
     options?.onTrailer?.(response.trailer);
+  })()[Symbol.asyncIterator]();
+  // Create a new iterable to omit throw/return.
+  return {
+    [Symbol.asyncIterator]: () => ({
+      next: () => it.next(),
+    }),
   };
 }

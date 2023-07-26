@@ -54,7 +54,7 @@ describe("runUnaryCall()", function () {
       url: `https://example.com/TestService/Unary`,
       init: {},
       header: new Headers(),
-      message: new Int32Value({ value: 123 }),
+      message: { value: 123 },
     };
   }
 
@@ -136,7 +136,7 @@ describe("runStreamingCall()", function () {
       url: `https://example.com/TestService/ServerStreaming`,
       init: {},
       header: new Headers(),
-      message: createAsyncIterable([new Int32Value({ value: 123 })]),
+      message: createAsyncIterable([{ value: 123 }]),
     };
   }
 
@@ -219,5 +219,20 @@ describe("runStreamingCall()", function () {
     await expectAsync(resPromise).toBeRejectedWithError(
       "[deadline_exceeded] the operation timed out"
     );
+  });
+  it("response iterable should not implement throw/return", async function () {
+    const res = await runStreamingCall<Int32Value, StringValue>({
+      timeoutMs: undefined,
+      signal: undefined,
+      interceptors: [],
+      req: makeReq(),
+      async next(req) {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        return makeRes(req);
+      },
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+    expect(it.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
   });
 });

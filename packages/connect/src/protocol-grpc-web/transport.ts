@@ -41,7 +41,6 @@ import {
   transformSplitEnvelope,
   transformDecompressEnvelope,
   transformParseEnvelope,
-  transformNormalizeMessage,
 } from "../protocol/async-iterable.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
@@ -88,8 +87,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.acceptCompression,
             opt.sendCompression
           ),
-          message:
-            message instanceof method.I ? message : new method.I(message),
+          message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const uRes = await opt.httpClient({
@@ -216,9 +214,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.acceptCompression,
             opt.sendCompression
           ),
-          message: pipe(input, transformNormalizeMessage(method.I), {
-            propagateDownStreamError: true,
-          }),
+          message: input,
         },
         next: async (req: StreamRequest<I, O>) => {
           const uRes = await opt.httpClient({
@@ -228,7 +224,6 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             signal: req.signal,
             body: pipe(
               req.message,
-              transformNormalizeMessage(method.I),
               transformSerializeEnvelope(
                 serialization.getI(opt.useBinaryFormat)
               ),

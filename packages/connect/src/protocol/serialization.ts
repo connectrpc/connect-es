@@ -20,7 +20,6 @@ import type {
   Message,
   MessageType,
   MethodInfo,
-  PartialMessage,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
@@ -138,16 +137,13 @@ export function createClientMethodSerializers<
   jsonOptions?: JsonSerializationOptions,
   binaryOptions?: BinarySerializationOptions
 ) {
-  function normalize(input: PartialMessage<I>): I {
-    return input instanceof method.I ? input : new method.I(input);
-  }
   const input = useBinaryFormat
     ? createBinarySerialization(method.I, binaryOptions)
     : createJsonSerialization(method.I, jsonOptions);
   const output = useBinaryFormat
     ? createBinarySerialization(method.O, binaryOptions)
     : createJsonSerialization(method.O, jsonOptions);
-  return { normalize, parse: output.parse, serialize: input.serialize };
+  return { parse: output.parse, serialize: input.serialize };
 }
 
 /**

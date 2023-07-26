@@ -145,6 +145,20 @@ describe("createServerStreamingFn()", function () {
     }
     expect(receivedMessages).toEqual(output);
   });
+  it("doesn't support throw/return on the returned response", function () {
+    const fn = createServerStreamingFn(
+      createRouterTransport(({ service }) => {
+        service(TestService, {
+          serverStream: () => createAsyncIterable([]),
+        });
+      }),
+      TestService,
+      TestService.methods.bidiStream
+    );
+    const it = fn({})[Symbol.asyncIterator]();
+    expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+    expect(it.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+  });
 });
 
 describe("createBiDiStreamingFn()", () => {
@@ -187,7 +201,6 @@ describe("createBiDiStreamingFn()", () => {
     const input = createAsyncIterable(
       values.map((value) => new Int32Value({ value }))
     );
-
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
         bidiStream: async function* (input: AsyncIterable<Int32Value>) {
@@ -214,5 +227,58 @@ describe("createBiDiStreamingFn()", () => {
       done: true,
       value: undefined,
     });
+  });
+  it("closes the request iterable when an error is thrown", async () => {
+    const values = [123, 456, 789];
+
+    const input = createAsyncIterable(
+      values.map((value) => new Int32Value({ value }))
+    );
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        bidiStream: async function* (input: AsyncIterable<Int32Value>) {
+          for await (const next of input) {
+            yield { value: `yield ${next.value}` };
+            throw new ConnectError("foo", Code.Internal);
+          }
+        },
+      });
+    });
+    const fn = createBiDiStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.bidiStream
+    );
+
+    let count = 0;
+    try {
+      for await (const res of fn(input)) {
+        expect(res).toEqual(new StringValue({ value: "yield 123" }));
+        count += 1;
+      }
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConnectError);
+      expect((e as ConnectError).code).toBe(Code.Internal);
+      expect((e as ConnectError).rawMessage).toBe("foo");
+    }
+    expect(count).toBe(1);
+    expect(await input[Symbol.asyncIterator]().next()).toEqual({
+      done: true,
+      value: undefined,
+    });
+  });
+  it("doesn't support throw/return on the returned response", function () {
+    const fn = createBiDiStreamingFn(
+      createRouterTransport(({ service }) => {
+        service(TestService, {
+          bidiStream: () => createAsyncIterable([]),
+        });
+      }),
+      TestService,
+      TestService.methods.bidiStream
+    );
+    const it = fn(createAsyncIterable([]))[Symbol.asyncIterator]();
+    expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+    expect(it.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
   });
 });
