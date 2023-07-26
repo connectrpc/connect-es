@@ -115,6 +115,43 @@ describe("createClientStreamingFn()", function () {
     expect(res.value).toEqual(output.value);
     expect(reqItrClosed).toBe(true);
   });
+  it("closes the request iterable when response is received", async () => {
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        clientStream: async (input: AsyncIterable<Int32Value>) => {
+          for await (const next of input) {
+            expect(next.value).toBe(1);
+            throw new ConnectError("foo", Code.Internal);
+          }
+          throw new ConnectError(
+            "expected at least 1 value",
+            Code.InvalidArgument
+          );
+        },
+      });
+    });
+    const fn = createClientStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.clientStream
+    );
+    let reqItrClosed = false;
+    const res = fn(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      (async function* () {
+        try {
+          yield { value: 1 };
+          fail("expected early return");
+        } finally {
+          reqItrClosed = true;
+        }
+      })()
+    );
+    await expectAsync(res).toBeRejectedWith(
+      new ConnectError("foo", Code.Internal)
+    );
+    expect(reqItrClosed).toBe(true);
+  });
 });
 
 describe("createServerStreamingFn()", function () {
