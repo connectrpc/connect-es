@@ -1394,10 +1394,16 @@ export function createWritableIterable<T>(): WritableIterable<T> {
         throw(throwErr: unknown) {
           err = throwErr;
           closed = true;
-          // Empty the write queue only in the case of an error.
           writeQueue.splice(0, writeQueue.length);
           // This will reject all pending writes.
           nextReject(err);
+          drain();
+          return Promise.resolve({ done: true, value: undefined });
+        },
+        return() {
+          closed = true;
+          writeQueue.splice(0, writeQueue.length);
+          nextReject(new Error("cannot write, consumer called return"));
           drain();
           return Promise.resolve({ done: true, value: undefined });
         },
