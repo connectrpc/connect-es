@@ -499,10 +499,14 @@ interface StateReady extends StateCommon {
   requiresVerify(): boolean;
 
   /**
-   * This connection has received a GOAWAY frame with code NO_ERROR (0x0).
-   * Previously established streams are allowed to finish, but no new streams
-   * may be opened on this connection.
-   * Keep-alive continues for this connection.
+   * This connection has received a GOAWAY frame.
+   *
+   * If the error code is NO_ERROR (0x0), previously established streams are
+   * allowed to finish. Otherwise, they error.
+   *
+   * No new streams may be opened on this connection, and the connection is
+   * closed as soon as possible. Until then, keep-alive continues for the
+   * connection.
    */
   isShuttingDown(): boolean;
 
@@ -559,8 +563,8 @@ function ready(
   let pingIntervalId: ReturnType<typeof setTimeout> | undefined;
   // timer for waiting for a PING response
   let pingTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  // keep track of GOAWAY with NO_ERROR - gracefully shut down open streams
-  let receivedGoAwayNoError = false;
+  // keep track of GOAWAY - gracefully shut down open streams / wait for connection to error
+  let receivedGoAway = false;
   // keep track of GOAWAY with ENHANCE_YOUR_CALM and with debug data too_many_pings
   let receivedGoAwayEnhanceYourCalmTooManyPings = false;
   // timer for closing connections without open streams, must be initialized
@@ -578,7 +582,7 @@ function ready(
       return elapsedMs > options.pingIntervalMs;
     },
     isShuttingDown(): boolean {
-      return receivedGoAwayNoError;
+      return receivedGoAway;
     },
     onClose: undefined,
     onError: undefined,
@@ -713,6 +717,7 @@ function ready(
     lastStreamID: number,
     opaqueData: Buffer | undefined | null
   ) {
+    receivedGoAway = true;
     const tooManyPingsAscii = Buffer.from("too_many_pings", "ascii");
     if (
       errorCode === http2.constants.NGHTTP2_ENHANCE_YOUR_CALM &&
@@ -724,7 +729,6 @@ function ready(
       receivedGoAwayEnhanceYourCalmTooManyPings = true;
     }
     if (errorCode === http2.constants.NGHTTP2_NO_ERROR) {
-      receivedGoAwayNoError = true;
       const nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
       // Node.js v16 closes a connection on its own when it receives a GOAWAY
       // frame and there are no open streams (emitting a "close" event and
