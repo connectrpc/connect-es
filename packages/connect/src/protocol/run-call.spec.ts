@@ -12,12 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Int32Value,
-  MethodKind,
-  type ServiceType,
-  StringValue,
-} from "@bufbuild/protobuf";
+import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
+import type { ServiceType } from "@bufbuild/protobuf";
 import { runStreamingCall, runUnaryCall } from "./run-call.js";
 import type {
   StreamRequest,

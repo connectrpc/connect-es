@@ -18,14 +18,10 @@ import type {
 } from "@bufbuild/connect/protocol";
 import { validateReadWriteMaxBytes } from "@bufbuild/connect/protocol";
 import { compressionBrotli, compressionGzip } from "./compression.js";
-import {
-  createNodeHttpClient,
-  type NodeHttp2ClientSessionManager,
-} from "./node-universal-client.js";
-import {
-  Http2SessionManager,
-  type Http2SessionOptions,
-} from "./http2-session-manager.js";
+import { createNodeHttpClient } from "./node-universal-client.js";
+import type { NodeHttp2ClientSessionManager } from "./node-universal-client.js";
+import { Http2SessionManager } from "./http2-session-manager.js";
+import type { Http2SessionOptions } from "./http2-session-manager.js";
 import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";

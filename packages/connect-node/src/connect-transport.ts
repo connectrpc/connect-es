@@ -21,10 +21,10 @@ import type {
 import type { Interceptor, Transport } from "@bufbuild/connect";
 import type { Compression } from "@bufbuild/connect/protocol";
 import { createTransport } from "@bufbuild/connect/protocol-connect";
-import {
-  type DeprecatedNodeTransportOptions,
-  type NodeTransportOptions,
-  validateNodeTransportOptions,
+import { validateNodeTransportOptions } from "./node-transport-options.js";
+import type {
+  DeprecatedNodeTransportOptions,
+  NodeTransportOptions,
 } from "./node-transport-options.js";
 
 /**

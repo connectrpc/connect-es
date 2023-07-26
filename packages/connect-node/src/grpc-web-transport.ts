@@ -21,10 +21,10 @@ import type {
   JsonReadOptions,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import {
-  type DeprecatedNodeTransportOptions,
-  type NodeTransportOptions,
-  validateNodeTransportOptions,
+import { validateNodeTransportOptions } from "./node-transport-options.js";
+import type {
+  DeprecatedNodeTransportOptions,
+  NodeTransportOptions,
 } from "./node-transport-options.js";
 
 /**
