@@ -396,29 +396,28 @@ async function sinkRequest(
             return;
           }
           nodeRequest.write(r.value, "binary", function (e) {
-            if (e) {
-              if (
-                nodeRequest.writableEnded &&
-                unwrapNodeErrorChain(e)
-                  .map(getNodeErrorProps)
-                  .some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END") &&
-                it.throw !== undefined
-              ) {
-                // If the server responds and closes the connection before the client has written the entire response
-                // body, we get an ERR_STREAM_WRITE_AFTER_END error code from Node.js here.
-                // We do want to notify the iterable of the error condition, but we do not want to reject our sentinel,
-                // because that would also affect the reading side.
-                it.throw(new ConnectError("stream closed", Code.Aborted)).catch(
-                  () => {
-                    //
-                  }
-                );
-                return;
-              }
-              sentinel.reject(e);
-            } else {
+            if (e === null || e === undefined) {
               writeNext();
+              return;
             }
+            if (it.throw !== undefined) {
+              it.throw(connectErrorFromNodeReason(e)).catch(() => {
+                //
+              });
+            }
+            // If the server responds and closes the connection before the client has written the entire response
+            // body, we get an ERR_STREAM_WRITE_AFTER_END error code from Node.js here.
+            // We do want to notify the iterable of the error condition, but we do not want to reject our sentinel,
+            // because that would also affect the reading side.
+            if (
+              nodeRequest.writableEnded &&
+              unwrapNodeErrorChain(e)
+                .map(getNodeErrorProps)
+                .some((p) => p.code == "ERR_STREAM_WRITE_AFTER_END")
+            ) {
+              return;
+            }
+            sentinel.reject(e);
           });
         },
         (e) => {
