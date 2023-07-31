@@ -1278,107 +1278,140 @@ export function makeIterableAbortable<T>(
   };
 }
 
-// QueueElement represents an element in the writer queue, which consists of the payload being written as well as an
-// associated resolve function to be invoked/resolved when the written element is read from the queue via the async
-// iterator.
-interface QueueElement<T> {
-  payload: IteratorResult<T>;
-  resolve?: () => void;
-  reject?: (reason?: Error) => void;
-}
-
-// WritableIterable represents an AsyncIterable that is able to be written to.
+/**
+ * WritableIterable is an AsyncIterable that can be used
+ * to supply values imperatively to the consumer of the
+ * AsyncIterable.
+ */
 export interface WritableIterable<T> extends AsyncIterable<T> {
+  /**
+   * Makes the payload available to the consumer of the
+   * iterable.
+   */
   write: (payload: T) => Promise<void>;
-  close: () => Promise<void>;
-  isClosed: () => boolean;
+  /**
+   * Closes the writer indicating to its consumer that no further
+   * payloads will be received.
+   *
+   * Any writes that happen after close is called will return an error.
+   */
+  close: () => void;
 }
 
-// Create an instance of a WritableIterable of type T
+/**
+ * Create a new WritableIterable.
+ */
 export function createWritableIterable<T>(): WritableIterable<T> {
-  let queue: QueueElement<T>[] = [];
-  // Represents the resolve function of the promise returned by the async iterator if no values exist in the queue at
-  // the time of request.  It is resolved when a value is successfully received into the queue.
-  let queueResolve: ((val: IteratorResult<T>) => void) | undefined;
-  let error: Error | undefined = undefined;
-
-  const process = async (payload: IteratorResult<T, undefined>) => {
-    // // If the writer's internal error was set, then reject any attempts at processing a payload.
-    if (error) {
-      return Promise.reject(String(error));
-    }
-    // If there is an iterator resolver then a consumer of the async iterator is waiting on a value.  So resolve that
-    // promise with the new value being sent and return a promise that is immediately resolved
-    if (queueResolve) {
-      queueResolve(payload);
-      queueResolve = undefined;
-      return Promise.resolve();
-    }
-    const elem: QueueElement<T> = {
-      payload,
-    };
-    const prom = new Promise<void>((resolve, reject) => {
-      elem.resolve = resolve;
-      elem.reject = reject;
-    });
-    // Otherwise no one is waiting on a value yet so add it to the queue and return a promise that will be resolved
-    // when someone reads this value
-    queue.push(elem);
-
-    return prom;
-  };
+  // We start with two queues to capture the read and write attempts.
+  //
+  // The writes and reads each check of their counterpart is
+  // already available and either interact/add themselves to the queue.
+  const readQueue: ((result: IteratorResult<T, undefined>) => void)[] = [];
+  const writeQueue: T[] = [];
+  let err: unknown = undefined;
+  let nextResolve: () => void;
+  let nextReject: (err: unknown) => void;
+  let nextPromise = new Promise<void>((resolve, reject) => {
+    nextResolve = resolve;
+    nextReject = reject;
+  });
   let closed = false;
+  // drain the readQueue in case of error/writer is closed by sending a
+  // done result.
+  function drain() {
+    for (const next of readQueue.splice(0, readQueue.length)) {
+      next({ done: true, value: undefined });
+    }
+  }
   return {
-    isClosed() {
-      return closed;
-    },
-    async write(payload) {
-      if (closed) {
-        throw new ConnectError("cannot write, already closed");
-      }
-      return process({ value: payload, done: false });
-    },
-    async close() {
-      if (closed) {
-        throw new ConnectError("cannot close, already closed");
-      }
+    close() {
       closed = true;
-      return process({ value: undefined, done: true });
+      drain();
+    },
+    async write(payload: T) {
+      if (closed) {
+        throw err ?? new Error("cannot write, WritableIterable already closed");
+      }
+      const read = readQueue.shift();
+      if (read === undefined) {
+        // We didn't find a pending read so we add the payload to the write queue.
+        writeQueue.push(payload);
+      } else {
+        // We found a pending read so we respond with the payload.
+        read({ done: false, value: payload });
+        if (readQueue.length > 0) {
+          // If there are more in the read queue we can mark the write as complete.
+          // as the error reporting is not guaranteed to be sequential and therefore cannot
+          // to linked to a specific write.
+          return;
+        }
+      }
+      // We await the next call for as many times as there are items in the queue + 1
+      //
+      // If there are no items in the write queue that means write happened and we just have
+      // to wait for one more call likewise if we are the nth write in the queue we
+      // have to wait for n writes to complete and one more.
+      const limit = writeQueue.length + 1;
+      for (let i = 0; i < limit; i++) {
+        await nextPromise;
+      }
     },
     [Symbol.asyncIterator](): AsyncIterator<T> {
       return {
-        next: async () => {
-          // If the writer's internal error was set, then reject any attempts at processing a payload.
-          if (error) {
-            return Promise.reject(String(error));
-          }
-          const elem = queue.shift();
-          if (!elem) {
-            // We don't have any payloads ready to be sent (i.e. the consumer of the iterator is consuming faster than
-            // senders are sending).  So return a Promise ensuring we'll resolve it when we get something.
-            return new Promise<IteratorResult<T>>((resolve) => {
-              queueResolve = resolve;
-            });
-          }
-          // Resolve the send promise on a successful send/close.
-          if (elem.resolve) {
-            elem.resolve();
-          }
-          return elem.payload;
-        },
-        throw: async (e: Error) => {
-          error = e;
-          // The reader of this iterator has failed with the given error.  So anything left in the queue should be
-          // drained and rejected with the given error
-          for (const item of queue) {
-            if (item.reject) {
-              item.reject(e);
-            }
-          }
-          queue = [];
-          return new Promise<IteratorResult<T>>((resolve) => {
-            resolve({ value: undefined, done: true });
+        next() {
+          // Resolve the nextPromise to indicate
+          // pending writes that a read attempt has been made
+          // after their write.
+          //
+          // We also need to reset the promise for future writes.
+          nextResolve();
+          nextPromise = new Promise<void>((resolve, reject) => {
+            nextResolve = resolve;
+            nextReject = reject;
           });
+          const write = writeQueue.shift();
+          if (write !== undefined) {
+            // We found a pending write so response with the payload.
+            return Promise.resolve({ done: false, value: write });
+          }
+          if (closed) {
+            return Promise.resolve({ done: true, value: undefined });
+          }
+          // We return a promise immediately that is either resolved/rejected
+          // as writes happen.
+          let readResolve: (result: IteratorResult<T>) => void;
+          const readPromise = new Promise<IteratorResult<T>>(
+            (resolve) => (readResolve = resolve)
+          );
+          readQueue.push(readResolve!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          return readPromise;
+        },
+        throw(throwErr: unknown) {
+          err = throwErr;
+          closed = true;
+          writeQueue.splice(0, writeQueue.length);
+          nextPromise.catch(() => {
+            // To make sure that the nextPromise is always resolved.
+          });
+          // This will reject all pending writes.
+          nextReject(err);
+          drain();
+          return Promise.resolve({ done: true, value: undefined });
+        },
+        return() {
+          closed = true;
+          writeQueue.splice(0, writeQueue.length);
+          // Resolve once for the write awaiting confirmation.
+          nextResolve();
+          // Reject all future writes.
+          nextPromise = Promise.reject(
+            new Error("cannot write, consumer called return")
+          );
+          nextPromise.catch(() => {
+            // To make sure that the nextPromise is always resolved.
+          });
+          drain();
+          return Promise.resolve({ done: true, value: undefined });
         },
       };
     },
