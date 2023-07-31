@@ -1395,6 +1395,9 @@ export function createWritableIterable<T>(): WritableIterable<T> {
           err = throwErr;
           closed = true;
           writeQueue.splice(0, writeQueue.length);
+          nextPromise.catch(() => {
+            // To make sure that the nextPromise is always resolved.
+          });
           // This will reject all pending writes.
           nextReject(err);
           drain();
@@ -1403,12 +1406,14 @@ export function createWritableIterable<T>(): WritableIterable<T> {
         return() {
           closed = true;
           writeQueue.splice(0, writeQueue.length);
-          nextResolve(); // Resolve once for the write awaiting confirmation.
+          // Resolve once for the write awaiting confirmation.
+          nextResolve();
           // Reject all future writes.
           nextPromise = Promise.reject(
             new Error("cannot write, consumer called return")
-          ).catch(() => {
-            // This is needed because there could be no more writes.
+          );
+          nextPromise.catch(() => {
+            // To make sure that the nextPromise is always resolved.
           });
           drain();
           return Promise.resolve({ done: true, value: undefined });

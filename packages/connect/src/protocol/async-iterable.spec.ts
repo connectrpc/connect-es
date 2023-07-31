@@ -1181,7 +1181,53 @@ describe("createWritableIterable()", function () {
     await Promise.all(writes);
     await read;
   });
-  it("honors return of the iterator", async () => {
+  it("queued writes are rejected when reader throws", async () => {
+    const wIterable = createWritableIterable<number>();
+    const writes = [];
+    for (let i = 0; i < 50; i++) {
+      writes.push(wIterable.write(i));
+    }
+    wIterable.close();
+    const readError = new Error("read failed");
+    const read = (async () => {
+      const it = wIterable[Symbol.asyncIterator]();
+      await it.throw?.(readError);
+    })();
+    await read;
+    expect(await Promise.allSettled(writes)).toEqual(
+      new Array(50).fill({ status: "rejected", reason: readError })
+    );
+  });
+  it("queued writes are rejected when reader calls return", async () => {
+    const wIterable = createWritableIterable<number>();
+    const writes = [];
+    for (let i = 0; i < 50; i++) {
+      writes.push(wIterable.write(i));
+    }
+    wIterable.close();
+    const read = (async () => {
+      const it = wIterable[Symbol.asyncIterator]();
+      await it.return?.();
+    })();
+    await read;
+    expect(await Promise.allSettled(writes)).toEqual(
+      new Array(50).fill({
+        status: "rejected",
+        reason: new Error("cannot write, consumer called return"),
+      })
+    );
+  });
+  it("throw before first write stops writes", async () => {
+    const wIterable = createWritableIterable<number>();
+    const readError = new Error("read failed");
+    const read = (async () => {
+      const it = wIterable[Symbol.asyncIterator]();
+      await it.throw?.(readError);
+    })();
+    await expectAsync(wIterable.write(1)).toBeRejectedWith(readError);
+    await read;
+  });
+  it("resolves already written value and rejects future writes on return", async () => {
     const wIterable = createWritableIterable<number>();
     const read = (async () => {
       const itr = wIterable[Symbol.asyncIterator]();
@@ -1189,6 +1235,7 @@ describe("createWritableIterable()", function () {
       if (next.done === true) {
         fail("expected at least one value");
       } else {
+        expect(next.value).toEqual(1);
         expect(await itr.return?.()).toEqual({
           done: true,
           value: undefined,
