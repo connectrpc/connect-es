@@ -50,6 +50,6 @@ export interface Transport {
     signal: AbortSignal | undefined,
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
-    input: AsyncIterable<I>
+    input: AsyncIterable<PartialMessage<I>>
   ): Promise<StreamResponse<I, O>>;
 }

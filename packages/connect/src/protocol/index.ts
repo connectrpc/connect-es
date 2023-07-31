@@ -60,7 +60,6 @@ export {
   transformAppend,
   transformPrepend,
   transformReadAllBytes,
-  transformNormalizeMessage,
   transformCompressEnvelope,
   transformDecompressEnvelope,
   transformJoinEnvelopes,

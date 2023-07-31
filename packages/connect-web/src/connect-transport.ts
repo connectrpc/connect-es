@@ -136,7 +136,7 @@ export function createConnectTransport(
       header: HeadersInit | undefined,
       message: PartialMessage<I>
     ): Promise<UnaryResponse<I, O>> {
-      const { normalize, serialize, parse } = createClientMethodSerializers(
+      const { serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
@@ -163,7 +163,7 @@ export function createConnectTransport(
             timeoutMs,
             header
           ),
-          message: normalize(message),
+          message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const useGet =
@@ -228,7 +228,7 @@ export function createConnectTransport(
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<I>
+      input: AsyncIterable<PartialMessage<I>>
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -279,6 +279,7 @@ export function createConnectTransport(
         }
         return encodeEnvelope(0, serialize(r.value));
       }
+
       return await runStreamingCall<I, O>({
         interceptors: options.interceptors,
         timeoutMs,

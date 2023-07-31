@@ -21,6 +21,8 @@ import {
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
 import type { HandlerContext } from "./implementation";
+import { ConnectError } from "./connect-error.js";
+import { Code } from "./code.js";
 
 const TestService = {
   typeName: "handwritten.TestService",
@@ -76,6 +78,80 @@ describe("createClientStreamingFn()", function () {
     expect(res).toBeInstanceOf(StringValue);
     expect(res.value).toEqual(output.value);
   });
+  it("closes the request iterable when response is received", async () => {
+    const output = new StringValue({ value: "yield 1" });
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        clientStream: async (input: AsyncIterable<Int32Value>) => {
+          for await (const next of input) {
+            expect(next.value).toBe(1);
+            return output;
+          }
+          throw new ConnectError(
+            "expected at least 1 value",
+            Code.InvalidArgument
+          );
+        },
+      });
+    });
+    const fn = createClientStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.clientStream
+    );
+    let reqItrClosed = false;
+    const res = await fn(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      (async function* () {
+        try {
+          yield { value: 1 };
+          fail("expected early return");
+        } finally {
+          reqItrClosed = true;
+        }
+      })()
+    );
+    expect(res).toBeInstanceOf(StringValue);
+    expect(res.value).toEqual(output.value);
+    expect(reqItrClosed).toBe(true);
+  });
+  it("closes the request iterable when response is received", async () => {
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        clientStream: async (input: AsyncIterable<Int32Value>) => {
+          for await (const next of input) {
+            expect(next.value).toBe(1);
+            throw new ConnectError("foo", Code.Internal);
+          }
+          throw new ConnectError(
+            "expected at least 1 value",
+            Code.InvalidArgument
+          );
+        },
+      });
+    });
+    const fn = createClientStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.clientStream
+    );
+    let reqItrClosed = false;
+    const res = fn(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      (async function* () {
+        try {
+          yield { value: 1 };
+          fail("expected early return");
+        } finally {
+          reqItrClosed = true;
+        }
+      })()
+    );
+    await expectAsync(res).toBeRejectedWith(
+      new ConnectError("foo", Code.Internal)
+    );
+    expect(reqItrClosed).toBe(true);
+  });
 });
 
 describe("createServerStreamingFn()", function () {
@@ -105,6 +181,20 @@ describe("createServerStreamingFn()", function () {
       receivedMessages.push(res);
     }
     expect(receivedMessages).toEqual(output);
+  });
+  it("doesn't support throw/return on the returned response", function () {
+    const fn = createServerStreamingFn(
+      createRouterTransport(({ service }) => {
+        service(TestService, {
+          serverStream: () => createAsyncIterable([]),
+        });
+      }),
+      TestService,
+      TestService.methods.bidiStream
+    );
+    const it = fn({})[Symbol.asyncIterator]();
+    expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+    expect(it.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
   });
 });
 
@@ -141,5 +231,91 @@ describe("createBiDiStreamingFn()", () => {
     }
     expect(index).toBe(3);
     expect(bidiIndex).toBe(3);
+  });
+  it("closes the request iterable when response is received", async () => {
+    const values = [123, 456, 789];
+
+    const input = createAsyncIterable(
+      values.map((value) => new Int32Value({ value }))
+    );
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        bidiStream: async function* (input: AsyncIterable<Int32Value>) {
+          for await (const next of input) {
+            yield { value: `yield ${next.value}` };
+            break;
+          }
+        },
+      });
+    });
+    const fn = createBiDiStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.bidiStream
+    );
+
+    let count = 0;
+    for await (const res of fn(input)) {
+      expect(res).toEqual(new StringValue({ value: "yield 123" }));
+      count += 1;
+    }
+    expect(count).toBe(1);
+    expect(await input[Symbol.asyncIterator]().next()).toEqual({
+      done: true,
+      value: undefined,
+    });
+  });
+  it("closes the request iterable when an error is thrown", async () => {
+    const values = [123, 456, 789];
+
+    const input = createAsyncIterable(
+      values.map((value) => new Int32Value({ value }))
+    );
+    const transport = createRouterTransport(({ service }) => {
+      service(TestService, {
+        bidiStream: async function* (input: AsyncIterable<Int32Value>) {
+          for await (const next of input) {
+            yield { value: `yield ${next.value}` };
+            throw new ConnectError("foo", Code.Internal);
+          }
+        },
+      });
+    });
+    const fn = createBiDiStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.bidiStream
+    );
+
+    let count = 0;
+    try {
+      for await (const res of fn(input)) {
+        expect(res).toEqual(new StringValue({ value: "yield 123" }));
+        count += 1;
+      }
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConnectError);
+      expect((e as ConnectError).code).toBe(Code.Internal);
+      expect((e as ConnectError).rawMessage).toBe("foo");
+    }
+    expect(count).toBe(1);
+    expect(await input[Symbol.asyncIterator]().next()).toEqual({
+      done: true,
+      value: undefined,
+    });
+  });
+  it("doesn't support throw/return on the returned response", function () {
+    const fn = createBiDiStreamingFn(
+      createRouterTransport(({ service }) => {
+        service(TestService, {
+          bidiStream: () => createAsyncIterable([]),
+        });
+      }),
+      TestService,
+      TestService.methods.bidiStream
+    );
+    const it = fn(createAsyncIterable([]))[Symbol.asyncIterator]();
+    expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+    expect(it.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
   });
 });

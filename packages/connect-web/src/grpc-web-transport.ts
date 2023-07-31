@@ -131,7 +131,7 @@ export function createGrpcWebTransport(
       header: Headers,
       message: PartialMessage<I>
     ): Promise<UnaryResponse<I, O>> {
-      const { normalize, serialize, parse } = createClientMethodSerializers(
+      const { serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
@@ -153,7 +153,7 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           header: requestHeader(useBinaryFormat, timeoutMs, header),
-          message: normalize(message),
+          message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const fetch = options.fetch ?? globalThis.fetch;
@@ -219,7 +219,7 @@ export function createGrpcWebTransport(
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<I>
+      input: AsyncIterable<PartialMessage<I>>
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
