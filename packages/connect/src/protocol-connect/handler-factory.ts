@@ -58,27 +58,25 @@ import {
   requireProtocolVersionHeader,
   requireProtocolVersionParam,
 } from "./version.js";
-import {
-  type Compression,
-  compressionNegotiate,
-} from "../protocol/compression.js";
-import {
-  type MethodSerializationLookup,
-  type Serialization,
-  createMethodSerializationLookup,
+import { compressionNegotiate } from "../protocol/compression.js";
+import type { Compression } from "../protocol/compression.js";
+import { createMethodSerializationLookup } from "../protocol/serialization.js";
+import type {
+  MethodSerializationLookup,
+  Serialization,
 } from "../protocol/serialization.js";
+import { validateUniversalHandlerOptions } from "../protocol/universal-handler.js";
+import type { UniversalHandlerOptions } from "../protocol/universal-handler.js";
 import {
-  type UniversalHandlerOptions,
-  validateUniversalHandlerOptions,
-} from "../protocol/universal-handler.js";
-import {
-  type UniversalHandlerFn,
-  type UniversalServerRequest,
-  type UniversalServerResponse,
   assertByteStreamRequest,
   uResponseMethodNotAllowed,
   uResponseOk,
   uResponseUnsupportedMediaType,
+} from "../protocol/universal.js";
+import type {
+  UniversalHandlerFn,
+  UniversalServerRequest,
+  UniversalServerResponse,
 } from "../protocol/universal.js";
 import {
   createAsyncIterable,

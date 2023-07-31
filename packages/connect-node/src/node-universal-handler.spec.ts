@@ -21,8 +21,8 @@ import { getNodeErrorProps } from "./node-error.js";
 import {
   assertByteStreamRequest,
   readAllBytes,
-  type UniversalServerRequest,
 } from "@bufbuild/connect/protocol";
+import type { UniversalServerRequest } from "@bufbuild/connect/protocol";
 
 // Polyfill the Headers API for Node versions < 18
 import "./node-headers-polyfill.js";

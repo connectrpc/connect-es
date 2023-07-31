@@ -50,17 +50,17 @@ import { createMethodUrl } from "../protocol/create-method-url.js";
 import { transformInvokeImplementation } from "../protocol/invoke-implementation.js";
 import type { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
+import { validateUniversalHandlerOptions } from "../protocol/universal-handler.js";
+import type { UniversalHandlerOptions } from "../protocol/universal-handler.js";
 import {
-  type UniversalHandlerOptions,
-  validateUniversalHandlerOptions,
-} from "../protocol/universal-handler.js";
-import {
-  type UniversalServerRequest,
-  type UniversalServerResponse,
   assertByteStreamRequest,
   uResponseUnsupportedMediaType,
   uResponseMethodNotAllowed,
   uResponseOk,
+} from "../protocol/universal.js";
+import type {
+  UniversalServerRequest,
+  UniversalServerResponse,
 } from "../protocol/universal.js";
 
 const protocolName = "grpc";

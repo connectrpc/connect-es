@@ -17,7 +17,8 @@ import * as http from "http";
 import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
-import { cors, createRouterTransport, type Transport } from "@bufbuild/connect";
+import { cors, createRouterTransport } from "@bufbuild/connect";
+import type { Transport } from "@bufbuild/connect";
 import {
   compressionGzip,
   connectNodeAdapter,
