@@ -210,6 +210,31 @@ describe("pipe()", function () {
       ]);
     });
   });
+  it("should propagate returns", async function () {
+    let returned = false;
+    const iterable = pipe(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      (async function* () {
+        try {
+          yield 1;
+          fail("expected early return");
+          yield 2;
+        } finally {
+          returned = true;
+        }
+      })(),
+      async function* (iterable) {
+        for await (const next of iterable) {
+          yield next * 2;
+        }
+      },
+      { propagateDownStreamError: true }
+    );
+    const it = iterable[Symbol.asyncIterator]();
+    expect(await it.next()).toEqual({ done: false, value: 2 });
+    await it.return?.();
+    expect(returned).toBe(true);
+  });
 });
 
 describe("pipeTo()", function () {

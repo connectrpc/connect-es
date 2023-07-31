@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Message, MessageType, PartialMessage } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import type { EnvelopedMessage } from "./envelope.js";
@@ -573,20 +572,36 @@ export async function* pipe<I, O>(
     iterable = t(iterable);
   }
   const it = iterable[Symbol.asyncIterator]();
-  for (;;) {
-    const r = await it.next();
-    if (r.done === true) {
-      break;
+  try {
+    for (;;) {
+      const r = await it.next();
+      if (r.done === true) {
+        break;
+      }
+      if (!abortable) {
+        yield r.value as O;
+        continue;
+      }
+      try {
+        yield r.value as O;
+      } catch (e) {
+        await abortable.abort(e); // propagate downstream error to the source
+        throw e;
+      }
     }
-    if (!abortable) {
-      yield r.value as O;
-      continue;
-    }
-    try {
-      yield r.value as O;
-    } catch (e) {
-      await abortable.abort(e); // propagate downstream error to the source
-      throw e;
+  } finally {
+    if (opt?.propagateDownStreamError === true) {
+      // Call return on the source iterable to indicate
+      // that we will no longer consume it and it should
+      // cleanup any allocated resources.
+      source[Symbol.asyncIterator]()
+        .return?.()
+        .catch(() => {
+          // return returns a promise, which we don't care about.
+          //
+          // Uncaught promises are thrown at sometime/somewhere by the event loop,
+          // this is to ensure error is caught and ignored.
+        });
     }
   }
 }
@@ -748,26 +763,6 @@ export function transformReadAllBytes(
 ): AsyncIterableTransform<Uint8Array> {
   return async function* (iterable) {
     yield await readAllBytes(iterable, readMaxBytes, lengthHint);
-  };
-}
-
-/**
- * Creates an AsyncIterableTransform that takes partial protobuf messages of the
- * specified message type as input, and yields full instances.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export function transformNormalizeMessage<T extends Message<T>>(
-  messageType: MessageType<T>
-): AsyncIterableTransform<T | PartialMessage<T>, T> {
-  return async function* (iterable) {
-    for await (const chunk of iterable) {
-      if (chunk instanceof messageType) {
-        yield chunk;
-      } else {
-        yield new messageType(chunk as PartialMessage<T>);
-      }
-    }
   };
 }
 
@@ -1246,7 +1241,7 @@ export function makeIterableAbortable<T>(
       return inner.throw(e);
     },
   };
-  if (innerCandidate.return === undefined) {
+  if (innerCandidate.return !== undefined) {
     it = {
       ...it,
       return(value?: unknown): Promise<IteratorResult<T>> {

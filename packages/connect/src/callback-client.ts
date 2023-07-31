@@ -137,8 +137,6 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
 ): ServerStreamingFn<I, O> {
   return function (input, onResponse, onClose, options) {
     const abort = new AbortController();
-    const inputMessage =
-      input instanceof method.I ? input : new method.I(input);
     async function run() {
       options = wrapSignal(abort, options);
       const response = await transport.stream(
@@ -147,7 +145,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
         options.signal,
         options.timeoutMs,
         options.headers,
-        createAsyncIterable([inputMessage])
+        createAsyncIterable([input])
       );
       options.onHeader?.(response.header);
       for await (const message of response.message) {
