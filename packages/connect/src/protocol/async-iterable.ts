@@ -1403,7 +1403,13 @@ export function createWritableIterable<T>(): WritableIterable<T> {
         return() {
           closed = true;
           writeQueue.splice(0, writeQueue.length);
-          nextReject(new Error("cannot write, consumer called return"));
+          nextResolve(); // Resolve once for the write awaiting confirmation.
+          // Reject all future writes.
+          nextPromise = Promise.reject(
+            new Error("cannot write, consumer called return")
+          ).catch(() => {
+            // This is needed because there could be no more writes.
+          });
           drain();
           return Promise.resolve({ done: true, value: undefined });
         },

@@ -1181,4 +1181,27 @@ describe("createWritableIterable()", function () {
     await Promise.all(writes);
     await read;
   });
+  it("honors return of the iterator", async () => {
+    const wIterable = createWritableIterable<number>();
+    const read = (async () => {
+      const itr = wIterable[Symbol.asyncIterator]();
+      const next = await itr.next();
+      if (next.done === true) {
+        fail("expected at least one value");
+      } else {
+        expect(await itr.return?.()).toEqual({
+          done: true,
+          value: undefined,
+        });
+      }
+      // All further calls to next should also result in done results.
+      expect(await itr.next()).toEqual({
+        done: true,
+        value: undefined,
+      });
+    })();
+    await expectAsync(wIterable.write(1)).toBeResolved();
+    await expectAsync(wIterable.write(2)).toBeRejected();
+    await read;
+  });
 });
