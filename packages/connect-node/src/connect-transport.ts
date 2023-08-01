@@ -129,7 +129,7 @@ type ConnectTransportOptions = NodeTransportOptions &
  * or `http2` module.
  */
 export function createConnectTransport(
-  options: ConnectTransportOptions
+  options: ConnectTransportOptions,
 ): Transport {
   return createTransport(validateNodeTransportOptions(options));
 }

@@ -46,7 +46,7 @@ describe("createBinarySerialization()", function () {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
         expect(c.message).toBe(
-          "[invalid_argument] parse binary: premature EOF"
+          "[invalid_argument] parse binary: premature EOF",
         );
       }
     });
@@ -94,7 +94,7 @@ describe("createJsonSerialization()", function () {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
         expect(c.message).toMatch(
-          /^\[invalid_argument] cannot decode google.protobuf.StringValue from JSON: Unexpected token/
+          /^\[invalid_argument] cannot decode google.protobuf.StringValue from JSON: Unexpected token/,
         );
       }
     });
@@ -134,10 +134,10 @@ describe("limitSerialization()", function () {
     });
     expect(() => limitedSer.serialize("abcdef")).toThrowError(
       ConnectError,
-      "[resource_exhausted] message size 6 is larger than configured writeMaxBytes 3"
+      "[resource_exhausted] message size 6 is larger than configured writeMaxBytes 3",
     );
     expect(() =>
-      limitedSer.parse(new TextEncoder().encode("abcdef"))
+      limitedSer.parse(new TextEncoder().encode("abcdef")),
     ).not.toThrowError();
   });
   it("limits parse", function () {
@@ -147,10 +147,10 @@ describe("limitSerialization()", function () {
     });
     expect(() => limitedSer.serialize("abcdef")).not.toThrowError();
     expect(() =>
-      limitedSer.parse(new TextEncoder().encode("abcdef"))
+      limitedSer.parse(new TextEncoder().encode("abcdef")),
     ).toThrowError(
       ConnectError,
-      "[resource_exhausted] message size 6 is larger than configured readMaxBytes 3"
+      "[resource_exhausted] message size 6 is larger than configured readMaxBytes 3",
     );
   });
 });

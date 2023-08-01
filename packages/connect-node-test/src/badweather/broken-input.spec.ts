@@ -41,7 +41,7 @@ describe("broken input", () => {
               url: createMethodUrl(
                 server.getUrl(),
                 TestService,
-                TestService.methods.unaryCall
+                TestService.methods.unaryCall,
               ),
               method: "POST",
               ctype: "application/json",
@@ -54,19 +54,19 @@ describe("broken input", () => {
                   undefined,
                   new ConnectError(
                     `HTTP ${res.status}`,
-                    codeFromHttpStatus(res.status)
-                  )
+                    codeFromHttpStatus(res.status),
+                  ),
                 ),
               };
             });
           const { status, error } = await unaryRequest(
-            new TextEncoder().encode("this is not json")
+            new TextEncoder().encode("this is not json"),
           );
           expect(status).toBe(400);
           expect(error.code).toBe(Code.InvalidArgument);
           if (serverName == "@bufbuild/connect-node (h2c)") {
             expect(error.rawMessage).toMatch(
-              /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token '?h'?.*JSON/
+              /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token '?h'?.*JSON/,
             );
           }
         });
@@ -97,7 +97,7 @@ describe("broken input", () => {
             const v = new DataView(
               body.buffer,
               body.byteOffset,
-              body.byteLength
+              body.byteLength,
             );
             v.setUint8(0, 0b00000000); // first byte is flags
             v.setUint32(1, json.byteLength); // 4 bytes message length
@@ -108,7 +108,7 @@ describe("broken input", () => {
               // Error messages tend to change across Node versions. Should this happen again, this link is useful to
               // build the correct RegExp:  https://regex101.com/r/By9VEN/1
               expect(endStream.error?.rawMessage).toMatch(
-                /^cannot decode grpc.testing.Streaming(Input|Output)CallRequest from JSON: Unexpected token '?h'?.*JSON/
+                /^cannot decode grpc.testing.Streaming(Input|Output)CallRequest from JSON: Unexpected token '?h'?.*JSON/,
               );
             }
           });
@@ -117,7 +117,7 @@ describe("broken input", () => {
             const v = new DataView(
               body.buffer,
               body.byteOffset,
-              body.byteLength
+              body.byteLength,
             );
             v.setUint8(0, 0b00000000); // first byte is flags
             v.setUint32(1, 1024); // 4 bytes message length
@@ -125,7 +125,7 @@ describe("broken input", () => {
             expect(status).toBe(200);
             expect(endStream.error?.code).toBe(Code.InvalidArgument);
             expect(endStream.error?.rawMessage).toBe(
-              "protocol error: promised 1024 bytes in enveloped message, got 0 bytes"
+              "protocol error: promised 1024 bytes in enveloped message, got 0 bytes",
             );
           });
           it("should raise HTTP 400 for short message", async () => {
@@ -133,7 +133,7 @@ describe("broken input", () => {
             const v = new DataView(
               body.buffer,
               body.byteOffset,
-              body.byteLength
+              body.byteLength,
             );
             v.setUint8(0, 0b00000000); // first byte is flags
             v.setUint32(1, 1024); // 4 bytes message length
@@ -141,7 +141,7 @@ describe("broken input", () => {
             expect(status).toBe(200);
             expect(endStream.error?.code).toBe(Code.InvalidArgument);
             expect(endStream.error?.rawMessage).toMatch(
-              "^protocol error: promised 1024 bytes in enveloped message, got (1|less) bytes"
+              "^protocol error: promised 1024 bytes in enveloped message, got (1|less) bytes",
             );
           });
           it("should raise HTTP 400 for short envelope", async () => {
@@ -149,19 +149,19 @@ describe("broken input", () => {
             const v = new DataView(
               body.buffer,
               body.byteOffset,
-              body.byteLength
+              body.byteLength,
             );
             v.setUint8(0, 0b00000000); // first byte is flags
             const { status, endStream } = await streamingRequest(body);
             expect(status).toBe(200);
             expect(endStream.error?.code).toBe(Code.InvalidArgument);
             expect(endStream.error?.rawMessage).toMatch(
-              "^protocol error: incomplete envelope"
+              "^protocol error: incomplete envelope",
             );
           });
         });
       }
-    }
+    },
   );
 
   afterAll(async () => await servers.stop());

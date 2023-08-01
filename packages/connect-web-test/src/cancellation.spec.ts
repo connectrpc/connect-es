@@ -69,7 +69,7 @@ describe("explicit cancellation with AbortController", function () {
           () => {
             fail("expected callback client to swallow AbortError");
           },
-          options
+          options,
         );
         setTimeout(done, 50);
       });
@@ -79,7 +79,7 @@ describe("explicit cancellation with AbortController", function () {
           () => {
             fail("expected callback client to swallow AbortError");
           },
-          options
+          options,
         );
         cancelFn();
         setTimeout(done, 50);
@@ -93,7 +93,7 @@ describe("explicit cancellation with AbortController", function () {
           (error) => {
             expect(error).toBeUndefined();
           },
-          options
+          options,
         );
         setTimeout(done, 50);
       });
@@ -106,7 +106,7 @@ describe("explicit cancellation with AbortController", function () {
           (error) => {
             expect(error).toBeUndefined();
           },
-          options
+          options,
         );
         cancelFn();
         setTimeout(done, 50);

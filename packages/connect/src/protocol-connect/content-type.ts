@@ -50,7 +50,7 @@ const encodingJson = "json";
  * @private Internal code, does not follow semantic versioning.
  */
 export function parseContentType(
-  contentType: string | null
+  contentType: string | null,
 ): { stream: boolean; binary: boolean } | undefined {
   const match = contentType?.match(contentTypeRegExp);
   if (!match) {
@@ -67,7 +67,7 @@ export function parseContentType(
  * @private Internal code, does not follow semantic versioning.
  */
 export function parseEncodingQuery(
-  encoding: string | null
+  encoding: string | null,
 ): { stream: boolean; binary: boolean } | undefined {
   switch (encoding) {
     case encodingProto:

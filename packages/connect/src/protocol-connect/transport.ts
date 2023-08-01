@@ -61,20 +61,20 @@ export function createTransport(opt: CommonTransportOptions): Transport {
   return {
     async unary<
       I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
+      O extends Message<O> = AnyMessage,
     >(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      message: PartialMessage<I>
+      message: PartialMessage<I>,
     ): Promise<UnaryResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
         opt.binaryOptions,
         opt.jsonOptions,
-        opt
+        opt,
       );
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
@@ -92,7 +92,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             timeoutMs,
             header,
             opt.acceptCompression,
-            opt.sendCompression
+            opt.sendCompression,
           ),
           message,
         },
@@ -117,7 +117,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             req = transformConnectPostToGetRequest(
               req,
               requestBody,
-              opt.useBinaryFormat
+              opt.useBinaryFormat,
             );
           } else {
             body = createAsyncIterable([requestBody]);
@@ -134,28 +134,28 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               method.kind,
               opt.acceptCompression,
               universalResponse.status,
-              universalResponse.header
+              universalResponse.header,
             );
           const [header, trailer] = trailerDemux(universalResponse.header);
           let responseBody = await pipeTo(
             universalResponse.body,
             sinkAllBytes(
               opt.readMaxBytes,
-              universalResponse.header.get(headerUnaryContentLength)
+              universalResponse.header.get(headerUnaryContentLength),
             ),
-            { propagateDownStreamError: false }
+            { propagateDownStreamError: false },
           );
           if (compression) {
             responseBody = await compression.decompress(
               responseBody,
-              opt.readMaxBytes
+              opt.readMaxBytes,
             );
           }
           if (isUnaryError) {
             throw errorFromJsonBytes(
               responseBody,
               appendHeaders(header, trailer),
-              unaryError
+              unaryError,
             );
           }
           return <UnaryResponse<I, O>>{
@@ -174,23 +174,23 @@ export function createTransport(opt: CommonTransportOptions): Transport {
 
     async stream<
       I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
+      O extends Message<O> = AnyMessage,
     >(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>
+      input: AsyncIterable<PartialMessage<I>>,
     ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
         opt.binaryOptions,
         opt.jsonOptions,
-        opt
+        opt,
       );
       const endStreamSerialization = createEndStreamSerialization(
-        opt.jsonOptions
+        opt.jsonOptions,
       );
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
@@ -212,7 +212,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             timeoutMs,
             header,
             opt.acceptCompression,
-            opt.sendCompression
+            opt.sendCompression,
           ),
           message: input,
         },
@@ -225,21 +225,21 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             body: pipe(
               req.message,
               transformSerializeEnvelope(
-                serialization.getI(opt.useBinaryFormat)
+                serialization.getI(opt.useBinaryFormat),
               ),
               transformCompressEnvelope(
                 opt.sendCompression,
-                opt.compressMinBytes
+                opt.compressMinBytes,
               ),
               transformJoinEnvelopes(),
-              { propagateDownStreamError: true }
+              { propagateDownStreamError: true },
             ),
           });
           const { compression } = validateResponseWithCompression(
             method.kind,
             opt.acceptCompression,
             uRes.status,
-            uRes.header
+            uRes.header,
           );
           const res: StreamResponse<I, O> = {
             ...req,
@@ -250,12 +250,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               transformSplitEnvelope(opt.readMaxBytes),
               transformDecompressEnvelope(
                 compression ?? null,
-                opt.readMaxBytes
+                opt.readMaxBytes,
               ),
               transformParseEnvelope(
                 serialization.getO(opt.useBinaryFormat),
                 endStreamFlag,
-                endStreamSerialization
+                endStreamSerialization,
               ),
               async function* (iterable) {
                 let endStreamReceived = false;
@@ -264,7 +264,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                     if (endStreamReceived) {
                       throw new ConnectError(
                         "protocol error: received extra EndStreamResponse",
-                        Code.InvalidArgument
+                        Code.InvalidArgument,
                       );
                     }
                     endStreamReceived = true;
@@ -272,14 +272,14 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                       throw chunk.value.error;
                     }
                     chunk.value.metadata.forEach((value, key) =>
-                      res.trailer.set(key, value)
+                      res.trailer.set(key, value),
                     );
                     continue;
                   }
                   if (endStreamReceived) {
                     throw new ConnectError(
                       "protocol error: received extra message after EndStreamResponse",
-                      Code.InvalidArgument
+                      Code.InvalidArgument,
                     );
                   }
                   yield chunk.value;
@@ -287,11 +287,11 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                 if (!endStreamReceived) {
                   throw new ConnectError(
                     "protocol error: missing EndStreamResponse",
-                    Code.InvalidArgument
+                    Code.InvalidArgument,
                   );
                 }
               },
-              { propagateDownStreamError: true }
+              { propagateDownStreamError: true },
             ),
           };
           return res;

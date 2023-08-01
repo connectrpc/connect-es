@@ -30,12 +30,12 @@ import type { Compression } from "../protocol/compression.js";
 export function requestHeader(
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
-  userProvidedHeaders: HeadersInit | undefined
+  userProvidedHeaders: HeadersInit | undefined,
 ): Headers {
   const result = new Headers(userProvidedHeaders ?? {});
   result.set(
     headerContentType,
-    useBinaryFormat ? contentTypeProto : contentTypeJson
+    useBinaryFormat ? contentTypeProto : contentTypeJson,
   );
   // Note that we do not comply with recommended structure for the
   // user-agent string.
@@ -60,7 +60,7 @@ export function requestHeaderWithCompression(
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: Compression[],
-  sendCompression: Compression | null
+  sendCompression: Compression | null,
 ): Headers {
   const result = requestHeader(useBinaryFormat, timeoutMs, userProvidedHeaders);
   if (sendCompression != null) {
@@ -69,7 +69,7 @@ export function requestHeaderWithCompression(
   if (acceptCompression.length > 0) {
     result.set(
       headerAcceptEncoding,
-      acceptCompression.map((c) => c.name).join(",")
+      acceptCompression.map((c) => c.name).join(","),
     );
   }
   return result;

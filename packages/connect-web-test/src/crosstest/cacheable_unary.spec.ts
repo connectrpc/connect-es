@@ -52,7 +52,7 @@ describe("cacheable_unary", function () {
           expect(response.payload?.body.length).toEqual(request.responseSize);
           done();
         },
-        { onHeader: ensureGetRequest }
+        { onHeader: ensureGetRequest },
       );
     });
   });

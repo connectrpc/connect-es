@@ -104,13 +104,13 @@ describe("negotiateProtocol()", function () {
         allowedMethods: ["POST"],
         supportedContentType: contentTypeMatcher(/application\/x/),
         ...o,
-      }
+      },
     );
   }
 
   it("should require at least one handler", function () {
     expect(() => negotiateProtocol([])).toThrowError(
-      "[internal] at least one protocol is required"
+      "[internal] at least one protocol is required",
     );
   });
 
@@ -118,7 +118,7 @@ describe("negotiateProtocol()", function () {
     const foo = stubHandler({ method: testService.methods.foo });
     const bar = stubHandler({ method: testService.methods.bar });
     expect(() => negotiateProtocol([foo, bar])).toThrowError(
-      "[internal] cannot negotiate protocol for different RPCs"
+      "[internal] cannot negotiate protocol for different RPCs",
     );
   });
 
@@ -126,7 +126,7 @@ describe("negotiateProtocol()", function () {
     const a = stubHandler({ requestPath: `/a` });
     const b = stubHandler({ requestPath: `/b` });
     expect(() => negotiateProtocol([a, b])).toThrowError(
-      "[internal] cannot negotiate protocol for different requestPaths"
+      "[internal] cannot negotiate protocol for different requestPaths",
     );
   });
 

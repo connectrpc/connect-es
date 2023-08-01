@@ -26,7 +26,7 @@ describe("express readme", function () {
   }
   const SayR = proto3.makeMessageType<SayR>(
     "buf.connect.demo.eliza.v1.SayRequest",
-    [{ no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ }]
+    [{ no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
   );
 
   interface IntroduceRequest extends Message<IntroduceRequest> {
@@ -34,7 +34,7 @@ describe("express readme", function () {
   }
   const IntroduceRequest = proto3.makeMessageType<IntroduceRequest>(
     "buf.connect.demo.eliza.v1.IntroduceRequest",
-    [{ no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ }]
+    [{ no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
   );
 
   const ElizaService = {

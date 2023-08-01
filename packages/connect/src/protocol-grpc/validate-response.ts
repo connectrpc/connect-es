@@ -32,13 +32,13 @@ import type { Compression } from "../protocol/compression.js";
  */
 export function validateResponse(
   status: number,
-  headers: Headers
+  headers: Headers,
 ): { foundStatus: boolean } {
   if (status != 200) {
     throw new ConnectError(
       `HTTP ${status}`,
       codeFromHttpStatus(status),
-      headers
+      headers,
     );
   }
   const err = findTrailerError(headers);
@@ -62,7 +62,7 @@ export function validateResponse(
 export function validateResponseWithCompression(
   acceptCompression: Compression[],
   status: number,
-  headers: Headers
+  headers: Headers,
 ): { foundStatus: boolean; compression: Compression | undefined } {
   const { foundStatus } = validateResponse(status, headers);
   let compression: Compression | undefined;
@@ -73,7 +73,7 @@ export function validateResponseWithCompression(
       throw new ConnectError(
         `unsupported response encoding "${encoding}"`,
         Code.InvalidArgument,
-        headers
+        headers,
       );
     }
   }

@@ -47,10 +47,10 @@ describe("timeout_on_sleeping_server", function () {
       try {
         for await (const response of client.streamingOutputCall(
           request,
-          options
+          options,
         )) {
           fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`
+            `expecting no response from sleeping server, got: ${response.toJsonString()}`,
           );
         }
         fail("expected to catch an error");
@@ -65,14 +65,14 @@ describe("timeout_on_sleeping_server", function () {
         request,
         (response) => {
           fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`
+            `expecting no response from sleeping server, got: ${response.toJsonString()}`,
           );
         },
         (err: ConnectError | undefined) => {
           expect(err?.code).toBe(Code.DeadlineExceeded);
           done();
         },
-        options
+        options,
       );
     });
   });

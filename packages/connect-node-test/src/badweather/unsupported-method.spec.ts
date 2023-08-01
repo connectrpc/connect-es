@@ -32,7 +32,7 @@ describe("unsupported method", () => {
             url: createMethodUrl(
               server.getUrl(),
               TestService,
-              TestService.methods.unaryCall
+              TestService.methods.unaryCall,
             ),
             method: "GET",
             ctype: "application/json",
@@ -46,7 +46,7 @@ describe("unsupported method", () => {
             url: createMethodUrl(
               server.getUrl(),
               TestService,
-              TestService.methods.unaryCall
+              TestService.methods.unaryCall,
             ),
             method: "PUT",
             ctype: "application/json",
@@ -56,7 +56,7 @@ describe("unsupported method", () => {
           expect(res.body.byteLength).toBe(0);
         });
       });
-    }
+    },
   );
 
   afterAll(async () => await servers.stop());

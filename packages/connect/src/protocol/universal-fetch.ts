@@ -27,7 +27,7 @@ import type {
  */
 export function createFetchClient(fetchFn: typeof fetch): UniversalClientFn {
   return async function fetchClient(
-    request: UniversalClientRequest
+    request: UniversalClientRequest,
   ): Promise<UniversalClientResponse> {
     const res: Response = await fetchFn(universalClientRequestToFetch(request));
     return universalClientResponseFromFetch(res);
@@ -49,7 +49,7 @@ interface FetchHandlerOptions {
  */
 export function createFetchHandler(
   uHandler: UniversalHandlerFn,
-  options?: FetchHandlerOptions
+  options?: FetchHandlerOptions,
 ): FetchHandlerFn {
   async function handleFetch(req: Request) {
     const uReq = universalServerRequestFromFetch(req, options ?? {});
@@ -72,7 +72,7 @@ function universalClientRequestToFetch(req: UniversalClientRequest): Request {
 }
 
 function universalClientResponseFromFetch(
-  res: Response
+  res: Response,
 ): UniversalClientResponse {
   return {
     status: res.status,
@@ -84,7 +84,7 @@ function universalClientResponseFromFetch(
 
 function universalServerRequestFromFetch(
   req: Request,
-  options: FetchHandlerOptions
+  options: FetchHandlerOptions,
 ): UniversalServerRequest {
   return {
     httpVersion: options.httpVersion ?? "",
@@ -97,7 +97,7 @@ function universalServerRequestFromFetch(
 }
 
 function universalServerResponseToFetch(
-  res: UniversalServerResponse
+  res: UniversalServerResponse,
 ): Response {
   let body: ReadableStream<Uint8Array> | null = null;
   if (res.body !== undefined) {
@@ -110,7 +110,7 @@ function universalServerResponseToFetch(
 }
 
 function iterableToReadableStream(
-  iterable: AsyncIterable<Uint8Array>
+  iterable: AsyncIterable<Uint8Array>,
 ): ReadableStream<Uint8Array> {
   const it = iterable[Symbol.asyncIterator]();
   return new ReadableStream<Uint8Array>(<UnderlyingSource<Uint8Array>>{
@@ -136,7 +136,7 @@ function iterableToReadableStream(
 }
 
 function iterableFromReadableStream(
-  body: ReadableStream<Uint8Array> | null
+  body: ReadableStream<Uint8Array> | null,
 ): AsyncIterable<Uint8Array> {
   return {
     [Symbol.asyncIterator](): AsyncIterator<Uint8Array> {

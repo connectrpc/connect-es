@@ -51,7 +51,7 @@ export type PromiseClient<T extends ServiceType> = {
  */
 export function createPromiseClient<T extends ServiceType>(
   service: T,
-  transport: Transport
+  transport: Transport,
 ) {
   return makeAnyClient(service, (method) => {
     switch (method.kind) {
@@ -74,13 +74,13 @@ export function createPromiseClient<T extends ServiceType>(
  */
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
-  options?: CallOptions
+  options?: CallOptions,
 ) => Promise<O>;
 
 function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   transport: Transport,
   service: ServiceType,
-  method: MethodInfo<I, O>
+  method: MethodInfo<I, O>,
 ): UnaryFn<I, O> {
   return async function (input, options) {
     const response = await transport.unary(
@@ -89,7 +89,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
       options?.signal,
       options?.timeoutMs,
       options?.headers,
-      input
+      input,
     );
     options?.onHeader?.(response.header);
     options?.onTrailer?.(response.trailer);
@@ -103,16 +103,16 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
  */
 type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
-  options?: CallOptions
+  options?: CallOptions,
 ) => AsyncIterable<O>;
 
 export function createServerStreamingFn<
   I extends Message<I>,
-  O extends Message<O>
+  O extends Message<O>,
 >(
   transport: Transport,
   service: ServiceType,
-  method: MethodInfo<I, O>
+  method: MethodInfo<I, O>,
 ): ServerStreamingFn<I, O> {
   return function (input, options): AsyncIterable<O> {
     return handleStreamResponse(
@@ -122,9 +122,9 @@ export function createServerStreamingFn<
         options?.signal,
         options?.timeoutMs,
         options?.headers,
-        createAsyncIterable([input])
+        createAsyncIterable([input]),
       ),
-      options
+      options,
     );
   };
 }
@@ -135,20 +135,20 @@ export function createServerStreamingFn<
  */
 type ClientStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: AsyncIterable<PartialMessage<I>>,
-  options?: CallOptions
+  options?: CallOptions,
 ) => Promise<O>;
 
 export function createClientStreamingFn<
   I extends Message<I>,
-  O extends Message<O>
+  O extends Message<O>,
 >(
   transport: Transport,
   service: ServiceType,
-  method: MethodInfo<I, O>
+  method: MethodInfo<I, O>,
 ): ClientStreamingFn<I, O> {
   return async function (
     request: AsyncIterable<PartialMessage<I>>,
-    options?: CallOptions
+    options?: CallOptions,
   ): Promise<O> {
     const response = await transport.stream<I, O>(
       service,
@@ -156,7 +156,7 @@ export function createClientStreamingFn<
       options?.signal,
       options?.timeoutMs,
       options?.headers,
-      request
+      request,
     );
     options?.onHeader?.(response.header);
     let singleMessage: O | undefined;
@@ -166,7 +166,7 @@ export function createClientStreamingFn<
     if (!singleMessage) {
       throw new ConnectError(
         "protocol error: missing response message",
-        Code.Internal
+        Code.Internal,
       );
     }
     options?.onTrailer?.(response.trailer);
@@ -180,20 +180,20 @@ export function createClientStreamingFn<
  */
 type BiDiStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: AsyncIterable<PartialMessage<I>>,
-  options?: CallOptions
+  options?: CallOptions,
 ) => AsyncIterable<O>;
 
 export function createBiDiStreamingFn<
   I extends Message<I>,
-  O extends Message<O>
+  O extends Message<O>,
 >(
   transport: Transport,
   service: ServiceType,
-  method: MethodInfo<I, O>
+  method: MethodInfo<I, O>,
 ): BiDiStreamingFn<I, O> {
   return function (
     request: AsyncIterable<PartialMessage<I>>,
-    options?: CallOptions
+    options?: CallOptions,
   ): AsyncIterable<O> {
     return handleStreamResponse(
       transport.stream<I, O>(
@@ -202,16 +202,16 @@ export function createBiDiStreamingFn<
         options?.signal,
         options?.timeoutMs,
         options?.headers,
-        request
+        request,
       ),
-      options
+      options,
     );
   };
 }
 
 function handleStreamResponse<I extends Message<I>, O extends Message<O>>(
   stream: Promise<StreamResponse<I, O>>,
-  options?: CallOptions
+  options?: CallOptions,
 ): AsyncIterable<O> {
   const it = (async function* () {
     const response = await stream;

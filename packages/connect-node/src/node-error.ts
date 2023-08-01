@@ -39,7 +39,7 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
       (p) =>
         p.code == "ERR_STREAM_DESTROYED" ||
         p.code == "ERR_HTTP2_INVALID_STREAM" ||
-        p.code == "ECONNRESET"
+        p.code == "ECONNRESET",
     )
   ) {
     // A handler whose stream is suddenly destroyed usually means the client
@@ -51,7 +51,7 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
         p.code == "ETIMEDOUT" ||
         p.code == "ENOTFOUND" ||
         p.code == "EAI_AGAIN" ||
-        p.code == "ECONNREFUSED"
+        p.code == "ECONNREFUSED",
     )
   ) {
     // Calling an unresolvable host should raise a ConnectError with
@@ -119,7 +119,7 @@ export function getNodeErrorProps(reason: unknown): {
  * Returns a ConnectError for an HTTP/2 error code.
  */
 export function connectErrorFromH2ResetCode(
-  rstCode: number
+  rstCode: number,
 ): ConnectError | undefined {
   switch (rstCode) {
     case H2Code.PROTOCOL_ERROR:
@@ -133,42 +133,42 @@ export function connectErrorFromH2ResetCode(
         `http/2 stream closed with error code ${
           H2Code[rstCode]
         } (0x${rstCode.toString(16)})`,
-        Code.Internal
+        Code.Internal,
       );
     case H2Code.REFUSED_STREAM:
       return new ConnectError(
         `http/2 stream closed with error code ${
           H2Code[rstCode]
         } (0x${rstCode.toString(16)})`,
-        Code.Unavailable
+        Code.Unavailable,
       );
     case H2Code.CANCEL:
       return new ConnectError(
         `http/2 stream closed with error code ${
           H2Code[rstCode]
         } (0x${rstCode.toString(16)})`,
-        Code.Canceled
+        Code.Canceled,
       );
     case H2Code.ENHANCE_YOUR_CALM:
       return new ConnectError(
         `http/2 stream closed with error code ${
           H2Code[rstCode]
         } (0x${rstCode.toString(16)})`,
-        Code.ResourceExhausted
+        Code.ResourceExhausted,
       );
     case H2Code.INADEQUATE_SECURITY:
       return new ConnectError(
         `http/2 stream closed with error code ${
           H2Code[rstCode]
         } (0x${rstCode.toString(16)})`,
-        Code.PermissionDenied
+        Code.PermissionDenied,
       );
     case H2Code.HTTP_1_1_REQUIRED:
       return new ConnectError(
         `http/2 stream closed with error code ${
           H2Code[rstCode]
         } (0x${rstCode.toString(16)})`,
-        Code.PermissionDenied
+        Code.PermissionDenied,
       );
     case H2Code.STREAM_CLOSED:
     default:

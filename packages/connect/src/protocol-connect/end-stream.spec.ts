@@ -40,7 +40,7 @@ describe("endStreamFromJson()", function () {
       metadata: false,
     };
     expect(() => endStreamFromJson(JSON.stringify(json))).toThrowError(
-      "[invalid_argument] invalid end stream"
+      "[invalid_argument] invalid end stream",
     );
   });
   it("should raise protocol error on malformed error", function () {
@@ -50,7 +50,7 @@ describe("endStreamFromJson()", function () {
       },
     };
     expect(() => endStreamFromJson(JSON.stringify(json))).toThrowError(
-      "[invalid_argument] invalid end stream"
+      "[invalid_argument] invalid end stream",
     );
   });
 });
@@ -75,7 +75,7 @@ describe("endStreamToJson()", function () {
         foo: "bar",
       }),
       undefined,
-      undefined
+      undefined,
     );
     const want: JsonObject = {
       metadata: { foo: ["bar"] },
@@ -102,7 +102,7 @@ describe("endStreamToJson()", function () {
         foo: "baz",
       }),
       err,
-      undefined
+      undefined,
     );
     const want: JsonObject = {
       error: errorToJson(err, undefined),

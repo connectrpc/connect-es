@@ -60,20 +60,20 @@ describe("createClientStreamingFn()", function () {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
           _input: AsyncIterable<Int32Value>,
           // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
-          _context: HandlerContext
+          _context: HandlerContext,
         ) => Promise.resolve(output),
       });
     });
     const fn = createClientStreamingFn(
       transport,
       TestService,
-      TestService.methods.clientStream
+      TestService.methods.clientStream,
     );
     const res = await fn(
       // eslint-disable-next-line @typescript-eslint/require-await
       (async function* () {
         yield input;
-      })()
+      })(),
     );
     expect(res).toBeInstanceOf(StringValue);
     expect(res.value).toEqual(output.value);
@@ -89,7 +89,7 @@ describe("createClientStreamingFn()", function () {
           }
           throw new ConnectError(
             "expected at least 1 value",
-            Code.InvalidArgument
+            Code.InvalidArgument,
           );
         },
       });
@@ -97,7 +97,7 @@ describe("createClientStreamingFn()", function () {
     const fn = createClientStreamingFn(
       transport,
       TestService,
-      TestService.methods.clientStream
+      TestService.methods.clientStream,
     );
     let reqItrClosed = false;
     const res = await fn(
@@ -109,7 +109,7 @@ describe("createClientStreamingFn()", function () {
         } finally {
           reqItrClosed = true;
         }
-      })()
+      })(),
     );
     expect(res).toBeInstanceOf(StringValue);
     expect(res.value).toEqual(output.value);
@@ -125,7 +125,7 @@ describe("createClientStreamingFn()", function () {
           }
           throw new ConnectError(
             "expected at least 1 value",
-            Code.InvalidArgument
+            Code.InvalidArgument,
           );
         },
       });
@@ -133,7 +133,7 @@ describe("createClientStreamingFn()", function () {
     const fn = createClientStreamingFn(
       transport,
       TestService,
-      TestService.methods.clientStream
+      TestService.methods.clientStream,
     );
     let reqItrClosed = false;
     const res = fn(
@@ -145,10 +145,10 @@ describe("createClientStreamingFn()", function () {
         } finally {
           reqItrClosed = true;
         }
-      })()
+      })(),
     );
     await expectAsync(res).toBeRejectedWith(
-      new ConnectError("foo", Code.Internal)
+      new ConnectError("foo", Code.Internal),
     );
     expect(reqItrClosed).toBe(true);
   });
@@ -173,7 +173,7 @@ describe("createServerStreamingFn()", function () {
     const fn = createServerStreamingFn(
       transport,
       TestService,
-      TestService.methods.serverStream
+      TestService.methods.serverStream,
     );
     const receivedMessages: StringValue[] = [];
     const input = new Int32Value({ value: 123 });
@@ -190,7 +190,7 @@ describe("createServerStreamingFn()", function () {
         });
       }),
       TestService,
-      TestService.methods.bidiStream
+      TestService.methods.bidiStream,
     );
     const it = fn({})[Symbol.asyncIterator]();
     expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
@@ -203,7 +203,7 @@ describe("createBiDiStreamingFn()", () => {
     const values = [123, 456, 789];
 
     const input = createAsyncIterable(
-      values.map((value) => new Int32Value({ value }))
+      values.map((value) => new Int32Value({ value })),
     );
 
     let bidiIndex = 0;
@@ -221,7 +221,7 @@ describe("createBiDiStreamingFn()", () => {
     const fn = createBiDiStreamingFn(
       transport,
       TestService,
-      TestService.methods.bidiStream
+      TestService.methods.bidiStream,
     );
 
     let index = 0;
@@ -236,7 +236,7 @@ describe("createBiDiStreamingFn()", () => {
     const values = [123, 456, 789];
 
     const input = createAsyncIterable(
-      values.map((value) => new Int32Value({ value }))
+      values.map((value) => new Int32Value({ value })),
     );
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
@@ -251,7 +251,7 @@ describe("createBiDiStreamingFn()", () => {
     const fn = createBiDiStreamingFn(
       transport,
       TestService,
-      TestService.methods.bidiStream
+      TestService.methods.bidiStream,
     );
 
     let count = 0;
@@ -269,7 +269,7 @@ describe("createBiDiStreamingFn()", () => {
     const values = [123, 456, 789];
 
     const input = createAsyncIterable(
-      values.map((value) => new Int32Value({ value }))
+      values.map((value) => new Int32Value({ value })),
     );
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
@@ -284,7 +284,7 @@ describe("createBiDiStreamingFn()", () => {
     const fn = createBiDiStreamingFn(
       transport,
       TestService,
-      TestService.methods.bidiStream
+      TestService.methods.bidiStream,
     );
 
     let count = 0;
@@ -312,7 +312,7 @@ describe("createBiDiStreamingFn()", () => {
         });
       }),
       TestService,
-      TestService.methods.bidiStream
+      TestService.methods.bidiStream,
     );
     const it = fn(createAsyncIterable([]))[Symbol.asyncIterator]();
     expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method

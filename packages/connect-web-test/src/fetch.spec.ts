@@ -35,7 +35,7 @@ describe("custom fetch", function () {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
@@ -49,7 +49,7 @@ describe("custom fetch", function () {
         undefined,
         undefined,
         undefined,
-        new SimpleRequest()
+        new SimpleRequest(),
       );
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
@@ -61,7 +61,7 @@ describe("custom fetch", function () {
           headers: {
             "Content-Type": "application/proto",
           },
-        }
+        },
       );
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
@@ -76,7 +76,7 @@ describe("custom fetch", function () {
         undefined,
         undefined,
         undefined,
-        new SimpleRequest()
+        new SimpleRequest(),
       );
       expect(response.json).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
@@ -92,7 +92,7 @@ describe("custom fetch", function () {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
@@ -108,8 +108,8 @@ describe("custom fetch", function () {
           undefined,
           undefined,
           undefined,
-          new SimpleRequest()
-        )
+          new SimpleRequest(),
+        ),
       ).toBeRejectedWithError(/\[permission_denied] foobar/);
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
@@ -121,7 +121,7 @@ describe("custom fetch", function () {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
@@ -136,7 +136,7 @@ describe("custom fetch", function () {
         undefined,
         undefined,
         undefined,
-        new SimpleRequest()
+        new SimpleRequest(),
       );
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
@@ -150,7 +150,7 @@ describe("custom fetch", function () {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
@@ -168,8 +168,8 @@ describe("custom fetch", function () {
           undefined,
           undefined,
           undefined,
-          new SimpleRequest()
-        )
+          new SimpleRequest(),
+        ),
       ).toBeRejectedWithError(/test-error-raised-from-patched-fetch/);
     });
   });

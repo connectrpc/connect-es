@@ -35,7 +35,7 @@ describe("compressionNegotiate()", function () {
       [compressionA, compressionB],
       null,
       null,
-      "accept-encoding"
+      "accept-encoding",
     );
     it("should return null for request and response compression", function () {
       expect(r.error).toBeUndefined();
@@ -49,7 +49,7 @@ describe("compressionNegotiate()", function () {
       [compressionA, compressionB],
       null,
       "z,b,a,f",
-      "accept-encoding"
+      "accept-encoding",
     );
     it("should return request compression null", function () {
       expect(r.error).toBeUndefined();
@@ -66,7 +66,7 @@ describe("compressionNegotiate()", function () {
       [compressionA, compressionB],
       "a",
       null,
-      "accept-encoding"
+      "accept-encoding",
     );
     it("should return request encoding", function () {
       expect(r.error).toBeUndefined();
@@ -80,7 +80,7 @@ describe("compressionNegotiate()", function () {
       [compressionA, compressionB],
       "a",
       "x,y,z",
-      "accept-encoding"
+      "accept-encoding",
     );
     it("should return response compression null", function () {
       expect(r.error).toBeUndefined();
@@ -94,13 +94,13 @@ describe("compressionNegotiate()", function () {
       [compressionA, compressionB],
       "z",
       "a,b",
-      "accept-encoding"
+      "accept-encoding",
     );
     it("should return error", function () {
       expect(r.error).toBeInstanceOf(ConnectError);
       if (r.error instanceof ConnectError) {
         expect(r.error.message).toBe(
-          '[unimplemented] unknown compression "z": supported encodings are a,b'
+          '[unimplemented] unknown compression "z": supported encodings are a,b',
         );
       }
       expect(r.request).toBe(null);

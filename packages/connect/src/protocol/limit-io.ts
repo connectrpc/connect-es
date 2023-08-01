@@ -40,7 +40,7 @@ const defaultCompressMinBytes = 1024;
 export function validateReadWriteMaxBytes(
   readMaxBytes: number | undefined,
   writeMaxBytes: number | undefined,
-  compressMinBytes: number | undefined
+  compressMinBytes: number | undefined,
 ) {
   writeMaxBytes ??= maxWriteMaxBytes;
   readMaxBytes ??= maxReadMaxBytes;
@@ -48,13 +48,13 @@ export function validateReadWriteMaxBytes(
   if (writeMaxBytes < 1 || writeMaxBytes > maxWriteMaxBytes) {
     throw new ConnectError(
       `writeMaxBytes ${writeMaxBytes} must be >= 1 and <= ${maxWriteMaxBytes}`,
-      Code.Internal
+      Code.Internal,
     );
   }
   if (readMaxBytes < 1 || readMaxBytes > maxReadMaxBytes) {
     throw new ConnectError(
       `readMaxBytes ${readMaxBytes} must be >= 1 and <= ${maxReadMaxBytes}`,
-      Code.Internal
+      Code.Internal,
     );
   }
   return {
@@ -71,12 +71,12 @@ export function validateReadWriteMaxBytes(
  */
 export function assertWriteMaxBytes(
   writeMaxBytes: number,
-  bytesWritten: number
+  bytesWritten: number,
 ): void {
   if (bytesWritten > writeMaxBytes) {
     throw new ConnectError(
       `message size ${bytesWritten} is larger than configured writeMaxBytes ${writeMaxBytes}`,
-      Code.ResourceExhausted
+      Code.ResourceExhausted,
     );
   }
 }
@@ -89,7 +89,7 @@ export function assertWriteMaxBytes(
 export function assertReadMaxBytes(
   readMaxBytes: number,
   bytesRead: number,
-  totalSizeKnown = false
+  totalSizeKnown = false,
 ): void {
   if (bytesRead > readMaxBytes) {
     let message = `message size is larger than configured readMaxBytes ${readMaxBytes}`;

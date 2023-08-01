@@ -51,7 +51,7 @@ export type MethodImpl<M extends MI> =
 interface MI<
   I extends Message<I> = AnyMessage,
   O extends Message<O> = AnyMessage,
-  K extends MethodKind = MethodKind
+  K extends MethodKind = MethodKind,
 > {
   readonly kind: K;
   readonly name: string;
@@ -147,7 +147,7 @@ interface HandlerContextController extends HandlerContext {
  * a context.
  */
 export function createHandlerContext(
-  init: HandlerContextInit
+  init: HandlerContextInit,
 ): HandlerContextController {
   let timeoutMs: () => undefined | number;
   if (init.timeoutMs !== undefined) {
@@ -160,7 +160,7 @@ export function createHandlerContext(
   const abortController = createLinkedAbortController(
     deadline.signal,
     init.requestSignal,
-    init.shutdownSignal
+    init.shutdownSignal,
   );
   return {
     ...init,
@@ -181,7 +181,7 @@ export function createHandlerContext(
  */
 export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
-  context: HandlerContext
+  context: HandlerContext,
 ) => Promise<O | PartialMessage<O>> | O | PartialMessage<O>;
 
 /**
@@ -190,7 +190,7 @@ export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
  */
 export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
-  context: HandlerContext
+  context: HandlerContext,
 ) => Promise<O | PartialMessage<O>>;
 
 /**
@@ -199,7 +199,7 @@ export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
  */
 export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   request: I,
-  context: HandlerContext
+  context: HandlerContext,
 ) => AsyncIterable<O | PartialMessage<O>>;
 
 /**
@@ -208,7 +208,7 @@ export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
  */
 export type BiDiStreamingImpl<I extends Message<I>, O extends Message<O>> = (
   requests: AsyncIterable<I>,
-  context: HandlerContext
+  context: HandlerContext,
 ) => AsyncIterable<O | PartialMessage<O>>;
 
 // prettier-ignore
@@ -245,7 +245,7 @@ export type ServiceImplSpec = {
 export function createMethodImplSpec<M extends MethodInfo>(
   service: ServiceType,
   method: M,
-  impl: MethodImpl<M>
+  impl: MethodImpl<M>,
 ): MethodImplSpec {
   return {
     kind: method.kind,
@@ -261,7 +261,7 @@ export function createMethodImplSpec<M extends MethodInfo>(
  */
 export function createServiceImplSpec<T extends ServiceType>(
   service: T,
-  impl: Partial<ServiceImpl<T>>
+  impl: Partial<ServiceImpl<T>>,
 ): ServiceImplSpec {
   const s: ServiceImplSpec = { service, methods: {} };
   for (const [localName, methodInfo] of Object.entries(service.methods)) {

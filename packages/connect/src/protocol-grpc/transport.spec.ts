@@ -71,11 +71,11 @@ describe("gRPC transport", function () {
       httpRequestAborted = false;
       transport = createTransport({
         httpClient(
-          request: UniversalClientRequest
+          request: UniversalClientRequest,
         ): Promise<UniversalClientResponse> {
           request.signal?.addEventListener(
             "abort",
-            () => (httpRequestAborted = true)
+            () => (httpRequestAborted = true),
           );
           return Promise.resolve({
             status: 200,
@@ -103,7 +103,7 @@ describe("gRPC transport", function () {
           undefined,
           undefined,
           undefined,
-          {}
+          {},
         );
         fail("expected error");
       } catch (e) {
@@ -120,7 +120,7 @@ describe("gRPC transport", function () {
         undefined,
         undefined,
         undefined,
-        createAsyncIterable([])
+        createAsyncIterable([]),
       );
       const messagesReceived: StringValue[] = [];
       try {

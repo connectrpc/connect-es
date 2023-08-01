@@ -67,7 +67,7 @@ describe("addGrpcService()", () => {
           server.forceShutdown();
           done();
         }
-      }
+      },
     );
   });
 });

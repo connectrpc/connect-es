@@ -21,11 +21,11 @@ import { createAsyncIterable } from "./protocol/async-iterable.js";
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
     log.push(
-      `${name} sending request with headers: ${listHeaderKeys(req.header)}`
+      `${name} sending request with headers: ${listHeaderKeys(req.header)}`,
     );
     const res = await next(req);
     log.push(
-      `${name} response received with headers: ${listHeaderKeys(res.header)}`
+      `${name} response received with headers: ${listHeaderKeys(res.header)}`,
     );
     if (res.stream) {
       return {
@@ -34,7 +34,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
       };
     } else {
       log.push(
-        `${name} response done with trailers: ${listHeaderKeys(res.trailer)}`
+        `${name} response done with trailers: ${listHeaderKeys(res.trailer)}`,
       );
     }
     return res;
@@ -48,8 +48,8 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
     yield* res.message;
     log.push(
       `${name} response stream done with trailers: ${listHeaderKeys(
-        res.trailer
-      )}`
+        res.trailer,
+      )}`,
     );
   }
 
@@ -110,11 +110,11 @@ describe("unary interceptors", () => {
           unary: (request: Int32Value, context: HandlerContext) => {
             context.responseHeader.set(
               "unary-response-header",
-              "response-header"
+              "response-header",
             );
             context.responseTrailer.set(
               "unary-response-trailer",
-              "response-trailer"
+              "response-trailer",
             );
             return { value: request.value.toString() };
           },
@@ -127,7 +127,7 @@ describe("unary interceptors", () => {
             makeLoggingInterceptor("inner", log),
           ],
         },
-      }
+      },
     );
 
     const response = await transport.unary(
@@ -138,15 +138,15 @@ describe("unary interceptors", () => {
       {
         "unary-request-header": "request-header",
       },
-      { value: 9001 }
+      { value: 9001 },
     );
 
     expect(response.message).toEqual(new StringValue({ value: "9001" }));
     expect(response.header.get("unary-response-header")).toEqual(
-      "response-header"
+      "response-header",
     );
     expect(response.trailer.get("unary-response-trailer")).toEqual(
-      "response-trailer"
+      "response-trailer",
     );
 
     expect(log).toEqual(wantLog);
@@ -173,11 +173,11 @@ describe("stream interceptors", () => {
           serverStream: (request: Int32Value, context: HandlerContext) => {
             context.responseHeader.set(
               "stream-response-header",
-              "response-header"
+              "response-header",
             );
             context.responseTrailer.set(
               "stream-response-trailer",
-              "response-trailer"
+              "response-trailer",
             );
             return createAsyncIterable([{ value: request.value.toString() }]);
           },
@@ -190,7 +190,7 @@ describe("stream interceptors", () => {
             makeLoggingInterceptor("inner", log),
           ],
         },
-      }
+      },
     );
 
     const response = await transport.stream(
@@ -201,7 +201,7 @@ describe("stream interceptors", () => {
       {
         "stream-request-header": "request-header",
       },
-      createAsyncIterable([new Int32Value({ value: 42 })])
+      createAsyncIterable([new Int32Value({ value: 42 })]),
     );
 
     for await (const message of response.message) {
@@ -210,10 +210,10 @@ describe("stream interceptors", () => {
 
     expect(log).toEqual(wantLog);
     expect(response.header.get("stream-response-header")).toEqual(
-      "response-header"
+      "response-header",
     );
     expect(response.trailer.get("stream-response-trailer")).toEqual(
-      "response-trailer"
+      "response-trailer",
     );
   });
 });

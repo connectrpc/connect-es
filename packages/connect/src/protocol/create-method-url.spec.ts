@@ -19,10 +19,10 @@ describe("createMethodUrl()", function () {
     const url = createMethodUrl(
       "https://example.com",
       "example.Service",
-      "Method"
+      "Method",
     );
     expect(url.toString()).toEqual(
-      "https://example.com/example.Service/Method"
+      "https://example.com/example.Service/Method",
     );
   });
   it("should accept empty string as baseUrl", function () {
@@ -41,30 +41,30 @@ describe("createMethodUrl()", function () {
     const url = createMethodUrl(
       "https://example.com/",
       "example.Service",
-      "Method"
+      "Method",
     );
     expect(url.toString()).toEqual(
-      "https://example.com/example.Service/Method"
+      "https://example.com/example.Service/Method",
     );
   });
   it("should merge paths", function () {
     const url = createMethodUrl(
       "https://example.com/twirp",
       "example.Service",
-      "Method"
+      "Method",
     );
     expect(url.toString()).toEqual(
-      "https://example.com/twirp/example.Service/Method"
+      "https://example.com/twirp/example.Service/Method",
     );
   });
   it("should merge paths without duplicating slashes", function () {
     const url = createMethodUrl(
       "https://example.com/twirp/",
       "example.Service",
-      "Method"
+      "Method",
     );
     expect(url.toString()).toEqual(
-      "https://example.com/twirp/example.Service/Method"
+      "https://example.com/twirp/example.Service/Method",
     );
   });
 });

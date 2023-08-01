@@ -46,7 +46,7 @@ describe("parseContentType()", function () {
     });
     expect(parseContentType("application/octet-stream")).toBeUndefined();
     expect(
-      parseContentType("application/grpc-web+json;charset=iso-8859-1")
+      parseContentType("application/grpc-web+json;charset=iso-8859-1"),
     ).toBeUndefined();
     expect(parseContentType("application/grpc-web+thrift")).toBeUndefined();
   });

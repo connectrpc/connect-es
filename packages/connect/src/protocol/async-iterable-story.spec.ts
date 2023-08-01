@@ -57,7 +57,7 @@ describe("full story", function () {
       if (t !== "end") {
         throw new ConnectError(
           "serialize end: cannot parse",
-          Code.InvalidArgument
+          Code.InvalidArgument,
         );
       }
       return t;
@@ -76,8 +76,8 @@ describe("full story", function () {
         return Promise.reject(
           new ConnectError(
             `message is larger than configured readMaxBytes ${readMaxBytes} after decompression`,
-            Code.ResourceExhausted
-          )
+            Code.ResourceExhausted,
+          ),
         );
       }
       const b = new Uint8Array(bytes.byteLength);
@@ -97,7 +97,7 @@ describe("full story", function () {
     {
       flags: 0 | 0b00000001 | endFlag,
       data: new TextEncoder().encode("end.").reverse(),
-    }
+    },
   );
   type Payload<I, E> = { end: false; value: I } | { end: true; value: E };
   const goldenPayload: Payload<string, "end">[] = [
@@ -112,7 +112,7 @@ describe("full story", function () {
         createAsyncIterable(goldenPayload),
         transformSerializeEnvelope(serialization, endFlag, endSerialization),
         transformCompressEnvelope(compressionReverse, 0),
-        transformJoinEnvelopes()
+        transformJoinEnvelopes(),
       );
       const all = await readAllBytes(it);
       expect(all).toEqual(goldenBytes);
@@ -125,7 +125,7 @@ describe("full story", function () {
         createAsyncIterableBytes(goldenBytes),
         transformSplitEnvelope(readMaxBytes),
         transformDecompressEnvelope(compressionReverse, readMaxBytes),
-        transformParseEnvelope(serialization, endFlag, endSerialization)
+        transformParseEnvelope(serialization, endFlag, endSerialization),
       );
       const all = await readAll(it);
       expect(all).toEqual(goldenPayload);
@@ -144,13 +144,13 @@ describe("full story", function () {
         writer,
         transformSerializeEnvelope(serialization, endFlag, endSerialization),
         transformCompressEnvelope(compressionReverse, 0),
-        transformJoinEnvelopes()
+        transformJoinEnvelopes(),
       );
       readerIt = pipe(
         writerIt,
         transformSplitEnvelope(readMaxBytes),
         transformDecompressEnvelope(compressionReverse, readMaxBytes),
-        transformParseEnvelope(serialization, endFlag, endSerialization)
+        transformParseEnvelope(serialization, endFlag, endSerialization),
       );
     });
     it("should correctly return results when caller waits properly", async function () {
@@ -205,8 +205,8 @@ describe("full story", function () {
         .write({ value: "alpha", end: false })
         .catch((e) =>
           expect(e).toEqual(
-            new Error("cannot write, WritableIterable already closed")
-          )
+            new Error("cannot write, WritableIterable already closed"),
+          ),
         );
     });
     it("should correctly behave when consumer fails and throw is invoked", async function () {
@@ -247,7 +247,7 @@ describe("full story", function () {
       successfulSends
         .then((result) => expect(result).toEqual([undefined]))
         .catch(() =>
-          fail("expected successful writes were unexpectedly rejected")
+          fail("expected successful writes were unexpectedly rejected"),
         );
 
       failedSends
@@ -267,10 +267,10 @@ describe("full story", function () {
       readerIt[Symbol.asyncIterator]()
         .next()
         .then((result) =>
-          expect(result).toEqual({ done: true, value: undefined })
+          expect(result).toEqual({ done: true, value: undefined }),
         )
         .catch(() =>
-          fail("expected successful done result but unexpectedly rejected")
+          fail("expected successful done result but unexpectedly rejected"),
         );
     });
   });
@@ -279,7 +279,7 @@ describe("full story", function () {
     const echoImplReceived: string[] = [];
 
     async function* echoImpl(
-      input: AsyncIterable<string>
+      input: AsyncIterable<string>,
     ): AsyncIterable<string> {
       for await (const i of input) {
         echoImplReceived.push(i);
@@ -312,13 +312,13 @@ describe("full story", function () {
           if (!endReceived) {
             throw new Error("did not receive end");
           }
-        }
+        },
       );
 
       const outputIt = pipe(
         echoImpl(inputIt),
         async function* (
-          iterable: AsyncIterable<string>
+          iterable: AsyncIterable<string>,
         ): AsyncIterable<
           { end: false; value: string | "end" } | { end: true; value: "end" }
         > {
@@ -329,7 +329,7 @@ describe("full story", function () {
         },
         transformSerializeEnvelope(serialization, endFlag, endSerialization),
         transformCompressEnvelope(compressionReverse, 0),
-        transformJoinEnvelopes()
+        transformJoinEnvelopes(),
       );
 
       expect(await readAllBytes(outputIt)).toEqual(goldenBytes);

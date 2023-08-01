@@ -31,7 +31,7 @@ export const contentTypeJson = "application/grpc-web+json";
  * @private Internal code, does not follow semantic versioning.
  */
 export function parseContentType(
-  contentType: string | null
+  contentType: string | null,
 ): { text: boolean; binary: boolean } | undefined {
   const match = contentType?.match(contentTypeRegExp);
   if (!match) {

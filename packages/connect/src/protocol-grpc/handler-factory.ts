@@ -70,7 +70,7 @@ const methodPost = "POST";
  * Create a factory that creates gRPC handlers.
  */
 export function createHandlerFactory(
-  options: Partial<UniversalHandlerOptions>
+  options: Partial<UniversalHandlerOptions>,
 ): ProtocolHandlerFactory {
   const opt = validateUniversalHandlerOptions(options);
   function fact(spec: MethodImplSpec) {
@@ -91,16 +91,16 @@ export function createHandlerFactory(
 
 function createHandler<I extends Message<I>, O extends Message<O>>(
   opt: UniversalHandlerOptions,
-  spec: MethodImplSpec<I, O>
+  spec: MethodImplSpec<I, O>,
 ) {
   const serialization = createMethodSerializationLookup(
     spec.method,
     opt.binaryOptions,
     opt.jsonOptions,
-    opt
+    opt,
   );
   return async function handle(
-    req: UniversalServerRequest
+    req: UniversalServerRequest,
   ): Promise<UniversalServerResponse> {
     assertByteStreamRequest(req);
     const type = parseContentType(req.header.get(headerContentType));
@@ -112,7 +112,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     }
     const timeout = parseTimeout(
       req.header.get(headerTimeout),
-      opt.maxTimeoutMs
+      opt.maxTimeoutMs,
     );
     const context = createHandlerContext({
       ...spec,
@@ -133,7 +133,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       opt.acceptCompression,
       req.header.get(headerEncoding),
       req.header.get(headerAcceptEncoding),
-      headerAcceptEncoding
+      headerAcceptEncoding,
     );
     if (compression.response) {
       context.responseHeader.set(headerEncoding, compression.response.name);
@@ -166,11 +166,11 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
               Code.Internal,
               undefined,
               undefined,
-              e
-            )
+              e,
+            ),
           );
         }
-      })
+      }),
     );
 
     return {

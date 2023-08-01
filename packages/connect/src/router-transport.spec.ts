@@ -89,7 +89,7 @@ describe("createRoutesTransport", function () {
   });
   it("should work for client steam", async function () {
     const res = await client.client(
-      createAsyncIterable([{ value: 12 }, { value: 13 }])
+      createAsyncIterable([{ value: 12 }, { value: 13 }]),
     );
     expect(res.value).toBe("13");
   });
@@ -114,7 +114,7 @@ describe("createRoutesTransport", function () {
     } catch (e) {
       expect(e).toBeInstanceOf(ConnectError);
       expect(ConnectError.from(e).message).toBe(
-        "[unimplemented] RouterHttpClient: no handler registered for /TestService/Unary"
+        "[unimplemented] RouterHttpClient: no handler registered for /TestService/Unary",
       );
     }
   });

@@ -61,7 +61,7 @@ describe("ConnectError", () => {
       [
         { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
         { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
-      ]
+      ],
     );
     describe("on error without details", () => {
       const err = new ConnectError("foo");
@@ -84,7 +84,7 @@ describe("ConnectError", () => {
         new ErrorDetail({
           reason: "soirée 🎉",
           domain: "example.com",
-        })
+        }),
       );
       it("with empty TypeRegistry produces no details", () => {
         const details = err.findDetails(createRegistry());
@@ -106,7 +106,7 @@ describe("ConnectError", () => {
       });
       it("with multiple MessageTypes produces detail", () => {
         const details = err.findDetails(
-          createRegistry(Struct, ErrorDetail, BoolValue)
+          createRegistry(Struct, ErrorDetail, BoolValue),
         );
         expect(details.length).toBe(1);
         expect(details[0]).toBeInstanceOf(ErrorDetail);
@@ -117,7 +117,7 @@ describe("ConnectError", () => {
     it("accepts ConnectError as unknown", () => {
       const error: unknown = new ConnectError(
         "Not permitted",
-        Code.PermissionDenied
+        Code.PermissionDenied,
       );
       const got = ConnectError.from(error);
       expect(got as unknown).toBe(error);
@@ -153,7 +153,7 @@ describe("connectErrorDetails()", () => {
     [
       { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
       { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
-    ]
+    ],
   );
   describe("on error without details", () => {
     const err = new ConnectError("foo");
@@ -176,7 +176,7 @@ describe("connectErrorDetails()", () => {
       new ErrorDetail({
         reason: "soirée 🎉",
         domain: "example.com",
-      })
+      }),
     );
     it("with empty TypeRegistry produces no details", () => {
       const details = connectErrorDetails(err, createRegistry());
@@ -208,7 +208,7 @@ describe("connectErrorFromReason()", () => {
   it("accepts ConnectError as unknown", () => {
     const error: unknown = new ConnectError(
       "Not permitted",
-      Code.PermissionDenied
+      Code.PermissionDenied,
     );
     const got = connectErrorFromReason(error);
     expect(got as unknown).toBe(error);

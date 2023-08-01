@@ -27,11 +27,11 @@ import type { AsyncIterableTransform } from "./async-iterable.js";
  */
 export async function invokeUnaryImplementation<
   I extends Message<I>,
-  O extends Message<O>
+  O extends Message<O>,
 >(
   spec: MethodImplSpec<I, O> & { kind: MethodKind.Unary },
   context: HandlerContext,
-  input: I
+  input: I,
 ): Promise<O> {
   const output = await spec.impl(input, context);
   return normalizeOutput(spec, output);
@@ -46,10 +46,10 @@ export async function invokeUnaryImplementation<
  */
 export function transformInvokeImplementation<
   I extends Message<I>,
-  O extends Message<O>
+  O extends Message<O>,
 >(
   spec: MethodImplSpec<I, O>,
-  context: HandlerContext
+  context: HandlerContext,
 ): AsyncIterableTransform<I, O> {
   switch (spec.kind) {
     case MethodKind.Unary:
@@ -59,7 +59,7 @@ export function transformInvokeImplementation<
         if (input1.done === true) {
           throw new ConnectError(
             "protocol error: missing input message for unary method",
-            Code.InvalidArgument
+            Code.InvalidArgument,
           );
         }
         yield normalizeOutput(spec, await spec.impl(input1.value, context));
@@ -67,7 +67,7 @@ export function transformInvokeImplementation<
         if (input2.done !== true) {
           throw new ConnectError(
             "protocol error: received extra input message for unary method",
-            Code.InvalidArgument
+            Code.InvalidArgument,
           );
         }
       };
@@ -78,7 +78,7 @@ export function transformInvokeImplementation<
         if (input1.done === true) {
           throw new ConnectError(
             "protocol error: missing input message for server-streaming method",
-            Code.InvalidArgument
+            Code.InvalidArgument,
           );
         }
         for await (const o of spec.impl(input1.value, context)) {
@@ -88,7 +88,7 @@ export function transformInvokeImplementation<
         if (input2.done !== true) {
           throw new ConnectError(
             "protocol error: received extra input message for server-streaming method",
-            Code.InvalidArgument
+            Code.InvalidArgument,
           );
         }
       };
@@ -109,7 +109,7 @@ export function transformInvokeImplementation<
 
 function normalizeOutput<I extends Message<I>, O extends Message<O>>(
   spec: MethodImplSpec<I, O>,
-  message: O | PartialMessage<O>
+  message: O | PartialMessage<O>,
 ) {
   if (message instanceof Message) {
     return message;
@@ -122,7 +122,7 @@ function normalizeOutput<I extends Message<I>, O extends Message<O>>(
       Code.Internal,
       undefined,
       undefined,
-      e
+      e,
     );
   }
 }

@@ -64,7 +64,7 @@ describe("requestHeader", () => {
       undefined,
       undefined,
       [compressionMock],
-      compressionMock
+      compressionMock,
     );
     expect(listHeaderKeys(headers)).toEqual([
       "content-type",

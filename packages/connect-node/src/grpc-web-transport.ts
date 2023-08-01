@@ -124,7 +124,7 @@ type GrpcWebTransportOptions = NodeTransportOptions &
  * `http2`, or `http2` module.
  */
 export function createGrpcWebTransport(
-  options: GrpcWebTransportOptions
+  options: GrpcWebTransportOptions,
 ): Transport {
   return createTransport(validateNodeTransportOptions(options));
 }

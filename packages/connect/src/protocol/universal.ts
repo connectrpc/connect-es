@@ -18,7 +18,7 @@ import type { JsonValue } from "@bufbuild/protobuf";
  * A minimal abstraction of an HTTP client.
  */
 export type UniversalClientFn = (
-  request: UniversalClientRequest
+  request: UniversalClientRequest,
 ) => Promise<UniversalClientResponse>;
 
 /**
@@ -46,7 +46,7 @@ export interface UniversalClientResponse {
  * A minimal abstraction of an HTTP handler.
  */
 export type UniversalHandlerFn = (
-  request: UniversalServerRequest
+  request: UniversalServerRequest,
 ) => Promise<UniversalServerResponse>;
 
 /**
@@ -91,7 +91,7 @@ export interface UniversalServerResponse {
  * @private Internal code, does not follow semantic versioning.
  */
 export function assertByteStreamRequest(
-  req: UniversalServerRequest
+  req: UniversalServerRequest,
 ): asserts req is Omit<UniversalServerRequest, "body"> & {
   body: AsyncIterable<Uint8Array>;
 } {

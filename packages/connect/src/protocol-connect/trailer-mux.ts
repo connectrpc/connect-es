@@ -22,7 +22,7 @@
  * @private Internal code, does not follow semantic versioning.
  */
 export function trailerDemux(
-  header: Headers
+  header: Headers,
 ): [header: Headers, trailer: Headers] {
   const h = new Headers(),
     t = new Headers();

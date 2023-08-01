@@ -49,7 +49,7 @@ describe("parseContentType()", function () {
       binary: false,
     });
     expect(
-      parseContentType("application/grpc-web+json; charset=utf-8")
+      parseContentType("application/grpc-web+json; charset=utf-8"),
     ).toEqual({ text: false, binary: false });
     expect(parseContentType("application/grpc-web-text")).toEqual({
       text: true,
@@ -64,14 +64,14 @@ describe("parseContentType()", function () {
       binary: false,
     });
     expect(
-      parseContentType("application/grpc-web-text+json;charset=utf8")
+      parseContentType("application/grpc-web-text+json;charset=utf8"),
     ).toEqual({ text: true, binary: false });
     expect(
-      parseContentType("application/grpc-web-text+json; charset=utf-8")
+      parseContentType("application/grpc-web-text+json; charset=utf-8"),
     ).toEqual({ text: true, binary: false });
     expect(parseContentType("application/octet-stream")).toBeUndefined();
     expect(
-      parseContentType("application/grpc-web+json;charset=iso-8859-1")
+      parseContentType("application/grpc-web+json;charset=iso-8859-1"),
     ).toBeUndefined();
     expect(parseContentType("application/grpc-web+thrift")).toBeUndefined();
     expect(parseContentType("application/connect+thrift")).toBeUndefined();

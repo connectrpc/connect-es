@@ -50,7 +50,7 @@ describe("server_streaming", function () {
           expect(err).toBeUndefined();
           expect(responseCount).toBe(sizes.length);
           done();
-        }
+        },
       );
     });
   });

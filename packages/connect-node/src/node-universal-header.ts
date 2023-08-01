@@ -28,7 +28,7 @@ export function nodeHeaderToWebHeader(
     | http.OutgoingHttpHeaders
     | http.IncomingHttpHeaders
     | http2.IncomingHttpHeaders
-    | http.IncomingMessage["trailers"]
+    | http.IncomingMessage["trailers"],
 ): Headers {
   const header = new Headers();
   for (const [k, v] of Object.entries(nodeHeaders)) {
@@ -59,13 +59,13 @@ export function nodeHeaderToWebHeader(
  * http and the http2 package.
  */
 export function webHeaderToNodeHeaders(
-  headersInit: HeadersInit
+  headersInit: HeadersInit,
 ): http.OutgoingHttpHeaders;
 export function webHeaderToNodeHeaders(
-  headersInit: HeadersInit | undefined
+  headersInit: HeadersInit | undefined,
 ): http.OutgoingHttpHeaders | undefined;
 export function webHeaderToNodeHeaders(
-  headersInit: HeadersInit | undefined
+  headersInit: HeadersInit | undefined,
 ): http.OutgoingHttpHeaders | undefined {
   if (headersInit === undefined) {
     return undefined;

@@ -160,7 +160,7 @@ export class Http2SessionManager {
     pingOptions?: Http2SessionOptions,
     http2SessionOptions?:
       | http2.ClientSessionOptions
-      | http2.SecureClientSessionOptions
+      | http2.SecureClientSessionOptions,
   ) {
     this.authority = new URL(authority).origin;
     this.http2SessionOptions = http2SessionOptions;
@@ -200,7 +200,7 @@ export class Http2SessionManager {
     method: string,
     path: string,
     headers: http2.OutgoingHttpHeaders,
-    options: Omit<http2.ClientSessionRequestOptions, "signal">
+    options: Omit<http2.ClientSessionRequestOptions, "signal">,
   ): Promise<http2.ClientHttp2Stream> {
     const ready = await this.gotoReady();
     const stream = ready.conn.request(
@@ -209,7 +209,7 @@ export class Http2SessionManager {
         ":method": method,
         ":path": path,
       },
-      options
+      options,
     );
     ready.registerRequest(stream);
     return stream;
@@ -250,7 +250,12 @@ export class Http2SessionManager {
         this.setState(connect(this.authority, this.http2SessionOptions));
       } else if (this.s.requiresVerify()) {
         this.setState(
-          verify(this.s, this.options, this.authority, this.http2SessionOptions)
+          verify(
+            this.s,
+            this.options,
+            this.authority,
+            this.http2SessionOptions,
+          ),
         );
       }
     } else if (this.s.t == "closed" || this.s.t == "error") {
@@ -277,7 +282,7 @@ export class Http2SessionManager {
       | StateError
       | StateConnecting
       | StateVerifying
-      | StateReady
+      | StateReady,
   ): void {
     this.s.onExitState?.();
     if (this.s.t == "ready" && this.s.isShuttingDown()) {
@@ -299,7 +304,7 @@ export class Http2SessionManager {
           },
           (reason) => {
             this.setState(closedOrError(reason));
-          }
+          },
         );
         break;
       case "verifying":
@@ -309,7 +314,7 @@ export class Http2SessionManager {
           },
           (reason) => {
             this.setState(closedOrError(reason));
-          }
+          },
         );
         break;
       case "ready":
@@ -398,7 +403,7 @@ function connect(
   http2SessionOptions:
     | http2.ClientSessionOptions
     | http2.SecureClientSessionOptions
-    | undefined
+    | undefined,
 ): StateConnecting {
   let resolve: ((value: http2.ClientHttp2Session) => void) | undefined;
   let reject: ((reason: unknown) => void) | undefined;
@@ -460,7 +465,7 @@ export function verify(
   http2SessionOptions:
     | http2.ClientSessionOptions
     | http2.SecureClientSessionOptions
-    | undefined
+    | undefined,
 ): StateVerifying {
   const verified = stateReady.ping().then((success) => {
     if (success) {
@@ -541,7 +546,7 @@ interface StateReady extends StateCommon {
 
 function ready(
   conn: http2.ClientHttp2Session,
-  options: Required<Http2SessionOptions>
+  options: Required<Http2SessionOptions>,
 ): StateReady {
   // Users have reported an error "The session has been destroyed" raised
   // from H2SessionManager.request(), see https://github.com/bufbuild/connect-es/issues/683
@@ -670,7 +675,7 @@ function ready(
     pingTimeoutId = safeSetTimeout(() => {
       conn.destroy(
         new ConnectError("PING timed out", Code.Unavailable),
-        http2.constants.NGHTTP2_CANCEL
+        http2.constants.NGHTTP2_CANCEL,
       );
     }, options.pingTimeoutMs);
     conn.ping((err, duration) => {
@@ -687,7 +692,7 @@ function ready(
         // tests.
         conn.destroy(
           new ConnectError("PING timed out", Code.Unavailable),
-          http2.constants.NGHTTP2_CANCEL
+          http2.constants.NGHTTP2_CANCEL,
         );
         return;
       }
@@ -703,7 +708,7 @@ function ready(
   function resetIdleTimeout() {
     idleTimeoutId = safeSetTimeout(
       onIdleTimeout,
-      options.idleConnectionTimeoutMs
+      options.idleConnectionTimeoutMs,
     );
   }
 
@@ -715,7 +720,7 @@ function ready(
   function onGoaway(
     errorCode: number,
     lastStreamID: number,
-    opaqueData: Buffer | undefined | null
+    opaqueData: Buffer | undefined | null,
   ) {
     receivedGoAway = true;
     const tooManyPingsAscii = Buffer.from("too_many_pings", "ascii");
@@ -739,9 +744,9 @@ function ready(
         conn.destroy(
           new ConnectError(
             "received GOAWAY without any open streams",
-            Code.Canceled
+            Code.Canceled,
           ),
-          http2.constants.NGHTTP2_NO_ERROR
+          http2.constants.NGHTTP2_NO_ERROR,
         );
       }
     }
@@ -760,9 +765,9 @@ function ready(
       // we surface on the manager.
       const ce = new ConnectError(
         `http/2 connection closed with error code ENHANCE_YOUR_CALM (0x${http2.constants.NGHTTP2_ENHANCE_YOUR_CALM.toString(
-          16
+          16,
         )}), too_many_pings, doubled the interval`,
-        Code.ResourceExhausted
+        Code.ResourceExhausted,
       );
       state.onError?.(ce);
     } else {
@@ -792,7 +797,7 @@ function ready(
  */
 function safeSetTimeout(
   callback: () => void,
-  ms: number
+  ms: number,
 ): ReturnType<typeof setTimeout> | undefined {
   if (ms > 0x7fffffff) {
     return;
@@ -804,19 +809,19 @@ function assertSessionOpen(conn: http2.ClientHttp2Session) {
   if (conn.connecting) {
     throw new ConnectError(
       "expected open session, but it is connecting",
-      Code.Internal
+      Code.Internal,
     );
   }
   if (conn.destroyed) {
     throw new ConnectError(
       "expected open session, but it is destroyed",
-      Code.Internal
+      Code.Internal,
     );
   }
   if (conn.closed) {
     throw new ConnectError(
       "expected open session, but it is closed",
-      Code.Internal
+      Code.Internal,
     );
   }
 }
