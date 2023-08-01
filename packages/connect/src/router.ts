@@ -99,7 +99,7 @@ export interface ConnectRouterOptions extends Partial<UniversalHandlerOptions> {
 
   /**
    * Enable the Connect protocol and make your API available to all Connect
-   * clients, but also for a simple call with curl. See https://connect.build/
+   * clients, but also for a simple call with curl. See https://connectrpc.com/
    *
    * The protocol is enabled by default. Set this option to `false` to disable
    * it, but mind that at least one protocol must be enabled.

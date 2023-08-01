@@ -14,14 +14,14 @@
 
 import { createPromiseClient } from "@bufbuild/connect";
 import { createConnectTransport } from "@bufbuild/connect-web";
-import { ElizaService } from "../gen/buf/connect/demo/eliza/v1/eliza_connect.js";
-import { IntroduceRequest } from "../gen/buf/connect/demo/eliza/v1/eliza_pb.js";
+import { ElizaService } from "../gen/connectrpc/eliza/v1/eliza_connect.js";
+import { IntroduceRequest } from "../gen/connectrpc/eliza/v1/eliza_pb.js";
 
 const timeoutMs = 15000;
 
 describe("eliza", () => {
   const transport = createConnectTransport({
-    baseUrl: "https://demo.connect.build",
+    baseUrl: "https://demo.connectrpc.com",
   });
   it(
     "say()",

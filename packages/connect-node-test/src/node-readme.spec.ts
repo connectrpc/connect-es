@@ -29,21 +29,20 @@ describe("node readme", function () {
   interface SayR extends Message<SayR> {
     sentence: string;
   }
-  const SayR = proto3.makeMessageType<SayR>(
-    "buf.connect.demo.eliza.v1.SayRequest",
-    [{ no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
-  );
+  const SayR = proto3.makeMessageType<SayR>("connectrpc.eliza.v1.SayRequest", [
+    { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
 
   interface IntroduceRequest extends Message<IntroduceRequest> {
     name: string;
   }
   const IntroduceRequest = proto3.makeMessageType<IntroduceRequest>(
-    "buf.connect.demo.eliza.v1.IntroduceRequest",
+    "connectrpc.eliza.v1.IntroduceRequest",
     [{ no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
   );
 
   const ElizaService = {
-    typeName: "buf.connect.demo.eliza.v1.ElizaService",
+    typeName: "connectrpc.eliza.v1.ElizaService",
     methods: {
       say: {
         name: "Say",
@@ -61,18 +60,18 @@ describe("node readme", function () {
   } as const;
 
   const optionsHttp2 = {
-    baseUrl: "https://demo.connect.build",
+    baseUrl: "https://demo.connectrpc.com",
     httpVersion: "2" as const,
   };
   const optionsHttp1 = {
-    baseUrl: "https://demo.connect.build",
+    baseUrl: "https://demo.connectrpc.com",
     httpVersion: "1.1" as const,
   };
 
   it("createConnectTransport()", async function () {
     // A transport for clients using the gRPC protocol with Node.js `http` module
     const transport = createConnectTransport({
-      baseUrl: "https://demo.connect.build",
+      baseUrl: "https://demo.connectrpc.com",
       httpVersion: "1.1",
     });
     const client = createPromiseClient(ElizaService, transport);

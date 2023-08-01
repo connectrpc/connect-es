@@ -24,21 +24,20 @@ describe("express readme", function () {
   interface SayR extends Message<SayR> {
     sentence: string;
   }
-  const SayR = proto3.makeMessageType<SayR>(
-    "buf.connect.demo.eliza.v1.SayRequest",
-    [{ no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
-  );
+  const SayR = proto3.makeMessageType<SayR>("connectrpc.eliza.v1.SayRequest", [
+    { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
 
   interface IntroduceRequest extends Message<IntroduceRequest> {
     name: string;
   }
   const IntroduceRequest = proto3.makeMessageType<IntroduceRequest>(
-    "buf.connect.demo.eliza.v1.IntroduceRequest",
+    "connectrpc.eliza.v1.IntroduceRequest",
     [{ no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
   );
 
   const ElizaService = {
-    typeName: "buf.connect.demo.eliza.v1.ElizaService",
+    typeName: "connectrpc.eliza.v1.ElizaService",
     methods: {
       say: {
         name: "Say",
