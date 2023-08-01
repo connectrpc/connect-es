@@ -69,7 +69,7 @@ describe("unresolvable_host", function () {
               fail("expected an error");
             } catch (e) {
               expect(ConnectError.from(e).message).toBe(
-                "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
+                "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain",
               );
               expect(e).toBeInstanceOf(ConnectError);
             }
@@ -85,7 +85,7 @@ describe("unresolvable_host", function () {
               fail("expected to catch an error");
             } catch (e) {
               expect(ConnectError.from(e).message).toBe(
-                "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
+                "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain",
               );
               expect(e).toBeInstanceOf(ConnectError);
             }
@@ -186,7 +186,7 @@ describe("unresolvable_host", function () {
               (error) => {
                 expect(error?.code).toBe(Code.Unavailable);
                 done();
-              }
+              },
             );
           });
         });

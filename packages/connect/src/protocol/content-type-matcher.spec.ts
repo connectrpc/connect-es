@@ -25,7 +25,7 @@ describe("contentTypeMatcher()", function () {
   it("matches multiple content type matchers as expected", function () {
     const matcher = contentTypeMatcher(
       contentTypeMatcher(/a/, /b/),
-      contentTypeMatcher(/c/)
+      contentTypeMatcher(/c/),
     );
     expect(matcher("a")).toBeTrue();
     expect(matcher("b")).toBeTrue();

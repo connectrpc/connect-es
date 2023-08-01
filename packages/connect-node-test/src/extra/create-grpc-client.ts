@@ -46,20 +46,20 @@ export type GrpcClient<T extends ServiceType> = {
  */
 export function createGrpcClient<T extends ServiceType>(
   service: T,
-  options: CreateGrpcClientOptions
+  options: CreateGrpcClientOptions,
 ): GrpcClient<T> {
   const grpcDefinitions = createGrpcServiceDefinition(
     service,
-    options.binaryOptions
+    options.binaryOptions,
   );
   const grpcClientCtor = grpc.makeGenericClientConstructor(
     grpcDefinitions,
-    service.typeName
+    service.typeName,
   );
   const grpcClient = new grpcClientCtor(
     options.address,
     options.channelCredentials,
-    options.clientOptions
+    options.clientOptions,
   ) as unknown;
   return grpcClient as GrpcClient<T>;
 }

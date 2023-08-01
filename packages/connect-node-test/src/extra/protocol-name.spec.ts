@@ -52,7 +52,7 @@ function testForProtocol(expectedProtocolName: string) {
           expect(response.payload?.body.length).toEqual(request.responseSize);
           done();
         },
-        { onHeader: ensureProtocolName(expectedProtocolName) }
+        { onHeader: ensureProtocolName(expectedProtocolName) },
       );
     });
   };
@@ -66,21 +66,21 @@ describe("protocolName", function () {
     [
       "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2)",
     ],
-    testForProtocol("grpc")
+    testForProtocol("grpc"),
   );
 
   servers.describeTransportsOnly(
     [
       "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)",
     ],
-    testForProtocol("grpc-web")
+    testForProtocol("grpc-web"),
   );
 
   servers.describeTransportsOnly(
     [
       "@bufbuild/connect-node (Connect, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
     ],
-    testForProtocol("connect")
+    testForProtocol("connect"),
   );
 
   afterAll(async () => await servers.stop());

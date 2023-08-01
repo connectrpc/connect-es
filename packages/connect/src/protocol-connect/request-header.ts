@@ -40,7 +40,7 @@ export function requestHeader(
   methodKind: MethodKind,
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
-  userProvidedHeaders: HeadersInit | undefined
+  userProvidedHeaders: HeadersInit | undefined,
 ): Headers {
   const result = new Headers(userProvidedHeaders ?? {});
   if (timeoutMs !== undefined) {
@@ -54,7 +54,7 @@ export function requestHeader(
         : contentTypeUnaryJson
       : useBinaryFormat
       ? contentTypeStreamProto
-      : contentTypeStreamJson
+      : contentTypeStreamJson,
   );
   result.set(headerProtocolVersion, protocolVersion);
   return result;
@@ -76,13 +76,13 @@ export function requestHeaderWithCompression(
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: Compression[],
-  sendCompression: Compression | null
+  sendCompression: Compression | null,
 ): Headers {
   const result = requestHeader(
     methodKind,
     useBinaryFormat,
     timeoutMs,
-    userProvidedHeaders
+    userProvidedHeaders,
   );
   if (sendCompression != null) {
     const name =

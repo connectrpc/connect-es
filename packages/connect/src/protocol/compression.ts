@@ -61,7 +61,7 @@ export function compressionNegotiate(
   available: Compression[],
   requested: string | null, // e.g. the value of the Grpc-Encoding header
   accepted: string | null, // e.g. the value of the Grpc-Accept-Encoding header
-  headerNameAcceptEncoding: string // e.g. the name of the Grpc-Accept-Encoding header
+  headerNameAcceptEncoding: string, // e.g. the name of the Grpc-Accept-Encoding header
 ): {
   request: Compression | null;
   response: Compression | null;
@@ -84,7 +84,7 @@ export function compressionNegotiate(
         Code.Unimplemented,
         {
           [headerNameAcceptEncoding]: acceptable,
-        }
+        },
       );
     }
   }

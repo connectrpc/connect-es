@@ -55,20 +55,20 @@ export function createTransport(opt: CommonTransportOptions): Transport {
   return {
     async unary<
       I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
+      O extends Message<O> = AnyMessage,
     >(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      message: PartialMessage<I>
+      message: PartialMessage<I>,
     ): Promise<UnaryResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
         opt.binaryOptions,
         opt.jsonOptions,
-        opt
+        opt,
       );
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
@@ -85,7 +85,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             timeoutMs,
             header,
             opt.acceptCompression,
-            opt.sendCompression
+            opt.sendCompression,
           ),
           message,
         },
@@ -98,22 +98,22 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             body: pipe(
               createAsyncIterable([req.message]),
               transformSerializeEnvelope(
-                serialization.getI(opt.useBinaryFormat)
+                serialization.getI(opt.useBinaryFormat),
               ),
               transformCompressEnvelope(
                 opt.sendCompression,
-                opt.compressMinBytes
+                opt.compressMinBytes,
               ),
               transformJoinEnvelopes(),
               {
                 propagateDownStreamError: true,
-              }
+              },
             ),
           });
           const { compression } = validateResponseWithCompression(
             opt.acceptCompression,
             uRes.status,
-            uRes.header
+            uRes.header,
           );
           const { trailer, message } = await pipeTo(
             uRes.body,
@@ -122,7 +122,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             transformParseEnvelope<O, Headers>(
               serialization.getO(opt.useBinaryFormat),
               trailerFlag,
-              createTrailerSerialization()
+              createTrailerSerialization(),
             ),
             async (iterable) => {
               let message: O | undefined;
@@ -132,7 +132,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                   if (trailer !== undefined) {
                     throw new ConnectError(
                       "protocol error: received extra trailer",
-                      Code.InvalidArgument
+                      Code.InvalidArgument,
                     );
                   }
                   trailer = env.value;
@@ -140,7 +140,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                   if (message !== undefined) {
                     throw new ConnectError(
                       "protocol error: received extra output message for unary method",
-                      Code.InvalidArgument
+                      Code.InvalidArgument,
                     );
                   }
                   message = env.value;
@@ -150,19 +150,19 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             },
             {
               propagateDownStreamError: false,
-            }
+            },
           );
           if (trailer === undefined) {
             throw new ConnectError(
               "protocol error: missing trailer",
-              Code.InvalidArgument
+              Code.InvalidArgument,
             );
           }
           validateTrailer(trailer);
           if (message === undefined) {
             throw new ConnectError(
               "protocol error: missing output message for unary method",
-              Code.InvalidArgument
+              Code.InvalidArgument,
             );
           }
           return <UnaryResponse<I, O>>{
@@ -178,20 +178,20 @@ export function createTransport(opt: CommonTransportOptions): Transport {
     },
     async stream<
       I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
+      O extends Message<O> = AnyMessage,
     >(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>
+      input: AsyncIterable<PartialMessage<I>>,
     ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
         opt.binaryOptions,
         opt.jsonOptions,
-        opt
+        opt,
       );
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
@@ -212,7 +212,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             timeoutMs,
             header,
             opt.acceptCompression,
-            opt.sendCompression
+            opt.sendCompression,
           ),
           message: input,
         },
@@ -225,20 +225,20 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             body: pipe(
               req.message,
               transformSerializeEnvelope(
-                serialization.getI(opt.useBinaryFormat)
+                serialization.getI(opt.useBinaryFormat),
               ),
               transformCompressEnvelope(
                 opt.sendCompression,
-                opt.compressMinBytes
+                opt.compressMinBytes,
               ),
               transformJoinEnvelopes(),
-              { propagateDownStreamError: true }
+              { propagateDownStreamError: true },
             ),
           });
           const { compression, foundStatus } = validateResponseWithCompression(
             opt.acceptCompression,
             uRes.status,
-            uRes.header
+            uRes.header,
           );
           const res: StreamResponse<I, O> = {
             ...req,
@@ -249,12 +249,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               transformSplitEnvelope(opt.readMaxBytes),
               transformDecompressEnvelope(
                 compression ?? null,
-                opt.readMaxBytes
+                opt.readMaxBytes,
               ),
               transformParseEnvelope(
                 serialization.getO(opt.useBinaryFormat),
                 trailerFlag,
-                createTrailerSerialization()
+                createTrailerSerialization(),
               ),
               async function* (iterable) {
                 if (foundStatus) {
@@ -270,7 +270,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                   if (r.done !== true) {
                     throw new ConnectError(
                       "protocol error: extra data for trailers-only",
-                      Code.InvalidArgument
+                      Code.InvalidArgument,
                     );
                   }
                   return;
@@ -281,20 +281,20 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                     if (trailerReceived) {
                       throw new ConnectError(
                         "protocol error: received extra trailer",
-                        Code.InvalidArgument
+                        Code.InvalidArgument,
                       );
                     }
                     trailerReceived = true;
                     validateTrailer(chunk.value);
                     chunk.value.forEach((value, key) =>
-                      res.trailer.set(key, value)
+                      res.trailer.set(key, value),
                     );
                     continue;
                   }
                   if (trailerReceived) {
                     throw new ConnectError(
                       "protocol error: received extra message after trailer",
-                      Code.InvalidArgument
+                      Code.InvalidArgument,
                     );
                   }
                   yield chunk.value;
@@ -302,11 +302,11 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                 if (!trailerReceived) {
                   throw new ConnectError(
                     "protocol error: missing trailer",
-                    Code.InvalidArgument
+                    Code.InvalidArgument,
                   );
                 }
               },
-              { propagateDownStreamError: true }
+              { propagateDownStreamError: true },
             ),
           };
           return res;

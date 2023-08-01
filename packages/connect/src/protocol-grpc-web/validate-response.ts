@@ -37,7 +37,7 @@ import type { Compression } from "../protocol/compression.js";
  */
 export function validateResponse(
   status: number,
-  headers: Headers
+  headers: Headers,
 ): { foundStatus: boolean } {
   // For compatibility with the `grpc-web` package, we treat all HTTP status
   // codes in the 200 range as valid, not just HTTP 200.
@@ -51,7 +51,7 @@ export function validateResponse(
   throw new ConnectError(
     decodeURIComponent(headers.get(headerGrpcMessage) ?? `HTTP ${status}`),
     codeFromHttpStatus(status),
-    headers
+    headers,
   );
 }
 
@@ -69,7 +69,7 @@ export function validateResponse(
 export function validateResponseWithCompression(
   acceptCompression: Compression[],
   status: number,
-  headers: Headers
+  headers: Headers,
 ): { foundStatus: boolean; compression: Compression | undefined } {
   const { foundStatus } = validateResponse(status, headers);
   let compression: Compression | undefined;
@@ -80,7 +80,7 @@ export function validateResponseWithCompression(
       throw new ConnectError(
         `unsupported response encoding "${encoding}"`,
         Code.InvalidArgument,
-        headers
+        headers,
       );
     }
   }

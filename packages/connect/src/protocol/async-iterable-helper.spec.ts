@@ -15,7 +15,7 @@
 export async function* createAsyncIterableBytes(
   bytes: Uint8Array,
   chunkSize = 2,
-  delay = 5
+  delay = 5,
 ): AsyncIterable<Uint8Array> {
   let offset = 0;
   for (;;) {
@@ -38,7 +38,7 @@ export async function readAll<T>(it: AsyncIterable<T>): Promise<T[]> {
 }
 
 export async function readAllBytes(
-  it: AsyncIterable<Uint8Array>
+  it: AsyncIterable<Uint8Array>,
 ): Promise<Uint8Array> {
   return (await readAll(it)).reduce((p, c) => {
     const n = new Uint8Array(p.byteLength + c.byteLength);

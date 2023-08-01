@@ -72,7 +72,7 @@ describe("ping_pong", () => {
             yield {
               payload: interop.makeServerPayload(
                 PayloadType.COMPRESSABLE,
-                size
+                size,
               ),
               responseParameters: [
                 {
@@ -92,7 +92,7 @@ describe("ping_pong", () => {
         }
         expect(i).toBe(sizes.length);
       });
-    }
+    },
   );
 
   afterAll(async () => await servers.stop());

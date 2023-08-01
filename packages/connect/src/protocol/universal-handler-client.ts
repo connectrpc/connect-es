@@ -24,7 +24,7 @@ import { getAbortSignalReason } from "./signals.js";
  * bypassing network calls. Useful for testing and calling in-process services.
  */
 export function createUniversalHandlerClient(
-  uHandlers: UniversalHandler[]
+  uHandlers: UniversalHandler[],
 ): UniversalClientFn {
   const handlerMap = new Map<string, UniversalHandler>();
   for (const handler of uHandlers) {
@@ -36,7 +36,7 @@ export function createUniversalHandlerClient(
     if (!handler) {
       throw new ConnectError(
         `RouterHttpClient: no handler registered for ${pathname}`,
-        Code.Unimplemented
+        Code.Unimplemented,
       );
     }
     const reqSignal = uClientReq.signal ?? new AbortController().signal;
@@ -49,7 +49,7 @@ export function createUniversalHandlerClient(
         url: uClientReq.url,
         header: uClientReq.header,
         signal: reqSignal,
-      })
+      }),
     );
     const body = uServerRes.body ?? createAsyncIterable([]);
     return {

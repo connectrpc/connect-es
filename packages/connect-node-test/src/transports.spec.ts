@@ -55,7 +55,7 @@ describe("createConnectTransport()", function () {
       },
       {
         maxSessionMemory: 1024 * 1024 * 4,
-      }
+      },
     );
     const t = createConnectTransport({
       httpVersion: "2",
@@ -78,7 +78,7 @@ describe("using a session manager to open a connection before starting an applic
           throw sm.error();
         }
         await new Promise<void>((resolve) =>
-          setTimeout(resolve, backoff * 1000)
+          setTimeout(resolve, backoff * 1000),
         );
       } else {
         // we are connected (either open or idle), break the loop
@@ -93,7 +93,7 @@ describe("using a session manager to explicitly close all connections", function
   it("should work", function () {
     // create a client, keeping a reference to the session manage
     const sessionManager = new Http2SessionManager(
-      "https://demo.connect.build"
+      "https://demo.connect.build",
     );
     createConnectTransport({
       httpVersion: "2",

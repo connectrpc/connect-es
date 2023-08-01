@@ -18,7 +18,7 @@ import * as zlib from "zlib";
 
 describe("compression", () => {
   const payload = new TextEncoder().encode(
-    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
   );
 
   const table = [
@@ -47,7 +47,7 @@ describe("compression", () => {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[resource_exhausted] message is larger than configured readMaxBytes 2 after decompression"
+            "[resource_exhausted] message is larger than configured readMaxBytes 2 after decompression",
           );
         }
       });
@@ -55,13 +55,13 @@ describe("compression", () => {
         try {
           await compression.decompress(
             new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
-            0xffffffff
+            0xffffffff,
           );
           fail("excepted an error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[invalid_argument] decompression failed"
+            "[invalid_argument] decompression failed",
           );
         }
       });
@@ -69,13 +69,13 @@ describe("compression", () => {
         try {
           await compression.decompress(
             new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
-            Number.MAX_SAFE_INTEGER
+            Number.MAX_SAFE_INTEGER,
           );
           fail("excepted an error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[internal] decompression failed"
+            "[internal] decompression failed",
           );
         }
       });

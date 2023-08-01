@@ -31,14 +31,14 @@ import type { Compression } from "../protocol/compression.js";
 export function requestHeader(
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
-  userProvidedHeaders: HeadersInit | undefined
+  userProvidedHeaders: HeadersInit | undefined,
 ): Headers {
   const result = new Headers(userProvidedHeaders ?? {});
   // Note that we do not support the grpc-web-text format.
   // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md#protocol-differences-vs-grpc-over-http2
   result.set(
     headerContentType,
-    useBinaryFormat ? contentTypeProto : contentTypeJson
+    useBinaryFormat ? contentTypeProto : contentTypeJson,
   );
   result.set(headerXGrpcWeb, "1");
   // Note that we do not comply with recommended structure for the
@@ -61,7 +61,7 @@ export function requestHeaderWithCompression(
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: Compression[],
-  sendCompression: Compression | null
+  sendCompression: Compression | null,
 ): Headers {
   const result = requestHeader(useBinaryFormat, timeoutMs, userProvidedHeaders);
   if (sendCompression != null) {
@@ -70,7 +70,7 @@ export function requestHeaderWithCompression(
   if (acceptCompression.length > 0) {
     result.set(
       headerAcceptEncoding,
-      acceptCompression.map((c) => c.name).join(",")
+      acceptCompression.map((c) => c.name).join(","),
     );
   }
   return result;

@@ -120,27 +120,27 @@ export interface ConnectTransportOptions {
  * API to make HTTP requests.
  */
 export function createConnectTransport(
-  options: ConnectTransportOptions
+  options: ConnectTransportOptions,
 ): Transport {
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
+      O extends Message<O> = AnyMessage,
     >(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      message: PartialMessage<I>
+      message: PartialMessage<I>,
     ): Promise<UnaryResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
-        options.binaryOptions
+        options.binaryOptions,
       );
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
@@ -161,7 +161,7 @@ export function createConnectTransport(
             method.kind,
             useBinaryFormat,
             timeoutMs,
-            header
+            header,
           ),
           message,
         },
@@ -174,7 +174,7 @@ export function createConnectTransport(
             req = transformConnectPostToGetRequest(
               req,
               serialize(req.message),
-              useBinaryFormat
+              useBinaryFormat,
             );
           } else {
             body = serialize(req.message);
@@ -189,17 +189,17 @@ export function createConnectTransport(
           const { isUnaryError, unaryError } = validateResponse(
             method.kind,
             response.status,
-            response.headers
+            response.headers,
           );
           if (isUnaryError) {
             throw errorFromJson(
               (await response.json()) as JsonValue,
               appendHeaders(...trailerDemux(response.headers)),
-              unaryError
+              unaryError,
             );
           }
           const [demuxedHeader, demuxedTrailer] = trailerDemux(
-            response.headers
+            response.headers,
           );
 
           return <UnaryResponse<I, O>>{
@@ -211,7 +211,7 @@ export function createConnectTransport(
               ? parse(new Uint8Array(await response.arrayBuffer()))
               : method.O.fromJson(
                   (await response.json()) as JsonValue,
-                  getJsonOptions(options.jsonOptions)
+                  getJsonOptions(options.jsonOptions),
                 ),
             trailer: demuxedTrailer,
           };
@@ -221,25 +221,25 @@ export function createConnectTransport(
 
     async stream<
       I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
+      O extends Message<O> = AnyMessage,
     >(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>
+      input: AsyncIterable<PartialMessage<I>>,
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
-        options.binaryOptions
+        options.binaryOptions,
       );
 
       async function* parseResponseBody(
         body: ReadableStream<Uint8Array>,
-        trailerTarget: Headers
+        trailerTarget: Headers,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         let endStreamReceived = false;
@@ -256,7 +256,7 @@ export function createConnectTransport(
               throw endStream.error;
             }
             endStream.metadata.forEach((value, key) =>
-              trailerTarget.set(key, value)
+              trailerTarget.set(key, value),
             );
             continue;
           }
@@ -268,7 +268,7 @@ export function createConnectTransport(
       }
 
       async function createRequestBody(
-        input: AsyncIterable<I>
+        input: AsyncIterable<I>,
       ): Promise<Uint8Array> {
         if (method.kind != MethodKind.ServerStreaming) {
           throw "The fetch API does not support streaming request bodies";
@@ -299,7 +299,7 @@ export function createConnectTransport(
             method.kind,
             useBinaryFormat,
             timeoutMs,
-            header
+            header,
           ),
           message: input,
         },

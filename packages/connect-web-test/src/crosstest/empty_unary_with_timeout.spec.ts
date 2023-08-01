@@ -35,7 +35,7 @@ describe("empty_unary_with_timeout", function () {
           expect(response).toEqual(empty);
           done();
         },
-        { timeoutMs: deadlineMs }
+        { timeoutMs: deadlineMs },
       );
     });
   });

@@ -39,7 +39,7 @@ export const compressionGzip: Compression = {
       gunzip(bytes, {
         maxOutputLength: readMaxBytes,
       }),
-      readMaxBytes
+      readMaxBytes,
     );
   },
 };
@@ -60,14 +60,14 @@ export const compressionBrotli: Compression = {
       brotliDecompress(bytes, {
         maxOutputLength: readMaxBytes,
       }),
-      readMaxBytes
+      readMaxBytes,
     );
   },
 };
 
 function wrapZLibErrors<T>(
   promise: Promise<T>,
-  readMaxBytes: number
+  readMaxBytes: number,
 ): Promise<T> {
   return promise.catch((e) => {
     const { code } = getNodeErrorProps(e);
@@ -76,7 +76,7 @@ function wrapZLibErrors<T>(
       case "ERR_BUFFER_TOO_LARGE":
         e = new ConnectError(
           `message is larger than configured readMaxBytes ${readMaxBytes} after decompression`,
-          Code.ResourceExhausted
+          Code.ResourceExhausted,
         );
         break;
       case "Z_DATA_ERROR":
@@ -86,7 +86,7 @@ function wrapZLibErrors<T>(
           Code.InvalidArgument,
           undefined,
           undefined,
-          e
+          e,
         );
         break;
       default:
@@ -95,7 +95,7 @@ function wrapZLibErrors<T>(
           Code.Internal,
           undefined,
           undefined,
-          e
+          e,
         );
         break;
     }

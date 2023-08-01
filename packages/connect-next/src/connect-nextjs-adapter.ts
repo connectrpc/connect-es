@@ -27,7 +27,7 @@ import type { JsonValue } from "@bufbuild/protobuf";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type NextApiHandler<T = any> = (
   req: NextApiRequest,
-  res: NextApiResponse<T>
+  res: NextApiResponse<T>,
 ) => unknown | Promise<unknown>;
 
 interface NextJsApiRouterOptions extends ConnectRouterOptions {
@@ -83,14 +83,14 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
     }
     try {
       const uRes = await uHandler(
-        universalRequestFromNodeRequest(req, req.body as JsonValue | undefined)
+        universalRequestFromNodeRequest(req, req.body as JsonValue | undefined),
       );
       await universalResponseToNodeResponse(uRes, res);
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error(
         `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
-        e
+        e,
       );
     }
   }

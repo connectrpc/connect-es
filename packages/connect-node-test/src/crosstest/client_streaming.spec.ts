@@ -38,7 +38,7 @@ describe("client_streaming", () => {
       }
       const client = createPromiseClient(TestService, transport());
       const { aggregatedPayloadSize } = await client.streamingInputCall(
-        input()
+        input(),
       );
       expect(aggregatedPayloadSize).toBe(sizes.reduce((p, c) => p + c, 0));
     });

@@ -36,7 +36,7 @@ import {
  */
 export type NodeHandlerFn = (
   request: NodeServerRequest,
-  response: NodeServerResponse
+  response: NodeServerResponse,
 ) => void;
 
 /**
@@ -55,12 +55,12 @@ export type NodeServerResponse = (
 ) & {
   write(
     chunk: string | Uint8Array,
-    callback?: (err: Error | null | undefined) => void
+    callback?: (err: Error | null | undefined) => void,
   ): boolean;
   write(
     chunk: string | Uint8Array,
     encoding: BufferEncoding,
-    callback?: (err: Error | null | undefined) => void
+    callback?: (err: Error | null | undefined) => void,
   ): boolean;
 };
 
@@ -72,7 +72,7 @@ export type NodeServerResponse = (
  */
 export function universalRequestFromNodeRequest(
   nodeRequest: NodeServerRequest,
-  parsedJsonBody: JsonValue | undefined
+  parsedJsonBody: JsonValue | undefined,
 ): UniversalServerRequest {
   const encrypted =
     "encrypted" in nodeRequest.socket && nodeRequest.socket.encrypted;
@@ -85,7 +85,7 @@ export function universalRequestFromNodeRequest(
   if (authority === undefined) {
     throw new ConnectError(
       "unable to determine request authority from Node.js server request",
-      Code.Internal
+      Code.Internal,
     );
   }
   const body =
@@ -136,7 +136,7 @@ export function universalRequestFromNodeRequest(
  */
 export async function universalResponseToNodeResponse(
   universalResponse: UniversalServerResponse,
-  nodeResponse: NodeServerResponse
+  nodeResponse: NodeServerResponse,
 ): Promise<void> {
   try {
     if (universalResponse.body !== undefined) {
@@ -147,7 +147,7 @@ export async function universalResponseToNodeResponse(
         if (!nodeResponse.headersSent) {
           nodeResponse.writeHead(
             universalResponse.status,
-            webHeaderToNodeHeaders(universalResponse.header)
+            webHeaderToNodeHeaders(universalResponse.header),
           );
         }
         await write(nodeResponse, chunk);
@@ -171,12 +171,12 @@ export async function universalResponseToNodeResponse(
     if (!nodeResponse.headersSent) {
       nodeResponse.writeHead(
         universalResponse.status,
-        webHeaderToNodeHeaders(universalResponse.header)
+        webHeaderToNodeHeaders(universalResponse.header),
       );
     }
     if (universalResponse.trailer) {
       nodeResponse.addTrailers(
-        webHeaderToNodeHeaders(universalResponse.trailer)
+        webHeaderToNodeHeaders(universalResponse.trailer),
       );
     }
     await new Promise<void>((resolve) => {
@@ -191,7 +191,7 @@ export async function universalResponseToNodeResponse(
 }
 
 async function* asyncIterableFromNodeServerRequest(
-  request: NodeServerRequest
+  request: NodeServerRequest,
 ): AsyncIterable<Uint8Array> {
   for await (const chunk of request) {
     yield chunk;

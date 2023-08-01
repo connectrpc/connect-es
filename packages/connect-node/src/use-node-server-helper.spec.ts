@@ -30,7 +30,7 @@ export function useNodeServer(
     | http.Server
     | https.Server
     | http2.Http2Server
-    | http2.Http2SecureServer
+    | http2.Http2SecureServer,
 ) {
   let server:
     | http.Server
@@ -94,14 +94,14 @@ export function useNodeServer(
               // we kept a clean house, and closed all our streams.
               idleConnectionTimeoutMs: 5,
             },
-            undefined
+            undefined,
           );
           client = createNodeHttpClient({
             httpVersion: "2",
             sessionProvider: (authority) => {
               if (authority !== this.getUrl()) {
                 throw new Error(
-                  "client from useNodeServer() can only be used for requests against the server URL"
+                  "client from useNodeServer() can only be used for requests against the server URL",
                 );
               }
               clientSessionManager = new Http2SessionManager(
@@ -114,7 +114,7 @@ export function useNodeServer(
                   // we kept a clean house, and closed all our streams.
                   idleConnectionTimeoutMs: 5,
                 },
-                undefined
+                undefined,
               );
               return clientSessionManager;
             },
@@ -137,7 +137,7 @@ function getServerUrl(
     | http.Server
     | https.Server
     | http2.Http2Server
-    | http2.Http2SecureServer
+    | http2.Http2SecureServer,
 ): string {
   const address = server.address();
   if (address == null || typeof address == "string") {

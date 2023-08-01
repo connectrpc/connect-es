@@ -30,7 +30,7 @@ import type {
 export function runUnary<I extends Message<I>, O extends Message<O>>(
   req: UnaryRequest<I, O>,
   next: UnaryFn<I, O>,
-  interceptors: Interceptor[] | undefined
+  interceptors: Interceptor[] | undefined,
 ): Promise<UnaryResponse<I, O>> {
   if (interceptors) {
     next = applyInterceptors(next, interceptors);
@@ -47,7 +47,7 @@ export function runUnary<I extends Message<I>, O extends Message<O>>(
 export function runStreaming<I extends Message<I>, O extends Message<O>>(
   req: StreamRequest<I, O>,
   next: StreamingFn<I, O>,
-  interceptors: Interceptor[] | undefined
+  interceptors: Interceptor[] | undefined,
 ): Promise<StreamResponse<I, O>> {
   if (interceptors) {
     next = applyInterceptors(next, interceptors);
@@ -67,7 +67,7 @@ function applyInterceptors<T>(next: T, interceptors: Interceptor[]): T {
     .reduce(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       (n, i) => i(n),
-      next as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      next as any, // eslint-disable-line @typescript-eslint/no-explicit-any
     ) as T;
 }
 
@@ -80,7 +80,7 @@ function applyInterceptors<T>(next: T, interceptors: Interceptor[]): T {
  */
 type UnaryFn<
   I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
+  O extends Message<O> = AnyMessage,
 > = (req: UnaryRequest<I, O>) => Promise<UnaryResponse<I, O>>;
 
 /**
@@ -92,5 +92,5 @@ type UnaryFn<
  */
 type StreamingFn<
   I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
+  O extends Message<O> = AnyMessage,
 > = (req: StreamRequest<I, O>) => Promise<StreamResponse<I, O>>;

@@ -29,7 +29,7 @@ describe("unimplemented_server_streaming_service", function () {
       const client = createPromiseClient(UnimplementedService, transport());
       try {
         for await (const response of client.unimplementedStreamingOutputCall(
-          request
+          request,
         )) {
           fail(`expecting no response, got: ${response.toJsonString()}`);
         }
@@ -49,7 +49,7 @@ describe("unimplemented_server_streaming_service", function () {
         (err: ConnectError | undefined) => {
           expect(err?.code).toBe(Code.Unimplemented);
           done();
-        }
+        },
       );
     });
   });

@@ -22,7 +22,7 @@ describe("errorToJson()", () => {
   it("serializes code and message", () => {
     const json = errorToJson(
       new ConnectError("Not permitted", Code.PermissionDenied),
-      undefined
+      undefined,
     );
     expect(json.code as unknown).toBe("permission_denied");
     expect(json.message as unknown).toBe("Not permitted");
@@ -30,7 +30,7 @@ describe("errorToJson()", () => {
   it("does not serialize empty message", () => {
     const json = errorToJson(
       new ConnectError("", Code.PermissionDenied),
-      undefined
+      undefined,
     );
     expect(json.code as unknown).toBe("permission_denied");
     expect(json.message as unknown).toBeUndefined();
@@ -45,11 +45,11 @@ describe("errorToJson()", () => {
       [
         { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
         { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
-      ]
+      ],
     );
     const err = new ConnectError("Not permitted", Code.PermissionDenied);
     err.details.push(
-      new ErrorDetail({ reason: "soirée 🎉", domain: "example.com" })
+      new ErrorDetail({ reason: "soirée 🎉", domain: "example.com" }),
     );
     const got = errorToJson(err, undefined);
     const want = {
@@ -62,7 +62,7 @@ describe("errorToJson()", () => {
             new ErrorDetail({
               reason: "soirée 🎉",
               domain: "example.com",
-            }).toBinary()
+            }).toBinary(),
           ),
           debug: {
             reason: "soirée 🎉",
@@ -83,7 +83,7 @@ describe("errorFromJson()", () => {
         message: "Not permitted",
       },
       undefined,
-      new ConnectError("foo", Code.ResourceExhausted)
+      new ConnectError("foo", Code.ResourceExhausted),
     );
     expect(error.code).toBe(Code.PermissionDenied);
     expect(error.rawMessage).toBe("Not permitted");
@@ -95,7 +95,7 @@ describe("errorFromJson()", () => {
         code: codeToString(Code.PermissionDenied),
       },
       undefined,
-      new ConnectError("foo", Code.ResourceExhausted)
+      new ConnectError("foo", Code.ResourceExhausted),
     );
     expect(error.message).toBe("[permission_denied]");
     expect(error.rawMessage).toBe("");
@@ -108,8 +108,8 @@ describe("errorFromJson()", () => {
           message: "Not permitted",
         },
         undefined,
-        new ConnectError("foo", Code.ResourceExhausted)
-      )
+        new ConnectError("foo", Code.ResourceExhausted),
+      ),
     ).toThrowError("[resource_exhausted] foo");
   });
   it("with invalid code throws fallback with metadata", () => {
@@ -120,7 +120,7 @@ describe("errorFromJson()", () => {
           message: "Not permitted",
         },
         new Headers({ foo: "bar" }),
-        new ConnectError("foo", Code.ResourceExhausted)
+        new ConnectError("foo", Code.ResourceExhausted),
       );
       fail("expected error");
     } catch (e) {
@@ -137,8 +137,8 @@ describe("errorFromJson()", () => {
           message: "Not permitted",
         },
         undefined,
-        new ConnectError("foo", Code.ResourceExhausted)
-      )
+        new ConnectError("foo", Code.ResourceExhausted),
+      ),
     ).toThrowError("[resource_exhausted] foo");
   });
   it("with missing code throws fallback", () => {
@@ -148,8 +148,8 @@ describe("errorFromJson()", () => {
           message: "Not permitted",
         },
         undefined,
-        new ConnectError("foo", Code.ResourceExhausted)
-      )
+        new ConnectError("foo", Code.ResourceExhausted),
+      ),
     ).toThrowError("[resource_exhausted] foo");
   });
   describe("with details", () => {
@@ -162,7 +162,7 @@ describe("errorFromJson()", () => {
       [
         { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
         { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
-      ]
+      ],
     );
     const json = {
       code: "permission_denied",
@@ -174,7 +174,7 @@ describe("errorFromJson()", () => {
             new ErrorDetail({
               reason: "soirée 🎉",
               domain: "example.com",
-            }).toBinary()
+            }).toBinary(),
           ),
         },
       ],
@@ -183,7 +183,7 @@ describe("errorFromJson()", () => {
       const error = errorFromJson(
         json,
         undefined,
-        new ConnectError("foo", Code.ResourceExhausted)
+        new ConnectError("foo", Code.ResourceExhausted),
       );
       expect(error.details.length).toBe(1);
     });
@@ -191,7 +191,7 @@ describe("errorFromJson()", () => {
       const error = errorFromJson(
         json,
         undefined,
-        new ConnectError("foo", Code.ResourceExhausted)
+        new ConnectError("foo", Code.ResourceExhausted),
       );
       const details = error.findDetails(ErrorDetail);
       expect(details.length).toBe(1);

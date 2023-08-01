@@ -23,7 +23,7 @@ describe("Connect validateResponse()", function () {
       const r = validateResponse(
         MethodKind.Unary,
         200,
-        new Headers({ "Content-Type": "application/json" })
+        new Headers({ "Content-Type": "application/json" }),
       );
       expect(r.isUnaryError).toBeFalse();
       expect(r.unaryError).toBeUndefined();
@@ -32,7 +32,7 @@ describe("Connect validateResponse()", function () {
       const r = validateResponse(
         MethodKind.Unary,
         204,
-        new Headers({ "Content-Type": "application/json" })
+        new Headers({ "Content-Type": "application/json" }),
       );
       expect(r.isUnaryError).toBeTrue();
       expect(r.unaryError?.message).toBe("[unknown] HTTP 204");
@@ -41,7 +41,7 @@ describe("Connect validateResponse()", function () {
       const r = validateResponse(
         MethodKind.Unary,
         204,
-        new Headers({ "Content-Type": "application/json", Foo: "Bar" })
+        new Headers({ "Content-Type": "application/json", Foo: "Bar" }),
       );
       expect(r.unaryError?.metadata.get("Foo")).toBe("Bar");
     });
@@ -49,7 +49,7 @@ describe("Connect validateResponse()", function () {
       const r = validateResponse(
         MethodKind.Unary,
         200,
-        new Headers({ "Content-Type": "application/proto" })
+        new Headers({ "Content-Type": "application/proto" }),
       );
       expect(r.isUnaryError).toBeFalse();
       expect(r.unaryError).toBeUndefined();
@@ -61,13 +61,13 @@ describe("Connect validateResponse()", function () {
           400,
           new Headers({
             "Content-Type": "application/proto",
-          })
+          }),
         );
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          "[invalid_argument] HTTP 400"
+          "[invalid_argument] HTTP 400",
         );
       }
     });
@@ -77,7 +77,7 @@ describe("Connect validateResponse()", function () {
         400,
         new Headers({
           "Content-Type": "application/json",
-        })
+        }),
       );
       expect(result.isUnaryError).toBeTrue();
       expect(result.unaryError?.code).toBe(Code.InvalidArgument);
@@ -93,7 +93,7 @@ describe("Connect validateResponse()", function () {
           new Headers({
             "Content-Type": "application/connect+proto",
             Foo: "Bar",
-          })
+          }),
         );
         fail("expected error");
       } catch (e) {

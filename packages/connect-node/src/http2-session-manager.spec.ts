@@ -27,7 +27,7 @@ describe("Http2SessionManager", function () {
       .createServer()
       .on("session", (s) => serverSessions.push(s))
       .on("session", (s) =>
-        s.on("ping", (payload: Buffer) => serverReceivedPings.push(payload))
+        s.on("ping", (payload: Buffer) => serverReceivedPings.push(payload)),
       )
       .on("request", () => {
         // without the listener, node cancels streams
@@ -60,7 +60,7 @@ describe("Http2SessionManager", function () {
       const req = await reqPromise;
       expect(sm.state()).toBe("open");
       await new Promise<void>((resolve) =>
-        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       sm.abort();
       expect(sm.state()).toBe("closed");
@@ -69,7 +69,7 @@ describe("Http2SessionManager", function () {
       const sm = new Http2SessionManager(server.getUrl());
       const req = await sm.request("POST", "/", {}, {});
       await new Promise<void>((resolve) =>
-        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       expect(sm.state()).toBe("idle");
       sm.abort();
@@ -81,7 +81,7 @@ describe("Http2SessionManager", function () {
       expect(sm.state()).toBe("connecting");
       sm.abort();
       await expectAsync(reqPromise).toBeRejectedWithError(
-        /\[canceled] connection aborted/
+        /\[canceled] connection aborted/,
       );
       expect(sm.state()).toBe("closed");
     });
@@ -99,7 +99,7 @@ describe("Http2SessionManager", function () {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
       expect(req.destroyed).toBeTrue();
       expect(String(reqError)).toBe(
-        "ConnectError: [canceled] connection aborted"
+        "ConnectError: [canceled] connection aborted",
       );
       expect(sm.state()).toBe("closed");
     });
@@ -112,16 +112,16 @@ describe("Http2SessionManager", function () {
       const req2 = await sm.request("POST", "/", {}, {});
       expect(req1.session === req2.session)
         .withContext(
-          "session for second request is re-using connection from first request"
+          "session for second request is re-using connection from first request",
         )
         .toBeTrue();
 
       // clean up
       await new Promise<void>((resolve) =>
-        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       await new Promise<void>((resolve) =>
-        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       sm.abort();
     });
@@ -134,7 +134,7 @@ describe("Http2SessionManager", function () {
       const req1 = await sm.request("POST", "/", {}, {});
       const req1Session = req1.session;
       await new Promise<void>((resolve) =>
-        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       expect(sm.state())
         .withContext("connection state after issuing a request and closing it")
@@ -156,13 +156,13 @@ describe("Http2SessionManager", function () {
         .toBe("open");
       expect(req1Session === req2.session)
         .withContext(
-          "connection for second request is re-using connection from first request"
+          "connection for second request is re-using connection from first request",
         )
         .toBeTrue();
 
       // clean up
       await new Promise<void>((resolve) =>
-        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       sm.abort();
       expect(sm.state()).toBe("closed");
@@ -177,7 +177,7 @@ describe("Http2SessionManager", function () {
       const req1 = await sm.request("POST", "/", {}, {});
       const req1Session = req1.session;
       await new Promise<void>((resolve) =>
-        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       expect(sm.state())
         .withContext("connection state after issuing a request and closing it")
@@ -195,13 +195,13 @@ describe("Http2SessionManager", function () {
         .toBe("open");
       expect(req1Session !== req2.session)
         .withContext(
-          "connection for second request is using a new connection instead of the one from the first request"
+          "connection for second request is using a new connection instead of the one from the first request",
         )
         .toBeTrue();
 
       // clean up
       await new Promise<void>((resolve) =>
-        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       sm.abort();
       expect(sm.state()).toBe("closed");
@@ -254,7 +254,7 @@ describe("Http2SessionManager", function () {
         serverSessions[0].goaway(
           http2.constants.NGHTTP2_ENHANCE_YOUR_CALM,
           undefined,
-          tooManyPingsAscii
+          tooManyPingsAscii,
         );
         await new Promise<void>((resolve) => setTimeout(resolve, 10));
 
@@ -262,17 +262,17 @@ describe("Http2SessionManager", function () {
         expect(String(req1Error))
           .withContext("node automatically destroys streams on GOAWAY")
           .toBe(
-            "Error [ERR_HTTP2_SESSION_ERROR]: Session closed with error code 11"
+            "Error [ERR_HTTP2_SESSION_ERROR]: Session closed with error code 11",
           );
         expect(sm.state())
           .withContext("connection state after receiving GOAWAY")
           .toBe("error");
         expect(String(sm.error()))
           .withContext(
-            "connect error wrapped by us with additional information"
+            "connect error wrapped by us with additional information",
           )
           .toBe(
-            "ConnectError: [resource_exhausted] http/2 connection closed with error code ENHANCE_YOUR_CALM (0xb), too_many_pings, doubled the interval"
+            "ConnectError: [resource_exhausted] http/2 connection closed with error code ENHANCE_YOUR_CALM (0xb), too_many_pings, doubled the interval",
           );
 
         // second connection should use double pingIntervalMs
@@ -288,7 +288,7 @@ describe("Http2SessionManager", function () {
 
         // clean up
         await new Promise<void>((resolve) =>
-          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         sm.abort();
       });
@@ -324,13 +324,13 @@ describe("Http2SessionManager", function () {
 
         // clean up
         await new Promise<void>((resolve) =>
-          req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         expect(serverSessions[0].closed)
           .withContext("first connection is closed after the stream is closed")
           .toBeTrue();
         await new Promise<void>((resolve) =>
-          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         sm.abort();
       });
@@ -343,12 +343,12 @@ describe("Http2SessionManager", function () {
         const req1 = await sm.request("POST", "/", {}, {});
         await new Promise<void>((resolve) => setTimeout(resolve, 10));
         await new Promise<void>((resolve) =>
-          req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         await new Promise<void>((resolve) => setTimeout(resolve, 10));
         expect(sm.state())
           .withContext(
-            "connection state after issuing a request and closing it"
+            "connection state after issuing a request and closing it",
           )
           .toBe("idle");
 
@@ -369,7 +369,7 @@ describe("Http2SessionManager", function () {
 
         // clean up
         await new Promise<void>((resolve) =>
-          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         expect(sm.state())
           .withContext("connection state after closing the second request")
@@ -403,12 +403,12 @@ describe("Http2SessionManager", function () {
 
         // close the request
         await new Promise<void>((resolve) =>
-          req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         await new Promise<void>((resolve) => setTimeout(resolve, 10));
         expect(sm.state())
           .withContext(
-            "connection state after receiving GOAWAY and then closing the single open stream"
+            "connection state after receiving GOAWAY and then closing the single open stream",
           )
           .toBe("closed");
 
@@ -420,7 +420,7 @@ describe("Http2SessionManager", function () {
 
         // clean up
         await new Promise<void>((resolve) =>
-          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         expect(sm.state())
           .withContext("connection state after closing the second request")
@@ -435,7 +435,7 @@ describe("Http2SessionManager", function () {
         // issue a request to open a connection
         const req1 = await sm.request("POST", "/", {}, {});
         const req1ErrorPromise = new Promise<unknown>((resolve) =>
-          req1.on("error", resolve)
+          req1.on("error", resolve),
         );
         expect(sm.state())
           .withContext("connection state after issuing a request")
@@ -449,7 +449,7 @@ describe("Http2SessionManager", function () {
         // wait for the request to error
         const req1Error = await req1ErrorPromise;
         expect(String(req1Error)).toBe(
-          "Error [ERR_HTTP2_SESSION_ERROR]: Session closed with error code 2"
+          "Error [ERR_HTTP2_SESSION_ERROR]: Session closed with error code 2",
         );
 
         // the "error" event on the session is raised after the "error" event on
@@ -468,7 +468,7 @@ describe("Http2SessionManager", function () {
         // issue a request to open a connection
         const req1 = await sm.request("POST", "/", {}, {});
         const req1ErrorPromise = new Promise<unknown>((resolve) =>
-          req1.on("error", resolve)
+          req1.on("error", resolve),
         );
         expect(sm.state())
           .withContext("connection state after issuing a request")
@@ -482,7 +482,7 @@ describe("Http2SessionManager", function () {
         // wait for the request to error
         const req1Error = await req1ErrorPromise;
         expect(String(req1Error)).toBe(
-          "Error [ERR_HTTP2_SESSION_ERROR]: Session closed with error code 2"
+          "Error [ERR_HTTP2_SESSION_ERROR]: Session closed with error code 2",
         );
 
         // the connection has not errored yet
@@ -496,7 +496,7 @@ describe("Http2SessionManager", function () {
 
         // clean up
         await new Promise<void>((resolve) =>
-          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         sm.abort();
         expect(sm.state()).toBe("closed");
@@ -514,7 +514,7 @@ describe("Http2SessionManager", function () {
         await new Promise<void>((resolve) => setTimeout(resolve, 50));
         expect(serverReceivedPings.length).toBeGreaterThanOrEqual(2);
         await new Promise<void>((resolve) =>
-          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         sm.abort();
         expect(sm.state()).toBe("closed");
@@ -532,7 +532,7 @@ describe("Http2SessionManager", function () {
 
         // clean up
         await new Promise<void>((resolve) =>
-          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         sm.abort();
         expect(sm.state()).toBe("closed");
@@ -548,11 +548,11 @@ describe("Http2SessionManager", function () {
         await new Promise<void>((resolve) => setTimeout(resolve, 50));
         expect(reqErrors.length).toBe(1);
         expect(String(reqErrors[0])).toBe(
-          "ConnectError: [unavailable] PING timed out"
+          "ConnectError: [unavailable] PING timed out",
         );
         expect(sm.state()).toBe("error");
         expect(String(sm.error())).toBe(
-          "ConnectError: [unavailable] PING timed out"
+          "ConnectError: [unavailable] PING timed out",
         );
       });
     });
@@ -564,7 +564,7 @@ describe("Http2SessionManager", function () {
         });
         const req = await sm.request("POST", "/", {}, {});
         await new Promise<void>((resolve) =>
-          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         expect(sm.state()).toBe("idle");
         await new Promise<void>((resolve) => setTimeout(resolve, 50));
@@ -578,7 +578,7 @@ describe("Http2SessionManager", function () {
         });
         const req = await sm.request("POST", "/", {}, {});
         await new Promise<void>((resolve) =>
-          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         expect(sm.state()).toBe("idle");
         await new Promise<void>((resolve) => setTimeout(resolve, 20));
@@ -596,12 +596,12 @@ describe("Http2SessionManager", function () {
         });
         const req = await sm.request("POST", "/", {}, {});
         await new Promise<void>((resolve) =>
-          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+          req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         await new Promise<void>((resolve) => setTimeout(resolve, 50));
         expect(sm.state()).toBe("error");
         expect(String(sm.error())).toBe(
-          "ConnectError: [unavailable] PING timed out"
+          "ConnectError: [unavailable] PING timed out",
         );
       });
     });
@@ -614,13 +614,13 @@ describe("Http2SessionManager", function () {
         {
           idleConnectionTimeoutMs: 1, // intentionally small for faster tests
         },
-        {}
+        {},
       );
 
       const req = await sm.request("POST", "/", {}, {});
       expect(sm.state()).toBe("open");
       await new Promise<void>((resolve) =>
-        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       expect(sm.state()).toBe("idle");
       await new Promise<void>((resolve) => setTimeout(resolve, 10));
@@ -631,24 +631,24 @@ describe("Http2SessionManager", function () {
   describe("request against unresolvable host", function () {
     it("should reject", async function () {
       const sm = new Http2SessionManager(
-        "https://unresolvable-host.some.domain"
+        "https://unresolvable-host.some.domain",
       );
       const reqPromise = sm.request("POST", "/", {}, {});
       expect(sm.state()).toBe("connecting");
       await expectAsync(reqPromise).toBeRejectedWithError(
-        /getaddrinfo ENOTFOUND unresolvable-host.some.domain/
+        /getaddrinfo ENOTFOUND unresolvable-host.some.domain/,
       );
       expect(sm.state()).toBe("error");
     });
     it("should reject if manager is aborted while connecting", async function () {
       const sm = new Http2SessionManager(
-        "https://unresolvable-host.some.domain"
+        "https://unresolvable-host.some.domain",
       );
       const reqPromise = sm.request("POST", "/", {}, {});
       expect(sm.state()).toBe("connecting");
       sm.abort();
       await expectAsync(reqPromise).toBeRejectedWithError(
-        /\[canceled] connection aborted/
+        /\[canceled] connection aborted/,
       );
       expect(sm.state()).toBe("closed");
     });
@@ -682,7 +682,7 @@ describe("Http2SessionManager", function () {
 
       // cleanup
       await new Promise<void>((resolve) =>
-        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve)
+        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       sm.abort();
     });

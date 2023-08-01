@@ -33,7 +33,7 @@ import type { Compression } from "../protocol/compression.js";
 export function validateResponse(
   methodKind: MethodKind,
   status: number,
-  headers: Headers
+  headers: Headers,
 ):
   | { isUnaryError: false; unaryError?: undefined }
   | { isUnaryError: true; unaryError: ConnectError } {
@@ -43,7 +43,7 @@ export function validateResponse(
     const errorFromStatus = new ConnectError(
       `HTTP ${status}`,
       codeFromHttpStatus(status),
-      headers
+      headers,
     );
     // If parsedType is defined and it is not binary, then this is a unary JSON response
     if (methodKind == MethodKind.Unary && parsedType && !parsedType.binary) {
@@ -65,13 +65,13 @@ export function validateResponseWithCompression(
   methodKind: MethodKind,
   acceptCompression: Compression[],
   status: number,
-  headers: Headers
+  headers: Headers,
 ): ReturnType<typeof validateResponse> & {
   compression: Compression | undefined;
 } {
   let compression: Compression | undefined;
   const encoding = headers.get(
-    methodKind == MethodKind.Unary ? headerUnaryEncoding : headerStreamEncoding
+    methodKind == MethodKind.Unary ? headerUnaryEncoding : headerStreamEncoding,
   );
   if (encoding != null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);
@@ -79,7 +79,7 @@ export function validateResponseWithCompression(
       throw new ConnectError(
         `unsupported response encoding "${encoding}"`,
         Code.InvalidArgument,
-        headers
+        headers,
       );
     }
   }

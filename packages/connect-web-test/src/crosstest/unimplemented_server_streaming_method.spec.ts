@@ -35,7 +35,7 @@ describe("unimplemented_server_streaming_method", function () {
       const client = createPromiseClient(TestService, transport());
       try {
         for await (const response of client.unimplementedStreamingOutputCall(
-          request
+          request,
         )) {
           fail(`expecting no response, got: ${response.toJsonString()}`);
         }
@@ -54,7 +54,7 @@ describe("unimplemented_server_streaming_method", function () {
         (err: ConnectError | undefined) => {
           expectError(err);
           done();
-        }
+        },
       );
     });
   });

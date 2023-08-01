@@ -70,8 +70,8 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
     yield* res.message;
     log.push(
       `${name} response stream done with trailers: ${listHeaderKeys(
-        res.trailer
-      ).join(", ")}`
+        res.trailer,
+      ).join(", ")}`,
     );
   }
 
@@ -98,7 +98,7 @@ describe("unary interceptors", () => {
     headers: {
       "x-grpc-test-echo-initial": "test_initial_metadata_value",
       "x-grpc-test-echo-trailing-bin": encodeBinaryHeader(
-        new Uint8Array([0xab, 0xab, 0xab])
+        new Uint8Array([0xab, 0xab, 0xab]),
       ),
     },
   };
@@ -121,7 +121,7 @@ describe("unary interceptors", () => {
             makeLoggingInterceptor("outer", log),
             makeLoggingInterceptor("inner", log),
           ],
-        })
+        }),
       );
       await client.unaryCall(
         {
@@ -130,7 +130,7 @@ describe("unary interceptors", () => {
             body: new Uint8Array(271828).fill(0),
           },
         },
-        options
+        options,
       );
       expect(log).toEqual(wantLog);
     });
@@ -143,7 +143,7 @@ describe("unary interceptors", () => {
             makeLoggingInterceptor("outer", log),
             makeLoggingInterceptor("inner", log),
           ],
-        })
+        }),
       );
       client.unaryCall(
         {
@@ -156,7 +156,7 @@ describe("unary interceptors", () => {
           expect(log).toEqual(wantLog);
           done();
         },
-        options
+        options,
       );
     });
   });
@@ -174,7 +174,7 @@ describe("server stream interceptors", () => {
     headers: {
       "x-grpc-test-echo-initial": "test_initial_metadata_value",
       "x-grpc-test-echo-trailing-bin": encodeBinaryHeader(
-        new Uint8Array([0xab, 0xab, 0xab])
+        new Uint8Array([0xab, 0xab, 0xab]),
       ),
     },
   };
@@ -209,7 +209,7 @@ describe("server stream interceptors", () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const _response of client.streamingOutputCall(
         request,
-        options
+        options,
       )) {
         //
       }
@@ -231,7 +231,7 @@ describe("server stream interceptors", () => {
           expect(log).toEqual(wantLog);
           done();
         },
-        options
+        options,
       );
     });
   });

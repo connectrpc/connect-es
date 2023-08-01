@@ -22,7 +22,7 @@ import { ConnectError } from "../connect-error.js";
  */
 export function parseTimeout(
   value: string | null,
-  maxTimeoutMs: number
+  maxTimeoutMs: number,
 ):
   | { timeoutMs?: number; error?: undefined }
   | { timeoutMs?: number; error: ConnectError } {
@@ -34,7 +34,7 @@ export function parseTimeout(
     return {
       error: new ConnectError(
         `protocol error: invalid grpc timeout value: ${value}`,
-        Code.InvalidArgument
+        Code.InvalidArgument,
       ),
     };
   }
@@ -54,7 +54,7 @@ export function parseTimeout(
       timeoutMs: timeoutMs,
       error: new ConnectError(
         `timeout ${timeoutMs}ms must be <= ${maxTimeoutMs}`,
-        Code.InvalidArgument
+        Code.InvalidArgument,
       ),
     };
   }

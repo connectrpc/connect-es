@@ -80,7 +80,7 @@ export type NodeTransportOptions =
 export function validateNodeTransportOptions(
   options: NodeTransportOptions &
     Partial<Omit<CommonTransportOptions, "baseUrl">> &
-    Pick<CommonTransportOptions, "baseUrl">
+    Pick<CommonTransportOptions, "baseUrl">,
 ) {
   let httpClient: UniversalClientFn;
   if (options.httpVersion == "2") {
@@ -96,7 +96,7 @@ export function validateNodeTransportOptions(
           pingTimeoutMs: options.pingTimeoutMs,
           idleConnectionTimeoutMs: options.idleConnectionTimeoutMs,
         },
-        options.nodeOptions
+        options.nodeOptions,
       );
     }
     httpClient = createNodeHttpClient({
@@ -122,7 +122,7 @@ export function validateNodeTransportOptions(
     ...validateReadWriteMaxBytes(
       options.readMaxBytes,
       options.writeMaxBytes,
-      options.compressMinBytes
+      options.compressMinBytes,
     ),
   };
 }

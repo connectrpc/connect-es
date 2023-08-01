@@ -20,7 +20,7 @@ const client = createPromiseClient(
   ElizaService,
   createConnectTransport({
     baseUrl: "https://demo.connect.build",
-  })
+  }),
 );
 
 // eslint-disable-next-line no-console -- log statement makes sure the variable is in use

@@ -42,7 +42,7 @@ export const grpcStatusOk = "0";
  */
 export function setTrailerStatus(
   target: Headers,
-  error: ConnectError | undefined
+  error: ConnectError | undefined,
 ): Headers {
   if (error) {
     target.set(headerGrpcStatus, error.code.toString(10));
@@ -57,7 +57,7 @@ export function setTrailerStatus(
             : new Any({
                 typeUrl: `type.googleapis.com/${value.type}`,
                 value: value.value,
-              })
+              }),
         ),
       });
       target.set(headerStatusDetailsBin, encodeBinaryHeader(status));
@@ -78,7 +78,7 @@ export function setTrailerStatus(
  * @private Internal code, does not follow semantic versioning.
  */
 export function findTrailerError(
-  headerOrTrailer: Headers
+  headerOrTrailer: Headers,
 ): ConnectError | undefined {
   // TODO
   // let code: Code;
@@ -94,7 +94,7 @@ export function findTrailerError(
     const error = new ConnectError(
       status.message,
       status.code,
-      headerOrTrailer
+      headerOrTrailer,
     );
     error.details = status.details.map((any) => ({
       type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
@@ -112,13 +112,13 @@ export function findTrailerError(
       return new ConnectError(
         decodeURIComponent(headerOrTrailer.get(headerGrpcMessage) ?? ""),
         code,
-        headerOrTrailer
+        headerOrTrailer,
       );
     }
     return new ConnectError(
       `invalid grpc-status: ${grpcStatus}`,
       Code.Internal,
-      headerOrTrailer
+      headerOrTrailer,
     );
   }
   return undefined;

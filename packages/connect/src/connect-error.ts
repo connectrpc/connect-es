@@ -84,7 +84,7 @@ export class ConnectError extends Error {
     code: Code = Code.Unknown,
     metadata?: HeadersInit,
     outgoingDetails?: Message[],
-    cause?: unknown
+    cause?: unknown,
   ) {
     super(createMessage(message, code));
     // see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html#example
@@ -124,7 +124,7 @@ export class ConnectError extends Error {
         code,
         undefined,
         undefined,
-        reason
+        reason,
       );
     }
     return new ConnectError(String(reason), code, undefined, undefined, reason);
@@ -141,7 +141,7 @@ export class ConnectError extends Error {
   findDetails<T extends Message<T>>(type: MessageType<T>): T[];
   findDetails(registry: IMessageTypeRegistry): AnyMessage[];
   findDetails(
-    typeOrRegistry: MessageType | IMessageTypeRegistry
+    typeOrRegistry: MessageType | IMessageTypeRegistry,
   ): AnyMessage[] {
     const registry =
       "typeName" in typeOrRegistry
@@ -194,7 +194,7 @@ type IncomingDetail = { type: string; value: Uint8Array; debug?: JsonValue };
  */
 export function connectErrorDetails<T extends Message<T>>(
   error: ConnectError,
-  type: MessageType<T>
+  type: MessageType<T>,
 ): T[];
 /**
  * @deprecated use ConnectError.findDetails() instead
@@ -209,7 +209,7 @@ export function connectErrorDetails(
  */
 export function connectErrorDetails(
   error: ConnectError,
-  registry: IMessageTypeRegistry
+  registry: IMessageTypeRegistry,
 ): AnyMessage[];
 /**
  * @deprecated use ConnectError.findDetails() instead
@@ -270,7 +270,7 @@ function createMessage(message: string, code: Code) {
  */
 export function connectErrorFromReason(
   reason: unknown,
-  code = Code.Unknown
+  code = Code.Unknown,
 ): ConnectError {
   if (reason instanceof ConnectError) {
     return reason;

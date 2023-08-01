@@ -73,10 +73,10 @@ describe("createHandlerFactory()", function () {
   function setupTestHandler<M extends MethodInfo>(
     method: M,
     opt: Partial<UniversalHandlerOptions>,
-    impl: MethodImpl<M>
+    impl: MethodImpl<M>,
   ) {
     const h = createHandlerFactory(opt)(
-      createMethodImplSpec(testService, method, impl)
+      createMethodImplSpec(testService, method, impl),
     );
     const t = createTransport({
       httpClient: createUniversalHandlerClient([h]),
@@ -100,7 +100,7 @@ describe("createHandlerFactory()", function () {
   describe("returned handler", function () {
     it("should allow POST for unary RPC", function () {
       const { handler } = setupTestHandler(testService.methods.unary, {}, () =>
-        Promise.reject()
+        Promise.reject(),
       );
       expect(handler.allowedMethods).toEqual(["POST"]);
       expect(handler.protocolNames).toEqual(["connect"]);
@@ -109,7 +109,7 @@ describe("createHandlerFactory()", function () {
       const { handler } = setupTestHandler(
         testService.methods.unaryNoSideEffects,
         {},
-        () => Promise.reject()
+        () => Promise.reject(),
       );
       expect(handler.allowedMethods).toEqual(["POST", "GET"]);
       expect(handler.protocolNames).toEqual(["connect"]);
@@ -121,7 +121,7 @@ describe("createHandlerFactory()", function () {
         (req, ctx) => {
           ctx.responseHeader.set("implementation-called", "yes");
           return { value: req.value.toString(10) };
-        }
+        },
       );
       const r = await transport.unary(
         service,
@@ -129,7 +129,7 @@ describe("createHandlerFactory()", function () {
         undefined,
         undefined,
         undefined,
-        new Int32Value({ value: 123 })
+        new Int32Value({ value: 123 }),
       );
       expect(r.header.get("implementation-called")).toBe("yes");
       expect(r.message.value).toBe("123");
@@ -142,7 +142,7 @@ describe("createHandlerFactory()", function () {
         async function* (req, ctx) {
           ctx.responseHeader.set("implementation-called", "yes");
           yield { value: req.value.toString(10) };
-        }
+        },
       );
       const r = await transport.stream(
         service,
@@ -150,7 +150,7 @@ describe("createHandlerFactory()", function () {
         undefined,
         undefined,
         undefined,
-        createAsyncIterable([new Int32Value({ value: 123 })])
+        createAsyncIterable([new Int32Value({ value: 123 })]),
       );
       expect(r.header.get("implementation-called")).toBe("yes");
       const all = await pipeTo(r.message, sinkAll());
@@ -164,7 +164,7 @@ describe("createHandlerFactory()", function () {
       const { handler } = setupTestHandler(
         testService.methods.unary,
         { requireConnectProtocolHeader: true },
-        (req) => ({ value: req.value.toString(10) })
+        (req) => ({ value: req.value.toString(10) }),
       );
       it("should raise error for missing header", async function () {
         const res = await handler({
@@ -183,10 +183,10 @@ describe("createHandlerFactory()", function () {
           const err = errorFromJsonBytes(
             body[0],
             undefined,
-            new ConnectError("failed to parse connect err", Code.Internal)
+            new ConnectError("failed to parse connect err", Code.Internal),
           );
           expect(err.message).toBe(
-            '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"'
+            '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"',
           );
         }
       });
@@ -210,10 +210,10 @@ describe("createHandlerFactory()", function () {
           const err = errorFromJsonBytes(
             body[0],
             undefined,
-            new ConnectError("failed to parse connect err", Code.Internal)
+            new ConnectError("failed to parse connect err", Code.Internal),
           );
           expect(err.message).toBe(
-            '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"'
+            '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"',
           );
         }
       });
@@ -225,7 +225,7 @@ describe("createHandlerFactory()", function () {
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req) {
           yield { value: req.value.toString(10) };
-        }
+        },
       );
       it("should raise error for missing header", async function () {
         const res = await handler({
@@ -241,10 +241,10 @@ describe("createHandlerFactory()", function () {
         expect(res.body).not.toBeUndefined();
         if (res.body !== undefined && Symbol.asyncIterator in res.body) {
           const end = endStreamFromJson(
-            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5)
+            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5),
           );
           expect(end.error?.message).toBe(
-            '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"'
+            '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"',
           );
         }
       });
@@ -265,10 +265,10 @@ describe("createHandlerFactory()", function () {
         expect(res.body).not.toBeUndefined();
         if (res.body !== undefined && Symbol.asyncIterator in res.body) {
           const end = endStreamFromJson(
-            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5)
+            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5),
           );
           expect(end.error?.message).toBe(
-            '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"'
+            '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"',
           );
         }
       });
@@ -286,7 +286,7 @@ describe("createHandlerFactory()", function () {
             await new Promise((r) => setTimeout(r, timeoutMs + 50));
             ctx.signal.throwIfAborted();
             return { value: req.value.toString(10) };
-          }
+          },
         );
         const res = await handler({
           httpVersion: "2.0",
@@ -302,11 +302,11 @@ describe("createHandlerFactory()", function () {
           const err = errorFromJsonBytes(
             await readAllBytes(res.body, Number.MAX_SAFE_INTEGER),
             undefined,
-            new ConnectError("error parse failed")
+            new ConnectError("error parse failed"),
           );
           expect(err.code).toBe(Code.DeadlineExceeded);
           expect(err.message).toBe(
-            "[deadline_exceeded] the operation timed out"
+            "[deadline_exceeded] the operation timed out",
           );
         }
       });
@@ -319,7 +319,7 @@ describe("createHandlerFactory()", function () {
           const envelopes = await pipeTo(
             res.body,
             transformSplitEnvelope(0xffffff),
-            sinkAll()
+            sinkAll(),
           );
           const last = envelopes.pop();
           expect(last).toBeDefined();
@@ -337,7 +337,7 @@ describe("createHandlerFactory()", function () {
             await new Promise((r) => setTimeout(r, timeoutMs + 50));
             ctx.signal.throwIfAborted();
             yield { value: req.value.toString(10) };
-          }
+          },
         );
         const res = await handler({
           httpVersion: "2.0",
@@ -355,7 +355,7 @@ describe("createHandlerFactory()", function () {
             const end = endStreamFromJson(lastEnv.data);
             expect(end.error?.code).toBe(Code.DeadlineExceeded);
             expect(end.error?.message).toBe(
-              "[deadline_exceeded] the operation timed out"
+              "[deadline_exceeded] the operation timed out",
             );
           }
         }
@@ -374,7 +374,7 @@ describe("createHandlerFactory()", function () {
           async () => {
             implementationCalled = true;
             return Promise.resolve(new StringValue());
-          }
+          },
         );
         try {
           await transport.unary(
@@ -383,13 +383,13 @@ describe("createHandlerFactory()", function () {
             undefined,
             timeoutMs,
             undefined,
-            new Int32Value()
+            new Int32Value(),
           );
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[invalid_argument] timeout 2000ms must be <= 1000"
+            "[invalid_argument] timeout 2000ms must be <= 1000",
           );
         }
         expect(implementationCalled)
@@ -412,7 +412,7 @@ describe("createHandlerFactory()", function () {
           expect(ctx.signal.aborted).toBeTrue();
           ctx.signal.throwIfAborted();
           return Promise.resolve(new StringValue());
-        }
+        },
       );
       try {
         await transport.unary(
@@ -421,13 +421,13 @@ describe("createHandlerFactory()", function () {
           undefined,
           undefined,
           undefined,
-          new Int32Value()
+          new Int32Value(),
         );
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          "[unavailable] shutting down"
+          "[unavailable] shutting down",
         );
       }
     });
@@ -446,7 +446,7 @@ describe("createHandlerFactory()", function () {
               await new Promise((r) => setTimeout(r, 1));
               ctx.signal.throwIfAborted();
             }
-          }
+          },
         );
         const ac = new AbortController();
         const resPromise = handler({
@@ -477,7 +477,7 @@ describe("createHandlerFactory()", function () {
               await new Promise((r) => setTimeout(r, 1));
               ctx.signal.throwIfAborted();
             }
-          }
+          },
         );
         const ac = new AbortController();
         const resPromise = handler({
@@ -507,7 +507,7 @@ describe("createHandlerFactory()", function () {
           expect(ctx.requestMethod).toBe("GET");
           expect(ctx.protocolName).toBe("connect");
           return { value: "abc" };
-        }
+        },
       );
       const res = await handler({
         httpVersion: "2.0",
@@ -554,7 +554,7 @@ describe("createHandlerFactory()", function () {
       const h = createHandlerFactory(opt)(
         createMethodImplSpec(NewService, OldService.methods.unary, () => {
           return new StringValue({ value: "server ok" });
-        })
+        }),
       );
       const t = createTransport({
         httpClient: createUniversalHandlerClient([h]),
@@ -586,7 +586,7 @@ describe("createHandlerFactory()", function () {
         new NewService.methods.unary.I({
           a: "A",
           b: "B",
-        })
+        }),
       );
       expect(res.message).toBeInstanceOf(StringValue);
     });
@@ -606,13 +606,13 @@ describe("createHandlerFactory()", function () {
           new NewService.methods.unary.I({
             a: "A",
             b: "B",
-          })
+          }),
         );
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown'
+          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown',
         );
       }
     });

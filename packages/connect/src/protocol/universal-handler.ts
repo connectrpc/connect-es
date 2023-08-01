@@ -165,7 +165,7 @@ export interface UniversalHandler extends UniversalHandlerFn {
  * @private Internal code, does not follow semantic versioning.
  */
 export function validateUniversalHandlerOptions(
-  opt: Partial<UniversalHandlerOptions> | undefined
+  opt: Partial<UniversalHandlerOptions> | undefined,
 ): UniversalHandlerOptions {
   opt ??= {};
   const acceptCompression = opt.acceptCompression
@@ -179,7 +179,7 @@ export function validateUniversalHandlerOptions(
     ...validateReadWriteMaxBytes(
       opt.readMaxBytes,
       opt.writeMaxBytes,
-      opt.compressMinBytes
+      opt.compressMinBytes,
     ),
     jsonOptions: opt.jsonOptions,
     binaryOptions: opt.binaryOptions,
@@ -199,10 +199,10 @@ export function validateUniversalHandlerOptions(
  */
 export function createUniversalServiceHandlers(
   spec: ServiceImplSpec,
-  protocols: ProtocolHandlerFactory[]
+  protocols: ProtocolHandlerFactory[],
 ): UniversalHandler[] {
   return Object.entries(spec.methods).map(([, implSpec]) =>
-    createUniversalMethodHandler(implSpec, protocols)
+    createUniversalMethodHandler(implSpec, protocols),
   );
 }
 
@@ -216,7 +216,7 @@ export function createUniversalServiceHandlers(
  */
 export function createUniversalMethodHandler(
   spec: MethodImplSpec,
-  protocols: ProtocolHandlerFactory[]
+  protocols: ProtocolHandlerFactory[],
 ): UniversalHandler {
   return negotiateProtocol(protocols.map((f) => f(spec)));
 }
@@ -235,7 +235,7 @@ export function createUniversalMethodHandler(
  * @private Internal code, does not follow semantic versioning.
  */
 export function negotiateProtocol(
-  protocolHandlers: UniversalHandler[]
+  protocolHandlers: UniversalHandler[],
 ): UniversalHandler {
   if (protocolHandlers.length == 0) {
     throw new ConnectError("at least one protocol is required", Code.Internal);
@@ -248,13 +248,13 @@ export function negotiateProtocol(
   ) {
     throw new ConnectError(
       "cannot negotiate protocol for different RPCs",
-      Code.Internal
+      Code.Internal,
     );
   }
   if (protocolHandlers.some((h) => h.requestPath !== requestPath)) {
     throw new ConnectError(
       "cannot negotiate protocol for different requestPaths",
-      Code.Internal
+      Code.Internal,
     );
   }
   async function protocolNegotiatingHandler(request: UniversalServerRequest) {
@@ -272,7 +272,7 @@ export function negotiateProtocol(
     }
     const contentType = request.header.get("Content-Type") ?? "";
     const matchingMethod = protocolHandlers.filter((h) =>
-      h.allowedMethods.includes(request.method)
+      h.allowedMethods.includes(request.method),
     );
     if (matchingMethod.length == 0) {
       return uResponseMethodNotAllowed;
@@ -283,7 +283,7 @@ export function negotiateProtocol(
       return onlyMatch(request);
     }
     const matchingContentTypes = matchingMethod.filter((h) =>
-      h.supportedContentType(contentType)
+      h.supportedContentType(contentType),
     );
     if (matchingContentTypes.length == 0) {
       return uResponseUnsupportedMediaType;
@@ -297,7 +297,7 @@ export function negotiateProtocol(
     method,
     requestPath,
     supportedContentType: contentTypeMatcher(
-      ...protocolHandlers.map((h) => h.supportedContentType)
+      ...protocolHandlers.map((h) => h.supportedContentType),
     ),
     protocolNames: protocolHandlers
       .flatMap((h) => h.protocolNames)

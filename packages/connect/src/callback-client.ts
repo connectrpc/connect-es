@@ -60,7 +60,7 @@ type CancelFn = () => void;
  */
 export function createCallbackClient<T extends ServiceType>(
   service: T,
-  transport: Transport
+  transport: Transport,
 ) {
   return makeAnyClient(service, (method) => {
     switch (method.kind) {
@@ -80,13 +80,13 @@ export function createCallbackClient<T extends ServiceType>(
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   callback: (error: ConnectError | undefined, response: O) => void,
-  options?: CallOptions
+  options?: CallOptions,
 ) => CancelFn;
 
 function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   transport: Transport,
   service: ServiceType,
-  method: MethodInfo<I, O>
+  method: MethodInfo<I, O>,
 ): UnaryFn<I, O> {
   return function (requestMessage, callback, options) {
     const abort = new AbortController();
@@ -98,7 +98,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
         abort.signal,
         options.timeoutMs,
         options.headers,
-        requestMessage
+        requestMessage,
       )
       .then(
         (response) => {
@@ -113,7 +113,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
             return;
           }
           callback(err, new method.O());
-        }
+        },
       );
     return () => abort.abort();
   };
@@ -127,13 +127,13 @@ type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
   request: PartialMessage<I>,
   onResponse: (response: O) => void,
   onClose: (error: ConnectError | undefined) => void,
-  options?: CallOptions
+  options?: CallOptions,
 ) => CancelFn;
 
 function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
   transport: Transport,
   service: ServiceType,
-  method: MethodInfo<I, O>
+  method: MethodInfo<I, O>,
 ): ServerStreamingFn<I, O> {
   return function (input, onResponse, onClose, options) {
     const abort = new AbortController();
@@ -145,7 +145,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
         options.signal,
         options.timeoutMs,
         options.headers,
-        createAsyncIterable([input])
+        createAsyncIterable([input]),
       );
       options.onHeader?.(response.header);
       for await (const message of response.message) {
@@ -170,7 +170,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
 
 function wrapSignal(
   abort: AbortController,
-  options: CallOptions | undefined
+  options: CallOptions | undefined,
 ): CallOptions {
   if (options?.signal) {
     options.signal.addEventListener("abort", () => abort.abort());

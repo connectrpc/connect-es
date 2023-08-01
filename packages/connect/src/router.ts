@@ -55,13 +55,13 @@ export interface ConnectRouter {
   service<T extends ServiceType>(
     service: T,
     implementation: Partial<ServiceImpl<T>>,
-    options?: Partial<UniversalHandlerOptions>
+    options?: Partial<UniversalHandlerOptions>,
   ): this;
   rpc<M extends MethodInfo>(
     service: ServiceType,
     method: M,
     impl: MethodImpl<M>,
-    options?: Partial<UniversalHandlerOptions>
+    options?: Partial<UniversalHandlerOptions>,
   ): this;
 }
 
@@ -115,7 +115,7 @@ export interface ConnectRouterOptions extends Partial<UniversalHandlerOptions> {
  * Create a new ConnectRouter.
  */
 export function createConnectRouter(
-  routerOptions?: ConnectRouterOptions
+  routerOptions?: ConnectRouterOptions,
 ): ConnectRouter {
   const base = whichProtocols(routerOptions);
   const handlers: UniversalHandler[] = [];
@@ -126,8 +126,8 @@ export function createConnectRouter(
       handlers.push(
         ...createUniversalServiceHandlers(
           createServiceImplSpec(service, implementation),
-          protocols
-        )
+          protocols,
+        ),
       );
       return this;
     },
@@ -136,8 +136,8 @@ export function createConnectRouter(
       handlers.push(
         createUniversalMethodHandler(
           createMethodImplSpec(service, method, implementation),
-          protocols
-        )
+          protocols,
+        ),
       );
       return this;
     },
@@ -146,7 +146,7 @@ export function createConnectRouter(
 
 function whichProtocols(
   options: ConnectRouterOptions | undefined,
-  base?: { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] }
+  base?: { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] },
 ): { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] } {
   if (base && !options) {
     return base;
@@ -174,7 +174,7 @@ function whichProtocols(
   if (protocols.length === 0) {
     throw new ConnectError(
       "cannot create handler, all protocols are disabled",
-      Code.InvalidArgument
+      Code.InvalidArgument,
     );
   }
   return {

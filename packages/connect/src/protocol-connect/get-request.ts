@@ -45,11 +45,11 @@ function encodeMessageForUrl(message: Uint8Array, useBase64: boolean): string {
  */
 export function transformConnectPostToGetRequest<
   I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
+  O extends Message<O> = AnyMessage,
 >(
   request: UnaryRequest<I, O>,
   message: Uint8Array,
-  useBase64: boolean
+  useBase64: boolean,
 ): UnaryRequest<I, O> {
   let query = `?connect=v${protocolVersion}`;
   const contentType = request.header.get(headerContentType);

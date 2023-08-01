@@ -38,7 +38,7 @@ describe("unsupported content encoding", () => {
             url: createMethodUrl(
               server.getUrl(),
               TestService,
-              TestService.methods.unaryCall
+              TestService.methods.unaryCall,
             ),
             method: "POST",
             headers: {
@@ -54,12 +54,12 @@ describe("unsupported content encoding", () => {
             undefined,
             new ConnectError(
               `HTTP ${res.status}`,
-              codeFromHttpStatus(res.status)
-            )
+              codeFromHttpStatus(res.status),
+            ),
           );
           expect(err.code).toBe(Code.Unimplemented);
           expect(err.rawMessage).toMatch(
-            /^unknown compression "banana": supported encodings are gzip(,[a-z]+)*$/
+            /^unknown compression "banana": supported encodings are gzip(,[a-z]+)*$/,
           );
         });
       });
@@ -69,7 +69,7 @@ describe("unsupported content encoding", () => {
             url: createMethodUrl(
               server.getUrl(),
               TestService,
-              TestService.methods.streamingInputCall
+              TestService.methods.streamingInputCall,
             ),
             method: "POST",
             headers: {
@@ -82,11 +82,11 @@ describe("unsupported content encoding", () => {
           const endStream = endStreamFromJson(res.body.subarray(5));
           expect(endStream.error?.code).toBe(Code.Unimplemented);
           expect(endStream.error?.rawMessage).toMatch(
-            /^unknown compression "banana": supported encodings are gzip(,[a-z]+)*$/
+            /^unknown compression "banana": supported encodings are gzip(,[a-z]+)*$/,
           );
         });
       });
-    }
+    },
   );
 
   afterAll(async () => await servers.stop());

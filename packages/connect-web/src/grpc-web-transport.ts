@@ -115,27 +115,27 @@ export interface GrpcWebTransportOptions {
  * support reading streaming responses from an XMLHttpRequest.
  */
 export function createGrpcWebTransport(
-  options: GrpcWebTransportOptions
+  options: GrpcWebTransportOptions,
 ): Transport {
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? true;
   return {
     async unary<
       I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
+      O extends Message<O> = AnyMessage,
     >(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: Headers,
-      message: PartialMessage<I>
+      message: PartialMessage<I>,
     ): Promise<UnaryResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
-        options.binaryOptions
+        options.binaryOptions,
       );
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
@@ -168,7 +168,7 @@ export function createGrpcWebTransport(
             throw "missing response body";
           }
           const reader = createEnvelopeReadableStream(
-            response.body
+            response.body,
           ).getReader();
           let trailer: Headers | undefined;
           let message: O | undefined;
@@ -212,26 +212,26 @@ export function createGrpcWebTransport(
 
     async stream<
       I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage
+      O extends Message<O> = AnyMessage,
     >(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>
+      input: AsyncIterable<PartialMessage<I>>,
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
         useBinaryFormat,
         options.jsonOptions,
-        options.binaryOptions
+        options.binaryOptions,
       );
 
       async function* parseResponseBody(
         body: ReadableStream<Uint8Array>,
         foundStatus: boolean,
-        trailerTarget: Headers
+        trailerTarget: Headers,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         if (foundStatus) {
@@ -277,7 +277,7 @@ export function createGrpcWebTransport(
       }
 
       async function createRequestBody(
-        input: AsyncIterable<I>
+        input: AsyncIterable<I>,
       ): Promise<Uint8Array> {
         if (method.kind != MethodKind.ServerStreaming) {
           throw "The fetch API does not support streaming request bodies";

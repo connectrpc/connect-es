@@ -18,7 +18,7 @@ import { ConnectError } from "../connect-error.js";
 describe("gRPC-web validateResponse()", function () {
   function v(
     httpStatus: number,
-    headers: Record<string, string>
+    headers: Record<string, string>,
   ): ConnectError | undefined {
     try {
       validateResponse(httpStatus, new Headers(headers));
@@ -79,7 +79,7 @@ describe("gRPC-web validateResponse()", function () {
   it("should return foundStatus for grpc-status OK", function () {
     const { foundStatus } = validateResponse(
       200,
-      new Headers({ "grpc-status": "0" })
+      new Headers({ "grpc-status": "0" }),
     );
     expect(foundStatus).toBeTrue();
   });

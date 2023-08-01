@@ -48,7 +48,7 @@ describe("createHandlerContext()", function () {
       });
       expect(ctx.signal.aborted).toBeTrue();
       expect(String(ctx.signal.reason)).toBe(
-        "ConnectError: [deadline_exceeded] the operation timed out"
+        "ConnectError: [deadline_exceeded] the operation timed out",
       );
     });
     it("should trigger on request signal", function () {

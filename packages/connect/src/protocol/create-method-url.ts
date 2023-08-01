@@ -32,7 +32,7 @@ import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 export function createMethodUrl(
   baseUrl: string | URL,
   service: ServiceType | string,
-  method: MethodInfo | string
+  method: MethodInfo | string,
 ): string {
   const s = typeof service == "string" ? service : service.typeName;
   const m = typeof method == "string" ? method : method.name;

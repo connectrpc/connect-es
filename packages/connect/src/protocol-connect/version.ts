@@ -35,12 +35,12 @@ export function requireProtocolVersionHeader(requestHeader: Headers) {
   if (v === null) {
     throw new ConnectError(
       `missing required header: set ${headerProtocolVersion} to "${protocolVersion}"`,
-      Code.InvalidArgument
+      Code.InvalidArgument,
     );
   } else if (v !== protocolVersion) {
     throw new ConnectError(
       `${headerProtocolVersion} must be "${protocolVersion}": got "${v}"`,
-      Code.InvalidArgument
+      Code.InvalidArgument,
     );
   }
 }
@@ -56,12 +56,12 @@ export function requireProtocolVersionParam(queryParams: URLSearchParams) {
   if (v === null) {
     throw new ConnectError(
       `missing required parameter: set ${paramConnectVersion} to "v${protocolVersion}"`,
-      Code.InvalidArgument
+      Code.InvalidArgument,
     );
   } else if (v !== `v${protocolVersion}`) {
     throw new ConnectError(
       `${paramConnectVersion} must be "v${protocolVersion}": got "${v}"`,
-      Code.InvalidArgument
+      Code.InvalidArgument,
     );
   }
 }

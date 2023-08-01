@@ -109,7 +109,7 @@ const methodGet = "GET";
  * Create a factory that creates Connect handlers.
  */
 export function createHandlerFactory(
-  options: Partial<UniversalHandlerOptions>
+  options: Partial<UniversalHandlerOptions>,
 ): ProtocolHandlerFactory {
   const opt = validateUniversalHandlerOptions(options);
   const endStreamSerialization = createEndStreamSerialization(opt.jsonOptions);
@@ -121,7 +121,7 @@ export function createHandlerFactory(
       spec.method,
       opt.binaryOptions,
       opt.jsonOptions,
-      opt
+      opt,
     );
     switch (spec.kind) {
       case MethodKind.Unary:
@@ -134,7 +134,7 @@ export function createHandlerFactory(
           opt,
           spec,
           serialization,
-          endStreamSerialization
+          endStreamSerialization,
         );
         break;
     }
@@ -159,10 +159,10 @@ export function createHandlerFactory(
 function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
   opt: UniversalHandlerOptions,
   spec: MethodImplSpec<I, O> & { kind: MethodKind.Unary },
-  serialization: MethodSerializationLookup<I, O>
+  serialization: MethodSerializationLookup<I, O>,
 ) {
   return async function handle(
-    req: UniversalServerRequest
+    req: UniversalServerRequest,
   ): Promise<UniversalServerResponse> {
     const isGet = req.method == methodGet;
     if (isGet && spec.method.idempotency != MethodIdempotency.NoSideEffects) {
@@ -180,7 +180,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     }
     const timeout = parseTimeout(
       req.header.get(headerTimeout),
-      opt.maxTimeoutMs
+      opt.maxTimeoutMs,
     );
     const context = createHandlerContext({
       ...spec,
@@ -200,7 +200,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       opt.acceptCompression,
       compressionRequested,
       req.header.get(headerUnaryAcceptEncoding),
-      headerUnaryAcceptEncoding
+      headerUnaryAcceptEncoding,
     );
     let status = uResponseOk.status;
     let body: Uint8Array;
@@ -225,20 +225,20 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
         reqBody = await readUnaryMessageFromQuery(
           opt.readMaxBytes,
           compression.request,
-          queryParams
+          queryParams,
         );
       } else {
         reqBody = await readUnaryMessageFromBody(
           opt.readMaxBytes,
           compression.request,
-          req
+          req,
         );
       }
       const input = parseUnaryMessage(
         spec.method,
         type.binary,
         serialization,
-        reqBody
+        reqBody,
       );
       const output = await invokeUnaryImplementation(spec, context, input);
       body = serialization.getO(type.binary).serialize(output);
@@ -252,7 +252,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
           Code.Internal,
           undefined,
           undefined,
-          e
+          e,
         );
       }
       status = codeToHttpStatus(error.code);
@@ -268,7 +268,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       body = await compression.response.compress(body);
       context.responseHeader.set(
         headerUnaryEncoding,
-        compression.response.name
+        compression.response.name,
       );
     }
     const header = trailerMux(context.responseHeader, context.responseTrailer);
@@ -284,7 +284,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
 async function readUnaryMessageFromBody(
   readMaxBytes: number,
   compression: Compression | null,
-  request: UniversalServerRequest
+  request: UniversalServerRequest,
 ): Promise<Uint8Array | JsonValue> {
   if (
     typeof request.body == "object" &&
@@ -294,7 +294,7 @@ async function readUnaryMessageFromBody(
     let reqBytes = await readAllBytes(
       request.body,
       readMaxBytes,
-      request.header.get(headerUnaryContentLength)
+      request.header.get(headerUnaryContentLength),
     );
     if (compression) {
       reqBytes = await compression.decompress(reqBytes, readMaxBytes);
@@ -307,7 +307,7 @@ async function readUnaryMessageFromBody(
 async function readUnaryMessageFromQuery(
   readMaxBytes: number,
   compression: Compression | null,
-  queryParams: URLSearchParams
+  queryParams: URLSearchParams,
 ): Promise<Uint8Array> {
   const base64 = queryParams.get(paramBase64);
   const message = queryParams.get(paramMessage) ?? "";
@@ -327,7 +327,7 @@ function parseUnaryMessage<I extends Message<I>, O extends Message<O>>(
   method: MethodInfo<I, O>,
   useBinaryFormat: boolean,
   serialization: MethodSerializationLookup<I, O>,
-  input: Uint8Array | JsonValue
+  input: Uint8Array | JsonValue,
 ): I {
   if (input instanceof Uint8Array) {
     return serialization.getI(useBinaryFormat).parse(input);
@@ -335,7 +335,7 @@ function parseUnaryMessage<I extends Message<I>, O extends Message<O>>(
   if (useBinaryFormat) {
     throw new ConnectError(
       "received parsed JSON request body, but content-type indicates binary format",
-      Code.Internal
+      Code.Internal,
     );
   }
   try {
@@ -349,10 +349,10 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
   opt: UniversalHandlerOptions,
   spec: MethodImplSpec<I, O>,
   serialization: MethodSerializationLookup<I, O>,
-  endStreamSerialization: Serialization<EndStreamResponse>
+  endStreamSerialization: Serialization<EndStreamResponse>,
 ) {
   return async function handle(
-    req: UniversalServerRequest
+    req: UniversalServerRequest,
   ): Promise<UniversalServerResponse> {
     assertByteStreamRequest(req);
     const type = parseContentType(req.header.get(headerContentType));
@@ -364,7 +364,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     }
     const timeout = parseTimeout(
       req.header.get(headerTimeout),
-      opt.maxTimeoutMs
+      opt.maxTimeoutMs,
     );
     const context = createHandlerContext({
       ...spec,
@@ -384,12 +384,12 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       opt.acceptCompression,
       req.header.get(headerStreamEncoding),
       req.header.get(headerStreamAcceptEncoding),
-      headerStreamAcceptEncoding
+      headerStreamAcceptEncoding,
     );
     if (compression.response) {
       context.responseHeader.set(
         headerStreamEncoding,
-        compression.response.name
+        compression.response.name,
       );
     }
     const outputIt = pipe(
@@ -408,7 +408,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       transformDecompressEnvelope(compression.request, opt.readMaxBytes),
       transformParseEnvelope(
         serialization.getI(type.binary),
-        endStreamFlag
+        endStreamFlag,
         // if we set `null` here, an end-stream-message in the request
         // raises an error, but we want to be lenient
       ),
@@ -427,7 +427,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
             Code.Internal,
             undefined,
             undefined,
-            e
+            e,
           );
         }
         return {
@@ -436,7 +436,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
         };
       }),
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
-      transformJoinEnvelopes()
+      transformJoinEnvelopes(),
     );
     return {
       ...uResponseOk,
