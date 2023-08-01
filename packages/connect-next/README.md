@@ -4,13 +4,13 @@ Connect is a family of libraries for building and consuming APIs on different la
 [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings type-safe APIs with Protobuf to
 TypeScript.
 
-`@bufbuild/connect-next` provides a plugin for [Next.js](https://nextjs.org/), 
+`@bufbuild/connect-next` provides a plugin for [Next.js](https://nextjs.org/),
 the React Framework for the Web.
 
 
 ### nextJsApiRouter()
 
-Provide your Connect RPCs via Next.js API routes.  To enable Connect in Next.js, 
+Provide your Connect RPCs via Next.js API routes.  To enable Connect in Next.js,
 add two files to your project:
 
 ```diff
@@ -35,7 +35,7 @@ export default function(router: ConnectRouter) {
 }
 ```
 
-`pages/api/[[..connect]].ts` is a Next.js [catch-all API route](https://nextjs.org/docs/routing/dynamic-routes#catch-all-routes): 
+`pages/api/[[..connect]].ts` is a Next.js [catch-all API route](https://nextjs.org/docs/routing/dynamic-routes#catch-all-routes):
 
 ```ts
 // pages/api/[[..connect]].ts
@@ -56,7 +56,7 @@ curl \
     --header "Content-Type: application/json" \
     --data '{"sentence": "I feel happy."}' \
     --http2-prior-knowledge \
-    http://localhost:3000/api/buf.connect.demo.eliza.v1.ElizaService/Say
+    http://localhost:3000/api/connectrpc.eliza.v1.ElizaService/Say
 ```
 
 Node.js with the gRPC-web protocol (using a transport from [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node)):
@@ -88,10 +88,10 @@ and Express does not support the Node.js `http2` module.
 
 Currently, `@bufbuild/connect-next` does not support the Vercel Edge runtime.
 It requires the Node.js server runtime, which is used by default when deploying
-to Vercel.  
+to Vercel.
 
 
 ## Getting started
 
 To get started with Connect, head over to the [docs](https://connect.build/docs/node/getting-started)
-for a tutorial, or take a look at [our example](https://github.com/bufbuild/connect-es/tree/main/packages/example). 
+for a tutorial, or take a look at [our example](https://github.com/bufbuild/connect-es/tree/main/packages/example).

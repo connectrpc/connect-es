@@ -125,19 +125,19 @@ $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-test/src/gen/*
 	npm run -w packages/connect-web-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=proto
-	npm run -w packages/connect-web-test generate buf.build/bufbuild/eliza
+	npm run -w packages/connect-web-test generate buf.build/connectrpc/eliza
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-node-test/src/gen/*
-	npm run -w packages/connect-node-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=proto
+	npm run -w packages/connect-node-test generate https://github.com/connectrpc/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=proto
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-bench/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-bench/src/gen/*
-	npm run -w packages/connect-web-bench generate buf.build/bufbuild/eliza:847d7675503fd7aef7137c62376fdbabcf777568
+	npm run -w packages/connect-web-bench generate buf.build/connectrpc/eliza:d8fbf2620c604277a0ece1ff3a26f2ff
 	@mkdir -p $(@D)
 	@touch $(@)
 

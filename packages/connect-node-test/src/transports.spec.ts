@@ -68,7 +68,7 @@ describe("createConnectTransport()", function () {
 
 describe("using a session manager to open a connection before starting an application", function () {
   it("should work", async function () {
-    const sm = new Http2SessionManager("https://demo.connect.build");
+    const sm = new Http2SessionManager("https://demo.connectrpc.com");
     for (let backoff = 1; ; backoff++) {
       const state = await sm.connect();
       if (state == "error") {
@@ -93,11 +93,11 @@ describe("using a session manager to explicitly close all connections", function
   it("should work", function () {
     // create a client, keeping a reference to the session manage
     const sessionManager = new Http2SessionManager(
-      "https://demo.connect.build",
+      "https://demo.connectrpc.com",
     );
     createConnectTransport({
       httpVersion: "2",
-      baseUrl: "https://demo.connect.build",
+      baseUrl: "https://demo.connectrpc.com",
       sessionManager,
     });
     // const client = createPromiseClient(..., transport);

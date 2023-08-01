@@ -1,6 +1,6 @@
 # @bufbuild/connect
 
-Connect is a family of libraries for building type-safe APIs with different languages and platforms.  
+Connect is a family of libraries for building type-safe APIs with different languages and platforms.
 [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings them to TypeScript,
 the web browser, and to Node.js.
 
@@ -29,7 +29,7 @@ and you can `curl` them if you want:
 curl \
     --header 'Content-Type: application/json' \
     --data '{"sentence": "I feel happy."}' \
-    https://demo.connect.build/buf.connect.demo.eliza.v1.ElizaService/Say
+    https://demo.connectrpc.com/connectrpc.eliza.v1.ElizaService/Say
 ```
 
 With Connect for ECMAScript, you can spin up a service in Node.js and call it

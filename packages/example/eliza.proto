@@ -1,4 +1,4 @@
-// Copyright 2021-2023 Buf Technologies, Inc.
+// Copyright 2022 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,52 +14,54 @@
 
 syntax = "proto3";
 
-package buf.connect.demo.eliza.v1;
+package connectrpc.eliza.v1;
 
-// ElizaService provides a way to talk to the ELIZA, which is a port of
-// the DOCTOR script for Joseph Weizenbaum's original ELIZA program.
-// Created in the mid-1960s at the MIT Artificial Intelligence Laboratory,
-// ELIZA demonstrates the superficiality of human-computer communication.
-// DOCTOR simulates a psychotherapist, and is commonly found as an Easter
-// egg in emacs distributions.
+// ElizaService provides a way to talk to Eliza, a port of the DOCTOR script
+// for Joseph Weizenbaum's original ELIZA program. Created in the mid-1960s at
+// the MIT Artificial Intelligence Laboratory, ELIZA demonstrates the
+// superficiality of human-computer communication. DOCTOR simulates a
+// psychotherapist, and is commonly found as an Easter egg in emacs
+// distributions.
 service ElizaService {
-  // Say is a unary request demo. This method should allow for a one sentence
-  // response given a one sentence request.
+  // Say is a unary RPC. Eliza responds to the prompt with a single sentence.
   rpc Say(SayRequest) returns (SayResponse) {}
-  // Converse is a bi-directional streaming request demo. This method should allow for
-  // many requests and many responses.
+  // Converse is a bidirectional RPC. The caller may exchange multiple
+  // back-and-forth messages with Eliza over a long-lived connection. Eliza
+  // responds to each ConverseRequest with a ConverseResponse.
   rpc Converse(stream ConverseRequest) returns (stream ConverseResponse) {}
-  // Introduce is a server-streaming request demo.  This method allows for a single request that will return a series
-  // of responses
+  // Introduce is a server streaming RPC. Given the caller's name, Eliza
+  // returns a stream of sentences to introduce itself.
   rpc Introduce(IntroduceRequest) returns (stream IntroduceResponse) {}
 }
 
-// SayRequest describes the sentence said to the ELIZA program.
+// SayRequest is a single-sentence request.
 message SayRequest {
   string sentence = 1;
 }
 
-// SayResponse describes the sentence responded by the ELIZA program.
+// SayResponse is a single-sentence response.
 message SayResponse {
   string sentence = 1;
 }
 
-// ConverseRequest describes the sentence said to the ELIZA program.
+// ConverseRequest is a single sentence request sent as part of a
+// back-and-forth conversation.
 message ConverseRequest {
   string sentence = 1;
 }
 
-// ConverseResponse describes the sentence responded by the ELIZA program.
+// ConverseResponse is a single sentence response sent in answer to a
+// ConverseRequest.
 message ConverseResponse {
   string sentence = 1;
 }
 
-// IntroduceRequest describes a request for details from the ELIZA program.
+// IntroduceRequest asks Eliza to introduce itself to the named user.
 message IntroduceRequest {
   string name = 1;
 }
 
-// IntroduceResponse describes the sentence responded by the ELIZA program.
+// IntroduceResponse is one sentence of Eliza's introductory monologue.
 message IntroduceResponse {
   string sentence = 1;
 }

@@ -32,7 +32,7 @@ can `curl` them if you want:
 curl \
     --header 'Content-Type: application/json' \
     --data '{"sentence": "I feel happy."}' \
-    https://demo.connect.build/buf.connect.demo.eliza.v1.ElizaService/Say
+    https://demo.connectrpc.com/connectrpc.eliza.v1.ElizaService/Say
 ```
 
 Connect uses [Protobuf-ES](https://github.com/bufbuild/protobuf-es), the only
@@ -108,7 +108,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 * [connect-go](https://github.com/bufbuild/connect-go):
   Go implementation of gRPC, gRPC-Web, and Connect
 * [connect-demo](https://github.com/bufbuild/connect-demo):
-  demonstration service powering demo.connect.build
+  demonstration service powering demo.connectrpc.com
 * [connect-crosstest](https://github.com/bufbuild/connect-crosstest):
   gRPC-Web and Connect interoperability tests
 * [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
