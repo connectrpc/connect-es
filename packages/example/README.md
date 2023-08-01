@@ -110,7 +110,7 @@ protoc -I . eliza.proto \
 
 ## More examples
 
-To get started, head over to the [docs](https://connect.build/docs/web/getting-started)
+To get started, head over to the [docs](https://connectrpc.com/docs/web/getting-started)
 for a tutorial. You will also find API documentation and best practices there.
 For using Connect with your favorite framework, take a look at
 [connect-es-integration](https://github.com/bufbuild/connect-es-integration).

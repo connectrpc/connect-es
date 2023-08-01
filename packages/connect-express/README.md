@@ -77,5 +77,5 @@ and Express does not support the Node.js `http2` module.
 
 ## Getting started
 
-To get started with Connect, head over to the [docs](https://connect.build/docs/node/getting-started)
+To get started with Connect, head over to the [docs](https://connectrpc.com/docs/node/getting-started)
 for a tutorial, or take a look at [our example](https://github.com/bufbuild/connect-es/tree/main/packages/example).
