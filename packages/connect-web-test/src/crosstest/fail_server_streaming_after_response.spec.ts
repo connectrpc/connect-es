@@ -56,7 +56,7 @@ describe("fail_server_streaming_after_response", () => {
       } catch (e) {
         expectError(e);
         expect(receivedResponses.length).toBe(
-          request.responseParameters.length
+          request.responseParameters.length,
         );
       }
     });
@@ -71,10 +71,10 @@ describe("fail_server_streaming_after_response", () => {
         (err: ConnectError | undefined) => {
           expectError(err);
           expect(receivedResponses.length).toBe(
-            request.responseParameters.length
+            request.responseParameters.length,
           );
           done();
-        }
+        },
       );
     });
   });

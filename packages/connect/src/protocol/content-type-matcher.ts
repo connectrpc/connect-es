@@ -37,9 +37,9 @@ export function contentTypeMatcher(
   const source = supported.reduce(
     (previousValue: RegExp[], currentValue) =>
       previousValue.concat(
-        "supported" in currentValue ? currentValue.supported : currentValue
+        "supported" in currentValue ? currentValue.supported : currentValue,
       ),
-    []
+    [],
   );
   function match(contentType: string | null): boolean {
     if (contentType === null || contentType.length == 0) {

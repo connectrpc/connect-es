@@ -51,10 +51,10 @@ describe("createHandlerFactory()", function () {
   function setupTestHandler<M extends MethodInfo>(
     method: M,
     opt: Partial<UniversalHandlerOptions>,
-    impl: MethodImpl<M>
+    impl: MethodImpl<M>,
   ) {
     const h = createHandlerFactory(opt)(
-      createMethodImplSpec(testService, method, impl)
+      createMethodImplSpec(testService, method, impl),
     );
     const t = createTransport({
       httpClient: createUniversalHandlerClient([h]),
@@ -83,7 +83,7 @@ describe("createHandlerFactory()", function () {
         (req, ctx) => {
           ctx.responseHeader.set("implementation-called", "yes");
           return { value: req.value.toString(10) };
-        }
+        },
       );
       const r = await transport.unary(
         service,
@@ -91,7 +91,7 @@ describe("createHandlerFactory()", function () {
         undefined,
         undefined,
         undefined,
-        new Int32Value({ value: 123 })
+        new Int32Value({ value: 123 }),
       );
       expect(r.header.get("implementation-called")).toBe("yes");
       expect(r.message.value).toBe("123");
@@ -105,7 +105,7 @@ describe("createHandlerFactory()", function () {
         async function* (req, ctx) {
           ctx.responseHeader.set("implementation-called", "yes");
           yield { value: req.value.toString(10) };
-        }
+        },
       );
       const r = await transport.stream(
         service,
@@ -113,7 +113,7 @@ describe("createHandlerFactory()", function () {
         undefined,
         undefined,
         undefined,
-        createAsyncIterable([new Int32Value({ value: 123 })])
+        createAsyncIterable([new Int32Value({ value: 123 })]),
       );
       expect(r.header.get("implementation-called")).toBe("yes");
       const all = await pipeTo(r.message, sinkAll());
@@ -135,7 +135,7 @@ describe("createHandlerFactory()", function () {
             await new Promise((r) => setTimeout(r, 1));
             ctx.signal.throwIfAborted();
           }
-        }
+        },
       );
       await handler({
         httpVersion: "2.0",
@@ -149,7 +149,7 @@ describe("createHandlerFactory()", function () {
       expect(handlerContextSignal?.aborted).toBeTrue();
       expect(handlerContextSignal?.reason).toBeInstanceOf(ConnectError);
       expect(ConnectError.from(handlerContextSignal?.reason).message).toBe(
-        "[deadline_exceeded] the operation timed out"
+        "[deadline_exceeded] the operation timed out",
       );
     });
     describe("exceeding configured maxTimeoutMs", function () {
@@ -165,7 +165,7 @@ describe("createHandlerFactory()", function () {
           async () => {
             implementationCalled = true;
             return Promise.resolve(new StringValue());
-          }
+          },
         );
         try {
           await transport.unary(
@@ -174,13 +174,13 @@ describe("createHandlerFactory()", function () {
             undefined,
             timeoutMs,
             undefined,
-            new Int32Value()
+            new Int32Value(),
           );
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[invalid_argument] timeout 2000ms must be <= 1000"
+            "[invalid_argument] timeout 2000ms must be <= 1000",
           );
         }
         expect(implementationCalled)
@@ -203,7 +203,7 @@ describe("createHandlerFactory()", function () {
           expect(ctx.signal.aborted).toBeTrue();
           ctx.signal.throwIfAborted();
           return Promise.resolve(new StringValue());
-        }
+        },
       );
       try {
         await transport.unary(
@@ -212,13 +212,13 @@ describe("createHandlerFactory()", function () {
           undefined,
           undefined,
           undefined,
-          new Int32Value()
+          new Int32Value(),
         );
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          "[unavailable] shutting down"
+          "[unavailable] shutting down",
         );
       }
     });
@@ -236,7 +236,7 @@ describe("createHandlerFactory()", function () {
             await new Promise((r) => setTimeout(r, 1));
             ctx.signal.throwIfAborted();
           }
-        }
+        },
       );
       const ac = new AbortController();
       const resPromise = handler({

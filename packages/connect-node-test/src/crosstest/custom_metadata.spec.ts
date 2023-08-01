@@ -98,7 +98,7 @@ describe("custom_metadata", function () {
           onTrailer(trailer) {
             responseTrailers = trailer;
           },
-        }
+        },
       );
     });
   });

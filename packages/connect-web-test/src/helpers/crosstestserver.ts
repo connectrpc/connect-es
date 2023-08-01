@@ -37,7 +37,7 @@ const connectNodeH1BaseUrl = "http://127.0.0.1:8085";
 const crosstestTransports = {
   // gRPC-web
   "@bufbuild/connect-web (gRPC-web, binary) gRPC-web against connect-go (h1)": (
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ) =>
     createGrpcWebTransport({
       ...options,
@@ -45,7 +45,7 @@ const crosstestTransports = {
       useBinaryFormat: true,
     }),
   "@bufbuild/connect-web (gRPC-web, JSON) gRPC-web against connect-go (h1)": (
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ) =>
     createGrpcWebTransport({
       ...options,
@@ -68,7 +68,7 @@ const crosstestTransports = {
       }),
   // Connect
   "@bufbuild/connect-web (Connect, binary) against connect-go (h1)": (
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ) =>
     createConnectTransport({
       ...options,
@@ -76,7 +76,7 @@ const crosstestTransports = {
       useBinaryFormat: true,
     }),
   "@bufbuild/connect-web (Connect, JSON) against connect-go (h1)": (
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ) =>
     createConnectTransport({
       ...options,
@@ -91,7 +91,7 @@ const crosstestTransports = {
         useBinaryFormat: true,
       }),
   "@bufbuild/connect-web (Connect, JSON) against @bufbuild/connect-node (h1)": (
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ) =>
     createConnectTransport({
       ...options,
@@ -101,7 +101,7 @@ const crosstestTransports = {
 
   // ConnectRouter
   "@bufbuild/connect-web (ConnectRouter, binary)": (
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ) =>
     createRouterTransport(testRoutes, {
       transport: {
@@ -111,7 +111,7 @@ const crosstestTransports = {
     }),
 
   "@bufbuild/connect-web (ConnectRouter, JSON)": (
-    options?: Record<string, unknown>
+    options?: Record<string, unknown>,
   ) =>
     createRouterTransport(testRoutes, {
       transport: {
@@ -124,14 +124,14 @@ const crosstestTransports = {
 export function describeTransports(
   specDefinitions: (
     transport: (options?: Record<string, unknown>) => Transport,
-    transportName: keyof typeof crosstestTransports
-  ) => void
+    transportName: keyof typeof crosstestTransports,
+  ) => void,
 ) {
   for (const [name, transportFactory] of Object.entries(crosstestTransports)) {
     describe(name, () => {
       specDefinitions(
         transportFactory,
-        name as keyof typeof crosstestTransports
+        name as keyof typeof crosstestTransports,
       );
     });
   }
@@ -141,8 +141,8 @@ export function describeTransportsExcluding(
   exclude: Array<keyof typeof crosstestTransports>,
   specDefinitions: (
     transport: (options?: Record<string, unknown>) => Transport,
-    transportName: keyof typeof crosstestTransports
-  ) => void
+    transportName: keyof typeof crosstestTransports,
+  ) => void,
 ) {
   for (const [name, transportFactory] of Object.entries(crosstestTransports)) {
     if (exclude.includes(name as keyof typeof crosstestTransports)) {
@@ -151,7 +151,7 @@ export function describeTransportsExcluding(
     describe(name, () => {
       specDefinitions(
         transportFactory,
-        name as keyof typeof crosstestTransports
+        name as keyof typeof crosstestTransports,
       );
     });
   }

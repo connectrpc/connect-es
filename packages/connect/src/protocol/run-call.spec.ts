@@ -103,7 +103,7 @@ describe("runUnaryCall()", function () {
     });
     userAbort.abort();
     await expectAsync(resPromise).toBeRejectedWithError(
-      "[canceled] This operation was aborted"
+      "[canceled] This operation was aborted",
     );
   });
   it("should raise Code.DeadlineExceeded on timeout", async function () {
@@ -118,7 +118,7 @@ describe("runUnaryCall()", function () {
       },
     });
     await expectAsync(resPromise).toBeRejectedWithError(
-      "[deadline_exceeded] the operation timed out"
+      "[deadline_exceeded] the operation timed out",
     );
   });
 });
@@ -209,7 +209,7 @@ describe("runStreamingCall()", function () {
     });
     userAbort.abort();
     await expectAsync(resPromise).toBeRejectedWithError(
-      "[canceled] This operation was aborted"
+      "[canceled] This operation was aborted",
     );
     const it = req.message[Symbol.asyncIterator]();
     expect(await it.next()).toEqual({ done: true, value: undefined });
@@ -227,7 +227,7 @@ describe("runStreamingCall()", function () {
       },
     });
     await expectAsync(resPromise).toBeRejectedWithError(
-      "[deadline_exceeded] the operation timed out"
+      "[deadline_exceeded] the operation timed out",
     );
     const it = req.message[Symbol.asyncIterator]();
     expect(await it.next()).toEqual({ done: true, value: undefined });

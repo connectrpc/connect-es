@@ -48,7 +48,7 @@ export function addGrpcService<T extends ServiceType>(
   grpcServer: grpc.Server,
   service: T,
   implementation: GrpcServiceImplementation<T>,
-  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>
+  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>,
 ): void {
   const definition = createGrpcServiceDefinition(service, binaryOptions);
   grpcServer.addService(definition, implementation);

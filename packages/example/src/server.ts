@@ -105,7 +105,7 @@ http2
       // and HTTP/2 on the same port.
       allowHTTP1: true,
     },
-    handler
+    handler,
   )
   .listen(8443, () => {
     stdout.write("The server is listening on https://localhost:8443\n");

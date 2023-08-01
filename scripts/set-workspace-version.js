@@ -27,7 +27,7 @@ if (process.argv.length < 3) {
       "If a package depends on another package from the workspace, the",
       "dependency version is updated as well.",
       "",
-    ].join("\n")
+    ].join("\n"),
   );
   process.exit(1);
 }

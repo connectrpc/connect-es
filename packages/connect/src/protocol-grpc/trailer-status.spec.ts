@@ -52,7 +52,7 @@ describe("setTrailerStatus()", function () {
       t,
       new ConnectError("soirée 🎉", Code.ResourceExhausted, {}, [
         new Int32Value({ value: 123 }),
-      ])
+      ]),
     );
     let count = 0;
     t.forEach(() => count++);
@@ -60,7 +60,7 @@ describe("setTrailerStatus()", function () {
     expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
     expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
     expect(t.get("grpc-status-details-bin")).toBe(
-      "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew"
+      "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew",
     );
   });
 });

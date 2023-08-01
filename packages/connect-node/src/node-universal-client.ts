@@ -101,7 +101,7 @@ export interface NodeHttp2ClientSessionManager {
     method: string,
     path: string,
     headers: http2.OutgoingHttpHeaders,
-    options: Omit<http2.ClientSessionRequestOptions, "signal">
+    options: Omit<http2.ClientSessionRequestOptions, "signal">,
   ): Promise<http2.ClientHttp2Stream>;
 
   /**
@@ -121,10 +121,10 @@ function createNodeHttp1Client(
   httpOptions:
     | Omit<http.RequestOptions, "signal">
     | Omit<https.RequestOptions, "signal">
-    | undefined
+    | undefined,
 ): UniversalClientFn {
   return async function request(
-    req: UniversalClientRequest
+    req: UniversalClientRequest,
   ): Promise<UniversalClientResponse> {
     const sentinel = createSentinel(req.signal);
     return new Promise<UniversalClientResponse>((resolve, reject) => {
@@ -145,7 +145,7 @@ function createNodeHttp1Client(
           request.on("response", (response) => {
             response.on("error", sentinel.reject);
             sentinel.catch((reason) =>
-              response.destroy(connectErrorFromNodeReason(reason))
+              response.destroy(connectErrorFromNodeReason(reason)),
             );
             const trailer = new Headers();
             resolve({
@@ -155,7 +155,7 @@ function createNodeHttp1Client(
               trailer,
             });
           });
-        }
+        },
       );
     });
   };
@@ -169,10 +169,10 @@ function createNodeHttp1Client(
  * an UniversalClientResponse.
  */
 function createNodeHttp2Client(
-  sessionProvider: (authority: string) => NodeHttp2ClientSessionManager
+  sessionProvider: (authority: string) => NodeHttp2ClientSessionManager,
 ): UniversalClientFn {
   return function request(
-    req: UniversalClientRequest
+    req: UniversalClientRequest,
   ): Promise<UniversalClientResponse> {
     const sentinel = createSentinel(req.signal);
     const sessionManager = sessionProvider(req.url);
@@ -198,7 +198,7 @@ function createNodeHttp2Client(
             };
             resolve(response);
           });
-        }
+        },
       );
     });
   };
@@ -210,7 +210,7 @@ function h1Request(
   options:
     | Omit<http.RequestOptions, "signal">
     | Omit<https.RequestOptions, "signal">,
-  onRequest: (request: http.ClientRequest) => void
+  onRequest: (request: http.ClientRequest) => void,
 ): void {
   let request: http.ClientRequest;
   if (new URL(url).protocol.startsWith("https")) {
@@ -219,7 +219,7 @@ function h1Request(
     request = http.request(url, options);
   }
   sentinel.catch((reason) =>
-    request.destroy(connectErrorFromNodeReason(reason))
+    request.destroy(connectErrorFromNodeReason(reason)),
   );
   // Node.js will only send headers with the first request body byte by default.
   // We force it to send headers right away for consistent behavior between
@@ -246,7 +246,7 @@ function h1Request(
 function h1ResponseIterable(
   sentinel: Sentinel,
   response: http.IncomingMessage,
-  trailer: Headers
+  trailer: Headers,
 ): AsyncIterable<Uint8Array> {
   const inner: AsyncIterator<Uint8Array> = response[Symbol.asyncIterator]();
   return {
@@ -279,7 +279,7 @@ function h2Request(
   method: string,
   headers: http2.OutgoingHttpHeaders,
   options: Omit<http2.ClientSessionRequestOptions, "signal">,
-  onStream: (stream: http2.ClientHttp2Stream) => void
+  onStream: (stream: http2.ClientHttp2Stream) => void,
 ): void {
   const requestUrl = new URL(url, sm.authority);
   if (requestUrl.origin !== sm.authority) {
@@ -328,7 +328,7 @@ function h2Request(
     },
     (reason) => {
       sentinel.reject(reason);
-    }
+    },
   );
 }
 
@@ -340,7 +340,7 @@ function h2ResponseTrailer(response: http2.ClientHttp2Stream): Headers {
       nodeHeaderToWebHeader(args).forEach((value, key) => {
         trailer.set(key, value);
       });
-    }
+    },
   );
   return trailer;
 }
@@ -348,7 +348,7 @@ function h2ResponseTrailer(response: http2.ClientHttp2Stream): Headers {
 function h2ResponseIterable(
   sentinel: Sentinel,
   response: http2.ClientHttp2Stream,
-  sm?: NodeHttp2ClientSessionManager
+  sm?: NodeHttp2ClientSessionManager,
 ): AsyncIterable<Uint8Array> {
   const inner: AsyncIterator<Uint8Array> = response[Symbol.asyncIterator]();
   return {
@@ -375,7 +375,7 @@ function h2ResponseIterable(
 async function sinkRequest(
   request: UniversalClientRequest,
   nodeRequest: http.ClientRequest | http2.ClientHttp2Stream,
-  sentinel: Sentinel
+  sentinel: Sentinel,
 ) {
   if (request.body === undefined) {
     await new Promise<void>((resolve) => nodeRequest.end(resolve));
@@ -422,7 +422,7 @@ async function sinkRequest(
         },
         (e) => {
           sentinel.reject(e);
-        }
+        },
       );
     }
   });
@@ -511,7 +511,7 @@ function createSentinel(signal?: AbortSignal): Sentinel {
       () => {
         // We intentionally swallow sentinel rejection - errors must
         // propagate through the request or response iterables.
-      }
+      },
     );
   }
   return s;

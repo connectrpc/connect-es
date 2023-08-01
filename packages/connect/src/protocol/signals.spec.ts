@@ -84,7 +84,7 @@ describe("createDeadlineSignal()", function () {
     await new Promise((resolve) => setTimeout(resolve, timeoutMs + 25));
     expect(d.signal.aborted).toBeTrue();
     expect(String(d.signal.reason)).toEqual(
-      "ConnectError: [deadline_exceeded] the operation timed out"
+      "ConnectError: [deadline_exceeded] the operation timed out",
     );
   });
 });

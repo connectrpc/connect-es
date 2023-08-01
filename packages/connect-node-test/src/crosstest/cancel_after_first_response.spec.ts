@@ -113,7 +113,7 @@ describe("cancel_after_first_response", function () {
           expectError(e);
         }
       });
-    }
+    },
   );
 
   afterAll(async () => await servers.stop());

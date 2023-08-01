@@ -32,7 +32,7 @@ describe("unimplemented_server_streaming_method", function () {
       const request = new Empty();
       try {
         for await (const response of client.unimplementedStreamingOutputCall(
-          request
+          request,
         )) {
           fail(`expecting no response, got: ${response.toJsonString()}`);
         }
@@ -42,11 +42,11 @@ describe("unimplemented_server_streaming_method", function () {
         expect(ConnectError.from(e).code).toBe(Code.Unimplemented);
         if (transportName.includes("against grpc-go")) {
           expect(ConnectError.from(e).message).toBe(
-            "[unimplemented] method UnimplementedStreamingOutputCall not implemented"
+            "[unimplemented] method UnimplementedStreamingOutputCall not implemented",
           );
         } else {
           expect(ConnectError.from(e).message).toBe(
-            "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented"
+            "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented",
           );
         }
       }
@@ -63,15 +63,15 @@ describe("unimplemented_server_streaming_method", function () {
           expect(err?.code).toBe(Code.Unimplemented);
           if (transportName.includes("against grpc-go")) {
             expect(err?.message).toBe(
-              "[unimplemented] method UnimplementedStreamingOutputCall not implemented"
+              "[unimplemented] method UnimplementedStreamingOutputCall not implemented",
             );
           } else {
             expect(err?.message).toBe(
-              "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented"
+              "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented",
             );
           }
           done();
-        }
+        },
       );
     });
   });

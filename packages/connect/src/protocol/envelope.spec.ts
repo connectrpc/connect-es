@@ -47,7 +47,7 @@ function createReadableByteStream(bytes: Uint8Array, chunkSize = 2, delay = 5) {
 describe("createEnvelopeReadableStream()", () => {
   it("reads empty stream", async () => {
     const reader = createEnvelopeReadableStream(
-      createReadableByteStream(new Uint8Array(0))
+      createReadableByteStream(new Uint8Array(0)),
     ).getReader();
     const r = await reader.read();
     expect(r.done).toBeTrue();
@@ -69,7 +69,7 @@ describe("createEnvelopeReadableStream()", () => {
       },
     ];
     const reader = createEnvelopeReadableStream(
-      createReadableByteStream(encodeEnvelopes(...input))
+      createReadableByteStream(encodeEnvelopes(...input)),
     ).getReader();
     for (const want of input) {
       const r = await reader.read();
@@ -104,7 +104,7 @@ describe("createEnvelopeReadableStream()", () => {
           // for envelopes should return them all with subsequent calls to read()
           // without pulling from this underlying stream again.
           throw new Error(
-            "expected only a single pull on the underlying stream"
+            "expected only a single pull on the underlying stream",
           );
         }
         sourceStreamPulls++;
@@ -133,7 +133,7 @@ describe("createEnvelopeReadableStream()", () => {
       },
     ];
     const reader = createEnvelopeReadableStream(
-      createReadableByteStream(encodeEnvelopes(...input))
+      createReadableByteStream(encodeEnvelopes(...input)),
     ).getReader();
     for (const want of input) {
       const r = await reader.read();
@@ -160,8 +160,8 @@ describe("envelope compression", function () {
         return Promise.reject(
           new ConnectError(
             `message is larger than configured readMaxBytes ${readMaxBytes} after decompression`,
-            Code.ResourceExhausted
-          )
+            Code.ResourceExhausted,
+          ),
         );
       }
       const b = new Uint8Array(bytes.byteLength);
@@ -182,7 +182,7 @@ describe("envelope compression", function () {
       const got = await envelopeDecompress(
         compressedEnvelope,
         compressionReverse,
-        Number.MAX_SAFE_INTEGER
+        Number.MAX_SAFE_INTEGER,
       );
       expect(got).toEqual(uncompressedEnvelope);
     });
@@ -190,7 +190,7 @@ describe("envelope compression", function () {
       const got = await envelopeDecompress(
         uncompressedEnvelope,
         compressionReverse,
-        Number.MAX_SAFE_INTEGER
+        Number.MAX_SAFE_INTEGER,
       );
       expect(got).toEqual(uncompressedEnvelope);
     });
@@ -201,7 +201,7 @@ describe("envelope compression", function () {
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression"
+          "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression",
         );
       }
     });
@@ -209,7 +209,7 @@ describe("envelope compression", function () {
       const got = await envelopeDecompress(
         uncompressedEnvelope,
         compressionReverse,
-        0
+        0,
       );
       expect(got).toEqual(uncompressedEnvelope);
     });
@@ -218,7 +218,7 @@ describe("envelope compression", function () {
         const got = await envelopeDecompress(
           uncompressedEnvelope,
           null,
-          Number.MAX_SAFE_INTEGER
+          Number.MAX_SAFE_INTEGER,
         );
         expect(got).toEqual(uncompressedEnvelope);
       });
@@ -227,13 +227,13 @@ describe("envelope compression", function () {
           await envelopeDecompress(
             compressedEnvelope,
             null,
-            Number.MAX_SAFE_INTEGER
+            Number.MAX_SAFE_INTEGER,
           );
           fail("expected error");
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[invalid_argument] received compressed envelope, but do not know how to decompress"
+            "[invalid_argument] received compressed envelope, but do not know how to decompress",
           );
         }
       });
@@ -249,7 +249,7 @@ describe("envelope compression", function () {
       const got = await envelopeCompress(
         uncompressedEnvelope,
         compressionReverse,
-        0
+        0,
       );
       expect(got).toEqual(compressedEnvelope);
     });
@@ -257,7 +257,7 @@ describe("envelope compression", function () {
       const got = await envelopeCompress(
         uncompressedEnvelope,
         compressionReverse,
-        0
+        0,
       );
       expect(got).toEqual(compressedEnvelope);
     });
@@ -268,7 +268,7 @@ describe("envelope compression", function () {
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          "[internal] invalid envelope, already compressed"
+          "[internal] invalid envelope, already compressed",
         );
       }
     });

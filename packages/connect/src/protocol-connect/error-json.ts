@@ -31,11 +31,11 @@ import { codeFromString, codeToString } from "./code-string.js";
 export function errorFromJson(
   jsonValue: JsonValue,
   metadata: HeadersInit | undefined,
-  fallback: ConnectError
+  fallback: ConnectError,
 ): ConnectError {
   if (metadata) {
     new Headers(metadata).forEach((value, key) =>
-      fallback.metadata.append(key, value)
+      fallback.metadata.append(key, value),
     );
   }
   if (
@@ -91,7 +91,7 @@ export function errorFromJson(
 export function errorFromJsonBytes(
   bytes: Uint8Array,
   metadata: HeadersInit | undefined,
-  fallback: ConnectError
+  fallback: ConnectError,
 ): ConnectError {
   let jsonValue: JsonValue;
   try {
@@ -116,7 +116,7 @@ export function errorFromJsonBytes(
  */
 export function errorToJson(
   error: ConnectError,
-  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined,
 ): JsonObject {
   const o: JsonObject = {
     code: codeToString(error.code),
@@ -165,7 +165,7 @@ export function errorToJson(
  */
 export function errorToJsonBytes(
   error: ConnectError,
-  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined,
 ): Uint8Array {
   const textEncoder = new TextEncoder();
   try {
@@ -176,7 +176,7 @@ export function errorToJsonBytes(
     const m = e instanceof Error ? e.message : String(e);
     throw new ConnectError(
       `failed to serialize Connect Error: ${m}`,
-      Code.Internal
+      Code.Internal,
     );
   }
 }

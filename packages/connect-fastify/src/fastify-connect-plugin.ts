@@ -51,7 +51,7 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
 export function fastifyConnectPlugin(
   instance: FastifyInstance,
   opts: FastifyConnectPluginOptions,
-  done: (err?: Error) => void
+  done: (err?: Error) => void,
 ) {
   if (opts.routes === undefined) {
     done();
@@ -82,8 +82,8 @@ export function fastifyConnectPlugin(
           const uRes = await uHandler(
             universalRequestFromNodeRequest(
               req.raw,
-              req.body as JsonValue | undefined
-            )
+              req.body as JsonValue | undefined,
+            ),
           );
           // Fastify maintains response headers on the reply object and only moves them to
           // the raw response during reply.send, but we are not using reply.send with this plugin.
@@ -101,10 +101,10 @@ export function fastifyConnectPlugin(
           // eslint-disable-next-line no-console
           console.error(
             `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
-            e
+            e,
           );
         }
-      }
+      },
     );
   }
 
@@ -125,26 +125,26 @@ function addNoopContentTypeParsers(instance: FastifyInstance): void {
       protoGrpc.contentTypeProto,
       protoGrpc.contentTypeJson,
     ],
-    noopContentTypeParser
+    noopContentTypeParser,
   );
   instance.addContentTypeParser(
     protoGrpc.contentTypeRegExp,
-    noopContentTypeParser
+    noopContentTypeParser,
   );
   instance.addContentTypeParser(
     protoGrpcWeb.contentTypeRegExp,
-    noopContentTypeParser
+    noopContentTypeParser,
   );
   instance.addContentTypeParser(
     protoConnect.contentTypeRegExp,
-    noopContentTypeParser
+    noopContentTypeParser,
   );
 }
 
 function noopContentTypeParser(
   _req: unknown,
   _payload: unknown,
-  done: (err: null, body?: undefined) => void
+  done: (err: null, body?: undefined) => void,
 ) {
   done(null, undefined);
 }

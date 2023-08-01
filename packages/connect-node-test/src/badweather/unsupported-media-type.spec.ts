@@ -32,7 +32,7 @@ describe("unsupported media type", () => {
             url: createMethodUrl(
               server.getUrl(),
               TestService,
-              TestService.methods.unaryCall
+              TestService.methods.unaryCall,
             ),
             method: "POST",
             ctype: "text/csv",
@@ -46,7 +46,7 @@ describe("unsupported media type", () => {
             url: createMethodUrl(
               server.getUrl(),
               TestService,
-              TestService.methods.unaryCall
+              TestService.methods.unaryCall,
             ),
             method: "POST",
             ctype: "application/connect+proto",
@@ -62,7 +62,7 @@ describe("unsupported media type", () => {
             url: createMethodUrl(
               server.getUrl(),
               TestService,
-              TestService.methods.streamingInputCall
+              TestService.methods.streamingInputCall,
             ),
             method: "POST",
             ctype: "text/csv",
@@ -76,7 +76,7 @@ describe("unsupported media type", () => {
             url: createMethodUrl(
               server.getUrl(),
               TestService,
-              TestService.methods.streamingInputCall
+              TestService.methods.streamingInputCall,
             ),
             method: "POST",
             ctype: "application/proto",
@@ -86,7 +86,7 @@ describe("unsupported media type", () => {
           expect(res.body.byteLength).toBe(0);
         });
       });
-    }
+    },
   );
 
   afterAll(async () => await servers.stop());

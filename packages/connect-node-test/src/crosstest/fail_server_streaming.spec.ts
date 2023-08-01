@@ -65,7 +65,7 @@ describe("fail_server_streaming", () => {
         (err: ConnectError | undefined) => {
           expectError(err);
           done();
-        }
+        },
       );
     });
   });

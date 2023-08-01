@@ -98,7 +98,7 @@ describe("custom_metadata_server_streaming", function () {
           onTrailer(trailer) {
             responseTrailers = trailer;
           },
-        }
+        },
       );
     });
   });

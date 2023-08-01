@@ -54,7 +54,7 @@ interface ExpressConnectMiddlewareOptions extends ConnectRouterOptions {
  * Adds your Connect RPCs to an Express server.
  */
 export function expressConnectMiddleware(
-  options: ExpressConnectMiddlewareOptions
+  options: ExpressConnectMiddlewareOptions,
 ): express.Handler {
   if (options.acceptCompression === undefined) {
     options.acceptCompression = [compressionGzip, compressionBrotli];
@@ -69,7 +69,7 @@ export function expressConnectMiddleware(
   return function handler(
     req: express.Request,
     res: express.Response,
-    next: express.NextFunction
+    next: express.NextFunction,
   ) {
     // Strip the query parameter when matching paths.
     const uHandler = paths.get(req.url.split("?", 2)[0]);
@@ -86,7 +86,7 @@ export function expressConnectMiddleware(
         // eslint-disable-next-line no-console
         console.error(
           `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
-          reason
+          reason,
         );
       });
   };

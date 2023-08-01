@@ -41,14 +41,14 @@ const testService: ServiceImpl<typeof TestService> = {
     echoMetadata(
       context.requestHeader,
       context.responseHeader,
-      context.responseTrailer
+      context.responseTrailer,
     );
     context.responseHeader.set("request-protocol", context.protocolName);
     maybeRaiseError(request.responseStatus);
     return {
       payload: interop.makeServerPayload(
         request.responseType,
-        request.responseSize
+        request.responseSize,
       ),
     };
   },
@@ -70,7 +70,7 @@ const testService: ServiceImpl<typeof TestService> = {
     echoMetadata(
       context.requestHeader,
       context.responseHeader,
-      context.responseTrailer
+      context.responseTrailer,
     );
     for (const param of request.responseParameters) {
       await maybeDelayResponse(param);
@@ -86,7 +86,7 @@ const testService: ServiceImpl<typeof TestService> = {
     echoMetadata(
       context.requestHeader,
       context.responseHeader,
-      context.responseTrailer
+      context.responseTrailer,
     );
     for (const param of request.responseParameters) {
       await maybeDelayResponse(param);
@@ -104,7 +104,7 @@ const testService: ServiceImpl<typeof TestService> = {
     echoMetadata(
       context.requestHeader,
       context.responseHeader,
-      context.responseTrailer
+      context.responseTrailer,
     );
     let total = 0;
     for await (const req of requests) {
@@ -119,7 +119,7 @@ const testService: ServiceImpl<typeof TestService> = {
     echoMetadata(
       context.requestHeader,
       context.responseHeader,
-      context.responseTrailer
+      context.responseTrailer,
     );
     for await (const req of requests) {
       for (const param of req.responseParameters) {
@@ -137,7 +137,7 @@ const testService: ServiceImpl<typeof TestService> = {
     echoMetadata(
       context.requestHeader,
       context.responseHeader,
-      context.responseTrailer
+      context.responseTrailer,
     );
     const buffer: StreamingOutputCallRequest[] = [];
     for await (const req of requests) {
@@ -158,7 +158,7 @@ const testService: ServiceImpl<typeof TestService> = {
   unimplementedCall(/*request*/) {
     throw new ConnectError(
       "grpc.testing.TestService.UnimplementedCall is not implemented",
-      Code.Unimplemented
+      Code.Unimplemented,
     );
   },
 
@@ -166,7 +166,7 @@ const testService: ServiceImpl<typeof TestService> = {
   async *unimplementedStreamingOutputCall(/*requests*/) {
     throw new ConnectError(
       "grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented",
-      Code.Unimplemented
+      Code.Unimplemented,
     );
   },
 };
@@ -189,7 +189,7 @@ function maybeRaiseError(status: EchoStatus | undefined): void {
 function echoMetadata(
   requestHeader: Headers,
   responseHeader: Headers,
-  responseTrailer: Headers
+  responseTrailer: Headers,
 ): void {
   const leadingMetadata = requestHeader.get(interop.leadingMetadataKey);
   if (leadingMetadata !== null) {
@@ -200,7 +200,7 @@ function echoMetadata(
     const decodedTrailingMetadata = decodeBinaryHeader(trailingMetadata);
     responseTrailer.set(
       interop.trailingMetadataKey,
-      encodeBinaryHeader(decodedTrailingMetadata)
+      encodeBinaryHeader(decodedTrailingMetadata),
     );
   }
 }

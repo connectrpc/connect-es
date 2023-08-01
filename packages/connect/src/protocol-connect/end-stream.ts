@@ -48,14 +48,14 @@ export interface EndStreamResponse {
  * @private Internal code, does not follow semantic versioning.
  */
 export function endStreamFromJson(
-  data: Uint8Array | string
+  data: Uint8Array | string,
 ): EndStreamResponse {
   const parseErr = new ConnectError("invalid end stream", Code.InvalidArgument);
   let jsonValue: JsonValue;
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     jsonValue = JSON.parse(
-      typeof data == "string" ? data : new TextDecoder().decode(data)
+      typeof data == "string" ? data : new TextDecoder().decode(data),
     );
   } catch (e) {
     throw parseErr;
@@ -109,7 +109,7 @@ export function endStreamFromJson(
 export function endStreamToJson(
   metadata: Headers,
   error: ConnectError | undefined,
-  jsonWriteOptions: Partial<JsonWriteOptions> | undefined
+  jsonWriteOptions: Partial<JsonWriteOptions> | undefined,
 ): JsonObject {
   const es: JsonObject = {};
   if (error !== undefined) {
@@ -135,7 +135,7 @@ export function endStreamToJson(
  * @private Internal code, does not follow semantic versioning.
  */
 export function createEndStreamSerialization(
-  options: Partial<JsonWriteOptions> | undefined
+  options: Partial<JsonWriteOptions> | undefined,
 ): Serialization<EndStreamResponse> {
   const textEncoder = new TextEncoder();
   return {
@@ -148,7 +148,7 @@ export function createEndStreamSerialization(
         const m = e instanceof Error ? e.message : String(e);
         throw new ConnectError(
           `failed to serialize EndStreamResponse: ${m}`,
-          Code.Internal
+          Code.Internal,
         );
       }
     },
@@ -159,7 +159,7 @@ export function createEndStreamSerialization(
         const m = e instanceof Error ? e.message : String(e);
         throw new ConnectError(
           `failed to parse EndStreamResponse: ${m}`,
-          Code.InvalidArgument
+          Code.InvalidArgument,
         );
       }
     },

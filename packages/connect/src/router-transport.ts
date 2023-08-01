@@ -30,7 +30,7 @@ export function createRouterTransport(
   options?: {
     transport?: Partial<CommonTransportOptions>;
     router?: ConnectRouterOptions;
-  }
+  },
 ) {
   const router = createConnectRouter({
     ...(options?.router ?? {}),

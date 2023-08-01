@@ -63,7 +63,7 @@ interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
  * The returned function is compatible with http.RequestListener and its equivalent for http2.
  */
 export function connectNodeAdapter(
-  options: ConnectNodeAdapterOptions
+  options: ConnectNodeAdapterOptions,
 ): NodeHandlerFn {
   if (options.acceptCompression === undefined) {
     options.acceptCompression = [compressionGzip, compressionBrotli];
@@ -77,7 +77,7 @@ export function connectNodeAdapter(
   }
   return function nodeRequestHandler(
     req: NodeServerRequest,
-    res: NodeServerResponse
+    res: NodeServerResponse,
   ): void {
     // Strip the query parameter when matching paths.
     const uHandler = paths.get(req.url?.split("?", 2)[0] ?? "");
@@ -95,7 +95,7 @@ export function connectNodeAdapter(
         // eslint-disable-next-line no-console
         console.error(
           `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
-          reason
+          reason,
         );
       });
   };

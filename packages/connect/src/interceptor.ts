@@ -51,7 +51,7 @@ export type Interceptor = (next: AnyFn) => AnyFn;
  * response to inspect and log.
  */
 type AnyFn = (
-  req: UnaryRequest | StreamRequest
+  req: UnaryRequest | StreamRequest,
 ) => Promise<UnaryResponse | StreamResponse>;
 
 /**
@@ -60,7 +60,7 @@ type AnyFn = (
  */
 export interface UnaryRequest<
   I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
+  O extends Message<O> = AnyMessage,
 > extends RequestCommon<I, O> {
   /**
    * The `stream` property discriminates between UnaryRequest and
@@ -80,7 +80,7 @@ export interface UnaryRequest<
  */
 export interface UnaryResponse<
   I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
+  O extends Message<O> = AnyMessage,
 > extends ResponseCommon<I, O> {
   /**
    * The `stream` property discriminates between UnaryResponse and
@@ -100,7 +100,7 @@ export interface UnaryResponse<
  */
 export interface StreamRequest<
   I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
+  O extends Message<O> = AnyMessage,
 > extends RequestCommon<I, O> {
   /**
    * The `stream` property discriminates between UnaryRequest and
@@ -120,7 +120,7 @@ export interface StreamRequest<
  */
 export interface StreamResponse<
   I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage
+  O extends Message<O> = AnyMessage,
 > extends ResponseCommon<I, O> {
   /**
    * The `stream` property discriminates between UnaryResponse and

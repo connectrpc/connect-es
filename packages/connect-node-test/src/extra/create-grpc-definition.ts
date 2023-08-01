@@ -31,14 +31,14 @@ import type * as grpc from "@grpc/grpc-js";
  */
 export function createGrpcServiceDefinition<T extends ServiceType>(
   service: T,
-  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>
+  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>,
 ): Record<string, grpc.MethodDefinition<AnyMessage, AnyMessage>> {
   const def: Record<string, grpc.MethodDefinition<AnyMessage, AnyMessage>> = {};
   for (const localName of Object.keys(service.methods)) {
     def[localName] = createGrpcMethodDefinition(
       service,
       localName,
-      binaryOptions
+      binaryOptions,
     );
   }
   return def;
@@ -50,11 +50,11 @@ export function createGrpcServiceDefinition<T extends ServiceType>(
  */
 function createGrpcMethodDefinition<
   T extends ServiceType,
-  M extends keyof T["methods"]
+  M extends keyof T["methods"],
 >(
   service: T,
   methodLocalName: M,
-  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>
+  binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>,
 ): grpc.MethodDefinition<AnyMessage, AnyMessage> {
   const info = service.methods[methodLocalName as string];
   return {

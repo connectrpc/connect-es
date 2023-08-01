@@ -45,7 +45,7 @@ export interface EnvelopedMessage {
  * @private Internal code, does not follow semantic versioning.
  */
 export function createEnvelopeReadableStream(
-  stream: ReadableStream<Uint8Array>
+  stream: ReadableStream<Uint8Array>,
 ): ReadableStream<EnvelopedMessage> {
   let reader: ReadableStreamDefaultReader<Uint8Array>;
   let buffer = new Uint8Array(0);
@@ -86,7 +86,7 @@ export function createEnvelopeReadableStream(
           return;
         }
         controller.error(
-          new ConnectError("premature end of stream", Code.DataLoss)
+          new ConnectError("premature end of stream", Code.DataLoss),
         );
         return;
       }
@@ -110,13 +110,13 @@ export function createEnvelopeReadableStream(
 export async function envelopeCompress(
   envelope: EnvelopedMessage,
   compression: Compression | null,
-  compressMinBytes: number
+  compressMinBytes: number,
 ): Promise<EnvelopedMessage> {
   let { flags, data } = envelope;
   if ((flags & compressedFlag) === compressedFlag) {
     throw new ConnectError(
       "invalid envelope, already compressed",
-      Code.Internal
+      Code.Internal,
     );
   }
   if (compression && data.byteLength >= compressMinBytes) {
@@ -140,14 +140,14 @@ export async function envelopeCompress(
 export async function envelopeDecompress(
   envelope: EnvelopedMessage,
   compression: Compression | null,
-  readMaxBytes: number
+  readMaxBytes: number,
 ): Promise<EnvelopedMessage> {
   let { flags, data } = envelope;
   if ((flags & compressedFlag) === compressedFlag) {
     if (!compression) {
       throw new ConnectError(
         "received compressed envelope, but do not know how to decompress",
-        Code.InvalidArgument
+        Code.InvalidArgument,
       );
     }
     data = await compression.decompress(data, readMaxBytes);
@@ -179,7 +179,7 @@ export function encodeEnvelopes(...envelopes: EnvelopedMessage[]): Uint8Array {
   const len = envelopes.reduce(
     (previousValue, currentValue) =>
       previousValue + currentValue.data.length + 5,
-    0
+    0,
   );
   const bytes = new Uint8Array(len);
   const v = new DataView(bytes.buffer);

@@ -122,7 +122,7 @@ describe("pipe()", function () {
         for await (const chunk of iterable) {
           yield chunk + 1;
         }
-      }
+      },
     );
     let sum = 0;
     for await (const chunk of iterable) {
@@ -158,7 +158,7 @@ describe("pipe()", function () {
     });
 
     async function consumeWithError(
-      iterable: AsyncIterable<unknown>
+      iterable: AsyncIterable<unknown>,
     ): Promise<void> {
       const it = iterable[Symbol.asyncIterator]();
       for (;;) {
@@ -181,7 +181,7 @@ describe("pipe()", function () {
     }
 
     async function* noopTransform(
-      iterable: AsyncIterable<string>
+      iterable: AsyncIterable<string>,
     ): AsyncIterable<string> {
       yield* iterable;
     }
@@ -229,7 +229,7 @@ describe("pipe()", function () {
           yield next * 2;
         }
       },
-      { propagateDownStreamError: true }
+      { propagateDownStreamError: true },
     );
     const it = iterable[Symbol.asyncIterator]();
     expect(await it.next()).toEqual({ done: false, value: 2 });
@@ -248,7 +248,7 @@ describe("pipeTo()", function () {
           sum += chunk;
         }
         return sum;
-      }
+      },
     );
     expect(sum).toBe(6);
   });
@@ -266,7 +266,7 @@ describe("pipeTo()", function () {
           sum += chunk;
         }
         return sum;
-      }
+      },
     );
     expect(sum).toBe(9);
   });
@@ -300,7 +300,7 @@ describe("pipeTo()", function () {
     }
 
     async function* noopTransform(
-      iterable: AsyncIterable<string>
+      iterable: AsyncIterable<string>,
     ): AsyncIterable<string> {
       yield* iterable;
     }
@@ -429,11 +429,11 @@ describe("makeIterableAbortable()", function () {
       const iterable = pipe(
         source(),
         async function* noopTransform(
-          iterable: AsyncIterable<string>
+          iterable: AsyncIterable<string>,
         ): AsyncIterable<string> {
           yield* iterable;
         },
-        { propagateDownStreamError: true }
+        { propagateDownStreamError: true },
       );
       const abortable = makeIterableAbortable(iterable);
       for await (const chunk of abortable) {
@@ -475,7 +475,7 @@ describe("transforming asynchronous iterables", () => {
       it("should serialize to envelopes", async function () {
         const it = pipe(
           createAsyncIterable(goldenItems),
-          transformSerializeEnvelope(fakeSerialization)
+          transformSerializeEnvelope(fakeSerialization),
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
@@ -485,7 +485,7 @@ describe("transforming asynchronous iterables", () => {
       it("should parse from envelopes", async function () {
         const it = pipe(
           createAsyncIterable(goldenEnvelopes),
-          transformParseEnvelope(fakeSerialization)
+          transformParseEnvelope(fakeSerialization),
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenItems);
@@ -535,7 +535,7 @@ describe("transforming asynchronous iterables", () => {
       it("should serialize to envelopes", async function () {
         const it = pipe(
           createAsyncIterable(goldenItems),
-          transformSerializeEnvelope(serialization, endFlag, endSerialization)
+          transformSerializeEnvelope(serialization, endFlag, endSerialization),
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
@@ -550,7 +550,7 @@ describe("transforming asynchronous iterables", () => {
       it("should parse from envelopes", async function () {
         const it = pipe(
           createAsyncIterable(goldenEnvelopes),
-          transformParseEnvelope(serialization, endFlag, endSerialization)
+          transformParseEnvelope(serialization, endFlag, endSerialization),
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenItems);
@@ -559,7 +559,7 @@ describe("transforming asynchronous iterables", () => {
         it("should skip unexpected end flag", async function () {
           const it = pipe(
             createAsyncIterable(goldenEnvelopes),
-            transformParseEnvelope(serialization, endFlag)
+            transformParseEnvelope(serialization, endFlag),
           );
           const got = await readAll(it);
           expect(got).toEqual(itemsWithoutEndFlag);
@@ -567,7 +567,7 @@ describe("transforming asynchronous iterables", () => {
         it("should still parse to T", async function () {
           const it = pipe(
             createAsyncIterable(envelopesWithoutEndFlag),
-            transformParseEnvelope(serialization, endFlag)
+            transformParseEnvelope(serialization, endFlag),
           );
           const got = await readAll(it);
           expect(got).toEqual(itemsWithoutEndFlag);
@@ -577,7 +577,7 @@ describe("transforming asynchronous iterables", () => {
         it("should raise error on unexpected end flag", async function () {
           const it = pipe(
             createAsyncIterable(goldenEnvelopes),
-            transformParseEnvelope(serialization, endFlag, null)
+            transformParseEnvelope(serialization, endFlag, null),
           );
           try {
             await readAll(it);
@@ -585,14 +585,14 @@ describe("transforming asynchronous iterables", () => {
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
             expect(ConnectError.from(e).message).toBe(
-              "[invalid_argument] unexpected end flag"
+              "[invalid_argument] unexpected end flag",
             );
           }
         });
         it("should still parse to T", async function () {
           const it = pipe(
             createAsyncIterable(envelopesWithoutEndFlag),
-            transformParseEnvelope(serialization, endFlag, null)
+            transformParseEnvelope(serialization, endFlag, null),
           );
           const got = await readAll(it);
           expect(got).toEqual(itemsWithoutEndFlag);
@@ -625,7 +625,7 @@ describe("transforming asynchronous iterables", () => {
       it("should join envelopes", async function () {
         const it = pipe(
           createAsyncIterable(goldenEnvelopes),
-          transformJoinEnvelopes()
+          transformJoinEnvelopes(),
         );
         const gotBytes = await readAllBytes(it);
         expect(gotBytes).toEqual(goldenBytes);
@@ -636,7 +636,7 @@ describe("transforming asynchronous iterables", () => {
       it("should split envelopes", async function () {
         const it = pipe(
           createAsyncIterableBytes(goldenBytes),
-          transformSplitEnvelope(Number.MAX_SAFE_INTEGER)
+          transformSplitEnvelope(Number.MAX_SAFE_INTEGER),
         );
         const got = await readAll(it);
         expect(got).toEqual(goldenEnvelopes);
@@ -644,7 +644,7 @@ describe("transforming asynchronous iterables", () => {
       it("should honor readMaxBytes", async function () {
         const it = pipe(
           createAsyncIterableBytes(goldenBytes),
-          transformSplitEnvelope(3)
+          transformSplitEnvelope(3),
         );
         try {
           await readAll(it);
@@ -652,7 +652,7 @@ describe("transforming asynchronous iterables", () => {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[resource_exhausted] message size 4 is larger than configured readMaxBytes 3"
+            "[resource_exhausted] message size 4 is larger than configured readMaxBytes 3",
           );
         }
       });
@@ -700,8 +700,8 @@ describe("transforming asynchronous iterables", () => {
           return Promise.reject(
             new ConnectError(
               `message is larger than configured readMaxBytes ${readMaxBytes} after decompression`,
-              Code.ResourceExhausted
-            )
+              Code.ResourceExhausted,
+            ),
           );
         }
         const b = new Uint8Array(bytes.byteLength);
@@ -714,7 +714,7 @@ describe("transforming asynchronous iterables", () => {
       it("should compress envelopes", async function () {
         const it = pipe(
           createAsyncIterable(uncompressedEnvelopes),
-          transformCompressEnvelope(compressionReverse, 0)
+          transformCompressEnvelope(compressionReverse, 0),
         );
         const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(compressedEnvelopes);
@@ -722,7 +722,7 @@ describe("transforming asynchronous iterables", () => {
       it("should throw on compressed input", async function () {
         const it = pipe(
           createAsyncIterable(compressedEnvelopes),
-          transformCompressEnvelope(compressionReverse, 0)
+          transformCompressEnvelope(compressionReverse, 0),
         );
         try {
           await readAll(it);
@@ -730,14 +730,14 @@ describe("transforming asynchronous iterables", () => {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[internal] invalid envelope, already compressed"
+            "[internal] invalid envelope, already compressed",
           );
         }
       });
       it("should honor compressMinBytes", async function () {
         const it = pipe(
           createAsyncIterable(uncompressedEnvelopes),
-          transformCompressEnvelope(compressionReverse, 5)
+          transformCompressEnvelope(compressionReverse, 5),
         );
         const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
@@ -746,7 +746,7 @@ describe("transforming asynchronous iterables", () => {
         it("should not compress", async function () {
           const it = pipe(
             createAsyncIterable(uncompressedEnvelopes),
-            transformCompressEnvelope(null, 0)
+            transformCompressEnvelope(null, 0),
           );
           const gotEnvelopes = await readAll(it);
           expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
@@ -754,7 +754,7 @@ describe("transforming asynchronous iterables", () => {
         it("should throw on compressed input", async function () {
           const it = pipe(
             createAsyncIterable(compressedEnvelopes),
-            transformCompressEnvelope(compressionReverse, 0)
+            transformCompressEnvelope(compressionReverse, 0),
           );
           try {
             await readAll(it);
@@ -762,7 +762,7 @@ describe("transforming asynchronous iterables", () => {
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
             expect(ConnectError.from(e).message).toBe(
-              "[internal] invalid envelope, already compressed"
+              "[internal] invalid envelope, already compressed",
             );
           }
         });
@@ -775,8 +775,8 @@ describe("transforming asynchronous iterables", () => {
           createAsyncIterable(compressedEnvelopes),
           transformDecompressEnvelope(
             compressionReverse,
-            Number.MAX_SAFE_INTEGER
-          )
+            Number.MAX_SAFE_INTEGER,
+          ),
         );
         const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
@@ -786,8 +786,8 @@ describe("transforming asynchronous iterables", () => {
           createAsyncIterable(uncompressedEnvelopes),
           transformDecompressEnvelope(
             compressionReverse,
-            Number.MAX_SAFE_INTEGER
-          )
+            Number.MAX_SAFE_INTEGER,
+          ),
         );
         const gotEnvelopes = await readAll(it);
         expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
@@ -795,7 +795,7 @@ describe("transforming asynchronous iterables", () => {
       it("should pass readMaxBytes to compression", async function () {
         const it = pipe(
           createAsyncIterable(compressedEnvelopes),
-          transformDecompressEnvelope(compressionReverse, 3)
+          transformDecompressEnvelope(compressionReverse, 3),
         );
         try {
           await readAll(it);
@@ -803,7 +803,7 @@ describe("transforming asynchronous iterables", () => {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression"
+            "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression",
           );
         }
       });
@@ -811,7 +811,7 @@ describe("transforming asynchronous iterables", () => {
         it("should not decompress uncompressed envelopes", async function () {
           const it = pipe(
             createAsyncIterable(uncompressedEnvelopes),
-            transformDecompressEnvelope(null, Number.MAX_SAFE_INTEGER)
+            transformDecompressEnvelope(null, Number.MAX_SAFE_INTEGER),
           );
           const gotEnvelopes = await readAll(it);
           expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
@@ -819,7 +819,7 @@ describe("transforming asynchronous iterables", () => {
         it("should raise error on compressed envelope", async function () {
           const it = pipe(
             createAsyncIterable(compressedEnvelopes),
-            transformDecompressEnvelope(null, Number.MAX_SAFE_INTEGER)
+            transformDecompressEnvelope(null, Number.MAX_SAFE_INTEGER),
           );
           try {
             await readAll(it);
@@ -827,7 +827,7 @@ describe("transforming asynchronous iterables", () => {
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
             expect(ConnectError.from(e).message).toBe(
-              "[invalid_argument] received compressed envelope, but do not know how to decompress"
+              "[invalid_argument] received compressed envelope, but do not know how to decompress",
             );
           }
         });
@@ -852,7 +852,7 @@ describe("transforming asynchronous iterables", () => {
     it("should raise error when unhandled", async function () {
       const it = pipe(
         createAsyncIterable(goldenItems),
-        transformSerializeEnvelope(serialization)
+        transformSerializeEnvelope(serialization),
       );
       try {
         await readAll(it);
@@ -891,7 +891,7 @@ describe("transforming asynchronous iterables", () => {
               flags: 0,
               data: new TextEncoder().encode("ERROR"),
             };
-          })
+          }),
         );
         const result = await readAll(it);
         expect(result).toEqual(goldenEnvelopes);
@@ -934,8 +934,8 @@ describe("transforming asynchronous iterables", () => {
           return Promise.reject(
             new ConnectError(
               `message is larger than configured readMaxBytes ${readMaxBytes} after decompression`,
-              Code.ResourceExhausted
-            )
+              Code.ResourceExhausted,
+            ),
           );
         }
         const b = new Uint8Array(bytes.byteLength);
@@ -953,9 +953,9 @@ describe("transforming asynchronous iterables", () => {
         transformSplitEnvelope(Number.MAX_SAFE_INTEGER),
         transformDecompressEnvelope(
           compressionReverse,
-          Number.MAX_SAFE_INTEGER
+          Number.MAX_SAFE_INTEGER,
         ),
-        transformParseEnvelope(serialization, endFlag, endSerialization)
+        transformParseEnvelope(serialization, endFlag, endSerialization),
       );
       const result = await readAll(it);
       expect(result).toEqual(goldenItemsWithEnd);
@@ -973,7 +973,7 @@ describe("transforming asynchronous iterables", () => {
     it("should read all bytes", async function () {
       const it = pipe(
         createAsyncIterableBytes(goldenBytes),
-        transformReadAllBytes(Number.MAX_SAFE_INTEGER)
+        transformReadAllBytes(Number.MAX_SAFE_INTEGER),
       );
       const got = await readAllBytes(it);
       expect(got).toEqual(goldenBytes);
@@ -981,7 +981,7 @@ describe("transforming asynchronous iterables", () => {
     it("should honor readMaxBytes", async function () {
       const it = pipe(
         createAsyncIterableBytes(goldenBytes),
-        transformReadAllBytes(4)
+        transformReadAllBytes(4),
       );
       try {
         await readAllBytes(it);
@@ -989,7 +989,7 @@ describe("transforming asynchronous iterables", () => {
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          "[resource_exhausted] message size is larger than configured readMaxBytes 4"
+          "[resource_exhausted] message size is larger than configured readMaxBytes 4",
         );
       }
     });
@@ -1000,8 +1000,8 @@ describe("transforming asynchronous iterables", () => {
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(
               Number.MAX_SAFE_INTEGER,
-              goldenBytes.byteLength
-            )
+              goldenBytes.byteLength,
+            ),
           );
           const got = await readAllBytes(it);
           expect(got).toEqual(goldenBytes);
@@ -1011,7 +1011,7 @@ describe("transforming asynchronous iterables", () => {
         it("should error", async function () {
           const it = pipe(
             createAsyncIterableBytes(goldenBytes),
-            transformReadAllBytes(4, 5)
+            transformReadAllBytes(4, 5),
           );
           try {
             await readAllBytes(it);
@@ -1019,7 +1019,7 @@ describe("transforming asynchronous iterables", () => {
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
             expect(ConnectError.from(e).message).toBe(
-              "[resource_exhausted] message size 5 is larger than configured readMaxBytes 4"
+              "[resource_exhausted] message size 5 is larger than configured readMaxBytes 4",
             );
           }
         });
@@ -1028,7 +1028,7 @@ describe("transforming asynchronous iterables", () => {
         it("should ignore length hint", async function () {
           const it = pipe(
             createAsyncIterableBytes(goldenBytes),
-            transformReadAllBytes(100, 100.75)
+            transformReadAllBytes(100, 100.75),
           );
           const got = await readAllBytes(it);
           expect(got).toEqual(goldenBytes);
@@ -1038,7 +1038,7 @@ describe("transforming asynchronous iterables", () => {
         it("should ignore length hint", async function () {
           const it = pipe(
             createAsyncIterableBytes(goldenBytes),
-            transformReadAllBytes(Number.MAX_SAFE_INTEGER, Number.NaN)
+            transformReadAllBytes(Number.MAX_SAFE_INTEGER, Number.NaN),
           );
           const got = await readAllBytes(it);
           expect(got).toEqual(goldenBytes);
@@ -1048,7 +1048,7 @@ describe("transforming asynchronous iterables", () => {
         it("should ignore length hint", async function () {
           const it = pipe(
             createAsyncIterableBytes(goldenBytes),
-            transformReadAllBytes(Number.MAX_SAFE_INTEGER, -10)
+            transformReadAllBytes(Number.MAX_SAFE_INTEGER, -10),
           );
           const got = await readAllBytes(it);
           expect(got).toEqual(goldenBytes);
@@ -1060,8 +1060,8 @@ describe("transforming asynchronous iterables", () => {
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(
               Number.MAX_SAFE_INTEGER,
-              goldenBytes.byteLength + 100
-            )
+              goldenBytes.byteLength + 100,
+            ),
           );
           try {
             await readAllBytes(it);
@@ -1069,7 +1069,7 @@ describe("transforming asynchronous iterables", () => {
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
             expect(ConnectError.from(e).message).toBe(
-              "[invalid_argument] protocol error: promised 116 bytes, received 16"
+              "[invalid_argument] protocol error: promised 116 bytes, received 16",
             );
           }
         });
@@ -1080,8 +1080,8 @@ describe("transforming asynchronous iterables", () => {
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(
               Number.MAX_SAFE_INTEGER,
-              goldenBytes.byteLength - 10
-            )
+              goldenBytes.byteLength - 10,
+            ),
           );
           try {
             await readAllBytes(it);
@@ -1089,7 +1089,7 @@ describe("transforming asynchronous iterables", () => {
           } catch (e) {
             expect(e).toBeInstanceOf(ConnectError);
             expect(ConnectError.from(e).message).toBe(
-              "[invalid_argument] protocol error: promised 6 bytes, received 8"
+              "[invalid_argument] protocol error: promised 6 bytes, received 8",
             );
           }
         });
@@ -1220,7 +1220,7 @@ describe("createWritableIterable()", function () {
     })();
     await read;
     expect(await Promise.allSettled(writes)).toEqual(
-      new Array(50).fill({ status: "rejected", reason: readError })
+      new Array(50).fill({ status: "rejected", reason: readError }),
     );
   });
   it("queued writes are rejected when reader calls return", async () => {
@@ -1239,7 +1239,7 @@ describe("createWritableIterable()", function () {
       new Array(50).fill({
         status: "rejected",
         reason: new Error("cannot write, consumer called return"),
-      })
+      }),
     );
   });
   it("throw before first write stops writes", async () => {

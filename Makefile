@@ -220,7 +220,7 @@ lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all fil
 
 .PHONY: format
 format: node_modules $(BIN)/license-header ## Format all files, adding license headers
-	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --loglevel error
+	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css}' --log-level error
 	comm -23 \
 		<(git ls-files --cached --modified --others --no-empty-directory --exclude-standard | sort -u | grep -v $(LICENSE_IGNORE) ) \
 		<(git ls-files --deleted | sort -u) | \

@@ -25,7 +25,7 @@ describe("empty_stream", function () {
       try {
         for await (const response of client.streamingOutputCall(request)) {
           fail(
-            `expecting no response in the empty stream, got: ${response.toJsonString()}`
+            `expecting no response in the empty stream, got: ${response.toJsonString()}`,
           );
         }
       } catch (e) {
@@ -42,7 +42,7 @@ describe("empty_stream", function () {
         (err) => {
           expect(err).toBeUndefined();
           done();
-        }
+        },
       );
     });
   });

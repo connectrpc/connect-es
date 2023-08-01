@@ -27,7 +27,7 @@ import { Code } from "./code.js";
  * a header whose name ends with `-bin`.
  */
 export function encodeBinaryHeader(
-  value: Uint8Array | ArrayBufferLike | Message | string
+  value: Uint8Array | ArrayBufferLike | Message | string,
 ): string {
   let bytes: Uint8Array;
   if (value instanceof Message) {
@@ -62,12 +62,12 @@ export function decodeBinaryHeader(value: string): Uint8Array;
 export function decodeBinaryHeader<T extends Message<T>>(
   value: string,
   type: MessageType<T>,
-  options?: Partial<BinaryReadOptions>
+  options?: Partial<BinaryReadOptions>,
 ): T;
 export function decodeBinaryHeader<T extends Message<T>>(
   value: string,
   type?: MessageType<T>,
-  options?: Partial<BinaryReadOptions>
+  options?: Partial<BinaryReadOptions>,
 ): Uint8Array | T {
   try {
     const bytes = protoBase64.dec(value);

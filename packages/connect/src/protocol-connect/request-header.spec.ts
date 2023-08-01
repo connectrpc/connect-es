@@ -68,7 +68,7 @@ describe("requestHeaderWithCompression", () => {
       undefined,
       undefined,
       [compressionMock],
-      compressionMock
+      compressionMock,
     );
     expect(listHeaderKeys(headers)).toEqual([
       "accept-encoding",
@@ -87,7 +87,7 @@ describe("requestHeaderWithCompression", () => {
       undefined,
       undefined,
       [compressionMock],
-      compressionMock
+      compressionMock,
     );
     expect(listHeaderKeys(headers)).toEqual([
       "connect-accept-encoding",

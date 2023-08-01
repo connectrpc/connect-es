@@ -20,7 +20,7 @@ describe("bigint", () => {
       { no: 1, name: "f", kind: "scalar", T: ScalarType.INT64 },
     ]);
     expect(String(M.fromBinary(new M({ f: "3409819015" }).toBinary()).f)).toBe(
-      "3409819015"
+      "3409819015",
     );
   });
 });

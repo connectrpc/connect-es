@@ -30,7 +30,7 @@ describe("eliza", () => {
       const res = await client.say({ sentence: "I feel happy." });
       expect(typeof res.sentence).toBe("string");
     },
-    timeoutMs
+    timeoutMs,
   );
   it(
     "introduce()",
@@ -46,6 +46,6 @@ describe("eliza", () => {
       }
       expect(receivedMessages > 3).toBe(true);
     },
-    timeoutMs
+    timeoutMs,
   );
 });

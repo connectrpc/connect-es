@@ -98,11 +98,11 @@ describe("Connect transport", function () {
       const getUnaryTransport = (opts: { contentType: string }) => {
         return createTransport({
           httpClient(
-            request: UniversalClientRequest
+            request: UniversalClientRequest,
           ): Promise<UniversalClientResponse> {
             request.signal?.addEventListener(
               "abort",
-              () => (httpRequestAborted = true)
+              () => (httpRequestAborted = true),
             );
             return Promise.resolve({
               status: 429,
@@ -112,7 +112,7 @@ describe("Connect transport", function () {
               body: createAsyncIterable([
                 errorToJsonBytes(
                   new ConnectError("foo", Code.ResourceExhausted),
-                  {}
+                  {},
                 ),
               ]),
               trailer: new Headers(),
@@ -130,7 +130,7 @@ describe("Connect transport", function () {
             undefined,
             undefined,
             undefined,
-            {}
+            {},
           );
           fail("expected error");
         } catch (e) {
@@ -150,7 +150,7 @@ describe("Connect transport", function () {
             undefined,
             undefined,
             undefined,
-            {}
+            {},
           );
           fail("expected error");
         } catch (e) {
@@ -166,11 +166,11 @@ describe("Connect transport", function () {
       let httpRequestAborted = false;
       const t = createTransport({
         httpClient(
-          request: UniversalClientRequest
+          request: UniversalClientRequest,
         ): Promise<UniversalClientResponse> {
           request.signal?.addEventListener(
             "abort",
-            () => (httpRequestAborted = true)
+            () => (httpRequestAborted = true),
           );
           return Promise.resolve({
             status: 200,
@@ -184,7 +184,7 @@ describe("Connect transport", function () {
                 createEndStreamSerialization({}).serialize({
                   metadata: new Headers(),
                   error: new ConnectError("foo", Code.ResourceExhausted),
-                })
+                }),
               ),
             ]),
             trailer: new Headers(),
@@ -199,7 +199,7 @@ describe("Connect transport", function () {
           undefined,
           undefined,
           undefined,
-          createAsyncIterable([])
+          createAsyncIterable([]),
         );
         const messagesReceived: StringValue[] = [];
         try {
@@ -230,7 +230,7 @@ describe("Connect transport", function () {
     const expectGet: UniversalClientFn = async (request) => {
       expect(request.method).toBe("GET");
       expect(request.url).toBe(
-        "http://example.com/TestService/UnaryNoSideEffects?connect=v1&encoding=proto&base64=1&message=CHs"
+        "http://example.com/TestService/UnaryNoSideEffects?connect=v1&encoding=proto&base64=1&message=CHs",
       );
       // no headers
       const headerFields: string[] = [];
@@ -262,7 +262,7 @@ describe("Connect transport", function () {
           undefined,
           undefined,
           undefined,
-          new Int32Value({ value: 123 })
+          new Int32Value({ value: 123 }),
         );
       });
     });
@@ -279,7 +279,7 @@ describe("Connect transport", function () {
           undefined,
           undefined,
           undefined,
-          new Int32Value({ value: 123 })
+          new Int32Value({ value: 123 }),
         );
       });
       it("should issue POST for RPC with side effects", async function () {
@@ -294,7 +294,7 @@ describe("Connect transport", function () {
           undefined,
           undefined,
           undefined,
-          new Int32Value({ value: 123 })
+          new Int32Value({ value: 123 }),
         );
       });
     });
@@ -338,8 +338,8 @@ describe("Connect transport", function () {
             a: "A",
             b: "B",
           });
-        }
-      )
+        },
+      ),
     );
     const httpClient = createUniversalHandlerClient([h]);
 
@@ -355,7 +355,7 @@ describe("Connect transport", function () {
         undefined,
         undefined,
         undefined,
-        {}
+        {},
       );
       expect(res.message).toBeInstanceOf(OldService.methods.unary.O);
     });
@@ -373,13 +373,13 @@ describe("Connect transport", function () {
           undefined,
           undefined,
           undefined,
-          {}
+          {},
         );
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown'
+          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown',
         );
       }
     });

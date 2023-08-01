@@ -44,7 +44,7 @@ describe("universalRequestFromNodeRequest()", function () {
               ":method": "POST",
               ":path": "/",
             },
-            {}
+            {},
           );
           setTimeout(() => {
             stream.on("error", () => {
@@ -71,7 +71,7 @@ describe("universalRequestFromNodeRequest()", function () {
       if (serverRequest?.signal.reason instanceof Error) {
         expect(serverRequest.signal.reason.name).toBe("AbortError");
         expect(serverRequest.signal.reason.message).toBe(
-          "This operation was aborted"
+          "This operation was aborted",
         );
       }
     });
@@ -92,7 +92,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverRequest?.signal.reason).toBeInstanceOf(ConnectError);
       const ce = ConnectError.from(serverRequest?.signal.reason);
       expect(ce.message).toBe(
-        "[canceled] http/2 stream closed with error code CANCEL (0x8)"
+        "[canceled] http/2 stream closed with error code CANCEL (0x8)",
       );
     });
     it("should silently end request body stream for CANCEL", async function () {
@@ -112,7 +112,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverRequest?.signal.reason).toBeInstanceOf(ConnectError);
       const ce = ConnectError.from(serverRequest?.signal.reason);
       expect(ce.message).toBe(
-        "[resource_exhausted] http/2 stream closed with error code ENHANCE_YOUR_CALM (0xb)"
+        "[resource_exhausted] http/2 stream closed with error code ENHANCE_YOUR_CALM (0xb)",
       );
     });
     it("should silently end request body stream for ENHANCE_YOUR_CALM", async function () {
@@ -132,7 +132,7 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverRequest?.signal.reason).toBeInstanceOf(ConnectError);
       const ce = ConnectError.from(serverRequest?.signal.reason);
       expect(ce.message).toBe(
-        "[internal] http/2 stream closed with error code FRAME_SIZE_ERROR (0x6)"
+        "[internal] http/2 stream closed with error code FRAME_SIZE_ERROR (0x6)",
       );
     });
     it("should silently end request body stream for FRAME_SIZE_ERROR", async function () {
@@ -174,7 +174,7 @@ describe("universalRequestFromNodeRequest()", function () {
         },
         function (request) {
           serverRequest = universalRequestFromNodeRequest(request, undefined);
-        }
+        },
       );
       // For some reason, the type definitions for ServerOptions do not include
       // headersTimeout:
@@ -262,7 +262,7 @@ describe("universalRequestFromNodeRequest()", function () {
           serverRequest = universalRequestFromNodeRequest(request, undefined);
           response.writeHead(200);
           response.end();
-        }
+        },
       );
       // For some reason, the type definitions for ServerOptions do not include
       // headersTimeout:
@@ -282,7 +282,7 @@ describe("universalRequestFromNodeRequest()", function () {
         request.end();
         request.on("response", (response) => {
           void readAllBytes(response, Number.MAX_SAFE_INTEGER).then(() =>
-            resolve()
+            resolve(),
           );
         });
       });
@@ -295,7 +295,7 @@ describe("universalRequestFromNodeRequest()", function () {
       if (serverRequest?.signal.reason instanceof Error) {
         expect(serverRequest.signal.reason.name).toBe("AbortError");
         expect(serverRequest.signal.reason.message).toBe(
-          "This operation was aborted"
+          "This operation was aborted",
         );
       }
     });

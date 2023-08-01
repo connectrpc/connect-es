@@ -52,13 +52,13 @@ describe("parseTimeout()", function () {
   });
   it("should return a ConnectError for a value exceeding maxTimeoutMs", function () {
     expect(parseTimeout("1m", 0).error?.message).toBe(
-      "[invalid_argument] timeout 1ms must be <= 0"
+      "[invalid_argument] timeout 1ms must be <= 0",
     );
     expect(parseTimeout("1024m", 1000).error?.message).toBe(
-      "[invalid_argument] timeout 1024ms must be <= 1000"
+      "[invalid_argument] timeout 1024ms must be <= 1000",
     );
     expect(parseTimeout("1S", 999).error?.message).toBe(
-      "[invalid_argument] timeout 1000ms must be <= 999"
+      "[invalid_argument] timeout 1000ms must be <= 999",
     );
   });
   const invalidValues = [
@@ -78,7 +78,7 @@ describe("parseTimeout()", function () {
       expect(r.error).toBeInstanceOf(ConnectError);
       if (r instanceof ConnectError) {
         expect(r.message).toBe(
-          `protocol error: invalid grpc timeout value: ${invalidValue}`
+          `protocol error: invalid grpc timeout value: ${invalidValue}`,
         );
       }
     });

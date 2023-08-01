@@ -51,7 +51,7 @@ export interface Serialization<T> {
  * by default.
  */
 export function getJsonOptions(
-  options: Partial<JsonReadOptions & JsonWriteOptions> | undefined
+  options: Partial<JsonReadOptions & JsonWriteOptions> | undefined,
 ) {
   const o = { ...options };
   o.ignoreUnknownFields ??= true;
@@ -66,7 +66,7 @@ export function getJsonOptions(
  */
 export function createMethodSerializationLookup<
   I extends Message<I>,
-  O extends Message<O>
+  O extends Message<O>,
 >(
   method: MethodInfo<I, O>,
   binaryOptions: Partial<BinaryReadOptions & BinaryWriteOptions> | undefined,
@@ -74,23 +74,23 @@ export function createMethodSerializationLookup<
   limitOptions: {
     writeMaxBytes: number;
     readMaxBytes: number;
-  }
+  },
 ): MethodSerializationLookup<I, O> {
   const inputBinary = limitSerialization(
     createBinarySerialization(method.I, binaryOptions),
-    limitOptions
+    limitOptions,
   );
   const inputJson = limitSerialization(
     createJsonSerialization(method.I, jsonOptions),
-    limitOptions
+    limitOptions,
   );
   const outputBinary = limitSerialization(
     createBinarySerialization(method.O, binaryOptions),
-    limitOptions
+    limitOptions,
   );
   const outputJson = limitSerialization(
     createJsonSerialization(method.O, jsonOptions),
-    limitOptions
+    limitOptions,
   );
   return {
     getI(useBinaryFormat) {
@@ -110,7 +110,7 @@ export function createMethodSerializationLookup<
  */
 export interface MethodSerializationLookup<
   I extends Message<I>,
-  O extends Message<O>
+  O extends Message<O>,
 > {
   /**
    * Get the JSON or binary serialization for the request message type.
@@ -130,12 +130,12 @@ export interface MethodSerializationLookup<
  */
 export function createClientMethodSerializers<
   I extends Message<I>,
-  O extends Message<O>
+  O extends Message<O>,
 >(
   method: MethodInfo<I, O>,
   useBinaryFormat: boolean,
   jsonOptions?: JsonSerializationOptions,
-  binaryOptions?: BinarySerializationOptions
+  binaryOptions?: BinarySerializationOptions,
 ) {
   const input = useBinaryFormat
     ? createBinarySerialization(method.I, binaryOptions)
@@ -156,7 +156,7 @@ export function limitSerialization<T>(
   limitOptions: {
     writeMaxBytes: number;
     readMaxBytes: number;
-  }
+  },
 ): Serialization<T> {
   return {
     serialize(data) {
@@ -184,7 +184,7 @@ type BinarySerializationOptions = Partial<
  */
 export function createBinarySerialization<T extends Message<T>>(
   messageType: MessageType<T>,
-  options: BinarySerializationOptions | undefined
+  options: BinarySerializationOptions | undefined,
 ): Serialization<T> {
   return {
     parse(data: Uint8Array): T {
@@ -222,7 +222,7 @@ type JsonSerializationOptions = Partial<JsonReadOptions & JsonWriteOptions> & {
  */
 export function createJsonSerialization<T extends Message<T>>(
   messageType: MessageType<T>,
-  options: JsonSerializationOptions | undefined
+  options: JsonSerializationOptions | undefined,
 ): Serialization<T> {
   const textEncoder = options?.textEncoder ?? new TextEncoder();
   const textDecoder = options?.textDecoder ?? new TextDecoder();

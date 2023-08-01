@@ -27,7 +27,7 @@ describe("node http/2 client closing with RST_STREAM with code CANCEL", function
   const server = useNodeServer(() =>
     http2.createServer().on("stream", (stream) => {
       stream.on("close", () => (serverReceivedRstCode = stream.rstCode));
-    })
+    }),
   );
   it("should send RST_STREAM frame to the server", async function () {
     return new Promise<void>((resolve) => {
@@ -37,7 +37,7 @@ describe("node http/2 client closing with RST_STREAM with code CANCEL", function
             ":method": "POST",
             ":path": "/",
           },
-          {}
+          {},
         );
         setTimeout(() => {
           stream.close(http2.constants.NGHTTP2_CANCEL, () => {
@@ -78,7 +78,7 @@ describe("universal node http client", function () {
             });
           } catch (e) {
             expect(ConnectError.from(e).message).toBe(
-              "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain"
+              "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain",
             );
           }
         });
@@ -93,7 +93,7 @@ describe("universal node http client", function () {
         http2.createServer((request, response) => {
           serverReceivedRequest = true;
           response.stream.close(http2.constants.NGHTTP2_CANCEL);
-        })
+        }),
       );
       it("should reject the response promise with Code.Canceled", async function () {
         const client = server.getClient();
@@ -107,7 +107,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with error code CANCEL (0x8)"
+            "[canceled] http/2 stream closed with error code CANCEL (0x8)",
           );
         }
         expect(serverReceivedRequest).toBeTrue();
@@ -119,7 +119,7 @@ describe("universal node http client", function () {
         http.createServer((req, res) => {
           serverReceivedRequest = true;
           res.destroy();
-        })
+        }),
       );
       it("should reject the response promise", async function () {
         const client = server.getClient();
@@ -148,7 +148,7 @@ describe("universal node http client", function () {
           // headers from being sent. The client response promise will reject,
           // instead of the response body.
           setTimeout(() => res.stream.close(http2.constants.NGHTTP2_CANCEL), 0);
-        })
+        }),
       );
       it("should reject the response promise with Code.Canceled", async function () {
         const client = server.getClient();
@@ -168,7 +168,7 @@ describe("universal node http client", function () {
           expect(e).toBeInstanceOf(ConnectError);
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with error code CANCEL (0x8)"
+            "[canceled] http/2 stream closed with error code CANCEL (0x8)",
           );
         }
       });
@@ -179,7 +179,7 @@ describe("universal node http client", function () {
           res.writeHead(200);
           res.flushHeaders();
           res.destroy();
-        })
+        }),
       );
       it("should reject the response promise", async function () {
         const client = server.getClient();
@@ -215,7 +215,7 @@ describe("universal node http client", function () {
               break;
             }
           })();
-        })
+        }),
       );
       it("should reject the response promise with Code.Canceled", async function () {
         const client = server.getClient();
@@ -238,7 +238,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with error code CANCEL (0x8)"
+            "[canceled] http/2 stream closed with error code CANCEL (0x8)",
           );
         }
         expect(serverReceivedBytes).toBe(32);
@@ -255,7 +255,7 @@ describe("universal node http client", function () {
               break;
             }
           })();
-        })
+        }),
       );
       it("should reject the response promise", async function () {
         const client = server.getClient();
@@ -293,13 +293,13 @@ describe("universal node http client", function () {
             res.writeHead(200);
             await new Promise<void>((resolve, reject) =>
               res.write(new Uint8Array(64), (e: Error | undefined) =>
-                e ? reject(e) : resolve()
-              )
+                e ? reject(e) : resolve(),
+              ),
             );
             serverSentBytes += 64;
             res.stream.close(http2.constants.NGHTTP2_CANCEL);
           })();
-        })
+        }),
       );
       it("should reject the response promise with Code.Canceled", async function () {
         const client = server.getClient();
@@ -317,7 +317,7 @@ describe("universal node http client", function () {
           expect(e).toBeInstanceOf(ConnectError);
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with error code CANCEL (0x8)"
+            "[canceled] http/2 stream closed with error code CANCEL (0x8)",
           );
         }
         expect(serverSentBytes).toBe(64);
@@ -330,12 +330,12 @@ describe("universal node http client", function () {
           void (async () => {
             res.writeHead(200);
             await new Promise<void>((resolve, reject) =>
-              res.write(new Uint8Array(64), (e) => (e ? reject(e) : resolve()))
+              res.write(new Uint8Array(64), (e) => (e ? reject(e) : resolve())),
             );
             serverSentBytes += 64;
             res.destroy();
           })();
-        })
+        }),
       );
       it("should reject the response promise", async function () {
         const client = server.getClient();
@@ -352,7 +352,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toMatch(
-            /\[aborted] (aborted|read ECONNRESET)/
+            /\[aborted] (aborted|read ECONNRESET)/,
           );
         }
         expect(serverSentBytes).toBe(64);
@@ -364,7 +364,7 @@ describe("universal node http client", function () {
     describe("over http/2", function () {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
-        http2.createServer(() => (serverReceivedRequest = true))
+        http2.createServer(() => (serverReceivedRequest = true)),
       );
       it("should raise error with Code.Canceled and never hit the server", async function () {
         const client = server.getClient();
@@ -381,7 +381,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted"
+            "[canceled] This operation was aborted",
           );
         }
         // request should never hit the server
@@ -391,7 +391,7 @@ describe("universal node http client", function () {
     describe("over http/1.1", function () {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
-        http.createServer(() => (serverReceivedRequest = true))
+        http.createServer(() => (serverReceivedRequest = true)),
       );
       it("should raise error with Code.Canceled and never hit the server", async function () {
         const client = server.getClient();
@@ -408,7 +408,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted"
+            "[canceled] This operation was aborted",
           );
         }
         // request should never hit the server
@@ -425,14 +425,14 @@ describe("universal node http client", function () {
         http2.createServer((req, res) => {
           res.stream.on(
             "close",
-            () => (serverReceivedRstCode = res.stream.rstCode)
+            () => (serverReceivedRstCode = res.stream.rstCode),
           );
           void (async () => {
             for await (const chunk of req) {
               serverReceivedBytes += (chunk as Uint8Array).byteLength;
             }
           })();
-        })
+        }),
       );
       it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
         // set up a client that aborts while still streaming the request body
@@ -458,7 +458,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted"
+            "[canceled] This operation was aborted",
           );
         }
 
@@ -495,7 +495,7 @@ describe("universal node http client", function () {
               serverRequestIterableErrored = e as Error & { code?: string };
             }
           })();
-        })
+        }),
       );
       it("should raise error with code canceled", async function () {
         // set up a client that aborts while still streaming the request body
@@ -521,7 +521,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted"
+            "[canceled] This operation was aborted",
           );
         }
 
@@ -551,14 +551,14 @@ describe("universal node http client", function () {
         http2.createServer((req, res) => {
           res.stream.on(
             "close",
-            () => (serverReceivedRstCode = res.stream.rstCode)
+            () => (serverReceivedRstCode = res.stream.rstCode),
           );
           void (async () => {
             for await (const chunk of req) {
               serverReceivedBytes += (chunk as Uint8Array).byteLength;
             }
           })();
-        })
+        }),
       );
       it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
         // set up a client that aborts while still streaming the request body
@@ -585,7 +585,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted"
+            "[canceled] This operation was aborted",
           );
         }
 
@@ -622,7 +622,7 @@ describe("universal node http client", function () {
               serverRequestIterableErrored = e as Error & { code?: string };
             }
           })();
-        })
+        }),
       );
       it("should raise error with code canceled", async function () {
         // set up a client that aborts while still streaming the request body
@@ -649,7 +649,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted"
+            "[canceled] This operation was aborted",
           );
         }
 
@@ -677,7 +677,7 @@ describe("universal node http client", function () {
         http2.createServer((req, res) => {
           res.stream.on(
             "close",
-            () => (serverReceivedRstCode = res.stream.rstCode)
+            () => (serverReceivedRstCode = res.stream.rstCode),
           );
           void (async () => {
             res.writeHead(200);
@@ -687,7 +687,7 @@ describe("universal node http client", function () {
               // never resolves
             });
           })();
-        })
+        }),
       );
       it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
         // set up a client that aborts while still streaming the request body
@@ -712,7 +712,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted"
+            "[canceled] This operation was aborted",
           );
         }
 
@@ -741,7 +741,7 @@ describe("universal node http client", function () {
               // never resolves
             });
           })();
-        })
+        }),
       );
       it("should raise error with code canceled", async function () {
         // set up a client that aborts while still streaming the request body
@@ -766,7 +766,7 @@ describe("universal node http client", function () {
         } catch (e) {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted"
+            "[canceled] This operation was aborted",
           );
         }
 

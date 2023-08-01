@@ -65,18 +65,18 @@ describe("decodeBinaryHeader()", function () {
         a: "abc",
         b: 456,
         c: true,
-      })
+      }),
     );
   });
   it("throws error on invalid base64 input", () => {
     const encoded = "not-base-64-😞";
     expect(() => decodeBinaryHeader(encoded)).toThrowError(
-      "[data_loss] invalid base64 string."
+      "[data_loss] invalid base64 string.",
     );
   });
   it("throws error on invalid message input", () => {
     expect(() => decodeBinaryHeader("3q2+7w==", M)).toThrowError(
-      "[data_loss] premature EOF"
+      "[data_loss] premature EOF",
     );
   });
 });

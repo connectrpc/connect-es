@@ -25,7 +25,7 @@ export type AnyClient = Record<string, AnyClientMethod>;
 type AnyClientMethod = (...args: any[]) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 type CreateAnyClientMethod = (
-  method: MethodInfo & { localName: string; service: ServiceType }
+  method: MethodInfo & { localName: string; service: ServiceType },
 ) => AnyClientMethod | null;
 
 /**
@@ -37,7 +37,7 @@ type CreateAnyClientMethod = (
  */
 export function makeAnyClient(
   service: ServiceType,
-  createMethod: CreateAnyClientMethod
+  createMethod: CreateAnyClientMethod,
 ): AnyClient {
   const client: AnyClient = {};
   for (const [localName, methodInfo] of Object.entries(service.methods)) {

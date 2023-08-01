@@ -36,7 +36,7 @@ describe("makeAnyClient()", () => {
     });
     const result = client.foo(); // eslint-disable-line
     expect(result).toBe(
-      "This is method Foo of service handwritten.TestService. It takes a google.protobuf.Empty as input and returns a google.protobuf.Struct."
+      "This is method Foo of service handwritten.TestService. It takes a google.protobuf.Empty as input and returns a google.protobuf.Struct.",
     );
   });
 });

@@ -34,10 +34,10 @@ describe("parseTimeout()", function () {
   });
   it("should return a ConnectError for a value exceeding maxTimeoutMs", function () {
     expect(parseTimeout("1", 0).error?.message).toBe(
-      "[invalid_argument] timeout 1ms must be <= 0"
+      "[invalid_argument] timeout 1ms must be <= 0",
     );
     expect(parseTimeout("1024", 1000).error?.message).toBe(
-      "[invalid_argument] timeout 1024ms must be <= 1000"
+      "[invalid_argument] timeout 1024ms must be <= 1000",
     );
   });
   const invalidValues = ["100m", "1H", "-1", "1e+10", "", "12345678901", "foo"];
@@ -48,7 +48,7 @@ describe("parseTimeout()", function () {
       expect(r.error).toBeInstanceOf(ConnectError);
       if (r instanceof ConnectError) {
         expect(r.message).toBe(
-          `protocol error: invalid connect timeout value: ${invalidValue}`
+          `protocol error: invalid connect timeout value: ${invalidValue}`,
         );
       }
     });

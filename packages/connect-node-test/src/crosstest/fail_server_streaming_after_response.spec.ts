@@ -58,7 +58,7 @@ describe("fail_server_streaming_after_response", () => {
       } catch (e) {
         // we expect to receive all messages we asked for
         expect(receivedResponses.length).toEqual(
-          request.responseParameters.length
+          request.responseParameters.length,
         );
         // we expect an error at the end
         expectError(e);
@@ -75,12 +75,12 @@ describe("fail_server_streaming_after_response", () => {
         (err: ConnectError | undefined) => {
           // we expect to receive all messages we asked for
           expect(receivedResponses.length).toEqual(
-            request.responseParameters.length
+            request.responseParameters.length,
           );
           // we expect an error at the end
           expectError(err);
           done();
-        }
+        },
       );
     });
   });
