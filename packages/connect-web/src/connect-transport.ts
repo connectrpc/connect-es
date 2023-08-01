@@ -51,6 +51,8 @@ import {
   validateResponse,
 } from "@bufbuild/connect/protocol-connect";
 import { assertFetchApi } from "./assert-fetch-api.js";
+import { supportsRequestStreams } from "./supports-request-streams.js";
+import { ConnectEnvelopStream } from "./connect-envelop-stream.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -269,15 +271,23 @@ export function createConnectTransport(
 
       async function createRequestBody(
         input: AsyncIterable<I>
-      ): Promise<Uint8Array> {
-        if (method.kind != MethodKind.ServerStreaming) {
+      ): Promise<Uint8Array | ReadableStream> {
+        if (method.kind == MethodKind.ServerStreaming) {
+          const r = await input[Symbol.asyncIterator]().next();
+          if (r.done == true) {
+            throw "missing request message";
+          }
+          return encodeEnvelope(0, serialize(r.value));
+        } else if (
+          method.kind === MethodKind.ClientStreaming &&
+          supportsRequestStreams()
+        ) {
+          const inputStream = iterableToReadableStream(input);
+
+          return inputStream.pipeThrough(new ConnectEnvelopStream(serialize));
+        } else {
           throw "The fetch API does not support streaming request bodies";
         }
-        const r = await input[Symbol.asyncIterator]().next();
-        if (r.done == true) {
-          throw "missing request message";
-        }
-        return encodeEnvelope(0, serialize(r.value));
       }
 
       return await runStreamingCall<I, O>({
@@ -327,4 +337,30 @@ export function createConnectTransport(
       });
     },
   };
+}
+
+function iterableToReadableStream<T>(
+  iterable: AsyncIterable<T>
+): ReadableStream<T> {
+  const it = iterable[Symbol.asyncIterator]();
+  return new ReadableStream<T>(<UnderlyingSource<T>>{
+    async pull(controller: ReadableStreamDefaultController<T>) {
+      const r = await it.next();
+      if (r.done === true) {
+        controller.close();
+        return;
+      }
+      controller.enqueue(r.value);
+    },
+    async cancel(reason) {
+      if (it.throw) {
+        try {
+          await it.throw(reason);
+        } catch {
+          // iterator.throw on a generator function rethrows unless the
+          // body catches and swallows.
+        }
+      }
+    },
+  });
 }
