@@ -32,21 +32,21 @@ can `curl` them if you want:
 curl \
     --header 'Content-Type: application/json' \
     --data '{"sentence": "I feel happy."}' \
-    https://demo.connect.build/buf.connect.demo.eliza.v1.ElizaService/Say
+    https://demo.connectrpc.com/connectrpc.eliza.v1.ElizaService/Say
 ```
 
 Connect uses [Protobuf-ES](https://github.com/bufbuild/protobuf-es), the only
 [fully-compliant](https://buf.build/blog/protobuf-conformance) Protobuf JavaScript library.
 
 Connect implements RPC three protocols: The widely available gRPC and
-gRPC-web protocols, and Connect's [own protocol](https://connect.build/docs/protocol/),
+gRPC-web protocols, and Connect's [own protocol](https://connectrpc.com/docs/protocol/),
 optimized for the web. This gives you unparalleled interoperability across many
 platforms and languages, with type-safety end-to-end.
 
 
 ## Get started on the web
 
-Follow our [10 minute tutorial](https://connect.build/docs/web/getting-started) where
+Follow our [10 minute tutorial](https://connectrpc.com/docs/web/getting-started) where
 we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
 web interface for ELIZA.
 
@@ -59,11 +59,11 @@ and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding
 
 ## Get started on Node.js
 
-Follow our [10 minute tutorial](https://connect.build/docs/node/getting-started)
+Follow our [10 minute tutorial](https://connectrpc.com/docs/node/getting-started)
 to spin up a service in Node.js, and call it from the web, and from a gRPC client
 in your terminal.
 
-You can serve your Connect RPCs with vanilla Node.js, or use our [server plugins](https://connect.build/docs/node/server-plugins)
+You can serve your Connect RPCs with vanilla Node.js, or use our [server plugins](https://connectrpc.com/docs/node/server-plugins)
 for **Fastify**, **Next.js**, and **Express**. We support Node.js v16 and later with
 the builtin `http` and `http2` modules.
 
@@ -108,7 +108,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 * [connect-go](https://github.com/bufbuild/connect-go):
   Go implementation of gRPC, gRPC-Web, and Connect
 * [connect-demo](https://github.com/bufbuild/connect-demo):
-  demonstration service powering demo.connect.build
+  demonstration service powering demo.connectrpc.com
 * [connect-crosstest](https://github.com/bufbuild/connect-crosstest):
   gRPC-Web and Connect interoperability tests
 * [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs

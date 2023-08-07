@@ -18,7 +18,7 @@
  * match gRPC. Only the codes below are valid — there are no user-defined
  * codes.
  *
- * See the specification at https://connect.build/docs/protocol#error-codes
+ * See the specification at https://connectrpc.com/docs/protocol#error-codes
  * for details.
  */
 export enum Code {

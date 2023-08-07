@@ -14,12 +14,12 @@
 
 import { createPromiseClient } from "@bufbuild/connect";
 import { createConnectTransport } from "@bufbuild/connect-web";
-import { ElizaService } from "./gen/connectweb/buf/connect/demo/eliza/v1/eliza_connect.js";
+import { ElizaService } from "./gen/connectweb/connectrpc/eliza/v1/eliza_connect.js";
 
 const client = createPromiseClient(
   ElizaService,
   createConnectTransport({
-    baseUrl: "https://demo.connect.build",
+    baseUrl: "https://demo.connectrpc.com",
   }),
 );
 
