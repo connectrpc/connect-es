@@ -28,6 +28,7 @@ import type { JsonValue } from "@bufbuild/protobuf";
 type NextApiHandler<T = any> = (
   req: NextApiRequest,
   res: NextApiResponse<T>,
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 ) => unknown | Promise<unknown>;
 
 interface NextJsApiRouterOptions extends ConnectRouterOptions {

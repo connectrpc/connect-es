@@ -66,11 +66,11 @@ export class ConnectError extends Error {
   override name = "ConnectError";
 
   /**
-   * The underlying cause of this error.  In cases where the actual cause is
-   * elided with the error message, the cause is specified here so that we don't
-   * leak the underlying error, but instead make it available for logging.
+   * The underlying cause of this error, if any. In cases where the actual cause
+   * is elided with the error message, the cause is specified here so that we
+   * don't leak the underlying error, but instead make it available for logging.
    */
-  cause: unknown | undefined;
+  cause: unknown;
 
   /**
    * Create a new ConnectError.
