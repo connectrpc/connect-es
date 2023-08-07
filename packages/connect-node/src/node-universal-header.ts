@@ -78,10 +78,19 @@ export function webHeaderToNodeHeaders(
     }
   } else if ("forEach" in headersInit) {
     if (typeof headersInit.forEach == "function") {
-      headersInit.forEach((value, key) => {
-        const k = key.toLowerCase();
-        o[k] = value;
-      });
+        const setCookieHeaders: string[] = [];
+        headersInit.forEach((value, key) => {
+            const k = key.toLowerCase();
+            if (k === 'set-cookie') {
+                setCookieHeaders.push(value);
+            }
+            else {
+                o[k] = value;
+            }
+        });
+        if (setCookieHeaders.length > 0) {
+            o['set-cookie'] = setCookieHeaders;
+        }
     }
   } else {
     for (const [key, value] of Object.entries<string>(headersInit)) {
