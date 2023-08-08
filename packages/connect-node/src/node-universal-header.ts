@@ -71,31 +71,30 @@ export function webHeaderToNodeHeaders(
     return undefined;
   }
   const o = Object.create(null) as http.OutgoingHttpHeaders;
+  const append = (key: string, value: string): void => {
+    key = key.toLowerCase();
+    const existing = o[key];
+    if (typeof existing == "string") {
+      o[key] = [existing, value];
+    } else if (Array.isArray(existing)) {
+      existing.push(value);
+    } else {
+      o[key] = value;
+    }
+  };
   if (Array.isArray(headersInit)) {
     for (const [key, value] of headersInit) {
-      const k = key.toLowerCase();
-      o[k] = value;
+      append(key, value);
     }
   } else if ("forEach" in headersInit) {
     if (typeof headersInit.forEach == "function") {
-        const setCookieHeaders: string[] = [];
-        headersInit.forEach((value, key) => {
-            const k = key.toLowerCase();
-            if (k === 'set-cookie') {
-                setCookieHeaders.push(value);
-            }
-            else {
-                o[k] = value;
-            }
-        });
-        if (setCookieHeaders.length > 0) {
-            o['set-cookie'] = setCookieHeaders;
-        }
+      headersInit.forEach((value, key) => {
+        append(key, value);
+      });
     }
   } else {
     for (const [key, value] of Object.entries<string>(headersInit)) {
-      const k = key.toLowerCase();
-      o[k] = value;
+      append(key, value);
     }
   }
   return o;
