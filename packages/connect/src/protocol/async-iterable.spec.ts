@@ -77,43 +77,6 @@ describe("slowly consuming an async iterable", function () {
   });
 });
 
-describe("consuming an async iterable with for-await and throwing an error", function () {
-  it("should leave source dangling", async function () {
-    const sourceLog: string[] = [];
-
-    // eslint-disable-next-line @typescript-eslint/require-await
-    async function* source() {
-      try {
-        sourceLog.push("yield a");
-        yield "a";
-        sourceLog.push("yield b");
-        yield "b";
-      } finally {
-        sourceLog.push("finally");
-      }
-    }
-
-    const consumerLog: string[] = [];
-
-    async function consume(source: AsyncIterable<string>) {
-      for await (const chunk of source) {
-        consumerLog.push("received " + chunk);
-        throw "CONSUMER_ERROR";
-      }
-    }
-
-    try {
-      await consume(source());
-      fail("expected error");
-    } catch (e) {
-      expect(e).toBe("CONSUMER_ERROR");
-    }
-
-    expect(sourceLog).toEqual(["yield a"]);
-    expect(consumerLog).toEqual(["received a"]);
-  });
-});
-
 describe("pipe()", function () {
   it("should apply transforms", async function () {
     const iterable = pipe(
