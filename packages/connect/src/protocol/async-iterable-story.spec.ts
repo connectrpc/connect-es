@@ -136,7 +136,7 @@ describe("full story", function () {
     let writer: WritableIterable<Payload<string, "end">>;
     let writerIt: AsyncIterable<Uint8Array>;
     let readerIt: AsyncIterable<
-      { end: false; value: string | "end" } | { end: true; value: "end" }
+      { end: false; value: string } | { end: true; value: "end" }
     >;
     beforeEach(() => {
       writer = createWritableIterable<Payload<string, "end">>();
@@ -154,7 +154,7 @@ describe("full story", function () {
       );
     });
     it("should correctly return results when caller waits properly", async function () {
-      writer
+      void writer
         .write({ value: "alpha", end: false })
         .then(() => writer.write({ value: "beta", end: false }))
         .then(() => writer.write({ value: "gamma", end: false }))
@@ -320,7 +320,7 @@ describe("full story", function () {
         async function* (
           iterable: AsyncIterable<string>,
         ): AsyncIterable<
-          { end: false; value: string | "end" } | { end: true; value: "end" }
+          { end: false; value: string } | { end: true; value: "end" }
         > {
           for await (const message of iterable) {
             yield { end: false, value: message };

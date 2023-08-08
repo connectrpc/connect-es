@@ -8,12 +8,12 @@ Learn more about Connect at [github.com/bufbuild/connect-es](https://github.com/
 
 ## Installation
 
-`protoc-gen-connect-es` is a code generator plugin for Protocol Buffer compilers, 
+`protoc-gen-connect-es` is a code generator plugin for Protocol Buffer compilers,
 like [buf](https://github.com/bufbuild/buf) and [protoc](https://github.com/protocolbuffers/protobuf/releases).
 It generates clients as well as server definitions from your Protocol Buffer schema, and works in tandem with
 [@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es),
-the code generator plugin for all Protocol Buffer base types. The code these two 
-plugins generate requires the runtime libraries [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect), 
+the code generator plugin for all Protocol Buffer base types. The code these two
+plugins generate requires the runtime libraries [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect),
 and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 
 To install `buf`, the plugins and their runtime libraries, run:
@@ -23,8 +23,8 @@ npm install --save-dev @bufbuild/buf @bufbuild/protoc-gen-es @bufbuild/protoc-ge
 npm install @bufbuild/connect @bufbuild/protobuf
 ```
 
-If you want to call Connect or gRPC-web services from a web browsers, make sure to install 
-[@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web). If you want servers too, 
+If you want to call Connect or gRPC-web services from a web browsers, make sure to install
+[@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web). If you want servers too,
 install [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node),
 [@bufbuild/connect-fastify](https://www.npmjs.com/package/@bufbuild/connect-fastify), or
 [@bufbuild/connect-express](https://www.npmjs.com/package/@bufbuild/connect-express)
@@ -54,7 +54,7 @@ plugins:
     out: src/gen
     opt:
       # Add more plugin options here
-      - target=ts 
+      - target=ts
 ```
 
 To generate code for all protobuf files within your project, simply run:
@@ -63,9 +63,9 @@ To generate code for all protobuf files within your project, simply run:
 npx buf generate
 ```
 
-Note that `buf` can generate from various [inputs](https://docs.buf.build/reference/inputs), 
-not just local protobuf files. For example, `npx buf generate buf.build/bufbuild/eliza` 
-generates code for the module [bufbuild/eliza](https://buf.build/bufbuild/eliza) on the Buf Schema
+Note that `buf` can generate from various [inputs](https://docs.buf.build/reference/inputs),
+not just local protobuf files. For example, `npx buf generate buf.build/connectrpc/eliza`
+generates code for the module [connectrpc/eliza](https://buf.build/connectrpc/eliza) on the Buf Schema
 Registry.
 
 
@@ -81,10 +81,10 @@ PATH=$PATH:$(pwd)/node_modules/.bin \
   a.proto b.proto c.proto
 ```
 
-Note that we are adding `node_modules/.bin` to the `$PATH`, so that the protocol 
+Note that we are adding `node_modules/.bin` to the `$PATH`, so that the protocol
 buffer compiler can find them. This happens automatically with npm scripts.
 
-Since yarn v2 and above does not use a `node_modules` directory, you need to 
+Since yarn v2 and above does not use a `node_modules` directory, you need to
 change the variable a bit:
 
 ```bash
@@ -108,7 +108,7 @@ Multiple values can be given by separating them with `+`, for example
 `target=js+dts`.
 
 By default, we generate JavaScript and TypeScript declaration files, which
-produces the smallest code size and is the most compatible with various 
+produces the smallest code size and is the most compatible with various
 bundler configurations. If you prefer to generate TypeScript, use `target=ts`.
 
 ### `import_extension=.js`
@@ -118,8 +118,8 @@ By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/prot
 uses a `.js` file extensions in import paths, even in TypeScript files.
 
 This is unintuitive, but necessary for [ECMAScript modules in Node.js](https://www.typescriptlang.org/docs/handbook/esm-node.html).
-Unfortunately, not all bundlers and tools have caught up yet, and Deno 
-requires `.ts`. With this plugin option, you can replace `.js` extensions 
+Unfortunately, not all bundlers and tools have caught up yet, and Deno
+requires `.ts`. With this plugin option, you can replace `.js` extensions
 in import paths with the given value. For example, set
 
 - `import_extension=none` to remove the `.js` extension
@@ -143,26 +143,25 @@ Unless you use Bazel, it is very unlikely that you need this option.
 ```protobuf
 syntax = "proto3";
 
-package buf.connect.demo.eliza.v1;
+package connectrpc.eliza.v1;
 
-// ElizaService provides a way to talk to the ELIZA, which is a port of
-// the DOCTOR script for Joseph Weizenbaum's original ELIZA program.
-// Created in the mid-1960s at the MIT Artificial Intelligence Laboratory,
-// ELIZA demonstrates the superficiality of human-computer communication.
-// DOCTOR simulates a psychotherapist, and is commonly found as an Easter
-// egg in emacs distributions.
+// ElizaService provides a way to talk to Eliza, a port of the DOCTOR script
+// for Joseph Weizenbaum's original ELIZA program. Created in the mid-1960s at
+// the MIT Artificial Intelligence Laboratory, ELIZA demonstrates the
+// superficiality of human-computer communication. DOCTOR simulates a
+// psychotherapist, and is commonly found as an Easter egg in emacs
+// distributions.
 service ElizaService {
-  // Say is a unary request demo. This method should allow for a one sentence
-  // response given a one sentence request.
+  // Say is a unary RPC. Eliza responds to the prompt with a single sentence.
   rpc Say(SayRequest) returns (SayResponse) {}
 }
 
-// SayRequest describes the sentence said to the ELIZA program.
+// SayRequest is a single-sentence request.
 message SayRequest {
   string sentence = 1;
 }
 
-// SayResponse describes the sentence responded by the ELIZA program.
+// SayRequest is a single-sentence response.
 message SayResponse {
   string sentence = 1;
 }
@@ -171,23 +170,22 @@ message SayResponse {
 `eliza_connect.ts`
 ```ts
 /**
- * ElizaService provides a way to talk to the ELIZA, which is a port of
- * the DOCTOR script for Joseph Weizenbaum's original ELIZA program.
- * Created in the mid-1960s at the MIT Artificial Intelligence Laboratory,
- * ELIZA demonstrates the superficiality of human-computer communication.
- * DOCTOR simulates a psychotherapist, and is commonly found as an Easter
- * egg in emacs distributions.
+ * ElizaService provides a way to talk to Eliza, a port of the DOCTOR script
+ * for Joseph Weizenbaum's original ELIZA program. Created in the mid-1960s at
+ * the MIT Artificial Intelligence Laboratory, ELIZA demonstrates the
+ * superficiality of human-computer communication. DOCTOR simulates a
+ * psychotherapist, and is commonly found as an Easter egg in emacs
+ * distributions.
  *
- * @generated from service buf.connect.demo.eliza.v1.ElizaService
+ * @generated from service connectrpc.eliza.v1.ElizaService
  */
 export const ElizaService = {
-  typeName: "buf.connect.demo.eliza.v1.ElizaService",
+  typeName: "connectrpc.eliza.v1.ElizaService",
   methods: {
     /**
-     * Say is a unary request demo. This method should allow for a one sentence
-     * response given a one sentence request.
+     * Say is a unary RPC. Eliza responds to the prompt with a single sentence.
      *
-     * @generated from rpc buf.connect.demo.eliza.v1.ElizaService.Say
+     * @generated from rpc connectrpc.eliza.v1.ElizaService.Say
      */
     say: {
       name: "Say",

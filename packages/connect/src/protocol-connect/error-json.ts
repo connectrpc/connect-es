@@ -110,7 +110,7 @@ export function errorFromJsonBytes(
  * google.protobuf.Any. If serialization of the "debug" value fails, it
  * is silently disregarded.
  *
- * See https://connect.build/docs/protocol#error-end-stream
+ * See https://connectrpc.com/docs/protocol#error-end-stream
  *
  * @private Internal code, does not follow semantic versioning.
  */

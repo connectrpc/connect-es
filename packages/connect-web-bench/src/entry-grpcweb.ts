@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ElizaServiceClient } from "./gen/grpcweb/buf/connect/demo/eliza/v1/eliza_grpc_web_pb.js";
+import { ElizaServiceClient } from "./gen/grpcweb/connectrpc/eliza/v1/eliza_grpc_web_pb.js";
 
-const client = new ElizaServiceClient("https://demo.connect.build");
+const client = new ElizaServiceClient("https://demo.connectrpc.com");
 
 // eslint-disable-next-line no-console -- log statement makes sure the variable is in use
 console.log(client);
