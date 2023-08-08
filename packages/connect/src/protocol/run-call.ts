@@ -178,7 +178,7 @@ function setupSignal(opt: {
       // We peek at the deadline signal because fetch() will throw an error on
       // abort that discards the signal reason.
       const e = ConnectError.from(
-        signal.aborted ? getAbortSignalReason(signal) : reason
+        signal.aborted ? getAbortSignalReason(signal) : reason,
       );
       controller.abort(e);
       cleanup();
@@ -198,7 +198,7 @@ function setupSignal(opt: {
  */
 function applyInterceptors<T>(
   next: T,
-  interceptors: Interceptor[] | undefined
+  interceptors: Interceptor[] | undefined,
 ): T {
   return (
     (interceptors
@@ -207,7 +207,7 @@ function applyInterceptors<T>(
       .reduce(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         (n, i) => i(n),
-        next as any // eslint-disable-line @typescript-eslint/no-explicit-any
+        next as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       ) as T) ?? next
   );
 }
@@ -218,7 +218,7 @@ function applyInterceptors<T>(
  */
 function normalize<T extends Message<T>>(
   type: MessageType<T>,
-  message: PartialMessage<T>
+  message: PartialMessage<T>,
 ) {
   return message instanceof type ? message : new type(message);
 }
@@ -229,7 +229,7 @@ function normalize<T extends Message<T>>(
  */
 export function normalizeIterable<T extends Message<T>>(
   messageType: MessageType<T>,
-  input: AsyncIterable<PartialMessage<T>>
+  input: AsyncIterable<PartialMessage<T>>,
 ): AsyncIterable<T> {
   function transform(result: IteratorResult<PartialMessage<T>>) {
     if (result.done === true) {
