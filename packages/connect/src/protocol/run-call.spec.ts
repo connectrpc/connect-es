@@ -232,4 +232,31 @@ describe("runStreamingCall()", function () {
     const it = req.message[Symbol.asyncIterator]();
     expect(await it.next()).toEqual({ done: true, value: undefined });
   });
+  it("should propagate the error thrown in next", async function () {
+    const req = makeReq();
+    let reqError: Error | undefined;
+    req.message = {
+      [Symbol.asyncIterator]() {
+        return {
+          next() {
+            fail("unexpected call");
+            throw new Error("unexpected call");
+          },
+          throw(e) {
+            reqError = e as Error;
+            return Promise.reject({ done: true, value: undefined });
+          },
+        };
+      },
+    };
+    await expectAsync(
+      runStreamingCall<Int32Value, StringValue>({
+        req: req,
+        next() {
+          return Promise.reject(new Error("foo"));
+        },
+      }),
+    ).toBeRejectedWithError("[unknown] foo");
+    expect(reqError?.message).toEqual("[unknown] foo");
+  });
 });
