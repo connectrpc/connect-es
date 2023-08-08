@@ -105,18 +105,28 @@ export function runStreamingCall<
     message: normalizeIterable(opt.req.method.I, opt.req.message),
     signal,
   };
+  let doneCalled = false;
   // Call return on the request iterable to indicate
   // that we will no longer consume it and it should
   // cleanup any allocated resources.
   signal.addEventListener("abort", function () {
-    opt.req.message[Symbol.asyncIterator]()
-      .return?.()
-      .catch(() => {
-        // return returns a promise, which we don't care about.
+    const it = opt.req.message[Symbol.asyncIterator]();
+    // If the signal is aborted due to an error, we want to throw
+    // the error to the request iterator.
+    if (!doneCalled) {
+      it.throw?.(this.reason).catch(() => {
+        // throw returns a promise, which we don't care about.
         //
         // Uncaught promises are thrown at sometime/somewhere by the event loop,
         // this is to ensure error is caught and ignored.
       });
+    }
+    it.return?.().catch(() => {
+      // return returns a promise, which we don't care about.
+      //
+      // Uncaught promises are thrown at sometime/somewhere by the event loop,
+      // this is to ensure error is caught and ignored.
+    });
   });
   return next(req).then((res) => {
     return {
@@ -128,6 +138,7 @@ export function runStreamingCall<
             next() {
               return it.next().then((r) => {
                 if (r.done == true) {
+                  doneCalled = true;
                   done();
                 }
                 return r;
