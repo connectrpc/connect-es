@@ -668,7 +668,7 @@ export function transformCatchFinally<T>(
   return async function* (iterable) {
     // we deliberate avoid a for-await loop because we only want to catch upstream
     // errors, not downstream errors (yield).
-    let err: unknown | undefined;
+    let err: unknown;
     const it = iterable[Symbol.asyncIterator]();
     for (;;) {
       let r: IteratorResult<T>;
@@ -690,10 +690,15 @@ export function transformCatchFinally<T>(
   };
 }
 
+/**
+ * The function to always run at the end of an async iterable.
+ * If an error was caught, it is passed as the `reason` argument.
+ * If the iterable finished successfully, `reason` is undefined.
+ */
 type TransformCatchFinallyFn<C> =
-  | ((reason: unknown | undefined) => void)
-  | ((reason: unknown | undefined) => C | undefined)
-  | ((reason: unknown | undefined) => Promise<C | undefined>);
+  | ((reason: unknown) => void)
+  | ((reason: unknown) => C | undefined)
+  | ((reason: unknown) => Promise<C | undefined>);
 
 /**
  * Creates an AsyncIterableTransform that appends a value.

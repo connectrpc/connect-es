@@ -437,10 +437,10 @@ type Sentinel = Promise<void> & {
   isResolved(): boolean;
 
   /**
-   * Reject the sentinel. All errors are converted to ConnectError via
-   * ConnectError.from().
+   * Reject the sentinel. Unless the reason is already a ConnectError, it is
+   * converted to one via ConnectError.from().
    */
-  reject: (reason: ConnectError | unknown) => void;
+  reject: (reason: unknown) => void;
 
   isRejected(): boolean;
 
@@ -458,7 +458,7 @@ type Sentinel = Promise<void> & {
 
 function createSentinel(signal?: AbortSignal): Sentinel {
   let res: (() => void) | undefined;
-  let rej: ((reason: ConnectError | unknown) => void) | undefined;
+  let rej: ((reason: unknown) => void) | undefined;
   let resolved = false;
   let rejected = false;
   const p = new Promise<void>((resolve, reject) => {
