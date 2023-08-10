@@ -392,7 +392,11 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
         compression.response.name,
       );
     }
-    const outputIt = pipe(
+    // We split the pipeline into two parts: The request iterator, and the
+    // response iterator. We do this because the request iterator is responsible
+    //  for parsing the request body, and we don't want write errors of the response
+    // iterator to affect the request iterator.
+    const reqIt = pipe(
       req.body,
       transformPrepend<Uint8Array>(() => {
         if (opt.requireConnectProtocolHeader) {
@@ -412,7 +416,9 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
         // if we set `null` here, an end-stream-message in the request
         // raises an error, but we want to be lenient
       ),
-      transformInvokeImplementation<I, O>(spec, context),
+    );
+    const outputIt = pipe(
+      transformInvokeImplementation<I, O>(spec, context)(reqIt),
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
         context.abort();
@@ -437,6 +443,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       }),
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
       transformJoinEnvelopes(),
+      { propagateDownStreamError: true },
     );
     return {
       ...uResponseOk,
