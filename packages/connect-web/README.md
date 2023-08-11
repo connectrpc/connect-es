@@ -53,5 +53,5 @@ To get started with Connect, head over to the [docs](https://connectrpc.com/docs
 for a tutorial, or take a look at [our example](https://github.com/bufbuild/connect-es/tree/main/packages/example).
 
 Connect plays nice with Vue, Svelte, Remix, Next.js, Angular and many others. Take a look at
-[our examples](https://github.com/bufbuild/connect-es-integration) for various frameworks.
+[our examples](https://github.com/connectrpc/examples-es) for various frameworks.
 
