@@ -1,7 +1,7 @@
 Contributing
 ============
 
-We'd love your help making `connect-web` better!
+We'd love your help making `connect-es` better!
 
 If you'd like to add new exported APIs, please [open an issue][open-issue]
 describing your proposal &mdash; discussing API changes ahead of time makes
@@ -18,9 +18,9 @@ you to accept the CLA when you open your pull request.
 [Fork][fork], then clone the repository:
 
 ```
-git clone git@github.com:your_github_username/connect-web.git
-cd connect-web
-git remote add upstream https://github.com/bufbuild/connect-web.git
+git clone git@github.com:your_github_username/connect-es.git
+cd connect-es
+git remote add upstream https://github.com/bufbuild/connect-es.git
 git fetch upstream
 ```
 
@@ -63,7 +63,7 @@ We're much more likely to approve your changes if you:
 * Write a [good commit message][commit-message].
 * Maintain backward compatibility.
 
-[fork]: https://github.com/bufbuild/connect-web/fork
-[open-issue]: https://github.com/bufbuild/connect-web/issues/new
-[cla]: https://cla-assistant.io/bufbuild/connect-web
+[fork]: https://github.com/bufbuild/connect-es/fork
+[open-issue]: https://github.com/bufbuild/connect-es/issues/new
+[cla]: https://cla-assistant.io/bufbuild/connect-es
 [commit-message]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
