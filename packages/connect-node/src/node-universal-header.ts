@@ -18,7 +18,7 @@ import type * as http2 from "http2";
 /**
  * Convert a Node.js header object to a fetch API Headers object.
  *
- * This function works for Node.js incoming our outgoing headers, and for the
+ * This function works for Node.js incoming and outgoing headers, and for the
  * http and the http2 package.
  *
  * HTTP/2 pseudo-headers (:method, :path, etc.) are stripped.
@@ -53,10 +53,6 @@ export function nodeHeaderToWebHeader(
 
 /**
  * Convert a fetch API Headers object to a Node.js headers object.
- * Convert a Node.js header object to a fetch API Headers object.
- *
- * This function works for Node.js incoming our outgoing headers, and for the
- * http and the http2 package.
  */
 export function webHeaderToNodeHeaders(
   headersInit: HeadersInit,

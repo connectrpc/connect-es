@@ -14,6 +14,7 @@
 
 import * as http2 from "http2";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
+import type { PartialMessage } from "@bufbuild/protobuf";
 import { createPromiseClient, createRouterTransport } from "@bufbuild/connect";
 import type { ConnectRouter } from "@bufbuild/connect";
 import {
@@ -22,6 +23,7 @@ import {
   createGrpcWebTransport,
   createConnectTransport,
 } from "@bufbuild/connect-node";
+import { createWritableIterable } from "@bufbuild/connect/protocol";
 
 /* eslint-disable @typescript-eslint/require-await */
 
@@ -41,6 +43,24 @@ describe("node readme", function () {
     [{ no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
   );
 
+  interface ConverseRequest extends Message<ConverseRequest> {
+    sentence: string;
+  }
+
+  const ConverseRequest = proto3.makeMessageType<ConverseRequest>(
+    "connectrpc.eliza.v1.ConverseRequest",
+    [{ no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
+  );
+
+  interface ConverseResponse extends Message<ConverseResponse> {
+    sentence: string;
+  }
+
+  const ConverseResponse = proto3.makeMessageType<ConverseResponse>(
+    "connectrpc.eliza.v1.ConverseResponse",
+    [{ no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
+  );
+
   const ElizaService = {
     typeName: "connectrpc.eliza.v1.ElizaService",
     methods: {
@@ -55,6 +75,12 @@ describe("node readme", function () {
         I: IntroduceRequest,
         O: SayR,
         kind: MethodKind.ServerStreaming,
+      },
+      converse: {
+        name: "Converse",
+        I: ConverseRequest,
+        O: ConverseResponse,
+        kind: MethodKind.BiDiStreaming,
       },
     },
   } as const;
@@ -145,6 +171,59 @@ describe("node readme", function () {
       const res = await client.say({ sentence: "I feel happy." });
       // console.log(res.sentence) // you said: I feel happy.
       expect(res.sentence).toBe("you said: I feel happy.");
+    }
+
+    const server = await startServer();
+    await runClient();
+    server.close();
+  });
+
+  it("using writable iterable", async function () {
+    let port = -1;
+
+    function routes(router: ConnectRouter) {
+      router.rpc(
+        ElizaService,
+        ElizaService.methods.converse,
+        async function* (req: AsyncIterable<ConverseRequest>) {
+          yield { sentence: "ping" };
+          for await (const next of req) {
+            expect(next.sentence).toBe("pong");
+          }
+        },
+      );
+    }
+
+    function startServer() {
+      return new Promise<http2.Http2Server>((resolve) => {
+        const handler = connectNodeAdapter({ routes });
+        const server = http2.createServer(handler).listen(0, () => {
+          const a = server.address();
+          if (a !== null && typeof a !== "string") {
+            port = a.port;
+          }
+          resolve(server);
+        });
+      });
+    }
+
+    async function runClient() {
+      const transport = createGrpcTransport({
+        baseUrl: `http://localhost:${port}`,
+        httpVersion: "2",
+      });
+      const client = createPromiseClient(ElizaService, transport);
+      const req = createWritableIterable<PartialMessage<ConverseRequest>>();
+      try {
+        const res = client.converse(req);
+        for await (const next of res) {
+          expect(next.sentence).toBe("ping");
+          await req.write({ sentence: "pong" });
+          break;
+        }
+      } finally {
+        req.close();
+      }
     }
 
     const server = await startServer();
