@@ -50,7 +50,7 @@ Follow our [10 minute tutorial](https://connectrpc.com/docs/web/getting-started)
 we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
 web interface for ELIZA.
 
-**React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/bufbuild/connect-es-integration)),
+**React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/connectrpc/examples-es)),
 and we have an expansion pack for [TanStack Query](https://github.com/bufbuild/connect-query).
 We support all modern web browsers that implement the widely available
 [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
@@ -99,7 +99,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 
 ## Ecosystem
 
-* [connect-es-integration](https://github.com/bufbuild/connect-es-integration):
+* [examples-es](https://github.com/connectrpc/examples-es):
   Examples for using Connect with various TypeScript web frameworks and tooling
 * [connect-query](https://github.com/bufbuild/connect-query):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
