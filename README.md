@@ -99,7 +99,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 
 ## Ecosystem
 
-* [connect-es Examples](https://github.com/connectrpc/examples-es):
+* [examples-es](https://github.com/connectrpc/examples-es):
   Examples for using Connect with various TypeScript web frameworks and tooling
 * [connect-query](https://github.com/bufbuild/connect-query):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
