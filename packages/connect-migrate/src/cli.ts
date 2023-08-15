@@ -1,6 +1,6 @@
 /* eslint-disable no-console -- We use this to output results. */
 import { replacePackageJSONReferences } from "./replacement-map";
-import fastBlob from "fast-glob";
+import fastGlob from "fast-glob";
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import * as path from "node:path";
@@ -48,7 +48,8 @@ async function replacePackageReferences() {
     "Could not determine package manager based on lock file. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project."
   );
   console.log("Updating package dependencies...");
-  const files = await fastBlob.async(["./**/package.json", "./package.json"], {
+  // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
+  const files = await fastGlob.async(["./**/package.json", "./package.json"], {
     ignore: ["**/node_modules/**"],
   });
   for (const file of files) {
