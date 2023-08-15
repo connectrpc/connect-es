@@ -11,7 +11,8 @@
     "./packages/connect-node-test",
     "./packages/connect-web-test",
     "./packages/connect-web-bench",
-    "./packages/example"
+    "./packages/example",
+    "./packages/connect-migrate"
   ],
   "type": "module",
   "engineStrict": true,

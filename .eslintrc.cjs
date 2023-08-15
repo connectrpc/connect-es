@@ -14,6 +14,7 @@ module.exports = {
     "packages/example/www/webclient.js",
     "packages/*/dist/**",
     "node_modules/**",
+    "packages/**/__testfixtures__/**/*"
   ],
   plugins: ["@typescript-eslint", "node", "import"],
   // Rules and settings that do not require a non-default parser
