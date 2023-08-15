@@ -14,7 +14,7 @@ You will need [Node](https://nodejs.org/en/download/) in version 16 or later ins
 the example project and install its dependencies:
 
 ```shell
-curl -L https://github.com/bufbuild/connect-es/archive/refs/heads/main.zip > connect-web-main.zip
+curl -L https://github.com/connectrpc/connect-es/archive/refs/heads/main.zip > connect-es-main.zip
 unzip connect-es-main.zip 'connect-es-main/packages/example/*'
 
 cd connect-es-main/packages/example
