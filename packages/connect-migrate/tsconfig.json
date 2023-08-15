@@ -1,5 +1,4 @@
 {
-  "files": ["src/cli/cli.ts"],
   "include": ["src/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "exclude": ["src/transforms/__testfixtures__/**/*"],

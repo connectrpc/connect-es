@@ -8,9 +8,8 @@
     "directory": "packages/connect-migrate"
   },
   "sideEffects": true,
-  "bin": "./dist/cli/cli.js",
+  "bin": "./dist/cli.js",
   "scripts": {
-    "clean": "rm -rf ./bin",
     "build": "tsup",
     "test": "jest"
   },
@@ -20,7 +19,6 @@
   },
   "dependencies": {
     "jscodeshift": "0.15.0",
-    "execa": "7.2.0",
     "fast-glob": "3.3.1"
   },
   "devDependencies": {

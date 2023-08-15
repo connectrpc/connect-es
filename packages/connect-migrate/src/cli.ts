@@ -1,5 +1,5 @@
 /* eslint-disable no-console -- We use this to output results. */
-import { replacePackageJSONReferences } from "../replacement-map";
+import { replacePackageJSONReferences } from "./replacement-map";
 import fastBlob from "fast-glob";
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -31,7 +31,10 @@ async function replacePackageReferences() {
     });
   }
 
-  assert(packageExists, "Could not find package.json");
+  assert(
+    packageExists,
+    "Could not find package.json. This command must be run in a directory with a package.json file."
+  );
   let packageManager: "pnpm" | "npm" | "yarn" | undefined = undefined;
   if (existsSync(path.join(dir, "pnpm-lock.yaml"))) {
     packageManager = "pnpm";
@@ -40,8 +43,11 @@ async function replacePackageReferences() {
   } else if (existsSync(path.join(dir, "yarn.lock"))) {
     packageManager = "yarn";
   }
-  assert(packageManager !== undefined, "Could not determine package manager");
-  // Update all package.json files
+  assert(
+    packageManager !== undefined,
+    "Could not determine package manager based on lock file. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project."
+  );
+  console.log("Updating package dependencies...");
   const files = await fastBlob.async(["./**/package.json", "./package.json"], {
     ignore: ["**/node_modules/**"],
   });
@@ -50,10 +56,11 @@ async function replacePackageReferences() {
     const fileContents = await readFile(file, "utf-8");
     await writeFile(file, replacePackageJSONReferences(fileContents), "utf-8");
   }
-  // Update references
+  console.log("Updated package dependencies.");
+  console.log("Updating references...");
   executeInContext(jscodeshiftExecutable, [
     "--ignore-pattern=**/node_modules/**",
-    "--extensions=tsx,ts,jsx,js",
+    "--extensions=tsx,ts,jsx,js,cjs,mjs",
     // TSX covers everything we need to be concerned about. The one parser it won't
     // cover is something like flow but we can worry about flow later and add it as a param.
     "--parser=tsx",
@@ -61,7 +68,7 @@ async function replacePackageReferences() {
     transformerPath,
     ".",
   ]);
-  console.log("Updates references.");
+  console.log("Updated references.");
   console.log("Installing dependencies...");
   if (packageManager === "npm") {
     executeInContext("npm", ["install"]);
