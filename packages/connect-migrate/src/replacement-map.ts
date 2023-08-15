@@ -24,3 +24,14 @@ export function getReplacementImport(sourceValue: string): string | undefined {
   }
   return undefined;
 }
+
+export function replacePackageJSONReferences(jsonString: string): string {
+  let result = jsonString;
+  for (const key of keys) {
+    result = result.replace(
+      new RegExp(`"${key}":`, "g"),
+      `"${replacementMap[key]}":`
+    );
+  }
+  return result;
+}
