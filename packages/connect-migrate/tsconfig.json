@@ -1,9 +1,8 @@
 {
-  "include": ["src/**/*.ts"],
+  "include": ["**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "exclude": ["src/transforms/__testfixtures__/**/*"],
   "compilerOptions": {
-    "module": "ES2020",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     // We see a row of errors from Next.js typings here, most likely simply

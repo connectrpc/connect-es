@@ -19,8 +19,6 @@ import fastGlob from "fast-glob";
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import * as path from "node:path";
-import { createRequire } from "node:module";
-import * as url from "node:url";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { parseCommandLineArgs } from "./arguments";
@@ -32,13 +30,16 @@ if (!args.ok) {
   process.exit(1);
 }
 
-const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
-const require = createRequire(import.meta.url);
 const jscodeshiftExecutable = require.resolve(".bin/jscodeshift");
 
 // We reference src here so jscodeshift can digest the transform
 // as it is, since jscodeshift can't seem to handle compiled ts.
-const transformerDirectory = path.join(__dirname, "../", "src", "transforms");
+const transformerDirectory = path.join(
+  __dirname,
+  "../../",
+  "src",
+  "transforms"
+);
 const transformerPath = path.join(transformerDirectory, `modify-imports.ts`);
 
 function executeInContext(command: string, args: string[]) {
