@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Copyright 2021-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,9 +77,9 @@ function reinstallDependencies(dir: string) {
       : packageManager === "pnpm"
       ? executeInContext("pnpm", ["install", "-r"])
       : executeInContext("yarn", ["install"]);
-  if (spawn.stderr.length > 0) {
+  if (spawn.status !== 0) {
     process.stderr.write(
-      "Failed to install. Check to make sure you have the most recent versions of @connectrpc/connect-* packages installed."
+      "Failed to install dependencies. Check to make sure you have the most recent versions of @connectrpc/connect-* packages installed."
     );
     process.exit(1);
   }
