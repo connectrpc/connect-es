@@ -35,7 +35,7 @@ export function getReplacementImport(sourceValue: string): string | undefined {
   });
   if (sourceValue === match) {
     return replacementMap[match];
-  } else if (match) {
+  } else if (match !== undefined) {
     return sourceValue.replace(`${match}/`, `${replacementMap[match]}/`);
   }
   return undefined;
