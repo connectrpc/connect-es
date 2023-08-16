@@ -4,3 +4,4 @@ node_modules
 /packages/*/dist
 /packages/*/src/gen
 /.tmp
+__testfixtures__

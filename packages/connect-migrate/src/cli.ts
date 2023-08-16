@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Copyright 2021-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable no-console -- We use this to output results. */
 import { replacePackageJSONReferences } from "./replacement-map";
 import fastGlob from "fast-glob";
 import { readFile, writeFile } from "node:fs/promises";
@@ -20,9 +21,16 @@ import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { createRequire } from "node:module";
 import * as url from "node:url";
-import assert from "node:assert";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
+import { parseCommandLineArgs, CommandLineArgs } from "./arguments";
+
+const args = parseCommandLineArgs(process.argv.slice(2));
+
+if (!args.ok) {
+  process.stderr.write(`${args.errorMessage}\n`);
+  process.exit(1);
+}
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -33,47 +41,57 @@ const jscodeshiftExecutable = require.resolve(".bin/jscodeshift");
 const transformerDirectory = path.join(__dirname, "../", "src", "transforms");
 const transformerPath = path.join(transformerDirectory, `modify-imports.ts`);
 
-async function replacePackageReferences() {
+function executeInContext(command: string, args: string[]) {
   const dir = process.cwd();
-  const packageExists = existsSync(path.join(dir, "package.json"));
 
-  function executeInContext(command: string, args: string[]) {
-    spawnSync(command, args, {
-      cwd: dir,
-      shell: true,
-      stdio: ["pipe", "inherit", "inherit"],
-    });
-  }
-
-  assert(
-    packageExists,
-    "Could not find package.json. This command must be run in a directory with a package.json file.",
-  );
-  let packageManager: "pnpm" | "npm" | "yarn" | undefined = undefined;
-  if (existsSync(path.join(dir, "pnpm-lock.yaml"))) {
-    packageManager = "pnpm";
-  } else if (existsSync(path.join(dir, "package-lock.json"))) {
-    packageManager = "npm";
-  } else if (existsSync(path.join(dir, "yarn.lock"))) {
-    packageManager = "yarn";
-  }
-  assert(
-    packageManager !== undefined,
-    "Could not determine package manager based on lock file. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project.",
-  );
-  console.log("Updating package dependencies...");
-  // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
-  const files = await fastGlob.async(["./**/package.json", "./package.json"], {
-    ignore: ["**/node_modules/**"],
+  spawnSync(command, args, {
+    cwd: dir,
+    shell: true,
+    stdio: ["pipe", "inherit", "inherit"],
   });
-  for (const file of files) {
-    console.log(`Updating ${file}...`);
-    const fileContents = await readFile(file, "utf-8");
-    await writeFile(file, replacePackageJSONReferences(fileContents), "utf-8");
+}
+
+async function main(flags: CommandLineArgs) {
+  const dir = process.cwd();
+
+  process.stdout.write("Updating package dependencies...\n");
+  await updatePackageFiles();
+  process.stdout.write("Updated package dependencies.\n");
+  process.stdout.write("Updating references...\n");
+  updateSourceFiles(flags);
+  process.stdout.write("Updated references.\n");
+  process.stdout.write("Installing dependencies...\n");
+  reinstallDependencies(dir);
+  process.stdout.write("Dependencies installed.\n");
+
+  process.exit(0);
+}
+
+void main(args);
+
+function reinstallDependencies(dir: string) {
+  // TODO: Perhaps we can find all the lock files and run install wherever we find them. This'll help for repos without a single
+  // top level lock file.
+  const packageManager = getPackageManager(dir);
+
+  if (packageManager === undefined) {
+    process.stderr.write(
+      "Cannot reinstall dependencies if we can't find a lockfile. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project."
+    );
+    process.exit(1);
   }
-  console.log("Updated package dependencies.");
-  console.log("Updating references...");
-  executeInContext(jscodeshiftExecutable, [
+
+  if (packageManager === "npm") {
+    executeInContext("npm", ["install"]);
+  } else if (packageManager === "pnpm") {
+    executeInContext("pnpm", ["install", "-r"]);
+  } else {
+    executeInContext("yarn", ["install"]);
+  }
+}
+
+function updateSourceFiles(flags: { singleQuotes: boolean }) {
+  const baseArgs = [
     "--ignore-pattern=**/node_modules/**",
     "--extensions=tsx,ts,jsx,js,cjs,mjs",
     // TSX covers everything we need to be concerned about. The one parser it won't
@@ -82,17 +100,34 @@ async function replacePackageReferences() {
     "--transform",
     transformerPath,
     ".",
-  ]);
-  console.log("Updated references.");
-  console.log("Installing dependencies...");
-  if (packageManager === "npm") {
-    executeInContext("npm", ["install"]);
-  } else if (packageManager === "pnpm") {
-    executeInContext("pnpm", ["install", "-r"]);
-  } else {
-    executeInContext("yarn", ["install"]);
+  ];
+  if (flags.singleQuotes) {
+    baseArgs.push(`--printOptions='{"quote": "single"}'`);
   }
-  console.log("Dependencies installed.");
+  executeInContext(jscodeshiftExecutable, baseArgs);
 }
 
-void replacePackageReferences();
+async function updatePackageFiles() {
+  // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
+  const files = await fastGlob.async(["./**/package.json", "./package.json"], {
+    ignore: ["**/node_modules/**"],
+  });
+  for (const file of files) {
+    process.stdout.write(`Updating ${file}...\n`);
+    const fileContents = await readFile(file, "utf-8");
+    await writeFile(file, replacePackageJSONReferences(fileContents), "utf-8");
+  }
+}
+
+function getPackageManager(dir: string) {
+  let packageManager: "pnpm" | "npm" | "yarn" | undefined = undefined;
+  if (existsSync(path.join(dir, "pnpm-lock.yaml"))) {
+    packageManager = "pnpm";
+  } else if (existsSync(path.join(dir, "package-lock.json"))) {
+    packageManager = "npm";
+  } else if (existsSync(path.join(dir, "yarn.lock"))) {
+    packageManager = "yarn";
+  }
+
+  return packageManager;
+}

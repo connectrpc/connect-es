@@ -13,13 +13,23 @@
 // limitations under the License.
 
 import { defineTest } from "jscodeshift/src/testUtils";
+import { join } from "node:path";
+import { readdirSync } from "node:fs";
 
 describe("modify-imports", () => {
-  const tests = ["simple", "sub-directory-imports", "cjs"];
+  const tests = readdirSync(join(__dirname, "__testfixtures__")).filter(
+    (file) => file.endsWith(".input.ts") || file.endsWith(".input.js")
+  );
 
   tests.forEach((test) => {
-    defineTest(__dirname, "modify-imports", null, `modify-imports/${test}`, {
-      parser: "ts",
-    });
+    defineTest(
+      join(__dirname, "__testfixtures__"),
+      "modify-imports",
+      null,
+      test.replace(/\.input\.(ts|js)$/, ""),
+      {
+        parser: test.endsWith(".ts") ? "ts" : "babel",
+      }
+    );
   });
 });
