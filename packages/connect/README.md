@@ -48,7 +48,7 @@ we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
 web interface for ELIZA.
 
 **React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/connectrpc/examples-es)),
-and we have an expansion pack for [TanStack Query](https://github.com/bufbuild/connect-query).
+and we have an expansion pack for [TanStack Query](https://github.com/connectrpc/connect-query-es).
 We support all modern web browsers that implement the widely available
 [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).

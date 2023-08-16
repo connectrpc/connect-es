@@ -34,7 +34,7 @@ describe("requestHeader", () => {
       "user-agent",
     ]);
     expect(headers.get("Content-Type")).toBe("application/grpc+proto");
-    expect(headers.get("User-Agent")).toBe("@bufbuild/connect-web");
+    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+$/);
   });
 
   it("should create request headers with timeout", () => {
