@@ -1,5 +1,3 @@
-// @ts-nocheck
-
-import { makeAnyClient } from "@bufbuild/connect/dist/cjs/any-client";
+import { runUnaryCall } from "@bufbuild/connect/protocol";
 
 export const createNewAnyClient = makeAnyClient;

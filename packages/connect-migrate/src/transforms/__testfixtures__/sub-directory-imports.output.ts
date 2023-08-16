@@ -1,5 +1,3 @@
-// @ts-nocheck
-
-import { makeAnyClient } from "@connectrpc/connect/dist/cjs/any-client";
+import { runUnaryCall } from "@connectrpc/connect/protocol";
 
 export const createNewAnyClient = makeAnyClient;
