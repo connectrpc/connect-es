@@ -18,7 +18,7 @@ import {
   headerEncoding,
   headerTimeout,
   headerXGrpcWeb,
-  headerXUserAgent
+  headerXUserAgent,
 } from "./headers.js";
 import { contentTypeJson, contentTypeProto } from "./content-type.js";
 import type { Compression } from "../protocol/compression.js";
