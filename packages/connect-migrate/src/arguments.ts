@@ -1,7 +1,6 @@
 export interface CommandLineArgs {
   ok: true;
   help: boolean;
-  singleQuotes: boolean;
   runInstall: boolean;
 }
 
@@ -36,9 +35,6 @@ export function parseCommandLineArgs(
         parsed.help = true;
         process.stdout.write(usage);
         process.exit(0);
-        break;
-      case "--single-quotes":
-        parsed.singleQuotes = true;
         break;
       default:
         return {

@@ -21,11 +21,25 @@ import { getReplacementImport } from "../replacement-map";
  */
 const transform: Transform = (file, { j }, options) => {
   const root = j(file.source);
+  const importPaths = root.find(j.ImportDeclaration);
+  const requirePaths = root.find(j.CallExpression, {
+    callee: {
+      type: "Identifier",
+      name: "require",
+    },
+  });
+
+  let quoteStyle: "double" | "single" = "double";
+  if (importPaths.length > 0) {
+    const first = importPaths.at(0);
+    quoteStyle = first.toSource().includes("'") ? "single" : "double";
+  } else if (requirePaths.length > 0) {
+    const first = requirePaths.at(0);
+    quoteStyle = first.toSource().includes("'") ? "single" : "double";
+  }
+
   // ESM imports
-  root
-    .find(j.ImportDeclaration, {
-      type: "ImportDeclaration",
-    })
+  importPaths
     .filter((path) => {
       // TODO: Handle dynamic imports
       if (typeof path.value.source.value !== "string") {
@@ -44,14 +58,7 @@ const transform: Transform = (file, { j }, options) => {
       }
     });
   // CJS imports
-  root
-    .find(j.CallExpression, {
-      type: "CallExpression",
-      callee: {
-        type: "Identifier",
-        name: "require",
-      },
-    })
+  requirePaths
     .filter((path) => {
       if (path.value.arguments.length === 0) {
         return false;
@@ -77,8 +84,13 @@ const transform: Transform = (file, { j }, options) => {
         }
       }
     });
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- passing the printOptions onto toSource is safe
-  return root.toSource(options.printOptions ?? {});
+
+  return root.toSource(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- passing the printOptions onto toSource is safe
+    options.printOptions ?? {
+      quote: quoteStyle,
+    }
+  );
 };
 
 export default transform;

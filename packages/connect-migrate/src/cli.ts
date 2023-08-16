@@ -23,7 +23,7 @@ import { createRequire } from "node:module";
 import * as url from "node:url";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
-import { parseCommandLineArgs, CommandLineArgs } from "./arguments";
+import { parseCommandLineArgs } from "./arguments";
 
 const args = parseCommandLineArgs(process.argv.slice(2));
 
@@ -51,14 +51,14 @@ function executeInContext(command: string, args: string[]) {
   });
 }
 
-async function main(flags: CommandLineArgs) {
+async function main() {
   const dir = process.cwd();
 
   process.stdout.write("Updating package dependencies...\n");
   await updatePackageFiles();
   process.stdout.write("Updated package dependencies.\n");
   process.stdout.write("Updating references...\n");
-  updateSourceFiles(flags);
+  updateSourceFiles();
   process.stdout.write("Updated references.\n");
   process.stdout.write("Installing dependencies...\n");
   reinstallDependencies(dir);
@@ -67,7 +67,7 @@ async function main(flags: CommandLineArgs) {
   process.exit(0);
 }
 
-void main(args);
+void main();
 
 function reinstallDependencies(dir: string) {
   // TODO: Perhaps we can find all the lock files and run install wherever we find them. This'll help for repos without a single
@@ -90,7 +90,7 @@ function reinstallDependencies(dir: string) {
   }
 }
 
-function updateSourceFiles(flags: { singleQuotes: boolean }) {
+function updateSourceFiles() {
   const baseArgs = [
     "--ignore-pattern=**/node_modules/**",
     "--extensions=tsx,ts,jsx,js,cjs,mjs",
@@ -101,9 +101,6 @@ function updateSourceFiles(flags: { singleQuotes: boolean }) {
     transformerPath,
     ".",
   ];
-  if (flags.singleQuotes) {
-    baseArgs.push(`--printOptions='{"quote": "single"}'`);
-  }
   executeInContext(jscodeshiftExecutable, baseArgs);
 }
 

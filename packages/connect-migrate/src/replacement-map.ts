@@ -33,7 +33,7 @@ export function getReplacementImport(sourceValue: string): string | undefined {
   if (match !== undefined) {
     return sourceValue.replace(
       new RegExp(`^${match}\\b`),
-      replacementMap[match],
+      replacementMap[match]
     );
   }
   return undefined;
@@ -42,10 +42,7 @@ export function getReplacementImport(sourceValue: string): string | undefined {
 export function replacePackageJSONReferences(jsonString: string): string {
   let result = jsonString;
   for (const key of keys) {
-    result = result.replace(
-      new RegExp(`"${key}":`, "g"),
-      `"${replacementMap[key]}":`,
-    );
+    result = result.replace(`"${key}"`, `"${replacementMap[key]}"`);
   }
   return result;
 }
