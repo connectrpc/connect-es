@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { createPromiseClient } from "@bufbuild/connect";
 import { createConnectTransport } from "@bufbuild/connect-web";
 

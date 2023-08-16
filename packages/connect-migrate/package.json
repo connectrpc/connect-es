@@ -30,8 +30,7 @@
   },
   "files": [
     "dist",
-    "src",
-    "!src/**/__testfixtures__",
-    "!src/**/*.spec.ts"
+    "!dist/**/__testfixtures__",
+    "!dist/**/*.spec.ts"
   ]
 }

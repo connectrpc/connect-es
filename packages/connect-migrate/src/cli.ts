@@ -22,6 +22,7 @@ import * as path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { parseCommandLineArgs } from "./arguments";
+import { run as jscodeshift } from "jscodeshift/src/Runner";
 
 const args = parseCommandLineArgs(process.argv.slice(2));
 
@@ -30,17 +31,7 @@ if (!args.ok) {
   process.exit(1);
 }
 
-const jscodeshiftExecutable = require.resolve(".bin/jscodeshift");
-
-// We reference src here so jscodeshift can digest the transform
-// as it is, since jscodeshift can't seem to handle compiled ts.
-const transformerDirectory = path.join(
-  __dirname,
-  "../../",
-  "src",
-  "transforms"
-);
-const transformerPath = path.join(transformerDirectory, `modify-imports.ts`);
+const transformerPath = path.join(__dirname, "transforms", `modify-imports.js`);
 
 function executeInContext(command: string, args: string[]) {
   const dir = process.cwd();
@@ -59,7 +50,7 @@ async function main() {
   await updatePackageFiles();
   process.stdout.write("Updated package dependencies.\n");
   process.stdout.write("Updating references...\n");
-  updateSourceFiles();
+  await updateSourceFiles();
   process.stdout.write("Updated references.\n");
   process.stdout.write("Installing dependencies...\n");
   reinstallDependencies(dir);
@@ -91,18 +82,25 @@ function reinstallDependencies(dir: string) {
   }
 }
 
-function updateSourceFiles() {
-  const baseArgs = [
-    "--ignore-pattern=**/node_modules/**",
-    "--extensions=tsx,ts,jsx,js,cjs,mjs",
-    // TSX covers everything we need to be concerned about. The one parser it won't
-    // cover is something like flow but we can worry about flow later and add it as a param.
-    "--parser=tsx",
-    "--transform",
-    transformerPath,
-    ".",
-  ];
-  executeInContext(jscodeshiftExecutable, baseArgs);
+async function updateSourceFiles() {
+  // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
+  const files = await fastGlob.async(
+    [
+      "./**/*.tsx",
+      "./**/*.ts",
+      "./**/*.js",
+      "./**/*.jsx",
+      "./**/*.cjs",
+      "./**/*.mjs",
+    ],
+    {
+      ignore: ["**/node_modules/**"],
+    }
+  );
+
+  await jscodeshift(transformerPath, files, {
+    parser: "tsx",
+  });
 }
 
 async function updatePackageFiles() {
