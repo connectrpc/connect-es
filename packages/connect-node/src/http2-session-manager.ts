@@ -549,7 +549,7 @@ function ready(
   options: Required<Http2SessionOptions>,
 ): StateReady {
   // Users have reported an error "The session has been destroyed" raised
-  // from H2SessionManager.request(), see https://github.com/bufbuild/connect-es/issues/683
+  // from H2SessionManager.request(), see https://github.com/connectrpc/connect-es/issues/683
   // This assertion will show whether the session already died in the
   // "connecting" state.
   assertSessionOpen(conn);

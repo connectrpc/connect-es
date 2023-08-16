@@ -20,15 +20,15 @@ you to accept the CLA when you open your pull request.
 ```
 git clone git@github.com:your_github_username/connect-es.git
 cd connect-es
-git remote add upstream https://github.com/bufbuild/connect-es.git
+git remote add upstream https://github.com/connectrpc/connect-es.git
 git fetch upstream
 ```
 
-Make sure that the tests and the linters pass (you'll need `node`, 
+Make sure that the tests and the linters pass (you'll need `node`,
 `buf`, `bash`, Docker, and the latest stable Go release installed):
 
 ```
-make 
+make
 ```
 
 ## Making Changes
@@ -42,7 +42,7 @@ git rebase upstream/main
 git checkout -b cool_new_feature
 ```
 
-Make your changes, then ensure that `make` still passes. 
+Make your changes, then ensure that `make` still passes.
 When you're satisfied with your changes, push them to your fork.
 
 ```
@@ -63,7 +63,7 @@ We're much more likely to approve your changes if you:
 * Write a [good commit message][commit-message].
 * Maintain backward compatibility.
 
-[fork]: https://github.com/bufbuild/connect-es/fork
-[open-issue]: https://github.com/bufbuild/connect-es/issues/new
-[cla]: https://cla-assistant.io/bufbuild/connect-es
+[fork]: https://github.com/connectrpc/connect-es/fork
+[open-issue]: https://github.com/connectrpc/connect-es/issues/new
+[cla]: https://cla-assistant.io/connectrpc/connect-es
 [commit-message]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html

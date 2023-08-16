@@ -64,7 +64,7 @@ export function createTestServers() {
   // | connect-go h2 | 8081 |
   // | grpc-go       | 8083 |
   //
-  // Source: https://github.com/bufbuild/connect-es/pull/87
+  // Source: https://github.com/connectrpc/connect-es/pull/87
   const servers = {
     // connect-go
     "connect-go (h1)": {
