@@ -23,19 +23,21 @@ describe("replacePackageJSONReferences", () => {
                 "name": "test",
                 "dependencies": {
                     "@bufbuild/connect": "1.0.0",
+                    "@bufbuild/connect-web": "1.0.0"
                 }
             }
-        `.trim(),
-      ),
+        `.trim()
+      )
     ).toEqual(
       `
             {
                 "name": "test",
                 "dependencies": {
                     "@connectrpc/connect": "1.0.0",
+                    "@connectrpc/connect-web": "1.0.0"
                 }
             }
-        `.trim(),
+        `.trim()
     );
   });
 });
