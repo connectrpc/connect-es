@@ -1,10 +1,10 @@
-# @bufbuild/connect-web
+# @connectrpc/connect-web
 
 Connect is a family of libraries for building and consuming APIs on different languages and platforms.
-[@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings type-safe APIs with Protobuf to
+[@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings type-safe APIs with Protobuf to
 TypeScript.
 
-`@bufbuild/connect-web` provides the following adapters for web browsers, and any other platform that has
+`@connectrpc/connect-web` provides the following adapters for web browsers, and any other platform that has
 the fetch API on board:
 
 
@@ -13,8 +13,8 @@ the fetch API on board:
 Lets your clients running in the web browser talk to a server with the Connect protocol:
 
 ```diff
-import { createPromiseClient } from "@bufbuild/connect";
-+ import { createConnectTransport } from "@bufbuild/connect-web";
+import { createPromiseClient } from "@connectrpc/connect";
++ import { createConnectTransport } from "@connectrpc/connect-web";
 import { ElizaService } from "./gen/eliza_connect.js";
 
 + // A transport for clients using the Connect protocol with fetch()
@@ -32,8 +32,8 @@ console.log(sentence) // you said: I feel happy.
 Lets your clients running in the web browser  talk to a server with the gRPC-web protocol:
 
 ```diff
-import { createPromiseClient } from "@bufbuild/connect";
-+ import { createGrpcWebTransport } from "@bufbuild/connect-web";
+import { createPromiseClient } from "@connectrpc/connect";
++ import { createGrpcWebTransport } from "@connectrpc/connect-web";
 import { ElizaService } from "./gen/eliza_connect.js";
 
 + // A transport for clients using the Connect protocol with fetch()

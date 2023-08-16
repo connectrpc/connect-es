@@ -15,8 +15,8 @@
 import type {
   CommonTransportOptions,
   UniversalClientFn,
-} from "@bufbuild/connect/protocol";
-import { validateReadWriteMaxBytes } from "@bufbuild/connect/protocol";
+} from "@connectrpc/connect/protocol";
+import { validateReadWriteMaxBytes } from "@connectrpc/connect/protocol";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 import { createNodeHttpClient } from "./node-universal-client.js";
 import type { NodeHttp2ClientSessionManager } from "./node-universal-client.js";

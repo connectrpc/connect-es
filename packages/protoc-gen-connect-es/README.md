@@ -13,21 +13,21 @@ like [buf](https://github.com/bufbuild/buf) and [protoc](https://github.com/prot
 It generates clients as well as server definitions from your Protocol Buffer schema, and works in tandem with
 [@bufbuild/protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es),
 the code generator plugin for all Protocol Buffer base types. The code these two
-plugins generate requires the runtime libraries [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect),
+plugins generate requires the runtime libraries [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect),
 and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 
 To install `buf`, the plugins and their runtime libraries, run:
 
 ```shell
 npm install --save-dev @bufbuild/buf @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-es
-npm install @bufbuild/connect @bufbuild/protobuf
+npm install @connectrpc/connect @bufbuild/protobuf
 ```
 
 If you want to call Connect or gRPC-web services from a web browsers, make sure to install
-[@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web). If you want servers too,
-install [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node),
-[@bufbuild/connect-fastify](https://www.npmjs.com/package/@bufbuild/connect-fastify), or
-[@bufbuild/connect-express](https://www.npmjs.com/package/@bufbuild/connect-express)
+[@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web). If you want servers too,
+install [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node),
+[@connectrpc/connect-fastify](https://www.npmjs.com/package/@connectrpc/connect-fastify), or
+[@connectrpc/connect-express](https://www.npmjs.com/package/@connectrpc/connect-express)
 
 We use peer dependencies to ensure that code generator and runtime library are
 compatible with each other. Note that npm installs them automatically, but yarn

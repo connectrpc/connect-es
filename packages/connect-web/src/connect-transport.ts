@@ -30,8 +30,8 @@ import type {
   Transport,
   UnaryRequest,
   UnaryResponse,
-} from "@bufbuild/connect";
-import { appendHeaders } from "@bufbuild/connect";
+} from "@connectrpc/connect";
+import { appendHeaders } from "@connectrpc/connect";
 import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
@@ -40,7 +40,7 @@ import {
   encodeEnvelope,
   runStreamingCall,
   runUnaryCall,
-} from "@bufbuild/connect/protocol";
+} from "@connectrpc/connect/protocol";
 import {
   endStreamFlag,
   endStreamFromJson,
@@ -49,7 +49,7 @@ import {
   trailerDemux,
   transformConnectPostToGetRequest,
   validateResponse,
-} from "@bufbuild/connect/protocol-connect";
+} from "@connectrpc/connect/protocol-connect";
 import { assertFetchApi } from "./assert-fetch-api.js";
 
 /**

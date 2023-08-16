@@ -2,10 +2,10 @@
 
 # Connect for ECMAScript
 
-[![License](https://img.shields.io/github/license/connectrpc/connect-es?color=blue)](./LICENSE) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/connect/latest?color=green&label=%40bufbuild%2Fconnect)](https://www.npmjs.com/package/@bufbuild/connect) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protoc-gen-connect-es/latest?color=green&label=%40bufbuild%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
+[![License](https://img.shields.io/github/license/connectrpc/connect-es?color=blue)](./LICENSE) [![NPM Version](https://img.shields.io/npm/v/@connectrpc/connect/latest?color=green&label=%40connectrpc%2Fconnect)](https://www.npmjs.com/package/@connectrpc/connect) [![NPM Version](https://img.shields.io/npm/v/@connectrpc/protoc-gen-connect-es/latest?color=green&label=%40connectrpc%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es)
 
 Connect is a family of libraries for building type-safe APIs with different languages and platforms.
-[@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings them to TypeScript,
+[@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings them to TypeScript,
 the web browser, and to Node.js.
 
 With Connect, you define your schema first:
@@ -79,19 +79,19 @@ be more than happy to chat!
 
 ## Packages
 
-- [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect):
+- [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect):
   RPC clients and servers for your schema ([source code](packages/connect)).
 - [@bufbuild/protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es):
   Code generator plugin for the services in your schema ([source code](packages/protoc-gen-connect-es)).
-- [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web):
+- [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web):
   Adapters for web browsers, and any other platform that has the fetch API on board.
-- [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node):
+- [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node):
   Serve RPCs on vanilla Node.js servers. Call RPCs with any protocol.
-- [@bufbuild/connect-fastify](https://www.npmjs.com/package/@bufbuild/connect-fastify):
+- [@connectrpc/connect-fastify](https://www.npmjs.com/package/@connectrpc/connect-fastify):
   Plug your services into a [Fastify](https://www.fastify.io/) server.
-- [@bufbuild/connect-next](https://www.npmjs.com/package/@bufbuild/connect-next):
+- [@connectrpc/connect-next](https://www.npmjs.com/package/@connectrpc/connect-next):
   Serve your RPCs with [Next.js](https://nextjs.org/) API routes.
-- [@bufbuild/connect-express](https://www.npmjs.com/package/@bufbuild/connect-express):
+- [@connectrpc/connect-express](https://www.npmjs.com/package/@connectrpc/connect-express):
   Adds your services to an [Express](https://expressjs.com/) server.
 
 The libraries and the generated code are compatible with ES2017 and TypeScript 4.1.

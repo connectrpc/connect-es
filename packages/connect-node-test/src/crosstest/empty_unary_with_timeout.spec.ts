@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
+import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { Empty } from "../gen/grpc/testing/empty_pb.js";
 import { createTestServers } from "../helpers/testserver.js";

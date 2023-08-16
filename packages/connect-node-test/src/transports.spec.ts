@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code, ConnectError } from "@bufbuild/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import {
   createConnectTransport,
   Http2SessionManager,
-} from "@bufbuild/connect-node";
+} from "@connectrpc/connect-node";
 
 describe("createConnectTransport()", function () {
   it("should take just httpVersion and baseUrl", function () {

@@ -1,10 +1,10 @@
-# @bufbuild/connect-next
+# @connectrpc/connect-next
 
 Connect is a family of libraries for building and consuming APIs on different languages and platforms, and
-[@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings type-safe APIs with Protobuf to
+[@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings type-safe APIs with Protobuf to
 TypeScript.
 
-`@bufbuild/connect-next` provides a plugin for [Next.js](https://nextjs.org/),
+`@connectrpc/connect-next` provides a plugin for [Next.js](https://nextjs.org/),
 the React Framework for the Web.
 
 
@@ -25,7 +25,7 @@ add two files to your project:
 
 ```ts
 // connect.ts
-import { ConnectRouter } from "@bufbuild/connect";
+import { ConnectRouter } from "@connectrpc/connect";
 
 export default function(router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
@@ -39,7 +39,7 @@ export default function(router: ConnectRouter) {
 
 ```ts
 // pages/api/[[..connect]].ts
-import { nextJsApiRouter } from "@bufbuild/connect-next";
+import { nextJsApiRouter } from "@connectrpc/connect-next";
 import routes from "../../connect";
 
 const {handler, config} = nextJsApiRouter({ routes });
@@ -59,11 +59,11 @@ curl \
     http://localhost:3000/api/connectrpc.eliza.v1.ElizaService/Say
 ```
 
-Node.js with the gRPC-web protocol (using a transport from [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node)):
+Node.js with the gRPC-web protocol (using a transport from [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node)):
 
 ```ts
-import { createPromiseClient } from "@bufbuild/connect";
-import { createGrpcWebTransport } from "@bufbuild/connect-node";
+import { createPromiseClient } from "@connectrpc/connect";
+import { createGrpcWebTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
 const transport = createGrpcWebTransport({
@@ -77,7 +77,7 @@ console.log(sentence) // you said: I feel happy.
 ```
 
 A client for the web browser actually looks identical to this example - it would
-simply use `createConnectTransport` from [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web)
+simply use `createConnectTransport` from [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web)
 instead.
 
 Note that support for gRPC is limited, since many gRPC clients require HTTP/2,
@@ -86,7 +86,7 @@ and Express does not support the Node.js `http2` module.
 
 ### Deploying to Vercel
 
-Currently, `@bufbuild/connect-next` does not support the Vercel Edge runtime.
+Currently, `@connectrpc/connect-next` does not support the Vercel Edge runtime.
 It requires the Node.js server runtime, which is used by default when deploying
 to Vercel.
 

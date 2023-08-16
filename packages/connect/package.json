@@ -1,5 +1,5 @@
 {
-  "name": "@bufbuild/connect",
+  "name": "@connectrpc/connect",
   "version": "0.12.0",
   "description": "Type-safe APIs with Protobuf and TypeScript.",
   "license": "Apache-2.0",

@@ -14,7 +14,7 @@
 
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
-import { createMethodUrl } from "@bufbuild/connect/protocol";
+import { createMethodUrl } from "@connectrpc/connect/protocol";
 import { http2Request } from "../helpers/http2-request.js";
 
 describe("unsupported method", () => {
@@ -22,7 +22,7 @@ describe("unsupported method", () => {
   beforeAll(async () => await servers.start());
 
   servers.describeServers(
-    ["@bufbuild/connect-node (h2c)", "connect-go (h2)"],
+    ["@connectrpc/connect-node (h2c)", "connect-go (h2)"],
     (server, serverName) => {
       const rejectUnauthorized = serverName !== "connect-go (h2)"; // TODO set up cert for go server correctly
 

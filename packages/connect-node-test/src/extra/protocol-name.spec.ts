@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
-import type { Transport } from "@bufbuild/connect";
+import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
+import type { Transport } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
@@ -64,21 +64,21 @@ describe("protocolName", function () {
 
   servers.describeTransportsOnly(
     [
-      "@bufbuild/connect-node (gRPC, binary, http2) against @bufbuild/connect-node (h2)",
+      "@connectrpc/connect-node (gRPC, binary, http2) against @connectrpc/connect-node (h2)",
     ],
     testForProtocol("grpc"),
   );
 
   servers.describeTransportsOnly(
     [
-      "@bufbuild/connect-node (gRPC-web, binary, http2) against @bufbuild/connect-node (h2c)",
+      "@connectrpc/connect-node (gRPC-web, binary, http2) against @connectrpc/connect-node (h2c)",
     ],
     testForProtocol("grpc-web"),
   );
 
   servers.describeTransportsOnly(
     [
-      "@bufbuild/connect-node (Connect, binary, http2, gzip) against @bufbuild/connect-node (h2c)",
+      "@connectrpc/connect-node (Connect, binary, http2, gzip) against @connectrpc/connect-node (h2c)",
     ],
     testForProtocol("connect"),
   );
