@@ -117,6 +117,7 @@ $(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.
 	@touch $(@)
 
 $(BUILD)/connect-migrate: packages/connect-migrate/package.json packages/connect-migrate/tsconfig.json $(shell find packages/connect-migrate/src -name '*.ts')
+	npm run -w packages/connect-migrate clean
 	npm run -w packages/connect-migrate build
 	@mkdir -p $(@D)
 	@touch $(@)
