@@ -11,7 +11,6 @@ const paths = [
 ];
 
 const {version} = JSON.parse(readFileSync(new URL("../package.json", import.meta.url).pathname, "utf-8"));
-console.log(version)
 assert(typeof version == "string");
 assert(version.length >= 5);
 
