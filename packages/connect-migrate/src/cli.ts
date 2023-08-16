@@ -66,7 +66,7 @@ function reinstallDependencies(dir: string) {
 
   if (packageManager === undefined) {
     process.stderr.write(
-      "Cannot reinstall dependencies if we can't find a lockfile. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project."
+      "Cannot reinstall dependencies if we can't find a lockfile. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project.",
     );
     process.exit(1);
   }
@@ -79,7 +79,7 @@ function reinstallDependencies(dir: string) {
       : executeInContext("yarn", ["install"]);
   if (spawn.status !== 0) {
     process.stderr.write(
-      "Failed to install dependencies. Check to make sure you have the most recent versions of @connectrpc/connect-* packages installed."
+      "Failed to install dependencies. Check to make sure you have the most recent versions of @connectrpc/connect-* packages installed.",
     );
     process.exit(1);
   }
@@ -98,7 +98,7 @@ async function updateSourceFiles() {
     ],
     {
       ignore: ["**/node_modules/**"],
-    }
+    },
   );
 
   await jscodeshift(transformerPath, files, {

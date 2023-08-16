@@ -26,8 +26,8 @@ describe("replacePackageJSONReferences", () => {
                     "@bufbuild/connect-web": "1.0.0"
                 }
             }
-        `.trim()
-      )
+        `.trim(),
+      ),
     ).toEqual(
       `
             {
@@ -37,7 +37,7 @@ describe("replacePackageJSONReferences", () => {
                     "@connectrpc/connect-web": "1.0.0"
                 }
             }
-        `.trim()
+        `.trim(),
     );
   });
 });

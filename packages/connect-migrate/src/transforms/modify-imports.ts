@@ -89,7 +89,7 @@ const transform: Transform = (file, { j }, options) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- passing the printOptions onto toSource is safe
     options.printOptions ?? {
       quote: quoteStyle,
-    }
+    },
   );
 };
 

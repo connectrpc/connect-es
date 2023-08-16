@@ -21,24 +21,24 @@ import transform from "./modify-imports";
 const fixtureLocation = join(
   __dirname,
   "../../../src/transforms",
-  "__testfixtures__"
+  "__testfixtures__",
 );
 
 describe("modify-imports", () => {
   const tests = readdirSync(fixtureLocation).filter(
-    (file) => file.endsWith(".input.ts") || file.endsWith(".input.js")
+    (file) => file.endsWith(".input.ts") || file.endsWith(".input.js"),
   );
 
   tests.forEach((test) => {
     it(`snapshot test ${test} matches expected output`, () => {
       const shift = jscodeshift.withParser(
-        test.endsWith(".ts") ? "ts" : "babel"
+        test.endsWith(".ts") ? "ts" : "babel",
       );
       const inputPath = join(fixtureLocation, test);
       const input = readFileSync(inputPath, "utf8");
       const expectedOutput = readFileSync(
         join(fixtureLocation, test.replace(/\.input\.(ts|js)$/, ".output.$1")),
-        "utf8"
+        "utf8",
       );
       const output = transform(
         { path: inputPath, source: input },
@@ -48,7 +48,7 @@ describe("modify-imports", () => {
           stats: () => {},
           report: () => {},
         },
-        {}
+        {},
       );
 
       expect(output?.trim()).toEqual(expectedOutput.trim());
