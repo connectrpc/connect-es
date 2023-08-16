@@ -1,6 +1,7 @@
 {
   "include": ["**/*.ts"],
   "extends": "../../tsconfig.base.json",
+  "exclude": ["src/transforms/__testfixtures__/**/*"],
   "compilerOptions": {
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

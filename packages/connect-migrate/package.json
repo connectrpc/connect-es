@@ -14,7 +14,8 @@
   "scripts": {
     "clean": "rm -rf ./dist/cjs/*",
     "build": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
-    "test": "jest"
+    "test": "jasmine --config=jasmine.json",
+    "build+test": "npm run build && npm run test"
   },
   "engines": {
     "node": ">=16.0.0"
@@ -24,9 +25,7 @@
     "fast-glob": "3.3.1"
   },
   "devDependencies": {
-    "@types/jscodeshift": "0.11.6",
-    "jest": "29.6.2",
-    "ts-jest": "29.1.1"
+    "@types/jscodeshift": "0.11.6"
   },
   "files": [
     "dist",

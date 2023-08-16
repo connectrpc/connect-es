@@ -12,24 +12,46 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { defineTest } from "jscodeshift/src/testUtils";
 import { join } from "node:path";
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import jscodeshift from "jscodeshift/src/core";
+import transform from "./modify-imports";
+
+// Make sure to import the testfixtures from source so we're not comparing transformed fixtures
+const fixtureLocation = join(
+  __dirname,
+  "../../../src/transforms",
+  "__testfixtures__"
+);
 
 describe("modify-imports", () => {
-  const tests = readdirSync(join(__dirname, "__testfixtures__")).filter(
+  const tests = readdirSync(fixtureLocation).filter(
     (file) => file.endsWith(".input.ts") || file.endsWith(".input.js")
   );
 
   tests.forEach((test) => {
-    defineTest(
-      join(__dirname, "__testfixtures__"),
-      "modify-imports",
-      null,
-      test.replace(/\.input\.(ts|js)$/, ""),
-      {
-        parser: test.endsWith(".ts") ? "ts" : "babel",
-      }
-    );
+    it(`snapshot test ${test} matches expected output`, () => {
+      const shift = jscodeshift.withParser(
+        test.endsWith(".ts") ? "ts" : "babel"
+      );
+      const inputPath = join(fixtureLocation, test);
+      const input = readFileSync(inputPath, "utf8");
+      const expectedOutput = readFileSync(
+        join(fixtureLocation, test.replace(/\.input\.(ts|js)$/, ".output.$1")),
+        "utf8"
+      );
+      const output = transform(
+        { path: inputPath, source: input },
+        {
+          jscodeshift: shift,
+          j: shift,
+          stats: () => {},
+          report: () => {},
+        },
+        {}
+      );
+
+      expect(output?.trim()).toEqual(expectedOutput.trim());
+    });
   });
 });
