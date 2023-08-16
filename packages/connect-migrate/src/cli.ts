@@ -36,7 +36,7 @@ const transformerPath = path.join(__dirname, "transforms", `modify-imports.js`);
 function executeInContext(command: string, args: string[]) {
   const dir = process.cwd();
 
-  spawnSync(command, args, {
+  return spawnSync(command, args, {
     cwd: dir,
     shell: true,
     stdio: ["pipe", "inherit", "inherit"],
@@ -73,12 +73,17 @@ function reinstallDependencies(dir: string) {
     process.exit(1);
   }
 
-  if (packageManager === "npm") {
-    executeInContext("npm", ["install"]);
-  } else if (packageManager === "pnpm") {
-    executeInContext("pnpm", ["install", "-r"]);
-  } else {
-    executeInContext("yarn", ["install"]);
+  const spawn =
+    packageManager === "npm"
+      ? executeInContext("npm", ["install"])
+      : packageManager === "pnpm"
+      ? executeInContext("pnpm", ["install", "-r"])
+      : executeInContext("yarn", ["install"]);
+  if (spawn.stderr.length > 0) {
+    process.stderr.write(
+      "Failed to install. Check to make sure you have the most recent versions of @connectrpc/connect-* packages installed."
+    );
+    process.exit(1);
   }
 }
 

@@ -1,7 +1,6 @@
 export interface CommandLineArgs {
   ok: true;
   help: boolean;
-  runInstall: boolean;
 }
 
 interface CommandLineError {
@@ -11,9 +10,6 @@ interface CommandLineError {
 
 const usage = `USAGE: connect-migrate
 Updates references to connect-es packages in your project to use @connectrpc.
-
-Options:
-  --single-quotes: Use single quotes instead of double quotes for imports
 `;
 
 export function parseCommandLineArgs(
