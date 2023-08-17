@@ -15,7 +15,6 @@
 export interface CommandLineArgs {
   ok: true;
   help: boolean;
-  recursive: boolean;
   version: boolean;
   ignorePatterns: string[];
   noInstall: boolean;
@@ -32,7 +31,6 @@ export function parseCommandLineArgs(
   const parsed = {
     singleQuotes: false,
     help: false,
-    recursive: false,
     version: false,
     ignorePatterns: ["**/dist/**"],
     noInstall: false,
@@ -50,12 +48,6 @@ export function parseCommandLineArgs(
         break;
       case "--version":
         parsed.version = true;
-        break;
-      case "--recursive":
-        if (parsed.recursive) {
-          break;
-        }
-        parsed.recursive = true;
         break;
       case "--no-install":
         parsed.noInstall = true;

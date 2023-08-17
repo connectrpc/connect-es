@@ -29,8 +29,7 @@ Updates references to connect-es packages in your project to use @connectrpc.
 
 Options:
   --version                   Print the version of connect-migrate.
-  --recursive                 Recursively search for lock files in order to find all projects that might need updates.
-  --ignore-pattern <pattern>  Glob pattern to ignore both source files. Defaults to **/dist/**. Supports multiples.
+  --ignore-pattern <pattern>  Glob pattern to ignore source and package files. Defaults to **/dist/**. Supports multiples.
   --no-install                Skip dependency installation after updating package.json files.
 `;
 
@@ -56,19 +55,16 @@ if (args.help) {
 const transformerPath = path.join(__dirname, "transforms", `modify-imports.js`);
 
 async function main(args: CommandLineArgs) {
-  let dirs = [process.cwd()];
+  // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
+  const nestedDirs = await fastGlob.async(
+    ["./**/pnpm-lock.yaml", "./**/package-lock.json", "./**/yarn-lock.yaml"],
+    {
+      ignore: ["**/node_modules/**", ...args.ignorePatterns],
+      cwd: process.cwd(),
+    }
+  );
+  const dirs = nestedDirs.map((dir) => path.dirname(dir));
 
-  if (args.recursive) {
-    // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
-    const nestedDirs = await fastGlob.async(
-      ["./**/pnpm-lock.yaml", "./**/package-lock.json", "./**/yarn-lock.yaml"],
-      {
-        ignore: ["**/node_modules/**"],
-        cwd: process.cwd(),
-      }
-    );
-    dirs = nestedDirs.map((dir) => path.dirname(dir));
-  }
   for (const dir of dirs) {
     process.stdout.write(`Updating package found at "${dir}"...\n`);
     process.stdout.write("Updating package dependencies...\n");
@@ -127,19 +123,21 @@ function reinstallDependencies(dir: string) {
   }
 }
 
+// eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
+const fastGlobAsync = fastGlob.async;
+
 async function updateSourceFiles(
   dir: string,
   { ignorePatterns }: { ignorePatterns: string[] }
 ) {
-  // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
-  const files = await fastGlob.async(
+  const allFiles = await fastGlobAsync(
     [
-      "./**/*.tsx",
       "./**/*.ts",
       "./**/*.js",
       "./**/*.jsx",
       "./**/*.cjs",
       "./**/*.mjs",
+      "./**/*.tsx",
     ],
     {
       ignore: ["**/node_modules/**", ...ignorePatterns],
@@ -147,13 +145,49 @@ async function updateSourceFiles(
     }
   );
 
-  await jscodeshift(
-    transformerPath,
-    files.map((f) => path.join(dir, f)),
+  const { tsFiles, tsxFiles, jsFiles } = allFiles.reduce(
+    (acc, file) => {
+      const ext = path.extname(file);
+      const fullPath = path.join(dir, file);
+      if (ext === ".ts") {
+        acc.tsFiles.push(fullPath);
+      } else if (ext === ".tsx") {
+        acc.tsxFiles.push(fullPath);
+      } else {
+        acc.jsFiles.push(fullPath);
+      }
+      return acc;
+    },
     {
-      parser: "tsx",
+      jsFiles: [] as string[],
+      tsFiles: [] as string[],
+      tsxFiles: [] as string[],
     }
   );
+
+  const results = await Promise.all([
+    jscodeshift(transformerPath, jsFiles, {
+      verbose: 1,
+    }),
+    jscodeshift(transformerPath, tsFiles, {
+      parser: "ts",
+      verbose: 1,
+    }),
+    jscodeshift(transformerPath, tsxFiles, {
+      parser: "tsx",
+      verbose: 1,
+    }),
+  ]);
+  const allErrorCount = results.reduce(
+    (acc, result) => acc + (result.error ? 1 : 0),
+    0
+  );
+  if (allErrorCount > 0) {
+    process.stderr.write(
+      "Errors occurred while updating source files. See logs above."
+    );
+    process.exit(1);
+  }
 }
 
 async function updatePackageFiles(dir: string) {

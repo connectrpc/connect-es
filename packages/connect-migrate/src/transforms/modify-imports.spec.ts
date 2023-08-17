@@ -15,8 +15,11 @@
 import jscodeshift from "jscodeshift";
 import transform from "./modify-imports.js";
 
-function t(source: string) {
-  const shift = jscodeshift.withParser("tsx");
+function t(
+  source: string,
+  parser: "tsx" | "babel" | "ts" | "babylon" | "flow" = "tsx"
+) {
+  const shift = jscodeshift.withParser(parser);
   return transform(
     { path: "test-file", source },
     {
@@ -25,7 +28,7 @@ function t(source: string) {
       stats: () => {},
       report: () => {},
     },
-    {},
+    {}
   );
 }
 
@@ -67,5 +70,26 @@ describe("modify-imports", () => {
     const got = `const a = require('@bufbuild/connect');`;
     const want = `const a = require('@connectrpc/connect');`;
     expect(t(got)?.trim()).toBe(want.trim());
+  });
+  it("should prase genertics using the ts parser", () => {
+    const got = `
+    async function doSomething() {
+      return <UnaryResponse<I, O>>{
+        stream: false,
+        header: response.headers,
+        message,
+        trailer,
+      };
+    }`;
+    const want = `
+    async function doSomething() {
+      return <UnaryResponse<I, O>>{
+        stream: false,
+        header: response.headers,
+        message,
+        trailer,
+      };
+    }`;
+    expect(t(got, "ts")?.trim()).toBe(want.trim());
   });
 });
