@@ -2,6 +2,6 @@
   "include": ["src/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "esModuleInterop": true, // required for jscodeshift
+    "esModuleInterop": true // required for jscodeshift
   }
 }
