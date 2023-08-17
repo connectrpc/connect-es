@@ -30,7 +30,7 @@ const transform: j.Transform = (file, { j }, options) => {
   });
   if (importPaths.length == 0 && requirePaths.length == 0) {
     // no imports in this file
-    return null;
+    return root.toSource();
   }
   let importOrRequireModified = false;
   // ESM imports -- no dynamic imports
@@ -62,7 +62,7 @@ const transform: j.Transform = (file, { j }, options) => {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- eslint is unaware of forEach callback
   if (!importOrRequireModified) {
     // no relevant imports in this file
-    return null;
+    return root.toSource();
   }
 
   return root.toSource(
