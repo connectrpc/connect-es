@@ -1,5 +1,5 @@
 {
-  "name": "@bufbuild/connect-migrate",
+  "name": "@connectrpc/connect-migrate",
   "version": "0.0.1",
   "license": "Apache-2.0",
   "repository": {
