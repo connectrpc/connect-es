@@ -52,7 +52,7 @@ describe("modify-imports", () => {
   });
   it("should not modify irrelevant import", () => {
     const got = `import a from "@foobar/connect";`;
-    expect(t(got)).toBeNull();
+    expect(t(got)).toBe(got);
   });
   it("should modify require", () => {
     const got = `const a = require("@bufbuild/connect");`;
@@ -61,7 +61,7 @@ describe("modify-imports", () => {
   });
   it("should not modify irrelevant require", () => {
     const got = `const a = require("@foobar/connect");`;
-    expect(t(got)).toBeNull();
+    expect(t(got)).toBe(got);
   });
   it("should modify require with single quotes", () => {
     const got = `const a = require('@bufbuild/connect');`;
