@@ -1,8 +1,7 @@
 {
-  "include": ["**/*.ts"],
+  "include": ["src/**/*.ts"],
   "extends": "../../tsconfig.base.json",
-  "exclude": ["src/transforms/__testfixtures__/**/*"],
   "compilerOptions": {
-    "esModuleInterop": true, // required for jscodeshift
+    "esModuleInterop": true // required for jscodeshift
   }
 }

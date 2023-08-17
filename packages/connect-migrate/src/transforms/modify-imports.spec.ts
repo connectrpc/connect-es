@@ -12,44 +12,60 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { join } from "node:path";
-import { readFileSync, readdirSync } from "node:fs";
-import jscodeshift from "jscodeshift/src/core";
-import transform from "./modify-imports";
+import jscodeshift from "jscodeshift";
+import transform from "./modify-imports.js";
 
-// Make sure to import the testfixtures from source so we're not comparing transformed fixtures
-const fixtureLocation = join(
-  __dirname,
-  "../../../src/transforms",
-  "__testfixtures__",
-);
+function t(source: string) {
+  const shift = jscodeshift.withParser("tsx");
+  return transform(
+    { path: "test-file", source },
+    {
+      jscodeshift: shift,
+      j: shift,
+      stats: () => {},
+      report: () => {},
+    },
+    {},
+  );
+}
 
 describe("modify-imports", () => {
-  const tests = readdirSync(fixtureLocation).filter(
-    (file) => file.endsWith(".input.ts") || file.endsWith(".input.js"),
-  );
-
-  tests.forEach((test) => {
-    it(`snapshot test ${test} matches expected output`, () => {
-      const shift = jscodeshift.withParser("tsx");
-      const inputPath = join(fixtureLocation, test);
-      const input = readFileSync(inputPath, "utf8");
-      const expectedOutput = readFileSync(
-        join(fixtureLocation, test.replace(/\.input\.(ts|js)$/, ".output.$1")),
-        "utf8",
-      );
-      const output = transform(
-        { path: inputPath, source: input },
-        {
-          jscodeshift: shift,
-          j: shift,
-          stats: () => {},
-          report: () => {},
-        },
-        {},
-      );
-
-      expect(output?.trim()).toEqual(expectedOutput.trim());
-    });
+  it("should modify import", () => {
+    const got = `import a from "@bufbuild/connect";`;
+    const want = `import a from "@connectrpc/connect";`;
+    expect(t(got)?.trim()).toBe(want.trim());
+  });
+  it("should modify type imports", () => {
+    const got = `import type {a} from "@bufbuild/connect";`;
+    const want = `import type {a} from "@connectrpc/connect";`;
+    expect(t(got)?.trim()).toBe(want.trim());
+  });
+  it("should modify import with single quotes", () => {
+    const got = `import a from '@bufbuild/connect';`;
+    const want = `import a from '@connectrpc/connect';`;
+    expect(t(got)?.trim()).toBe(want.trim());
+  });
+  it("should modify subpath import", () => {
+    const got = `import a from "@bufbuild/connect/protocol";`;
+    const want = `import a from "@connectrpc/connect/protocol";`;
+    expect(t(got)?.trim()).toBe(want.trim());
+  });
+  it("should not modify irrelevant import", () => {
+    const got = `import a from "@foobar/connect";`;
+    expect(t(got)).toBe(got);
+  });
+  it("should modify require", () => {
+    const got = `const a = require("@bufbuild/connect");`;
+    const want = `const a = require("@connectrpc/connect");`;
+    expect(t(got)?.trim()).toBe(want.trim());
+  });
+  it("should not modify irrelevant require", () => {
+    const got = `const a = require("@foobar/connect");`;
+    expect(t(got)).toBe(got);
+  });
+  it("should modify require with single quotes", () => {
+    const got = `const a = require('@bufbuild/connect');`;
+    const want = `const a = require('@connectrpc/connect');`;
+    expect(t(got)?.trim()).toBe(want.trim());
   });
 });
