@@ -1,11 +1,11 @@
-# @bufbuild/connect-migrate
+# @connectrpc/connect-migrate
 
-This tool migrates your packages from the old `@bufbuild` organization to the dedicated `@connectrpc` organization.
+This tool updates your Connect project to use the new `@connectrpc` packages.
 
 Usage:
 
 ```shell
-npx @bufbuild/connect-migrate
+npx @connectrpc/connect-migrate
 ```
 
 ## What it does

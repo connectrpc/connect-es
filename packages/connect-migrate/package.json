@@ -1,6 +1,7 @@
 {
   "name": "@connectrpc/connect-migrate",
   "version": "0.0.13",
+  "description": "This tool updates your Connect project to use the new @connectrpc packages.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
