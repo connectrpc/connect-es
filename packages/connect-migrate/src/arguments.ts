@@ -15,6 +15,10 @@
 export interface CommandLineArgs {
   ok: true;
   help: boolean;
+  recursive: boolean;
+  version: boolean;
+  ignorePatterns: string[];
+  noInstall: boolean;
 }
 
 interface CommandLineError {
@@ -22,18 +26,18 @@ interface CommandLineError {
   errorMessage: string;
 }
 
-const usage = `USAGE: connect-migrate
-Updates references to connect-es packages in your project to use @connectrpc.
-`;
-
 export function parseCommandLineArgs(
-  args: string[],
+  args: string[]
 ): CommandLineArgs | CommandLineError {
   const parsed = {
     singleQuotes: false,
     help: false,
-    runInstall: false,
+    recursive: false,
+    version: false,
+    ignorePatterns: ["**/dist/**"],
+    noInstall: false,
   };
+  let overridingIgnore = false;
   while (args.length > 0) {
     const arg = args.shift();
     switch (arg) {
@@ -43,9 +47,34 @@ export function parseCommandLineArgs(
           break;
         }
         parsed.help = true;
-        process.stdout.write(usage);
-        process.exit(0);
         break;
+      case "--version":
+        parsed.version = true;
+        break;
+      case "--recursive":
+        if (parsed.recursive) {
+          break;
+        }
+        parsed.recursive = true;
+        break;
+      case "--no-install":
+        parsed.noInstall = true;
+        break;
+      case "--ignore-pattern": {
+        if (!overridingIgnore) {
+          overridingIgnore = true;
+          parsed.ignorePatterns = [];
+        }
+        const value = args.shift();
+        if (value === undefined) {
+          return {
+            ok: false,
+            errorMessage: `--ignore-pattern requires a value`,
+          };
+        }
+        parsed.ignorePatterns.push(value);
+        break;
+      }
       default:
         return {
           ok: false,
