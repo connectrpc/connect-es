@@ -31,9 +31,7 @@ describe("modify-imports", () => {
 
   tests.forEach((test) => {
     it(`snapshot test ${test} matches expected output`, () => {
-      const shift = jscodeshift.withParser(
-        test.endsWith(".ts") ? "ts" : "babel",
-      );
+      const shift = jscodeshift.withParser("tsx");
       const inputPath = join(fixtureLocation, test);
       const input = readFileSync(inputPath, "utf8");
       const expectedOutput = readFileSync(
