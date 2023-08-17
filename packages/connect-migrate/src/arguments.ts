@@ -23,7 +23,7 @@ interface CommandLineError {
 }
 
 const usage = `USAGE: connect-migrate
-Updates references to connect-es packages in your project to use @connectrpc.
+Updates your Connect project to use the new @connectrpc packages.
 `;
 
 export function parseCommandLineArgs(

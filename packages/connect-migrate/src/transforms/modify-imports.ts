@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Transform } from "jscodeshift";
+import j from "jscodeshift";
 import { getReplacementImport } from "../replacement-map";
 
 /**
  * This transform handles moving all imports to the new package.
  *
  */
-const transform: Transform = (file, { j }, options) => {
+const transform: j.Transform = (file, { j }, options) => {
   const root = j(file.source);
   const importPaths = root.find(j.ImportDeclaration);
   const requirePaths = root.find(j.CallExpression, {
@@ -28,69 +28,70 @@ const transform: Transform = (file, { j }, options) => {
       name: "require",
     },
   });
-
-  let quoteStyle: "double" | "single" = "double";
-  if (importPaths.length > 0) {
-    const first = importPaths.at(0);
-    quoteStyle = first.toSource().includes("'") ? "single" : "double";
-  } else if (requirePaths.length > 0) {
-    const first = requirePaths.at(0);
-    quoteStyle = first.toSource().includes("'") ? "single" : "double";
+  if (importPaths.length == 0 && requirePaths.length == 0) {
+    // no imports in this file
+    return null;
   }
-
-  // ESM imports
-  importPaths
-    .filter((path) => {
-      // TODO: Handle dynamic imports
-      if (typeof path.value.source.value !== "string") {
-        return false;
+  let importOrRequireModified = false;
+  // ESM imports -- no dynamic imports
+  importPaths.forEach((path) => {
+    if (typeof path.value.source.value === "string") {
+      const sourceValue = path.value.source.value;
+      const replacement = getReplacementImport(sourceValue);
+      if (replacement !== undefined) {
+        path.value.source.value = replacement;
+        importOrRequireModified = true;
       }
-      return getReplacementImport(path.value.source.value) !== undefined;
-    })
-    .forEach((path) => {
-      if (typeof path.value.source.value === "string") {
-        const sourceValue = path.value.source.value;
-
-        const replacement = getReplacementImport(sourceValue);
-        if (replacement !== undefined) {
-          path.value.source.value = replacement;
-        }
-      }
-    });
+    }
+  });
   // CJS imports
-  requirePaths
-    .filter((path) => {
-      if (path.value.arguments.length === 0) {
-        return false;
+  requirePaths.forEach((path) => {
+    const firstArg = path.value.arguments[0];
+    if (
+      (firstArg.type === "StringLiteral" || firstArg.type === "Literal") &&
+      typeof firstArg.value === "string"
+    ) {
+      const replacement = getReplacementImport(firstArg.value);
+      if (replacement !== undefined) {
+        firstArg.value = replacement;
+        importOrRequireModified = true;
       }
-      const firstArg = path.value.arguments[0];
-      if (
-        (firstArg.type === "StringLiteral" || firstArg.type === "Literal") &&
-        typeof firstArg.value === "string"
-      ) {
-        return getReplacementImport(firstArg.value) !== undefined;
-      }
-      return false;
-    })
-    .forEach((path) => {
-      const firstArg = path.value.arguments[0];
-      if (
-        (firstArg.type === "StringLiteral" || firstArg.type === "Literal") &&
-        typeof firstArg.value === "string"
-      ) {
-        const replacement = getReplacementImport(firstArg.value);
-        if (replacement !== undefined) {
-          firstArg.value = replacement;
-        }
-      }
-    });
+    }
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- eslint is unaware of forEach callback
+  if (!importOrRequireModified) {
+    // no relevant imports in this file
+    return null;
+  }
 
   return root.toSource(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- passing the printOptions onto toSource is safe
     options.printOptions ?? {
-      quote: quoteStyle,
+      quote: determineQuoteStyle(importPaths, requirePaths),
     },
   );
 };
+
+function determineQuoteStyle(
+  importPaths: j.Collection<j.ImportDeclaration>,
+  requirePaths: j.Collection<j.CallExpression>,
+): "double" | "single" {
+  let nodePath: unknown;
+  if (importPaths.length > 0) {
+    nodePath = importPaths.get("source", "extra", "raw") as unknown;
+  } else if (requirePaths.length > 0) {
+    nodePath = requirePaths.get("arguments", 0, "extra", "raw") as unknown;
+  }
+  if (
+    typeof nodePath == "object" &&
+    nodePath != null &&
+    "value" in nodePath &&
+    typeof nodePath.value == "string"
+  ) {
+    return nodePath.value.startsWith("'") ? "single" : "double";
+  }
+  return "double";
+}
 
 export default transform;
