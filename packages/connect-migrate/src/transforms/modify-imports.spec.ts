@@ -17,7 +17,7 @@ import transform from "./modify-imports.js";
 
 function t(
   source: string,
-  parser: "tsx" | "babel" | "ts" | "babylon" | "flow" = "tsx"
+  parser: "tsx" | "babel" | "ts" | "babylon" | "flow" = "tsx",
 ) {
   const shift = jscodeshift.withParser(parser);
   return transform(
@@ -28,7 +28,7 @@ function t(
       stats: () => {},
       report: () => {},
     },
-    {}
+    {},
   );
 }
 

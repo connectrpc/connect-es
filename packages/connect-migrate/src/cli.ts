@@ -41,7 +41,7 @@ if (!args.ok) {
 if (args.version) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
   const version = JSON.parse(
-    readFileSync(path.join(__dirname, "../../package.json"), "utf8")
+    readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
   ).version;
   process.stdout.write(`${version}\n`);
   process.exit(0);
@@ -61,7 +61,7 @@ async function main(args: CommandLineArgs) {
     {
       ignore: ["**/node_modules/**", ...args.ignorePatterns],
       cwd: process.cwd(),
-    }
+    },
   );
   const dirs = nestedDirs.map((dir) => path.dirname(dir));
 
@@ -79,7 +79,7 @@ async function main(args: CommandLineArgs) {
       process.stdout.write("Dependencies installed.\n");
     } else {
       process.stdout.write(
-        "Skipping dependency installation (--no-install).\n"
+        "Skipping dependency installation (--no-install).\n",
       );
     }
   }
@@ -96,7 +96,7 @@ function reinstallDependencies(dir: string) {
 
   if (packageManager === undefined) {
     process.stderr.write(
-      "Cannot reinstall dependencies if we can't find a lockfile. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project."
+      "Cannot reinstall dependencies if we can't find a lockfile. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project.",
     );
     process.exit(1);
   }
@@ -109,7 +109,7 @@ function reinstallDependencies(dir: string) {
       : executeInContext("yarn", ["install"]);
   if (spawn.status !== 0) {
     process.stderr.write(
-      "Failed to install dependencies. Check to make sure you have the most recent versions of @connectrpc/connect-* packages installed."
+      "Failed to install dependencies. Check to make sure you have the most recent versions of @connectrpc/connect-* packages installed.",
     );
     process.exit(1);
   }
@@ -128,7 +128,7 @@ const fastGlobAsync = fastGlob.async;
 
 async function updateSourceFiles(
   dir: string,
-  { ignorePatterns }: { ignorePatterns: string[] }
+  { ignorePatterns }: { ignorePatterns: string[] },
 ) {
   const allFiles = await fastGlobAsync(
     [
@@ -142,7 +142,7 @@ async function updateSourceFiles(
     {
       ignore: ["**/node_modules/**", ...ignorePatterns],
       cwd: dir,
-    }
+    },
   );
 
   const { tsFiles, tsxFiles, jsFiles } = allFiles.reduce(
@@ -162,7 +162,7 @@ async function updateSourceFiles(
       jsFiles: [] as string[],
       tsFiles: [] as string[],
       tsxFiles: [] as string[],
-    }
+    },
   );
 
   const results = await Promise.all([
@@ -180,11 +180,11 @@ async function updateSourceFiles(
   ]);
   const allErrorCount = results.reduce(
     (acc, result) => acc + (result.error ? 1 : 0),
-    0
+    0,
   );
   if (allErrorCount > 0) {
     process.stderr.write(
-      "Errors occurred while updating source files. See logs above."
+      "Errors occurred while updating source files. See logs above.",
     );
     process.exit(1);
   }
