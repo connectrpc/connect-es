@@ -1,5 +1,5 @@
 {
-  "name": "@bufbuild/example",
+  "name": "@connectrpc/example",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,14 +12,14 @@
     "node": ">=16"
   },
   "dependencies": {
-    "@connectrpc/connect-node": "^0.12.0",
-    "@connectrpc/connect-web": "^0.12.0",
+    "@connectrpc/connect-node": "^0.13.0",
+    "@connectrpc/connect-web": "^0.13.0",
     "@bufbuild/protobuf": "^1.2.1",
     "tsx": "^3.12.7"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.26.1",
-    "@connectrpc/protoc-gen-connect-es": "^0.12.0",
+    "@connectrpc/protoc-gen-connect-es": "^0.13.0",
     "@bufbuild/protoc-gen-es": "^1.2.1",
     "@types/express": "^4.17.15",
     "esbuild": "^0.16.12",

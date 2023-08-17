@@ -17,8 +17,8 @@ import {
   headerContentType,
   headerEncoding,
   headerTimeout,
-  headerXUserAgent,
   headerXGrpcWeb,
+  headerXUserAgent,
 } from "./headers.js";
 import { contentTypeJson, contentTypeProto } from "./content-type.js";
 import type { Compression } from "../protocol/compression.js";
@@ -41,10 +41,10 @@ export function requestHeader(
     useBinaryFormat ? contentTypeProto : contentTypeJson,
   );
   result.set(headerXGrpcWeb, "1");
-  // Note that we do not comply with recommended structure for the
-  // user-agent string.
-  // https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
-  result.set(headerXUserAgent, "@bufbuild/connect-web");
+  // Note that we do not strictly comply with gRPC user agents.
+  // We use "connect-es/1.2.3" where gRPC would use "grpc-es/1.2.3".
+  // See https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
+  result.set(headerXUserAgent, "CONNECT_ES_USER_AGENT");
   if (timeoutMs !== undefined) {
     result.set(headerTimeout, `${timeoutMs}m`);
   }
