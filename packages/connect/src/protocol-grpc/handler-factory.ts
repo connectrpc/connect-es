@@ -138,7 +138,11 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     if (compression.response) {
       context.responseHeader.set(headerEncoding, compression.response.name);
     }
-    const outputIt = pipe(
+    // We split the pipeline into two parts: The request iterator, and the
+    // response iterator. We do this because the request iterator is responsible
+    // for parsing the request body, and we don't want write errors of the response
+    // iterator to affect the request iterator.
+    const inputIt = pipe(
       req.body,
       transformPrepend<Uint8Array>(() => {
         // raise compression error to serialize it as a trailer status
@@ -150,7 +154,9 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformSplitEnvelope(opt.readMaxBytes),
       transformDecompressEnvelope(compression.request, opt.readMaxBytes),
       transformParseEnvelope(serialization.getI(type.binary)),
-      transformInvokeImplementation<I, O>(spec, context),
+    );
+    const outputIt = pipe(
+      transformInvokeImplementation<I, O>(spec, context)(inputIt),
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
       transformJoinEnvelopes(),
@@ -171,8 +177,8 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
           );
         }
       }),
+      { propagateDownStreamError: true },
     );
-
     return {
       ...uResponseOk,
       // We wait for the first response body bytes before resolving, so that

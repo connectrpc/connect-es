@@ -160,7 +160,7 @@ describe("createHandlerFactory()", function () {
     });
     it("should propogate errors back to the handler", async function () {
       let resolve: (e: unknown) => void;
-      const catchCalled = new Promise<unknown>((r) => (resolve = r));
+      const catchError = new Promise<unknown>((r) => (resolve = r));
       const { handler } = setupTestHandler(
         testService.methods.serverStreaming,
         {},
@@ -192,7 +192,7 @@ describe("createHandlerFactory()", function () {
       await it.next();
       const writeError = new Error("write error");
       await it.throw?.(writeError).catch(() => {});
-      expect(await catchCalled).toEqual(writeError);
+      expect(await catchError).toEqual(writeError);
     });
   });
 

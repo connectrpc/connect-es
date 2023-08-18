@@ -394,9 +394,9 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     }
     // We split the pipeline into two parts: The request iterator, and the
     // response iterator. We do this because the request iterator is responsible
-    //  for parsing the request body, and we don't want write errors of the response
+    // for parsing the request body, and we don't want write errors of the response
     // iterator to affect the request iterator.
-    const reqIt = pipe(
+    const inputIt = pipe(
       req.body,
       transformPrepend<Uint8Array>(() => {
         if (opt.requireConnectProtocolHeader) {
@@ -418,7 +418,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       ),
     );
     const outputIt = pipe(
-      transformInvokeImplementation<I, O>(spec, context)(reqIt),
+      transformInvokeImplementation<I, O>(spec, context)(inputIt),
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
         context.abort();
