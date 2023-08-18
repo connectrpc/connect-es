@@ -152,7 +152,7 @@ export async function universalResponseToNodeResponse(
         webHeaderToNodeHeaders(universalResponse.header),
       );
       isWriteError = false;
-      for (; !chunk.done; chunk = await it.next()) {
+      for (; chunk.done !== true; chunk = await it.next()) {
         isWriteError = true;
         await write(nodeResponse, chunk.value);
         if (
