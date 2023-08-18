@@ -36,7 +36,7 @@ import {
  */
 export type NodeHandlerFn = (
   request: NodeServerRequest,
-  response: NodeServerResponse,
+  response: NodeServerResponse
 ) => void;
 
 /**
@@ -55,12 +55,12 @@ export type NodeServerResponse = (
 ) & {
   write(
     chunk: string | Uint8Array,
-    callback?: (err: Error | null | undefined) => void,
+    callback?: (err: Error | null | undefined) => void
   ): boolean;
   write(
     chunk: string | Uint8Array,
     encoding: BufferEncoding,
-    callback?: (err: Error | null | undefined) => void,
+    callback?: (err: Error | null | undefined) => void
   ): boolean;
 };
 
@@ -72,7 +72,7 @@ export type NodeServerResponse = (
  */
 export function universalRequestFromNodeRequest(
   nodeRequest: NodeServerRequest,
-  parsedJsonBody: JsonValue | undefined,
+  parsedJsonBody: JsonValue | undefined
 ): UniversalServerRequest {
   const encrypted =
     "encrypted" in nodeRequest.socket && nodeRequest.socket.encrypted;
@@ -85,7 +85,7 @@ export function universalRequestFromNodeRequest(
   if (authority === undefined) {
     throw new ConnectError(
       "unable to determine request authority from Node.js server request",
-      Code.Internal,
+      Code.Internal
     );
   }
   const body =
@@ -136,21 +136,25 @@ export function universalRequestFromNodeRequest(
  */
 export async function universalResponseToNodeResponse(
   universalResponse: UniversalServerResponse,
-  nodeResponse: NodeServerResponse,
+  nodeResponse: NodeServerResponse
 ): Promise<void> {
+  const it = universalResponse.body?.[Symbol.asyncIterator]();
+  let isWriteError = false;
   try {
-    if (universalResponse.body !== undefined) {
-      for await (const chunk of universalResponse.body) {
-        // we deliberately send headers *in* this loop, not before,
-        // because we have to give the implementation a chance to
-        // set response headers
-        if (!nodeResponse.headersSent) {
-          nodeResponse.writeHead(
-            universalResponse.status,
-            webHeaderToNodeHeaders(universalResponse.header),
-          );
-        }
-        await write(nodeResponse, chunk);
+    if (it !== undefined) {
+      let chunk = await it.next();
+      isWriteError = true;
+      // we deliberately send headers after first read, not before,
+      // because we have to give the implementation a chance to
+      // set response headers
+      nodeResponse.writeHead(
+        universalResponse.status,
+        webHeaderToNodeHeaders(universalResponse.header)
+      );
+      isWriteError = false;
+      for (; !chunk.done; chunk = await it.next()) {
+        isWriteError = true;
+        await write(nodeResponse, chunk.value);
         if (
           "flush" in nodeResponse &&
           typeof nodeResponse.flush == "function"
@@ -166,17 +170,18 @@ export async function universalResponseToNodeResponse(
           // https://github.com/expressjs/compression/blob/ad5113b98cafe1382a0ece30bb4673707ac59ce7/index.js#L70
           nodeResponse.flush();
         }
+        isWriteError = false;
       }
     }
     if (!nodeResponse.headersSent) {
       nodeResponse.writeHead(
         universalResponse.status,
-        webHeaderToNodeHeaders(universalResponse.header),
+        webHeaderToNodeHeaders(universalResponse.header)
       );
     }
     if (universalResponse.trailer) {
       nodeResponse.addTrailers(
-        webHeaderToNodeHeaders(universalResponse.trailer),
+        webHeaderToNodeHeaders(universalResponse.trailer)
       );
     }
     await new Promise<void>((resolve) => {
@@ -186,12 +191,18 @@ export async function universalResponseToNodeResponse(
       nodeResponse.end();
     });
   } catch (e) {
+    // Report write errors to the handler.
+    if (isWriteError) {
+      it?.throw?.(e).catch(() => {});
+    }
     throw connectErrorFromNodeReason(e);
+  } finally {
+    it?.return?.().catch(() => {});
   }
 }
 
 async function* asyncIterableFromNodeServerRequest(
-  request: NodeServerRequest,
+  request: NodeServerRequest
 ): AsyncIterable<Uint8Array> {
   for await (const chunk of request) {
     yield chunk;
