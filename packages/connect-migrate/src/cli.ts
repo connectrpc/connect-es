@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { replacePackageJSONReferences } from "./replacement-map";
-import fastGlob from "fast-glob";
-import { readFile, writeFile } from "node:fs/promises";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import process from "node:process";
-import { spawnSync } from "node:child_process";
-import { parseCommandLineArgs, CommandLineArgs } from "./arguments";
-import { run as jscodeshift } from "jscodeshift/src/Runner";
-
-const args = parseCommandLineArgs(process.argv.slice(2));
+import { argv, cwd, exit, stderr, stdout } from "node:process";
+import { parseCommandLineArgs } from "./arguments";
+import { scan } from "./scan";
+import {
+  updateLockfile,
+  updatePackageFiles,
+  updateSourceFile,
+} from "./migrate";
+import { Logger } from "./log";
+import modifyImports from "./transforms/modify-imports";
 
 const usage = `USAGE: connect-migrate
 Updates references to connect-es packages in your project to use @connectrpc.
@@ -33,186 +34,158 @@ Options:
   --no-install                Skip dependency installation after updating package.json files.
 `;
 
-if (!args.ok) {
-  process.stderr.write(`${args.errorMessage}\n`);
-  process.exit(1);
-}
+const logger = new Logger();
 
-if (args.version) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
-  const version = JSON.parse(
-    readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
-  ).version;
-  process.stdout.write(`${version}\n`);
-  process.exit(0);
-}
+try {
+  const args = parseCommandLineArgs(argv.slice(2));
 
-if (args.help) {
-  process.stdout.write(usage);
-  process.exit(0);
-}
+  if (!args.ok) {
+    stderr.write(`${args.errorMessage}\n`);
+    exit(1);
+  }
 
-const transformerPath = path.join(__dirname, "transforms", `modify-imports.js`);
+  if (args.version) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
+    const version = JSON.parse(
+      readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
+    ).version;
+    stdout.write(`${version}\n`);
+    exit(0);
+  }
 
-async function main(args: CommandLineArgs) {
-  // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
-  const nestedDirs = await fastGlob.async(
-    ["./**/pnpm-lock.yaml", "./**/package-lock.json", "./**/yarn-lock.yaml"],
-    {
-      ignore: ["**/node_modules/**", ...args.ignorePatterns],
-      cwd: process.cwd(),
-    },
+  if (args.help) {
+    stdout.write(usage);
+    exit(0);
+  }
+
+  stdout.write(`Scanning... `);
+  const scanned = scan(args.ignorePatterns, cwd(), logger);
+  stdout.write(`✓\n`);
+  stdout.write(
+    `${scanned.packageFiles.length.toString().padStart(5)} package.json ${
+      scanned.packageFiles.length == 1 ? "file" : "files"
+    }\n`,
   );
-  const dirs = nestedDirs.map((dir) => path.dirname(dir));
+  stdout.write(
+    `${scanned.lockFiles.length.toString().padStart(5)} lock ${
+      scanned.lockFiles.length == 1 ? "file" : "files"
+    }\n`,
+  );
+  stdout.write(
+    `${scanned.sourceFiles.length.toString().padStart(5)} source ${
+      scanned.sourceFiles.length == 1 ? "file" : "files"
+    }\n`,
+  );
+  if (scanned.packageFiles.length === 0 && scanned.sourceFiles.length === 0) {
+    stderr.write(
+      `No files to process. Make sure to run the command in a JavaScript or TypeScript project.\n`,
+    );
+    exit(1);
+  }
 
-  for (const dir of dirs) {
-    process.stdout.write(`Updating package found at "${dir}"...\n`);
-    process.stdout.write("Updating package dependencies...\n");
-    await updatePackageFiles(dir);
-    process.stdout.write("Updated package dependencies.\n");
-    process.stdout.write("Updating references...\n");
-    await updateSourceFiles(dir, { ignorePatterns: args.ignorePatterns });
-    process.stdout.write("Updated references.\n");
-    if (!args.noInstall) {
-      process.stdout.write("Installing dependencies...\n");
-      reinstallDependencies(dir);
-      process.stdout.write("Dependencies installed.\n");
-    } else {
-      process.stdout.write(
-        "Skipping dependency installation (--no-install).\n",
-      );
+  // update source files
+  let sourceFileErrors = 0;
+  if (scanned.sourceFiles.length > 0) {
+    stdout.write(
+      `Updating source ${
+        scanned.sourceFiles.length == 1 ? "file" : "files"
+      }... \n`,
+    );
+    let sourceFilesUpdated = false;
+    for (const path of scanned.sourceFiles) {
+      const r = updateSourceFile(modifyImports, path, logger);
+      if (r.ok) {
+        if (r.modified) {
+          stdout.write(`  ${path} ✓\n`);
+          sourceFilesUpdated = true;
+        }
+      } else {
+        stdout.write(`  ${path} ❌\n`);
+        sourceFileErrors++;
+      }
+    }
+    if (!sourceFilesUpdated) {
+      stdout.write(`  No files modified.\n`);
     }
   }
 
-  process.exit(0);
-}
-
-void main(args);
-
-function reinstallDependencies(dir: string) {
-  // TODO: Perhaps we can find all the lock files and run install wherever we find them. This'll help for repos without a single
-  // top level lock file.
-  const packageManager = getPackageManager(dir);
-
-  if (packageManager === undefined) {
-    process.stderr.write(
-      "Cannot reinstall dependencies if we can't find a lockfile. Make sure you have a lock file (yarn.lock, package-lock.json, or pnpm-lock.yaml) in your project.",
-    );
-    process.exit(1);
+  // update package.json
+  let packageFilesUpdated = false;
+  if (scanned.packageFiles.length > 0) {
+    stdout.write(`Updating packages... `);
+    const updated = updatePackageFiles(scanned.packageFiles);
+    stdout.write(`✓\n`);
+    if (updated.modified.length == 0) {
+      if (scanned.lockFiles.length > 0) {
+        stdout.write(`  No files modified. Will not update lock files.\n`);
+      } else {
+        stdout.write(`  No files modified.\n`);
+      }
+    } else {
+      for (const path of updated.modified) {
+        stdout.write(`  ${path} ✓\n`);
+      }
+      packageFilesUpdated = true;
+    }
   }
 
-  const spawn =
-    packageManager === "npm"
-      ? executeInContext("npm", ["install"])
-      : packageManager === "pnpm"
-      ? executeInContext("pnpm", ["install", "-r"])
-      : executeInContext("yarn", ["install"]);
-  if (spawn.status !== 0) {
-    process.stderr.write(
-      "Failed to install dependencies. Check to make sure you have the most recent versions of @connectrpc/connect-* packages installed.",
-    );
-    process.exit(1);
+  // update lock files
+  let lockFileErrors = 0;
+  if (scanned.lockFiles.length > 0 && packageFilesUpdated) {
+    if (args.noInstall) {
+      stdout.write("Skipping dependency installation (--no-install).\n");
+    } else {
+      stdout.write(
+        `Updating lock ${
+          scanned.lockFiles.length == 1 ? "file" : "files"
+        }... \n`,
+      );
+      for (const path of scanned.lockFiles) {
+        if (updateLockfile(path, logger)) {
+          stdout.write(`  ${path} ✓\n`);
+        } else {
+          stdout.write(`  ${path} ❌\n`);
+          lockFileErrors++;
+        }
+      }
+    }
   }
 
-  function executeInContext(command: string, args: string[]) {
-    return spawnSync(command, args, {
-      cwd: dir,
-      shell: true,
-      stdio: ["pipe", "inherit", "inherit"],
+  if (sourceFileErrors > 0 || lockFileErrors > 0) {
+    if (sourceFileErrors > 0) {
+      stdout.write(
+        `${sourceFileErrors} source ${
+          sourceFileErrors == 1 ? "file" : "files"
+        } could not be updated.\n`,
+      );
+      stdout.write(
+        `You may have to update the files manually. Check the log for details.\n`,
+      );
+    }
+    if (lockFileErrors > 0) {
+      stdout.write(
+        `${lockFileErrors} lock ${
+          lockFileErrors == 1 ? "file" : "files"
+        } could not be updated.\n`,
+      );
+      stdout.write(
+        `Check to make sure you have the most recent versions of @bufbuild/connect-* packages installed before you migrate.\n`,
+      );
+      stdout.write(`To skip lock file updates, use the --no-install flag.\n`);
+    }
+    void logger.close().then((logfilePath) => {
+      stdout.write(`Details were logged to ${logfilePath}\n`);
+      exit(1);
     });
   }
-}
-
-// eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
-const fastGlobAsync = fastGlob.async;
-
-async function updateSourceFiles(
-  dir: string,
-  { ignorePatterns }: { ignorePatterns: string[] },
-) {
-  const allFiles = await fastGlobAsync(
-    [
-      "./**/*.ts",
-      "./**/*.js",
-      "./**/*.jsx",
-      "./**/*.cjs",
-      "./**/*.mjs",
-      "./**/*.tsx",
-    ],
-    {
-      ignore: ["**/node_modules/**", ...ignorePatterns],
-      cwd: dir,
-    },
-  );
-
-  const { tsFiles, tsxFiles, jsFiles } = allFiles.reduce(
-    (acc, file) => {
-      const ext = path.extname(file);
-      const fullPath = path.join(dir, file);
-      if (ext === ".ts") {
-        acc.tsFiles.push(fullPath);
-      } else if (ext === ".tsx") {
-        acc.tsxFiles.push(fullPath);
-      } else {
-        acc.jsFiles.push(fullPath);
-      }
-      return acc;
-    },
-    {
-      jsFiles: [] as string[],
-      tsFiles: [] as string[],
-      tsxFiles: [] as string[],
-    },
-  );
-
-  const results = await Promise.all([
-    jscodeshift(transformerPath, jsFiles, {
-      verbose: 1,
-    }),
-    jscodeshift(transformerPath, tsFiles, {
-      parser: "ts",
-      verbose: 1,
-    }),
-    jscodeshift(transformerPath, tsxFiles, {
-      parser: "tsx",
-      verbose: 1,
-    }),
-  ]);
-  const allErrorCount = results.reduce(
-    (acc, result) => acc + (result.error ? 1 : 0),
-    0,
-  );
-  if (allErrorCount > 0) {
-    process.stderr.write(
-      "Errors occurred while updating source files. See logs above.",
-    );
-    process.exit(1);
+} catch (e) {
+  logger.error(`caught error: ${String(e)}`);
+  if (e instanceof Error && e.stack !== undefined) {
+    logger.error(e.stack);
   }
-}
-
-async function updatePackageFiles(dir: string) {
-  // eslint-disable-next-line import/no-named-as-default-member -- fast-glob doesn't seem to support ESM imports
-  const files = await fastGlob.async(["./**/package.json", "./package.json"], {
-    ignore: ["**/node_modules/**"],
-    cwd: dir,
+  stderr.write(`ERROR: ${e instanceof Error ? e.message : String(e)}\n`);
+  void logger.close().then((logfilePath) => {
+    stdout.write(`Details were logged to ${logfilePath}\n`);
+    exit(1);
   });
-  for (const relativeFile of files) {
-    const file = path.join(dir, relativeFile);
-    process.stdout.write(`Updating ${file}...\n`);
-    const fileContents = await readFile(file, "utf-8");
-    await writeFile(file, replacePackageJSONReferences(fileContents), "utf-8");
-  }
-}
-
-function getPackageManager(dir: string) {
-  let packageManager: "pnpm" | "npm" | "yarn" | undefined = undefined;
-  if (existsSync(path.join(dir, "pnpm-lock.yaml"))) {
-    packageManager = "pnpm";
-  } else if (existsSync(path.join(dir, "package-lock.json"))) {
-    packageManager = "npm";
-  } else if (existsSync(path.join(dir, "yarn.lock"))) {
-    packageManager = "yarn";
-  }
-
-  return packageManager;
 }

@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import j from "jscodeshift";
-import { getReplacementImport } from "../replacement-map";
+
+import { getReplacementImport } from "../migrate";
 
 /**
  * This transform handles moving all imports to the new package.
