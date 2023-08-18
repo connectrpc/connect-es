@@ -14,7 +14,7 @@ You will need [Node](https://nodejs.org/en/download/) in version 16 or later ins
 the example project and install its dependencies:
 
 ```shell
-curl -L https://github.com/bufbuild/connect-es/archive/refs/heads/main.zip > connect-web-main.zip
+curl -L https://github.com/connectrpc/connect-es/archive/refs/heads/main.zip > connect-es-main.zip
 unzip connect-es-main.zip 'connect-es-main/packages/example/*'
 
 cd connect-es-main/packages/example
@@ -112,5 +112,4 @@ protoc -I . eliza.proto \
 
 To get started, head over to the [docs](https://connectrpc.com/docs/web/getting-started)
 for a tutorial. You will also find API documentation and best practices there.
-For using Connect with your favorite framework, take a look at
-[connect-es-integration](https://github.com/bufbuild/connect-es-integration).
+For using Connect with your favorite framework, take a look at [Connect-ES Examples](https://github.com/connectrpc/examples-es).

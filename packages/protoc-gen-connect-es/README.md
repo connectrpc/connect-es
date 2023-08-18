@@ -4,7 +4,7 @@ The code generator for Connect, a simple library to work with servers and client
 in ECMAScript with the type-safety of TypeScript.  It generates code that is compatible with
 browsers and Node.js.
 
-Learn more about Connect at [github.com/bufbuild/connect-es](https://github.com/bufbuild/connect-es).
+Learn more about Connect at [github.com/connectrpc/connect-es](https://github.com/connectrpc/connect-es).
 
 ## Installation
 

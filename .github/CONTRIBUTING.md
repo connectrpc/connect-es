@@ -1,7 +1,7 @@
 Contributing
 ============
 
-We'd love your help making `connect-web` better!
+We'd love your help making `connect-es` better!
 
 If you'd like to add new exported APIs, please [open an issue][open-issue]
 describing your proposal &mdash; discussing API changes ahead of time makes
@@ -18,17 +18,17 @@ you to accept the CLA when you open your pull request.
 [Fork][fork], then clone the repository:
 
 ```
-git clone git@github.com:your_github_username/connect-web.git
-cd connect-web
-git remote add upstream https://github.com/bufbuild/connect-web.git
+git clone git@github.com:your_github_username/connect-es.git
+cd connect-es
+git remote add upstream https://github.com/connectrpc/connect-es.git
 git fetch upstream
 ```
 
-Make sure that the tests and the linters pass (you'll need `node`, 
+Make sure that the tests and the linters pass (you'll need `node`,
 `buf`, `bash`, Docker, and the latest stable Go release installed):
 
 ```
-make 
+make
 ```
 
 ## Making Changes
@@ -42,7 +42,7 @@ git rebase upstream/main
 git checkout -b cool_new_feature
 ```
 
-Make your changes, then ensure that `make` still passes. 
+Make your changes, then ensure that `make` still passes.
 When you're satisfied with your changes, push them to your fork.
 
 ```
@@ -63,7 +63,7 @@ We're much more likely to approve your changes if you:
 * Write a [good commit message][commit-message].
 * Maintain backward compatibility.
 
-[fork]: https://github.com/bufbuild/connect-web/fork
-[open-issue]: https://github.com/bufbuild/connect-web/issues/new
-[cla]: https://cla-assistant.io/bufbuild/connect-web
+[fork]: https://github.com/connectrpc/connect-es/fork
+[open-issue]: https://github.com/connectrpc/connect-es/issues/new
+[cla]: https://cla-assistant.io/connectrpc/connect-es
 [commit-message]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html

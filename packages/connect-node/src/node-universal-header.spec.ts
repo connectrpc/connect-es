@@ -12,13 +12,116 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { nodeHeaderToWebHeader } from "./node-universal-header.js";
+import {
+  nodeHeaderToWebHeader,
+  webHeaderToNodeHeaders,
+} from "./node-universal-header.js";
 
-describe("nodeHeaderToWebHeader", function () {
+describe("nodeHeaderToWebHeader()", function () {
   it("should accept empty node header", function () {
     const h = nodeHeaderToWebHeader({});
     let numHeaders = 0;
     h.forEach(() => numHeaders++);
     expect(numHeaders).toBe(0);
   });
+  it("should skip HTTP/2 pseudo-headers", function () {
+    const h = nodeHeaderToWebHeader({
+      ":path": "ignore",
+    });
+    let numHeaders = 0;
+    h.forEach(() => numHeaders++);
+    expect(numHeaders).toBe(0);
+  });
+  it("should skip undefined values", function () {
+    const h = nodeHeaderToWebHeader({
+      undef: undefined,
+    });
+    let numHeaders = 0;
+    h.forEach(() => numHeaders++);
+    expect(numHeaders).toBe(0);
+  });
+  it("should accept string, string[], and number", function () {
+    const h = nodeHeaderToWebHeader({
+      string: "string",
+      "string-array": ["a", "b", "c"],
+      number: 123,
+    });
+    expect(h.get("string")).toBe("string");
+    expect(h.get("string-array")).toBe("a, b, c");
+    expect(h.get("number")).toBe("123");
+  });
+});
+
+describe("webHeaderToNodeHeaders()", function () {
+  it("should accept object literal", () => {
+    const h = webHeaderToNodeHeaders({
+      foo: "bar",
+      Custom: "a, b",
+      custom: "c",
+    });
+    expect(h["custom"]).toEqual(["a, b", "c"]);
+    expect(h["foo"]).toBe("bar");
+  });
+  it("should accept Headers object", () => {
+    const input = new Headers({
+      foo: "bar",
+      Custom: "a, b",
+      custom: "c",
+    });
+    const h = webHeaderToNodeHeaders(input);
+    expect(h["custom"]).toEqual("a, b, c");
+    expect(h["foo"]).toBe("bar");
+  });
+  it("should accept array of name-value pairs", () => {
+    const h = webHeaderToNodeHeaders([
+      ["custom", "a"],
+      ["Custom", "b"],
+      ["foo", "bar"],
+    ]);
+    expect(h["custom"]).toEqual(["a", "b"]);
+    expect(h["foo"]).toBe("bar");
+  });
+  if ("getSetCookie" in new Headers()) {
+    // Special handling of set-cookie is available since Node.js v20.0.0,
+    // v18.14.1, v16.19.1, but not in headers-polyfill 3.1.2.
+    // Also see https://github.com/nodejs/undici/releases/tag/v5.19.0
+    describe("with support for set-cookie", function () {
+      it("should accept object literal", () => {
+        const h = webHeaderToNodeHeaders({
+          "set-cookie": "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+          "Set-Cookie": "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        });
+        expect(h["set-cookie"]).toEqual([
+          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        ]);
+      });
+      it("should accept Headers object", () => {
+        const input = new Headers();
+        input.append(
+          "set-cookie",
+          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        );
+        input.append(
+          "Set-Cookie",
+          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        );
+        const h = webHeaderToNodeHeaders(input);
+        expect(h["set-cookie"]).toEqual([
+          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        ]);
+      });
+      it("should accept array of name-value pairs", () => {
+        const h = webHeaderToNodeHeaders([
+          ["set-cookie", "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT"],
+          ["Set-Cookie", "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT"],
+        ]);
+        expect(h["set-cookie"]).toEqual([
+          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        ]);
+      });
+    });
+  }
 });

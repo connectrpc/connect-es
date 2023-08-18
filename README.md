@@ -2,7 +2,7 @@
 
 # Connect for ECMAScript
 
-[![License](https://img.shields.io/github/license/bufbuild/connect-es?color=blue)](./LICENSE) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/connect/latest?color=green&label=%40bufbuild%2Fconnect)](https://www.npmjs.com/package/@bufbuild/connect) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protoc-gen-connect-es/latest?color=green&label=%40bufbuild%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
+[![License](https://img.shields.io/github/license/connectrpc/connect-es?color=blue)](./LICENSE) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/connect/latest?color=green&label=%40bufbuild%2Fconnect)](https://www.npmjs.com/package/@bufbuild/connect) [![NPM Version](https://img.shields.io/npm/v/@bufbuild/protoc-gen-connect-es/latest?color=green&label=%40bufbuild%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
 
 Connect is a family of libraries for building type-safe APIs with different languages and platforms.
 [@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings them to TypeScript,
@@ -50,8 +50,8 @@ Follow our [10 minute tutorial](https://connectrpc.com/docs/web/getting-started)
 we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
 web interface for ELIZA.
 
-**React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/bufbuild/connect-es-integration)),
-and we have an expansion pack for [TanStack Query](https://github.com/bufbuild/connect-query).
+**React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/connectrpc/examples-es)),
+and we have an expansion pack for [TanStack Query](https://github.com/connectrpc/connect-query-es).
 We support all modern web browsers that implement the widely available
 [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).
@@ -73,7 +73,7 @@ the builtin `http` and `http2` modules.
 Would you like to use Connect on other platforms like Bun, Deno, Vercel’s Edge Runtime,
 or Cloudflare Workers? We’d love to learn about your use cases and what you’d like to do
 with Connect. You can reach us either through the [Buf Slack](https://buf.build/links/slack/)
-or by filing a [GitHub issue](https://github.com/bufbuild/connect-web/issues) and we’d
+or by filing a [GitHub issue](https://github.com/connectrpc/connect-es/issues) and we’d
 be more than happy to chat!
 
 
@@ -99,16 +99,16 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 
 ## Ecosystem
 
-* [connect-es-integration](https://github.com/bufbuild/connect-es-integration):
+* [examples-es](https://github.com/connectrpc/examples-es):
   Examples for using Connect with various TypeScript web frameworks and tooling
-* [connect-query](https://github.com/bufbuild/connect-query):
+* [connect-query-es](https://github.com/connectrpc/connect-query-es):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
 * [connect-swift](https://github.com/bufbuild/connect-swift):
   Idiomatic gRPC & Connect RPCs for Swift.
-* [connect-go](https://github.com/bufbuild/connect-go):
+* [connect-go](https://github.com/connectrpc/connect-go):
   Go implementation of gRPC, gRPC-Web, and Connect
-* [connect-demo](https://github.com/bufbuild/connect-demo):
-  demonstration service powering demo.connectrpc.com
+* [examples-go](https://github.com/connectrpc/examples-go):
+  Example RPC service powering https://demo.connectrpc.com and built with connect-go
 * [connect-crosstest](https://github.com/bufbuild/connect-crosstest):
   gRPC-Web and Connect interoperability tests
 * [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
@@ -119,7 +119,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 
 This project is a beta: we rely on it in production, but we may make a few
 changes as we gather feedback from early adopters. Join us on [Slack](https://buf.build/links/slack)
-or see the [roadmap discussion](https://github.com/bufbuild/connect-web/discussions/315) for details.
+or see the [roadmap discussion](https://github.com/connectrpc/connect-es/discussions/315) for details.
 
 
 ## Legal

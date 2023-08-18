@@ -141,4 +141,4 @@ instead.
 ## Getting started
 
 To get started with Connect, head over to the [docs](https://connectrpc.com/docs/node/getting-started)
-for a tutorial, or take a look at [our example](https://github.com/bufbuild/connect-es/tree/main/packages/example).
+for a tutorial, or take a look at [our example](https://github.com/connectrpc/connect-es/tree/main/packages/example).

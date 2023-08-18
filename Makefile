@@ -63,7 +63,7 @@ $(BUILD)/protoc-gen-connect-es: node_modules tsconfig.base.json packages/protoc-
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect: $(GEN)/connect node_modules tsconfig.base.json packages/connect/tsconfig.json $(shell find packages/connect/src -name '*.ts') packages/connect/*.js
+$(BUILD)/connect: $(GEN)/connect node_modules packages/connect/package.json packages/connect/scripts/* tsconfig.base.json packages/connect/tsconfig.json $(shell find packages/connect/src -name '*.ts') packages/connect/*.js
 	npm run -w packages/connect clean
 	npm run -w packages/connect build
 	@mkdir -p $(@D)
