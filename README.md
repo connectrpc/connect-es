@@ -81,7 +81,7 @@ be more than happy to chat!
 
 - [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect):
   RPC clients and servers for your schema ([source code](packages/connect)).
-- [@bufbuild/protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es):
+- [@connectrpc/protoc-gen-connect-es](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es):
   Code generator plugin for the services in your schema ([source code](packages/protoc-gen-connect-es)).
 - [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web):
   Adapters for web browsers, and any other platform that has the fetch API on board.
