@@ -19,7 +19,7 @@ and [@bufbuild/protobuf](https://www.npmjs.com/package/@bufbuild/protobuf).
 To install `buf`, the plugins and their runtime libraries, run:
 
 ```shell
-npm install --save-dev @bufbuild/buf @bufbuild/protoc-gen-es @bufbuild/protoc-gen-connect-es
+npm install --save-dev @bufbuild/buf @bufbuild/protoc-gen-es @connectrpc/protoc-gen-connect-es
 npm install @connectrpc/connect @bufbuild/protobuf
 ```
 
