@@ -2,11 +2,14 @@
 
 This tool updates your Connect project to use the new `@connectrpc` packages.
 
-Usage:
+To migrate, run the following command in your project root directory:
 
 ```shell
-npx @connectrpc/connect-migrate --help
+npx @connectrpc/connect-migrate
 ```
+
+Add the `--help` flag to the command to learn more about the available flags.
+
 
 ## What it does
 
