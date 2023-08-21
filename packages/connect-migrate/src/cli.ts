@@ -25,10 +25,10 @@ import {
 import { Logger } from "./log";
 import modifyImports from "./transforms/modify-imports";
 
-const usage = `USAGE: connect-migrate
+const usage = `USAGE: connect-migrate [flags]
 Updates references to connect-es packages in your project to use @connectrpc.
 
-Options:
+Flags:
   --ignore-pattern <pattern>  Glob pattern to ignore source and package files. Defaults to **/dist/**. Supports multiples.
   --no-install                Skip dependency installation after updating package.json files.
   --version                   Print the version of connect-migrate.
