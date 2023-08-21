@@ -14,8 +14,8 @@
 
 import * as http2 from "http2";
 import * as http from "http";
-import { ConnectError } from "@bufbuild/connect";
-import { createAsyncIterable } from "@bufbuild/connect/protocol";
+import { ConnectError } from "@connectrpc/connect";
+import { createAsyncIterable } from "@connectrpc/connect/protocol";
 import { createNodeHttpClient } from "./node-universal-client.js";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 

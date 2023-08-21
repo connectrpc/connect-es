@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "@bufbuild/connect";
-import { compressionBrotli, compressionGzip } from "@bufbuild/connect-node";
+import { ConnectError } from "@connectrpc/connect";
+import { compressionBrotli, compressionGzip } from "@connectrpc/connect-node";
 import * as zlib from "zlib";
 
 describe("compression", () => {

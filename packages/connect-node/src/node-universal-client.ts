@@ -16,7 +16,7 @@ import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";
 import type * as net from "net";
-import { Code, ConnectError } from "@bufbuild/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
@@ -32,8 +32,8 @@ import type {
   UniversalClientFn,
   UniversalClientRequest,
   UniversalClientResponse,
-} from "@bufbuild/connect/protocol";
-import { getAbortSignalReason } from "@bufbuild/connect/protocol";
+} from "@connectrpc/connect/protocol";
+import { getAbortSignalReason } from "@connectrpc/connect/protocol";
 import { Http2SessionManager } from "./http2-session-manager.js";
 
 /**

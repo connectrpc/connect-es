@@ -14,10 +14,10 @@
 
 import * as http from "http";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
-import { createPromiseClient } from "@bufbuild/connect";
-import type { ConnectRouter } from "@bufbuild/connect";
-import { expressConnectMiddleware } from "@bufbuild/connect-express";
-import { createGrpcWebTransport } from "@bufbuild/connect-node";
+import { createPromiseClient } from "@connectrpc/connect";
+import type { ConnectRouter } from "@connectrpc/connect";
+import { expressConnectMiddleware } from "@connectrpc/connect-express";
+import { createGrpcWebTransport } from "@connectrpc/connect-node";
 import { importExpress } from "./helpers/import-express.js";
 
 describe("express readme", function () {

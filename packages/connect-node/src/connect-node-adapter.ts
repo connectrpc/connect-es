@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code, ConnectError, createConnectRouter } from "@bufbuild/connect";
-import type { ConnectRouter, ConnectRouterOptions } from "@bufbuild/connect";
-import type { UniversalHandler } from "@bufbuild/connect/protocol";
-import { uResponseNotFound } from "@bufbuild/connect/protocol";
+import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
+import type { ConnectRouter, ConnectRouterOptions } from "@connectrpc/connect";
+import type { UniversalHandler } from "@connectrpc/connect/protocol";
+import { uResponseNotFound } from "@connectrpc/connect/protocol";
 import {
   universalRequestFromNodeRequest,
   universalResponseToNodeResponse,
@@ -34,7 +34,7 @@ interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
    * Create a file `connect.ts` with a default export such as this:
    *
    * ```ts
-   * import {ConnectRouter} from "@bufbuild/connect";
+   * import {ConnectRouter} from "@connectrpc/connect";
    *
    * export default (router: ConnectRouter) => {
    *   router.service(ElizaService, {});

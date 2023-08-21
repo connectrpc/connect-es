@@ -15,15 +15,18 @@
 import * as http2 from "http2";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
 import type { PartialMessage } from "@bufbuild/protobuf";
-import { createPromiseClient, createRouterTransport } from "@bufbuild/connect";
-import type { ConnectRouter } from "@bufbuild/connect";
+import {
+  createPromiseClient,
+  createRouterTransport,
+} from "@connectrpc/connect";
+import type { ConnectRouter } from "@connectrpc/connect";
 import {
   connectNodeAdapter,
   createGrpcTransport,
   createGrpcWebTransport,
   createConnectTransport,
-} from "@bufbuild/connect-node";
-import { createWritableIterable } from "@bufbuild/connect/protocol";
+} from "@connectrpc/connect-node";
+import { createWritableIterable } from "@connectrpc/connect/protocol";
 
 /* eslint-disable @typescript-eslint/require-await */
 

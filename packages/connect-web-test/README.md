@@ -1,6 +1,6 @@
 # Tests
 
-This package provides test coverage for @bufbuild/connect-web with the test
+This package provides test coverage for @connectrpc/connect-web with the test
 framework [Jasmine](https://jasmine.github.io/) and the [Karma](https://karma-runner.github.io/) 
 test runner.
 
@@ -12,7 +12,7 @@ The test suite is run multiple times:
 
 The tests run against:
 - connect-go (h1/h2) via Docker
-- @bufbuild/connect-node (h1)
+- @connectrpc/connect-node (h1)
 
 ### Running tests in a headless browser
 
@@ -31,7 +31,7 @@ and trust the self-signed certificate in the browser UI.
 
 ### Running tests in Node.js
 
-@bufbuild/connect-web requires the fetch API. It is available since Node.js 
+@connectrpc/connect-web requires the fetch API. It is available since Node.js 
 v18, and you can run this suite of tests on it with `make testwebnode`.
 Note that client-streaming and bidi-streaming are not fully supported because
 of limitations in browser APIs.

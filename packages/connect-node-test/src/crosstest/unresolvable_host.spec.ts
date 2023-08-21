@@ -17,12 +17,12 @@ import {
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-} from "@bufbuild/connect";
+} from "@connectrpc/connect";
 import {
   createConnectTransport,
   createGrpcTransport,
   createGrpcWebTransport,
-} from "@bufbuild/connect-node";
+} from "@connectrpc/connect-node";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
 
@@ -40,23 +40,29 @@ describe("unresolvable_host", function () {
   };
   const transports = [
     [
-      "@bufbuild/connect-node (gRPC-web, http2)",
+      "@connectrpc/connect-node (gRPC-web, http2)",
       createGrpcWebTransport(optionsHttp2),
     ],
     [
-      "@bufbuild/connect-node (gRPC-web, http)",
+      "@connectrpc/connect-node (gRPC-web, http)",
       createGrpcTransport(optionsHttp1),
     ],
     [
-      "@bufbuild/connect-node (Connect, http2)",
+      "@connectrpc/connect-node (Connect, http2)",
       createConnectTransport(optionsHttp2),
     ],
     [
-      "@bufbuild/connect-node (Connect, http)",
+      "@connectrpc/connect-node (Connect, http)",
       createConnectTransport(optionsHttp1),
     ],
-    ["@bufbuild/connect-node (gRPC, http2)", createGrpcTransport(optionsHttp2)],
-    ["@bufbuild/connect-node (gRPC, http)", createGrpcTransport(optionsHttp1)],
+    [
+      "@connectrpc/connect-node (gRPC, http2)",
+      createGrpcTransport(optionsHttp2),
+    ],
+    [
+      "@connectrpc/connect-node (gRPC, http)",
+      createGrpcTransport(optionsHttp1),
+    ],
   ] as const;
   for (const [name, transport] of transports) {
     describe(`${name} against unresolvable domain`, function () {

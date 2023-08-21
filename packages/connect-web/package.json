@@ -1,5 +1,5 @@
 {
-  "name": "@bufbuild/connect-web",
+  "name": "@connectrpc/connect-web",
   "version": "0.13.0",
   "license": "Apache-2.0",
   "repository": {
@@ -23,7 +23,7 @@
     "require": "./dist/cjs/index.js"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.13.0"
+    "@connectrpc/connect": "0.13.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1"

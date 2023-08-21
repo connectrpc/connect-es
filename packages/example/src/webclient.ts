@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createPromiseClient } from "@bufbuild/connect";
-import { createConnectTransport } from "@bufbuild/connect-web";
+import { createPromiseClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
 import { ElizaService } from "./gen/eliza_connect.js";
 
 // Alternatively, use createGrpcWebTransport here for the gRPC-web
