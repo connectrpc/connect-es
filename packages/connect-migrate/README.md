@@ -2,6 +2,9 @@
 
 This tool updates your Connect project to use the new `@connectrpc` packages.
 
+
+## Usage
+
 To migrate, run the following command in your project root directory:
 
 ```shell
@@ -23,6 +26,16 @@ This package is made up of a few migration steps
 
 We ignore all files within `node_modules` but will update any other files that 
 end with the following extensions: `.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`.
+
+
+## Prerequisites
+
+- Make sure that you have updated to the latest version of `@bufbuild/connect` and
+  related packages before you migrate.
+- Commit any unstaged changes to your project, so that you can revert in case the migration failed.
+- After migration, run your generate scripts to re-generate code with the latest
+  plugin versions.
+
 
 ## Alternative running methods
 
