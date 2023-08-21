@@ -261,13 +261,14 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 release: all ## Release npm packages
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
 	npm publish \
+		--workspace packages/connect \
 		--workspace packages/connect-web \
 		--workspace packages/connect-node \
 		--workspace packages/connect-fastify \
 		--workspace packages/connect-express \
 		--workspace packages/connect-next \
-		--workspace packages/connect \
 		--workspace packages/protoc-gen-connect-es \
+		--workspace packages/connect-migrate \
 
 .PHONY: crosstestserverstop
 crosstestserverstop:
