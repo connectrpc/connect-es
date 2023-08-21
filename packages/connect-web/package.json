@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-web",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -23,7 +23,7 @@
     "require": "./dist/cjs/index.js"
   },
   "dependencies": {
-    "@connectrpc/connect": "0.13.0"
+    "@connectrpc/connect": "0.13.1"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1"
