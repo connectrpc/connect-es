@@ -21,18 +21,50 @@ import jscodeshift from "jscodeshift/src/core";
 import { Logger } from "./log";
 
 export const replacementMap = {
-  "@bufbuild/connect": "@connectrpc/connect",
-  "@bufbuild/connect-web": "@connectrpc/connect-web",
-  "@bufbuild/connect-fastify": "@connectrpc/connect-fastify",
-  "@bufbuild/connect-node": "@connectrpc/connect-node",
-  "@bufbuild/connect-next": "@connectrpc/connect-next",
-  "@bufbuild/connect-express": "@connectrpc/connect-express",
-  "@bufbuild/protoc-gen-connect-es": "@connectrpc/protoc-gen-connect-es",
-  "@bufbuild/protoc-gen-connect-web": "@connectrpc/protoc-gen-connect-web",
-  "@bufbuild/connect-query": "@connectrpc/connect-query",
-  "@bufbuild/protoc-gen-connect-query": "@connectrpc/protoc-gen-connect-query",
-  "@bufbuild/protoc-gen-connect-query-react":
-    "@connectrpc/protoc-gen-connect-query-react",
+  "@bufbuild/connect": {
+    newPackage: "@connectrpc/connect",
+    version: "14.0.1",
+  },
+  "@bufbuild/connect-web": {
+    newPackage: "@connectrpc/connect-web",
+    version: "14.0.1",
+  },
+  "@bufbuild/connect-fastify": {
+    newPackage: "@connectrpc/connect-fastify",
+    version: "14.0.1",
+  },
+  "@bufbuild/connect-node": {
+    newPackage: "@connectrpc/connect-node",
+    version: "14.0.1",
+  },
+  "@bufbuild/connect-next": {
+    newPackage: "@connectrpc/connect-next",
+    version: "14.0.1",
+  },
+  "@bufbuild/connect-express": {
+    newPackage: "@connectrpc/connect-express",
+    version: "14.0.1",
+  },
+  "@bufbuild/protoc-gen-connect-es": {
+    newPackage: "@connectrpc/protoc-gen-connect-es",
+    version: "14.0.1",
+  },
+  "@bufbuild/protoc-gen-connect-web": {
+    newPackage: "@connectrpc/protoc-gen-connect-web",
+    version: "14.0.1",
+  },
+  "@bufbuild/connect-query": {
+    newPackage: "@connectrpc/connect-query",
+    version: "14.0.1",
+  },
+  "@bufbuild/protoc-gen-connect-query": {
+    newPackage: "@connectrpc/protoc-gen-connect-query",
+    version: "14.0.1",
+  },
+  "@bufbuild/protoc-gen-connect-query-react": {
+    newPackage: "@connectrpc/protoc-gen-connect-query-react",
+    version: "14.0.1",
+  },
 } as const;
 
 const keys = Object.keys(replacementMap) as (keyof typeof replacementMap)[];
@@ -42,9 +74,12 @@ export function getReplacementImport(sourceValue: string): string | undefined {
     return sourceValue === key || sourceValue.startsWith(`${key}/`);
   });
   if (sourceValue === match) {
-    return replacementMap[match];
+    return replacementMap[match].newPackage;
   } else if (match !== undefined) {
-    return sourceValue.replace(`${match}/`, `${replacementMap[match]}/`);
+    return sourceValue.replace(
+      `${match}/`,
+      `${replacementMap[match].newPackage}/`
+    );
   }
   return undefined;
 }
@@ -52,7 +87,7 @@ export function getReplacementImport(sourceValue: string): string | undefined {
 export function replacePackageJSONReferences(jsonString: string): string {
   let result = jsonString;
   for (const key of keys) {
-    result = result.replace(`"${key}"`, `"${replacementMap[key]}"`);
+    result = result.replace(`"${key}"`, `"${replacementMap[key].newPackage}"`);
   }
   return result;
 }
@@ -88,7 +123,7 @@ interface UpdateSourceFileResult {
 export function updateSourceFile(
   transform: Transform,
   path: string,
-  logger: Logger,
+  logger: Logger
 ): UpdateSourceFileResult {
   logger.log(`transform ${path}`);
   let jscs: jscodeshift.JSCodeshift;
@@ -109,7 +144,7 @@ export function updateSourceFile(
         stats: () => {},
         report: () => {},
       },
-      {},
+      {}
     );
     if (typeof result != "string") {
       logger.log(`skipped`);
@@ -160,7 +195,7 @@ export function updateLockfile(lockfilePath: string, logger: Logger) {
       break;
     default:
       throw new Error(
-        `Cannot determine package manager for lock file ${lockfilePath}`,
+        `Cannot determine package manager for lock file ${lockfilePath}`
       );
   }
   return ok;
