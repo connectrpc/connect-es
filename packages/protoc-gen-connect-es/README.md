@@ -1,4 +1,4 @@
-# @bufbuild/protoc-gen-connect-es
+# @connectrpc/protoc-gen-connect-es
 
 The code generator for Connect, a simple library to work with servers and clients
 in ECMAScript with the type-safety of TypeScript.  It generates code that is compatible with
@@ -113,7 +113,7 @@ bundler configurations. If you prefer to generate TypeScript, use `target=ts`.
 
 ### `import_extension=.js`
 
-By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
+By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es)
 (and all other plugins based on [@bufbuild/protoplugin](https://www.npmjs.com/package/@bufbuild/protoplugin))
 uses a `.js` file extensions in import paths, even in TypeScript files.
 
@@ -128,7 +128,7 @@ in import paths with the given value. For example, set
 
 ### `keep_empty_files=true`
 
-By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-connect-es)
+By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es)
 (and all other plugins based on [@bufbuild/protoplugin](https://www.npmjs.com/package/@bufbuild/protoplugin))
 omit empty files from the plugin output. This option disables pruning of
 empty files, to allow for smooth interoperation with Bazel and similar
