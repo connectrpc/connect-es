@@ -34,6 +34,7 @@ export function scan(ignorePatterns: string[], cwd: string, logger: Logger) {
       ...lockFilename.map((f) => `**/${f}`),
       // source files
       "**/*.ts",
+      "!**/*.d.ts",
       "**/*.js",
       "**/*.jsx",
       "**/*.cjs",
