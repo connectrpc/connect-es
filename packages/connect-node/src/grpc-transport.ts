@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Interceptor, Transport } from "@bufbuild/connect";
-import type { Compression } from "@bufbuild/connect/protocol";
-import { createTransport } from "@bufbuild/connect/protocol-grpc";
+import type { Interceptor, Transport } from "@connectrpc/connect";
+import type { Compression } from "@connectrpc/connect/protocol";
+import { createTransport } from "@connectrpc/connect/protocol-grpc";
 import type {
   BinaryReadOptions,
   BinaryWriteOptions,

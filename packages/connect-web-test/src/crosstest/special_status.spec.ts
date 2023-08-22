@@ -17,7 +17,7 @@ import {
   createCallbackClient,
   createPromiseClient,
   Code,
-} from "@bufbuild/connect";
+} from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";

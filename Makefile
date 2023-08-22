@@ -116,6 +116,12 @@ $(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-migrate: packages/connect-migrate/package.json packages/connect-migrate/tsconfig.json $(shell find packages/connect-migrate/src -name '*.ts')
+	npm run -w packages/connect-migrate clean
+	npm run -w packages/connect-migrate build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(shell find packages/connect/src -name '*.proto') Makefile
 	rm -rf packages/connect/src/gen/*
 	npm run -w packages/connect generate
@@ -161,10 +167,10 @@ clean: crosstestserverstop ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example ## Build
+build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testnode testwebnode testwebbrowser ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testnode testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
@@ -214,6 +220,10 @@ testwebbrowserlocal: $(BUILD)/connect-web-test
 testwebbrowserstack: $(BUILD)/connect-web-test
 	npm run -w packages/connect-web-test karma-browserstack
 
+.PHONY: testconnectmigrate
+testconnectmigrate: $(BUILD)/connect-migrate
+	npm run -w packages/connect-migrate test
+
 .PHONY: lint
 lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
 	npx eslint --max-warnings 0 .
@@ -251,13 +261,14 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 release: all ## Release npm packages
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
 	npm publish \
+		--workspace packages/connect \
 		--workspace packages/connect-web \
 		--workspace packages/connect-node \
 		--workspace packages/connect-fastify \
 		--workspace packages/connect-express \
 		--workspace packages/connect-next \
-		--workspace packages/connect \
 		--workspace packages/protoc-gen-connect-es \
+		--workspace packages/connect-migrate \
 
 .PHONY: crosstestserverstop
 crosstestserverstop:

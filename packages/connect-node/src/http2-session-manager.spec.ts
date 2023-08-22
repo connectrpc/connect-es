@@ -15,7 +15,7 @@
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "http2";
 import { Http2SessionManager } from "./http2-session-manager.js";
-import { ConnectError } from "@bufbuild/connect";
+import { ConnectError } from "@connectrpc/connect";
 
 describe("Http2SessionManager", function () {
   const serverSessions: http2.ServerHttp2Session[] = [];

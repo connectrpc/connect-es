@@ -18,9 +18,9 @@ import type {
   JsonReadOptions,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import type { Interceptor, Transport } from "@bufbuild/connect";
-import type { Compression } from "@bufbuild/connect/protocol";
-import { createTransport } from "@bufbuild/connect/protocol-connect";
+import type { Interceptor, Transport } from "@connectrpc/connect";
+import type { Compression } from "@connectrpc/connect/protocol";
+import { createTransport } from "@connectrpc/connect/protocol-connect";
 import { validateNodeTransportOptions } from "./node-transport-options.js";
 import type {
   DeprecatedNodeTransportOptions,

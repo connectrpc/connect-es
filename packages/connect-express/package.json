@@ -1,6 +1,6 @@
 {
-  "name": "@bufbuild/connect-express",
-  "version": "0.13.0",
+  "name": "@connectrpc/connect-express",
+  "version": "0.13.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -26,8 +26,8 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.13.0",
-    "@bufbuild/connect-node": "^0.13.0",
+    "@connectrpc/connect": "0.13.1",
+    "@connectrpc/connect-node": "^0.13.1",
     "@types/express": "^4.17.17"
   },
   "peerDependencies": {

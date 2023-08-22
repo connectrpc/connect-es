@@ -25,7 +25,7 @@ import type {
  * Runs a unary method with the given interceptors. Note that this function
  * is only used when implementing a Transport.
  *
- * @deprecated Use runUnaryCall from @bufbuild/connect/protocol instead.
+ * @deprecated Use runUnaryCall from @connectrpc/connect/protocol instead.
  */
 export function runUnary<I extends Message<I>, O extends Message<O>>(
   req: UnaryRequest<I, O>,
@@ -42,7 +42,7 @@ export function runUnary<I extends Message<I>, O extends Message<O>>(
  * Runs a server-streaming method with the given interceptors. Note that this
  * function is only used when implementing a Transport.
  *
- * @deprecated Use runStreamingCall from @bufbuild/connect/protocol instead.
+ * @deprecated Use runStreamingCall from @connectrpc/connect/protocol instead.
  */
 export function runStreaming<I extends Message<I>, O extends Message<O>>(
   req: StreamRequest<I, O>,

@@ -1,6 +1,6 @@
 {
-  "name": "@bufbuild/connect-next",
-  "version": "0.13.0",
+  "name": "@connectrpc/connect-next",
+  "version": "0.13.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -26,8 +26,8 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@bufbuild/connect": "0.13.0",
-    "@bufbuild/connect-node": "^0.13.0"
+    "@connectrpc/connect": "0.13.1",
+    "@connectrpc/connect-node": "^0.13.1"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1",

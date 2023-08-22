@@ -16,13 +16,13 @@ import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "http2";
 import * as http from "http";
 import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
-import { ConnectError } from "@bufbuild/connect";
+import { ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";
 import {
   assertByteStreamRequest,
   readAllBytes,
-} from "@bufbuild/connect/protocol";
-import type { UniversalServerRequest } from "@bufbuild/connect/protocol";
+} from "@connectrpc/connect/protocol";
+import type { UniversalServerRequest } from "@connectrpc/connect/protocol";
 
 // Polyfill the Headers API for Node versions < 18
 import "./node-headers-polyfill.js";
