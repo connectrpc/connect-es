@@ -14,8 +14,8 @@
 
 import * as zlib from "zlib";
 import { promisify } from "util";
-import type { Compression } from "@bufbuild/connect/protocol";
-import { Code, ConnectError } from "@bufbuild/connect";
+import type { Compression } from "@connectrpc/connect/protocol";
+import { Code, ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";
 
 const gzip = promisify(zlib.gzip);
@@ -27,7 +27,7 @@ const brotliDecompress = promisify(zlib.brotliDecompress);
  * The gzip compression algorithm, implemented with the Node.js built-in module
  * zlib. This value can be used for the `sendCompression` and `acceptCompression`
  * option of client transports, or for the `acceptCompression` option of server
- * plugins like `fastifyConnectPlugin` from @bufbuild/connect-fastify.
+ * plugins like `fastifyConnectPlugin` from @connectrpc/connect-fastify.
  */
 export const compressionGzip: Compression = {
   name: "gzip",
@@ -48,7 +48,7 @@ export const compressionGzip: Compression = {
  * The brotli compression algorithm, implemented with the Node.js built-in module
  * zlib. This value can be used for the `sendCompression` and `acceptCompression`
  * option of client transports, or for the `acceptCompression` option of server
- * plugins like `fastifyConnectPlugin` from @bufbuild/connect-fastify.
+ * plugins like `fastifyConnectPlugin` from @connectrpc/connect-fastify.
  */
 export const compressionBrotli: Compression = {
   name: "br",

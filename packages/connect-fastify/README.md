@@ -1,10 +1,10 @@
-# @bufbuild/connect-fastify
+# @connectrpc/connect-fastify
 
 Connect is a family of libraries for building and consuming APIs on different languages and platforms, and
-[@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings type-safe APIs with Protobuf to
+[@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings type-safe APIs with Protobuf to
 TypeScript.
 
-`@bufbuild/connect-fastify` provides a plugin for [fastify](https://www.fastify.io/), the fast and
+`@connectrpc/connect-fastify` provides a plugin for [fastify](https://www.fastify.io/), the fast and
 low overhead web framework, for Node.js.
 
 ### fastifyConnectPlugin()
@@ -13,7 +13,7 @@ Plug your Connect RPCs into a fastify server.
 
 ```ts
 // connect.ts
-import { ConnectRouter } from "@bufbuild/connect";
+import { ConnectRouter } from "@connectrpc/connect";
 
 export default function(router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
@@ -27,7 +27,7 @@ export default function(router: ConnectRouter) {
 // server.ts
 import { fastify } from "fastify";
 + import routes from "connect";
-+ import { fastifyConnectPlugin } from "@bufbuild/connect-fastify";
++ import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
 
 const server = fastify({
   http2: true,
@@ -64,11 +64,11 @@ curl \
     http://localhost:8080/connectrpc.eliza.v1.ElizaService/Say
 ```
 
-Node.js with the gRPC protocol (using a transport from [@bufbuild/connect-node](https://www.npmjs.com/package/@bufbuild/connect-node)):
+Node.js with the gRPC protocol (using a transport from [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node)):
 
 ```ts
-import { createPromiseClient } from "@bufbuild/connect";
-import { createGrpcTransport } from "@bufbuild/connect-node";
+import { createPromiseClient } from "@connectrpc/connect";
+import { createGrpcTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
 const transport = createGrpcTransport({
@@ -82,7 +82,7 @@ console.log(sentence) // you said: I feel happy.
 ```
 
 A client for the web browser actually looks identical to this example - it would
-simply use `createConnectTransport` from [@bufbuild/connect-web](https://www.npmjs.com/package/@bufbuild/connect-web)
+simply use `createConnectTransport` from [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web)
 instead.
 
 

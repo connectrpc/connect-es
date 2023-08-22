@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as http2 from "http2";
-import { Code, ConnectError } from "@bufbuild/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import { connectErrorFromNodeReason } from "./node-error.js";
 
 export interface Http2SessionOptions {

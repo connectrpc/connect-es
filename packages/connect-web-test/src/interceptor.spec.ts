@@ -16,12 +16,12 @@ import type {
   CallOptions,
   Interceptor,
   StreamResponse,
-} from "@bufbuild/connect";
+} from "@connectrpc/connect";
 import {
   createCallbackClient,
   createPromiseClient,
   encodeBinaryHeader,
-} from "@bufbuild/connect";
+} from "@connectrpc/connect";
 import { TestService } from "./gen/grpc/testing/test_connect.js";
 import { StreamingOutputCallRequest } from "./gen/grpc/testing/messages_pb.js";
 import { describeTransports } from "./helpers/crosstestserver.js";

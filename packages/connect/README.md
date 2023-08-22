@@ -1,7 +1,7 @@
-# @bufbuild/connect
+# @connectrpc/connect
 
 Connect is a family of libraries for building type-safe APIs with different languages and platforms.
-[@bufbuild/connect](https://www.npmjs.com/package/@bufbuild/connect) brings them to TypeScript,
+[@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings them to TypeScript,
 the web browser, and to Node.js.
 
 

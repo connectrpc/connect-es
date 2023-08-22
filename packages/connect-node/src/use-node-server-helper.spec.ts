@@ -15,7 +15,7 @@
 import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";
-import type { UniversalClientFn } from "@bufbuild/connect/protocol";
+import type { UniversalClientFn } from "@connectrpc/connect/protocol";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { createNodeHttpClient } from "./node-universal-client.js";
 

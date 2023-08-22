@@ -16,11 +16,11 @@ import type * as http from "http";
 import type * as http2 from "http2";
 import type * as stream from "stream";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { Code, ConnectError } from "@bufbuild/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import type {
   UniversalServerRequest,
   UniversalServerResponse,
-} from "@bufbuild/connect/protocol";
+} from "@connectrpc/connect/protocol";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,

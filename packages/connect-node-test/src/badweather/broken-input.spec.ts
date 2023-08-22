@@ -14,13 +14,13 @@
 
 import { TestService } from "../gen/grpc/testing/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
-import { Code, ConnectError } from "@bufbuild/connect";
-import { createMethodUrl } from "@bufbuild/connect/protocol";
+import { Code, ConnectError } from "@connectrpc/connect";
+import { createMethodUrl } from "@connectrpc/connect/protocol";
 import {
   endStreamFromJson,
   codeFromHttpStatus,
   errorFromJsonBytes,
-} from "@bufbuild/connect/protocol-connect";
+} from "@connectrpc/connect/protocol-connect";
 import { http2Request } from "../helpers/http2-request.js";
 
 describe("broken input", () => {
@@ -28,7 +28,7 @@ describe("broken input", () => {
   beforeAll(async () => await servers.start());
 
   servers.describeServers(
-    ["connect-go (h2)", "@bufbuild/connect-node (h2c)"],
+    ["connect-go (h2)", "@connectrpc/connect-node (h2c)"],
     (server, serverName) => {
       const rejectUnauthorized = serverName !== "connect-go (h2)"; // TODO set up cert for go server correctly
 
@@ -64,7 +64,7 @@ describe("broken input", () => {
           );
           expect(status).toBe(400);
           expect(error.code).toBe(Code.InvalidArgument);
-          if (serverName == "@bufbuild/connect-node (h2c)") {
+          if (serverName == "@connectrpc/connect-node (h2c)") {
             expect(error.rawMessage).toMatch(
               /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token '?h'?.*JSON/,
             );
@@ -104,7 +104,7 @@ describe("broken input", () => {
             const { status, endStream } = await streamingRequest(body);
             expect(status).toBe(200);
             expect(endStream.error?.code).toBe(Code.InvalidArgument);
-            if (serverName == "@bufbuild/connect-node (h2c)") {
+            if (serverName == "@connectrpc/connect-node (h2c)") {
               // Error messages tend to change across Node versions. Should this happen again, this link is useful to
               // build the correct RegExp:  https://regex101.com/r/By9VEN/1
               expect(endStream.error?.rawMessage).toMatch(

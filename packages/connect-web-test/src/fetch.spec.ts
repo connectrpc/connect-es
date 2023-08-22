@@ -20,7 +20,7 @@ import {
 import {
   createConnectTransport,
   createGrpcWebTransport,
-} from "@bufbuild/connect-web";
+} from "@connectrpc/connect-web";
 
 describe("custom fetch", function () {
   let originFetch: typeof fetch;

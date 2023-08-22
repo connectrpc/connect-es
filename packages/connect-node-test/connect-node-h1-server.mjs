@@ -88,7 +88,7 @@ switch (command) {
     break;
 
   case "startinternal":
-    const server = createTestServers().servers["@bufbuild/connect-node (h1)"];
+    const server = createTestServers().servers["@connectrpc/connect-node (h1)"];
     await server.start(PORT);
     writeFileSync(lockFile, "server listening at " + server.getUrl(), {
       encoding: "utf-8",
