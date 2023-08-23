@@ -12,11 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
+import {
+  Int32Value,
+  Message,
+  MethodKind,
+  proto3,
+  StringValue,
+} from "@bufbuild/protobuf";
 import { createPromiseClient } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
 import { ConnectError } from "./connect-error.js";
+import { Code } from "./code.js";
 
 describe("createRoutesTransport", function () {
   const testService = {
@@ -117,5 +124,104 @@ describe("createRoutesTransport", function () {
         "[unimplemented] RouterHttpClient: no handler registered for /TestService/Unary",
       );
     }
+  });
+  describe("on connectrpc.com", function () {
+    interface SayRequest extends Message<SayRequest> {
+      sentence: string;
+    }
+    const SayRequest = proto3.makeMessageType<SayRequest>(
+      "connectrpc.eliza.v1.SayRequest",
+      [
+        {
+          no: 1,
+          name: "sentence",
+          kind: "scalar",
+          T: 9 /* ScalarType.STRING */,
+        },
+      ],
+    );
+    interface SayResponse extends Message<SayResponse> {
+      sentence: string;
+    }
+    const SayResponse = proto3.makeMessageType<SayResponse>(
+      "connectrpc.eliza.v1.SayResponse",
+      [
+        {
+          no: 1,
+          name: "sentence",
+          kind: "scalar",
+          T: 9 /* ScalarType.STRING */,
+        },
+      ],
+    );
+    const ElizaService = {
+      typeName: "connectrpc.eliza.v1.ElizaService",
+      methods: {
+        say: {
+          name: "Say",
+          I: SayRequest,
+          O: SayResponse,
+          kind: MethodKind.Unary,
+        },
+      },
+    } as const;
+
+    describe("simple ELIZA mock", function () {
+      const mockTransport = createRouterTransport(({ service }) => {
+        service(ElizaService, {
+          say: () => new SayResponse({ sentence: "I feel happy." }),
+        });
+      });
+      it("returns mocked answer", async () => {
+        const client = createPromiseClient(ElizaService, mockTransport);
+        const { sentence } = await client.say({ sentence: "how do you feel?" });
+        expect(sentence).toEqual("I feel happy.");
+      });
+    });
+
+    describe("expecting requests", function () {
+      const mockTransport = createRouterTransport(({ service }) => {
+        service(ElizaService, {
+          say(request) {
+            expect(request.sentence).toBe("how do you feel?");
+            return new SayResponse({ sentence: "I feel happy." });
+          },
+        });
+      });
+      it("expects a request", async () => {
+        const client = createPromiseClient(ElizaService, mockTransport);
+        const { sentence } = await client.say({ sentence: "how do you feel?" });
+        expect(sentence).toEqual("I feel happy.");
+      });
+    });
+
+    describe("raising errors", function () {
+      const mockTransport = createRouterTransport(({ service }) => {
+        const sentences: string[] = [];
+        service(ElizaService, {
+          say(request: SayRequest) {
+            sentences.push(request.sentence);
+            if (sentences.length > 3) {
+              throw new ConnectError(
+                "I have no words anymore.",
+                Code.ResourceExhausted,
+              );
+            }
+            return new SayResponse({
+              sentence: `You said ${sentences.length} sentences.`,
+            });
+          },
+        });
+      });
+      it("tests a simple client call", async () => {
+        const client = createPromiseClient(ElizaService, mockTransport);
+        await client.say({ sentence: "1" });
+        await client.say({ sentence: "2" });
+        await client.say({ sentence: "3" });
+        await expectAsync(client.say({ sentence: "4" })).toBeRejectedWithError(
+          /I have no words anymore/,
+        );
+      });
+    });
   });
 });
