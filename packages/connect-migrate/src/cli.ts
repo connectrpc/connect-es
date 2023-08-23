@@ -51,7 +51,7 @@ try {
   if (args.version) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
     const version = JSON.parse(
-      readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
+      readFileSync(path.join(__dirname, "../../package.json"), "utf8")
     ).version;
     stdout.write(`${version}\n`);
     exit(0);
@@ -68,21 +68,21 @@ try {
   stdout.write(
     `${scanned.packageFiles.length.toString().padStart(5)} package.json ${
       scanned.packageFiles.length == 1 ? "file" : "files"
-    }\n`,
+    }\n`
   );
   stdout.write(
     `${scanned.lockFiles.length.toString().padStart(5)} lock ${
       scanned.lockFiles.length == 1 ? "file" : "files"
-    }\n`,
+    }\n`
   );
   stdout.write(
     `${scanned.sourceFiles.length.toString().padStart(5)} source ${
       scanned.sourceFiles.length == 1 ? "file" : "files"
-    }\n`,
+    }\n`
   );
   if (scanned.packageFiles.length === 0 && scanned.sourceFiles.length === 0) {
     stderr.write(
-      `No files to process. Make sure to run the command in a JavaScript or TypeScript project.\n`,
+      `No files to process. Make sure to run the command in a JavaScript or TypeScript project.\n`
     );
     exit(1);
   }
@@ -97,7 +97,7 @@ try {
       if (!args.forceUpdate) {
         packageFileErrors += packagesToForceUpdate.length;
         stdout.write(
-          `  ${packagesToForceUpdate.length} files could not be updated due to out-of-date packages Add the --force-update to automatically update these as well.\n`,
+          `  ${packagesToForceUpdate.length} files could not be updated due to out-of-date packages Add the --force-update to automatically update these as well.\n`
         );
         for (const { path, invalidPackages } of packagesToForceUpdate) {
           stdout.write(`  ${path} ❌\n`);
@@ -107,13 +107,13 @@ try {
         }
       } else {
         stdout.write(
-          `  ${packagesToForceUpdate.length} files will be updated to match minimum version requires. Make sure the new versions match expected values for your application.\n`,
+          `  ${packagesToForceUpdate.length} files will be updated to match minimum version requires. Make sure the new versions match expected values for your application.\n`
         );
         for (const { path, invalidPackages } of packagesToForceUpdate) {
           stdout.write(`  ${path} ✓\n`);
           for (const { packageName, version, location } of invalidPackages) {
             stdout.write(
-              `    ${location}: ${packageName}@${version} => ${replacementMap[packageName].version} ✓\n`,
+              `    ${location}: ${packageName}@${version} => ${replacementMap[packageName].version} ✓\n`
             );
           }
         }
@@ -127,7 +127,7 @@ try {
     stdout.write(`Updating packages... `);
     const updated = updatePackageFiles(
       scanned.packageFiles,
-      packagesToForceUpdate,
+      packagesToForceUpdate
     );
     stdout.write(`✓\n`);
     if (updated.modified.length == 0) {
@@ -150,7 +150,7 @@ try {
     stdout.write(
       `Updating source ${
         scanned.sourceFiles.length == 1 ? "file" : "files"
-      }... \n`,
+      }... \n`
     );
     let sourceFilesUpdated = false;
     for (const path of scanned.sourceFiles) {
@@ -183,7 +183,7 @@ try {
       stdout.write(
         `Updating lock ${
           scanned.lockFiles.length == 1 ? "file" : "files"
-        }... \n`,
+        }... \n`
       );
       for (const path of scanned.lockFiles) {
         if (updateLockfile(path, logger)) {
@@ -201,20 +201,20 @@ try {
       stdout.write(
         `${sourceFileErrors} source ${
           sourceFileErrors == 1 ? "file" : "files"
-        } could not be updated.\n`,
+        } could not be updated.\n`
       );
       stdout.write(
-        `You may have to update the files manually. Check the log for details.\n`,
+        `You may have to update the files manually. Check the log for details.\n`
       );
     }
     if (lockFileErrors > 0) {
       stdout.write(
         `${lockFileErrors} lock ${
           lockFileErrors == 1 ? "file" : "files"
-        } could not be updated.\n`,
+        } could not be updated.\n`
       );
       stdout.write(
-        `Check to make sure you have the most recent versions of @bufbuild/connect-* packages installed before you migrate. Or run the program with --force-update flag.\n`,
+        `Check to make sure you have the most recent versions of @bufbuild/connect-* packages installed before you migrate, or run with --force-update flag.\n`
       );
       stdout.write(`To skip lock file updates, use the --no-install flag.\n`);
     }
