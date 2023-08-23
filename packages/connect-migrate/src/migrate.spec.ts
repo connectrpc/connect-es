@@ -29,8 +29,8 @@ describe("replacePackageJSONReferences", () => {
                     "@bufbuild/connect-web": "0.14.0"
                 }
             }
-        `.trim()
-      )
+        `.trim(),
+      ),
     ).toEqual(
       `
             {
@@ -40,7 +40,7 @@ describe("replacePackageJSONReferences", () => {
                     "@connectrpc/connect-web": "0.14.0"
                 }
             }
-        `.trim()
+        `.trim(),
     );
   });
 
@@ -60,8 +60,8 @@ describe("replacePackageJSONReferences", () => {
           {
             packageName: "@bufbuild/connect",
           },
-        ]
-      )
+        ],
+      ),
     ).toEqual(
       `
             {
@@ -71,7 +71,7 @@ describe("replacePackageJSONReferences", () => {
                     "@connectrpc/connect-web": "0.13.0"
                 }
             }
-        `.trim()
+        `.trim(),
     );
   });
 
@@ -94,8 +94,8 @@ describe("replacePackageJSONReferences", () => {
           {
             packageName: "@bufbuild/connect-web",
           },
-        ]
-      )
+        ],
+      ),
     ).toEqual(
       `
             {
@@ -105,7 +105,7 @@ describe("replacePackageJSONReferences", () => {
                     "@connectrpc/connect-web": "0.13.1"
                 }
             }
-        `.trim()
+        `.trim(),
     );
   });
 });
@@ -121,8 +121,8 @@ describe("getInvalidUsedPackages", () => {
             "@bufbuild/connect": "^0.13.1",
             "@bufbuild/connect-web": "^0.13.1"
         }
-    }`.trim()
-      )
+    }`.trim(),
+      ),
     ).toEqual([]);
   });
   it("detects packages that may not satisfy our version", () => {
@@ -135,16 +135,18 @@ describe("getInvalidUsedPackages", () => {
             "@bufbuild/connect": "^0.13.0",
             "@bufbuild/connect-web": "^0.13.0"
         }
-    }`.trim()
-      )
+    }`.trim(),
+      ),
     ).toEqual([
       {
         packageName: "@bufbuild/connect",
         version: "^0.13.0",
+        location: "dependencies",
       },
       {
         packageName: "@bufbuild/connect-web",
         version: "^0.13.0",
+        location: "dependencies",
       },
     ]);
   });

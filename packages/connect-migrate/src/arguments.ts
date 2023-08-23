@@ -27,7 +27,7 @@ interface CommandLineError {
 }
 
 export function parseCommandLineArgs(
-  args: string[]
+  args: string[],
 ): CommandLineArgs | CommandLineError {
   const parsed = {
     singleQuotes: false,

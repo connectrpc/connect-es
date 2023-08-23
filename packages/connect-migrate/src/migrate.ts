@@ -75,6 +75,7 @@ const keys = Object.keys(replacementMap) as (keyof typeof replacementMap)[];
 interface UsedPackage {
   packageName: keyof typeof replacementMap;
   version: string;
+  location: "dependencies" | "devDependencies" | "peerDependencies";
 }
 
 export function getReplacementImport(sourceValue: string): string | undefined {
@@ -86,7 +87,7 @@ export function getReplacementImport(sourceValue: string): string | undefined {
   } else if (match !== undefined) {
     return sourceValue.replace(
       `${match}/`,
-      `${replacementMap[match].newPackage}/`
+      `${replacementMap[match].newPackage}/`,
     );
   }
   return undefined;
@@ -94,7 +95,7 @@ export function getReplacementImport(sourceValue: string): string | undefined {
 
 export function replacePackageJSONReferences(
   jsonString: string,
-  packagesToForceUpdate?: { packageName: string }[]
+  packagesToForceUpdate?: { packageName: string }[],
 ): string {
   let result = jsonString;
   for (const key of keys) {
@@ -103,14 +104,14 @@ export function replacePackageJSONReferences(
     if (!forceUpdate) {
       result = result.replace(
         `"${key}"`,
-        `"${replacementMap[key].newPackage}"`
+        `"${replacementMap[key].newPackage}"`,
       );
     } else {
       // I wish there was a way to do this without relying on dynamic regexes
       // but not while maintaining existing formatting
       result = result.replace(
         new RegExp(`"${key}"(\\s*:\\s*)"\\S*"([\\s,])`, "g"),
-        `"${replacementMap[key].newPackage}"$1"${replacementMap[key].version}"$2`
+        `"${replacementMap[key].newPackage}"$1"${replacementMap[key].version}"$2`,
       );
     }
   }
@@ -125,16 +126,21 @@ function getUsedPackages(jsonString: string): UsedPackage[] {
     devDependencies?: Record<string, string | undefined>;
     peerDependencies?: Record<string, string | undefined>;
   } = JSON.parse(jsonString);
+  const fieldsToCheck = [
+    "dependencies",
+    "devDependencies",
+    "peerDependencies",
+  ] as const;
   for (const key of keys) {
-    const version =
-      json.dependencies?.[key] ??
-      json.devDependencies?.[key] ??
-      json.peerDependencies?.[key];
-    if (version !== undefined) {
-      result.push({
-        packageName: key,
-        version,
-      });
+    for (const field of fieldsToCheck) {
+      const version = json[field]?.[key];
+      if (version !== undefined) {
+        result.push({
+          packageName: key,
+          version,
+          location: field,
+        });
+      }
     }
   }
   return result;
@@ -176,7 +182,7 @@ export function updatePackageFiles(
   packagesToForceUpdate: {
     path: string;
     invalidPackages: UsedPackage[];
-  }[]
+  }[],
 ) {
   const modified: string[] = [];
   const unmodified: string[] = [];
@@ -184,7 +190,7 @@ export function updatePackageFiles(
     const oldContent = readFileSync(path, "utf-8");
     const newContent = replacePackageJSONReferences(
       oldContent,
-      packagesToForceUpdate.find((p) => p.path === path)?.invalidPackages ?? []
+      packagesToForceUpdate.find((p) => p.path === path)?.invalidPackages ?? [],
     );
     if (oldContent === newContent) {
       unmodified.push(path);
@@ -211,7 +217,7 @@ interface UpdateSourceFileResult {
 export function updateSourceFile(
   transform: Transform,
   path: string,
-  logger: Logger
+  logger: Logger,
 ): UpdateSourceFileResult {
   logger.log(`transform ${path}`);
   let jscs: jscodeshift.JSCodeshift;
@@ -232,7 +238,7 @@ export function updateSourceFile(
         stats: () => {},
         report: () => {},
       },
-      {}
+      {},
     );
     if (typeof result != "string") {
       logger.log(`skipped`);
@@ -283,7 +289,7 @@ export function updateLockfile(lockfilePath: string, logger: Logger) {
       break;
     default:
       throw new Error(
-        `Cannot determine package manager for lock file ${lockfilePath}`
+        `Cannot determine package manager for lock file ${lockfilePath}`,
       );
   }
   return ok;
