@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { replacePackageJSONReferences } from "./migrate";
+import {
+  replacePackageJSONReferences,
+  getInvalidUsedPackagesForPackageFile,
+} from "./migrate";
 
 describe("replacePackageJSONReferences", () => {
   it("handles parsing package.json", () => {
@@ -39,5 +42,110 @@ describe("replacePackageJSONReferences", () => {
             }
         `.trim()
     );
+  });
+
+  it("can forceupdate the version", () => {
+    expect(
+      replacePackageJSONReferences(
+        `
+            {
+                "name": "test",
+                "dependencies": {
+                    "@bufbuild/connect": "0.13.0",
+                    "@bufbuild/connect-web": "0.13.0"
+                }
+            }
+        `.trim(),
+        [
+          {
+            packageName: "@bufbuild/connect",
+          },
+        ]
+      )
+    ).toEqual(
+      `
+            {
+                "name": "test",
+                "dependencies": {
+                    "@connectrpc/connect": "0.13.1",
+                    "@connectrpc/connect-web": "0.13.0"
+                }
+            }
+        `.trim()
+    );
+  });
+
+  it("ignores ranges provided", () => {
+    expect(
+      replacePackageJSONReferences(
+        `
+            {
+                "name": "test",
+                "dependencies": {
+                    "@bufbuild/connect": "^0.13.0",
+                    "@bufbuild/connect-web": "^0.13.0"
+                }
+            }
+        `.trim(),
+        [
+          {
+            packageName: "@bufbuild/connect",
+          },
+          {
+            packageName: "@bufbuild/connect-web",
+          },
+        ]
+      )
+    ).toEqual(
+      `
+            {
+                "name": "test",
+                "dependencies": {
+                    "@connectrpc/connect": "0.13.1",
+                    "@connectrpc/connect-web": "0.13.1"
+                }
+            }
+        `.trim()
+    );
+  });
+});
+
+describe("getInvalidUsedPackages", () => {
+  it("skips versions that satisfy", () => {
+    expect(
+      getInvalidUsedPackagesForPackageFile(
+        `
+    {
+        "name": "test",
+        "dependencies": {
+            "@bufbuild/connect": "^0.13.1",
+            "@bufbuild/connect-web": "^0.13.1"
+        }
+    }`.trim()
+      )
+    ).toEqual([]);
+  });
+  it("detects packages that may not satisfy our version", () => {
+    expect(
+      getInvalidUsedPackagesForPackageFile(
+        `
+    {
+        "name": "test",
+        "dependencies": {
+            "@bufbuild/connect": "^0.13.0",
+            "@bufbuild/connect-web": "^0.13.0"
+        }
+    }`.trim()
+      )
+    ).toEqual([
+      {
+        packageName: "@bufbuild/connect",
+        version: "^0.13.0",
+      },
+      {
+        packageName: "@bufbuild/connect-web",
+        version: "^0.13.0",
+      },
+    ]);
   });
 });

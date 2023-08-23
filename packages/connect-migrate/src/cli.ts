@@ -18,6 +18,7 @@ import { argv, cwd, exit, stderr, stdout } from "node:process";
 import { parseCommandLineArgs } from "./arguments";
 import { scan } from "./scan";
 import {
+  getInvalidUsedPackages,
   updateLockfile,
   updatePackageFiles,
   updateSourceFile,
@@ -33,6 +34,7 @@ Flags:
   --no-install                Skip dependency installation after updating package.json files.
   --version                   Print the version of connect-migrate.
   --help                      Print this help.
+  --force-update              Update all @bufbuild/connect-* packages in package.json files to the latest compatible version.
 `;
 
 const logger = new Logger();
@@ -48,7 +50,7 @@ try {
   if (args.version) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
     const version = JSON.parse(
-      readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
+      readFileSync(path.join(__dirname, "../../package.json"), "utf8")
     ).version;
     stdout.write(`${version}\n`);
     exit(0);
@@ -65,32 +67,75 @@ try {
   stdout.write(
     `${scanned.packageFiles.length.toString().padStart(5)} package.json ${
       scanned.packageFiles.length == 1 ? "file" : "files"
-    }\n`,
+    }\n`
   );
   stdout.write(
     `${scanned.lockFiles.length.toString().padStart(5)} lock ${
       scanned.lockFiles.length == 1 ? "file" : "files"
-    }\n`,
+    }\n`
   );
   stdout.write(
     `${scanned.sourceFiles.length.toString().padStart(5)} source ${
       scanned.sourceFiles.length == 1 ? "file" : "files"
-    }\n`,
+    }\n`
   );
   if (scanned.packageFiles.length === 0 && scanned.sourceFiles.length === 0) {
     stderr.write(
-      `No files to process. Make sure to run the command in a JavaScript or TypeScript project.\n`,
+      `No files to process. Make sure to run the command in a JavaScript or TypeScript project.\n`
     );
     exit(1);
   }
 
+  // check for compatibility of all package.json files
+  let packageFileErrors = 0;
+  let packagesToForceUpdate: ReturnType<typeof getInvalidUsedPackages> = [];
+  if (scanned.packageFiles.length > 0) {
+    stdout.write(`Checking package.json files...\n`);
+    packagesToForceUpdate = getInvalidUsedPackages(scanned.packageFiles);
+    if (packagesToForceUpdate.length > 0 && !args.forceUpdate) {
+      packageFileErrors += packagesToForceUpdate.length;
+      stdout.write(
+        `  ${packagesToForceUpdate.length} files could not be updated due to out-of-date packages Add the --force-update to automatically update these as well.\n`
+      );
+      for (const { path, invalidPackages } of packagesToForceUpdate) {
+        stdout.write(`  ${path} ❌\n`);
+        for (const { packageName, version } of invalidPackages) {
+          stdout.write(`    ${packageName}@${version} x\n`);
+        }
+      }
+    }
+  }
+
+  // update package.json
+  let packageFilesUpdated = false;
+  if (scanned.packageFiles.length > 0 && packageFileErrors === 0) {
+    stdout.write(`Updating packages... `);
+    const updated = updatePackageFiles(
+      scanned.packageFiles,
+      packagesToForceUpdate
+    );
+    stdout.write(`✓\n`);
+    if (updated.modified.length == 0) {
+      if (scanned.lockFiles.length > 0) {
+        stdout.write(`  No files modified. Will not update lock files.\n`);
+      } else {
+        stdout.write(`  No files modified.\n`);
+      }
+    } else {
+      for (const path of updated.modified) {
+        stdout.write(`  ${path} ✓\n`);
+      }
+      packageFilesUpdated = true;
+    }
+  }
+
   // update source files
   let sourceFileErrors = 0;
-  if (scanned.sourceFiles.length > 0) {
+  if (scanned.sourceFiles.length > 0 && packageFileErrors === 0) {
     stdout.write(
       `Updating source ${
         scanned.sourceFiles.length == 1 ? "file" : "files"
-      }... \n`,
+      }... \n`
     );
     let sourceFilesUpdated = false;
     for (const path of scanned.sourceFiles) {
@@ -110,36 +155,20 @@ try {
     }
   }
 
-  // update package.json
-  let packageFilesUpdated = false;
-  if (scanned.packageFiles.length > 0) {
-    stdout.write(`Updating packages... `);
-    const updated = updatePackageFiles(scanned.packageFiles);
-    stdout.write(`✓\n`);
-    if (updated.modified.length == 0) {
-      if (scanned.lockFiles.length > 0) {
-        stdout.write(`  No files modified. Will not update lock files.\n`);
-      } else {
-        stdout.write(`  No files modified.\n`);
-      }
-    } else {
-      for (const path of updated.modified) {
-        stdout.write(`  ${path} ✓\n`);
-      }
-      packageFilesUpdated = true;
-    }
-  }
-
   // update lock files
   let lockFileErrors = 0;
-  if (scanned.lockFiles.length > 0 && packageFilesUpdated) {
+  if (
+    scanned.lockFiles.length > 0 &&
+    packageFilesUpdated &&
+    packageFileErrors === 0
+  ) {
     if (args.noInstall) {
       stdout.write("Skipping dependency installation (--no-install).\n");
     } else {
       stdout.write(
         `Updating lock ${
           scanned.lockFiles.length == 1 ? "file" : "files"
-        }... \n`,
+        }... \n`
       );
       for (const path of scanned.lockFiles) {
         if (updateLockfile(path, logger)) {
@@ -157,20 +186,20 @@ try {
       stdout.write(
         `${sourceFileErrors} source ${
           sourceFileErrors == 1 ? "file" : "files"
-        } could not be updated.\n`,
+        } could not be updated.\n`
       );
       stdout.write(
-        `You may have to update the files manually. Check the log for details.\n`,
+        `You may have to update the files manually. Check the log for details.\n`
       );
     }
     if (lockFileErrors > 0) {
       stdout.write(
         `${lockFileErrors} lock ${
           lockFileErrors == 1 ? "file" : "files"
-        } could not be updated.\n`,
+        } could not be updated.\n`
       );
       stdout.write(
-        `Check to make sure you have the most recent versions of @bufbuild/connect-* packages installed before you migrate.\n`,
+        `Check to make sure you have the most recent versions of @bufbuild/connect-* packages installed before you migrate. Or run the program with --force-update flag.\n`
       );
       stdout.write(`To skip lock file updates, use the --no-install flag.\n`);
     }
