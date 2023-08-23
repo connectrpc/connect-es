@@ -1,5 +1,4 @@
-Contributing
-============
+# Contributing
 
 We'd love your help making `connect-es` better!
 
@@ -24,8 +23,9 @@ git remote add upstream https://github.com/connectrpc/connect-es.git
 git fetch upstream
 ```
 
-Make sure that the tests and the linters pass (you'll need `node`,
-`buf`, `bash`, Docker, and the latest stable Go release installed):
+Make sure that the tests and the linters pass (you'll need Node.js in the 
+version specified in .nvmrc, `bash`, Docker, and the latest stable Go release 
+installed):
 
 ```
 make
