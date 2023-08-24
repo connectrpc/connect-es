@@ -14,8 +14,6 @@
 
 import type { PartialMessage, MessageType } from "@bufbuild/protobuf";
 import { Message } from "@bufbuild/protobuf";
-import { ConnectError } from "../connect-error.js";
-import { Code } from "../code.js";
 
 /**
  *  Takes a partial protobuf messages of the
@@ -25,20 +23,7 @@ export function normalize<T extends Message<T>>(
   type: MessageType<T>,
   message: T | PartialMessage<T>,
 ) {
-  if (message instanceof Message) {
-    return message;
-  }
-  try {
-    return new type(message);
-  } catch (e) {
-    throw new ConnectError(
-      `failed to normalize message ${type.typeName}`,
-      Code.Internal,
-      undefined,
-      undefined,
-      e,
-    );
-  }
+  return message instanceof Message ? message : new type(message);
 }
 
 /**
