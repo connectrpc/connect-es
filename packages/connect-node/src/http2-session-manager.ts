@@ -224,9 +224,8 @@ export class Http2SessionManager {
         return stream;
       } catch (e) {
         // Check to see if the connection is closed or destroyed
-        // and if so, move to closed state and try again.
+        // and if so, we try again.
         if (ready.conn.closed || ready.conn.destroyed) {
-          this.setState(closed());
           continue;
         }
         throw e;
@@ -265,7 +264,11 @@ export class Http2SessionManager {
 
   private async gotoReady() {
     if (this.s.t == "ready") {
-      if (this.s.isShuttingDown()) {
+      if (
+        this.s.isShuttingDown() ||
+        this.s.conn.closed ||
+        this.s.conn.destroyed
+      ) {
         this.setState(connect(this.authority, this.http2SessionOptions));
       } else if (this.s.requiresVerify()) {
         this.setState(
