@@ -190,7 +190,7 @@ describe("createServerStreamingFn()", function () {
         });
       }),
       TestService,
-      TestService.methods.bidiStream,
+      TestService.methods.serverStream,
     );
     const it = fn({})[Symbol.asyncIterator]();
     expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
