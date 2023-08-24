@@ -202,17 +202,36 @@ export class Http2SessionManager {
     headers: http2.OutgoingHttpHeaders,
     options: Omit<http2.ClientSessionRequestOptions, "signal">,
   ): Promise<http2.ClientHttp2Stream> {
-    const ready = await this.gotoReady();
-    const stream = ready.conn.request(
-      {
-        ...headers,
-        ":method": method,
-        ":path": path,
-      },
-      options,
-    );
-    ready.registerRequest(stream);
-    return stream;
+    // Request sometimes fails with goaway/destroyed
+    // errors, we use a loop to retry.
+    //
+    // This is not expected to happen often, but it is possible that a
+    // connection is closed while we are trying to open a stream.
+    //
+    // Ref: https://github.com/nodejs/help/issues/2105
+    for (;;) {
+      const ready = await this.gotoReady();
+      try {
+        const stream = ready.conn.request(
+          {
+            ...headers,
+            ":method": method,
+            ":path": path,
+          },
+          options,
+        );
+        ready.registerRequest(stream);
+        return stream;
+      } catch (e) {
+        // Check to see if the connection is closed or destroyed
+        // and if so, move to closed state and try again.
+        if (ready.conn.closed || ready.conn.destroyed) {
+          this.setState(closed());
+          continue;
+        }
+        throw e;
+      }
+    }
   }
 
   /**
