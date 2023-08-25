@@ -17,7 +17,6 @@ import { dirname } from "node:path";
 import {
   getLockFilePackageManager,
   PackageJson,
-  readPackageJsonFile,
   writePackageJsonFile,
 } from "./scan";
 import { run } from "./run";
@@ -188,27 +187,19 @@ export function getInvalidUsedPackagesForPackageFile(pkg: PackageJson) {
   return invalidPackages;
 }
 
-export function getInvalidUsedPackages(packageFiles: string[]) {
-  const result: {
-    path: string;
-    invalidPackages: UsedPackage[];
-  }[] = [];
-  for (const path of packageFiles) {
-    const invalidPackages = getInvalidUsedPackagesForPackageFile(
-      readPackageJsonFile(path),
-    );
-    if (invalidPackages.length > 0) {
-      result.push({
-        path,
-        invalidPackages,
-      });
-    }
-  }
-  return result;
+export function getInvalidUsedPackages(
+  packages: { path: string; pkg: PackageJson }[],
+) {
+  return packages
+    .map(({ path, pkg }) => {
+      const invalidPackages = getInvalidUsedPackagesForPackageFile(pkg);
+      return { path, invalidPackages };
+    })
+    .filter((i) => i.invalidPackages.length > 0);
 }
 
 export function updatePackageFiles(
-  packageFiles: string[],
+  packageFiles: { path: string; pkg: PackageJson }[],
   packagesToForceUpdate: {
     path: string;
     invalidPackages: UsedPackage[];
@@ -216,9 +207,9 @@ export function updatePackageFiles(
 ) {
   const modified: string[] = [];
   const unmodified: string[] = [];
-  for (const path of packageFiles) {
+  for (const { path, pkg } of packageFiles) {
     const updated = replacePackageJSONReferences(
-      readPackageJsonFile(path),
+      pkg,
       packagesToForceUpdate.find((p) => p.path === path)?.invalidPackages ?? [],
     );
     if (updated === null) {

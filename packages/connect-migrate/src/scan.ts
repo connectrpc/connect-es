@@ -48,10 +48,16 @@ export function scan(ignorePatterns: string[], cwd: string, logger: Logger) {
     },
   );
   const lockFiles = all.filter((path) => lockFilename.includes(basename(path)));
-  const packageFiles = all.filter((path) => basename(path) === packageFilename);
-  const sourceFiles = all.filter(
-    (path) => !lockFiles.includes(path) && !packageFiles.includes(path),
+  const packagePaths = all.filter(
+    (path) => basename(path) === packageFilename,
   );
+  const sourceFiles = all.filter(
+    (path) => !lockFiles.includes(path) && !packagePaths.includes(path),
+  );
+  const packageFiles = packagePaths.map((path) => ({
+    path,
+    pkg: readPackageJsonFile(path),
+  }));
   const result = {
     lockFiles,
     packageFiles,
