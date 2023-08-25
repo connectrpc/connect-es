@@ -36,8 +36,8 @@ import { createEndStreamSerialization, endStreamFlag } from "./end-stream.js";
 import { Code } from "../code.js";
 import {
   contentTypeStreamProto,
-  contentTypeUnaryProto,
   contentTypeUnaryJson,
+  contentTypeUnaryProto,
 } from "./content-type.js";
 import { errorToJsonBytes } from "./error-json.js";
 import { createHandlerFactory } from "./handler-factory.js";
@@ -235,7 +235,7 @@ describe("Connect transport", function () {
       // no headers
       const headerFields: string[] = [];
       request.header.forEach((_, key) => headerFields.push(key));
-      expect(headerFields).toEqual([]);
+      expect(headerFields).toEqual(["user-agent"]);
       // no body
       expect(request.body).toBeUndefined();
       return httpClientResponse;

@@ -22,5 +22,5 @@ export const headerTimeout = "Grpc-Timeout";
 export const headerGrpcStatus = "Grpc-Status";
 export const headerGrpcMessage = "Grpc-Message";
 export const headerStatusDetailsBin = "Grpc-Status-Details-Bin";
-export const headerUserAgent = "User-Agent";
 export const headerMessageType = "Grpc-Message-Type";
+export const headerUserAgent = "User-Agent";

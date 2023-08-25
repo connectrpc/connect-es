@@ -62,6 +62,7 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
       "connect-protocol-version",
       "content-type",
       "content-length",
+      "user-agent",
     ];
     const keys: string[] = [];
     header.forEach((_, key) => {

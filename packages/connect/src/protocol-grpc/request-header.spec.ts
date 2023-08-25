@@ -22,7 +22,7 @@ import { headerEncoding, headerAcceptEncoding } from "./headers.js";
 function listHeaderKeys(header: Headers): string[] {
   const keys: string[] = [];
   header.forEach((_, key) => keys.push(key));
-  return keys;
+  return keys.sort();
 }
 
 describe("requestHeader", () => {
