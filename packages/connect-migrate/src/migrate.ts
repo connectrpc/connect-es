@@ -14,7 +14,12 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { getLockFilePackageManager } from "./scan";
+import {
+  getLockFilePackageManager,
+  PackageJson,
+  readPackageJsonFile,
+  writePackageJsonFile,
+} from "./scan";
 import { run } from "./run";
 import type { Transform } from "jscodeshift";
 import jscodeshift from "jscodeshift/src/core";
@@ -94,49 +99,73 @@ export function getReplacementImport(sourceValue: string): string | undefined {
 }
 
 export function replacePackageJSONReferences(
-  jsonString: string,
+  pkg: Readonly<PackageJson>,
   packagesToForceUpdate?: { packageName: string }[],
-): string {
-  let result = jsonString;
-  for (const key of keys) {
-    const forceUpdate =
-      packagesToForceUpdate?.find((p) => p.packageName === key) !== undefined;
-    if (!forceUpdate) {
-      result = result.replace(
-        `"${key}"`,
-        `"${replacementMap[key].newPackage}"`,
-      );
-    } else {
-      // I wish there was a way to do this without relying on dynamic regexes
-      // but not while maintaining existing formatting
-      result = result.replace(
-        new RegExp(`"${key}"(\\s*:\\s*)"\\S*"([\\s,])`, "g"),
-        `"${replacementMap[key].newPackage}"$1"${replacementMap[key].version}"$2`,
+): PackageJson | null {
+  let modified = false;
+  const copy = structuredClone(pkg) as PackageJson;
+  for (const legacyPackageName of keys) {
+    // replace package names in bundled dependencies
+    for (const p of ["bundleDependencies", "bundledDependencies"] as const) {
+      const bundled = copy[p];
+      if (!Array.isArray(bundled) || !bundled.includes(legacyPackageName)) {
+        continue;
+      }
+      modified = true;
+      copy[p] = bundled.map((n) =>
+        n === legacyPackageName
+          ? replacementMap[legacyPackageName].newPackage
+          : n,
       );
     }
+    // replace package names in peer dependency meta
+    const meta = copy.peerDependenciesMeta;
+    if (meta !== undefined && Object.keys(meta).includes(legacyPackageName)) {
+      modified = true;
+      meta[replacementMap[legacyPackageName].newPackage] =
+        meta[legacyPackageName];
+      delete meta[legacyPackageName];
+    }
+    // replace package names in dependencies, maybe bumping versions
+    for (const p of [
+      "dependencies",
+      "devDependencies",
+      "peerDependencies",
+    ] as const) {
+      const deps = copy[p] ?? {};
+      for (const [key, value] of Object.entries(deps)) {
+        if (key !== legacyPackageName) {
+          continue;
+        }
+        modified = true;
+        delete deps[key];
+        const forceUpdate =
+          packagesToForceUpdate?.find(
+            (p) => p.packageName === legacyPackageName,
+          ) !== undefined;
+        deps[replacementMap[legacyPackageName].newPackage] = forceUpdate
+          ? `${replacementMap[legacyPackageName].version}`
+          : value;
+      }
+    }
   }
-  return result;
+  return modified ? copy : null;
 }
 
-function getUsedPackages(jsonString: string): UsedPackage[] {
+function getUsedPackages(pkg: PackageJson): UsedPackage[] {
   const result: UsedPackage[] = [];
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const json: {
-    dependencies?: Record<string, string | undefined>;
-    devDependencies?: Record<string, string | undefined>;
-    peerDependencies?: Record<string, string | undefined>;
-  } = JSON.parse(jsonString);
   const fieldsToCheck = [
     "dependencies",
     "devDependencies",
     "peerDependencies",
   ] as const;
-  for (const key of keys) {
+  for (const legacyPackageName of keys) {
     for (const field of fieldsToCheck) {
-      const version = json[field]?.[key];
+      const version = pkg[field]?.[legacyPackageName];
       if (version !== undefined) {
         result.push({
-          packageName: key,
+          packageName: legacyPackageName,
           version,
           location: field,
         });
@@ -146,8 +175,8 @@ function getUsedPackages(jsonString: string): UsedPackage[] {
   return result;
 }
 
-export function getInvalidUsedPackagesForPackageFile(packageContent: string) {
-  const usedPackages = getUsedPackages(packageContent);
+export function getInvalidUsedPackagesForPackageFile(pkg: PackageJson) {
+  const usedPackages = getUsedPackages(pkg);
   const invalidPackages = usedPackages.filter((usedPackage) => {
     const replacement = replacementMap[usedPackage.packageName];
     const currentMinVersion = minVersion(usedPackage.version);
@@ -165,8 +194,9 @@ export function getInvalidUsedPackages(packageFiles: string[]) {
     invalidPackages: UsedPackage[];
   }[] = [];
   for (const path of packageFiles) {
-    const oldContent = readFileSync(path, "utf-8");
-    const invalidPackages = getInvalidUsedPackagesForPackageFile(oldContent);
+    const invalidPackages = getInvalidUsedPackagesForPackageFile(
+      readPackageJsonFile(path),
+    );
     if (invalidPackages.length > 0) {
       result.push({
         path,
@@ -187,15 +217,14 @@ export function updatePackageFiles(
   const modified: string[] = [];
   const unmodified: string[] = [];
   for (const path of packageFiles) {
-    const oldContent = readFileSync(path, "utf-8");
-    const newContent = replacePackageJSONReferences(
-      oldContent,
+    const updated = replacePackageJSONReferences(
+      readPackageJsonFile(path),
       packagesToForceUpdate.find((p) => p.path === path)?.invalidPackages ?? [],
     );
-    if (oldContent === newContent) {
+    if (updated === null) {
       unmodified.push(path);
     } else {
-      writeFileSync(path, newContent);
+      writePackageJsonFile(path, updated);
       modified.push(path);
     }
   }
