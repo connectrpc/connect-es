@@ -21,6 +21,7 @@ import {
   headerUnaryEncoding,
   headerTimeout,
   headerProtocolVersion,
+  headerUserAgent,
 } from "./headers.js";
 import { protocolVersion } from "./version.js";
 import {
@@ -57,6 +58,7 @@ export function requestHeader(
       : contentTypeStreamJson,
   );
   result.set(headerProtocolVersion, protocolVersion);
+  result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
   return result;
 }
 

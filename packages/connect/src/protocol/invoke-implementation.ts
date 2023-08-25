@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import { Message, MethodKind } from "@bufbuild/protobuf";
-import type { PartialMessage } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { HandlerContext, MethodImplSpec } from "../implementation.js";
 import type { AsyncIterableTransform } from "./async-iterable.js";
+import { normalize, normalizeIterable } from "./normalize.js";
 
 /**
  * Invoke a user-provided implementation of a unary RPC. Returns a normalized
@@ -34,7 +34,7 @@ export async function invokeUnaryImplementation<
   input: I,
 ): Promise<O> {
   const output = await spec.impl(input, context);
-  return normalizeOutput(spec, output);
+  return normalize(spec.method.O, output);
 }
 
 /**
@@ -62,7 +62,7 @@ export function transformInvokeImplementation<
             Code.InvalidArgument,
           );
         }
-        yield normalizeOutput(spec, await spec.impl(input1.value, context));
+        yield normalize(spec.method.O, await spec.impl(input1.value, context));
         const input2 = await inputIt.next();
         if (input2.done !== true) {
           throw new ConnectError(
@@ -81,9 +81,10 @@ export function transformInvokeImplementation<
             Code.InvalidArgument,
           );
         }
-        for await (const o of spec.impl(input1.value, context)) {
-          yield normalizeOutput(spec, o);
-        }
+        yield* normalizeIterable(
+          spec.method.O,
+          spec.impl(input1.value, context),
+        );
         const input2 = await inputIt.next();
         if (input2.done !== true) {
           throw new ConnectError(
@@ -95,34 +96,12 @@ export function transformInvokeImplementation<
     }
     case MethodKind.ClientStreaming: {
       return async function* clientStreaming(input: AsyncIterable<I>) {
-        yield normalizeOutput(spec, await spec.impl(input, context));
+        yield normalize(spec.method.O, await spec.impl(input, context));
       };
     }
     case MethodKind.BiDiStreaming:
-      return async function* biDiStreaming(input: AsyncIterable<I>) {
-        for await (const o of spec.impl(input, context)) {
-          yield normalizeOutput(spec, o);
-        }
+      return function biDiStreaming(input: AsyncIterable<I>) {
+        return normalizeIterable(spec.method.O, spec.impl(input, context));
       };
-  }
-}
-
-function normalizeOutput<I extends Message<I>, O extends Message<O>>(
-  spec: MethodImplSpec<I, O>,
-  message: O | PartialMessage<O>,
-) {
-  if (message instanceof Message) {
-    return message;
-  }
-  try {
-    return new spec.method.O(message);
-  } catch (e) {
-    throw new ConnectError(
-      `failed to normalize message ${spec.method.O.typeName}`,
-      Code.Internal,
-      undefined,
-      undefined,
-      e,
-    );
   }
 }

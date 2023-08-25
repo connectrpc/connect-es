@@ -43,6 +43,7 @@ import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
 import { readAll } from "../protocol/async-iterable-helper.spec.js";
+import { contentTypeStreamProto } from "./content-type.js";
 
 describe("createHandlerFactory()", function () {
   const testService = {
@@ -156,6 +157,42 @@ describe("createHandlerFactory()", function () {
       const all = await pipeTo(r.message, sinkAll());
       expect(all.length).toBe(1);
       expect(all[0].value).toBe("123");
+    });
+    it("should propogate errors back to the handler", async function () {
+      let resolve: (e: unknown) => void;
+      const catchError = new Promise<unknown>((r) => (resolve = r));
+      const { handler } = setupTestHandler(
+        testService.methods.serverStreaming,
+        {},
+        // eslint-disable-next-line @typescript-eslint/require-await
+        async function* (req) {
+          try {
+            yield { value: `${req.value}` };
+            fail("expected error");
+          } catch (e: unknown) {
+            resolve!(e);
+          }
+        },
+      );
+
+      const res = await handler({
+        httpVersion: "2.0",
+        url: handler.requestPath,
+        method: "POST",
+        header: new Headers({
+          "content-type": contentTypeStreamProto,
+        }),
+        body: createAsyncIterable([
+          encodeEnvelope(0, new Int32Value({ value: 1 }).toBinary()),
+        ]),
+        signal: new AbortController().signal,
+      });
+      expect(res.body).toBeDefined();
+      const it = res.body![Symbol.asyncIterator]();
+      await it.next();
+      const writeError = new Error("write error");
+      await it.throw?.(writeError).catch(() => {});
+      expect(await catchError).toEqual(writeError);
     });
   });
 

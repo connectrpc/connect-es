@@ -18,6 +18,7 @@ import {
   headerEncoding,
   headerTimeout,
   headerXGrpcWeb,
+  headerUserAgent,
   headerXUserAgent,
 } from "./headers.js";
 import { contentTypeJson, contentTypeProto } from "./content-type.js";
@@ -45,6 +46,7 @@ export function requestHeader(
   // We use "connect-es/1.2.3" where gRPC would use "grpc-es/1.2.3".
   // See https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
   result.set(headerXUserAgent, "CONNECT_ES_USER_AGENT");
+  result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
   if (timeoutMs !== undefined) {
     result.set(headerTimeout, `${timeoutMs}m`);
   }

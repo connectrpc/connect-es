@@ -23,3 +23,4 @@ export const headerUnaryAcceptEncoding = "Accept-Encoding";
 export const headerStreamAcceptEncoding = "Connect-Accept-Encoding";
 export const headerTimeout = "Connect-Timeout-Ms";
 export const headerProtocolVersion = "Connect-Protocol-Version";
+export const headerUserAgent = "User-Agent";

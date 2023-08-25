@@ -12,12 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-  AnyMessage,
-  Message,
-  MessageType,
-  PartialMessage,
-} from "@bufbuild/protobuf";
+import type { AnyMessage, Message, PartialMessage } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamRequest,
@@ -31,6 +26,7 @@ import {
   createLinkedAbortController,
   getAbortSignalReason,
 } from "./signals.js";
+import { normalize, normalizeIterable } from "./normalize.js";
 
 /**
  * UnaryFn represents the client-side invocation of a unary RPC - a method
@@ -210,49 +206,4 @@ function applyInterceptors<T>(
         next as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       ) as T) ?? next
   );
-}
-
-/**
- *  Takes a partial protobuf messages of the
- *  specified message type as input, and returns full instances.
- */
-function normalize<T extends Message<T>>(
-  type: MessageType<T>,
-  message: PartialMessage<T>,
-) {
-  return message instanceof type ? message : new type(message);
-}
-
-/**
- * Takes an AsyncIterable of partial protobuf messages of the
- * specified message type as input, and yields full instances.
- */
-export function normalizeIterable<T extends Message<T>>(
-  messageType: MessageType<T>,
-  input: AsyncIterable<PartialMessage<T>>,
-): AsyncIterable<T> {
-  function transform(result: IteratorResult<PartialMessage<T>>) {
-    if (result.done === true) {
-      return result;
-    }
-    return {
-      done: result.done,
-      value: normalize(messageType, result.value),
-    };
-  }
-  return {
-    [Symbol.asyncIterator]() {
-      const it = input[Symbol.asyncIterator]();
-      const res: AsyncIterator<T> = {
-        next: () => it.next().then(transform),
-      };
-      if (it.throw !== undefined) {
-        res.throw = (e) => it.throw!(e).then(transform); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      }
-      if (it.return !== undefined) {
-        res.return = (v) => it.return!(v).then(transform); // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      }
-      return res;
-    },
-  };
 }
