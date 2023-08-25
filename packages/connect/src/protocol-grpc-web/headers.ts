@@ -23,6 +23,7 @@ export {
   headerGrpcStatus,
   headerGrpcMessage,
   headerStatusDetailsBin,
+  headerUserAgent,
 } from "../protocol-grpc/headers.js";
 
 /**

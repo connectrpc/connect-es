@@ -25,7 +25,7 @@ import {
 function listHeaderKeys(header: Headers): string[] {
   const keys: string[] = [];
   header.forEach((_, key) => keys.push(key));
-  return keys;
+  return keys.sort();
 }
 
 describe("requestHeader", () => {
@@ -33,11 +33,13 @@ describe("requestHeader", () => {
     const headers = requestHeader(true, undefined, undefined);
     expect(listHeaderKeys(headers)).toEqual([
       "content-type",
+      "user-agent",
       "x-grpc-web",
       "x-user-agent",
     ]);
     expect(headers.get("Content-Type")).toBe("application/grpc-web+proto");
     expect(headers.get("X-User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+$/);
+    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+$/);
     expect(headers.get("X-Grpc-Web")).toBe("1");
   });
 
@@ -46,6 +48,7 @@ describe("requestHeader", () => {
     expect(listHeaderKeys(headers)).toEqual([
       "content-type",
       "grpc-timeout",
+      "user-agent",
       "x-grpc-web",
       "x-user-agent",
     ]);
@@ -70,6 +73,7 @@ describe("requestHeader", () => {
       "content-type",
       "grpc-accept-encoding",
       "grpc-encoding",
+      "user-agent",
       "x-grpc-web",
       "x-user-agent",
     ]);

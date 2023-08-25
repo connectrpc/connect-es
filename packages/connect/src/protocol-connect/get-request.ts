@@ -73,12 +73,13 @@ export function transformConnectPostToGetRequest<
 
   // Omit headers that are not used for unary GET requests.
   const header = new Headers(request.header);
-  header.delete(headerProtocolVersion);
-  header.delete(headerContentType);
-  header.delete(headerUnaryContentLength);
-  header.delete(headerUnaryEncoding);
-  header.delete(headerUnaryAcceptEncoding);
-
+  [
+    headerProtocolVersion,
+    headerContentType,
+    headerUnaryContentLength,
+    headerUnaryEncoding,
+    headerUnaryAcceptEncoding,
+  ].forEach((h) => header.delete(h));
   return {
     ...request,
     init: {

@@ -28,7 +28,7 @@ import {
 function listHeaderKeys(header: Headers): string[] {
   const keys: string[] = [];
   header.forEach((_, key) => keys.push(key));
-  return keys;
+  return keys.sort();
 }
 
 describe("requestHeader", () => {
@@ -37,9 +37,11 @@ describe("requestHeader", () => {
     expect(listHeaderKeys(headers)).toEqual([
       "connect-protocol-version",
       "content-type",
+      "user-agent",
     ]);
     expect(headers.get("Content-Type")).toBe("application/proto");
     expect(headers.get("Connect-Protocol-Version")).toBe("1");
+    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+$/);
   });
 
   it("should create request headers with timeout", () => {
@@ -48,6 +50,7 @@ describe("requestHeader", () => {
       "connect-protocol-version",
       "connect-timeout-ms",
       "content-type",
+      "user-agent",
     ]);
     expect(headers.get("Connect-Timeout-Ms")).toBe("10");
   });
@@ -75,6 +78,7 @@ describe("requestHeaderWithCompression", () => {
       "connect-protocol-version",
       "content-encoding",
       "content-type",
+      "user-agent",
     ]);
     expect(headers.get(headerUnaryEncoding)).toBe(compressionMock.name);
     expect(headers.get(headerUnaryAcceptEncoding)).toBe(compressionMock.name);
@@ -94,6 +98,7 @@ describe("requestHeaderWithCompression", () => {
       "connect-content-encoding",
       "connect-protocol-version",
       "content-type",
+      "user-agent",
     ]);
     expect(headers.get(headerStreamEncoding)).toBe(compressionMock.name);
     expect(headers.get(headerStreamAcceptEncoding)).toBe(compressionMock.name);
