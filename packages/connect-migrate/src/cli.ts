@@ -35,7 +35,7 @@ Flags:
   --no-install                Skip dependency installation after updating package.json files.
   --version                   Print the version of connect-migrate.
   --help                      Print this help.
-  --force-update              Update all @bufbuild/connect-* packages in package.json files to the latest compatible version.
+  --force-update              Ignore version constraints when updating @bufbuild/connect-* dependencies.
 `;
 
 const logger = new Logger();
