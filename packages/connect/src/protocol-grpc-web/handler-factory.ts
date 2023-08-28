@@ -169,8 +169,30 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
         // raises an error, but we want to be lenient
       ),
     );
+    const it = transformInvokeImplementation<I, O>(
+      spec,
+      context,
+    )(inputIt)[Symbol.asyncIterator]();
     const outputIt = pipe(
-      transformInvokeImplementation<I, O>(spec, context)(inputIt),
+      // We wrap the iterator in an async iterator to ensure that the
+      // abort signal is aborted when the iterator is done.
+      {
+        [Symbol.asyncIterator]() {
+          return {
+            next: () => it.next(),
+            throw: (e: unknown) => {
+              context.abort(e);
+              return it.throw?.(e) ?? Promise.reject({ done: true });
+            },
+            return: (v: unknown) => {
+              context.abort();
+              return (
+                it.return?.(v) ?? Promise.resolve({ done: true, value: v })
+              );
+            },
+          };
+        },
+      },
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
         context.abort();
