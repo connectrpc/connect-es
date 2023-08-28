@@ -15,7 +15,7 @@
 import { sync } from "fast-glob";
 import { basename } from "node:path";
 import { Logger, PrintFn } from "./logger";
-import { readPackageJsonFile } from "./package-json";
+import { PackageJson, readPackageJsonFile } from "./package-json";
 
 const packageFilename = "package.json";
 export const lockFilenameNpm = "package-lock.json";
@@ -105,19 +105,4 @@ export function scan(
     packageFiles,
     sourceFiles,
   };
-}
-
-/**
- * Simplified typing for a package.json file.
- */
-export interface PackageJson {
-  name?: string;
-  version?: string;
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
-  peerDependenciesMeta?: Record<string, object>;
-  optionalDependencies?: Record<string, string>;
-  bundleDependencies?: boolean | string[];
-  bundledDependencies?: boolean | string[];
 }
