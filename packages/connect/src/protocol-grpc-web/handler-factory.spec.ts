@@ -124,11 +124,14 @@ describe("createHandlerFactory()", function () {
     it("should propogate errors back to the handler", async function () {
       let resolve: (e: unknown) => void;
       const catchError = new Promise<unknown>((r) => (resolve = r));
+      let abortResolve: () => void;
+      const abortCalled = new Promise<void>((r) => (abortResolve = r));
       const { handler } = setupTestHandler(
         testService.methods.serverStreaming,
         {},
         // eslint-disable-next-line @typescript-eslint/require-await
-        async function* (req) {
+        async function* (req, { signal }) {
+          signal.addEventListener("abort", abortResolve);
           try {
             yield { value: `${req.value}` };
             fail("expected error");
@@ -155,7 +158,8 @@ describe("createHandlerFactory()", function () {
       await it.next();
       const writeError = new Error("write error");
       await it.throw?.(writeError).catch(() => {});
-      expect(await catchError).toEqual(writeError);
+      await expectAsync(catchError).toBeResolvedTo(writeError);
+      await expectAsync(abortCalled).toBeResolved();
     });
   });
 
