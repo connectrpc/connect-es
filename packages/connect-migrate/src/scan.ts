@@ -48,9 +48,7 @@ export function scan(ignorePatterns: string[], cwd: string, logger: Logger) {
     },
   );
   const lockFiles = all.filter((path) => lockFilename.includes(basename(path)));
-  const packagePaths = all.filter(
-    (path) => basename(path) === packageFilename,
-  );
+  const packagePaths = all.filter((path) => basename(path) === packageFilename);
   const sourceFiles = all.filter(
     (path) => !lockFiles.includes(path) && !packagePaths.includes(path),
   );
