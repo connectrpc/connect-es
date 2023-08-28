@@ -13,7 +13,12 @@
 // limitations under the License.
 
 import { valid, validRange } from "semver";
-import { dependencyReplacements, v0_13_1 } from "./v0.13.1";
+import {
+  targetVersionConnectEs,
+  targetVersionConnectQuery,
+  dependencyReplacements,
+  v0_13_1,
+} from "./v0.13.1";
 import { PackageJson } from "../lib/package-json";
 import { MigrateOptions } from "../migration";
 
@@ -103,7 +108,7 @@ describe("migration", function () {
         dependencies: {
           "@connectrpc/connect": "^0.13.1",
           "@connectrpc/connect-web": "^0.13.1",
-          "@connectrpc/protoc-gen-connect-es": "^0.13.1",
+          "@connectrpc/protoc-gen-connect-es": "^" + targetVersionConnectEs,
         },
       });
       expect(lockFilesUpdated.length).toBe(1);
@@ -143,7 +148,7 @@ describe("migration", function () {
       expect(packageJsonWritten.length).toBe(1);
       expect(packageJsonWritten[0].pkg).toEqual({
         dependencies: {
-          "@connectrpc/protoc-gen-connect-es": "^0.13.1",
+          "@connectrpc/protoc-gen-connect-es": "^" + targetVersionConnectEs,
         },
       });
       expect(lockFilesUpdated.length).toBe(1);
@@ -203,7 +208,7 @@ describe("migration", function () {
       expect(packageJsonWritten.length).toBe(1);
       expect(packageJsonWritten[0].pkg).toEqual({
         dependencies: {
-          "@connectrpc/connect": "^0.13.1",
+          "@connectrpc/connect": "^" + targetVersionConnectEs,
         },
       });
       expect(lockFilesUpdated.length).toBe(1);
@@ -216,7 +221,7 @@ describe("migration", function () {
           path: "package.json",
           pkg: {
             dependencies: {
-              "@connectrpc/connect": "^0.13.1",
+              "@connectrpc/connect": "^" + targetVersionConnectEs,
             },
           },
         },
@@ -224,6 +229,42 @@ describe("migration", function () {
     });
     it("should not be applicable", () => {
       expect(v0_13_1.applicable(opt.scanned)).toBeFalse();
+    });
+  });
+  describe("from connect-query v0.3.0", function () {
+    beforeEach(function () {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@bufbuild/connect-query": "^0.3.0",
+              "@bufbuild/protoc-gen-connect-query": "^0.3.0",
+              "@bufbuild/protoc-gen-connect-query-react": "^0.0.1",
+            },
+          },
+        },
+      ];
+    });
+    it("should be applicable", () => {
+      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
+    });
+    it("should migrate", () => {
+      const result = v0_13_1.migrate(opt);
+      expect(result).toEqual({
+        ok: true,
+      });
+      expect(packageJsonWritten.length).toBe(1);
+      expect(packageJsonWritten[0].pkg).toEqual({
+        dependencies: {
+          "@connectrpc/connect-query": "^" + targetVersionConnectQuery,
+          "@connectrpc/protoc-gen-connect-query":
+            "^" + targetVersionConnectQuery,
+          "@connectrpc/protoc-gen-connect-query-react":
+            "^" + targetVersionConnectQuery,
+        },
+      });
+      expect(lockFilesUpdated.length).toBe(1);
     });
   });
 });

@@ -26,6 +26,9 @@ import { migrateSourceFiles } from "../lib/migrate-source-files";
 import { migratePackages } from "../lib/migrate-packages";
 import { migrateLockFiles } from "../lib/migrate-lock-files";
 
+export const targetVersionConnectEs = "0.13.1";
+export const targetVersionConnectQuery = "0.4.2";
+
 /**
  * The latest available version of protoc-gen-connect-web is v0.11.0.
  * v0.12.0 removed it. The package was never moved to the connectrpc org.
@@ -36,7 +39,10 @@ import { migrateLockFiles } from "../lib/migrate-lock-files";
  */
 const oldPluginReplacement = {
   from: { name: "@bufbuild/protoc-gen-connect-web", range: "*" },
-  to: { name: "@connectrpc/protoc-gen-connect-es", version: "0.13.1" },
+  to: {
+    name: "@connectrpc/protoc-gen-connect-es",
+    version: targetVersionConnectEs,
+  },
 } satisfies DependencyReplacement;
 
 /**
@@ -48,7 +54,7 @@ const oldPluginReplacement = {
  */
 const removedWebExportReplacement: DependencyReplacement = {
   from: { name: "@bufbuild/connect-web", range: "<0.9.0" },
-  to: { name: "@connectrpc/connect-web", version: "0.13.1" },
+  to: { name: "@connectrpc/connect-web", version: targetVersionConnectEs },
 };
 
 export const dependencyReplacements: DependencyReplacement[] = [
@@ -56,50 +62,65 @@ export const dependencyReplacements: DependencyReplacement[] = [
   removedWebExportReplacement,
   {
     from: { name: "@bufbuild/connect", range: "*" },
-    to: { name: "@connectrpc/connect", version: "0.13.1" },
+    to: { name: "@connectrpc/connect", version: targetVersionConnectEs },
   },
   {
     // was only published in v0.7.0, renamed to @bufbuild/connect in v0.8.0
     from: { name: "@bufbuild/connect-core", range: "*" },
-    to: { name: "@connectrpc/connect", version: "0.13.1" },
+    to: { name: "@connectrpc/connect", version: targetVersionConnectEs },
   },
   {
     from: { name: "@bufbuild/connect-web", range: "*" },
-    to: { name: "@connectrpc/connect-web", version: "0.13.1" },
+    to: { name: "@connectrpc/connect-web", version: targetVersionConnectEs },
   },
   {
     from: { name: "@bufbuild/connect-fastify", range: "*" },
-    to: { name: "@connectrpc/connect-fastify", version: "0.13.1" },
+    to: {
+      name: "@connectrpc/connect-fastify",
+      version: targetVersionConnectEs,
+    },
   },
   {
     from: { name: "@bufbuild/connect-node", range: "*" },
-    to: { name: "@connectrpc/connect-node", version: "0.13.1" },
+    to: { name: "@connectrpc/connect-node", version: targetVersionConnectEs },
   },
   {
     from: { name: "@bufbuild/connect-next", range: "*" },
-    to: { name: "@connectrpc/connect-next", version: "0.13.1" },
+    to: { name: "@connectrpc/connect-next", version: targetVersionConnectEs },
   },
   {
     from: { name: "@bufbuild/connect-express", range: "*" },
-    to: { name: "@connectrpc/connect-express", version: "0.13.1" },
+    to: {
+      name: "@connectrpc/connect-express",
+      version: targetVersionConnectEs,
+    },
   },
   {
     from: { name: "@bufbuild/protoc-gen-connect-es", range: "*" },
-    to: { name: "@connectrpc/protoc-gen-connect-es", version: "0.13.1" },
+    to: {
+      name: "@connectrpc/protoc-gen-connect-es",
+      version: targetVersionConnectEs,
+    },
   },
   {
     from: { name: "@bufbuild/connect-query", range: "*" },
-    to: { name: "@connectrpc/connect-query", version: "0.13.1" },
+    to: {
+      name: "@connectrpc/connect-query",
+      version: targetVersionConnectQuery,
+    },
   },
   {
     from: { name: "@bufbuild/protoc-gen-connect-query", range: "*" },
-    to: { name: "@connectrpc/protoc-gen-connect-query", version: "0.13.1" },
+    to: {
+      name: "@connectrpc/protoc-gen-connect-query",
+      version: targetVersionConnectQuery,
+    },
   },
   {
     from: { name: "@bufbuild/protoc-gen-connect-query-react", range: "*" },
     to: {
       name: "@connectrpc/protoc-gen-connect-query-react",
-      version: "0.13.1",
+      version: targetVersionConnectQuery,
     },
   },
 ];
