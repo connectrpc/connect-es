@@ -52,7 +52,7 @@ async function main() {
       return exitErr(scanned.errorMessage, false);
     }
     if (v0_13_1.applicable(scanned)) {
-      const result = v0_13_1.migrate(scanned, args, print, logger);
+      const result = v0_13_1.migrate({ scanned, args, print, logger });
       if (!result.ok) {
         return exitErr(result.errorMessage, result.dumpLogfile ?? false);
       }

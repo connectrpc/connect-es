@@ -21,15 +21,17 @@ import { runInstall } from "./lib/run";
 
 export interface Migration {
   applicable(scanned: Scanned): boolean;
-  migrate(
-    scanned: Scanned,
-    args: CommandLineArgs,
-    print: PrintFn,
-    logger?: Logger,
-    updateSourceFileFn?: typeof updateSourceFile,
-    writePackageJsonFileFn?: typeof writePackageJsonFile,
-    runInstallFn?: typeof runInstall,
-  ): MigrateError | MigrateSuccess;
+  migrate(opt: MigrateOptions): MigrateError | MigrateSuccess;
+}
+
+export interface MigrateOptions {
+  scanned: Scanned;
+  args: CommandLineArgs;
+  print: PrintFn;
+  logger?: Logger;
+  updateSourceFileFn?: typeof updateSourceFile;
+  writePackageJsonFileFn?: typeof writePackageJsonFile;
+  runInstallFn?: typeof runInstall;
 }
 
 export interface MigrateSuccess {

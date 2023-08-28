@@ -14,10 +14,8 @@
 
 import { valid, validRange } from "semver";
 import { dependencyReplacements, v0_13_1 } from "./v0.13.1";
-import { Scanned } from "../lib/scan";
-import { CommandLineArgs } from "../arguments";
 import { PackageJson } from "../lib/package-json";
-import { Migration } from "../migration";
+import { MigrateOptions } from "../migration";
 
 describe("dependencyReplacements", function () {
   dependencyReplacements.forEach((r, index) => {
@@ -31,50 +29,45 @@ describe("dependencyReplacements", function () {
 });
 
 describe("migration", function () {
-  let scanned: Scanned;
-  let args: CommandLineArgs;
-  let migrateArgs: Parameters<Migration["migrate"]>;
   const packageJsonWritten: { path: string; pkg: PackageJson }[] = [];
   const lockFilesUpdated: string[] = [];
+  let opt: MigrateOptions;
   beforeEach(function () {
     packageJsonWritten.splice(0);
     lockFilesUpdated.splice(0);
-    scanned = {
-      ok: true,
-      lockFiles: ["package-lock.json"],
-      sourceFiles: [],
-      packageFiles: [],
-    };
-    args = {
-      ok: true,
-      help: false,
-      version: false,
-      ignorePatterns: [],
-      noInstall: false,
-      forceUpdate: false,
-    };
-    migrateArgs = [
-      scanned,
-      args,
-      () => {
+    opt = {
+      scanned: {
+        ok: true,
+        lockFiles: ["package-lock.json"],
+        sourceFiles: [],
+        packageFiles: [],
+      },
+      args: {
+        ok: true,
+        help: false,
+        version: false,
+        ignorePatterns: [],
+        noInstall: false,
+        forceUpdate: false,
+      },
+      print: () => {
         //
       },
-      undefined,
-      () => ({
+      updateSourceFileFn: () => ({
         ok: true,
         modified: false,
       }),
-      (path: string, pkg: PackageJson) =>
+      writePackageJsonFileFn: (path: string, pkg: PackageJson) =>
         packageJsonWritten.push({ path, pkg }),
-      (lockfilePath) => {
+      runInstallFn: (lockfilePath) => {
         lockFilesUpdated.push(lockfilePath);
         return true;
       },
-    ];
+    };
   });
   describe("from 0.7.0", function () {
     beforeEach(function () {
-      scanned.packageFiles = [
+      opt.scanned.packageFiles = [
         {
           path: "package.json",
           pkg: {
@@ -88,10 +81,10 @@ describe("migration", function () {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(scanned)).toBeTrue();
+      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
     });
     it("should abort without --force", () => {
-      const result = v0_13_1.migrate(...migrateArgs);
+      const result = v0_13_1.migrate(opt);
       expect(result.ok).toBeFalse();
       if (!result.ok) {
         expect(result.errorMessage).toMatch(
@@ -100,8 +93,8 @@ describe("migration", function () {
       }
     });
     it("should migrate with --force", () => {
-      args.forceUpdate = true;
-      const result = v0_13_1.migrate(...migrateArgs);
+      opt.args.forceUpdate = true;
+      const result = v0_13_1.migrate(opt);
       expect(result).toEqual({
         ok: true,
       });
@@ -118,7 +111,7 @@ describe("migration", function () {
   });
   describe("from protoc-gen-connect-web", function () {
     beforeEach(function () {
-      scanned.packageFiles = [
+      opt.scanned.packageFiles = [
         {
           path: "package.json",
           pkg: {
@@ -130,10 +123,10 @@ describe("migration", function () {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(scanned)).toBeTrue();
+      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
     });
     it("should abort", () => {
-      const result = v0_13_1.migrate(...migrateArgs);
+      const result = v0_13_1.migrate(opt);
       expect(result.ok).toBeFalse();
       if (!result.ok) {
         expect(result.errorMessage).toMatch(
@@ -142,8 +135,8 @@ describe("migration", function () {
       }
     });
     it("should migrate with --force", () => {
-      args.forceUpdate = true;
-      const result = v0_13_1.migrate(...migrateArgs);
+      opt.args.forceUpdate = true;
+      const result = v0_13_1.migrate(opt);
       expect(result).toEqual({
         ok: true,
       });
@@ -158,7 +151,7 @@ describe("migration", function () {
   });
   describe("from bufbuild v0.13.0", function () {
     beforeEach(function () {
-      scanned.packageFiles = [
+      opt.scanned.packageFiles = [
         {
           path: "package.json",
           pkg: {
@@ -170,10 +163,10 @@ describe("migration", function () {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(scanned)).toBeTrue();
+      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
     });
     it("should migrate", () => {
-      const result = v0_13_1.migrate(...migrateArgs);
+      const result = v0_13_1.migrate(opt);
       expect(result).toEqual({
         ok: true,
       });
@@ -188,7 +181,7 @@ describe("migration", function () {
   });
   describe("from bufbuild v0.12.0", function () {
     beforeEach(function () {
-      scanned.packageFiles = [
+      opt.scanned.packageFiles = [
         {
           path: "package.json",
           pkg: {
@@ -200,10 +193,10 @@ describe("migration", function () {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(scanned)).toBeTrue();
+      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
     });
     it("should migrate", () => {
-      const result = v0_13_1.migrate(...migrateArgs);
+      const result = v0_13_1.migrate(opt);
       expect(result).toEqual({
         ok: true,
       });
@@ -218,7 +211,7 @@ describe("migration", function () {
   });
   describe("from connectrpc v0.13.1", function () {
     beforeEach(function () {
-      scanned.packageFiles = [
+      opt.scanned.packageFiles = [
         {
           path: "package.json",
           pkg: {
@@ -230,7 +223,7 @@ describe("migration", function () {
       ];
     });
     it("should not be applicable", () => {
-      expect(v0_13_1.applicable(scanned)).toBeFalse();
+      expect(v0_13_1.applicable(opt.scanned)).toBeFalse();
     });
   });
 });

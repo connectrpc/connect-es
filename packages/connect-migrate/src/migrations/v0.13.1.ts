@@ -13,8 +13,6 @@
 // limitations under the License.
 
 import { Scanned } from "../lib/scan";
-import { Logger, PrintFn } from "../lib/logger";
-import { CommandLineArgs } from "../arguments";
 import modifyImports from "./v0.13.1-transform";
 import { MigrateError, MigrateSuccess, Migration } from "../migration";
 import { runInstall } from "../lib/run";
@@ -110,21 +108,21 @@ export const dependencyReplacements: DependencyReplacement[] = [
  * Migrates from any version of the @bufbuild packages to 0.13.1 of the @connectrpc
  * packages.
  */
-export const v0_13_1 = {
+export const v0_13_1: Migration = {
   applicable(scanned: Scanned) {
     return scanned.packageFiles.some(
       ({ pkg }) => replaceDependencies(pkg, dependencyReplacements) !== null,
     );
   },
-  migrate(
-    scanned: Scanned,
-    args: CommandLineArgs,
-    print: PrintFn,
-    logger?: Logger,
+  migrate({
+    scanned,
+    args,
+    print,
+    logger,
     updateSourceFileFn = updateSourceFile,
     writePackageJsonFileFn = writePackageJsonFile,
     runInstallFn = runInstall,
-  ): MigrateError | MigrateSuccess {
+  }): MigrateError | MigrateSuccess {
     if (!args.forceUpdate) {
       const errorLines = [];
       const oldPluginUsed = scanned.packageFiles
@@ -215,4 +213,4 @@ export const v0_13_1 = {
       ok: true,
     };
   },
-} satisfies Migration;
+};
