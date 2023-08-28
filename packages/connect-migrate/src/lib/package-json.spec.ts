@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { PackageJson, readPackageJsonFile } from "./scan";
 import { existsSync, unlinkSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import type { JsonValue } from "@bufbuild/protobuf";
+import { PackageJson, readPackageJsonFile } from "./package-json.js";
 
 describe("readPackageJsonFile", function () {
   let testFilePath: string;
