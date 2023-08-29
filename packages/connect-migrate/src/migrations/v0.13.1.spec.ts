@@ -106,9 +106,9 @@ describe("migration", function () {
       expect(packageJsonWritten.length).toBe(1);
       expect(packageJsonWritten[0].pkg).toEqual({
         dependencies: {
-          "@connectrpc/connect": "^0.13.1",
-          "@connectrpc/connect-web": "^0.13.1",
-          "@connectrpc/protoc-gen-connect-es": "^" + targetVersionConnectEs,
+          "@connectrpc/connect": `^${targetVersionConnectEs}`,
+          "@connectrpc/connect-web": `^${targetVersionConnectEs}`,
+          "@connectrpc/protoc-gen-connect-es": `^${targetVersionConnectEs}`,
         },
       });
       expect(lockFilesUpdated.length).toBe(1);
