@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@connectrpc/connect": "0.13.1",
-    "headers-polyfill": "^3.1.2"
+    "undici": "^5.23.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1"
