@@ -30,23 +30,22 @@ end with the following extensions: `.ts`, `.tsx`, `.js`, `.jsx`, `.cjs`, `.mjs`.
 
 ## Prerequisites
 
-- Make sure that you have updated to the latest version of `@bufbuild/connect` and
-  related packages before you migrate.
-- Commit any unstaged changes to your project, so that you can revert in case the migration failed.
+- Commit any unstaged changes to your project, so that you can revert in case the 
+  migration fails.
 - After migration, run your generate scripts to re-generate code with the latest
   plugin versions.
 
 
 ## Alternative running methods
 
-This tool leverages jscodeshift in order to find all references to packages and 
+This tool leverages `jscodeshift` in order to find all references to packages and 
 update them. As a result, we've assumed a parser to parse your JavaScript/TypeScript 
 files. If you see errors due to parsing, you may be using a custom babel config 
 or another custom parser. You can work around this while leveraging our 
 transforms by calling `jscodeshift` directly.
 
 ```shell
-npx jscodeshift -t ./node_modules/@connectrpc/connect-migrate/dist/cjs/transforms/modify-imports.js .
+npx jscodeshift -t ./node_modules/@connectrpc/connect-migrate/dist/cjs/migrations/v0.13.1-transform.js .
 ```
 
 And add any additional params you feel are necessary. You can find more 

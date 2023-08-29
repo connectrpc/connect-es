@@ -14,7 +14,16 @@
 
 import j from "jscodeshift";
 
-import { getReplacementImport } from "../migrate";
+const importReplacements: Record<string, string> = {
+  "@bufbuild/connect-web": "@connectrpc/connect-web",
+  "@bufbuild/connect-fastify": "@connectrpc/connect-fastify",
+  "@bufbuild/connect-node": "@connectrpc/connect-node",
+  "@bufbuild/connect-next": "@connectrpc/connect-next",
+  "@bufbuild/connect-express": "@connectrpc/connect-express",
+  "@bufbuild/connect-query": "@connectrpc/connect-query",
+  "@bufbuild/connect": "@connectrpc/connect",
+  "@bufbuild/connect-core": "@connectrpc/connect",
+};
 
 /**
  * This transform handles moving all imports to the new package.
@@ -73,6 +82,20 @@ const transform: j.Transform = (file, { j }, options) => {
     },
   );
 };
+
+function getReplacementImport(sourceValue: string): string | undefined {
+  for (const [oldPackageName, newPackageName] of Object.entries(
+    importReplacements,
+  )) {
+    if (sourceValue === oldPackageName) {
+      return newPackageName;
+    }
+    if (sourceValue.startsWith(`${oldPackageName}/`)) {
+      return sourceValue.replace(`${oldPackageName}/`, `${newPackageName}/`);
+    }
+  }
+  return undefined;
+}
 
 function determineQuoteStyle(
   importPaths: j.Collection<j.ImportDeclaration>,

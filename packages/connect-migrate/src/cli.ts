@@ -14,18 +14,11 @@
 
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { argv, cwd, exit, stderr, stdout } from "node:process";
+import process from "node:process";
 import { parseCommandLineArgs } from "./arguments";
-import { scan } from "./scan";
-import {
-  getInvalidUsedPackages,
-  replacementMap,
-  updateLockfile,
-  updatePackageFiles,
-  updateSourceFile,
-} from "./migrate";
-import { Logger } from "./log";
-import modifyImports from "./transforms/modify-imports";
+import { scan } from "./lib/scan";
+import { Logger } from "./lib/logger";
+import { v0_13_1 } from "./migrations/v0.13.1";
 
 const usage = `USAGE: connect-migrate [flags]
 Updates references to connect-es packages in your project to use @connectrpc.
@@ -35,202 +28,79 @@ Flags:
   --no-install                Skip dependency installation after updating package.json files.
   --version                   Print the version of connect-migrate.
   --help                      Print this help.
-  --force-update              Ignore version constraints when updating @bufbuild/connect-* dependencies.
+  --force                     Continue migration despite warnings.
 `;
 
 const logger = new Logger();
 
-try {
-  const args = parseCommandLineArgs(argv.slice(2));
+void main();
 
-  if (!args.ok) {
-    stderr.write(`${args.errorMessage}\n`);
-    exit(1);
-  }
-
-  if (args.version) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
-    const version = JSON.parse(
-      readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
-    ).version;
-    stdout.write(`${version}\n`);
-    exit(0);
-  }
-
-  if (args.help) {
-    stdout.write(usage);
-    exit(0);
-  }
-
-  stdout.write(`Scanning... `);
-  const scanned = scan(args.ignorePatterns, cwd(), logger);
-  stdout.write(`✓\n`);
-  stdout.write(
-    `${scanned.packageFiles.length.toString().padStart(5)} package.json ${
-      scanned.packageFiles.length == 1 ? "file" : "files"
-    }\n`,
-  );
-  stdout.write(
-    `${scanned.lockFiles.length.toString().padStart(5)} lock ${
-      scanned.lockFiles.length == 1 ? "file" : "files"
-    }\n`,
-  );
-  stdout.write(
-    `${scanned.sourceFiles.length.toString().padStart(5)} source ${
-      scanned.sourceFiles.length == 1 ? "file" : "files"
-    }\n`,
-  );
-  if (scanned.packageFiles.length === 0 && scanned.sourceFiles.length === 0) {
-    stderr.write(
-      `No files to process. Make sure to run the command in a JavaScript or TypeScript project.\n`,
-    );
-    exit(1);
-  }
-
-  // check for compatibility of all package.json files
-  let packageFileErrors = 0;
-  let packagesToForceUpdate: ReturnType<typeof getInvalidUsedPackages> = [];
-  if (scanned.packageFiles.length > 0) {
-    stdout.write(`Checking package.json files...\n`);
-    packagesToForceUpdate = getInvalidUsedPackages(scanned.packageFiles);
-    if (packagesToForceUpdate.length > 0) {
-      if (!args.forceUpdate) {
-        packageFileErrors += packagesToForceUpdate.length;
-        stdout.write(
-          `  ${packagesToForceUpdate.length} files could not be updated due to out-of-date packages Add the --force-update to automatically update these as well.\n`,
-        );
-        for (const { path, invalidPackages } of packagesToForceUpdate) {
-          stdout.write(`  ${path} ❌\n`);
-          for (const { packageName, version } of invalidPackages) {
-            stdout.write(`    ${packageName}@${version} ❌\n`);
-          }
-        }
-      } else {
-        stdout.write(
-          `  ${packagesToForceUpdate.length} files will be updated to match minimum version requires. Make sure the new versions match expected values for your application.\n`,
-        );
-        for (const { path, invalidPackages } of packagesToForceUpdate) {
-          stdout.write(`  ${path} ✓\n`);
-          for (const { packageName, version, location } of invalidPackages) {
-            stdout.write(
-              `    ${location}: ${packageName}@${version} => ${replacementMap[packageName].version} ✓\n`,
-            );
-          }
-        }
-      }
+async function main() {
+  try {
+    const args = parseCommandLineArgs(process.argv.slice(2));
+    if (!args.ok) {
+      return exitErr(args.errorMessage, false);
     }
-  }
-
-  // update package.json
-  let packageFilesUpdated = false;
-  if (scanned.packageFiles.length > 0 && packageFileErrors === 0) {
-    stdout.write(`Updating packages... `);
-    const updated = updatePackageFiles(
-      scanned.packageFiles,
-      packagesToForceUpdate,
-    );
-    stdout.write(`✓\n`);
-    if (updated.modified.length == 0) {
-      if (scanned.lockFiles.length > 0) {
-        stdout.write(`  No files modified. Will not update lock files.\n`);
-      } else {
-        stdout.write(`  No files modified.\n`);
+    if (args.version) {
+      exitOk(getCliVersion());
+    }
+    if (args.help) {
+      exitOk(usage);
+    }
+    const scanned = scan(args.ignorePatterns, process.cwd(), print, logger);
+    if (!scanned.ok) {
+      return exitErr(scanned.errorMessage, false);
+    }
+    if (v0_13_1.applicable(scanned)) {
+      const result = v0_13_1.migrate({ scanned, args, print, logger });
+      if (!result.ok) {
+        return exitErr(result.errorMessage, result.dumpLogfile ?? false);
       }
     } else {
-      for (const path of updated.modified) {
-        stdout.write(`  ${path} ✓\n`);
-      }
-      packageFilesUpdated = true;
+      exitOk("It looks like you are already up to date 🎉");
     }
-  }
-
-  // update source files
-  let sourceFileErrors = 0;
-  if (scanned.sourceFiles.length > 0 && packageFileErrors === 0) {
-    stdout.write(
-      `Updating source ${
-        scanned.sourceFiles.length == 1 ? "file" : "files"
-      }... \n`,
+  } catch (e) {
+    logger.error(`caught error: ${String(e)}`);
+    if (e instanceof Error && e.stack !== undefined) {
+      logger.error(e.stack);
+    }
+    return exitErr(
+      `ERROR: ${e instanceof Error ? e.message : String(e)}`,
+      true,
     );
-    let sourceFilesUpdated = false;
-    for (const path of scanned.sourceFiles) {
-      const r = updateSourceFile(modifyImports, path, logger);
-      if (r.ok) {
-        if (r.modified) {
-          stdout.write(`  ${path} ✓\n`);
-          sourceFilesUpdated = true;
-        }
-      } else {
-        stdout.write(`  ${path} ❌\n`);
-        sourceFileErrors++;
-      }
-    }
-    if (!sourceFilesUpdated) {
-      stdout.write(`  No files modified.\n`);
-    }
   }
+}
 
-  // update lock files
-  let lockFileErrors = 0;
-  if (
-    scanned.lockFiles.length > 0 &&
-    packageFilesUpdated &&
-    packageFileErrors === 0
-  ) {
-    if (args.noInstall) {
-      stdout.write("Skipping dependency installation (--no-install).\n");
-    } else {
-      stdout.write(
-        `Updating lock ${
-          scanned.lockFiles.length == 1 ? "file" : "files"
-        }... \n`,
-      );
-      for (const path of scanned.lockFiles) {
-        if (updateLockfile(path, logger)) {
-          stdout.write(`  ${path} ✓\n`);
-        } else {
-          stdout.write(`  ${path} ❌\n`);
-          lockFileErrors++;
-        }
-      }
-    }
-  }
+function print(text: string) {
+  process.stdout.write(text);
+}
 
-  if (sourceFileErrors > 0 || lockFileErrors > 0) {
-    if (sourceFileErrors > 0) {
-      stdout.write(
-        `${sourceFileErrors} source ${
-          sourceFileErrors == 1 ? "file" : "files"
-        } could not be updated.\n`,
-      );
-      stdout.write(
-        `You may have to update the files manually. Check the log for details.\n`,
-      );
-    }
-    if (lockFileErrors > 0) {
-      stdout.write(
-        `${lockFileErrors} lock ${
-          lockFileErrors == 1 ? "file" : "files"
-        } could not be updated.\n`,
-      );
-      stdout.write(
-        `Check to make sure you have the most recent versions of @bufbuild/connect-* packages installed before you migrate, or run with --force-update flag.\n`,
-      );
-      stdout.write(`To skip lock file updates, use the --no-install flag.\n`);
-    }
-    void logger.close().then((logfilePath) => {
-      stdout.write(`Details were logged to ${logfilePath}\n`);
-      exit(1);
-    });
+async function exitErr(
+  errorMessage: string,
+  dumpLogFile: boolean,
+): Promise<never> {
+  process.stderr.write(errorMessage);
+  if (!errorMessage.endsWith("\n")) {
+    process.stdout.write("\n");
   }
-} catch (e) {
-  logger.error(`caught error: ${String(e)}`);
-  if (e instanceof Error && e.stack !== undefined) {
-    logger.error(e.stack);
+  if (dumpLogFile) {
+    const logfilePath = await logger.close();
+    process.stdout.write(`Details were logged to ${logfilePath}\n`);
   }
-  stderr.write(`ERROR: ${e instanceof Error ? e.message : String(e)}\n`);
-  void logger.close().then((logfilePath) => {
-    stdout.write(`Details were logged to ${logfilePath}\n`);
-    exit(1);
-  });
+  process.exit(1);
+}
+
+function exitOk(message: string): never {
+  process.stdout.write(message);
+  if (!message.endsWith("\n")) {
+    process.stdout.write("\n");
+  }
+  process.exit(0);
+}
+
+function getCliVersion() {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
+  return JSON.parse(
+    readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
+  ).version as string;
 }

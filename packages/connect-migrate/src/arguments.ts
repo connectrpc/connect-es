@@ -69,7 +69,7 @@ export function parseCommandLineArgs(
         parsed.ignorePatterns.push(value);
         break;
       }
-      case "--force-update": {
+      case "--force": {
         parsed.forceUpdate = true;
         break;
       }

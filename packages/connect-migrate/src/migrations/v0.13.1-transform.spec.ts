@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import jscodeshift from "jscodeshift";
-import transform from "./modify-imports.js";
+import transform from "./v0.13.1-transform";
 
 function t(
   source: string,
@@ -71,7 +71,7 @@ describe("modify-imports", () => {
     const want = `const a = require('@connectrpc/connect');`;
     expect(t(got)?.trim()).toBe(want.trim());
   });
-  it("should prase genertics using the ts parser", () => {
+  it("should parse generics using the ts parser", () => {
     const got = `
     async function doSomething() {
       return <UnaryResponse<I, O>>{
