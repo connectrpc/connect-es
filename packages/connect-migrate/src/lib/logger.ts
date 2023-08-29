@@ -15,6 +15,8 @@
 import path from "node:path";
 import { createWriteStream, existsSync, WriteStream } from "node:fs";
 
+export type PrintFn = (text: string) => void;
+
 export class Logger {
   private logfileStream: WriteStream | undefined;
   private logfilePath: string | undefined;

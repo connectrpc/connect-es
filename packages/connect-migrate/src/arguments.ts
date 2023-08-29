@@ -18,6 +18,7 @@ export interface CommandLineArgs {
   version: boolean;
   ignorePatterns: string[];
   noInstall: boolean;
+  forceUpdate: boolean;
 }
 
 interface CommandLineError {
@@ -34,6 +35,7 @@ export function parseCommandLineArgs(
     version: false,
     ignorePatterns: ["**/dist/**"],
     noInstall: false,
+    forceUpdate: false,
   };
   let overridingIgnore = false;
   while (args.length > 0) {
@@ -65,6 +67,10 @@ export function parseCommandLineArgs(
           };
         }
         parsed.ignorePatterns.push(value);
+        break;
+      }
+      case "--force": {
+        parsed.forceUpdate = true;
         break;
       }
       default:
