@@ -21,7 +21,11 @@ add two files to your project:
         └── [[...connect]].ts
 ```
 
-`connect.ts` is where you register your RPCs:
+> **Note:** Next.js 13 introduced the new App Router. Your Connect API routes 
+> need to be placed in `pages/`, but you can use the `app/` directory for the 
+> App Router at the same time.
+
+The new file `connect.ts` is where you register your RPCs:
 
 ```ts
 // connect.ts
