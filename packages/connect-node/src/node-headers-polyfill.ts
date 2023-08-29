@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Headers as HeadersPolyfill } from "headers-polyfill";
+import { Headers as HeadersPolyfill } from "undici";
 
 // The global Headers class was introduced in Node v16.15.0, behind the
 // --experimental-fetch flag. It became available by default with Node
