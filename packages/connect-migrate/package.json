@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bufbuild/connect-es.git",
+    "url": "https://github.com/connectrpc/connect-es.git",
     "directory": "packages/connect-migrate"
   },
   "sideEffects": true,
