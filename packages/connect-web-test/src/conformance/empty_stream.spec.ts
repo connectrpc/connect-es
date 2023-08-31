@@ -14,41 +14,33 @@
 
 import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 
-describe("server_streaming", function () {
+describe("empty_stream", function () {
   describeTransports((transport) => {
-    const sizes = [31415, 9, 2653, 58979];
-    const request = new StreamingOutputCallRequest({
-      responseParameters: sizes.map((size, index) => ({
-        size,
-        intervalUs: index * 10,
-      })),
-    });
+    const request = new StreamingOutputCallRequest();
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
-      let responseCount = 0;
-      for await (const response of client.streamingOutputCall(request)) {
-        expect(response.payload).toBeDefined();
-        expect(response.payload?.body.length).toEqual(sizes[responseCount]);
-        responseCount++;
+      try {
+        for await (const response of client.streamingOutputCall(request)) {
+          fail(
+            `expecting no response in the empty stream, got: ${response.toJsonString()}`,
+          );
+        }
+      } catch (e) {
+        fail(`expecting no error in the empty stream, got: ${String(e)}`);
       }
-      expect(responseCount).toEqual(sizes.length);
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      let responseCount = 0;
       client.streamingOutputCall(
         request,
-        (response) => {
-          expect(response.payload).toBeDefined();
-          expect(response.payload?.body.length).toEqual(sizes[responseCount]);
-          responseCount++;
+        () => {
+          fail("expecting no response in the empty stream");
         },
         (err) => {
           expect(err).toBeUndefined();
-          expect(responseCount).toBe(sizes.length);
           done();
         },
       );

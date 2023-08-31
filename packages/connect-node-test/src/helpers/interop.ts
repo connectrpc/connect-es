@@ -29,7 +29,7 @@ export const interop = {
    */
   errorDetail: new ErrorDetail({
     reason: "soirée 🎉",
-    domain: "connect-crosstest",
+    domain: "connect-conformance",
   }),
 
   leadingMetadataKey: "x-grpc-test-echo-initial",

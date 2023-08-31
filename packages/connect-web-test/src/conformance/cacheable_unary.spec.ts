@@ -14,7 +14,7 @@
 
 import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
 function ensureGetRequest(header: Headers) {

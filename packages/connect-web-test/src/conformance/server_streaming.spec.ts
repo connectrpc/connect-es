@@ -14,28 +14,43 @@
 
 import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { Empty } from "../gen/grpc/testing/empty_pb.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
+import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 
-describe("empty_unary_with_timeout", function () {
+describe("server_streaming", function () {
   describeTransports((transport) => {
-    const empty = new Empty();
-    const deadlineMs = 1000; // 1 second
+    const sizes = [31415, 9, 2653, 58979];
+    const request = new StreamingOutputCallRequest({
+      responseParameters: sizes.map((size, index) => ({
+        size,
+        intervalUs: index * 10,
+      })),
+    });
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
-      const response = await client.emptyCall(empty, { timeoutMs: deadlineMs });
-      expect(response).toEqual(empty);
+      let responseCount = 0;
+      for await (const response of client.streamingOutputCall(request)) {
+        expect(response.payload).toBeDefined();
+        expect(response.payload?.body.length).toEqual(sizes[responseCount]);
+        responseCount++;
+      }
+      expect(responseCount).toEqual(sizes.length);
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.emptyCall(
-        empty,
-        (err, response) => {
+      let responseCount = 0;
+      client.streamingOutputCall(
+        request,
+        (response) => {
+          expect(response.payload).toBeDefined();
+          expect(response.payload?.body.length).toEqual(sizes[responseCount]);
+          responseCount++;
+        },
+        (err) => {
           expect(err).toBeUndefined();
-          expect(response).toEqual(empty);
+          expect(responseCount).toBe(sizes.length);
           done();
         },
-        { timeoutMs: deadlineMs },
       );
     });
   });

@@ -43,7 +43,7 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
     )
   ) {
     // A handler whose stream is suddenly destroyed usually means the client
-    // hung up. This behavior is triggered by the crosstest "cancel_after_begin".
+    // hung up. This behavior is triggered by the conformance test "cancel_after_begin".
     code = Code.Aborted;
   } else if (
     chain.some(
@@ -56,7 +56,7 @@ export function connectErrorFromNodeReason(reason: unknown): ConnectError {
   ) {
     // Calling an unresolvable host should raise a ConnectError with
     // Code.Aborted.
-    // This behavior is covered by the crosstest "unresolvable_host".
+    // This behavior is covered by the conformance test "unresolvable_host".
     code = Code.Unavailable;
   }
   const ce = ConnectError.from(reason, code);

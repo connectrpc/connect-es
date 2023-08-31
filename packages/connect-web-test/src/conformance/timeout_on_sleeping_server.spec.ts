@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { CallOptions } from "@connectrpc/connect";
 import {
   Code,
   ConnectError,
@@ -19,51 +20,56 @@ import {
   createPromiseClient,
 } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import {
-  ErrorDetail,
-  StreamingOutputCallRequest,
-} from "../gen/grpc/testing/messages_pb.js";
-import { interop } from "../helpers/interop.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
+import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
 
-describe("fail_server_streaming", () => {
-  function expectError(err: unknown) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      expect(err.code).toEqual(Code.ResourceExhausted);
-      expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
-      const details = err.findDetails(ErrorDetail);
-      expect(details).toEqual([interop.errorDetail]);
-    }
-  }
-  const request = new StreamingOutputCallRequest();
+describe("timeout_on_sleeping_server", function () {
+  const request = new StreamingOutputCallRequest({
+    payload: {
+      body: new Uint8Array(271828).fill(0),
+    },
+    responseParameters: [
+      {
+        size: 31415,
+        intervalUs: 50 * 1000, // 50ms
+      },
+    ],
+  });
+  const options: CallOptions = {
+    timeoutMs: 5,
+  };
   describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for await (const response of client.failStreamingOutputCall(request)) {
-          expect(response)
-            .withContext("did not expect any response message")
-            .toBeUndefined();
+        for await (const response of client.streamingOutputCall(
+          request,
+          options,
+        )) {
+          fail(
+            `expecting no response from sleeping server, got: ${response.toJsonString()}`,
+          );
         }
+        fail("expected to catch an error");
       } catch (e) {
-        expectError(e);
+        expect(e).toBeInstanceOf(ConnectError);
+        expect(ConnectError.from(e).code).toBe(Code.DeadlineExceeded);
       }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.failStreamingOutputCall(
+      client.streamingOutputCall(
         request,
         (response) => {
-          expect(response)
-            .withContext("did not expect any response message")
-            .toBeUndefined();
+          fail(
+            `expecting no response from sleeping server, got: ${response.toJsonString()}`,
+          );
         },
         (err: ConnectError | undefined) => {
-          expectError(err);
+          expect(err?.code).toBe(Code.DeadlineExceeded);
           done();
         },
+        options,
       );
     });
   });

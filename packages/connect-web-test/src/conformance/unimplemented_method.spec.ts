@@ -18,23 +18,19 @@ import {
   createPromiseClient,
   Code,
 } from "@connectrpc/connect";
-import { UnimplementedService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { TestService } from "../gen/grpc/testing/test_connect.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 
-describe("unimplemented_service", function () {
+describe("unimplemented_method", function () {
   function expectError(err: unknown) {
-    // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
-    // and will return an HTTP status code 408 when stream max duration time reached, which
-    // cannot be translated to a connect error code.
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
-      expect(err.code === Code.DeadlineExceeded);
+      expect(err.code).toEqual(Code.Unimplemented);
     }
   }
-
   describeTransports((transport) => {
     it("with promise client", async function () {
-      const client = createPromiseClient(UnimplementedService, transport());
+      const client = createPromiseClient(TestService, transport());
       try {
         await client.unimplementedCall({});
         fail("expected to catch an error");
@@ -43,7 +39,7 @@ describe("unimplemented_service", function () {
       }
     });
     it("with callback client", function (done) {
-      const client = createCallbackClient(UnimplementedService, transport());
+      const client = createCallbackClient(TestService, transport());
       client.unimplementedCall({}, (err: ConnectError | undefined) => {
         expectError(err);
         done();

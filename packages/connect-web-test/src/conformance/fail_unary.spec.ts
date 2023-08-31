@@ -13,35 +13,31 @@
 // limitations under the License.
 
 import {
+  Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
-  Code,
 } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
+import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
+import { interop } from "../helpers/interop.js";
 
-describe("special_status", function () {
-  describeTransports((transport) => {
-    const TEST_STATUS_MESSAGE = `\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n`;
-    const request = new SimpleRequest({
-      responseStatus: {
-        code: Code.Unknown,
-        message: TEST_STATUS_MESSAGE,
-      },
-    });
-    function expectError(err: unknown) {
-      expect(err).toBeInstanceOf(ConnectError);
-      if (err instanceof ConnectError) {
-        expect(err.code).toEqual(Code.Unknown);
-        expect(err.rawMessage).toEqual(TEST_STATUS_MESSAGE);
-      }
+describe("fail_unary", () => {
+  function expectError(err: unknown) {
+    expect(err).toBeInstanceOf(ConnectError);
+    if (err instanceof ConnectError) {
+      expect(err.code).toEqual(Code.ResourceExhausted);
+      expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
+      const details = err.findDetails(ErrorDetail);
+      expect(details).toEqual([interop.errorDetail]);
     }
+  }
+  describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       try {
-        await client.unaryCall(request);
+        await client.failUnaryCall({});
         fail("expected to catch an error");
       } catch (e) {
         expectError(e);
@@ -49,7 +45,7 @@ describe("special_status", function () {
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.unaryCall(request, (err: ConnectError | undefined) => {
+      client.failUnaryCall({}, (err: ConnectError | undefined) => {
         expectError(err);
         done();
       });

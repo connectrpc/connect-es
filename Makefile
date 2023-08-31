@@ -10,7 +10,7 @@ TMP   = .tmp
 BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
-CROSSTEST_VERSION := fc468f96a6f6dd41d5744608d2f30008592835e7
+CONFORMANCE_VERSION := fc468f96a6f6dd41d5744608d2f30008592835e7
 LICENSE_HEADER_YEAR_RANGE := 2021-2023
 LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
 NODE20_VERSION ?= v20.0.0
@@ -130,14 +130,14 @@ $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(
 
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-test/src/gen/*
-	npm run -w packages/connect-web-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=proto
+	npm run -w packages/connect-web-test generate https://github.com/connectrpc/conformance.git#ref=$(CONFORMANCE_VERSION),subdir=proto
 	npm run -w packages/connect-web-test generate buf.build/connectrpc/eliza
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-node-test/src/gen/*
-	npm run -w packages/connect-node-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=proto
+	npm run -w packages/connect-node-test generate https://github.com/connectrpc/conformance.git#ref=$(CONFORMANCE_VERSION),subdir=proto
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -162,7 +162,7 @@ help: ## Describe useful make targets
 all: build test format lint bench ## build, test, format, lint, and bench (default)
 
 .PHONY: clean
-clean: crosstestserverstop ## Delete build artifacts and installed dependencies
+clean: conformanceserverstop ## Delete build artifacts and installed dependencies
 	@# -X only removes untracked files, -d recurses into directories, -f actually removes files/dirs
 	git clean -Xdf
 
@@ -185,35 +185,35 @@ testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 
 
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 $(BUILD)/connect-node-test
-	$(MAKE) crosstestserverrun
+	$(MAKE) conformanceserverrun
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node19 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	$(MAKE) crosstestserverstop
+	$(MAKE) conformanceserverstop
 
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BUILD)/connect-web-test
-	$(MAKE) crosstestserverrun
+	$(MAKE) conformanceserverrun
 	$(MAKE) connectnodeserverrun
 	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
-	$(MAKE) crosstestserverstop
+	$(MAKE) conformanceserverstop
 	$(MAKE) connectnodeserverstop
 
 .PHONY: testwebbrowser
 testwebbrowser: $(BUILD)/connect-web-test
-	$(MAKE) crosstestserverrun
+	$(MAKE) conformanceserverrun
 	$(MAKE) connectnodeserverrun
 	npm run -w packages/connect-web-test karma
-	$(MAKE) crosstestserverstop
+	$(MAKE) conformanceserverstop
 	$(MAKE) connectnodeserverstop
 
 .PHONY: testwebbrowserlocal
 testwebbrowserlocal: $(BUILD)/connect-web-test
-	$(MAKE) crosstestserverrun
+	$(MAKE) conformanceserverrun
 	$(MAKE) connectnodeserverrun
 	npm run -w packages/connect-web-test karma-serve
-	$(MAKE) crosstestserverstop
+	$(MAKE) conformanceserverstop
 	$(MAKE) connectnodeserverstop
 
 .PHONY: testwebbrowserstack
@@ -270,17 +270,17 @@ release: all ## Release npm packages
 		--workspace packages/protoc-gen-connect-es \
 		--workspace packages/connect-migrate \
 
-.PHONY: crosstestserverstop
-crosstestserverstop:
+.PHONY: conformanceserverstop
+conformanceserverstop:
 	-docker container stop serverconnect servergrpc
 
-.PHONY: crosstestserverrun
-crosstestserverrun: crosstestserverstop
+.PHONY: conformanceserverrun
+conformanceserverrun: conformanceserverstop
 	docker run --rm --name serverconnect -p 8080:8080 -p 8081:8081 -d \
-		bufbuild/connect-crosstest:$(CROSSTEST_VERSION) \
+		connectrpc/conformance:$(CONFORMANCE_VERSION) \
 		/usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
 	docker run --rm --name servergrpc -p 8083:8083 -d \
-		bufbuild/connect-crosstest:$(CROSSTEST_VERSION) \
+		connectrpc/conformance:$(CONFORMANCE_VERSION) \
 		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
 
 .PHONY: connectnodeserverrun

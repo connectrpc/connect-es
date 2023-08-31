@@ -12,41 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Code,
-  ConnectError,
-  createCallbackClient,
-  createPromiseClient,
-} from "@connectrpc/connect";
+import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
-import { interop } from "../helpers/interop.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
+import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
 
-describe("fail_unary", () => {
-  function expectError(err: unknown) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      expect(err.code).toEqual(Code.ResourceExhausted);
-      expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
-      const details = err.findDetails(ErrorDetail);
-      expect(details).toEqual([interop.errorDetail]);
-    }
-  }
+describe("large_unary", function () {
   describeTransports((transport) => {
+    const request = new SimpleRequest({
+      responseSize: 314159,
+      payload: {
+        body: new Uint8Array(271828).fill(0),
+      },
+    });
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
-      try {
-        await client.failUnaryCall({});
-        fail("expected to catch an error");
-      } catch (e) {
-        expectError(e);
-      }
+      const response = await client.unaryCall(request);
+      expect(response.payload).toBeDefined();
+      expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.failUnaryCall({}, (err: ConnectError | undefined) => {
-        expectError(err);
+      client.unaryCall(request, (err, response) => {
+        expect(err).toBeUndefined();
+        expect(response.payload).toBeDefined();
+        expect(response.payload?.body.length).toEqual(request.responseSize);
         done();
       });
     });

@@ -20,7 +20,7 @@ import {
 } from "@connectrpc/connect-web";
 import { testRoutes } from "./test-routes.js";
 
-// The following servers are available through crosstests:
+// The following servers are available through conformance:
 //
 // | server        | port |
 // | ------------- | --- |
@@ -29,18 +29,18 @@ import { testRoutes } from "./test-routes.js";
 // | grpc-go       | 8083 |
 //
 // Source: // https://github.com/connectrpc/connect-es/pull/87
-const crossTestConnectGoH1BaseUrl = "https://127.0.0.1:8080";
+const conformanceConnectGoH1BaseUrl = "https://127.0.0.1:8080";
 
 // see connect-node-h1-server.mjs
 const connectNodeH1BaseUrl = "http://127.0.0.1:8085";
 
-const crosstestTransports = {
+const conformanceTransports = {
   // gRPC-web
   "@connectrpc/connect-web (gRPC-web, binary) gRPC-web against connect-go (h1)":
     (options?: Record<string, unknown>) =>
       createGrpcWebTransport({
         ...options,
-        baseUrl: crossTestConnectGoH1BaseUrl,
+        baseUrl: conformanceConnectGoH1BaseUrl,
         useBinaryFormat: true,
       }),
   "@connectrpc/connect-web (gRPC-web, JSON) gRPC-web against connect-go (h1)": (
@@ -48,7 +48,7 @@ const crosstestTransports = {
   ) =>
     createGrpcWebTransport({
       ...options,
-      baseUrl: crossTestConnectGoH1BaseUrl,
+      baseUrl: conformanceConnectGoH1BaseUrl,
       useBinaryFormat: false,
     }),
   "@connectrpc/connect-web (gRPC-web, binary) gRPC-web against @connectrpc/connect-node (h1)":
@@ -71,7 +71,7 @@ const crosstestTransports = {
   ) =>
     createConnectTransport({
       ...options,
-      baseUrl: crossTestConnectGoH1BaseUrl,
+      baseUrl: conformanceConnectGoH1BaseUrl,
       useBinaryFormat: true,
     }),
   "@connectrpc/connect-web (Connect, JSON) against connect-go (h1)": (
@@ -79,7 +79,7 @@ const crosstestTransports = {
   ) =>
     createConnectTransport({
       ...options,
-      baseUrl: crossTestConnectGoH1BaseUrl,
+      baseUrl: conformanceConnectGoH1BaseUrl,
       useBinaryFormat: false,
     }),
   "@connectrpc/connect-web (Connect, binary) against @connectrpc/connect-node (h1)":
@@ -122,34 +122,38 @@ const crosstestTransports = {
 export function describeTransports(
   specDefinitions: (
     transport: (options?: Record<string, unknown>) => Transport,
-    transportName: keyof typeof crosstestTransports,
+    transportName: keyof typeof conformanceTransports,
   ) => void,
 ) {
-  for (const [name, transportFactory] of Object.entries(crosstestTransports)) {
+  for (const [name, transportFactory] of Object.entries(
+    conformanceTransports,
+  )) {
     describe(name, () => {
       specDefinitions(
         transportFactory,
-        name as keyof typeof crosstestTransports,
+        name as keyof typeof conformanceTransports,
       );
     });
   }
 }
 
 export function describeTransportsExcluding(
-  exclude: Array<keyof typeof crosstestTransports>,
+  exclude: Array<keyof typeof conformanceTransports>,
   specDefinitions: (
     transport: (options?: Record<string, unknown>) => Transport,
-    transportName: keyof typeof crosstestTransports,
+    transportName: keyof typeof conformanceTransports,
   ) => void,
 ) {
-  for (const [name, transportFactory] of Object.entries(crosstestTransports)) {
-    if (exclude.includes(name as keyof typeof crosstestTransports)) {
+  for (const [name, transportFactory] of Object.entries(
+    conformanceTransports,
+  )) {
+    if (exclude.includes(name as keyof typeof conformanceTransports)) {
       continue;
     }
     describe(name, () => {
       specDefinitions(
         transportFactory,
-        name as keyof typeof crosstestTransports,
+        name as keyof typeof conformanceTransports,
       );
     });
   }

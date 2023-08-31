@@ -19,7 +19,7 @@ import {
   createPromiseClient,
 } from "@connectrpc/connect";
 import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 import {
   SimpleRequest,
   SimpleResponse,
