@@ -20,8 +20,8 @@
   },
   "preferUnplugged": true,
   "dependencies": {
-    "@bufbuild/protobuf": "^1.2.1",
-    "@bufbuild/protoplugin": "^1.2.1"
+    "@bufbuild/protobuf": "^1.3.1",
+    "@bufbuild/protoplugin": "^1.3.1"
   },
   "peerDependencies": {
     "@connectrpc/connect": "0.13.2",

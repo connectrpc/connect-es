@@ -10,5 +10,5 @@ it like a web server would usually do.
 
 | code generator | bundle size        | minified               | compressed           |
 |----------------|-------------------:|-----------------------:|---------------------:|
-| connect        | 112,509 b | 49,592 b | 13,387 b |
+| connect        | 113,397 b | 49,843 b | 13,470 b |
 | grpc-web       | 414,071 b    | 300,352 b    | 53,255 b |
