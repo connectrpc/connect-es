@@ -339,6 +339,7 @@ describe("Connect transport", function () {
             b: "B",
           });
         },
+        [],
       ),
     );
     const httpClient = createUniversalHandlerClient([h]);

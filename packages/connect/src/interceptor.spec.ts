@@ -15,7 +15,7 @@
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import type { Interceptor, StreamResponse } from "./interceptor.js";
 import { createRouterTransport } from "./router-transport.js";
-import type { HandlerContext } from "./implementation.js";
+import type { HandlerContext } from "./method-implementation.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {

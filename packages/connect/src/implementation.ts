@@ -15,19 +15,28 @@
 import type {
   AnyMessage,
   Message,
-  MessageType,
-  MethodIdempotency,
   MethodInfo,
-  MethodKind,
-  PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
+import { MethodKind } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
+import type {
+  BiDiStreamingImpl,
+  ClientStreamingImpl,
+  HandlerContext,
+  MethodImpl,
+  ServerStreamingImpl,
+  UnaryImpl,
+} from "./method-implementation.js";
 import {
   createDeadlineSignal,
   createLinkedAbortController,
 } from "./protocol/signals.js";
+import type {
+  InterceptorImpl,
+  UniversalInterceptor,
+} from "./protocol/universal-interceptor.js";
 
 // prettier-ignore
 /**
@@ -36,88 +45,6 @@ import {
 export type ServiceImpl<T extends ServiceType> = {
   [P in keyof T["methods"]]: MethodImpl<T["methods"][P]>;
 };
-
-// prettier-ignore
-/**
- * MethodImpl is the signature of the implementation of an RPC.
- */
-export type MethodImpl<M extends MI> =
-    M extends MI<infer I, infer O, MethodKind.Unary>           ? UnaryImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.ServerStreaming> ? ServerStreamingImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.ClientStreaming> ? ClientStreamingImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.BiDiStreaming>   ? BiDiStreamingImpl<I, O>
-  : never;
-
-interface MI<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
-  K extends MethodKind = MethodKind,
-> {
-  readonly kind: K;
-  readonly name: string;
-  readonly I: MessageType<I>;
-  readonly O: MessageType<O>;
-  readonly idempotency?: MethodIdempotency;
-}
-
-/**
- * Context for an RPC on the server. Every RPC implementation can accept a
- * HandlerContext as an argument to gain access to headers and service metadata.
- */
-export interface HandlerContext {
-  /**
-   * Metadata for the method being called.
-   */
-  readonly method: MethodInfo;
-
-  /**
-   * Metadata for the service being called.
-   */
-  readonly service: ServiceType;
-
-  /**
-   * An AbortSignal that is aborted when the connection with the client is closed
-   * or when the deadline is reached.
-   *
-   * The signal can be used to automatically cancel downstream calls.
-   */
-  readonly signal: AbortSignal;
-
-  /**
-   * If the current request has a timeout, this function returns the remaining
-   * time.
-   */
-  readonly timeoutMs: () => number | undefined;
-
-  /**
-   * HTTP method of incoming request, usually "POST", but "GET" in the case of
-   * Connect Get.
-   */
-  readonly requestMethod: string;
-
-  /**
-   * Incoming request headers.
-   */
-  readonly requestHeader: Headers;
-
-  /**
-   * Outgoing response headers.
-   *
-   * For methods that return a stream, response headers must be set before
-   * yielding the first response message.
-   */
-  readonly responseHeader: Headers;
-
-  /**
-   * Outgoing response trailers.
-   */
-  readonly responseTrailer: Headers;
-
-  /**
-   * Name of the RPC protocol in use; one of "connect", "grpc" or "grpc-web".
-   */
-  readonly protocolName: string;
-}
 
 /**
  * Options for creating a HandlerContext.
@@ -176,41 +103,6 @@ export function createHandlerContext(
   };
 }
 
-/**
- * UnaryImp is the signature of the implementation of a unary RPC.
- */
-export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
-  request: I,
-  context: HandlerContext,
-) => Promise<O | PartialMessage<O>> | O | PartialMessage<O>;
-
-/**
- * ClientStreamingImpl is the signature of the implementation of a
- * client-streaming RPC.
- */
-export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  requests: AsyncIterable<I>,
-  context: HandlerContext,
-) => Promise<O | PartialMessage<O>>;
-
-/**
- * ServerStreamingImpl is the signature of the implementation of a
- * server-streaming RPC.
- */
-export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  request: I,
-  context: HandlerContext,
-) => AsyncIterable<O | PartialMessage<O>>;
-
-/**
- * BiDiStreamingImpl is the signature of the implementation of a bi-di
- * streaming RPC.
- */
-export type BiDiStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  requests: AsyncIterable<I>,
-  context: HandlerContext,
-) => AsyncIterable<O | PartialMessage<O>>;
-
 // prettier-ignore
 /**
  * Wraps a user-provided implementation along with service and method
@@ -246,13 +138,58 @@ export function createMethodImplSpec<M extends MethodInfo>(
   service: ServiceType,
   method: M,
   impl: MethodImpl<M>,
+  interceptors: UniversalInterceptor[],
 ): MethodImplSpec {
+  const interceptions = getMatchingInterceptors(method, interceptors);
   return {
     kind: method.kind,
     service,
     method,
-    impl,
+    impl: chain(interceptions, impl),
   } as MethodImplSpec;
+}
+
+function getMatchingInterceptors<M extends MethodInfo>(
+  method: M,
+  interceptors: UniversalInterceptor[],
+): InterceptorImpl<M>[] {
+  return (
+    interceptors
+      .map((i) => {
+        switch (method.kind) {
+          case MethodKind.BiDiStreaming:
+            return i.biDiStreaming;
+          case MethodKind.ClientStreaming:
+            return i.clientStreaming;
+          case MethodKind.ServerStreaming:
+            return i.serverStreaming;
+          case MethodKind.Unary:
+            return i.unary;
+          default:
+            return undefined;
+        }
+      })
+      // We need to cast here because TS can't see that we're narrowing M based
+      // on MethodKind.
+      .filter(exists) as InterceptorImpl<M>[]
+  );
+}
+
+function chain<M extends MethodInfo>(
+  remaining: InterceptorImpl<M>[],
+  impl: MethodImpl<M>,
+): MethodImpl<M> {
+  if (remaining.length === 0) {
+    return impl;
+  } else {
+    const head = remaining[0];
+    const rest = remaining.slice(1);
+    const chained = (...args: Parameters<MethodImpl<M>>) => {
+      return head(...args, chain(rest, impl));
+    };
+    // TS seems to dislike this cast, no idea why
+    return chained as unknown as MethodImpl<M>;
+  }
 }
 
 /**
@@ -262,6 +199,7 @@ export function createMethodImplSpec<M extends MethodInfo>(
 export function createServiceImplSpec<T extends ServiceType>(
   service: T,
   impl: Partial<ServiceImpl<T>>,
+  interceptors: UniversalInterceptor[],
 ): ServiceImplSpec {
   const s: ServiceImplSpec = { service, methods: {} };
   for (const [localName, methodInfo] of Object.entries(service.methods)) {
@@ -274,7 +212,20 @@ export function createServiceImplSpec<T extends ServiceType>(
         throw new ConnectError(message, Code.Unimplemented);
       };
     }
-    s.methods[localName] = createMethodImplSpec(service, methodInfo, fn);
+    s.methods[localName] = createMethodImplSpec(
+      service,
+      methodInfo,
+      fn,
+      interceptors,
+    );
   }
   return s;
+}
+
+function exists<T>(v: T | null | undefined): v is T {
+  if (v === null || v === undefined) {
+    return false;
+  } else {
+    return true;
+  }
 }

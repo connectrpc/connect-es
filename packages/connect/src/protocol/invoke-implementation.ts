@@ -15,7 +15,8 @@
 import { Message, MethodKind } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import type { HandlerContext, MethodImplSpec } from "../implementation.js";
+import type { HandlerContext } from "../method-implementation.js";
+import type { MethodImplSpec } from "../implementation.js";
 import type { AsyncIterableTransform } from "./async-iterable.js";
 import { normalize, normalizeIterable } from "./normalize.js";
 

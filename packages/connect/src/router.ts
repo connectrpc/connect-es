@@ -19,7 +19,8 @@ import {
   createMethodImplSpec,
   createServiceImplSpec,
 } from "./implementation.js";
-import type { MethodImpl, ServiceImpl } from "./implementation.js";
+import type { MethodImpl } from "./method-implementation.js";
+import type { ServiceImpl } from "./implementation.js";
 import { createHandlerFactory as handlerFactoryGrpcWeb } from "./protocol-grpc-web/handler-factory.js";
 import { createHandlerFactory as handlerFactoryGrpc } from "./protocol-grpc/handler-factory.js";
 import { createHandlerFactory as handlerFactoryConnect } from "./protocol-connect/handler-factory.js";
@@ -32,6 +33,7 @@ import type {
   UniversalHandler,
   UniversalHandlerOptions,
 } from "./protocol/universal-handler.js";
+import type { UniversalInterceptor } from "./protocol/universal-interceptor.js";
 import type { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
 
 /**
@@ -70,6 +72,14 @@ export interface ConnectRouter {
  * and Connect are enabled.
  */
 export interface ConnectRouterOptions extends Partial<UniversalHandlerOptions> {
+  /**
+   * The list of interceptors to apply on all calls in this router. Interceptors
+   * are applied according to this list's order, ie the first interceptor wraps
+   * the second which wraps the third and the last wraps the method
+   * implementation function.
+   */
+  interceptors?: UniversalInterceptor[];
+
   /**
    * Enable the gRPC protocol and make your API available to all gRPC clients
    * for various platforms and languages. See https://grpc.io/
@@ -119,13 +129,15 @@ export function createConnectRouter(
 ): ConnectRouter {
   const base = whichProtocols(routerOptions);
   const handlers: UniversalHandler[] = [];
+  const interceptors = routerOptions?.interceptors ?? [];
+
   return {
     handlers,
     service(service, implementation, options) {
       const { protocols } = whichProtocols(options, base);
       handlers.push(
         ...createUniversalServiceHandlers(
-          createServiceImplSpec(service, implementation),
+          createServiceImplSpec(service, implementation, interceptors),
           protocols,
         ),
       );
@@ -135,7 +147,7 @@ export function createConnectRouter(
       const { protocols } = whichProtocols(options, base);
       handlers.push(
         createUniversalMethodHandler(
-          createMethodImplSpec(service, method, implementation),
+          createMethodImplSpec(service, method, implementation, interceptors),
           protocols,
         ),
       );

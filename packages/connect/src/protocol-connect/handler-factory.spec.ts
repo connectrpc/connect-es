@@ -22,7 +22,7 @@ import {
   StringValue,
 } from "@bufbuild/protobuf";
 import { createHandlerFactory } from "./handler-factory.js";
-import type { MethodImpl } from "../implementation.js";
+import type { MethodImpl } from "../method-implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
 import type {
   UniversalHandlerOptions,
@@ -77,7 +77,7 @@ describe("createHandlerFactory()", function () {
     impl: MethodImpl<M>,
   ) {
     const h = createHandlerFactory(opt)(
-      createMethodImplSpec(testService, method, impl),
+      createMethodImplSpec(testService, method, impl, []),
     );
     const t = createTransport({
       httpClient: createUniversalHandlerClient([h]),
@@ -593,9 +593,14 @@ describe("createHandlerFactory()", function () {
 
     function setupTestHandler(opt: Partial<UniversalHandlerOptions>) {
       const h = createHandlerFactory(opt)(
-        createMethodImplSpec(NewService, OldService.methods.unary, () => {
-          return new StringValue({ value: "server ok" });
-        }),
+        createMethodImplSpec(
+          NewService,
+          OldService.methods.unary,
+          () => {
+            return new StringValue({ value: "server ok" });
+          },
+          [],
+        ),
       );
       const t = createTransport({
         httpClient: createUniversalHandlerClient([h]),

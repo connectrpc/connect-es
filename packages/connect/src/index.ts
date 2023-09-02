@@ -38,10 +38,11 @@ export type {
 } from "./interceptor.js";
 
 export type {
-  ServiceImpl,
   MethodImpl,
   HandlerContext,
-} from "./implementation.js";
+  TypedMethodInfo,
+} from "./method-implementation.js";
+export type { ServiceImpl } from "./implementation.js";
 export { createConnectRouter } from "./router.js";
 export type { ConnectRouter, ConnectRouterOptions } from "./router.js";
 export { createHandlerContext } from "./implementation.js";

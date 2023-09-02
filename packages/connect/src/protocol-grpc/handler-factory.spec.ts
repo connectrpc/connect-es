@@ -14,7 +14,7 @@
 
 import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
-import type { MethodImpl } from "../implementation.js";
+import type { MethodImpl } from "../method-implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
 import type { UniversalHandlerOptions } from "../protocol/index.js";
 import {
@@ -55,7 +55,7 @@ describe("createHandlerFactory()", function () {
     impl: MethodImpl<M>,
   ) {
     const h = createHandlerFactory(opt)(
-      createMethodImplSpec(testService, method, impl),
+      createMethodImplSpec(testService, method, impl, []),
     );
     const t = createTransport({
       httpClient: createUniversalHandlerClient([h]),

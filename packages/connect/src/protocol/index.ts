@@ -99,6 +99,10 @@ export {
   uResponseMethodNotAllowed,
   uResponseVersionNotSupported,
 } from "./universal.js";
+export type {
+  InterceptorImpl,
+  UniversalInterceptor,
+} from "./universal-interceptor.js";
 export {
   validateUniversalHandlerOptions,
   createUniversalServiceHandlers,
