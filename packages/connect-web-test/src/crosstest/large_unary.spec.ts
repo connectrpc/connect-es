@@ -12,3 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
+import { describeTransports } from "../helpers/crosstestserver.js";
+import { SimpleRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
+
+describe("large_unary", function () {
+  describeTransports((transport) => {
+    const request = new SimpleRequest({
+      responseSize: 314159,
+      payload: {
+        body: new Uint8Array(271828).fill(0),
+      },
+    });
+    it("with promise client", async function () {
+      const client = createPromiseClient(TestService, transport());
+      const response = await client.unaryCall(request);
+      expect(response.payload).toBeDefined();
+      expect(response.payload?.body.length).toEqual(request.responseSize);
+    });
+    it("with callback client", function (done) {
+      const client = createCallbackClient(TestService, transport());
+      client.unaryCall(request, (err, response) => {
+        expect(err).toBeUndefined();
+        expect(response.payload).toBeDefined();
+        expect(response.payload?.body.length).toEqual(request.responseSize);
+        done();
+      });
+    });
+  });
+});

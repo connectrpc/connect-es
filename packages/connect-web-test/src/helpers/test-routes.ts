@@ -157,7 +157,7 @@ const testService: ServiceImpl<typeof TestService> = {
 
   unimplementedCall(/*request*/) {
     throw new ConnectError(
-      "grpc.testing.TestService.UnimplementedCall is not implemented",
+      "connectrpc.conformance.v1.TestService.UnimplementedCall is not implemented",
       Code.Unimplemented,
     );
   },
@@ -165,7 +165,7 @@ const testService: ServiceImpl<typeof TestService> = {
   // eslint-disable-next-line @typescript-eslint/require-await,require-yield
   async *unimplementedStreamingOutputCall(/*requests*/) {
     throw new ConnectError(
-      "grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented",
+      "connectrpc.conformance.v1.TestService.UnimplementedStreamingOutputCall is not implemented",
       Code.Unimplemented,
     );
   },
