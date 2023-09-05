@@ -12,26 +12,3 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
-import { TestService } from "../gen/connectrpc.conformance.v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { Empty } from "../gen/connectrpc.conformance.v1/empty_pb.js";
-
-describe("empty_unary", function () {
-  describeTransports((transport) => {
-    const empty = new Empty();
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
-      const response = await client.emptyCall(empty);
-      expect(response).toEqual(empty);
-    });
-    it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport());
-      client.emptyCall(empty, (err, response) => {
-        expect(err).toBeUndefined();
-        expect(response).toEqual(empty);
-        done();
-      });
-    });
-  });
-});

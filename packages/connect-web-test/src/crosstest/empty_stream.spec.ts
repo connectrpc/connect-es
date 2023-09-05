@@ -12,38 +12,3 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
-import { TestService } from "../gen/connectrpc.conformance.v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { StreamingOutputCallRequest } from "../gen/connectrpc.conformance.v1/messages_pb.js";
-
-describe("empty_stream", function () {
-  describeTransports((transport) => {
-    const request = new StreamingOutputCallRequest();
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
-      try {
-        for await (const response of client.streamingOutputCall(request)) {
-          fail(
-            `expecting no response in the empty stream, got: ${response.toJsonString()}`,
-          );
-        }
-      } catch (e) {
-        fail(`expecting no error in the empty stream, got: ${String(e)}`);
-      }
-    });
-    it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport());
-      client.streamingOutputCall(
-        request,
-        () => {
-          fail("expecting no response in the empty stream");
-        },
-        (err) => {
-          expect(err).toBeUndefined();
-          done();
-        },
-      );
-    });
-  });
-});

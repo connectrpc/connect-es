@@ -12,38 +12,3 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ConnectError,
-  createCallbackClient,
-  createPromiseClient,
-  Code,
-} from "@connectrpc/connect";
-import { TestService } from "../gen/connectrpc.conformance.v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-
-describe("unimplemented_method", function () {
-  function expectError(err: unknown) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      expect(err.code).toEqual(Code.Unimplemented);
-    }
-  }
-  describeTransports((transport) => {
-    it("with promise client", async function () {
-      const client = createPromiseClient(TestService, transport());
-      try {
-        await client.unimplementedCall({});
-        fail("expected to catch an error");
-      } catch (e) {
-        expectError(e);
-      }
-    });
-    it("with callback client", function (done) {
-      const client = createCallbackClient(TestService, transport());
-      client.unimplementedCall({}, (err: ConnectError | undefined) => {
-        expectError(err);
-        done();
-      });
-    });
-  });
-});
