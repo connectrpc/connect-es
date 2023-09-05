@@ -14,8 +14,8 @@
 
 import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
+import { SimpleRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
 function ensureProtocolName(expectedName: string) {

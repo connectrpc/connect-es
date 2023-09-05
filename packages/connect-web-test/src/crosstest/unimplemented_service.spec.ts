@@ -18,7 +18,7 @@ import {
   createPromiseClient,
   Code,
 } from "@connectrpc/connect";
-import { UnimplementedService } from "../gen/grpc/testing/test_connect.js";
+import { UnimplementedService } from "../gen/connectrpc.conformance.v1/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
 
 describe("unimplemented_service", function () {

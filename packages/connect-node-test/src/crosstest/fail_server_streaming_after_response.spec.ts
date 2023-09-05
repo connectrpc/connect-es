@@ -18,12 +18,12 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@connectrpc/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import {
   ErrorDetail,
   StreamingOutputCallRequest,
   StreamingOutputCallResponse,
-} from "../gen/grpc/testing/messages_pb.js";
+} from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 import { interop } from "../helpers/interop.js";
 

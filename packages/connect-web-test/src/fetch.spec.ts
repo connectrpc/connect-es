@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TestService } from "./gen/grpc/testing/test_connect.js";
+import { TestService } from "./gen/connectrpc.conformance.v1/test_connect.js";
 import {
   SimpleRequest,
   SimpleResponse,
-} from "./gen/grpc/testing/messages_pb.js";
+} from "./gen/connectrpc.conformance.v1/messages_pb.js";
 import {
   createConnectTransport,
   createGrpcWebTransport,

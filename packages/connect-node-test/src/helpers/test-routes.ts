@@ -20,12 +20,12 @@ import {
   encodeBinaryHeader,
 } from "@connectrpc/connect";
 import type { ConnectRouter, ServiceImpl } from "@connectrpc/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
-import type { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
+import type { StreamingOutputCallRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import {
   EchoStatus,
   ResponseParameters,
-} from "../gen/grpc/testing/messages_pb.js";
+} from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import { interop } from "./interop.js";
 
 export const testRoutes = (router: ConnectRouter) => {
@@ -157,7 +157,7 @@ const testService: ServiceImpl<typeof TestService> = {
 
   unimplementedCall(/*request*/) {
     throw new ConnectError(
-      "grpc.testing.TestService.UnimplementedCall is not implemented",
+      "connectrpc.conformance.v1.TestService.UnimplementedCall is not implemented",
       Code.Unimplemented,
     );
   },
@@ -165,7 +165,7 @@ const testService: ServiceImpl<typeof TestService> = {
   // eslint-disable-next-line @typescript-eslint/require-await,require-yield
   async *unimplementedStreamingOutputCall(/*requests*/) {
     throw new ConnectError(
-      "grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented",
+      "connectrpc.conformance.v1.TestService.UnimplementedStreamingOutputCall is not implemented",
       Code.Unimplemented,
     );
   },
