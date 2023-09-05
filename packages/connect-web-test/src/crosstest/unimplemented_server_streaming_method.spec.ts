@@ -20,7 +20,7 @@ import {
 } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
-import { Empty } from "../gen/connectrpc/conformance/v1/empty_pb.js";
+import { Empty } from "@bufbuild/protobuf";
 
 describe("unimplemented_server_streaming_method", function () {
   function expectError(err: unknown) {
