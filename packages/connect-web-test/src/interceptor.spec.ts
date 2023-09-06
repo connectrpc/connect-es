@@ -22,15 +22,9 @@ import {
   createPromiseClient,
   encodeBinaryHeader,
 } from "@connectrpc/connect";
-<<<<<<< HEAD
-import { TestService } from "./gen/grpc/testing/test_connect.js";
-import { StreamingOutputCallRequest } from "./gen/grpc/testing/messages_pb.js";
-import { describeTransports } from "./helpers/conformanceserver.js";
-=======
 import { TestService } from "./gen/connectrpc/conformance/v1/test_connect.js";
 import { StreamingOutputCallRequest } from "./gen/connectrpc/conformance/v1/messages_pb.js";
-import { describeTransports } from "./helpers/crosstestserver.js";
->>>>>>> main
+import { describeTransports } from "./helpers/conformanceserver.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   /**
