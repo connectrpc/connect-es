@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export {
-  ConnectError,
-  connectErrorDetails,
-  connectErrorFromReason,
-} from "./connect-error.js";
+export { ConnectError } from "./connect-error.js";
 export { Code } from "./code.js";
 export {
   encodeBinaryHeader,
@@ -47,11 +43,8 @@ export type { ConnectRouter, ConnectRouterOptions } from "./router.js";
 export { createHandlerContext } from "./implementation.js";
 export { cors } from "./cors.js";
 
-// TODO(TCN-1261)
-
 // Symbols above should be relevant to end users.
 // Symbols below should only be relevant for other libraries.
-export { runUnary, runStreaming } from "./legacy-interceptor.js";
 export { makeAnyClient } from "./any-client.js";
 export type { AnyClient } from "./any-client.js";
 
