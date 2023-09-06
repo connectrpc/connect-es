@@ -19,11 +19,15 @@ import {
   createPromiseClient,
 } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { ErrorDetail } from "../gen/connectrpc/conformance/v1/messages_pb.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
+import {
+  ErrorDetail,
+  StreamingOutputCallRequest,
+  StreamingOutputCallResponse,
+} from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import { interop } from "../helpers/interop.js";
 
-describe("fail_unary", () => {
+describe("fail_server_streaming_after_response", () => {
   function expectError(err: unknown) {
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
@@ -33,22 +37,45 @@ describe("fail_unary", () => {
       expect(details).toEqual([interop.errorDetail]);
     }
   }
+  const request = new StreamingOutputCallRequest({
+    responseParameters: [
+      { size: 64, intervalUs: 0 },
+      { size: 64, intervalUs: 0 },
+      { size: 64, intervalUs: 0 },
+    ],
+  });
   describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
+      const receivedResponses: StreamingOutputCallResponse[] = [];
       try {
-        await client.failUnaryCall({});
+        for await (const response of client.failStreamingOutputCall(request)) {
+          receivedResponses.push(response);
+        }
         fail("expected to catch an error");
       } catch (e) {
         expectError(e);
+        expect(receivedResponses.length).toBe(
+          request.responseParameters.length,
+        );
       }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.failUnaryCall({}, (err: ConnectError | undefined) => {
-        expectError(err);
-        done();
-      });
+      const receivedResponses: StreamingOutputCallResponse[] = [];
+      client.failStreamingOutputCall(
+        request,
+        (response) => {
+          receivedResponses.push(response);
+        },
+        (err: ConnectError | undefined) => {
+          expectError(err);
+          expect(receivedResponses.length).toBe(
+            request.responseParameters.length,
+          );
+          done();
+        },
+      );
     });
   });
 });

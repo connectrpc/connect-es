@@ -14,24 +14,29 @@
 
 import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 import { Empty } from "@bufbuild/protobuf";
 
-describe("empty_unary", function () {
+describe("empty_unary_with_timeout", function () {
   describeTransports((transport) => {
     const empty = new Empty();
+    const deadlineMs = 1000; // 1 second
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
-      const response = await client.emptyCall(empty);
+      const response = await client.emptyCall(empty, { timeoutMs: deadlineMs });
       expect(response).toEqual(empty);
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.emptyCall(empty, (err, response) => {
-        expect(err).toBeUndefined();
-        expect(response).toEqual(empty);
-        done();
-      });
+      client.emptyCall(
+        empty,
+        (err, response) => {
+          expect(err).toBeUndefined();
+          expect(response).toEqual(empty);
+          done();
+        },
+        { timeoutMs: deadlineMs },
+      );
     });
   });
 });

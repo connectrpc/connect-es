@@ -24,7 +24,7 @@ import {
 } from "@connectrpc/connect";
 import { TestService } from "./gen/connectrpc/conformance/v1/test_connect.js";
 import { StreamingOutputCallRequest } from "./gen/connectrpc/conformance/v1/messages_pb.js";
-import { describeTransports } from "./helpers/crosstestserver.js";
+import { describeTransports } from "./helpers/conformanceserver.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   /**

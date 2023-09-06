@@ -109,7 +109,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
   Go implementation of gRPC, gRPC-Web, and Connect
 * [examples-go](https://github.com/connectrpc/examples-go):
   Example RPC service powering https://demo.connectrpc.com and built with connect-go
-* [connect-crosstest](https://github.com/bufbuild/connect-crosstest):
+* [conformance](https://github.com/connectrpc/conformance):
   gRPC-Web and Connect interoperability tests
 * [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
 

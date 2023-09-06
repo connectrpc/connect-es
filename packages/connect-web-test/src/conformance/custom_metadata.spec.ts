@@ -19,14 +19,14 @@ import {
   createPromiseClient,
 } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 import {
-  StreamingOutputCallRequest,
-  StreamingOutputCallResponse,
+  SimpleRequest,
+  SimpleResponse,
 } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import { interop } from "../helpers/interop.js";
 
-describe("custom_metadata_server_streaming", function () {
+describe("custom_metadata", function () {
   describeTransports((transport) => {
     const size = 314159;
     const binaryValue = new Uint8Array([0xab, 0xab, 0xab]);
@@ -34,10 +34,13 @@ describe("custom_metadata_server_streaming", function () {
       [interop.leadingMetadataKey]: "test_initial_metadata_value",
       [interop.trailingMetadataKey]: encodeBinaryHeader(binaryValue),
     };
-    const request = new StreamingOutputCallRequest({
-      responseParameters: [{ size }],
+    const request = new SimpleRequest({
+      responseSize: size,
+      payload: {
+        body: new Uint8Array(271828).fill(0),
+      },
     });
-    function expectResponseSize(response: StreamingOutputCallResponse) {
+    function expectResponseSize(response: SimpleResponse) {
       expect(response.payload).toBeDefined();
       expect(response.payload?.body.length).toEqual(size);
     }
@@ -58,7 +61,7 @@ describe("custom_metadata_server_streaming", function () {
       const client = createPromiseClient(TestService, transport());
       let responseHeaders: Headers | undefined;
       let responseTrailers: Headers | undefined;
-      for await (const response of client.streamingOutputCall(request, {
+      const response = await client.unaryCall(request, {
         headers: requestHeaders,
         onHeader(header) {
           responseHeaders = header;
@@ -66,9 +69,8 @@ describe("custom_metadata_server_streaming", function () {
         onTrailer(trailer) {
           responseTrailers = trailer;
         },
-      })) {
-        expectResponseSize(response);
-      }
+      });
+      expectResponseSize(response);
       expectResponseHeaders(responseHeaders);
       expectResponseTrailers(responseTrailers);
     });
@@ -76,13 +78,11 @@ describe("custom_metadata_server_streaming", function () {
       const client = createCallbackClient(TestService, transport());
       let responseHeaders: Headers | undefined;
       let responseTrailers: Headers | undefined;
-      client.streamingOutputCall(
+      client.unaryCall(
         request,
-        (response) => {
-          expectResponseSize(response);
-        },
-        (err) => {
+        (err, response) => {
           expect(err).toBeUndefined();
+          expectResponseSize(response);
           expectResponseHeaders(responseHeaders);
           expectResponseTrailers(responseTrailers);
           done();

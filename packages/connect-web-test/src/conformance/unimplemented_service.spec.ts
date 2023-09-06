@@ -13,44 +13,41 @@
 // limitations under the License.
 
 import {
-  Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
+  Code,
 } from "@connectrpc/connect";
 import { UnimplementedService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { Empty } from "@bufbuild/protobuf";
+import { describeTransports } from "../helpers/conformanceserver.js";
 
-describe("unimplemented_server_streaming_service", function () {
-  const request = new Empty();
+describe("unimplemented_service", function () {
+  function expectError(err: unknown) {
+    // We expect this to be DEADLINE_EXCEEDED, however envoy is monitoring the stream timeout
+    // and will return an HTTP status code 408 when stream max duration time reached, which
+    // cannot be translated to a connect error code.
+    expect(err).toBeInstanceOf(ConnectError);
+    if (err instanceof ConnectError) {
+      expect(err.code === Code.DeadlineExceeded);
+    }
+  }
+
   describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(UnimplementedService, transport());
       try {
-        for await (const response of client.unimplementedStreamingOutputCall(
-          request,
-        )) {
-          fail(`expecting no response, got: ${response.toJsonString()}`);
-        }
+        await client.unimplementedCall({});
         fail("expected to catch an error");
       } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).code).toBe(Code.Unimplemented);
+        expectError(e);
       }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(UnimplementedService, transport());
-      client.unimplementedStreamingOutputCall(
-        request,
-        (response) => {
-          fail(`expecting no response, got: ${response.toJsonString()}`);
-        },
-        (err: ConnectError | undefined) => {
-          expect(err?.code).toBe(Code.Unimplemented);
-          done();
-        },
-      );
+      client.unimplementedCall({}, (err: ConnectError | undefined) => {
+        expectError(err);
+        done();
+      });
     });
   });
 });

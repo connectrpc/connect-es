@@ -12,31 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
+import {
+  ConnectError,
+  createCallbackClient,
+  createPromiseClient,
+  Code,
+} from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 import { SimpleRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 
-describe("large_unary", function () {
+describe("status_code_and_message", function () {
   describeTransports((transport) => {
+    const TEST_STATUS_MESSAGE = "test status message";
     const request = new SimpleRequest({
-      responseSize: 314159,
-      payload: {
-        body: new Uint8Array(271828).fill(0),
+      responseStatus: {
+        code: Code.Unknown,
+        message: TEST_STATUS_MESSAGE,
       },
     });
+    function expectError(err: unknown) {
+      expect(err).toBeInstanceOf(ConnectError);
+      if (err instanceof ConnectError) {
+        expect(err.code).toEqual(Code.Unknown);
+        expect(err.rawMessage).toEqual(TEST_STATUS_MESSAGE);
+      }
+    }
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
-      const response = await client.unaryCall(request);
-      expect(response.payload).toBeDefined();
-      expect(response.payload?.body.length).toEqual(request.responseSize);
+      try {
+        await client.unaryCall(request);
+        fail("expected to catch an error");
+      } catch (e) {
+        expectError(e);
+      }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.unaryCall(request, (err, response) => {
-        expect(err).toBeUndefined();
-        expect(response.payload).toBeDefined();
-        expect(response.payload?.body.length).toEqual(request.responseSize);
+      client.unaryCall(request, (err: ConnectError | undefined) => {
+        expectError(err);
         done();
       });
     });

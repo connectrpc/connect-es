@@ -12,47 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ConnectError,
-  createCallbackClient,
-  createPromiseClient,
-  Code,
-} from "@connectrpc/connect";
+import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { Empty } from "@bufbuild/protobuf";
+import { describeTransports } from "../helpers/conformanceserver.js";
+import { StreamingOutputCallRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 
-describe("unimplemented_server_streaming_method", function () {
-  function expectError(err: unknown) {
-    expect(err).toBeInstanceOf(ConnectError);
-    if (err instanceof ConnectError) {
-      expect(err.code).toEqual(Code.Unimplemented);
-    }
-  }
-  const request = new Empty();
+describe("empty_stream", function () {
   describeTransports((transport) => {
+    const request = new StreamingOutputCallRequest();
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       try {
-        for await (const response of client.unimplementedStreamingOutputCall(
-          request,
-        )) {
-          fail(`expecting no response, got: ${response.toJsonString()}`);
+        for await (const response of client.streamingOutputCall(request)) {
+          fail(
+            `expecting no response in the empty stream, got: ${response.toJsonString()}`,
+          );
         }
-        fail("expected to catch an error");
       } catch (e) {
-        expectError(e);
+        fail(`expecting no error in the empty stream, got: ${String(e)}`);
       }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.unimplementedStreamingOutputCall(
+      client.streamingOutputCall(
         request,
-        (response) => {
-          fail(`expecting no response, got: ${response.toJsonString()}`);
+        () => {
+          fail("expecting no response in the empty stream");
         },
-        (err: ConnectError | undefined) => {
-          expectError(err);
+        (err) => {
+          expect(err).toBeUndefined();
           done();
         },
       );

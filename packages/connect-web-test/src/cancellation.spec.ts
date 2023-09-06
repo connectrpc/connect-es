@@ -19,7 +19,7 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@connectrpc/connect";
-import { describeTransports } from "./helpers/crosstestserver.js";
+import { describeTransports } from "./helpers/conformanceserver.js";
 import { TestService } from "./gen/connectrpc/conformance/v1/test_connect.js";
 
 describe("explicit cancellation with AbortController", function () {

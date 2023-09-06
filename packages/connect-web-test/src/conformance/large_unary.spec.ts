@@ -12,45 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ConnectError,
-  createCallbackClient,
-  createPromiseClient,
-  Code,
-} from "@connectrpc/connect";
+import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 import { SimpleRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 
-describe("special_status", function () {
+describe("large_unary", function () {
   describeTransports((transport) => {
-    const TEST_STATUS_MESSAGE = `\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n`;
     const request = new SimpleRequest({
-      responseStatus: {
-        code: Code.Unknown,
-        message: TEST_STATUS_MESSAGE,
+      responseSize: 314159,
+      payload: {
+        body: new Uint8Array(271828).fill(0),
       },
     });
-    function expectError(err: unknown) {
-      expect(err).toBeInstanceOf(ConnectError);
-      if (err instanceof ConnectError) {
-        expect(err.code).toEqual(Code.Unknown);
-        expect(err.rawMessage).toEqual(TEST_STATUS_MESSAGE);
-      }
-    }
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
-      try {
-        await client.unaryCall(request);
-        fail("expected to catch an error");
-      } catch (e) {
-        expectError(e);
-      }
+      const response = await client.unaryCall(request);
+      expect(response.payload).toBeDefined();
+      expect(response.payload?.body.length).toEqual(request.responseSize);
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.unaryCall(request, (err: ConnectError | undefined) => {
-        expectError(err);
+      client.unaryCall(request, (err, response) => {
+        expect(err).toBeUndefined();
+        expect(response.payload).toBeDefined();
+        expect(response.payload?.body.length).toEqual(request.responseSize);
         done();
       });
     });

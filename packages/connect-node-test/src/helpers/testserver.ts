@@ -56,7 +56,7 @@ export function createTestServers() {
 
   const certLocalhost = getCertLocalhost();
 
-  // The following servers are available through crosstests:
+  // The following servers are available through conformance:
   //
   // | server        | port |
   // | ------------- | --- |

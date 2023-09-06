@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CallOptions } from "@connectrpc/connect";
 import {
   Code,
   ConnectError,
@@ -20,56 +19,51 @@ import {
   createPromiseClient,
 } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import { StreamingOutputCallRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
+import {
+  ErrorDetail,
+  StreamingOutputCallRequest,
+} from "../gen/connectrpc/conformance/v1/messages_pb.js";
+import { interop } from "../helpers/interop.js";
 
-describe("timeout_on_sleeping_server", function () {
-  const request = new StreamingOutputCallRequest({
-    payload: {
-      body: new Uint8Array(271828).fill(0),
-    },
-    responseParameters: [
-      {
-        size: 31415,
-        intervalUs: 50 * 1000, // 50ms
-      },
-    ],
-  });
-  const options: CallOptions = {
-    timeoutMs: 5,
-  };
+describe("fail_server_streaming", () => {
+  function expectError(err: unknown) {
+    expect(err).toBeInstanceOf(ConnectError);
+    if (err instanceof ConnectError) {
+      expect(err.code).toEqual(Code.ResourceExhausted);
+      expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
+      const details = err.findDetails(ErrorDetail);
+      expect(details).toEqual([interop.errorDetail]);
+    }
+  }
+  const request = new StreamingOutputCallRequest();
   describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       try {
-        for await (const response of client.streamingOutputCall(
-          request,
-          options,
-        )) {
-          fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`,
-          );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        for await (const response of client.failStreamingOutputCall(request)) {
+          expect(response)
+            .withContext("did not expect any response message")
+            .toBeUndefined();
         }
-        fail("expected to catch an error");
       } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).code).toBe(Code.DeadlineExceeded);
+        expectError(e);
       }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.streamingOutputCall(
+      client.failStreamingOutputCall(
         request,
         (response) => {
-          fail(
-            `expecting no response from sleeping server, got: ${response.toJsonString()}`,
-          );
+          expect(response)
+            .withContext("did not expect any response message")
+            .toBeUndefined();
         },
         (err: ConnectError | undefined) => {
-          expect(err?.code).toBe(Code.DeadlineExceeded);
+          expectError(err);
           done();
         },
-        options,
       );
     });
   });

@@ -19,12 +19,12 @@ import {
   Code,
 } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 import { SimpleRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 
-describe("status_code_and_message", function () {
+describe("special_status", function () {
   describeTransports((transport) => {
-    const TEST_STATUS_MESSAGE = "test status message";
+    const TEST_STATUS_MESSAGE = `\t\ntest with whitespace\r\nand Unicode BMP ☺ and non-BMP 😈\t\n`;
     const request = new SimpleRequest({
       responseStatus: {
         code: Code.Unknown,

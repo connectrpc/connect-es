@@ -13,58 +13,37 @@
 // limitations under the License.
 
 import {
-  Code,
   ConnectError,
   createCallbackClient,
   createPromiseClient,
+  Code,
 } from "@connectrpc/connect";
 import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { describeTransports } from "../helpers/crosstestserver.js";
-import {
-  ErrorDetail,
-  StreamingOutputCallRequest,
-} from "../gen/connectrpc/conformance/v1/messages_pb.js";
-import { interop } from "../helpers/interop.js";
+import { describeTransports } from "../helpers/conformanceserver.js";
 
-describe("fail_server_streaming", () => {
+describe("unimplemented_method", function () {
   function expectError(err: unknown) {
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {
-      expect(err.code).toEqual(Code.ResourceExhausted);
-      expect(err.rawMessage).toEqual(interop.nonASCIIErrMsg);
-      const details = err.findDetails(ErrorDetail);
-      expect(details).toEqual([interop.errorDetail]);
+      expect(err.code).toEqual(Code.Unimplemented);
     }
   }
-  const request = new StreamingOutputCallRequest();
   describeTransports((transport) => {
     it("with promise client", async function () {
       const client = createPromiseClient(TestService, transport());
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for await (const response of client.failStreamingOutputCall(request)) {
-          expect(response)
-            .withContext("did not expect any response message")
-            .toBeUndefined();
-        }
+        await client.unimplementedCall({});
+        fail("expected to catch an error");
       } catch (e) {
         expectError(e);
       }
     });
     it("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
-      client.failStreamingOutputCall(
-        request,
-        (response) => {
-          expect(response)
-            .withContext("did not expect any response message")
-            .toBeUndefined();
-        },
-        (err: ConnectError | undefined) => {
-          expectError(err);
-          done();
-        },
-      );
+      client.unimplementedCall({}, (err: ConnectError | undefined) => {
+        expectError(err);
+        done();
+      });
     });
   });
 });
