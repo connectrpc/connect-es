@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TestService } from "../gen/grpc/testing/test_connect.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { createMethodUrl } from "@connectrpc/connect/protocol";
@@ -66,7 +66,7 @@ describe("broken input", () => {
           expect(error.code).toBe(Code.InvalidArgument);
           if (serverName == "@connectrpc/connect-node (h2c)") {
             expect(error.rawMessage).toMatch(
-              /^cannot decode grpc.testing.SimpleRequest from JSON: Unexpected token '?h'?.*JSON/,
+              /^cannot decode connectrpc.conformance.v1.SimpleRequest from JSON: Unexpected token '?h'?.*JSON/,
             );
           }
         });
@@ -108,7 +108,7 @@ describe("broken input", () => {
               // Error messages tend to change across Node versions. Should this happen again, this link is useful to
               // build the correct RegExp:  https://regex101.com/r/By9VEN/1
               expect(endStream.error?.rawMessage).toMatch(
-                /^cannot decode grpc.testing.Streaming(Input|Output)CallRequest from JSON: Unexpected token '?h'?.*JSON/,
+                /^cannot decode connectrpc.conformance.v1.Streaming(Input|Output)CallRequest from JSON: Unexpected token '?h'?.*JSON/,
               );
             }
           });

@@ -18,8 +18,8 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@connectrpc/connect";
-import { UnimplementedService } from "../gen/grpc/testing/test_connect.js";
-import { Empty } from "../gen/grpc/testing/empty_pb.js";
+import { UnimplementedService } from "../gen/connectrpc/conformance/v1/test_connect.js";
+import { Empty } from "@bufbuild/protobuf";
 import { createTestServers } from "../helpers/testserver.js";
 
 describe("unimplemented_server_streaming_service", function () {

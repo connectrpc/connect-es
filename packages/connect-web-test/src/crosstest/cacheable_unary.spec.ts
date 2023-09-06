@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import { describeTransports } from "../helpers/crosstestserver.js";
-import { SimpleRequest } from "../gen/grpc/testing/messages_pb.js";
+import { SimpleRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 
 function ensureGetRequest(header: Headers) {
   expect(header.has("request-protocol")).toBeTrue();
