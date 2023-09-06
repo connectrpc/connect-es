@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TestService } from "../gen/grpc/testing/test_connect.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { createMethodUrl } from "@connectrpc/connect/protocol";

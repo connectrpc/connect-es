@@ -16,7 +16,7 @@ import {
   ErrorDetail,
   Payload,
   PayloadType,
-} from "../gen/grpc/testing/messages_pb.js";
+} from "../gen/connectrpc/conformance/v1/messages_pb.js";
 
 export const interop = {
   /**

@@ -18,8 +18,8 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@connectrpc/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { Empty } from "../gen/grpc/testing/empty_pb.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
+import { Empty } from "@bufbuild/protobuf";
 import { createTestServers } from "../helpers/testserver.js";
 
 describe("unimplemented_server_streaming_method", function () {
@@ -46,7 +46,7 @@ describe("unimplemented_server_streaming_method", function () {
           );
         } else {
           expect(ConnectError.from(e).message).toBe(
-            "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented",
+            "[unimplemented] connectrpc.conformance.v1.TestService.UnimplementedStreamingOutputCall is not implemented",
           );
         }
       }
@@ -67,7 +67,7 @@ describe("unimplemented_server_streaming_method", function () {
             );
           } else {
             expect(err?.message).toBe(
-              "[unimplemented] grpc.testing.TestService.UnimplementedStreamingOutputCall is not implemented",
+              "[unimplemented] connectrpc.conformance.v1.TestService.UnimplementedStreamingOutputCall is not implemented",
             );
           }
           done();
