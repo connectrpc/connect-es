@@ -25,7 +25,7 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "devDependencies": {
+  "dependencies": {
     "@types/express": "^4.17.17"
   },
   "peerDependencies": {
