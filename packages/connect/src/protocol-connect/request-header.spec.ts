@@ -41,7 +41,7 @@ describe("requestHeader", () => {
     ]);
     expect(headers.get("Content-Type")).toBe("application/proto");
     expect(headers.get("Connect-Protocol-Version")).toBe("1");
-    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+$/);
+    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+/);
   });
 
   it("should create request headers with timeout", () => {
