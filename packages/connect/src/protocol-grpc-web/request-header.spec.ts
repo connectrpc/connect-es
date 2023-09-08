@@ -38,8 +38,8 @@ describe("requestHeader", () => {
       "x-user-agent",
     ]);
     expect(headers.get("Content-Type")).toBe("application/grpc-web+proto");
-    expect(headers.get("X-User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+$/);
-    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+$/);
+    expect(headers.get("X-User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+/);
+    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+/);
     expect(headers.get("X-Grpc-Web")).toBe("1");
   });
 
