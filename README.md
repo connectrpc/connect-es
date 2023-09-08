@@ -103,8 +103,10 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
   Examples for using Connect with various TypeScript web frameworks and tooling
 * [connect-query-es](https://github.com/connectrpc/connect-query-es):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
+* [connect-playwright-es](https://github.com/connectrpc/connect-playwright-es):
+  Playwright tests for your Connect application
 * [connect-swift](https://github.com/bufbuild/connect-swift):
-  Idiomatic gRPC & Connect RPCs for Swift.
+  Idiomatic gRPC & Connect RPCs for Swift
 * [connect-go](https://github.com/connectrpc/connect-go):
   Go implementation of gRPC, gRPC-Web, and Connect
 * [examples-go](https://github.com/connectrpc/examples-go):
