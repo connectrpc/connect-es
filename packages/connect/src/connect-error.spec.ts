@@ -20,11 +20,7 @@ import {
   ScalarType,
   Struct,
 } from "@bufbuild/protobuf";
-import {
-  ConnectError,
-  connectErrorDetails,
-  connectErrorFromReason,
-} from "./connect-error.js";
+import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import { node16FetchHeadersPolyfill } from "./node16-polyfill-helper.spec.js";
 
@@ -140,93 +136,6 @@ describe("ConnectError", () => {
       expect(got.rawMessage).toBe("Not permitted");
       expect(got.cause).toBe(error);
     });
-  });
-});
-
-describe("connectErrorDetails()", () => {
-  type ErrorDetail = Message<ErrorDetail> & {
-    reason: string;
-    domain: string;
-  };
-  const ErrorDetail = proto3.makeMessageType<ErrorDetail>(
-    "handwritten.ErrorDetail",
-    [
-      { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
-      { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
-    ],
-  );
-  describe("on error without details", () => {
-    const err = new ConnectError("foo");
-    it("with empty TypeRegistry produces no details", () => {
-      const details = connectErrorDetails(err, createRegistry());
-      expect(details.length).toBe(0);
-    });
-    it("with non-empty TypeRegistry produces no details", () => {
-      const details = connectErrorDetails(err, createRegistry(ErrorDetail));
-      expect(details.length).toBe(0);
-    });
-    it("with MessageType produces no details", () => {
-      const details = connectErrorDetails(err, ErrorDetail);
-      expect(details.length).toBe(0);
-    });
-  });
-  describe("on error with Any details", () => {
-    const err = new ConnectError("foo");
-    err.details.push(
-      new ErrorDetail({
-        reason: "soirée 🎉",
-        domain: "example.com",
-      }),
-    );
-    it("with empty TypeRegistry produces no details", () => {
-      const details = connectErrorDetails(err, createRegistry());
-      expect(details.length).toBe(0);
-    });
-    it("with non-empty TypeRegistry produces detail", () => {
-      const details = connectErrorDetails(err, createRegistry(ErrorDetail));
-      expect(details.length).toBe(1);
-    });
-    it("with MessageType produces detail", () => {
-      const details = connectErrorDetails(err, ErrorDetail);
-      expect(details.length).toBe(1);
-      if (details[0] instanceof ErrorDetail) {
-        expect(details[0].domain).toBe("example.com");
-        expect(details[0].reason).toBe("soirée 🎉");
-      } else {
-        fail();
-      }
-    });
-    it("with multiple MessageTypes produces detail", () => {
-      const details = connectErrorDetails(err, Struct, ErrorDetail, BoolValue);
-      expect(details.length).toBe(1);
-      expect(details[0]).toBeInstanceOf(ErrorDetail);
-    });
-  });
-});
-
-describe("connectErrorFromReason()", () => {
-  it("accepts ConnectError as unknown", () => {
-    const error: unknown = new ConnectError(
-      "Not permitted",
-      Code.PermissionDenied,
-    );
-    const got = connectErrorFromReason(error);
-    expect(got as unknown).toBe(error);
-    expect(got.code).toBe(Code.PermissionDenied);
-    expect(got.rawMessage).toBe("Not permitted");
-  });
-  it("accepts any Error", () => {
-    const error: unknown = new Error("Not permitted");
-    const got = connectErrorFromReason(error);
-    expect(got as unknown).not.toBe(error);
-    expect(got.code).toBe(Code.Unknown);
-    expect(got.rawMessage).toBe("Not permitted");
-  });
-  it("accepts string value", () => {
-    const error: unknown = "Not permitted";
-    const got = connectErrorFromReason(error);
-    expect(got.code).toBe(Code.Unknown);
-    expect(got.rawMessage).toBe("Not permitted");
   });
 });
 

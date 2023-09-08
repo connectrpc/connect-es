@@ -26,17 +26,6 @@ import * as http2 from "http2";
 import * as http from "http";
 import * as https from "https";
 
-export type DeprecatedNodeTransportOptions = {
-  /**
-   * @deprecated use the Http2SessionManager instead for fine-grained control over sessions and keep-alive
-   *
-   * By default, HTTP/2 sessions are terminated after each request.
-   * Set this option to true to keep sessions alive across multiple
-   * requests.
-   */
-  keepSessionAlive?: boolean;
-};
-
 /**
  * Options specific to Node.js client transports.
  */
