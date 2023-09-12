@@ -25,13 +25,11 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "dependencies": {
-    "@connectrpc/connect": "0.13.2",
-    "@connectrpc/connect-node": "^0.13.2",
-    "fastify": "^4.22.1"
-  },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.2.1"
+    "@bufbuild/protobuf": "^1.2.1",
+    "fastify": "^4.22.1",
+    "@connectrpc/connect": "0.13.2",
+    "@connectrpc/connect-node": "0.13.2"
   },
   "files": [
     "dist/**"
