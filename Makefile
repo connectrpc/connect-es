@@ -236,7 +236,7 @@ format: node_modules $(BIN)/license-header ## Format all files, adding license h
 		<(git ls-files --deleted | sort -u) | \
 		xargs $(BIN)/license-header \
 			--license-type "apache" \
-			--copyright-holder "Buf Technologies, Inc." \
+			--copyright-holder "The Connect Authors" \
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 .PHONY: bench
