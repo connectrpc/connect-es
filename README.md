@@ -105,7 +105,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
 * [connect-playwright-es](https://github.com/connectrpc/connect-playwright-es):
   Playwright tests for your Connect application
-* [connect-swift](https://github.com/bufbuild/connect-swift):
+* [connect-swift](https://github.com/connectrpc/connect-swift):
   Idiomatic gRPC & Connect RPCs for Swift
 * [connect-go](https://github.com/connectrpc/connect-go):
   Go implementation of gRPC, gRPC-Web, and Connect
