@@ -116,13 +116,9 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 * [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
 
 
+## Status: Stable
 
-## Status
-
-This project is a beta: we rely on it in production, but we may make a few
-changes as we gather feedback from early adopters. Join us on [Slack](https://buf.build/links/slack)
-or see the [roadmap discussion](https://github.com/connectrpc/connect-es/discussions/315) for details.
-
+All packages are stable and have reached a major version release.
 
 ## Legal
 
