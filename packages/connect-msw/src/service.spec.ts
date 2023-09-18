@@ -1,6 +1,7 @@
 import { setupServer } from "msw/node";
 import { service } from "./service.js";
 import { ElizaService } from "@buf/connectrpc_eliza.connectrpc_es/connectrpc/eliza/v1/eliza_connect.js";
+import { SayRequest } from "@buf/connectrpc_eliza.bufbuild_es/connectrpc/eliza/v1/eliza_pb.js";
 import {
   createConnectTransport,
   createGrpcWebTransport,
@@ -174,3 +175,23 @@ for (const testCase of allTestCases) {
     });
   });
 }
+
+it("has access to the request object of the proper type", async () => {
+  const { dispose, client } = createElizaMock({
+    protocol: "connect",
+    additionalMethods: {
+      say: (req) => {
+        expect(req).toBeInstanceOf(SayRequest);
+        return {
+          sentence: `Parrot says: ${req.sentence}`,
+        };
+      },
+    },
+  });
+  try {
+    const result = await client.say({ sentence: "Echo!" });
+    expect(result.sentence).toBe("Parrot says: Echo!");
+  } finally {
+    dispose();
+  }
+});
