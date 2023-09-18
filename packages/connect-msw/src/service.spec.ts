@@ -121,7 +121,7 @@ for (const testCase of allTestCases) {
   describe(testCase.protocol, () => {
     describe("unary calls", () => {
       testCase.testDefs.forEach(({ name, transportOptions }) => {
-        describe(name, () => {
+        describe(`with config ${name}`, () => {
           it(`responds with proper result`, async () => {
             const { dispose, client } = createElizaMock({
               transportOptions,
