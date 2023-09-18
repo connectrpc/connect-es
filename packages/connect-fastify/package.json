@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-fastify",
-  "version": "1.0.0-rc1",
+  "version": "1.0.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -28,8 +28,8 @@
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1",
     "fastify": "^4.22.1",
-    "@connectrpc/connect": "1.0.0-rc1",
-    "@connectrpc/connect-node": "1.0.0-rc1"
+    "@connectrpc/connect": "1.0.0",
+    "@connectrpc/connect-node": "1.0.0"
   },
   "files": [
     "dist/**"
