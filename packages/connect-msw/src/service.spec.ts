@@ -9,7 +9,8 @@ import type {
   GrpcWebTransportOptions,
   ConnectTransportOptions,
 } from "@connectrpc/connect-web";
-import { createPromiseClient } from "@connectrpc/connect";
+import { Code, ConnectError, createPromiseClient } from "@connectrpc/connect";
+import type { ServiceImpl } from "@connectrpc/connect";
 
 type MockConnectTransportOptions = Omit<ConnectTransportOptions, "baseUrl">;
 type ConnectTestDef = {
@@ -27,16 +28,19 @@ function createElizaMock({
   transportOptions = {},
   streamDelay,
   protocol,
+  additionalMethods = {},
 }:
   | {
       protocol: "connect";
       transportOptions?: MockConnectTransportOptions;
       streamDelay?: number;
+      additionalMethods?: Partial<ServiceImpl<typeof ElizaService>>;
     }
   | {
       protocol: "grpc-web";
       transportOptions?: MockGRPCTransportOptions;
       streamDelay?: number;
+      additionalMethods?: Partial<ServiceImpl<typeof ElizaService>>;
     }) {
   const baseUrl = "https://example.com/api";
   const server = setupServer(
@@ -60,6 +64,7 @@ function createElizaMock({
             sentence: "How are you?",
           };
         },
+        ...additionalMethods,
       }
     )
   );
@@ -131,7 +136,7 @@ for (const testCase of allTestCases) {
           const { dispose, client } = createElizaMock({
             transportOptions,
             streamDelay: 0,
-            protocol: "connect",
+            protocol: testCase.protocol,
           });
           try {
             const stream = client.introduce({ name: "Test name" });
@@ -139,6 +144,28 @@ for (const testCase of allTestCases) {
             for await (const response of stream) {
               expect(response.sentence).toBe(expected.shift() ?? "");
             }
+          } finally {
+            dispose();
+          }
+        });
+      });
+    });
+    describe("throwing errors", () => {
+      testCase.testDefs.forEach(({ name, transportOptions }) => {
+        it(`handles ${name}`, async () => {
+          const { dispose, client } = createElizaMock({
+            transportOptions,
+            protocol: testCase.protocol,
+            additionalMethods: {
+              say: () => {
+                throw new ConnectError("Test error", Code.Internal);
+              },
+            },
+          });
+          try {
+            await expectAsync(
+              client.say({ sentence: "Test name" })
+            ).toBeRejectedWithError("[internal] Test error");
           } finally {
             dispose();
           }
