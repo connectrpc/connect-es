@@ -131,7 +131,7 @@ $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-test/src/gen/*
 	npm run -w packages/connect-web-test generate https://github.com/connectrpc/conformance.git#ref=$(CONFORMANCE_VERSION),subdir=proto
-	npm run -w packages/connect-web-test generate buf.build/connectrpc/eliza
+	npm run -w packages/connect-web-test generate buf.build/connectrpc/eliza:8bde2b90ec0a7f23df3de5824bed0b6ea2043305
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -143,7 +143,7 @@ $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-co
 
 $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-bench/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-bench/src/gen/*
-	npm run -w packages/connect-web-bench generate buf.build/connectrpc/eliza:d8fbf2620c604277a0ece1ff3a26f2ff
+	npm run -w packages/connect-web-bench generate buf.build/connectrpc/eliza:8bde2b90ec0a7f23df3de5824bed0b6ea2043305
 	@mkdir -p $(@D)
 	@touch $(@)
 
