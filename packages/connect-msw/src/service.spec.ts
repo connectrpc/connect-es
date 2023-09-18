@@ -1,7 +1,11 @@
 import { setupServer } from "msw/node";
 import { service } from "./service.js";
 import { ElizaService } from "@buf/connectrpc_eliza.connectrpc_es/connectrpc/eliza/v1/eliza_connect.js";
-import { SayRequest } from "@buf/connectrpc_eliza.bufbuild_es/connectrpc/eliza/v1/eliza_pb.js";
+import {
+  SayRequest,
+  SayResponse,
+  IntroduceResponse,
+} from "@buf/connectrpc_eliza.bufbuild_es/connectrpc/eliza/v1/eliza_pb.js";
 import {
   createConnectTransport,
   createGrpcWebTransport,
@@ -117,17 +121,41 @@ for (const testCase of allTestCases) {
   describe(testCase.protocol, () => {
     describe("unary calls", () => {
       testCase.testDefs.forEach(({ name, transportOptions }) => {
-        it(`handles ${name}`, async () => {
-          const { dispose, client } = createElizaMock({
-            transportOptions,
-            protocol: testCase.protocol,
+        describe(name, () => {
+          it(`responds with proper result`, async () => {
+            const { dispose, client } = createElizaMock({
+              transportOptions,
+              protocol: testCase.protocol,
+            });
+            try {
+              const response = await client.say({ sentence: "Hello" });
+              expect(response).toBeInstanceOf(SayResponse);
+              expect(response.sentence).toBe("Hello and welcome!");
+            } finally {
+              dispose();
+            }
           });
-          try {
-            const response = await client.say({ sentence: "Hello" });
-            expect(response.sentence).toBe("Hello and welcome!");
-          } finally {
-            dispose();
-          }
+
+          it(`has access to the request object of the proper type`, async () => {
+            const { dispose, client } = createElizaMock({
+              transportOptions,
+              protocol: testCase.protocol,
+              additionalMethods: {
+                say: (req) => {
+                  expect(req).toBeInstanceOf(SayRequest);
+                  return {
+                    sentence: `Parrot says: ${req.sentence}`,
+                  };
+                },
+              },
+            });
+            try {
+              const result = await client.say({ sentence: "Echo!" });
+              expect(result.sentence).toBe("Parrot says: Echo!");
+            } finally {
+              dispose();
+            }
+          });
         });
       });
     });
@@ -143,6 +171,7 @@ for (const testCase of allTestCases) {
             const stream = client.introduce({ name: "Test name" });
             const expected = ["Hello and welcome!", "How are you?"];
             for await (const response of stream) {
+              expect(response).toBeInstanceOf(IntroduceResponse);
               expect(response.sentence).toBe(expected.shift() ?? "");
             }
           } finally {
@@ -175,23 +204,3 @@ for (const testCase of allTestCases) {
     });
   });
 }
-
-it("has access to the request object of the proper type", async () => {
-  const { dispose, client } = createElizaMock({
-    protocol: "connect",
-    additionalMethods: {
-      say: (req) => {
-        expect(req).toBeInstanceOf(SayRequest);
-        return {
-          sentence: `Parrot says: ${req.sentence}`,
-        };
-      },
-    },
-  });
-  try {
-    const result = await client.say({ sentence: "Echo!" });
-    expect(result.sentence).toBe("Parrot says: Echo!");
-  } finally {
-    dispose();
-  }
-});
