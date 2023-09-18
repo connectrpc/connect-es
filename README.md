@@ -118,8 +118,7 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 
 ## Status: Stable
 
-All packages are stable and have reached a major version release. Connect-ES follows semantic versioning and
-we will not make breaking changes in the 1.x series of releases.
+All packages are stable and have reached a major version release.
 
 ## Legal
 
