@@ -76,7 +76,6 @@ function createElizaMock({
         })
   );
   server.listen({ onUnhandledRequest: "error" });
-  // Would love to use the `using` keyword but it doesn't seem to be supported in esbuild yet 😢
   return {
     dispose: () => {
       server.close();
