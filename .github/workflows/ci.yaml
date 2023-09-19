@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   ci:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -28,9 +28,3 @@ jobs:
             ${{ runner.os }}-connect-web-ci-
       - name: make
         run: make format build lint test bench checkdiff
-      - name: browserstack
-        env:
-          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
-          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
-        run: make testwebbrowserstack
-
