@@ -13,7 +13,11 @@
 // limitations under the License.
 
 import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
-import type { ConnectRouter, ConnectRouterOptions } from "@connectrpc/connect";
+import type {
+  ConnectRouter,
+  ConnectRouterOptions,
+  ContextValues,
+} from "@connectrpc/connect";
 import type { UniversalHandler } from "@connectrpc/connect/protocol";
 import { uResponseNotFound } from "@connectrpc/connect/protocol";
 import {
@@ -55,6 +59,11 @@ interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
    * Note that many gRPC client implementations do not allow for prefixes.
    */
   requestPathPrefix?: string;
+  /**
+   * Context values to extract from the request. These values are passed to
+   * the handlers.
+   */
+  contextValues?: (req: NodeServerRequest) => ContextValues;
 }
 
 /**
@@ -85,7 +94,11 @@ export function connectNodeAdapter(
       (options.fallback ?? fallback)(req, res);
       return;
     }
-    const uReq = universalRequestFromNodeRequest(req, undefined);
+    const uReq = universalRequestFromNodeRequest(
+      req,
+      undefined,
+      options.contextValues?.(req),
+    );
     uHandler(uReq)
       .then((uRes) => universalResponseToNodeResponse(uRes, res))
       .catch((reason) => {

@@ -28,6 +28,8 @@ import {
   createDeadlineSignal,
   createLinkedAbortController,
 } from "./protocol/signals.js";
+import { createContextValues } from "./context-values.js";
+import type { ContextValues } from "./context-values.js";
 
 // prettier-ignore
 /**
@@ -117,6 +119,11 @@ export interface HandlerContext {
    * Name of the RPC protocol in use; one of "connect", "grpc" or "grpc-web".
    */
   readonly protocolName: string;
+
+  /**
+   * Per RPC context values that can be used to pass data to handlers.
+   */
+  readonly values: ContextValues;
 }
 
 /**
@@ -133,6 +140,7 @@ interface HandlerContextInit {
   requestHeader?: HeadersInit;
   responseHeader?: HeadersInit;
   responseTrailer?: HeadersInit;
+  values?: ContextValues;
 }
 
 interface HandlerContextController extends HandlerContext {
@@ -173,6 +181,7 @@ export function createHandlerContext(
       deadline.cleanup();
       abortController.abort(reason);
     },
+    values: init.values ?? createContextValues(),
   };
 }
 
