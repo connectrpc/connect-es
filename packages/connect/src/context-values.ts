@@ -23,31 +23,30 @@ export interface ContextValues {
   /**
    * set sets a context value. It returns the ContextValues to allow chaining.
    */
-  set<T>(key: ContextKey<T>, value: T): ContextValues;
+  set<T>(key: ContextKey<T>, value: T): this;
   /**
    * delete deletes a context value. It returns the ContextValues to allow chaining.
    */
-  delete(key: ContextKey<unknown>): ContextValues;
+  delete(key: ContextKey<unknown>): this;
 }
 
 /**
  * createContextValues creates a new ContextValues.
  */
 export function createContextValues(): ContextValues {
-  const values: Record<symbol, unknown> = {};
   return {
     get<T>(key: ContextKey<T>) {
-      return key.id in values ? (values[key.id] as T) : key.defaultValue;
+      return key.id in this ? (this[key.id] as T) : key.defaultValue;
     },
     set<T>(key: ContextKey<T>, value: T) {
-      values[key.id] = value;
+      this[key.id] = value;
       return this;
     },
     delete(key) {
-      delete values[key.id];
+      delete this[key.id];
       return this;
     },
-  };
+  } as Record<symbol, unknown> & ContextValues;
 }
 
 /**
@@ -61,6 +60,9 @@ export type ContextKey<T> = {
 /**
  * createContextKey creates a new ContextKey.
  */
-export function createContextKey<T>(defaultValue: T): ContextKey<T> {
-  return { id: Symbol(), defaultValue };
+export function createContextKey<T>(
+  defaultValue: T,
+  options?: { description?: string },
+): ContextKey<T> {
+  return { id: Symbol(options?.description), defaultValue };
 }

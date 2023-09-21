@@ -40,4 +40,12 @@ describe("ContextValues", function () {
     contextValues.set(kUndefined, undefined);
     expect(contextValues.get(kUndefined)).toBe(undefined);
   });
+  it("should be properties on the type", function () {
+    const contextValues = createContextValues();
+    const kString = createContextKey("default", { description: "string" });
+    contextValues.set(kString, "foo");
+    expect(contextValues).toEqual(
+      jasmine.objectContaining({ [kString.id]: "foo" }),
+    );
+  });
 });
