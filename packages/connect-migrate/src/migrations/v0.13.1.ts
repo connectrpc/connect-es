@@ -25,8 +25,9 @@ import { updateSourceFile } from "../lib/update-source-file";
 import { migrateSourceFiles } from "../lib/migrate-source-files";
 import { migratePackages } from "../lib/migrate-packages";
 import { migrateLockFiles } from "../lib/migrate-lock-files";
+import packageJson from "../../package.json";
 
-export const targetVersionConnectEs = "1.0.0";
+export const targetVersionConnectEs = packageJson.version;
 export const targetVersionConnectQuery = "0.4.4";
 
 /**
