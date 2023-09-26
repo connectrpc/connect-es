@@ -40,7 +40,7 @@ $(BIN)/node20: Makefile
 
 $(BIN)/node19: Makefile
 	@mkdir -p $(@D)
-	curl --retry 5 --retry-all-errors --http1.1 -sSL -o $(TMP)/$(NODE19_VERSION).tar.xz https://nodejs.org/dist/$(NODE19_VERSION)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
+	curl --retry 5 --retry-all-errors -sSL -o $(TMP)/$(NODE19_VERSION).tar.xz https://nodejs.org/dist/$(NODE19_VERSION)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
 	tar xJf $(TMP)/$(NODE19_VERSION).tar.xz -C $(TMP) node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
 	@mv $(TMP)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
 	@rm -r $(TMP)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)
@@ -49,7 +49,7 @@ $(BIN)/node19: Makefile
 
 $(BIN)/node18: Makefile
 	@mkdir -p $(@D)
-	curl --retry 5 --retry-all-errors --http1.1 -sSL -o $(TMP)/$(NODE18_VERSION).tar.xz https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
+	curl --retry 5 --retry-all-errors -sSL -o $(TMP)/$(NODE18_VERSION).tar.xz https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
 	tar xJf $(TMP)/$(NODE18_VERSION).tar.xz -C $(TMP) node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
 	@mv $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
 	@rm -r $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)

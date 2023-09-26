@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Serialization } from "../protocol";
+import type { Serialization } from "../protocol/serialization.js";
 
 /**
  * trailerFlag indicates that the data in a EnvelopedMessage
