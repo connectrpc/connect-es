@@ -17,7 +17,7 @@
   },
   "main": "./dist/cjs/index.js",
   "type": "module",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
       "import": {
