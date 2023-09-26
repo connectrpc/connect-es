@@ -10,55 +10,81 @@
   },
   "sideEffects": false,
   "scripts": {
-    "clean": "rm -rf ./dist/cjs/* ./dist/esm/* ./dist/types/*",
+    "clean": "rm -rf ./dist/cjs/* ./dist/esm/*",
     "generate": "buf generate src/protocol-grpc/proto",
-    "build": "npm run build:cjs && npm run build:esm+types && node scripts/update-user-agent.mjs",
-    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
-    "build:esm+types": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/types && echo >./dist/esm/package.json '{\"type\":\"module\", \"sideEffects\":false}'",
-    "jasmine": "jasmine --config=jasmine.json"
+    "build": "npm run build:cjs && npm run build:esm && node scripts/update-user-agent.mjs",
+    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm && echo >./dist/esm/package.json '{\"type\":\"module\", \"sideEffects\":false}'",
+    "jasmine": "jasmine --config=jasmine.json",
+    "lint:types": "attw --pack"
   },
   "main": "./dist/cjs/index.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./protocol": {
-      "types": "./dist/types/protocol/index.d.ts",
-      "import": "./dist/esm/protocol/index.js",
-      "require": "./dist/cjs/protocol/index.js"
+      "import": {
+        "types": "./dist/esm/protocol/index.d.ts",
+        "default": "./dist/esm/protocol/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/protocol/index.d.ts",
+        "default": "./dist/cjs/protocol/index.js"
+      }
     },
     "./protocol-connect": {
-      "types": "./dist/types/protocol-connect/index.d.ts",
-      "import": "./dist/esm/protocol-connect/index.js",
-      "require": "./dist/cjs/protocol-connect/index.js"
+      "import": {
+        "types": "./dist/esm/protocol-connect/index.d.ts",
+        "default": "./dist/esm/protocol-connect/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/protocol-connect/index.d.ts",
+        "default": "./dist/cjs/protocol-connect/index.js"
+      }
     },
     "./protocol-grpc": {
-      "types": "./dist/types/protocol-grpc/index.d.ts",
-      "import": "./dist/esm/protocol-grpc/index.js",
-      "require": "./dist/cjs/protocol-grpc/index.js"
+      "import": {
+        "types": "./dist/esm/protocol-grpc/index.d.ts",
+        "default": "./dist/esm/protocol-grpc/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/protocol-grpc/index.d.ts",
+        "default": "./dist/cjs/protocol-grpc/index.js"
+      }
     },
     "./protocol-grpc-web": {
-      "types": "./dist/types/protocol-grpc-web/index.d.ts",
-      "import": "./dist/esm/protocol-grpc-web/index.js",
-      "require": "./dist/cjs/protocol-grpc-web/index.js"
+      "import": {
+        "types": "./dist/esm/protocol-grpc-web/index.d.ts",
+        "default": "./dist/esm/protocol-grpc-web/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/protocol-grpc-web/index.d.ts",
+        "default": "./dist/cjs/protocol-grpc-web/index.js"
+      }
     }
   },
   "typesVersions": {
     "*": {
       "protocol": [
-        "./dist/types/protocol/index.d.ts"
+        "./dist/esm/protocol/index.d.ts"
       ],
       "protocol-connect": [
-        "./dist/types/protocol-connect/index.d.ts"
+        "./dist/esm/protocol-connect/index.d.ts"
       ],
       "protocol-grpc": [
-        "./dist/types/protocol-grpc/index.d.ts"
+        "./dist/esm/protocol-grpc/index.d.ts"
       ],
       "protocol-grpc-web": [
-        "./dist/types/protocol-grpc-web/index.d.ts"
+        "./dist/esm/protocol-grpc-web/index.d.ts"
       ]
     }
   },

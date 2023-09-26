@@ -8,19 +8,27 @@
     "directory": "packages/connect-node"
   },
   "scripts": {
-    "clean": "rm -rf ./dist/cjs/* ./dist/esm/* ./dist/types/*",
-    "build": "npm run build:cjs && npm run build:esm+types",
-    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
-    "build:esm+types": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/types",
-    "jasmine": "jasmine --config=jasmine.json"
+    "clean": "rm -rf ./dist/cjs/* ./dist/esm/*",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
+    "jasmine": "jasmine --config=jasmine.json",
+    "lint:types": "attw --pack"
   },
   "main": "./dist/cjs/index.js",
   "type": "module",
   "types": "./dist/types/index.d.ts",
   "exports": {
-    "types": "./dist/types/index.d.ts",
-    "import": "./dist/esm/index.js",
-    "require": "./dist/cjs/index.js"
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
   },
   "engines": {
     "node": ">=16.0.0"
