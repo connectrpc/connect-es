@@ -16,8 +16,8 @@
     "lint:types": "attw --pack"
   },
   "main": "./dist/cjs/index.js",
-  "type": "module",
   "types": "./dist/esm/index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
       "import": {
