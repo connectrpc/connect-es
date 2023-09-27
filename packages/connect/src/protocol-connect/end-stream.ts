@@ -21,7 +21,7 @@ import { errorFromJson, errorToJson } from "./error-json.js";
 import { appendHeaders } from "../http-headers.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import type { Serialization } from "../protocol";
+import type { Serialization } from "../protocol/serialization.js";
 
 /**
  * endStreamFlag indicates that the data in a EnvelopedMessage

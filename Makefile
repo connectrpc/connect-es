@@ -233,8 +233,15 @@ testconnectmigrate: $(BUILD)/connect-migrate
 	npm run -w packages/connect-migrate test
 
 .PHONY: lint
-lint: node_modules $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
+lint: node_modules $(BUILD)/connect $(BUILD)/connect-express $(BUILD)/connect-fastify $(BUILD)/connect-next $(BUILD)/connect-node $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
 	npx eslint --max-warnings 0 .
+	@# Check type exports on npm packages to verify they're correct
+	npm run -w packages/connect attw
+	npm run -w packages/connect-express attw
+	npm run -w packages/connect-fastify attw
+	npm run -w packages/connect-next attw
+	npm run -w packages/connect-node attw
+	npm run -w packages/connect-web attw
 
 .PHONY: format
 format: node_modules $(BIN)/license-header ## Format all files, adding license headers
