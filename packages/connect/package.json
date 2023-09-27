@@ -74,16 +74,16 @@
   "typesVersions": {
     "*": {
       "protocol": [
-        "./dist/esm/protocol/index.d.ts"
+        "./dist/cjs/protocol/index.d.ts"
       ],
       "protocol-connect": [
-        "./dist/esm/protocol-connect/index.d.ts"
+        "./dist/cjs/protocol-connect/index.d.ts"
       ],
       "protocol-grpc": [
-        "./dist/esm/protocol-grpc/index.d.ts"
+        "./dist/cjs/protocol-grpc/index.d.ts"
       ],
       "protocol-grpc-web": [
-        "./dist/esm/protocol-grpc-web/index.d.ts"
+        "./dist/cjs/protocol-grpc-web/index.d.ts"
       ]
     }
   },
