@@ -270,7 +270,7 @@ export function createConnectTransport(
       async function createRequestBody(
         input: AsyncIterable<I>,
       ): Promise<Uint8Array> {
-        if (method.kind != MethodKind.ServerStreaming) {
+        if (!TransformStream) {
           throw "The fetch API does not support streaming request bodies";
         }
         const r = await input[Symbol.asyncIterator]().next();
