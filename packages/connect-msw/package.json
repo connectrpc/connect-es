@@ -39,7 +39,7 @@
     "@connectrpc/connect-web": "0.13.2",
     "@types/jasmine": "^4.3.5",
     "jasmine": "^5.0.0",
-    "msw": "v0.0.0-fetch.rc-19"
+    "msw": "v0.0.0-fetch.rc-20"
   },
   "files": [
     "dist/**"

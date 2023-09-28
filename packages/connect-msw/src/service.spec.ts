@@ -16,6 +16,7 @@ import type {
 } from "@connectrpc/connect-web";
 import { Code, ConnectError, createPromiseClient } from "@connectrpc/connect";
 import type { ServiceImpl } from "@connectrpc/connect";
+import { createBypassOptions, passthrough } from "./create-worker-handlers.js";
 
 type MockConnectTransportOptions = Omit<ConnectTransportOptions, "baseUrl">;
 type ConnectTestDef = {
@@ -204,3 +205,60 @@ for (const testCase of allTestCases) {
     });
   });
 }
+
+it("handles bypassing the mock", async () => {
+  const { dispose, client } = createElizaMock({
+    protocol: "connect",
+    additionalMethods: {
+      say: () => {
+        return {
+          sentence: "Faked response",
+        };
+      },
+    },
+  });
+  try {
+    // Expect this to fail since the mock is bypassed. And will hit the real transport (and fail due to timeout)
+    await expectAsync(
+      client.say(
+        { sentence: "Bypassing msw mock" },
+        createBypassOptions({
+          timeoutMs: 10,
+        })
+      )
+    ).toBeRejectedWithError(ConnectError, /\[deadline_exceeded\]/);
+  } finally {
+    dispose();
+  }
+});
+
+it("handles passthrough", async () => {
+  const { dispose, client } = createElizaMock({
+    protocol: "connect",
+    additionalMethods: {
+      say: (req, ctx) => {
+        if (req.sentence === "Passthrough") {
+          return passthrough(ctx);
+        }
+        return {
+          sentence: "Hello again",
+        };
+      },
+    },
+  });
+  try {
+    // Expect this to fail since the mock is bypassed. And will hit the real transport (and fail due to timeout)
+    await expectAsync(
+      client.say(
+        { sentence: "Passthrough" },
+        {
+          timeoutMs: 10,
+        }
+      )
+    ).toBeRejectedWithError(ConnectError, /\[deadline_exceeded\]/);
+    const response = await client.say({ sentence: "Hello" });
+    expect(response.sentence).toBe("Hello again");
+  } finally {
+    dispose();
+  }
+});

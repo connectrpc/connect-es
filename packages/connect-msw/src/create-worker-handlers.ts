@@ -1,21 +1,49 @@
 import { MethodIdempotency } from "@bufbuild/protobuf";
-import type { ConnectRouter } from "@connectrpc/connect";
+import type {
+  CallOptions,
+  ConnectRouter,
+  HandlerContext,
+} from "@connectrpc/connect";
 import type { UniversalHandler } from "@connectrpc/connect/protocol";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, passthrough as mswPassthrough } from "msw";
 import type { RequestHandler, ResponseResolver } from "msw";
+
+export function passthrough(ctx: HandlerContext) {
+  ctx.responseHeader.append("x-passthrough", "true");
+  return {};
+}
+
+export function createBypassOptions(callOptions: CallOptions): CallOptions {
+  return {
+    ...callOptions,
+    headers: {
+      // We could make this more consistent with the exposed bypass() function provided by msw
+      // IFF we could specify interceptors on a request by request basis. At least in theory, bypass()
+      // works on a standard Request object so we'd need a converter from the interceptor UnaryRequest/StreamRequest
+      // to a standard request to pass it to bypass() and out again.
+      // Otherwise, we just need to make sure this keeps in sync with https://github.com/mswjs/msw/blob/8855956f561ad4afd4ce7ae6500ca706757bb5a9/src/core/bypass.ts
+      "x-msw-intention": "bypass",
+      ...callOptions.headers,
+    },
+  };
+}
 
 function createResponseResolver(handler: UniversalHandler): ResponseResolver {
   return async ({ request }) => {
-    const bodyGenerator = streamToAsyncIterator(request.body);
-
+    // Clone the request as it a passthrough may trigger a reuse of the request.
+    const clonedRequest = request.clone();
+    const bodyGenerator = streamToAsyncIterator(clonedRequest.body);
     const universalResult = await handler({
       body: bodyGenerator,
-      header: request.headers,
+      header: clonedRequest.headers,
       httpVersion: "2.0",
-      method: request.method,
-      signal: request.signal,
-      url: request.url,
+      method: clonedRequest.method,
+      signal: clonedRequest.signal,
+      url: clonedRequest.url,
     });
+    if (universalResult.header?.get("x-passthrough") === "true") {
+      return mswPassthrough();
+    }
 
     return new HttpResponse(
       universalResult.body === undefined
