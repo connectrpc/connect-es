@@ -247,7 +247,8 @@ it("handles passthrough", async () => {
     },
   });
   try {
-    // Expect this to fail since the mock is bypassed. And will hit the real transport (and fail due to timeout)
+    // Expect this to fail since the mock triggers a passthrough. The passthrough will cause it to hit the real server without an
+    // additional request.
     await expectAsync(
       client.say(
         { sentence: "Passthrough" },

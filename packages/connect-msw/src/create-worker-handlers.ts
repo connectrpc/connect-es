@@ -8,8 +8,10 @@ import type { UniversalHandler } from "@connectrpc/connect/protocol";
 import { http, HttpResponse, passthrough as mswPassthrough } from "msw";
 import type { RequestHandler, ResponseResolver } from "msw";
 
+const passthroughHeader = "x-passthrough";
+
 export function passthrough(ctx: HandlerContext) {
-  ctx.responseHeader.append("x-passthrough", "true");
+  ctx.responseHeader.append(passthroughHeader, "true");
   return {};
 }
 
@@ -41,7 +43,7 @@ function createResponseResolver(handler: UniversalHandler): ResponseResolver {
       signal: clonedRequest.signal,
       url: clonedRequest.url,
     });
-    if (universalResult.header?.get("x-passthrough") === "true") {
+    if (universalResult.header?.get(passthroughHeader) === "true") {
       return mswPassthrough();
     }
 
