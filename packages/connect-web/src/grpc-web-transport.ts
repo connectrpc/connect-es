@@ -22,7 +22,7 @@ import type {
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
-import { Message, MethodKind } from "@bufbuild/protobuf";
+import { Message } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamResponse,
