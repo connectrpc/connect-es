@@ -14,7 +14,7 @@
     "build": "npm run build:cjs && npm run build:esm && npm run build:proxy && node scripts/update-user-agent.mjs",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
-    "build:proxy": "node scripts/gen-proxy.mjs . protocol protocol-connect protocol-grpc protocol-grpc-web",
+    "build:proxy": "node ../../scripts/gen-esm-proxy.mjs . protocol protocol-connect protocol-grpc protocol-grpc-web",
     "jasmine": "jasmine --config=jasmine.json",
     "attw": "attw --pack"
   },
