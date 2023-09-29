@@ -16,7 +16,7 @@ import type {
 } from "@connectrpc/connect-web";
 import { Code, ConnectError, createPromiseClient } from "@connectrpc/connect";
 import type { ServiceImpl } from "@connectrpc/connect";
-import { createBypassOptions, passthrough } from "./create-worker-handlers.js";
+import { bypassFetch, passthrough } from "./create-worker-handlers.js";
 
 type MockConnectTransportOptions = Omit<ConnectTransportOptions, "baseUrl">;
 type ConnectTestDef = {
@@ -86,6 +86,7 @@ function createElizaMock({
           ...transportOptions,
         })
   );
+
   server.listen({ onUnhandledRequest: "error" });
   return {
     dispose: () => {
@@ -217,16 +218,26 @@ it("handles bypassing the mock", async () => {
       },
     },
   });
+  const bypassClient = createPromiseClient(
+    ElizaService,
+    createConnectTransport({
+      baseUrl: "https://example.com/api",
+      fetch: bypassFetch,
+    })
+  );
   try {
     // Expect this to fail since the mock is bypassed. And will hit the real transport (and fail due to timeout)
     await expectAsync(
-      client.say(
+      bypassClient.say(
         { sentence: "Bypassing msw mock" },
-        createBypassOptions({
+        {
           timeoutMs: 10,
-        })
+        }
       )
     ).toBeRejectedWithError(ConnectError, /\[deadline_exceeded\]/);
+    // This call will succeed since it uses the mock.
+    const response = await client.say({ sentence: "Hello" });
+    expect(response.sentence).toBe("Faked response");
   } finally {
     dispose();
   }
