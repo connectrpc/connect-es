@@ -14,6 +14,7 @@
 
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
+import { createLinkedAbortController } from "@connectrpc/connect/protocol";
 import type { ConnectRouter, ConnectRouterOptions } from "@connectrpc/connect";
 import * as protoConnect from "@connectrpc/connect/protocol-connect";
 import * as protoGrpcWeb from "@connectrpc/connect/protocol-grpc-web";
@@ -43,6 +44,17 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
    * Then pass this function here.
    */
   routes?: (router: ConnectRouter) => void;
+
+  /**
+   * If set, once `fastify.close` is called, waits for the requests to be finished for the specified duration
+   * before aborting them.
+   */
+  shutdownTimeout?: number;
+
+  /**
+   * The error to be returned for requests that couldn't complete within the shutdown period.
+   */
+  shutdownError?: unknown;
 }
 
 /**
@@ -59,6 +71,19 @@ export function fastifyConnectPlugin(
   }
   if (opts.acceptCompression === undefined) {
     opts.acceptCompression = [compressionGzip, compressionBrotli];
+  }
+  if (opts.shutdownTimeout !== undefined) {
+    const shutdownController = createLinkedAbortController(opts.shutdownSignal);
+    opts.shutdownSignal = shutdownController.signal;
+    instance.addHook("preClose", (done) => {
+      setTimeout(() => {
+        shutdownController.abort(
+          opts.shutdownError ??
+            new ConnectError("The request was aborted", Code.Aborted),
+        );
+      }, opts.shutdownTimeout);
+      done();
+    });
   }
   const router = createConnectRouter(opts);
   opts.routes(router);
