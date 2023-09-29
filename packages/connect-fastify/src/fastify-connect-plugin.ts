@@ -52,9 +52,9 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
   shutdownTimeoutMs?: number;
 
   /**
-   * The error to be returned for requests that couldn't complete within the shutdown period.
-   * 
-   * Defaults to a ConnectError with code `Code.Aborted`.
+   * The abort error caused by the shutdown timeout.
+   *
+   * If this is a ConnectError, it will be sent to the client.
    */
   shutdownError?: unknown;
 }
@@ -79,10 +79,7 @@ export function fastifyConnectPlugin(
     opts.shutdownSignal = shutdownController.signal;
     instance.addHook("preClose", (done) => {
       setTimeout(() => {
-        shutdownController.abort(
-          opts.shutdownError ??
-            new ConnectError("The request was aborted", Code.Aborted),
-        );
+        shutdownController.abort(opts.shutdownError);
       }, opts.shutdownTimeoutMs);
       done();
     });
