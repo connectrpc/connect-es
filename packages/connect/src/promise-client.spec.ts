@@ -17,16 +17,24 @@ import {
   createBiDiStreamingFn,
   createClientStreamingFn,
   createServerStreamingFn,
+  createUnaryFn,
 } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
 import type { HandlerContext } from "./implementation";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
+import { createContextKey, createContextValues } from "./context-values.js";
 
 const TestService = {
   typeName: "handwritten.TestService",
   methods: {
+    unaryMethod: {
+      name: "Unary",
+      I: Int32Value,
+      O: StringValue,
+      kind: MethodKind.Unary,
+    },
     clientStream: {
       name: "ClientStream",
       I: Int32Value,
@@ -47,6 +55,54 @@ const TestService = {
     },
   },
 } as const;
+
+const kString = createContextKey("foo");
+
+describe("createUnaryFn()", function () {
+  it("passes the context values to interceptors", async () => {
+    const input = new Int32Value({ value: 1 });
+
+    const output = new StringValue({ value: "yield 1" });
+    let interceptorCalled = false;
+
+    const transport = createRouterTransport(
+      ({ service }) => {
+        service(TestService, {
+          unaryMethod: (
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
+            _input: Int32Value,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
+            _context: HandlerContext,
+          ) => Promise.resolve(output),
+        });
+      },
+      {
+        transport: {
+          interceptors: [
+            (next) => {
+              return (req) => {
+                interceptorCalled = true;
+                expect(req.values.get(kString)).toBe("bar");
+                return next(req);
+              };
+            },
+          ],
+        },
+      },
+    );
+    const fn = createUnaryFn(
+      transport,
+      TestService,
+      TestService.methods.unaryMethod,
+    );
+    const res = await fn(input, {
+      values: createContextValues().set(kString, "bar"),
+    });
+    expect(res).toBeInstanceOf(StringValue);
+    expect(res.value).toEqual(output.value);
+    expect(interceptorCalled).toBe(true);
+  });
+});
 
 describe("createClientStreamingFn()", function () {
   it("works as expected on the happy path", async () => {
@@ -77,6 +133,56 @@ describe("createClientStreamingFn()", function () {
     );
     expect(res).toBeInstanceOf(StringValue);
     expect(res.value).toEqual(output.value);
+  });
+  it("passes the context values to interceptors", async () => {
+    const input = new Int32Value({ value: 1 });
+
+    const output = new StringValue({ value: "yield 1" });
+    const kString = createContextKey("foo");
+    let interceptorCalled = false;
+
+    const transport = createRouterTransport(
+      ({ service }) => {
+        service(TestService, {
+          clientStream: (
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
+            _input: AsyncIterable<Int32Value>,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
+            _context: HandlerContext,
+          ) => Promise.resolve(output),
+        });
+      },
+      {
+        transport: {
+          interceptors: [
+            (next) => {
+              return (req) => {
+                interceptorCalled = true;
+                expect(req.values.get(kString)).toBe("bar");
+                return next(req);
+              };
+            },
+          ],
+        },
+      },
+    );
+    const fn = createClientStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.clientStream,
+    );
+    const res = await fn(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      (async function* () {
+        yield input;
+      })(),
+      {
+        values: createContextValues().set(kString, "bar"),
+      },
+    );
+    expect(res).toBeInstanceOf(StringValue);
+    expect(res.value).toEqual(output.value);
+    expect(interceptorCalled).toBe(true);
   });
   it("closes the request iterable when response is received", async () => {
     const output = new StringValue({ value: "yield 1" });
@@ -182,6 +288,51 @@ describe("createServerStreamingFn()", function () {
     }
     expect(receivedMessages).toEqual(output);
   });
+  it("passes the context values to interceptors", async () => {
+    const output = [
+      new StringValue({ value: "input1" }),
+      new StringValue({ value: "input2" }),
+      new StringValue({ value: "input3" }),
+    ];
+    let interceptorCalled = false;
+    const transport = createRouterTransport(
+      ({ service }) => {
+        service(TestService, {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
+          serverStream: (_input: Int32Value, _context: HandlerContext) =>
+            createAsyncIterable(output),
+        });
+      },
+      {
+        transport: {
+          interceptors: [
+            (next) => {
+              return (req) => {
+                interceptorCalled = true;
+                expect(req.values.get(kString)).toBe("bar");
+                return next(req);
+              };
+            },
+          ],
+        },
+      },
+    );
+
+    const fn = createServerStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.serverStream,
+    );
+    const receivedMessages: StringValue[] = [];
+    const input = new Int32Value({ value: 123 });
+    for await (const res of fn(input, {
+      values: createContextValues().set(kString, "bar"),
+    })) {
+      receivedMessages.push(res);
+    }
+    expect(receivedMessages).toEqual(output);
+    expect(interceptorCalled).toBeTrue();
+  });
   it("doesn't support throw/return on the returned response", function () {
     const fn = createServerStreamingFn(
       createRouterTransport(({ service }) => {
@@ -231,6 +382,57 @@ describe("createBiDiStreamingFn()", () => {
     }
     expect(index).toBe(3);
     expect(bidiIndex).toBe(3);
+  });
+  it("passes the context values to interceptors", async () => {
+    const values = [123, 456, 789];
+
+    const input = createAsyncIterable(
+      values.map((value) => new Int32Value({ value })),
+    );
+    let interceptorCalled = false;
+    let bidiIndex = 0;
+    const transport = createRouterTransport(
+      ({ service }) => {
+        service(TestService, {
+          bidiStream: async function* (input: AsyncIterable<Int32Value>) {
+            for await (const thing of input) {
+              expect(thing.value).toBe(values[bidiIndex]);
+              bidiIndex += 1;
+              yield new StringValue({ value: thing.value.toString() });
+            }
+          },
+        });
+      },
+      {
+        transport: {
+          interceptors: [
+            (next) => {
+              return (req) => {
+                interceptorCalled = true;
+                expect(req.values.get(kString)).toBe("bar");
+                return next(req);
+              };
+            },
+          ],
+        },
+      },
+    );
+    const fn = createBiDiStreamingFn(
+      transport,
+      TestService,
+      TestService.methods.bidiStream,
+    );
+
+    let index = 0;
+    for await (const res of fn(input, {
+      values: createContextValues().set(kString, "bar"),
+    })) {
+      expect(res).toEqual(new StringValue({ value: values[index].toString() }));
+      index += 1;
+    }
+    expect(index).toBe(3);
+    expect(bidiIndex).toBe(3);
+    expect(interceptorCalled).toBeTrue();
   });
   it("closes the request iterable when response is received", async () => {
     const values = [123, 456, 789];

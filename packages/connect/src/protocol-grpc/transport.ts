@@ -46,6 +46,8 @@ import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
 import type { CommonTransportOptions } from "../protocol/transport-options.js";
 import type { Transport } from "../transport.js";
+import { createContextValues } from "../context-values.js";
+import type { ContextValues } from "../context-values.js";
 
 /**
  * Create a Transport for the gRPC protocol.
@@ -62,6 +64,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>,
+      values?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
@@ -92,6 +95,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.acceptCompression,
             opt.sendCompression,
           ),
+          values: values ?? createContextValues(),
           message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
@@ -168,6 +172,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
+      values?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
@@ -198,6 +203,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.acceptCompression,
             opt.sendCompression,
           ),
+          values: values ?? createContextValues(),
           message: input,
         },
         next: async (req: StreamRequest<I, O>) => {

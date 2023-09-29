@@ -20,6 +20,7 @@ import type {
   ServiceType,
 } from "@bufbuild/protobuf";
 import type { StreamResponse, UnaryResponse } from "./interceptor.js";
+import type { ContextValues } from "./context-values.js";
 
 /**
  * Transport represents the underlying transport for a client.
@@ -38,6 +39,7 @@ export interface Transport {
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
     input: PartialMessage<I>,
+    values?: ContextValues,
   ): Promise<UnaryResponse<I, O>>;
 
   /**
@@ -51,5 +53,6 @@ export interface Transport {
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
     input: AsyncIterable<PartialMessage<I>>,
+    values?: ContextValues,
   ): Promise<StreamResponse<I, O>>;
 }

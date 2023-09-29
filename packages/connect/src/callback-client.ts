@@ -99,6 +99,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
         options.timeoutMs,
         options.headers,
         requestMessage,
+        options.values,
       )
       .then(
         (response) => {
@@ -146,6 +147,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
         options.timeoutMs,
         options.headers,
         createAsyncIterable([input]),
+        options.values,
       );
       options.onHeader?.(response.header);
       for await (const message of response.message) {
