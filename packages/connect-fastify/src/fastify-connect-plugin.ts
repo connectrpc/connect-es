@@ -53,6 +53,8 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
 
   /**
    * The error to be returned for requests that couldn't complete within the shutdown period.
+   * 
+   * Defaults to a ConnectError with code `Code.Aborted`.
    */
   shutdownError?: unknown;
 }
