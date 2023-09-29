@@ -14,6 +14,7 @@
 
 import type { PartialMessage, MessageType } from "@bufbuild/protobuf";
 import { Message } from "@bufbuild/protobuf";
+import { isProtobufMessage } from "./is-protobuf-message.js";
 
 /**
  *  Takes a partial protobuf messages of the
@@ -23,7 +24,7 @@ export function normalize<T extends Message<T>>(
   type: MessageType<T>,
   message: T | PartialMessage<T>,
 ) {
-  return message instanceof Message ? message : new type(message);
+  return isProtobufMessage(message) ? message : new type(message);
 }
 
 /**

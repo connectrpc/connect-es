@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, protoBase64 } from "@bufbuild/protobuf";
 import type {
   JsonObject,
   JsonValue,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
+import { protoBase64 } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import { codeFromString, codeToString } from "./code-string.js";
+import { isProtobufMessage } from "../protocol/is-protobuf-message.js";
 
 /**
  * Parse a Connect error from a JSON value.
@@ -132,7 +133,7 @@ export function errorToJson(
     };
     o.details = error.details
       .map((value) => {
-        if (value instanceof Message) {
+        if (isProtobufMessage(value)) {
           const i: IncomingDetail = {
             type: value.getType().typeName,
             value: value.toBinary(),

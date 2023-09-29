@@ -33,6 +33,7 @@ export { runUnaryCall, runStreamingCall } from "./run-call.js";
 // following exports, we recommend that you do so with an exact version
 // constraint (no ~ or ^).
 
+export { isProtobufMessage } from "./is-protobuf-message.js";
 export {
   createMethodSerializationLookup,
   createClientMethodSerializers,

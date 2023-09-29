@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Any, Message } from "@bufbuild/protobuf";
+import { Any } from "@bufbuild/protobuf";
 import { Status } from "./gen/status_pb.js";
 import { ConnectError } from "../connect-error.js";
 import { decodeBinaryHeader, encodeBinaryHeader } from "../http-headers.js";
@@ -22,6 +22,7 @@ import {
   headerGrpcStatus,
   headerStatusDetailsBin,
 } from "./headers.js";
+import { isProtobufMessage } from "../protocol/is-protobuf-message.js";
 
 /**
  * The value of the Grpc-Status header or trailer in case of success.
@@ -52,7 +53,7 @@ export function setTrailerStatus(
         code: error.code,
         message: error.rawMessage,
         details: error.details.map((value) =>
-          value instanceof Message
+          isProtobufMessage(value)
             ? Any.pack(value)
             : new Any({
                 typeUrl: `type.googleapis.com/${value.type}`,
