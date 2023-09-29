@@ -3,3 +3,4 @@
 /dist/*/**/*.spec.js
 /dist/*/**/*.spec.d.ts
 /buf.gen.yaml
+/scripts/update-user-agent.mjs
