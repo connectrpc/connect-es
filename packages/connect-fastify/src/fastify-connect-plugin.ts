@@ -49,7 +49,7 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
    * If set, once `fastify.close` is called, waits for the requests to be finished for the specified duration
    * before aborting them.
    */
-  shutdownTimeout?: number;
+  shutdownTimeoutMs?: number;
 
   /**
    * The error to be returned for requests that couldn't complete within the shutdown period.
@@ -74,7 +74,7 @@ export function fastifyConnectPlugin(
   if (opts.acceptCompression === undefined) {
     opts.acceptCompression = [compressionGzip, compressionBrotli];
   }
-  if (opts.shutdownTimeout !== undefined) {
+  if (opts.shutdownTimeoutMs !== undefined) {
     const shutdownController = createLinkedAbortController(opts.shutdownSignal);
     opts.shutdownSignal = shutdownController.signal;
     instance.addHook("preClose", (done) => {
@@ -83,7 +83,7 @@ export function fastifyConnectPlugin(
           opts.shutdownError ??
             new ConnectError("The request was aborted", Code.Aborted),
         );
-      }, opts.shutdownTimeout);
+      }, opts.shutdownTimeoutMs);
       done();
     });
   }
