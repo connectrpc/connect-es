@@ -38,11 +38,11 @@ package.json must contain:
   "exports": {
     ".": {
       "require": "./dist/cjs/index.js",
-      "import": "./dist/esmfake/index.js"
+      "import": "./dist/proxy/index.js"
     },
     "./protocol": {
       "require": "./dist/cjs/foo/index.js",
-      "import": "./dist/esmfake/foo/index.js"
+      "import": "./dist/proxy/foo/index.js"
     },
 
 Known limitations:
