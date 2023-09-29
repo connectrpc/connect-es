@@ -120,4 +120,11 @@ export interface CommonTransportOptions {
    * available, on side-effect free methods. Defaults to false.
    */
   useHttpGet?: boolean;
+
+  /**
+   * The timeout in milliseconds to apply to all requests.
+   *
+   * This can be overridden on a per-request basis by passing a timeoutMs.
+   */
+  defaultTimeoutMs?: number;
 }

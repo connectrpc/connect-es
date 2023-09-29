@@ -112,6 +112,13 @@ export interface ConnectTransportOptions {
    * available, on side-effect free methods. Defaults to false.
    */
   useHttpGet?: boolean;
+
+  /**
+   * The timeout in milliseconds to apply to all requests.
+   *
+   * This can be overridden on a per-request basis by passing a timeoutMs.
+   */
+  defaultTimeoutMs?: number;
 }
 
 /**
@@ -132,7 +139,7 @@ export function createConnectTransport(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
-      timeoutMs: number | undefined,
+      timeoutMs: number | undefined | null,
       header: HeadersInit | undefined,
       message: PartialMessage<I>,
     ): Promise<UnaryResponse<I, O>> {
@@ -142,6 +149,10 @@ export function createConnectTransport(
         options.jsonOptions,
         options.binaryOptions,
       );
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs ?? undefined;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -226,7 +237,7 @@ export function createConnectTransport(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
-      timeoutMs: number | undefined,
+      timeoutMs: number | undefined | null,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
     ): Promise<StreamResponse<I, O>> {
@@ -280,6 +291,10 @@ export function createConnectTransport(
         return encodeEnvelope(0, serialize(r.value));
       }
 
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs ?? undefined;
       return await runStreamingCall<I, O>({
         interceptors: options.interceptors,
         timeoutMs,

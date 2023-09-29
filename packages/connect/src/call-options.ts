@@ -19,8 +19,10 @@
 export interface CallOptions {
   /**
    * Timeout in milliseconds.
+   *
+   * Set to `null` to disable the default timeout.
    */
-  timeoutMs?: number;
+  timeoutMs?: number | null;
 
   /**
    * Custom headers to send with the request.

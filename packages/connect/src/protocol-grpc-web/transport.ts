@@ -60,7 +60,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
-      timeoutMs: number | undefined,
+      timeoutMs: number | undefined | null,
       header: HeadersInit | undefined,
       message: PartialMessage<I>,
     ): Promise<UnaryResponse<I, O>> {
@@ -70,6 +70,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt,
       );
+      timeoutMs =
+        timeoutMs === undefined ? opt.defaultTimeoutMs : timeoutMs ?? undefined;
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -183,7 +185,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
-      timeoutMs: number | undefined,
+      timeoutMs: number | undefined | null,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
     ): Promise<StreamResponse<I, O>> {
@@ -193,6 +195,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt,
       );
+      timeoutMs =
+        timeoutMs === undefined ? opt.defaultTimeoutMs : timeoutMs ?? undefined;
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
         signal,

@@ -102,6 +102,13 @@ export interface GrpcWebTransportOptions {
    * Optional override of the fetch implementation used by the transport.
    */
   fetch?: typeof globalThis.fetch;
+
+  /**
+   * The timeout in milliseconds to apply to all requests.
+   *
+   * This can be overridden on a per-request basis by passing a timeoutMs.
+   */
+  defaultTimeoutMs?: number;
 }
 
 /**
@@ -127,7 +134,7 @@ export function createGrpcWebTransport(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
-      timeoutMs: number | undefined,
+      timeoutMs: number | undefined | null,
       header: Headers,
       message: PartialMessage<I>,
     ): Promise<UnaryResponse<I, O>> {
@@ -137,6 +144,10 @@ export function createGrpcWebTransport(
         options.jsonOptions,
         options.binaryOptions,
       );
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs ?? undefined;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -217,7 +228,7 @@ export function createGrpcWebTransport(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
-      timeoutMs: number | undefined,
+      timeoutMs: number | undefined | null,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
     ): Promise<StreamResponse<I, O>> {
@@ -288,7 +299,10 @@ export function createGrpcWebTransport(
         }
         return encodeEnvelope(0, serialize(r.value));
       }
-
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs ?? undefined;
       return runStreamingCall<I, O>({
         interceptors: options.interceptors,
         signal,
