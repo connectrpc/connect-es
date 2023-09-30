@@ -21,7 +21,6 @@ import {
 } from "./v0.13.1";
 import { PackageJson } from "../lib/package-json";
 import { MigrateOptions } from "../migration";
-import packageJson from "../../package.json";
 
 describe("dependencyReplacements", function () {
   dependencyReplacements.forEach((r, index) => {
@@ -179,7 +178,7 @@ describe("migration", function () {
       expect(packageJsonWritten.length).toBe(1);
       expect(packageJsonWritten[0].pkg).toEqual({
         dependencies: {
-          "@connectrpc/connect": "^" + packageJson.version,
+          "@connectrpc/connect": "^1.0.0-rc1",
         },
       });
       expect(lockFilesUpdated.length).toBe(1);

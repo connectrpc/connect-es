@@ -2,7 +2,6 @@
   "include": ["src/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "esModuleInterop": true, // required for jscodeshift
-    "resolveJsonModule": true // required for read package.json
+    "esModuleInterop": true // required for jscodeshift
   }
 }
