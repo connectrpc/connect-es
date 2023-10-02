@@ -134,7 +134,7 @@ export function createGrpcWebTransport(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
-      timeoutMs: number | undefined | null,
+      timeoutMs: number | undefined,
       header: Headers,
       message: PartialMessage<I>,
     ): Promise<UnaryResponse<I, O>> {
@@ -147,7 +147,9 @@ export function createGrpcWebTransport(
       timeoutMs =
         timeoutMs === undefined
           ? options.defaultTimeoutMs
-          : timeoutMs ?? undefined;
+          : timeoutMs <= 0
+          ? undefined
+          : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -228,7 +230,7 @@ export function createGrpcWebTransport(
       service: ServiceType,
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
-      timeoutMs: number | undefined | null,
+      timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
     ): Promise<StreamResponse<I, O>> {
@@ -302,7 +304,9 @@ export function createGrpcWebTransport(
       timeoutMs =
         timeoutMs === undefined
           ? options.defaultTimeoutMs
-          : timeoutMs ?? undefined;
+          : timeoutMs <= 0
+          ? undefined
+          : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: options.interceptors,
         signal,

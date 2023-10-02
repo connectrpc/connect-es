@@ -35,7 +35,7 @@ export interface Transport {
     service: ServiceType,
     method: MethodInfo<I, O>,
     signal: AbortSignal | undefined,
-    timeoutMs: number | undefined | null,
+    timeoutMs: number | undefined,
     header: HeadersInit | undefined,
     input: PartialMessage<I>,
   ): Promise<UnaryResponse<I, O>>;
@@ -48,7 +48,7 @@ export interface Transport {
     service: ServiceType,
     method: MethodInfo<I, O>,
     signal: AbortSignal | undefined,
-    timeoutMs: number | undefined | null,
+    timeoutMs: number | undefined,
     header: HeadersInit | undefined,
     input: AsyncIterable<PartialMessage<I>>,
   ): Promise<StreamResponse<I, O>>;
