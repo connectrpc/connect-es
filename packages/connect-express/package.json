@@ -33,7 +33,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@types/express": "^4.17.17"
+    "@types/express": "^4.17.18"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1",
