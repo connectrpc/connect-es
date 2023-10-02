@@ -14,7 +14,11 @@
 
 import type { JsonValue } from "@bufbuild/protobuf";
 import { createConnectRouter, Code, ConnectError } from "@connectrpc/connect";
-import type { ConnectRouter, ConnectRouterOptions } from "@connectrpc/connect";
+import type {
+  ConnectRouter,
+  ConnectRouterOptions,
+  ContextValues,
+} from "@connectrpc/connect";
 import type { UniversalHandler } from "@connectrpc/connect/protocol";
 import {
   compressionBrotli,
@@ -48,6 +52,11 @@ interface ExpressConnectMiddlewareOptions extends ConnectRouterOptions {
    * Note that many gRPC client implementations do not allow for prefixes.
    */
   requestPathPrefix?: string;
+  /**
+   * Context values to extract from the request. These values are passed to
+   * the handlers.
+   */
+  contextValues?: (req: express.Request) => ContextValues;
 }
 
 /**
@@ -76,7 +85,11 @@ export function expressConnectMiddleware(
     if (!uHandler) {
       return next();
     }
-    const uReq = universalRequestFromNodeRequest(req, getPreparsedBody(req));
+    const uReq = universalRequestFromNodeRequest(
+      req,
+      getPreparsedBody(req),
+      options.contextValues?.(req),
+    );
     uHandler(uReq)
       .then((uRes) => universalResponseToNodeResponse(uRes, res))
       .catch((reason) => {

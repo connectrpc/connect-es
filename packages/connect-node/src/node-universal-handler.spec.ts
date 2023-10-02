@@ -33,7 +33,11 @@ describe("universalRequestFromNodeRequest()", function () {
     const server = useNodeServer(() => {
       serverRequest = undefined;
       return http2.createServer(function (request) {
-        serverRequest = universalRequestFromNodeRequest(request, undefined);
+        serverRequest = universalRequestFromNodeRequest(
+          request,
+          undefined,
+          undefined,
+        );
       });
     });
     async function request(rstCode: number) {
@@ -173,7 +177,11 @@ describe("universalRequestFromNodeRequest()", function () {
           requestTimeout: 0,
         },
         function (request) {
-          serverRequest = universalRequestFromNodeRequest(request, undefined);
+          serverRequest = universalRequestFromNodeRequest(
+            request,
+            undefined,
+            undefined,
+          );
         },
       );
       // For some reason, the type definitions for ServerOptions do not include
@@ -259,7 +267,11 @@ describe("universalRequestFromNodeRequest()", function () {
           requestTimeout: 0,
         },
         function (request, response) {
-          serverRequest = universalRequestFromNodeRequest(request, undefined);
+          serverRequest = universalRequestFromNodeRequest(
+            request,
+            undefined,
+            undefined,
+          );
           response.writeHead(200);
           response.end();
         },

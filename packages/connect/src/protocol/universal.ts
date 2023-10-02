@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { JsonValue } from "@bufbuild/protobuf";
+import type { ContextValues } from "../context-values.js";
 
 /**
  * A minimal abstraction of an HTTP client.
@@ -65,6 +66,7 @@ export interface UniversalServerRequest {
    */
   body: AsyncIterable<Uint8Array> | JsonValue;
   signal: AbortSignal;
+  values?: ContextValues;
 }
 
 /**

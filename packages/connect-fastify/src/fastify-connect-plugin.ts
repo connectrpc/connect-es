@@ -14,7 +14,11 @@
 
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
-import type { ConnectRouter, ConnectRouterOptions } from "@connectrpc/connect";
+import type {
+  ConnectRouter,
+  ConnectRouterOptions,
+  ContextValues,
+} from "@connectrpc/connect";
 import * as protoConnect from "@connectrpc/connect/protocol-connect";
 import * as protoGrpcWeb from "@connectrpc/connect/protocol-grpc-web";
 import * as protoGrpc from "@connectrpc/connect/protocol-grpc";
@@ -25,6 +29,7 @@ import {
   universalResponseToNodeResponse,
 } from "@connectrpc/connect-node";
 import type { FastifyInstance } from "fastify/types/instance";
+import type { FastifyRequest } from "fastify/types/request";
 
 interface FastifyConnectPluginOptions extends ConnectRouterOptions {
   /**
@@ -43,6 +48,11 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
    * Then pass this function here.
    */
   routes?: (router: ConnectRouter) => void;
+  /**
+   * Context values to extract from the request. These values are passed to
+   * the handlers.
+   */
+  contextValues?: (req: FastifyRequest) => ContextValues;
 }
 
 /**
@@ -83,6 +93,7 @@ export function fastifyConnectPlugin(
             universalRequestFromNodeRequest(
               req.raw,
               req.body as JsonValue | undefined,
+              opts.contextValues?.(req),
             ),
           );
           // Fastify maintains response headers on the reply object and only moves them to
