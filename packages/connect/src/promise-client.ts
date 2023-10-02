@@ -90,7 +90,7 @@ export function createUnaryFn<I extends Message<I>, O extends Message<O>>(
       options?.timeoutMs,
       options?.headers,
       input,
-      options?.values,
+      options?.contextValues,
     );
     options?.onHeader?.(response.header);
     options?.onTrailer?.(response.trailer);
@@ -124,7 +124,7 @@ export function createServerStreamingFn<
         options?.timeoutMs,
         options?.headers,
         createAsyncIterable([input]),
-        options?.values,
+        options?.contextValues,
       ),
       options,
     );
@@ -159,7 +159,7 @@ export function createClientStreamingFn<
       options?.timeoutMs,
       options?.headers,
       request,
-      options?.values,
+      options?.contextValues,
     );
     options?.onHeader?.(response.header);
     let singleMessage: O | undefined;
@@ -206,7 +206,7 @@ export function createBiDiStreamingFn<
         options?.timeoutMs,
         options?.headers,
         request,
-        options?.values,
+        options?.contextValues,
       ),
       options,
     );

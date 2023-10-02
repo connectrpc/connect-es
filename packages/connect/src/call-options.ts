@@ -50,5 +50,5 @@ export interface CallOptions {
   /**
    * ContextValues to pass to the interceptors.
    */
-  values?: ContextValues;
+  contextValues?: ContextValues;
 }

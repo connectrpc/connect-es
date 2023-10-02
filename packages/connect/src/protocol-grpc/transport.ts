@@ -95,7 +95,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.acceptCompression,
             opt.sendCompression,
           ),
-          values: values ?? createContextValues(),
+          contextValues: values ?? createContextValues(),
           message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
@@ -203,7 +203,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.acceptCompression,
             opt.sendCompression,
           ),
-          values: values ?? createContextValues(),
+          contextValues: values ?? createContextValues(),
           message: input,
         },
         next: async (req: StreamRequest<I, O>) => {

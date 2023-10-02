@@ -178,7 +178,7 @@ export function createConnectTransport(
             timeoutMs,
             header,
           ),
-          values: values ?? createContextValues(),
+          contextValues: values ?? createContextValues(),
           message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
@@ -324,7 +324,7 @@ export function createConnectTransport(
             timeoutMs,
             header,
           ),
-          values: values ?? createContextValues(),
+          contextValues: values ?? createContextValues(),
           message: input,
         },
         next: async (req) => {

@@ -169,7 +169,7 @@ interface RequestCommon<I extends Message<I>, O extends Message<O>> {
   /**
    * The context values for the current call.
    */
-  readonly values: ContextValues;
+  readonly contextValues: ContextValues;
 }
 
 interface ResponseCommon<I extends Message<I>, O extends Message<O>> {

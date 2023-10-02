@@ -52,7 +52,7 @@ describe("runUnaryCall()", function () {
       init: {},
       header: new Headers(),
       message: { value: 123 },
-      values: createContextValues(),
+      contextValues: createContextValues(),
     };
   }
 
@@ -135,7 +135,7 @@ describe("runStreamingCall()", function () {
       init: {},
       header: new Headers(),
       message: createAsyncIterable([{ value: 1 }, { value: 2 }, { value: 3 }]),
-      values: createContextValues(),
+      contextValues: createContextValues(),
     };
   }
 

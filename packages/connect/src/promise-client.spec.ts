@@ -82,7 +82,7 @@ describe("createUnaryFn()", function () {
             (next) => {
               return (req) => {
                 interceptorCalled = true;
-                expect(req.values.get(kString)).toBe("bar");
+                expect(req.contextValues.get(kString)).toBe("bar");
                 return next(req);
               };
             },
@@ -96,7 +96,7 @@ describe("createUnaryFn()", function () {
       TestService.methods.unaryMethod,
     );
     const res = await fn(input, {
-      values: createContextValues().set(kString, "bar"),
+      contextValues: createContextValues().set(kString, "bar"),
     });
     expect(res).toBeInstanceOf(StringValue);
     expect(res.value).toEqual(output.value);
@@ -158,7 +158,7 @@ describe("createClientStreamingFn()", function () {
             (next) => {
               return (req) => {
                 interceptorCalled = true;
-                expect(req.values.get(kString)).toBe("bar");
+                expect(req.contextValues.get(kString)).toBe("bar");
                 return next(req);
               };
             },
@@ -177,7 +177,7 @@ describe("createClientStreamingFn()", function () {
         yield input;
       })(),
       {
-        values: createContextValues().set(kString, "bar"),
+        contextValues: createContextValues().set(kString, "bar"),
       },
     );
     expect(res).toBeInstanceOf(StringValue);
@@ -309,7 +309,7 @@ describe("createServerStreamingFn()", function () {
             (next) => {
               return (req) => {
                 interceptorCalled = true;
-                expect(req.values.get(kString)).toBe("bar");
+                expect(req.contextValues.get(kString)).toBe("bar");
                 return next(req);
               };
             },
@@ -326,7 +326,7 @@ describe("createServerStreamingFn()", function () {
     const receivedMessages: StringValue[] = [];
     const input = new Int32Value({ value: 123 });
     for await (const res of fn(input, {
-      values: createContextValues().set(kString, "bar"),
+      contextValues: createContextValues().set(kString, "bar"),
     })) {
       receivedMessages.push(res);
     }
@@ -409,7 +409,7 @@ describe("createBiDiStreamingFn()", () => {
             (next) => {
               return (req) => {
                 interceptorCalled = true;
-                expect(req.values.get(kString)).toBe("bar");
+                expect(req.contextValues.get(kString)).toBe("bar");
                 return next(req);
               };
             },
@@ -425,7 +425,7 @@ describe("createBiDiStreamingFn()", () => {
 
     let index = 0;
     for await (const res of fn(input, {
-      values: createContextValues().set(kString, "bar"),
+      contextValues: createContextValues().set(kString, "bar"),
     })) {
       expect(res).toEqual(new StringValue({ value: values[index].toString() }));
       index += 1;
