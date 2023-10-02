@@ -19,6 +19,8 @@
 export interface CallOptions {
   /**
    * Timeout in milliseconds.
+   *
+   * Set to <= 0 to disable the default timeout.
    */
   timeoutMs?: number;
 
