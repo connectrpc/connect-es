@@ -39,7 +39,7 @@ export interface Transport {
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
     input: PartialMessage<I>,
-    values?: ContextValues,
+    contextValues?: ContextValues,
   ): Promise<UnaryResponse<I, O>>;
 
   /**
@@ -53,6 +53,6 @@ export interface Transport {
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
     input: AsyncIterable<PartialMessage<I>>,
-    values?: ContextValues,
+    contextValues?: ContextValues,
   ): Promise<StreamResponse<I, O>>;
 }

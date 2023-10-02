@@ -18,7 +18,7 @@ import type {
   MethodInfo,
   ServiceType,
 } from "@bufbuild/protobuf";
-import type { ContextValues } from "./context-values";
+import type { ContextValues } from "./context-values.js";
 
 /**
  * An interceptor can add logic to clients, similar to the decorators

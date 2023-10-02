@@ -139,7 +139,7 @@ export function createGrpcWebTransport(
       timeoutMs: number | undefined,
       header: Headers,
       message: PartialMessage<I>,
-      values?: ContextValues,
+      contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -169,7 +169,7 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           header: requestHeader(useBinaryFormat, timeoutMs, header),
-          contextValues: values ?? createContextValues(),
+          contextValues: contextValues ?? createContextValues(),
           message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
@@ -237,7 +237,7 @@ export function createGrpcWebTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
-      values?: ContextValues,
+      contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -328,7 +328,7 @@ export function createGrpcWebTransport(
             mode: "cors",
           },
           header: requestHeader(useBinaryFormat, timeoutMs, header),
-          contextValues: values ?? createContextValues(),
+          contextValues: contextValues ?? createContextValues(),
           message: input,
         },
         next: async (req) => {
