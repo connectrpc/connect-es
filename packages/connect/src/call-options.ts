@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ContextValues } from "./context-values";
+import type { ContextValues } from "./context-values.js";
 
 /**
  * Options for a call. Every client should accept CallOptions as optional
