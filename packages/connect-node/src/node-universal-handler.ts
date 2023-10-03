@@ -127,7 +127,7 @@ export function universalRequestFromNodeRequest(
     header: nodeHeaderToWebHeader(nodeRequest.headers),
     body,
     signal: abortController.signal,
-    values: contextValues,
+    contextValues: contextValues,
   };
 }
 
