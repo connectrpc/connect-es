@@ -16,6 +16,7 @@ import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "http2";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { ConnectError } from "@connectrpc/connect";
+import { Worker } from "worker_threads";
 
 describe("Http2SessionManager", function () {
   const serverSessions: http2.ServerHttp2Session[] = [];
@@ -166,6 +167,24 @@ describe("Http2SessionManager", function () {
       );
       sm.abort();
       expect(sm.state()).toBe("closed");
+    });
+    it("verify should keep the process alive", async function () {
+      const worker = new Worker(
+        "./dist/cjs/testdata/http2-session-manager-verify-ping.js",
+        {
+          workerData: server.getUrl(),
+        },
+      );
+      worker.once("error", (err) => {
+        fail(err);
+      });
+      await expectAsync(
+        new Promise<string>((resolve) => {
+          worker.once("message", (message) => {
+            resolve(message as string);
+          });
+        }),
+      ).toBeResolvedTo("done");
     });
     it("should open a new connection if verification for the old one fails", async function () {
       const sm = new Http2SessionManager(server.getUrl(), {
