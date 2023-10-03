@@ -70,6 +70,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt,
       );
+      timeoutMs =
+        timeoutMs === undefined
+          ? opt.defaultTimeoutMs
+          : timeoutMs <= 0
+          ? undefined
+          : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -193,6 +199,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt,
       );
+      timeoutMs =
+        timeoutMs === undefined
+          ? opt.defaultTimeoutMs
+          : timeoutMs <= 0
+          ? undefined
+          : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
         signal,

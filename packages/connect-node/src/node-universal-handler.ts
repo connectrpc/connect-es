@@ -29,6 +29,7 @@ import {
   connectErrorFromH2ResetCode,
   connectErrorFromNodeReason,
 } from "./node-error.js";
+import type { ContextValues } from "@connectrpc/connect";
 
 /**
  * NodeHandlerFn is compatible with http.RequestListener and its equivalent
@@ -73,6 +74,7 @@ export type NodeServerResponse = (
 export function universalRequestFromNodeRequest(
   nodeRequest: NodeServerRequest,
   parsedJsonBody: JsonValue | undefined,
+  contextValues: ContextValues | undefined,
 ): UniversalServerRequest {
   const encrypted =
     "encrypted" in nodeRequest.socket && nodeRequest.socket.encrypted;
@@ -125,6 +127,7 @@ export function universalRequestFromNodeRequest(
     header: nodeHeaderToWebHeader(nodeRequest.headers),
     body,
     signal: abortController.signal,
+    values: contextValues,
   };
 }
 
