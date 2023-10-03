@@ -14,6 +14,7 @@
 
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
+import { createLinkedAbortController } from "@connectrpc/connect/protocol";
 import type {
   ConnectRouter,
   ConnectRouterOptions,
@@ -48,6 +49,19 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
    * Then pass this function here.
    */
   routes?: (router: ConnectRouter) => void;
+
+  /**
+   * If set, once `fastify.close` is called, waits for the requests to be finished for the specified duration
+   * before aborting them.
+   */
+  shutdownTimeoutMs?: number;
+
+  /**
+   * The abort error caused by the shutdown timeout.
+   *
+   * If this is a ConnectError, it will be sent to the client.
+   */
+  shutdownError?: unknown;
   /**
    * Context values to extract from the request. These values are passed to
    * the handlers.
@@ -69,6 +83,16 @@ export function fastifyConnectPlugin(
   }
   if (opts.acceptCompression === undefined) {
     opts.acceptCompression = [compressionGzip, compressionBrotli];
+  }
+  if (opts.shutdownTimeoutMs !== undefined) {
+    const shutdownController = createLinkedAbortController(opts.shutdownSignal);
+    opts.shutdownSignal = shutdownController.signal;
+    instance.addHook("preClose", (done) => {
+      setTimeout(() => {
+        shutdownController.abort(opts.shutdownError);
+      }, opts.shutdownTimeoutMs);
+      done();
+    });
   }
   const router = createConnectRouter(opts);
   opts.routes(router);
