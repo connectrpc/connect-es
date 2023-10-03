@@ -140,7 +140,7 @@ interface HandlerContextInit {
   requestHeader?: HeadersInit;
   responseHeader?: HeadersInit;
   responseTrailer?: HeadersInit;
-  values?: ContextValues;
+  contextValues?: ContextValues;
 }
 
 interface HandlerContextController extends HandlerContext {
@@ -181,7 +181,7 @@ export function createHandlerContext(
       deadline.cleanup();
       abortController.abort(reason);
     },
-    values: init.values ?? createContextValues(),
+    values: init.contextValues ?? createContextValues(),
   };
 }
 

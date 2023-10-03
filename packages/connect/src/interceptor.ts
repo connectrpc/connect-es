@@ -18,6 +18,7 @@ import type {
   MethodInfo,
   ServiceType,
 } from "@bufbuild/protobuf";
+import type { ContextValues } from "./context-values.js";
 
 /**
  * An interceptor can add logic to clients, similar to the decorators
@@ -164,6 +165,11 @@ interface RequestCommon<I extends Message<I>, O extends Message<O>> {
    * Headers that will be sent along with the request.
    */
   readonly header: Headers;
+
+  /**
+   * The context values for the current call.
+   */
+  readonly contextValues: ContextValues;
 }
 
 interface ResponseCommon<I extends Message<I>, O extends Message<O>> {

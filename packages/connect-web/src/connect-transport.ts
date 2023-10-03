@@ -30,8 +30,9 @@ import type {
   Transport,
   UnaryRequest,
   UnaryResponse,
+  ContextValues,
 } from "@connectrpc/connect";
-import { appendHeaders } from "@connectrpc/connect";
+import { appendHeaders, createContextValues } from "@connectrpc/connect";
 import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
@@ -142,6 +143,7 @@ export function createConnectTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>,
+      contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -176,6 +178,7 @@ export function createConnectTransport(
             timeoutMs,
             header,
           ),
+          contextValues: contextValues ?? createContextValues(),
           message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
@@ -242,6 +245,7 @@ export function createConnectTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
+      contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -320,6 +324,7 @@ export function createConnectTransport(
             timeoutMs,
             header,
           ),
+          contextValues: contextValues ?? createContextValues(),
           message: input,
         },
         next: async (req) => {

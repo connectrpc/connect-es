@@ -77,7 +77,7 @@ type UnaryFn<I extends Message<I>, O extends Message<O>> = (
   options?: CallOptions,
 ) => Promise<O>;
 
-function createUnaryFn<I extends Message<I>, O extends Message<O>>(
+export function createUnaryFn<I extends Message<I>, O extends Message<O>>(
   transport: Transport,
   service: ServiceType,
   method: MethodInfo<I, O>,
@@ -90,6 +90,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
       options?.timeoutMs,
       options?.headers,
       input,
+      options?.contextValues,
     );
     options?.onHeader?.(response.header);
     options?.onTrailer?.(response.trailer);
@@ -123,6 +124,7 @@ export function createServerStreamingFn<
         options?.timeoutMs,
         options?.headers,
         createAsyncIterable([input]),
+        options?.contextValues,
       ),
       options,
     );
@@ -157,6 +159,7 @@ export function createClientStreamingFn<
       options?.timeoutMs,
       options?.headers,
       request,
+      options?.contextValues,
     );
     options?.onHeader?.(response.header);
     let singleMessage: O | undefined;
@@ -203,6 +206,7 @@ export function createBiDiStreamingFn<
         options?.timeoutMs,
         options?.headers,
         request,
+        options?.contextValues,
       ),
       options,
     );

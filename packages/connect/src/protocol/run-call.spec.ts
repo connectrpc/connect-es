@@ -22,6 +22,7 @@ import type {
   UnaryResponse,
 } from "../interceptor.js";
 import { createAsyncIterable } from "./async-iterable.js";
+import { createContextValues } from "../context-values.js";
 
 const TestService = {
   typeName: "TestService",
@@ -51,6 +52,7 @@ describe("runUnaryCall()", function () {
       init: {},
       header: new Headers(),
       message: { value: 123 },
+      contextValues: createContextValues(),
     };
   }
 
@@ -133,6 +135,7 @@ describe("runStreamingCall()", function () {
       init: {},
       header: new Headers(),
       message: createAsyncIterable([{ value: 1 }, { value: 2 }, { value: 3 }]),
+      contextValues: createContextValues(),
     };
   }
 

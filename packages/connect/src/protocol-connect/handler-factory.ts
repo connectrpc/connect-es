@@ -195,7 +195,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
           ? contentTypeUnaryProto
           : contentTypeUnaryJson,
       },
-      values: req.values,
+      contextValues: req.contextValues,
     });
     const compression = compressionNegotiate(
       opt.acceptCompression,
@@ -380,7 +380,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
           ? contentTypeStreamProto
           : contentTypeStreamJson,
       },
-      values: req.values,
+      contextValues: req.contextValues,
     });
     const compression = compressionNegotiate(
       opt.acceptCompression,
