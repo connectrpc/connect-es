@@ -647,8 +647,12 @@ function ready(
       resetPingInterval();
     },
     ping() {
+      conn.ref();
       return new Promise<boolean>((resolve) => {
-        commonPing(() => resolve(true));
+        commonPing(() => {
+          if (streamCount == 0) conn.unref();
+          resolve(true);
+        });
         conn.once("error", () => resolve(false));
       });
     },
