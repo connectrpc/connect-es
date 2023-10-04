@@ -17,8 +17,8 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@connectrpc/connect-web": "1.0.0",
-    "@connectrpc/connect": "1.0.0",
+    "@connectrpc/connect-web": "1.1.0",
+    "@connectrpc/connect": "1.1.0",
     "@types/jasmine": "^4.3.5",
     "esbuild": "^0.16.12",
     "jasmine": "^5.0.0",
