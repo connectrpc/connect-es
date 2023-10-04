@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Type-safe APIs with Protobuf and TypeScript.",
   "license": "Apache-2.0",
   "repository": {
