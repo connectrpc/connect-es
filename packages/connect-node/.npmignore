@@ -2,3 +2,4 @@
 /*.json
 /dist/*/**/*.spec.js
 /dist/*/**/*.spec.d.ts
+/dist/*/testdata/
