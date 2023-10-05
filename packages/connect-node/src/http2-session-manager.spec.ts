@@ -186,6 +186,58 @@ describe("Http2SessionManager", function () {
         }),
       ).toBeResolvedTo("done");
     });
+    it("state should closed after verify", async function () {
+      const sm = new Http2SessionManager(server.getUrl(), {
+        pingIntervalMs: 10, // intentionally short to trigger verification in tests
+      });
+
+      // issue a request and close it, then wait for more than pingIntervalMs to trigger a verification
+      const req1 = await sm.request("POST", "/", {}, {});
+      const req1Session = req1.session;
+      await new Promise<void>((resolve) =>
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      expect(sm.state())
+        .withContext("connection state after issuing a request and closing it")
+        .toBe("idle");
+      await new Promise<void>((resolve) => setTimeout(resolve, 30));
+
+      // issue another request, which should verify the connection first with successful PING within timeout
+      serverReceivedPings.splice(0);
+      const req2Promise = sm.request("POST", "/", {}, {});
+      expect(sm.state())
+        .withContext("connection unused for more than verifyAgeMs")
+        .toBe("verifying");
+      const req2 = await req2Promise;
+      expect(serverReceivedPings.length)
+        .withContext("server received ping for verification")
+        .toBeGreaterThan(0);
+      expect(sm.state())
+        .withContext("connection after verification")
+        .toBe("open");
+      expect(req1Session === req2.session)
+        .withContext(
+          "connection for second request is re-using connection from first request",
+        )
+        .toBeTrue();
+
+      let req2Error: unknown;
+      req2.on("error", (err) => (req2Error = err as unknown));
+      expect(serverSessions.length).toBe(1);
+      serverSessions[0].close();
+      await new Promise<void>((resolve) => setTimeout(resolve, 10));
+      expect(String(req2Error))
+        .withContext("node automatically destroys streams on close")
+        .toBe(
+          "Error [ERR_HTTP2_STREAM_ERROR]: Stream closed with error code NGHTTP2_REFUSED_STREAM",
+        );
+      expect(sm.state())
+        .withContext("connection state after closing session")
+        .toBe("closed");
+      // clean up
+      sm.abort();
+      expect(sm.state()).toBe("closed");
+    });
     it("should open a new connection if verification for the old one fails", async function () {
       const sm = new Http2SessionManager(server.getUrl(), {
         pingTimeoutMs: 0, // intentionally unsatisfiable
