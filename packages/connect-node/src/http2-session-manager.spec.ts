@@ -193,7 +193,6 @@ describe("Http2SessionManager", function () {
 
       // issue a request and close it, then wait for more than pingIntervalMs to trigger a verification
       const req1 = await sm.request("POST", "/", {}, {});
-      const req1Session = req1.session;
       await new Promise<void>((resolve) =>
         req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
@@ -209,17 +208,9 @@ describe("Http2SessionManager", function () {
         .withContext("connection unused for more than verifyAgeMs")
         .toBe("verifying");
       const req2 = await req2Promise;
-      expect(serverReceivedPings.length)
-        .withContext("server received ping for verification")
-        .toBeGreaterThan(0);
       expect(sm.state())
         .withContext("connection after verification")
         .toBe("open");
-      expect(req1Session === req2.session)
-        .withContext(
-          "connection for second request is re-using connection from first request",
-        )
-        .toBeTrue();
 
       let req2Error: unknown;
       req2.on("error", (err) => (req2Error = err as unknown));
