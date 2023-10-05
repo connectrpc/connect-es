@@ -186,7 +186,7 @@ describe("Http2SessionManager", function () {
         }),
       ).toBeResolvedTo("done");
     });
-    it("state should closed after verify", async function () {
+    it("conn should response to session events after verify", async function () {
       const sm = new Http2SessionManager(server.getUrl(), {
         pingIntervalMs: 10, // intentionally short to trigger verification in tests
       });
