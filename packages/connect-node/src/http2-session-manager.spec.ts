@@ -186,6 +186,42 @@ describe("Http2SessionManager", function () {
         }),
       ).toBeResolvedTo("done");
     });
+    it("conn should response to session events after verify", async function () {
+      const sm = new Http2SessionManager(server.getUrl(), {
+        pingIntervalMs: 10, // intentionally short to trigger verification in tests
+      });
+
+      // issue a request and close it, then wait for more than pingIntervalMs to trigger a verification
+      const req1 = await sm.request("POST", "/", {}, {});
+      await new Promise<void>((resolve) =>
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      expect(sm.state())
+        .withContext("connection state after issuing a request and closing it")
+        .toBe("idle");
+      await new Promise<void>((resolve) => setTimeout(resolve, 30));
+
+      // issue another request, which should verify the connection first with successful PING within timeout
+      serverReceivedPings.splice(0);
+      const connectPromise = sm.connect();
+      expect(sm.state())
+        .withContext("connection unused for more than verifyAgeMs")
+        .toBe("verifying");
+      await connectPromise;
+      expect(sm.state())
+        .withContext("connection after verification")
+        .toBe("idle");
+
+      expect(serverSessions.length).toBe(1);
+      serverSessions[0].close();
+      await new Promise<void>((resolve) => setTimeout(resolve, 10));
+      expect(sm.state())
+        .withContext("connection state after closing session")
+        .toBe("closed");
+      // clean up
+      sm.abort();
+      expect(sm.state()).toBe("closed");
+    });
     it("should open a new connection if verification for the old one fails", async function () {
       const sm = new Http2SessionManager(server.getUrl(), {
         pingTimeoutMs: 0, // intentionally unsatisfiable

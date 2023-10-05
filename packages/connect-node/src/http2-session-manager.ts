@@ -123,6 +123,9 @@ export class Http2SessionManager {
    */
   state(): "closed" | "connecting" | "open" | "idle" | "verifying" | "error" {
     if (this.s.t == "ready") {
+      if (this.verifying !== undefined) {
+        return "verifying";
+      }
       return this.s.streamCount() > 0 ? "open" : "idle";
     }
     return this.s.t;
@@ -139,12 +142,7 @@ export class Http2SessionManager {
     return undefined;
   }
 
-  private s:
-    | StateClosed
-    | StateError
-    | StateConnecting
-    | StateVerifying
-    | StateReady = closed();
+  private s: StateClosed | StateError | StateConnecting | StateReady = closed();
 
   private shuttingDown: StateReady[] = [];
 
@@ -154,6 +152,8 @@ export class Http2SessionManager {
     | undefined;
 
   private readonly options: Required<Http2SessionOptions>;
+
+  private verifying: Promise<void> | undefined;
 
   public constructor(
     authority: URL | string,
@@ -271,14 +271,7 @@ export class Http2SessionManager {
       ) {
         this.setState(connect(this.authority, this.http2SessionOptions));
       } else if (this.s.requiresVerify()) {
-        this.setState(
-          verify(
-            this.s,
-            this.options,
-            this.authority,
-            this.http2SessionOptions,
-          ),
-        );
+        await this.verify(this.s);
       }
     } else if (this.s.t == "closed" || this.s.t == "error") {
       this.setState(connect(this.authority, this.http2SessionOptions));
@@ -290,21 +283,13 @@ export class Http2SessionManager {
       if (this.s.t === "connecting") {
         await this.s.conn;
       }
-      if (this.s.t === "verifying") {
-        await this.s.verified;
-      }
     }
     return this.s;
   }
 
   private setState(
     this: Http2SessionManager,
-    state:
-      | StateClosed
-      | StateError
-      | StateConnecting
-      | StateVerifying
-      | StateReady,
+    state: StateClosed | StateError | StateConnecting | StateReady,
   ): void {
     this.s.onExitState?.();
     if (this.s.t == "ready" && this.s.isShuttingDown()) {
@@ -329,16 +314,6 @@ export class Http2SessionManager {
           },
         );
         break;
-      case "verifying":
-        state.verified.then(
-          (value) => {
-            this.setState(value);
-          },
-          (reason) => {
-            this.setState(closedOrError(reason));
-          },
-        );
-        break;
       case "ready":
         state.onClose = () => this.setState(closed());
         state.onError = (err) => this.setState(closedOrError(err));
@@ -349,6 +324,30 @@ export class Http2SessionManager {
         break;
     }
     this.s = state;
+  }
+
+  private verify(stateReady: StateReady): Promise<void> {
+    if (this.verifying !== undefined) {
+      return this.verifying;
+    }
+    this.verifying = stateReady
+      .verify()
+      .then(
+        (success) => {
+          if (success) {
+            return;
+          }
+          // verify() has destroyed the old connection
+          this.setState(connect(this.authority, this.http2SessionOptions));
+        },
+        (reason) => {
+          this.setState(closedOrError(reason));
+        },
+      )
+      .finally(() => {
+        this.verifying = undefined;
+      });
+    return this.verifying;
   }
 }
 
@@ -470,41 +469,6 @@ function connect(
   } satisfies StateConnecting;
 }
 
-interface StateVerifying extends StateCommon {
-  readonly t: "verifying";
-
-  /**
-   * The existing connection (StateReady) if it has been successfully verified
-   * with a PING frame. A new connection otherwise.
-   */
-  readonly verified: Promise<StateReady | StateConnecting>;
-}
-
-export function verify(
-  stateReady: StateReady,
-  options: Required<Http2SessionOptions>,
-  authority: string,
-  http2SessionOptions:
-    | http2.ClientSessionOptions
-    | http2.SecureClientSessionOptions
-    | undefined,
-): StateVerifying {
-  const verified = stateReady.ping().then((success) => {
-    if (success) {
-      return stateReady;
-    }
-    // ping() has destroyed the old connection
-    return connect(authority, http2SessionOptions);
-  });
-  return {
-    t: "verifying",
-    verified,
-    abort(reason) {
-      stateReady.abort?.(reason);
-    },
-  };
-}
-
 interface StateReady extends StateCommon {
   readonly t: "ready";
 
@@ -550,10 +514,10 @@ interface StateReady extends StateCommon {
   responseByteRead(stream: http2.ClientHttp2Stream): void;
 
   /**
-   * Send a PING frame, resolve to true if it is responded to in time, resolve
+   * Verify the connection by sending a PING frame, resolve to true if it is responded to in time, resolve
    * to false otherwise (and closes the connection).
    */
-  ping(): Promise<boolean>;
+  verify(): Promise<boolean>;
 
   /**
    * Called when the connection closes without error.
@@ -646,7 +610,7 @@ function ready(
       lastAliveAt = Date.now();
       resetPingInterval();
     },
-    ping() {
+    verify() {
       conn.ref();
       return new Promise<boolean>((resolve) => {
         commonPing(() => {
