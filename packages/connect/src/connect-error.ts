@@ -21,7 +21,6 @@ import type {
 } from "@bufbuild/protobuf";
 import { Message } from "@bufbuild/protobuf";
 import { codeToString } from "./protocol-connect/code-string.js";
-import { isProtobufMessage } from "./protocol/is-protobuf-message.js";
 
 /**
  * ConnectError captures four pieces of information: a Code, an error
@@ -153,7 +152,7 @@ export class ConnectError extends Error {
         : typeOrRegistry;
     const details: AnyMessage[] = [];
     for (const data of this.details) {
-      if (isProtobufMessage(data)) {
+      if (data instanceof Message) {
         if (registry.findMessage(data.getType().typeName)) {
           details.push(data);
         }

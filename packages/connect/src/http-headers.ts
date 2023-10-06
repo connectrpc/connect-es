@@ -16,7 +16,6 @@ import type { BinaryReadOptions, MessageType } from "@bufbuild/protobuf";
 import { Message, protoBase64 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
-import { isProtobufMessage } from "./protocol/is-protobuf-message.js";
 
 /**
  * Encode a single binary header value according to the Connect
@@ -31,7 +30,7 @@ export function encodeBinaryHeader(
   value: Uint8Array | ArrayBufferLike | Message | string,
 ): string {
   let bytes: Uint8Array;
-  if (isProtobufMessage(value)) {
+  if (value instanceof Message) {
     bytes = value.toBinary();
   } else if (typeof value == "string") {
     bytes = new TextEncoder().encode(value);
