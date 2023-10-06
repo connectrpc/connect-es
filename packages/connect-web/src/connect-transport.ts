@@ -30,8 +30,9 @@ import type {
   Transport,
   UnaryRequest,
   UnaryResponse,
+  ContextValues,
 } from "@connectrpc/connect";
-import { appendHeaders } from "@connectrpc/connect";
+import { appendHeaders, createContextValues } from "@connectrpc/connect";
 import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
@@ -112,6 +113,13 @@ export interface ConnectTransportOptions {
    * available, on side-effect free methods. Defaults to false.
    */
   useHttpGet?: boolean;
+
+  /**
+   * The timeout in milliseconds to apply to all requests.
+   *
+   * This can be overridden on a per-request basis by passing a timeoutMs.
+   */
+  defaultTimeoutMs?: number;
 }
 
 /**
@@ -135,6 +143,7 @@ export function createConnectTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>,
+      contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -142,6 +151,12 @@ export function createConnectTransport(
         options.jsonOptions,
         options.binaryOptions,
       );
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs <= 0
+          ? undefined
+          : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -163,6 +178,7 @@ export function createConnectTransport(
             timeoutMs,
             header,
           ),
+          contextValues: contextValues ?? createContextValues(),
           message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
@@ -229,6 +245,7 @@ export function createConnectTransport(
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
+      contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
         method,
@@ -280,6 +297,12 @@ export function createConnectTransport(
         return encodeEnvelope(0, serialize(r.value));
       }
 
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs <= 0
+          ? undefined
+          : timeoutMs;
       return await runStreamingCall<I, O>({
         interceptors: options.interceptors,
         timeoutMs,
@@ -301,6 +324,7 @@ export function createConnectTransport(
             timeoutMs,
             header,
           ),
+          contextValues: contextValues ?? createContextValues(),
           message: input,
         },
         next: async (req) => {

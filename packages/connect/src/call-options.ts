@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { ContextValues } from "./context-values.js";
+
 /**
  * Options for a call. Every client should accept CallOptions as optional
  * argument in its RPC methods.
@@ -19,6 +21,8 @@
 export interface CallOptions {
   /**
    * Timeout in milliseconds.
+   *
+   * Set to <= 0 to disable the default timeout.
    */
   timeoutMs?: number;
 
@@ -42,4 +46,9 @@ export interface CallOptions {
    * Called when response trailers are received.
    */
   onTrailer?(trailers: Headers): void;
+
+  /**
+   * ContextValues to pass to the interceptors.
+   */
+  contextValues?: ContextValues;
 }

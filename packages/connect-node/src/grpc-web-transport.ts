@@ -113,6 +113,13 @@ type GrpcWebTransportOptions = NodeTransportOptions & {
    * The default limit is the maximum supported value of ~4GiB.
    */
   writeMaxBytes?: number;
+
+  /**
+   * The timeout in milliseconds to apply to all requests.
+   *
+   * This can be overridden on a per-request basis by passing a timeoutMs.
+   */
+  defaultTimeoutMs?: number;
 };
 
 /**

@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-web",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -27,7 +27,7 @@
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1",
-    "@connectrpc/connect": "1.0.0"
+    "@connectrpc/connect": "1.1.1"
   },
   "files": [
     "dist/**"

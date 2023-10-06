@@ -16,6 +16,8 @@ import * as http2 from "http2";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
 import type { PartialMessage } from "@bufbuild/protobuf";
 import {
+  createContextKey,
+  createContextValues,
   createPromiseClient,
   createRouterTransport,
 } from "@connectrpc/connect";
@@ -174,6 +176,56 @@ describe("node readme", function () {
       const res = await client.say({ sentence: "I feel happy." });
       // console.log(res.sentence) // you said: I feel happy.
       expect(res.sentence).toBe("you said: I feel happy.");
+    }
+
+    const server = await startServer();
+    await runClient();
+    server.close();
+  });
+
+  it("using context value", async function () {
+    let port = -1;
+
+    const kUser = createContextKey<string | undefined>(undefined);
+    function routes(router: ConnectRouter) {
+      router.rpc(
+        ElizaService,
+        ElizaService.methods.say,
+        async (req, { values }) => ({
+          sentence: `Hey ${values.get(kUser)}! You said: ${req.sentence}`,
+        }),
+      );
+    }
+
+    function startServer() {
+      return new Promise<http2.Http2Server>((resolve) => {
+        const handler = connectNodeAdapter({
+          routes,
+          contextValues: (req) =>
+            createContextValues().set(kUser, req.headers["x-user"]),
+        });
+        const server = http2.createServer(handler).listen(0, () => {
+          const a = server.address();
+          if (a !== null && typeof a !== "string") {
+            port = a.port;
+          }
+          resolve(server);
+        });
+      });
+    }
+
+    async function runClient() {
+      const transport = createGrpcTransport({
+        baseUrl: `http://localhost:${port}`,
+        httpVersion: "2",
+      });
+      const client = createPromiseClient(ElizaService, transport);
+      const res = await client.say(
+        { sentence: "I feel happy." },
+        { headers: { "x-user": "alice" } },
+      );
+      // console.log(res.sentence) // Hey alice! You said: I feel happy.
+      expect(res.sentence).toBe("Hey alice! You said: I feel happy.");
     }
 
     const server = await startServer();

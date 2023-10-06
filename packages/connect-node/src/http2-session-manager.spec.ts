@@ -16,6 +16,7 @@ import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "http2";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { ConnectError } from "@connectrpc/connect";
+import { Worker } from "worker_threads";
 
 describe("Http2SessionManager", function () {
   const serverSessions: http2.ServerHttp2Session[] = [];
@@ -164,6 +165,60 @@ describe("Http2SessionManager", function () {
       await new Promise<void>((resolve) =>
         req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
+      sm.abort();
+      expect(sm.state()).toBe("closed");
+    });
+    it("verify should keep the process alive", async function () {
+      const worker = new Worker(
+        "./dist/cjs/testdata/http2-session-manager-verify-ping.js",
+        {
+          workerData: server.getUrl(),
+        },
+      );
+      worker.once("error", (err) => {
+        fail(err);
+      });
+      await expectAsync(
+        new Promise<string>((resolve) => {
+          worker.once("message", (message) => {
+            resolve(message as string);
+          });
+        }),
+      ).toBeResolvedTo("done");
+    });
+    it("conn should response to session events after verify", async function () {
+      const sm = new Http2SessionManager(server.getUrl(), {
+        pingIntervalMs: 10, // intentionally short to trigger verification in tests
+      });
+
+      // issue a request and close it, then wait for more than pingIntervalMs to trigger a verification
+      const req1 = await sm.request("POST", "/", {}, {});
+      await new Promise<void>((resolve) =>
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      expect(sm.state())
+        .withContext("connection state after issuing a request and closing it")
+        .toBe("idle");
+      await new Promise<void>((resolve) => setTimeout(resolve, 30));
+
+      // issue another request, which should verify the connection first with successful PING within timeout
+      serverReceivedPings.splice(0);
+      const connectPromise = sm.connect();
+      expect(sm.state())
+        .withContext("connection unused for more than verifyAgeMs")
+        .toBe("verifying");
+      await connectPromise;
+      expect(sm.state())
+        .withContext("connection after verification")
+        .toBe("idle");
+
+      expect(serverSessions.length).toBe(1);
+      serverSessions[0].close();
+      await new Promise<void>((resolve) => setTimeout(resolve, 10));
+      expect(sm.state())
+        .withContext("connection state after closing session")
+        .toBe("closed");
+      // clean up
       sm.abort();
       expect(sm.state()).toBe("closed");
     });

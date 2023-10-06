@@ -47,6 +47,8 @@ import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
 import type { CommonTransportOptions } from "../protocol/transport-options.js";
 import type { Transport } from "../transport.js";
+import { createContextValues } from "../context-values.js";
+import type { ContextValues } from "../context-values.js";
 
 /**
  * Create a Transport for the gRPC-web protocol.
@@ -63,6 +65,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       message: PartialMessage<I>,
+      contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
@@ -70,6 +73,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt,
       );
+      timeoutMs =
+        timeoutMs === undefined
+          ? opt.defaultTimeoutMs
+          : timeoutMs <= 0
+          ? undefined
+          : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -87,6 +96,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.acceptCompression,
             opt.sendCompression,
           ),
+          contextValues: contextValues ?? createContextValues(),
           message,
         },
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
@@ -186,6 +196,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
       input: AsyncIterable<PartialMessage<I>>,
+      contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
         method,
@@ -193,6 +204,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt,
       );
+      timeoutMs =
+        timeoutMs === undefined
+          ? opt.defaultTimeoutMs
+          : timeoutMs <= 0
+          ? undefined
+          : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -214,6 +231,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             opt.acceptCompression,
             opt.sendCompression,
           ),
+          contextValues: contextValues ?? createContextValues(),
           message: input,
         },
         next: async (req: StreamRequest<I, O>) => {

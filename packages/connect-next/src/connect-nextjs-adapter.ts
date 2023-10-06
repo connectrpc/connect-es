@@ -13,7 +13,11 @@
 // limitations under the License.
 
 import { createConnectRouter } from "@connectrpc/connect";
-import type { ConnectRouter, ConnectRouterOptions } from "@connectrpc/connect";
+import type {
+  ConnectRouter,
+  ConnectRouterOptions,
+  ContextValues,
+} from "@connectrpc/connect";
 import type { UniversalHandler } from "@connectrpc/connect/protocol";
 import {
   compressionBrotli,
@@ -56,6 +60,11 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
    * This is `/api` by default for Next.js.
    */
   prefix?: string;
+  /**
+   * Context values to extract from the request. These values are passed to
+   * the handlers.
+   */
+  contextValues?: (req: NextApiRequest) => ContextValues;
 }
 
 /**
@@ -84,7 +93,11 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
     }
     try {
       const uRes = await uHandler(
-        universalRequestFromNodeRequest(req, req.body as JsonValue | undefined),
+        universalRequestFromNodeRequest(
+          req,
+          req.body as JsonValue | undefined,
+          options.contextValues?.(req),
+        ),
       );
       await universalResponseToNodeResponse(uRes, res);
     } catch (e) {

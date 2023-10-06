@@ -42,6 +42,8 @@ export { createConnectRouter } from "./router.js";
 export type { ConnectRouter, ConnectRouterOptions } from "./router.js";
 export { createHandlerContext } from "./implementation.js";
 export { cors } from "./cors.js";
+export { createContextKey, createContextValues } from "./context-values.js";
+export type { ContextKey, ContextValues } from "./context-values.js";
 
 // Symbols above should be relevant to end users.
 // Symbols below should only be relevant for other libraries.

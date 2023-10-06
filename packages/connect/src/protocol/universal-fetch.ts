@@ -60,7 +60,12 @@ export function createFetchHandler(
   return Object.assign(handleFetch, uHandler);
 }
 
-function universalClientRequestToFetch(req: UniversalClientRequest): Request {
+/**
+ * Convert a universal client request to a fetch request.
+ */
+export function universalClientRequestToFetch(
+  req: UniversalClientRequest,
+): Request {
   const body =
     req.body === undefined ? null : iterableToReadableStream(req.body);
   return new Request(req.url, {
@@ -71,7 +76,10 @@ function universalClientRequestToFetch(req: UniversalClientRequest): Request {
   });
 }
 
-function universalClientResponseFromFetch(
+/**
+ * Convert a fetch response to a universal client response.
+ */
+export function universalClientResponseFromFetch(
   res: Response,
 ): UniversalClientResponse {
   return {
@@ -82,7 +90,10 @@ function universalClientResponseFromFetch(
   };
 }
 
-function universalServerRequestFromFetch(
+/**
+ * Convert a fetch request to a universal server request.
+ */
+export function universalServerRequestFromFetch(
   req: Request,
   options: FetchHandlerOptions,
 ): UniversalServerRequest {
@@ -96,7 +107,10 @@ function universalServerRequestFromFetch(
   };
 }
 
-function universalServerResponseToFetch(
+/**
+ * Convert a universal server response to a fetch response.
+ */
+export function universalServerResponseToFetch(
   res: UniversalServerResponse,
 ): Response {
   let body: ReadableStream<Uint8Array> | null = null;

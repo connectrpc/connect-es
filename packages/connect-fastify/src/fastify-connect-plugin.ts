@@ -14,7 +14,12 @@
 
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
-import type { ConnectRouter, ConnectRouterOptions } from "@connectrpc/connect";
+import { createLinkedAbortController } from "@connectrpc/connect/protocol";
+import type {
+  ConnectRouter,
+  ConnectRouterOptions,
+  ContextValues,
+} from "@connectrpc/connect";
 import * as protoConnect from "@connectrpc/connect/protocol-connect";
 import * as protoGrpcWeb from "@connectrpc/connect/protocol-grpc-web";
 import * as protoGrpc from "@connectrpc/connect/protocol-grpc";
@@ -25,6 +30,7 @@ import {
   universalResponseToNodeResponse,
 } from "@connectrpc/connect-node";
 import type { FastifyInstance } from "fastify/types/instance";
+import type { FastifyRequest } from "fastify/types/request";
 
 interface FastifyConnectPluginOptions extends ConnectRouterOptions {
   /**
@@ -43,6 +49,24 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
    * Then pass this function here.
    */
   routes?: (router: ConnectRouter) => void;
+
+  /**
+   * If set, once `fastify.close` is called, waits for the requests to be finished for the specified duration
+   * before aborting them.
+   */
+  shutdownTimeoutMs?: number;
+
+  /**
+   * The abort error caused by the shutdown timeout.
+   *
+   * If this is a ConnectError, it will be sent to the client.
+   */
+  shutdownError?: unknown;
+  /**
+   * Context values to extract from the request. These values are passed to
+   * the handlers.
+   */
+  contextValues?: (req: FastifyRequest) => ContextValues;
 }
 
 /**
@@ -59,6 +83,16 @@ export function fastifyConnectPlugin(
   }
   if (opts.acceptCompression === undefined) {
     opts.acceptCompression = [compressionGzip, compressionBrotli];
+  }
+  if (opts.shutdownTimeoutMs !== undefined) {
+    const shutdownController = createLinkedAbortController(opts.shutdownSignal);
+    opts.shutdownSignal = shutdownController.signal;
+    instance.addHook("preClose", (done) => {
+      setTimeout(() => {
+        shutdownController.abort(opts.shutdownError);
+      }, opts.shutdownTimeoutMs);
+      done();
+    });
   }
   const router = createConnectRouter(opts);
   opts.routes(router);
@@ -83,6 +117,7 @@ export function fastifyConnectPlugin(
             universalRequestFromNodeRequest(
               req.raw,
               req.body as JsonValue | undefined,
+              opts.contextValues?.(req),
             ),
           );
           // Fastify maintains response headers on the reply object and only moves them to

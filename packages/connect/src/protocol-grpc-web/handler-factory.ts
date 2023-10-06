@@ -137,6 +137,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       responseTrailer: {
         [headerGrpcStatus]: grpcStatusOk,
       },
+      contextValues: req.contextValues,
     });
     const compression = compressionNegotiate(
       opt.acceptCompression,
