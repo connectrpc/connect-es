@@ -178,7 +178,7 @@ describe("migration", function () {
       expect(packageJsonWritten.length).toBe(1);
       expect(packageJsonWritten[0].pkg).toEqual({
         dependencies: {
-          "@connectrpc/connect": "^1.1.0",
+          "@connectrpc/connect": "^1.1.1",
         },
       });
       expect(lockFilesUpdated.length).toBe(1);

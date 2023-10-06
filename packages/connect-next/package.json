@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-next",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -35,8 +35,8 @@
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.2.1",
     "next": "^13.2.4",
-    "@connectrpc/connect": "1.1.0",
-    "@connectrpc/connect-node": "1.1.0"
+    "@connectrpc/connect": "1.1.1",
+    "@connectrpc/connect-node": "1.1.1"
   },
   "files": [
     "dist/**"

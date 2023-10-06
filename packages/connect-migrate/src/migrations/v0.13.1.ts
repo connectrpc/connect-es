@@ -26,7 +26,7 @@ import { migrateSourceFiles } from "../lib/migrate-source-files";
 import { migratePackages } from "../lib/migrate-packages";
 import { migrateLockFiles } from "../lib/migrate-lock-files";
 
-export const targetVersionConnectEs = "1.1.0";
+export const targetVersionConnectEs = "1.1.1";
 export const targetVersionConnectQuery = "0.5.1";
 
 /**
