@@ -20,7 +20,7 @@ import {
 } from "@bufbuild/connect";
 import type { CallOptions } from "@bufbuild/connect";
 import { describeTransports } from "./helpers/crosstestserver.js";
-import { TestService } from "./gen/grpc/testing/test_connect.js";
+import { TestService } from "./gen/connectrpc/conformance/v1/test_connect.js";
 
 describe("explicit cancellation with AbortController", function () {
   const abort = new AbortController();

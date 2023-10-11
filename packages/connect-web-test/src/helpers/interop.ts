@@ -16,7 +16,7 @@ import {
   ErrorDetail,
   Payload,
   PayloadType,
-} from "../gen/grpc/testing/messages_pb.js";
+} from "../gen/connectrpc/conformance/v1/messages_pb.js";
 
 export const interop = {
   /**
@@ -29,7 +29,7 @@ export const interop = {
    */
   errorDetail: new ErrorDetail({
     reason: "soirée 🎉",
-    domain: "connect-crosstest",
+    domain: "connect-conformance",
   }),
 
   leadingMetadataKey: "x-grpc-test-echo-initial",

@@ -22,8 +22,8 @@ import {
   createPromiseClient,
   encodeBinaryHeader,
 } from "@bufbuild/connect";
-import { TestService } from "./gen/grpc/testing/test_connect.js";
-import { StreamingOutputCallRequest } from "./gen/grpc/testing/messages_pb.js";
+import { TestService } from "./gen/connectrpc/conformance/v1/test_connect.js";
+import { StreamingOutputCallRequest } from "./gen/connectrpc/conformance/v1/messages_pb.js";
 import { describeTransports } from "./helpers/crosstestserver.js";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
@@ -33,24 +33,25 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
    */
   function listHeaderKeys(header: Headers): string[] {
     const fieldsToIgnore = [
-      "access-control-allow-origin",
-      "access-control-expose-headers",
-      "connect-accept-encoding",
-      "grpc-accept-encoding",
-      "grpc-message",
-      "grpc-status",
-      "content-type",
-      "date",
-      "transfer-encoding",
-      "vary",
-      "accept-encoding",
-      "content-encoding",
-      "content-length",
-      "connection",
-      "keep-alive",
-      "access-control-allow-headers",
-      "access-control-allow-methods",
-      "access-control-max-age",
+        "access-control-allow-origin",
+        "access-control-expose-headers",
+        "connect-accept-encoding",
+        "grpc-accept-encoding",
+        "grpc-message",
+        "grpc-status",
+        "content-type",
+        "date",
+        "transfer-encoding",
+        "vary",
+        "accept-encoding",
+        "content-encoding",
+        "content-length",
+        "connection",
+        "keep-alive",
+        "access-control-allow-headers",
+        "access-control-allow-methods",
+        "access-control-max-age",
+        "request-protocol",
     ];
     const keys: string[] = [];
     header.forEach((_, key) => {

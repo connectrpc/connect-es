@@ -19,12 +19,12 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import {
   ErrorDetail,
   StreamingOutputCallRequest,
   StreamingOutputCallResponse,
-} from "../gen/grpc/testing/messages_pb.js";
+} from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
 describe("fail_server_streaming", () => {
@@ -34,7 +34,7 @@ describe("fail_server_streaming", () => {
   function expectError(err: unknown) {
     const expectedErrorDetail = new ErrorDetail({
       reason: "soirée 🎉",
-      domain: "connect-crosstest",
+      domain: "connect-conformance",
     });
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {

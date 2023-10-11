@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { StreamingOutputCallRequest } from "../gen/grpc/testing/messages_pb.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
+import { StreamingOutputCallRequest } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
 describe("empty_stream", function () {

@@ -19,7 +19,7 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect";
-import { UnimplementedService } from "../gen/grpc/testing/test_connect.js";
+import { UnimplementedService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
 
 describe("unimplemented_service", function () {

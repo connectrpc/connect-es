@@ -10,7 +10,7 @@ TMP   = .tmp
 BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
-CROSSTEST_VERSION := 35f013f2f543646f4a40579993e7bb68cfb03133
+CONFORMANCE_VERSION := 0b07f579cb61ad89de24524d62f804a2b03b1acf
 LICENSE_HEADER_YEAR_RANGE := 2021-2023
 LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
 NODE19_VERSION ?= v19.2.0
@@ -136,20 +136,20 @@ $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(
 
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-test/src/gen/*
-	npm run -w packages/connect-web-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
+	npm run -w packages/connect-web-test generate https://github.com/connectrpc/conformance.git#ref=$(CONFORMANCE_VERSION),subdir=proto
 	npm run -w packages/connect-web-test generate buf.build/bufbuild/eliza
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-node-test/src/gen/*
-	npm run -w packages/connect-node-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
+	npm run -w packages/connect-node-test generate https://github.com/connectrpc/conformance.git#ref=$(CONFORMANCE_VERSION),subdir=proto
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/connect-edge-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-edge-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-edge-test/src/gen/*
-	npm run -w packages/connect-edge-test generate https://github.com/bufbuild/connect-crosstest.git#ref=$(CROSSTEST_VERSION),subdir=internal/proto
+	npm run -w packages/connect-edge-test generate https://github.com/connectrpc/conformance.git#ref=$(CONFORMANCE_VERSION),subdir=proto
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -286,10 +286,10 @@ crosstestserverstop:
 .PHONY: crosstestserverrun
 crosstestserverrun: crosstestserverstop
 	docker run --rm --name serverconnect -p 8080:8080 -p 8081:8081 -d \
-		bufbuild/connect-crosstest:$(CROSSTEST_VERSION) \
+		connectrpc/conformance:$(CONFORMANCE_VERSION) \
 		/usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
 	docker run --rm --name servergrpc -p 8083:8083 -d \
-		bufbuild/connect-crosstest:$(CROSSTEST_VERSION) \
+		connectrpc/conformance:$(CONFORMANCE_VERSION) \
 		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
 
 .PHONY: connectnodeserverrun

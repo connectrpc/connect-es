@@ -19,8 +19,8 @@ import {
   createCallbackClient,
   createPromiseClient,
 } from "@bufbuild/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { ErrorDetail } from "../gen/grpc/testing/messages_pb.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
+import { ErrorDetail } from "../gen/connectrpc/conformance/v1/messages_pb.js";
 import { createTestServers } from "../helpers/testserver.js";
 
 describe("fail_unary", () => {
@@ -30,7 +30,7 @@ describe("fail_unary", () => {
   function expectError(err: unknown) {
     const expectedErrorDetail = new ErrorDetail({
       reason: "soirée 🎉",
-      domain: "connect-crosstest",
+      domain: "connect-conformance",
     });
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {

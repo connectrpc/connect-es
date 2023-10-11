@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createPromiseClient } from "@bufbuild/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { PayloadType } from "../gen/grpc/testing/messages_pb.js";
-import { createTestServers } from "../helpers/testserver.js";
-import { interop } from "../helpers/interop.js";
+import {createPromiseClient} from "@bufbuild/connect";
+import {TestService} from "../gen/connectrpc/conformance/v1/test_connect.js";
+import {PayloadType} from "../gen/connectrpc/conformance/v1/messages_pb.js";
+import {createTestServers} from "../helpers/testserver.js";
+import {interop} from "../helpers/interop.js";
 
 describe("client_streaming", () => {
   const sizes = [31415, 9, 2653, 58979];
@@ -29,9 +29,7 @@ describe("client_streaming", () => {
         for (const size of sizes) {
           yield {
             payload: interop.makeServerPayload(PayloadType.COMPRESSABLE, size),
-            expectCompressed: {
-              value: false,
-            },
+            expectCompressed: false,
           };
         }
         await new Promise((resolve) => setTimeout(resolve, 1));

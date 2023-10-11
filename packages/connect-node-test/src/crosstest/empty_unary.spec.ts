@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { createCallbackClient, createPromiseClient } from "@bufbuild/connect";
-import { TestService } from "../gen/grpc/testing/test_connect.js";
-import { Empty } from "../gen/grpc/testing/empty_pb.js";
+import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import { createTestServers } from "../helpers/testserver.js";
+import {Empty} from "@bufbuild/protobuf";
 
 describe("empty_unary", function () {
   const servers = createTestServers();
