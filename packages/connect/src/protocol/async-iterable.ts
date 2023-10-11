@@ -564,7 +564,13 @@ export async function* pipe<I, O>(
 ): AsyncIterable<O> {
   const [transforms, opt] = pickTransforms(rest);
   let abortable: Abortable | undefined;
-  let iterable: AsyncIterable<unknown> = source;
+  const sourceIt = source[Symbol.asyncIterator]();
+  const cachedSource = {
+    [Symbol.asyncIterator]() {
+      return sourceIt;
+    },
+  };
+  let iterable: AsyncIterable<unknown> = cachedSource;
   if (opt?.propagateDownStreamError === true) {
     iterable = abortable = makeIterableAbortable(iterable);
   }
@@ -594,14 +600,12 @@ export async function* pipe<I, O>(
       // Call return on the source iterable to indicate
       // that we will no longer consume it and it should
       // cleanup any allocated resources.
-      source[Symbol.asyncIterator]()
-        .return?.()
-        .catch(() => {
-          // return returns a promise, which we don't care about.
-          //
-          // Uncaught promises are thrown at sometime/somewhere by the event loop,
-          // this is to ensure error is caught and ignored.
-        });
+      sourceIt.return?.().catch(() => {
+        // return returns a promise, which we don't care about.
+        //
+        // Uncaught promises are thrown at sometime/somewhere by the event loop,
+        // this is to ensure error is caught and ignored.
+      });
     }
   }
 }

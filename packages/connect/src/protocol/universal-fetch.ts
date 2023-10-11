@@ -152,9 +152,9 @@ function iterableToReadableStream(
 function iterableFromReadableStream(
   body: ReadableStream<Uint8Array> | null,
 ): AsyncIterable<Uint8Array> {
+  const reader = body?.getReader();
   return {
     [Symbol.asyncIterator](): AsyncIterator<Uint8Array> {
-      const reader = body?.getReader();
       return {
         async next() {
           if (reader !== undefined) {
