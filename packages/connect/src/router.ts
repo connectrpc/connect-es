@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
+import type { AnyMessage, MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
@@ -33,6 +33,7 @@ import type {
   UniversalHandlerOptions,
 } from "./protocol/universal-handler.js";
 import type { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
+import type { MethodType } from "./method-type-temp.js";
 
 /**
  * ConnectRouter is your single registration point for RPCs.
@@ -55,13 +56,18 @@ export interface ConnectRouter {
   service<T extends ServiceType>(
     service: T,
     implementation: Partial<ServiceImpl<T>>,
-    options?: Partial<UniversalHandlerOptions>,
+    options?: Partial<UniversalHandlerOptions>
   ): this;
   rpc<M extends MethodInfo>(
     service: ServiceType,
     method: M,
     impl: MethodImpl<M>,
-    options?: Partial<UniversalHandlerOptions>,
+    options?: Partial<UniversalHandlerOptions>
+  ): this;
+  rpc<M extends MethodType>(
+    method: M,
+    impl: MethodImpl<M>,
+    options?: Partial<UniversalHandlerOptions>
   ): this;
 }
 
@@ -115,7 +121,7 @@ export interface ConnectRouterOptions extends Partial<UniversalHandlerOptions> {
  * Create a new ConnectRouter.
  */
 export function createConnectRouter(
-  routerOptions?: ConnectRouterOptions,
+  routerOptions?: ConnectRouterOptions
 ): ConnectRouter {
   const base = whichProtocols(routerOptions);
   const handlers: UniversalHandler[] = [];
@@ -126,18 +132,39 @@ export function createConnectRouter(
       handlers.push(
         ...createUniversalServiceHandlers(
           createServiceImplSpec(service, implementation),
-          protocols,
-        ),
+          protocols
+        )
       );
       return this;
     },
-    rpc(service, method, implementation, options) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- overload is intentionally vague.
+    rpc(...args: any[]) {
+      if ("typeName" in args[0]) {
+        const [service, method, implementation, options] = args as [
+          ServiceType,
+          MethodInfo,
+          MethodImpl<MethodInfo<AnyMessage>>,
+          UniversalHandlerOptions,
+        ];
+        const { protocols } = whichProtocols(options, base);
+        handlers.push(
+          createUniversalMethodHandler(
+            createMethodImplSpec(service, method, implementation),
+            protocols
+          )
+        );
+      }
+      const [method, implementation, options] = args as [
+        MethodType,
+        MethodImpl<MethodInfo<AnyMessage>>,
+        UniversalHandlerOptions,
+      ];
       const { protocols } = whichProtocols(options, base);
       handlers.push(
         createUniversalMethodHandler(
-          createMethodImplSpec(service, method, implementation),
-          protocols,
-        ),
+          createMethodImplSpec(method, implementation),
+          protocols
+        )
       );
       return this;
     },
@@ -146,7 +173,7 @@ export function createConnectRouter(
 
 function whichProtocols(
   options: ConnectRouterOptions | undefined,
-  base?: { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] },
+  base?: { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] }
 ): { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] } {
   if (base && !options) {
     return base;
@@ -174,7 +201,7 @@ function whichProtocols(
   if (protocols.length === 0) {
     throw new ConnectError(
       "cannot create handler, all protocols are disabled",
-      Code.InvalidArgument,
+      Code.InvalidArgument
     );
   }
   return {

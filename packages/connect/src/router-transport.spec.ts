@@ -15,6 +15,7 @@
 import {
   Int32Value,
   Message,
+  MethodIdempotency,
   MethodKind,
   proto3,
   StringValue,
@@ -96,7 +97,7 @@ describe("createRoutesTransport", function () {
   });
   it("should work for client steam", async function () {
     const res = await client.client(
-      createAsyncIterable([{ value: 12 }, { value: 13 }]),
+      createAsyncIterable([{ value: 12 }, { value: 13 }])
     );
     expect(res.value).toBe("13");
   });
@@ -121,7 +122,7 @@ describe("createRoutesTransport", function () {
     } catch (e) {
       expect(e).toBeInstanceOf(ConnectError);
       expect(ConnectError.from(e).message).toBe(
-        "[unimplemented] RouterHttpClient: no handler registered for /TestService/Unary",
+        "[unimplemented] RouterHttpClient: no handler registered for /TestService/Unary"
       );
     }
   });
@@ -138,7 +139,7 @@ describe("createRoutesTransport", function () {
           kind: "scalar",
           T: 9 /* ScalarType.STRING */,
         },
-      ],
+      ]
     );
     interface SayResponse extends Message<SayResponse> {
       sentence: string;
@@ -152,7 +153,7 @@ describe("createRoutesTransport", function () {
           kind: "scalar",
           T: 9 /* ScalarType.STRING */,
         },
-      ],
+      ]
     );
     const ElizaService = {
       typeName: "connectrpc.eliza.v1.ElizaService",
@@ -204,7 +205,7 @@ describe("createRoutesTransport", function () {
             if (sentences.length > 3) {
               throw new ConnectError(
                 "I have no words anymore.",
-                Code.ResourceExhausted,
+                Code.ResourceExhausted
               );
             }
             return new SayResponse({
@@ -219,9 +220,31 @@ describe("createRoutesTransport", function () {
         await client.say({ sentence: "2" });
         await client.say({ sentence: "3" });
         await expectAsync(client.say({ sentence: "4" })).toBeRejectedWithError(
-          /I have no words anymore/,
+          /I have no words anymore/
         );
       });
+    });
+  });
+  describe("supports self describing method type", function () {
+    const methodDefinition = {
+      kind: MethodKind.Unary,
+      I: Int32Value,
+      localName: "unary",
+      name: "Unary",
+      O: StringValue,
+      service: testService,
+      idempotency: MethodIdempotency.NoSideEffects,
+    } as const;
+    const transport = createRouterTransport(({ rpc }) => {
+      rpc(methodDefinition, (request) => {
+        return { value: `${request.value}-RESPONSE` };
+      });
+    });
+
+    const client = createPromiseClient(testService, transport);
+    it("should work for unary", async function () {
+      const res = await client.unary({ value: 13 });
+      expect(res.value).toBe("13-RESPONSE");
     });
   });
 });
