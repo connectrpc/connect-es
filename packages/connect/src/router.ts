@@ -56,18 +56,18 @@ export interface ConnectRouter {
   service<T extends ServiceType>(
     service: T,
     implementation: Partial<ServiceImpl<T>>,
-    options?: Partial<UniversalHandlerOptions>
+    options?: Partial<UniversalHandlerOptions>,
   ): this;
   rpc<M extends MethodInfo>(
     service: ServiceType,
     method: M,
     impl: MethodImpl<M>,
-    options?: Partial<UniversalHandlerOptions>
+    options?: Partial<UniversalHandlerOptions>,
   ): this;
   rpc<M extends MethodType>(
     method: M,
     impl: MethodImpl<M>,
-    options?: Partial<UniversalHandlerOptions>
+    options?: Partial<UniversalHandlerOptions>,
   ): this;
 }
 
@@ -121,7 +121,7 @@ export interface ConnectRouterOptions extends Partial<UniversalHandlerOptions> {
  * Create a new ConnectRouter.
  */
 export function createConnectRouter(
-  routerOptions?: ConnectRouterOptions
+  routerOptions?: ConnectRouterOptions,
 ): ConnectRouter {
   const base = whichProtocols(routerOptions);
   const handlers: UniversalHandler[] = [];
@@ -133,8 +133,8 @@ export function createConnectRouter(
       handlers.push(
         ...createUniversalServiceHandlers(
           createServiceImplSpec(service, implementation),
-          protocols
-        )
+          protocols,
+        ),
       );
       return this;
     },
@@ -144,7 +144,7 @@ export function createConnectRouter(
       implementationOrOptions?:
         | MethodImpl<MethodInfo<AnyMessage>>
         | Partial<UniversalHandlerOptions>,
-      options?: Partial<UniversalHandlerOptions>
+      options?: Partial<UniversalHandlerOptions>,
     ) {
       if ("typeName" in serviceOrMethod) {
         const { protocols } = whichProtocols(options, base);
@@ -154,24 +154,24 @@ export function createConnectRouter(
             createMethodImplSpec(
               serviceOrMethod,
               methodOrImpl as MethodInfo<AnyMessage>,
-              implementationOrOptions as MethodImpl<MethodInfo<AnyMessage>>
+              implementationOrOptions as MethodImpl<MethodInfo<AnyMessage>>,
             ),
-            protocols
-          )
+            protocols,
+          ),
         );
       } else {
         const { protocols } = whichProtocols(
           implementationOrOptions as Partial<UniversalHandlerOptions>,
-          base
+          base,
         );
         handlers.push(
           createUniversalMethodHandler(
             createMethodImplSpec(
               serviceOrMethod,
-              methodOrImpl as MethodImpl<MethodType<AnyMessage>>
+              methodOrImpl as MethodImpl<MethodType<AnyMessage>>,
             ),
-            protocols
-          )
+            protocols,
+          ),
         );
       }
       return this;
@@ -181,7 +181,7 @@ export function createConnectRouter(
 
 function whichProtocols(
   options: ConnectRouterOptions | undefined,
-  base?: { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] }
+  base?: { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] },
 ): { options: ConnectRouterOptions; protocols: ProtocolHandlerFactory[] } {
   if (base && !options) {
     return base;
@@ -209,7 +209,7 @@ function whichProtocols(
   if (protocols.length === 0) {
     throw new ConnectError(
       "cannot create handler, all protocols are disabled",
-      Code.InvalidArgument
+      Code.InvalidArgument,
     );
   }
   return {
