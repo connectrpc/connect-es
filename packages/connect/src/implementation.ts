@@ -30,7 +30,7 @@ import {
 } from "./protocol/signals.js";
 import { createContextValues } from "./context-values.js";
 import type { ContextValues } from "./context-values.js";
-import type { MethodType } from "./method-type-temp.js";
+import type { MethodType } from "./method-type.js";
 
 // prettier-ignore
 /**

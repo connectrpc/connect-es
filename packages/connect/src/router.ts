@@ -33,7 +33,7 @@ import type {
   UniversalHandlerOptions,
 } from "./protocol/universal-handler.js";
 import type { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
-import type { MethodType } from "./method-type-temp.js";
+import type { MethodType } from "./method-type.js";
 
 /**
  * ConnectRouter is your single registration point for RPCs.
@@ -125,6 +125,7 @@ export function createConnectRouter(
 ): ConnectRouter {
   const base = whichProtocols(routerOptions);
   const handlers: UniversalHandler[] = [];
+
   return {
     handlers,
     service(service, implementation, options) {
@@ -137,32 +138,38 @@ export function createConnectRouter(
       );
       return this;
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- overload is intentionally vague.
-    rpc(...args: any[]) {
-      if ("typeName" in args[0]) {
-        const [service, method, implementation, options] = args as [
-          ServiceType,
-          MethodInfo,
-          MethodImpl<MethodInfo<AnyMessage>>,
-          UniversalHandlerOptions,
-        ];
+    rpc(
+      serviceOrMethod: ServiceType | MethodType,
+      methodOrImpl: MethodInfo | MethodImpl<MethodInfo<AnyMessage>>,
+      implementationOrOptions?:
+        | MethodImpl<MethodInfo<AnyMessage>>
+        | Partial<UniversalHandlerOptions>,
+      options?: Partial<UniversalHandlerOptions>
+    ) {
+      if ("typeName" in serviceOrMethod) {
         const { protocols } = whichProtocols(options, base);
+
         handlers.push(
           createUniversalMethodHandler(
-            createMethodImplSpec(service, method, implementation),
+            createMethodImplSpec(
+              serviceOrMethod,
+              methodOrImpl as MethodInfo<AnyMessage>,
+              implementationOrOptions as MethodImpl<MethodInfo<AnyMessage>>
+            ),
             protocols
           )
         );
       }
-      const [method, implementation, options] = args as [
-        MethodType,
-        MethodImpl<MethodInfo<AnyMessage>>,
-        UniversalHandlerOptions,
-      ];
-      const { protocols } = whichProtocols(options, base);
+      const { protocols } = whichProtocols(
+        implementationOrOptions as Partial<UniversalHandlerOptions>,
+        base
+      );
       handlers.push(
         createUniversalMethodHandler(
-          createMethodImplSpec(method, implementation),
+          createMethodImplSpec(
+            serviceOrMethod as MethodType,
+            methodOrImpl as MethodImpl<MethodType<AnyMessage>>
+          ),
           protocols
         )
       );
