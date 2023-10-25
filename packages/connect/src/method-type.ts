@@ -23,7 +23,6 @@ import type {
 } from "@bufbuild/protobuf";
 
 interface mtShared {
-  readonly localName: string;
   readonly service: Omit<ServiceType, "methods">;
 }
 
