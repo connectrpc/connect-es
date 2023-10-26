@@ -69,6 +69,7 @@ describe("createConnectRouter", function () {
       );
 
       expect(router.handlers).toHaveSize(1);
+      expect(router.handlers[0].method).toEqual(methodDefinition);
       expect(router.handlers[0].service).toEqual({
         ...testService,
         methods: {},
