@@ -64,6 +64,10 @@ export interface MethodTypeBiDiStreaming<
  * MethodType represents a self-contained method type. It must contain
  * references to the service that implements it.
  *
+ * This type should ultimately live inside @bufbuild/protobuf but will
+ * exist here for now until https://github.com/bufbuild/protobuf-es/pull/594
+ * can be merged/resolved.
+ *
  * - "name": The original name of the protobuf rpc.
  * - "I": The input message type.
  * - "O": The output message type.

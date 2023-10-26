@@ -15,7 +15,6 @@
 import {
   Int32Value,
   Message,
-  MethodIdempotency,
   MethodKind,
   proto3,
   StringValue,
@@ -25,7 +24,6 @@ import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
-import { MethodType } from "./method-type.js";
 
 describe("createRoutesTransport", function () {
   const testService = {
@@ -224,63 +222,6 @@ describe("createRoutesTransport", function () {
           /I have no words anymore/,
         );
       });
-    });
-  });
-  describe("supports self describing method type", function () {
-    it("should work for unary", async function () {
-      const methodDefinition = {
-        name: "Unary",
-        kind: MethodKind.Unary,
-        I: Int32Value,
-        O: StringValue,
-        service: testService,
-        idempotency: MethodIdempotency.NoSideEffects,
-      } as const;
-      const transport = createRouterTransport(({ rpc }) => {
-        rpc(methodDefinition, (request) => {
-          return { value: `${request.value}-RESPONSE` };
-        });
-      });
-
-      const client = createPromiseClient(testService, transport);
-
-      const res = await client.unary({ value: 13 });
-      expect(res.value).toBe("13-RESPONSE");
-    });
-
-    it("should work with method built from service", async function () {
-      const methodDefinition = {
-        ...testService.methods.unary,
-        service: testService,
-      } as const;
-      const transport = createRouterTransport(({ rpc }) => {
-        rpc(methodDefinition, (request) => {
-          return { value: `${request.value}-RESPONSE` };
-        });
-      });
-
-      const client = createPromiseClient(testService, transport);
-
-      const res = await client.unary({ value: 13 });
-      expect(res.value).toBe("13-RESPONSE");
-    });
-
-    it("should work with method built with explicit type", async function () {
-      const methodDefinition: MethodType<Int32Value, StringValue> = {
-        ...testService.methods.unary,
-        service: testService,
-      };
-
-      const transport = createRouterTransport(({ rpc }) => {
-        rpc(methodDefinition, (request) => {
-          return { value: `${request.value}-RESPONSE` };
-        });
-      });
-
-      const client = createPromiseClient(testService, transport);
-
-      const res = await client.unary({ value: 13 });
-      expect(res.value).toBe("13-RESPONSE");
     });
   });
 });

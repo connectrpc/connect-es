@@ -30,7 +30,6 @@ import {
 } from "./protocol/signals.js";
 import { createContextValues } from "./context-values.js";
 import type { ContextValues } from "./context-values.js";
-import type { MethodType } from "./method-type.js";
 
 // prettier-ignore
 /**
@@ -252,36 +251,14 @@ export type ServiceImplSpec = {
  * Create an MethodImplSpec - a user-provided implementation for a method,
  * wrapped in a discriminated union type along with service and method metadata.
  */
-export function createMethodImplSpec<M extends MethodType>(
-  method: M,
-  impl: MethodImpl<M>,
-): MethodImplSpec;
 export function createMethodImplSpec<M extends MethodInfo>(
   service: ServiceType,
   method: M,
   impl: MethodImpl<M>,
-): MethodImplSpec;
-export function createMethodImplSpec<
-  M extends MethodInfo,
-  MT extends MethodType,
->(
-  ...args: [MT, MethodImpl<MT>] | [ServiceType, M, MethodImpl<M>]
 ): MethodImplSpec {
-  if ("typeName" in args[0] && "kind" in args[1]) {
-    return {
-      kind: args[1].kind,
-      service: args[0],
-      method: args[1],
-      impl: args[2],
-    } as MethodImplSpec;
-  }
-  const [method, impl] = args as [MT, MethodImpl<MT>];
   return {
     kind: method.kind,
-    service: {
-      ...method.service,
-      methods: {},
-    },
+    service,
     method,
     impl,
   } as MethodImplSpec;
