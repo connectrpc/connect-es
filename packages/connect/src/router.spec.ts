@@ -51,29 +51,24 @@ const testService = {
 } as const;
 
 describe("createConnectRouter", function () {
-  describe("supports self describing method type", function () {
-    it("should work for unary", function () {
-      const methodDefinition = {
-        name: "Unary",
-        kind: MethodKind.Unary,
-        I: Int32Value,
-        O: StringValue,
-        service: testService,
-        idempotency: MethodIdempotency.NoSideEffects,
-      } as const;
-      const router = createConnectRouter({}).rpc(
-        methodDefinition,
-        (request) => {
-          return { value: `${request.value}-RESPONSE` };
-        },
-      );
+  it("supports self describing method type", function () {
+    const methodDefinition = {
+      name: "Unary",
+      kind: MethodKind.Unary,
+      I: Int32Value,
+      O: StringValue,
+      service: testService,
+      idempotency: MethodIdempotency.NoSideEffects,
+    } as const;
+    const router = createConnectRouter({}).rpc(methodDefinition, (request) => {
+      return { value: `${request.value}-RESPONSE` };
+    });
 
-      expect(router.handlers).toHaveSize(1);
-      expect(router.handlers[0].method).toEqual(methodDefinition);
-      expect(router.handlers[0].service).toEqual({
-        ...testService,
-        methods: {},
-      });
+    expect(router.handlers).toHaveSize(1);
+    expect(router.handlers[0].method).toEqual(methodDefinition);
+    expect(router.handlers[0].service).toEqual({
+      ...testService,
+      methods: {},
     });
   });
 });
