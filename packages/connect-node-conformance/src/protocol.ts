@@ -17,6 +17,7 @@ import {
   Error as ConformanceError,
   Header as ConformanceHeader,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
+import { Any, Message } from "@bufbuild/protobuf";
 
 export function connectErrorFromProto(err: ConformanceError) {
   // The ConnectErrror constructor accepts messages for details.
@@ -37,6 +38,30 @@ export function connectErrorFromProto(err: ConformanceError) {
   const cErr = new ConnectError(err.message ?? "", err.code);
   cErr.details = details;
   return cErr;
+}
+
+export function convertToProtoError(err: ConnectError | undefined) {
+  if (err === undefined) {
+    return undefined;
+  }
+  const details: Any[] = [];
+  for (const detail of err.details) {
+    if (detail instanceof Message) {
+      details.push(Any.pack(detail));
+    } else {
+      details.push(
+        new Any({
+          typeUrl: "type.googleapis.com/" + detail.type,
+          value: detail.value,
+        })
+      );
+    }
+  }
+  return new ConformanceError({
+    code: err.code,
+    message: err.rawMessage,
+    details,
+  });
 }
 
 export function convertToProtoHeaders(headers: Headers): ConformanceHeader[] {
@@ -61,4 +86,8 @@ export function appendProtoHeaders(
       headers.append(header.name, value);
     }
   }
+}
+
+export function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

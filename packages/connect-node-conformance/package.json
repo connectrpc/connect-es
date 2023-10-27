@@ -2,7 +2,8 @@
   "name": "@connectrpc/connect-node-conformance",
   "private": true,
   "bin": {
-    "conformanceserver": "bin/conformanceserver"
+    "conformanceserver": "bin/conformanceserver",
+    "conformanceclient": "bin/conformanceclient"
   },
   "scripts": {
     "generate": "buf generate https://github.com/connectrpc/conformance.git#branch=v1,ref=ecde37cfb2756120d935f7e1711b7d8941f817f0,subdir=proto",
