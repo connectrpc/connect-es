@@ -13,8 +13,8 @@ GEN   = .tmp/gen
 CONFORMANCE_VERSION := 0b07f579cb61ad89de24524d62f804a2b03b1acf
 LICENSE_HEADER_YEAR_RANGE := 2021-2023
 LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
-NODE20_VERSION ?= v20.0.0
-NODE19_VERSION ?= v19.9.0
+NODE21_VERSION ?= v21.1.0
+NODE20_VERSION ?= v20.9.0
 NODE18_VERSION ?= v18.16.0
 NODE16_VERSION ?= v16.20.0
 NODE_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
@@ -29,27 +29,27 @@ $(BIN)/license-header: Makefile
 	@mkdir -p $(@D)
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@v1.1.0
 
+$(BIN)/node21: Makefile
+	@mkdir -p $(@D)
+	curl --retry 5 --retry-all-errors --http1.1 -sSL -o $(TMP)/$(NODE21_VERSION).tar.xz https://nodejs.org/dist/$(NODE21_VERSION)/node-$(NODE21_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
+	tar xJf $(TMP)/$(NODE21_VERSION).tar.xz -C $(TMP) node-$(NODE21_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
+	@mv $(TMP)/node-$(NODE21_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
+	@rm -r $(TMP)/node-$(NODE21_VERSION)-$(NODE_OS)-$(NODE_ARCH)
+	@rm -r $(TMP)/$(NODE21_VERSION).tar.xz
+	@touch $(@)
+
 $(BIN)/node20: Makefile
 	@mkdir -p $(@D)
-	curl --retry 5 --retry-all-errors -sSL -o $(TMP)/$(NODE20_VERSION).tar.xz https://nodejs.org/dist/$(NODE20_VERSION)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
+	curl --retry 5 --retry-all-errors --http1.1 -sSL -o $(TMP)/$(NODE20_VERSION).tar.xz https://nodejs.org/dist/$(NODE20_VERSION)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
 	tar xJf $(TMP)/$(NODE20_VERSION).tar.xz -C $(TMP) node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
 	@mv $(TMP)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
 	@rm -r $(TMP)/node-$(NODE20_VERSION)-$(NODE_OS)-$(NODE_ARCH)
 	@rm -r $(TMP)/$(NODE20_VERSION).tar.xz
 	@touch $(@)
 
-$(BIN)/node19: Makefile
-	@mkdir -p $(@D)
-	curl --retry 5 --retry-all-errors -sSL -o $(TMP)/$(NODE19_VERSION).tar.xz https://nodejs.org/dist/$(NODE19_VERSION)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
-	tar xJf $(TMP)/$(NODE19_VERSION).tar.xz -C $(TMP) node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
-	@mv $(TMP)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
-	@rm -r $(TMP)/node-$(NODE19_VERSION)-$(NODE_OS)-$(NODE_ARCH)
-	@rm -r $(TMP)/$(NODE19_VERSION).tar.xz
-	@touch $(@)
-
 $(BIN)/node18: Makefile
 	@mkdir -p $(@D)
-	curl --retry 5 --retry-all-errors -sSL -o $(TMP)/$(NODE18_VERSION).tar.xz https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
+	curl --retry 5 --retry-all-errors --http1.1 -sSL -o $(TMP)/$(NODE18_VERSION).tar.xz https://nodejs.org/dist/$(NODE18_VERSION)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
 	tar xJf $(TMP)/$(NODE18_VERSION).tar.xz -C $(TMP) node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
 	@mv $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
 	@rm -r $(TMP)/node-$(NODE18_VERSION)-$(NODE_OS)-$(NODE_ARCH)
@@ -58,7 +58,7 @@ $(BIN)/node18: Makefile
 
 $(BIN)/node16: Makefile
 	@mkdir -p $(@D)
-	curl --retry 5 --retry-all-errors -sSL -o $(TMP)/$(NODE16_VERSION).tar.xz https://nodejs.org/dist/$(NODE16_VERSION)/node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
+	curl --retry 5 --retry-all-errors --http1.1 -sSL -o $(TMP)/$(NODE16_VERSION).tar.xz https://nodejs.org/dist/$(NODE16_VERSION)/node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH).tar.xz
 	tar xJf $(TMP)/$(NODE16_VERSION).tar.xz -C $(TMP) node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node
 	@mv $(TMP)/node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH)/bin/node $(@)
 	@rm -r $(TMP)/node-$(NODE16_VERSION)-$(NODE_OS)-$(NODE_ARCH)
@@ -185,26 +185,28 @@ testconnectpackage: $(BUILD)/connect
 	npm run -w packages/connect jasmine
 
 .PHONY: testconnectnodepackage
-testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 $(BUILD)/connect-node
+testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node19 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 
 .PHONY: testnode
-testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node19 $(BIN)/node20 $(BUILD)/connect-node-test
+testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node-test
 	$(MAKE) conformanceserverrun
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node19 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) conformanceserverstop
 
 .PHONY: testwebnode
-testwebnode: $(BIN)/node18 $(BUILD)/connect-web-test
+testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
 	$(MAKE) conformanceserverrun
 	$(MAKE) connectnodeserverrun
 	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node20 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node21 ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) conformanceserverstop
 	$(MAKE) connectnodeserverstop
 
