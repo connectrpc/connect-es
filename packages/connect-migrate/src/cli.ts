@@ -99,8 +99,7 @@ function exitOk(message: string): never {
 }
 
 function getCliVersion() {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
   return JSON.parse(
     readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
-  ).version as string;
+  ).version as string; // eslint-disable-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
 }
