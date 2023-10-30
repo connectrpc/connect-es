@@ -41,7 +41,6 @@ const { values: flags } = parseArgs({
     port: {
       type: "string",
       description: "the port for the conformance server",
-      default: "0",
     },
   },
 });
@@ -71,22 +70,26 @@ switch (req.httpVersion) {
     throw new Error("Unknown HTTP version");
 }
 
-server.listen(Number(flags.port), flags.host, () => {
-  const addrInfo = server.address() as net.AddressInfo;
-  const res = new ServerCompatResponse({
-    result: {
-      case: "listening",
-      value: {
-        host: addrInfo.address,
-        port: addrInfo.port.toString(),
+server.listen(
+  flags.port !== undefined ? parseInt(flags.port, 10) : undefined,
+  flags.host,
+  () => {
+    const addrInfo = server.address() as net.AddressInfo;
+    const res = new ServerCompatResponse({
+      result: {
+        case: "listening",
+        value: {
+          host: addrInfo.address,
+          port: addrInfo.port.toString(),
+        },
       },
-    },
-  });
-  let data: Uint8Array;
-  if (flags.json === true) {
-    data = Buffer.from(res.toJsonString(), "utf-8");
-  } else {
-    data = res.toBinary();
-  }
-  process.stdout.write(data);
-});
+    });
+    let data: Uint8Array;
+    if (flags.json === true) {
+      data = Buffer.from(res.toJsonString(), "utf-8");
+    } else {
+      data = res.toBinary();
+    }
+    process.stdout.write(data);
+  },
+);

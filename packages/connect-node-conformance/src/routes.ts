@@ -70,8 +70,7 @@ function handleUnaryResponse(
 
 export default ({ service }: ConnectRouter) => {
   service(ConformanceService, {
-    //eslint-disable-next-line @typescript-eslint/require-await
-    async unary(req, ctx) {
+    unary(req, ctx) {
       return handleUnaryResponse(req.responseDefinition, [Any.pack(req)], ctx);
     },
     async clientStream(reqIt, ctx) {
