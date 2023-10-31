@@ -42,6 +42,8 @@ export interface Compression {
   /**
    * Decompress a chunk of data.
    *
+   * A zero-length chunk is acceptable, and will return a zero-length result.
+   *
    * Raises a ConnectError with Code.InvalidArgument if the decompressed
    * size exceeds readMaxBytes.
    */
