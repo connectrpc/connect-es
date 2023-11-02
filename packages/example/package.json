@@ -1,7 +1,7 @@
 {
   "name": "@connectrpc/example",
   "private": true,
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "lint": "tsc --noEmit",
     "start": "tsx src/server.ts",

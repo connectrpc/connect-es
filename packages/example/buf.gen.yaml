@@ -8,3 +8,10 @@ plugins:
   - plugin: connect-es
     opt: target=ts
     out: src/gen
+
+  - plugin: buf.build/grpc/web:v1.4.2
+    out: src/gengrpcweb
+    opt: mode=grpcweb,import_style=commonjs
+  - plugin: buf.build/protocolbuffers/js
+    out: src/gengrpcweb
+    opt: import_style=commonjs

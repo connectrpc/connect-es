@@ -77,7 +77,7 @@ const handler = connectNodeAdapter({
       case "/webclient.js":
         void esbuild
           .build({
-            entryPoints: ["src/webclient.ts"],
+            entryPoints: ["src/webclient.js"],
             bundle: true,
             write: false,
           })
