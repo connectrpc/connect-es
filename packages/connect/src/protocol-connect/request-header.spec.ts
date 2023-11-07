@@ -33,7 +33,13 @@ function listHeaderKeys(header: Headers): string[] {
 
 describe("requestHeader", () => {
   it("should create request headers", () => {
-    const headers = requestHeader(MethodKind.Unary, true, undefined, undefined);
+    const headers = requestHeader(
+      MethodKind.Unary,
+      true,
+      undefined,
+      undefined,
+      true,
+    );
     expect(listHeaderKeys(headers)).toEqual([
       "connect-protocol-version",
       "content-type",
@@ -45,7 +51,7 @@ describe("requestHeader", () => {
   });
 
   it("should create request headers with timeout", () => {
-    const headers = requestHeader(MethodKind.Unary, true, 10, undefined);
+    const headers = requestHeader(MethodKind.Unary, true, 10, undefined, true);
     expect(listHeaderKeys(headers)).toEqual([
       "connect-protocol-version",
       "connect-timeout-ms",
@@ -53,6 +59,20 @@ describe("requestHeader", () => {
       "user-agent",
     ]);
     expect(headers.get("Connect-Timeout-Ms")).toBe("10");
+  });
+
+  it("should exclude user-agent", () => {
+    const headers = requestHeader(
+      MethodKind.Unary,
+      true,
+      undefined,
+      undefined,
+      false,
+    );
+    expect(listHeaderKeys(headers)).toEqual([
+      "connect-protocol-version",
+      "content-type",
+    ]);
   });
 });
 
@@ -72,6 +92,7 @@ describe("requestHeaderWithCompression", () => {
       undefined,
       [compressionMock],
       compressionMock,
+      true,
     );
     expect(listHeaderKeys(headers)).toEqual([
       "accept-encoding",
@@ -92,6 +113,7 @@ describe("requestHeaderWithCompression", () => {
       undefined,
       [compressionMock],
       compressionMock,
+      true,
     );
     expect(listHeaderKeys(headers)).toEqual([
       "connect-accept-encoding",

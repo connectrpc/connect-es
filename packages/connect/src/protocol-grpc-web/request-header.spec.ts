@@ -30,7 +30,7 @@ function listHeaderKeys(header: Headers): string[] {
 
 describe("requestHeader", () => {
   it("should create request headers", () => {
-    const headers = requestHeader(true, undefined, undefined);
+    const headers = requestHeader(true, undefined, undefined, true);
     expect(listHeaderKeys(headers)).toEqual([
       "content-type",
       "user-agent",
@@ -44,11 +44,22 @@ describe("requestHeader", () => {
   });
 
   it("should create request headers with timeout", () => {
-    const headers = requestHeader(true, 10, undefined);
+    const headers = requestHeader(true, 10, undefined, true);
     expect(listHeaderKeys(headers)).toEqual([
       "content-type",
       "grpc-timeout",
       "user-agent",
+      "x-grpc-web",
+      "x-user-agent",
+    ]);
+    expect(headers.get("Grpc-Timeout")).toBe("10m");
+  });
+
+  it("should not set user-agent header", () => {
+    const headers = requestHeader(true, 10, undefined, false);
+    expect(listHeaderKeys(headers)).toEqual([
+      "content-type",
+      "grpc-timeout",
       "x-grpc-web",
       "x-user-agent",
     ]);
@@ -68,6 +79,7 @@ describe("requestHeader", () => {
       undefined,
       [compressionMock],
       compressionMock,
+      true,
     );
     expect(listHeaderKeys(headers)).toEqual([
       "content-type",
