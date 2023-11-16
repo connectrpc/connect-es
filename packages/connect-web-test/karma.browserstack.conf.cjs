@@ -1,8 +1,13 @@
-if (process.env.BROWSERSTACK_USERNAME === undefined || process.env.BROWSERSTACK_ACCESS_KEY === undefined) {
-  throw new Error("The environment variables BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY are required to run tests on browserstack.");
+if (
+  process.env.BROWSERSTACK_USERNAME === undefined ||
+  process.env.BROWSERSTACK_ACCESS_KEY === undefined
+) {
+  throw new Error(
+    "The environment variables BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY are required to run tests on browserstack.",
+  );
 }
 
-module.exports = function(config) {
+module.exports = function (config) {
   config.set({
     plugins: [
       require("./karma-fixup.cjs"),
@@ -12,15 +17,12 @@ module.exports = function(config) {
       require("karma-chrome-launcher"),
     ],
     singleRun: true,
-    frameworks: [ "jasmine", "fixup" ],
+    frameworks: ["jasmine", "fixup"],
     preprocessors: {
       "**/*.ts": "esbuild",
     },
     reporters: ["progress", "BrowserStack"],
-    files: [
-      "src/browserstackonly/*.ts",
-      "src/gen/**/*.ts",
-    ],
+    files: ["src/browserstackonly/*.ts", "src/gen/**/*.ts"],
     esbuild: {
       define: {},
       plugins: [],
@@ -33,7 +35,7 @@ module.exports = function(config) {
     browserStack: {
       username: process.env.BROWSERSTACK_USERNAME,
       accessKey: process.env.BROWSERSTACK_ACCESS_KEY,
-      apiClientEndpoint: 'https://api.browserstack.com'
+      apiClientEndpoint: "https://api.browserstack.com",
     },
     browsers: [
       "ChromeHeadless",
@@ -46,16 +48,15 @@ module.exports = function(config) {
       "bstack_windows_ff_67_0",
     ],
     customLaunchers: {
-
       bstack_ios_safari_13: {
         // Safari 13 on iOS 13.3 - the oldest iOS version available.
-        base : "BrowserStack",
+        base: "BrowserStack",
         "browserstack.tunnel": false,
-        device : "iPhone 11",
+        device: "iPhone 11",
         real_mobile: true,
-        browser : "safari",
+        browser: "safari",
         os: "ios",
-        os_version : "13",
+        os_version: "13",
       },
 
       bstack_macos_safari_14_1: {
@@ -114,7 +115,7 @@ module.exports = function(config) {
         browser: "chrome",
         browser_version: "60.0",
         os: "Windows",
-        os_version: "10"
+        os_version: "10",
       },
 
       bstack_windows_ff_67_0: {
@@ -128,9 +129,8 @@ module.exports = function(config) {
         browser: "firefox",
         browser_version: "67.0",
         os: "Windows",
-        os_version: "10"
+        os_version: "10",
       },
-
-    }
+    },
   });
 };

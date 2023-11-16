@@ -15,14 +15,12 @@
 module.exports = function (config) {
   config.set({
     frameworks: ["jasmine"],
-    files: [
-      "src/**/*.ts",
-    ],
+    files: ["src/**/*.ts"],
     exclude: [],
     singleRun: true,
     reporters: ["progress"],
     browsers: ["ChromeCustom"],
-    preprocessors: {"/**/*.ts": "esbuild"},
+    preprocessors: { "/**/*.ts": "esbuild" },
     esbuild: {
       target: "esnext",
       tsconfig: "./tsconfig.json",
@@ -35,4 +33,4 @@ module.exports = function (config) {
       },
     },
   });
-}
+};

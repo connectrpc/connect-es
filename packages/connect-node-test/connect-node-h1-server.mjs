@@ -23,7 +23,7 @@ import {
   utimesSync,
   writeFileSync,
   readFileSync,
-  openSync
+  openSync,
 } from "fs";
 import { dirname, join, basename } from "path";
 import * as process from "process";
@@ -58,7 +58,7 @@ switch (command) {
     const outHandle = openSync(outFile, "a");
     spawn(nodePath, [selfPath, "startinternal"], {
       detached: true,
-      stdio: ["ignore", outHandle, outHandle]
+      stdio: ["ignore", outHandle, outHandle],
     }).unref();
     // wait until server has updated lock file
     const startTs = Date.now();
