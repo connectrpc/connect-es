@@ -633,11 +633,13 @@ export class ConformancePayload_RequestInfo extends Message<ConformancePayload_R
   requestHeaders: Header[] = [];
 
   /**
-   * The timeout observed that was included in the request.
+   * The timeout observed that was included in the request. Other timeouts use a
+   * type of uint32, but we want to be lenient here to allow whatever value the RPC
+   * server observes, even if it's outside the range of uint32.
    *
-   * @generated from field: optional uint32 timeout_ms = 2;
+   * @generated from field: optional int64 timeout_ms = 2;
    */
-  timeoutMs?: number;
+  timeoutMs?: bigint;
 
   /**
    * The server should echo back all requests received.
@@ -651,6 +653,18 @@ export class ConformancePayload_RequestInfo extends Message<ConformancePayload_R
    */
   requests: Any[] = [];
 
+  /**
+   * If present, the request used the Connect protocol and a GET method. This
+   * captures other relevant information about the request. If a server implementation
+   * is unable to populate this (due to the server framework not exposing all of these
+   * details to application code), it may be an empty message. This implies that the
+   * server framework, at a minimum, at least expose to application code whether the
+   * request used GET vs. POST.
+   *
+   * @generated from field: connectrpc.conformance.v1alpha1.ConformancePayload.ConnectGetInfo connect_get_info = 4;
+   */
+  connectGetInfo?: ConformancePayload_ConnectGetInfo;
+
   constructor(data?: PartialMessage<ConformancePayload_RequestInfo>) {
     super();
     proto3.util.initPartial(data, this);
@@ -660,8 +674,9 @@ export class ConformancePayload_RequestInfo extends Message<ConformancePayload_R
   static readonly typeName = "connectrpc.conformance.v1alpha1.ConformancePayload.RequestInfo";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "request_headers", kind: "message", T: Header, repeated: true },
-    { no: 2, name: "timeout_ms", kind: "scalar", T: 13 /* ScalarType.UINT32 */, opt: true },
+    { no: 2, name: "timeout_ms", kind: "scalar", T: 3 /* ScalarType.INT64 */, opt: true },
     { no: 3, name: "requests", kind: "message", T: Any, repeated: true },
+    { no: 4, name: "connect_get_info", kind: "message", T: ConformancePayload_ConnectGetInfo },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConformancePayload_RequestInfo {
@@ -678,6 +693,43 @@ export class ConformancePayload_RequestInfo extends Message<ConformancePayload_R
 
   static equals(a: ConformancePayload_RequestInfo | PlainMessage<ConformancePayload_RequestInfo> | undefined, b: ConformancePayload_RequestInfo | PlainMessage<ConformancePayload_RequestInfo> | undefined): boolean {
     return proto3.util.equals(ConformancePayload_RequestInfo, a, b);
+  }
+}
+
+/**
+ * @generated from message connectrpc.conformance.v1alpha1.ConformancePayload.ConnectGetInfo
+ */
+export class ConformancePayload_ConnectGetInfo extends Message<ConformancePayload_ConnectGetInfo> {
+  /**
+   * @generated from field: repeated connectrpc.conformance.v1alpha1.Header query_params = 1;
+   */
+  queryParams: Header[] = [];
+
+  constructor(data?: PartialMessage<ConformancePayload_ConnectGetInfo>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "connectrpc.conformance.v1alpha1.ConformancePayload.ConnectGetInfo";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "query_params", kind: "message", T: Header, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConformancePayload_ConnectGetInfo {
+    return new ConformancePayload_ConnectGetInfo().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ConformancePayload_ConnectGetInfo {
+    return new ConformancePayload_ConnectGetInfo().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ConformancePayload_ConnectGetInfo {
+    return new ConformancePayload_ConnectGetInfo().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ConformancePayload_ConnectGetInfo | PlainMessage<ConformancePayload_ConnectGetInfo> | undefined, b: ConformancePayload_ConnectGetInfo | PlainMessage<ConformancePayload_ConnectGetInfo> | undefined): boolean {
+    return proto3.util.equals(ConformancePayload_ConnectGetInfo, a, b);
   }
 }
 

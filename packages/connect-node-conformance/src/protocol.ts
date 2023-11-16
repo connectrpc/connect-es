@@ -19,25 +19,42 @@ import {
 } from "./gen/connectrpc/conformance/v1alpha1/service_pb.js";
 
 export function connectErrorFromProto(err: ConformanceError) {
-  return new ConnectError(err.message, err.code, undefined, err.details);
+  // The ConnectErrror constructor accepts messages for details.
+  // The conformance error details are the raw google.protobuf.Any messages.
+  // We need to convert them to `IncomingDetails` for connect to represent them
+  // accurately.
+  const details: ConnectError["details"] = [];
+  for (const any of err.details) {
+    const slashIndex = any.typeUrl.lastIndexOf("/");
+    if (slashIndex < 0) {
+      throw new Error(`invalid typeUrl: ${any.typeUrl}`);
+    }
+    details.push({
+      type: any.typeUrl.substring(slashIndex + 1),
+      value: any.value,
+    });
+  }
+  const cErr = new ConnectError(err.message, err.code);
+  cErr.details = details;
+  return cErr;
 }
 
-export function protoHeadersFromHeaders(headers: Headers): ConformanceHeader[] {
+export function convertToProtoHeaders(headers: Headers): ConformanceHeader[] {
   const result: ConformanceHeader[] = [];
   headers.forEach((value, key) => {
     result.push(
       new ConformanceHeader({
         name: key,
         value: value.split(",").map((e) => e.trim()),
-      }),
+      })
     );
   });
   return result;
 }
 
-export function appendHeadersFromProtoHeaders(
+export function appendProtoHeaders(
   headers: Headers,
-  protoHeaders: ConformanceHeader[],
+  protoHeaders: ConformanceHeader[]
 ) {
   for (const header of protoHeaders) {
     for (const value of header.value) {

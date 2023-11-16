@@ -57,6 +57,27 @@ export class ServerCompatRequest extends Message<ServerCompatRequest> {
    */
   useTls = false;
 
+  /**
+   * If non-empty, the clients will use certificates to authenticate
+   * themselves. This value is a PEM-encoded cert that should be
+   * trusted by the server. When non-empty, the server should require
+   * that clients provide certificates and they should validate that
+   * the certificate presented is valid.
+   *
+   * This will always be empty if use_tls is false.
+   *
+   * @generated from field: bytes client_tls_cert = 5;
+   */
+  clientTlsCert = new Uint8Array(0);
+
+  /**
+   * If non-zero, indicates the maximum size in bytes for a message.
+   * If the client sends anything larger, the server should reject it.
+   *
+   * @generated from field: uint32 message_receive_limit = 6;
+   */
+  messageReceiveLimit = 0;
+
   constructor(data?: PartialMessage<ServerCompatRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -68,6 +89,8 @@ export class ServerCompatRequest extends Message<ServerCompatRequest> {
     { no: 1, name: "protocol", kind: "enum", T: proto3.getEnumType(Protocol) },
     { no: 2, name: "http_version", kind: "enum", T: proto3.getEnumType(HTTPVersion) },
     { no: 4, name: "use_tls", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "client_tls_cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+    { no: 6, name: "message_receive_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ServerCompatRequest {
@@ -94,21 +117,22 @@ export class ServerCompatRequest extends Message<ServerCompatRequest> {
  */
 export class ServerCompatResponse extends Message<ServerCompatResponse> {
   /**
-   * @generated from oneof connectrpc.conformance.v1alpha1.ServerCompatResponse.result
+   * @generated from field: string host = 1;
    */
-  result: {
-    /**
-     * @generated from field: connectrpc.conformance.v1alpha1.ServerListeningResult listening = 1;
-     */
-    value: ServerListeningResult;
-    case: "listening";
-  } | {
-    /**
-     * @generated from field: connectrpc.conformance.v1alpha1.ServerErrorResult error = 2;
-     */
-    value: ServerErrorResult;
-    case: "error";
-  } | { case: undefined; value?: undefined } = { case: undefined };
+  host = "";
+
+  /**
+   * @generated from field: uint32 port = 2;
+   */
+  port = 0;
+
+  /**
+   * The server's PEM-encoded certificate, so the
+   * client can verify it when connecting via TLS.
+   *
+   * @generated from field: bytes pem_cert = 3;
+   */
+  pemCert = new Uint8Array(0);
 
   constructor(data?: PartialMessage<ServerCompatResponse>) {
     super();
@@ -118,8 +142,9 @@ export class ServerCompatResponse extends Message<ServerCompatResponse> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "connectrpc.conformance.v1alpha1.ServerCompatResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "listening", kind: "message", T: ServerListeningResult, oneof: "result" },
-    { no: 2, name: "error", kind: "message", T: ServerErrorResult, oneof: "result" },
+    { no: 1, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "port", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
+    { no: 3, name: "pem_cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ServerCompatResponse {
@@ -136,58 +161,6 @@ export class ServerCompatResponse extends Message<ServerCompatResponse> {
 
   static equals(a: ServerCompatResponse | PlainMessage<ServerCompatResponse> | undefined, b: ServerCompatResponse | PlainMessage<ServerCompatResponse> | undefined): boolean {
     return proto3.util.equals(ServerCompatResponse, a, b);
-  }
-}
-
-/**
- * @generated from message connectrpc.conformance.v1alpha1.ServerListeningResult
- */
-export class ServerListeningResult extends Message<ServerListeningResult> {
-  /**
-   * @generated from field: string host = 1;
-   */
-  host = "";
-
-  /**
-   * @generated from field: string port = 2;
-   */
-  port = "";
-
-  /**
-   * The server's PEM-encoded certificate, so the
-   * client can verify it when connecting via TLS.
-   *
-   * @generated from field: bytes pem_cert = 3;
-   */
-  pemCert = new Uint8Array(0);
-
-  constructor(data?: PartialMessage<ServerListeningResult>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "connectrpc.conformance.v1alpha1.ServerListeningResult";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "port", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "pem_cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ServerListeningResult {
-    return new ServerListeningResult().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ServerListeningResult {
-    return new ServerListeningResult().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ServerListeningResult {
-    return new ServerListeningResult().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ServerListeningResult | PlainMessage<ServerListeningResult> | undefined, b: ServerListeningResult | PlainMessage<ServerListeningResult> | undefined): boolean {
-    return proto3.util.equals(ServerListeningResult, a, b);
   }
 }
 

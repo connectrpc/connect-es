@@ -25,47 +25,43 @@ import type {
   StreamResponseDefinition,
 } from "./gen/connectrpc/conformance/v1alpha1/service_pb.js";
 import {
-  appendHeadersFromProtoHeaders,
+  appendProtoHeaders,
   connectErrorFromProto,
-  protoHeadersFromHeaders,
+  convertToProtoHeaders,
 } from "./protocol.js";
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function createRequestInfo(
-  header: Headers,
-  reqs: Any[],
+  ctx: HandlerContext,
+  reqs: Any[]
 ): ConformancePayload_RequestInfo {
+  const timeoutMs = ctx.timeoutMs();
   return new ConformancePayload_RequestInfo({
-    requestHeaders: protoHeadersFromHeaders(header),
+    requestHeaders: convertToProtoHeaders(ctx.requestHeader),
     requests: reqs,
+    timeoutMs: timeoutMs !== undefined ? BigInt(timeoutMs) : undefined,
   });
 }
 
 function handleUnaryResponse(
   def: UnaryResponseDefinition | undefined,
   reqs: Any[],
-  ctx: HandlerContext,
+  ctx: HandlerContext
 ) {
-  appendHeadersFromProtoHeaders(ctx.responseHeader, def?.responseHeaders ?? []);
-  appendHeadersFromProtoHeaders(
-    ctx.responseTrailer,
-    def?.responseTrailers ?? [],
-  );
-  switch (def?.response.case) {
-    case "error":
-      throw connectErrorFromProto(def.response.value);
-    case "responseData":
-      return {
-        payload: new ConformancePayload({
-          requestInfo: createRequestInfo(ctx.requestHeader, reqs),
-          data: def.response.value,
-        }),
-      };
-    default:
-      throw new ConnectError(
-        `provided UnaryRequest.Response has an unexpected type ${def?.response.case}`,
-        Code.InvalidArgument,
-      );
+  appendProtoHeaders(ctx.responseHeader, def?.responseHeaders ?? []);
+  appendProtoHeaders(ctx.responseTrailer, def?.responseTrailers ?? []);
+  if (def?.response.case === "error") {
+    throw connectErrorFromProto(def.response.value);
   }
+  return {
+    payload: new ConformancePayload({
+      requestInfo: createRequestInfo(ctx, reqs),
+      data: def?.response.value,
+    }),
+  };
 }
 
 export default ({ service }: ConnectRouter) => {
@@ -86,28 +82,29 @@ export default ({ service }: ConnectRouter) => {
     },
     async *serverStream(req, ctx) {
       const def = req.responseDefinition;
-      appendHeadersFromProtoHeaders(
-        ctx.responseHeader,
-        def?.responseHeaders ?? [],
-      );
-      appendHeadersFromProtoHeaders(
-        ctx.responseTrailer,
-        def?.responseTrailers ?? [],
-      );
+      if (def === undefined) {
+        throw new ConnectError(
+          "missing response_definition",
+          Code.InvalidArgument
+        );
+      }
+      appendProtoHeaders(ctx.responseHeader, def.responseHeaders);
+      appendProtoHeaders(ctx.responseTrailer, def.responseTrailers);
       const anyReq = Any.pack(req);
       let reqInfo: ConformancePayload_RequestInfo | undefined =
-        createRequestInfo(ctx.requestHeader, [anyReq]);
-      for (const res of def?.responseData ?? []) {
-        await wait(def?.responseDelayMs ?? 0);
+        createRequestInfo(ctx, [anyReq]);
+      for (const res of def.responseData) {
+        await wait(def.responseDelayMs);
         yield {
           payload: new ConformancePayload({
             requestInfo: reqInfo,
             data: res,
           }),
         };
+        // Only echo back the request info in the first response
         reqInfo = undefined;
       }
-      if (def?.error !== undefined) {
+      if (def.error !== undefined) {
         throw connectErrorFromProto(def.error);
       }
     },
@@ -115,41 +112,45 @@ export default ({ service }: ConnectRouter) => {
       let def: StreamResponseDefinition | undefined;
       let fullDuplex = false;
       let resNum = 0;
-      const reqs: Any[] = [];
+      let reqs: Any[] = [];
       for await (const req of reqIt) {
         if (def === undefined) {
           def = req.responseDefinition;
-          appendHeadersFromProtoHeaders(
-            ctx.responseHeader,
-            def?.responseHeaders ?? [],
-          );
-          appendHeadersFromProtoHeaders(
-            ctx.responseTrailer,
-            def?.responseTrailers ?? [],
-          );
+          if (def === undefined) {
+            throw new ConnectError(
+              "missing response_definition",
+              Code.InvalidArgument
+            );
+          }
+          appendProtoHeaders(ctx.responseHeader, def.responseHeaders);
+          appendProtoHeaders(ctx.responseTrailer, def.responseTrailers);
           fullDuplex = req.fullDuplex;
         }
         reqs.push(Any.pack(req));
         if (!fullDuplex) {
           continue;
         }
-        if (resNum >= (def?.responseData.length ?? 0)) {
+        // fullDuplex, so send one of the desired responses each time we get a message on the stream
+        if (resNum >= def.responseData.length) {
           throw new ConnectError(
             "received more requests than desired responses on a full duplex stream",
-            Code.Aborted,
+            Code.Aborted
           );
         }
-        await wait(def?.responseDelayMs ?? 0);
+        await wait(def.responseDelayMs);
         yield {
           payload: new ConformancePayload({
-            requestInfo: createRequestInfo(ctx.requestHeader, [Any.pack(req)]),
-            data: def?.responseData[resNum],
+            requestInfo: createRequestInfo(ctx, [Any.pack(req)]),
+            data: def.responseData[resNum],
           }),
         };
         resNum++;
-        reqs.splice(0, reqs.length);
+        reqs = [];
       }
-      const reqInfo = createRequestInfo(ctx.requestHeader, reqs);
+      // If we still have responses left to send, flush them now. This accommodates
+      // both scenarios of half duplex (we haven't sent any responses yet) or full duplex
+      // where the requested responses are greater than the total requests.
+      const reqInfo = createRequestInfo(ctx, reqs);
       for (; resNum < (def?.responseData.length ?? 0); resNum++) {
         await wait(def?.responseDelayMs ?? 0);
         yield {
@@ -165,7 +166,3 @@ export default ({ service }: ConnectRouter) => {
     },
   });
 };
-
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

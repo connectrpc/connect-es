@@ -194,9 +194,14 @@ export enum StreamType {
   SERVER_STREAM = 3,
 
   /**
-   * @generated from enum value: STREAM_TYPE_BIDI_STREAM = 4;
+   * @generated from enum value: STREAM_TYPE_HALF_DUPLEX_BIDI_STREAM = 4;
    */
-  BIDI_STREAM = 4,
+  HALF_DUPLEX_BIDI_STREAM = 4,
+
+  /**
+   * @generated from enum value: STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM = 5;
+   */
+  FULL_DUPLEX_BIDI_STREAM = 5,
 }
 // Retrieve enum metadata with: proto3.getEnumType(StreamType)
 proto3.util.setEnumType(StreamType, "connectrpc.conformance.v1alpha1.StreamType", [
@@ -204,7 +209,8 @@ proto3.util.setEnumType(StreamType, "connectrpc.conformance.v1alpha1.StreamType"
   { no: 1, name: "STREAM_TYPE_UNARY" },
   { no: 2, name: "STREAM_TYPE_CLIENT_STREAM" },
   { no: 3, name: "STREAM_TYPE_SERVER_STREAM" },
-  { no: 4, name: "STREAM_TYPE_BIDI_STREAM" },
+  { no: 4, name: "STREAM_TYPE_HALF_DUPLEX_BIDI_STREAM" },
+  { no: 5, name: "STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM" },
 ]);
 
 /**
@@ -215,16 +221,27 @@ proto3.util.setEnumType(StreamType, "connectrpc.conformance.v1alpha1.StreamType"
  */
 export class Config extends Message<Config> {
   /**
+   * The features supported by the client or server under test.
+   * This is used to filter the set of test cases that are run.
+   * If absent, an empty message is used. See Features for more
+   * on how empty/absent fields are interpreted.
+   *
    * @generated from field: connectrpc.conformance.v1alpha1.Features features = 1;
    */
   features?: Features;
 
   /**
+   * This can indicate additional permutations that are supported
+   * that might otherwise be excluded based on the above features.
+   *
    * @generated from field: repeated connectrpc.conformance.v1alpha1.ConfigCase include_cases = 2;
    */
   includeCases: ConfigCase[] = [];
 
   /**
+   * This can indicates permutations that are not supported even
+   * though their support might be implied by the above features.
+   *
    * @generated from field: repeated connectrpc.conformance.v1alpha1.ConfigCase exclude_cases = 3;
    */
   excludeCases: ConfigCase[] = [];
@@ -260,63 +277,106 @@ export class Config extends Message<Config> {
 }
 
 /**
+ * TODO: we could probably model some of the constraints on what are valid vs.
+ *       invalid (i.e. conflicting/impossible) features using protovalidate rules
+ *
  * @generated from message connectrpc.conformance.v1alpha1.Features
  */
 export class Features extends Message<Features> {
   /**
+   * If empty, HTTP 1.1 and HTTP/2 are assumed.
+   *
    * @generated from field: repeated connectrpc.conformance.v1alpha1.HTTPVersion versions = 1;
    */
   versions: HTTPVersion[] = [];
 
   /**
+   * If empty, all three are assumed: Connect, gRPC, and gRPC-Web.
+   *
    * @generated from field: repeated connectrpc.conformance.v1alpha1.Protocol protocols = 2;
    */
   protocols: Protocol[] = [];
 
   /**
+   * If empty, "proto" and "json" are assumed.
+   *
    * @generated from field: repeated connectrpc.conformance.v1alpha1.Codec codecs = 3;
    */
   codecs: Codec[] = [];
 
   /**
-   * @generated from field: repeated connectrpc.conformance.v1alpha1.Compression compression_algorithms = 4;
+   * If empty, "identity" and "gzip" are assumed.
+   *
+   * @generated from field: repeated connectrpc.conformance.v1alpha1.Compression compressions = 4;
    */
-  compressionAlgorithms: Compression[] = [];
+  compressions: Compression[] = [];
 
   /**
-   * @generated from field: bool supports_h2c = 5;
-   */
-  supportsH2c = false;
-
-  /**
-   * @generated from field: bool supports_tls = 6;
-   */
-  supportsTls = false;
-
-  /**
-   * @generated from field: bool supports_trailers = 7;
-   */
-  supportsTrailers = false;
-
-  /**
-   * @generated from field: bool supports_connect_get = 8;
-   */
-  supportsConnectGet = false;
-
-  /**
-   * @generated from field: bool requires_connect_version_header = 9;
-   */
-  requiresConnectVersionHeader = false;
-
-  /**
-   * If non-empty, the set of stream types that are supported. This is
-   * usually for clients, since some client environments may not be
-   * able to support certain kinds of streaming operations, especially
+   * If empty, all stream types are assumed. This is usually for
+   * clients, since some client environments may not be able to
+   * support certain kinds of streaming operations, especially
    * bidirectional streams.
    *
-   * @generated from field: repeated connectrpc.conformance.v1alpha1.StreamType stream_types = 10;
+   * @generated from field: repeated connectrpc.conformance.v1alpha1.StreamType stream_types = 5;
    */
   streamTypes: StreamType[] = [];
+
+  /**
+   * If absent, true is assumed.
+   *
+   * @generated from field: optional bool supports_h2c = 6;
+   */
+  supportsH2c?: boolean;
+
+  /**
+   * If absent, true is assumed.
+   *
+   * @generated from field: optional bool supports_tls = 7;
+   */
+  supportsTls?: boolean;
+
+  /**
+   * If absent, false is assumed. This should not be set if
+   * supports_tls is false.
+   *
+   * @generated from field: optional bool supports_tls_client_certs = 8;
+   */
+  supportsTlsClientCerts?: boolean;
+
+  /**
+   * If absent, true is assumed. If false, implies that gRPC protocol is not allowed.
+   *
+   * @generated from field: optional bool supports_trailers = 9;
+   */
+  supportsTrailers?: boolean;
+
+  /**
+   * If absent, false is assumed.
+   *
+   * @generated from field: optional bool supports_half_duplex_bidi_over_http1 = 10;
+   */
+  supportsHalfDuplexBidiOverHttp1?: boolean;
+
+  /**
+   * If absent, true is assumed.
+   *
+   * @generated from field: optional bool supports_connect_get = 11;
+   */
+  supportsConnectGet?: boolean;
+
+  /**
+   * If absent, false is assumed.
+   *
+   * @generated from field: optional bool requires_connect_version_header = 12;
+   */
+  requiresConnectVersionHeader?: boolean;
+
+  /**
+   * If absent, true is assumed.
+   *
+   * @generated from field: optional bool supports_message_receive_limit = 13;
+   */
+  supportsMessageReceiveLimit?: boolean;
 
   constructor(data?: PartialMessage<Features>) {
     super();
@@ -329,13 +389,16 @@ export class Features extends Message<Features> {
     { no: 1, name: "versions", kind: "enum", T: proto3.getEnumType(HTTPVersion), repeated: true },
     { no: 2, name: "protocols", kind: "enum", T: proto3.getEnumType(Protocol), repeated: true },
     { no: 3, name: "codecs", kind: "enum", T: proto3.getEnumType(Codec), repeated: true },
-    { no: 4, name: "compression_algorithms", kind: "enum", T: proto3.getEnumType(Compression), repeated: true },
-    { no: 5, name: "supports_h2c", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 6, name: "supports_tls", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 7, name: "supports_trailers", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 8, name: "supports_connect_get", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 9, name: "requires_connect_version_header", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 10, name: "stream_types", kind: "enum", T: proto3.getEnumType(StreamType), repeated: true },
+    { no: 4, name: "compressions", kind: "enum", T: proto3.getEnumType(Compression), repeated: true },
+    { no: 5, name: "stream_types", kind: "enum", T: proto3.getEnumType(StreamType), repeated: true },
+    { no: 6, name: "supports_h2c", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 7, name: "supports_tls", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 8, name: "supports_tls_client_certs", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 9, name: "supports_trailers", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 10, name: "supports_half_duplex_bidi_over_http1", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 11, name: "supports_connect_get", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 12, name: "requires_connect_version_header", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 13, name: "supports_message_receive_limit", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Features {
@@ -356,38 +419,54 @@ export class Features extends Message<Features> {
 }
 
 /**
+ * TODO: we could probably model some of the constraints on what is a valid
+ *       vs. invalid config case using protovalidate rules
+ *
  * @generated from message connectrpc.conformance.v1alpha1.ConfigCase
  */
 export class ConfigCase extends Message<ConfigCase> {
   /**
+   * If unspecified, indicates cases for all versions.
+   *
    * @generated from field: connectrpc.conformance.v1alpha1.HTTPVersion version = 1;
    */
   version = HTTPVersion.HTTP_VERSION_UNSPECIFIED;
 
   /**
+   * If unspecified, indicates cases for all protocols.
+   *
    * @generated from field: connectrpc.conformance.v1alpha1.Protocol protocol = 2;
    */
   protocol = Protocol.UNSPECIFIED;
 
   /**
+   * If unspecified, indicates cases for all codecs.
+   *
    * @generated from field: connectrpc.conformance.v1alpha1.Codec codec = 3;
    */
   codec = Codec.UNSPECIFIED;
 
   /**
+   * If unspecified, indicates cases for all compression algorithms.
+   *
    * @generated from field: connectrpc.conformance.v1alpha1.Compression compression = 4;
    */
   compression = Compression.UNSPECIFIED;
 
   /**
-   * @generated from field: bool use_tls = 5;
+   * If absent, indicates cases for plaintext (no TLS) but also for
+   * TLS if features indicate that TLS is supported.
+   *
+   * @generated from field: optional bool use_tls = 5;
    */
-  useTls = false;
+  useTls?: boolean;
 
   /**
-   * @generated from field: repeated connectrpc.conformance.v1alpha1.StreamType stream_types = 6;
+   * If unspecified, indicates cases for all stream types.
+   *
+   * @generated from field: connectrpc.conformance.v1alpha1.StreamType stream_type = 6;
    */
-  streamTypes: StreamType[] = [];
+  streamType = StreamType.UNSPECIFIED;
 
   constructor(data?: PartialMessage<ConfigCase>) {
     super();
@@ -401,8 +480,8 @@ export class ConfigCase extends Message<ConfigCase> {
     { no: 2, name: "protocol", kind: "enum", T: proto3.getEnumType(Protocol) },
     { no: 3, name: "codec", kind: "enum", T: proto3.getEnumType(Codec) },
     { no: 4, name: "compression", kind: "enum", T: proto3.getEnumType(Compression) },
-    { no: 5, name: "use_tls", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 6, name: "stream_types", kind: "enum", T: proto3.getEnumType(StreamType), repeated: true },
+    { no: 5, name: "use_tls", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 6, name: "stream_type", kind: "enum", T: proto3.getEnumType(StreamType) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ConfigCase {
