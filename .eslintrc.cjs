@@ -51,7 +51,8 @@ module.exports = {
           rules: {
             "@typescript-eslint/strict-boolean-expressions": "error",
             "@typescript-eslint/no-unnecessary-condition": "error",
-            "@typescript-eslint/array-type": "off", // we use complex typings, where Array is actually more readable than T[]
+            // we use complex typings, where Array is actually more readable than T[]
+            "@typescript-eslint/array-type": "off",
             "@typescript-eslint/switch-exhaustiveness-check": "error",
             "@typescript-eslint/prefer-nullish-coalescing": "error",
             "@typescript-eslint/no-unnecessary-boolean-literal-compare":
@@ -60,10 +61,11 @@ module.exports = {
             "@typescript-eslint/no-base-to-string": "error",
             "import/no-cycle": "error",
             "import/no-duplicates": "error",
+            // TS 4.5 adds type modifiers on import names, but we want to support lower versions
             "import/consistent-type-specifier-style": [
               "error",
               "prefer-top-level",
-            ], // TS 4.5 adds type modifiers on import names, but we want to support lower versions
+            ],
           },
         };
       }),
