@@ -15,7 +15,7 @@ module.exports = {
     "packages/*/dist/**",
     "node_modules/**",
   ],
-  plugins: ["@typescript-eslint", "node", "import"],
+  plugins: ["@typescript-eslint", "n", "import"],
   // Rules and settings that do not require a non-default parser
   extends: ["eslint:recommended"],
   rules: {
@@ -68,35 +68,23 @@ module.exports = {
     {
       files: ["**/*.{js,mjs,cjs}"],
       parserOptions: {
-        ecmaVersion: 2020,
+          ecmaVersion: 13, // ES2022 - https://eslint.org/docs/latest/use/configure/language-options#specifying-environments
       },
-      extends: ["eslint:recommended", "plugin:node/recommended"],
+      extends: ["eslint:recommended", "plugin:n/recommended"],
       rules: {
-        "node/shebang": "off", // this plugin only determines shebang necessary for files that are in a package.json "bin" field
-        "node/exports-style": ["error", "module.exports"],
-        "node/file-extension-in-import": ["error", "always"],
-        "node/prefer-global/buffer": ["error", "always"],
-        "node/prefer-global/console": ["error", "always"],
-        "node/prefer-global/process": ["error", "always"],
-        "node/prefer-global/url-search-params": ["error", "always"],
-        "node/prefer-global/url": ["error", "always"],
-        "node/prefer-promises/dns": "error",
-        "node/prefer-promises/fs": "error",
-        "no-process-exit": "off",
-        "node/no-unsupported-features/es-builtins": [
-          "error",
-          {
-            version: ">=16.0.0",
-            ignores: [],
-          },
-        ],
-        "node/no-unsupported-features/node-builtins": [
-          "error",
-          {
-            version: ">=16.0.0",
-            ignores: [],
-          },
-        ],
+          "n/shebang": "off", // this rule reports _any_ shebang outside of an npm binary as an error
+          "n/prefer-global/process": "off",
+          "n/no-process-exit": "off",
+          "n/exports-style": ["error", "module.exports"],
+          "n/file-extension-in-import": ["error", "always"],
+          "n/prefer-global/buffer": ["error", "always"],
+          "n/prefer-global/console": ["error", "always"],
+          "n/prefer-global/url-search-params": ["error", "always"],
+          "n/prefer-global/url": ["error", "always"],
+          "n/prefer-promises/dns": "error",
+          "n/prefer-promises/fs": "error",
+          "n/no-unsupported-features/node-builtins": "error",
+          "n/no-unsupported-features/es-syntax": "error",
       },
     },
     {
