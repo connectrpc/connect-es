@@ -12,7 +12,8 @@
     "./packages/connect-web-test",
     "./packages/connect-web-bench",
     "./packages/example",
-    "./packages/connect-migrate"
+    "./packages/connect-migrate",
+    "./packages/connect-node-conformance"
   ],
   "type": "module",
   "engineStrict": true,

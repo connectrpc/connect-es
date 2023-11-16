@@ -75,22 +75,48 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
   serverTlsCert = new Uint8Array(0);
 
   /**
-   * @generated from field: string service = 9;
+   * If present, the client certificate credentials to use to
+   * authenticate with the server. This will only be present
+   * when server_tls_cert is non-empty.
+   *
+   * @generated from field: connectrpc.conformance.v1alpha1.ClientCompatRequest.TLSCreds client_tls_creds = 9;
+   */
+  clientTlsCreds?: ClientCompatRequest_TLSCreds;
+
+  /**
+   * If non-zero, indicates the maximum size in bytes for a message.
+   * If the server sends anything larger, the client should reject it.
+   *
+   * @generated from field: uint32 message_receive_limit = 10;
+   */
+  messageReceiveLimit = 0;
+
+  /**
+   * @generated from field: string service = 11;
    */
   service = "";
 
   /**
-   * @generated from field: string method = 10;
+   * @generated from field: string method = 12;
    */
   method = "";
 
   /**
-   * @generated from field: connectrpc.conformance.v1alpha1.StreamType stream_type = 11;
+   * @generated from field: connectrpc.conformance.v1alpha1.StreamType stream_type = 13;
    */
   streamType = StreamType.UNSPECIFIED;
 
   /**
-   * @generated from field: repeated connectrpc.conformance.v1alpha1.Header request_headers = 12;
+   * If protocol indicates Connect and stream type indicates
+   * Unary, this instructs the client to use a GET HTTP method
+   * when making the request.
+   *
+   * @generated from field: bool use_get_http_method = 14;
+   */
+  useGetHttpMethod = false;
+
+  /**
+   * @generated from field: repeated connectrpc.conformance.v1alpha1.Header request_headers = 15;
    */
   requestHeaders: Header[] = [];
 
@@ -99,42 +125,23 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
    * For client- and bidi-stream methods, all entries will have the
    * same type URL (which matches the request type of the method).
    *
-   * @generated from field: repeated google.protobuf.Any request_messages = 13;
+   * @generated from field: repeated google.protobuf.Any request_messages = 16;
    */
   requestMessages: Any[] = [];
 
   /**
-   * @generated from field: optional uint32 timeout_ms = 14;
+   * @generated from field: optional uint32 timeout_ms = 17;
    */
   timeoutMs?: number;
 
   /**
-   * wait this many milliseconds before sending a request message
-   * TODO - This could potentially be removed bc this is in the relevant requests
-   * in the request_messages field
+   * Wait this many milliseconds before sending a request message.
+   * For client- or bidi-streaming requests, this delay should be
+   * applied before each request sent.
    *
-   * @generated from field: uint32 response_delay_ms = 15;
+   * @generated from field: uint32 request_delay_ms = 18;
    */
-  responseDelayMs = 0;
-
-  /**
-   * Tells the server whether it should wait for each request
-   * before sending a response.
-   * If true, it indicates the server should effectively interleave the
-   * stream so messages are sent in request->response pairs.
-   * If false, then the response stream will be sent once all request messages
-   * are finished sending with the only delays between messages
-   * being the optional fixed milliseconds defined in the response
-   * definition.
-   * This field is only relevant in the first message in the stream
-   * and should be ignored in subsequent messages.
-   * Note, this is only applicable to bidi endpoints.
-   * TODO - This could potentially be removed bc this is in the BidiStreamRequest
-   * which would be in the request_messages field
-   *
-   * @generated from field: bool full_duplex = 16;
-   */
-  fullDuplex = false;
+  requestDelayMs = 0;
 
   constructor(data?: PartialMessage<ClientCompatRequest>) {
     super();
@@ -152,14 +159,16 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
     { no: 6, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "port", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 8, name: "server_tls_cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 9, name: "service", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 10, name: "method", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 11, name: "stream_type", kind: "enum", T: proto3.getEnumType(StreamType) },
-    { no: 12, name: "request_headers", kind: "message", T: Header, repeated: true },
-    { no: 13, name: "request_messages", kind: "message", T: Any, repeated: true },
-    { no: 14, name: "timeout_ms", kind: "scalar", T: 13 /* ScalarType.UINT32 */, opt: true },
-    { no: 15, name: "response_delay_ms", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
-    { no: 16, name: "full_duplex", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 9, name: "client_tls_creds", kind: "message", T: ClientCompatRequest_TLSCreds },
+    { no: 10, name: "message_receive_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
+    { no: 11, name: "service", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 12, name: "method", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 13, name: "stream_type", kind: "enum", T: proto3.getEnumType(StreamType) },
+    { no: 14, name: "use_get_http_method", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 15, name: "request_headers", kind: "message", T: Header, repeated: true },
+    { no: 16, name: "request_messages", kind: "message", T: Any, repeated: true },
+    { no: 17, name: "timeout_ms", kind: "scalar", T: 13 /* ScalarType.UINT32 */, opt: true },
+    { no: 18, name: "request_delay_ms", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ClientCompatRequest {
@@ -176,6 +185,49 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
 
   static equals(a: ClientCompatRequest | PlainMessage<ClientCompatRequest> | undefined, b: ClientCompatRequest | PlainMessage<ClientCompatRequest> | undefined): boolean {
     return proto3.util.equals(ClientCompatRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message connectrpc.conformance.v1alpha1.ClientCompatRequest.TLSCreds
+ */
+export class ClientCompatRequest_TLSCreds extends Message<ClientCompatRequest_TLSCreds> {
+  /**
+   * @generated from field: bytes cert = 1;
+   */
+  cert = new Uint8Array(0);
+
+  /**
+   * @generated from field: bytes key = 2;
+   */
+  key = new Uint8Array(0);
+
+  constructor(data?: PartialMessage<ClientCompatRequest_TLSCreds>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "connectrpc.conformance.v1alpha1.ClientCompatRequest.TLSCreds";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+    { no: 2, name: "key", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ClientCompatRequest_TLSCreds {
+    return new ClientCompatRequest_TLSCreds().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ClientCompatRequest_TLSCreds {
+    return new ClientCompatRequest_TLSCreds().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ClientCompatRequest_TLSCreds {
+    return new ClientCompatRequest_TLSCreds().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ClientCompatRequest_TLSCreds | PlainMessage<ClientCompatRequest_TLSCreds> | undefined, b: ClientCompatRequest_TLSCreds | PlainMessage<ClientCompatRequest_TLSCreds> | undefined): boolean {
+    return proto3.util.equals(ClientCompatRequest_TLSCreds, a, b);
   }
 }
 
@@ -207,6 +259,16 @@ export class ClientCompatResponse extends Message<ClientCompatResponse> {
     case: "error";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
+  /**
+   * This field is used only by the reference client, and it can be used
+   * to provide additional feedback about problems observed in the server
+   * response. If non-empty, the test case is considered failed even if
+   * the result above matches all expectations.
+   *
+   * @generated from field: repeated string feedback = 4;
+   */
+  feedback: string[] = [];
+
   constructor(data?: PartialMessage<ClientCompatResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -218,6 +280,7 @@ export class ClientCompatResponse extends Message<ClientCompatResponse> {
     { no: 1, name: "test_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "response", kind: "message", T: ClientResponseResult, oneof: "result" },
     { no: 3, name: "error", kind: "message", T: ClientErrorResult, oneof: "result" },
+    { no: 4, name: "feedback", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ClientCompatResponse {
@@ -255,23 +318,31 @@ export class ClientResponseResult extends Message<ClientResponseResult> {
 
   /**
    * The error received from the actual RPC invocation. Note this is not representative
-   * of a runtime error and should always be the proto equivalent of a Connect error
+   * of a runtime error and should always be the proto equivalent of a Connect error.
    *
    * @generated from field: connectrpc.conformance.v1alpha1.Error error = 3;
    */
   error?: Error;
 
   /**
-   * In case the client cannot decode Any from JSON, it should instead return the received JSON
-   *
-   * @generated from field: repeated google.protobuf.Struct error_details_raw = 7;
-   */
-  errorDetailsRaw: Struct[] = [];
-
-  /**
    * @generated from field: repeated connectrpc.conformance.v1alpha1.Header response_trailers = 4;
    */
   responseTrailers: Header[] = [];
+
+  /**
+   * When processing an error from a Connect server, this should contain
+   * the actual JSON received on the wire. Clients under test do not need
+   * to populate this field. It is primarily used by the reference client,
+   * so that a server-under-test's on-the-wire error can be examined and
+   * validated.
+   *
+   * TODO - We should probably add a field to indicate the number of messages that were
+   * in the test case request definition but that couldn't be sent, due to an error
+   * occurring before finishing the upload.
+   *
+   * @generated from field: google.protobuf.Struct connect_error_raw = 5;
+   */
+  connectErrorRaw?: Struct;
 
   constructor(data?: PartialMessage<ClientResponseResult>) {
     super();
@@ -284,8 +355,8 @@ export class ClientResponseResult extends Message<ClientResponseResult> {
     { no: 1, name: "response_headers", kind: "message", T: Header, repeated: true },
     { no: 2, name: "payloads", kind: "message", T: ConformancePayload, repeated: true },
     { no: 3, name: "error", kind: "message", T: Error },
-    { no: 7, name: "error_details_raw", kind: "message", T: Struct, repeated: true },
     { no: 4, name: "response_trailers", kind: "message", T: Header, repeated: true },
+    { no: 5, name: "connect_error_raw", kind: "message", T: Struct },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ClientResponseResult {
@@ -308,7 +379,7 @@ export class ClientResponseResult extends Message<ClientResponseResult> {
 /**
  * The client is not able to fulfill the ClientCompatRequest. This may be due
  * to a runtime error or an unexpected internal error such as the requested protocol
- * not being supported. This is completely independent of the actual RPC invocation
+ * not being supported. This is completely independent of the actual RPC invocation.
  *
  * @generated from message connectrpc.conformance.v1alpha1.ClientErrorResult
  */
