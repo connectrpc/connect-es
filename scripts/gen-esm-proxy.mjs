@@ -1,6 +1,6 @@
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import {exit, stderr, stdout, argv} from "node:process";
+import { exit, stderr, stdout, argv } from "node:process";
 
 const args = argv.slice(2);
 
@@ -66,14 +66,16 @@ if (packageType !== "module") {
 for (const subpath of args) {
   const cjsPath = path.join(cjsDist, subpath, "index.js");
   if (!existsSync(cjsPath)) {
-    stderr.write(`CommonJS artifact for subpath "${subpath}" not found at expected path ${cjsPath}\n`);
+    stderr.write(
+      `CommonJS artifact for subpath "${subpath}" not found at expected path ${cjsPath}\n`,
+    );
     exit(1);
   }
   const proxyDir = path.join(proxyDist, subpath);
   if (!existsSync(proxyDir)) {
     mkdirSync(proxyDir, { recursive: true });
   }
-  const cjsImportPath = path.relative(proxyDir, cjsPath)
+  const cjsImportPath = path.relative(proxyDir, cjsPath);
   writeFileSync(
     path.join(proxyDir, "index.js"),
     `export * from "${cjsImportPath}";\n`,
