@@ -73,23 +73,23 @@ module.exports = {
     {
       files: ["**/*.{js,mjs,cjs}"],
       parserOptions: {
-          ecmaVersion: 13, // ES2022 - https://eslint.org/docs/latest/use/configure/language-options#specifying-environments
+        ecmaVersion: 13, // ES2022 - https://eslint.org/docs/latest/use/configure/language-options#specifying-environments
       },
       extends: ["eslint:recommended", "plugin:n/recommended"],
       rules: {
-          "n/shebang": "off", // this rule reports _any_ shebang outside of an npm binary as an error
-          "n/prefer-global/process": "off",
-          "n/no-process-exit": "off",
-          "n/exports-style": ["error", "module.exports"],
-          "n/file-extension-in-import": ["error", "always"],
-          "n/prefer-global/buffer": ["error", "always"],
-          "n/prefer-global/console": ["error", "always"],
-          "n/prefer-global/url-search-params": ["error", "always"],
-          "n/prefer-global/url": ["error", "always"],
-          "n/prefer-promises/dns": "error",
-          "n/prefer-promises/fs": "error",
-          "n/no-unsupported-features/node-builtins": "error",
-          "n/no-unsupported-features/es-syntax": "error",
+        "n/shebang": "off", // this rule reports _any_ shebang outside of an npm binary as an error
+        "n/prefer-global/process": "off",
+        "n/no-process-exit": "off",
+        "n/exports-style": ["error", "module.exports"],
+        "n/file-extension-in-import": ["error", "always"],
+        "n/prefer-global/buffer": ["error", "always"],
+        "n/prefer-global/console": ["error", "always"],
+        "n/prefer-global/url-search-params": ["error", "always"],
+        "n/prefer-global/url": ["error", "always"],
+        "n/prefer-promises/dns": "error",
+        "n/prefer-promises/fs": "error",
+        "n/no-unsupported-features/node-builtins": "error",
+        "n/no-unsupported-features/es-syntax": "error",
       },
     },
     {
