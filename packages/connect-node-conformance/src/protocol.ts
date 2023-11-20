@@ -16,7 +16,7 @@ import { ConnectError } from "@connectrpc/connect";
 import {
   Error as ConformanceError,
   Header as ConformanceHeader,
-} from "./gen/connectrpc/conformance/v1alpha1/service_pb.js";
+} from "./gen/connectrpc/conformance/v1/service_pb.js";
 
 export function connectErrorFromProto(err: ConformanceError) {
   // The ConnectErrror constructor accepts messages for details.
@@ -34,7 +34,7 @@ export function connectErrorFromProto(err: ConformanceError) {
       value: any.value,
     });
   }
-  const cErr = new ConnectError(err.message, err.code);
+  const cErr = new ConnectError(err.message ?? "", err.code);
   cErr.details = details;
   return cErr;
 }
