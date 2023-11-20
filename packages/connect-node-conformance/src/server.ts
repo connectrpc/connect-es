@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { parseArgs } from "node:util";
 import { readFileSync } from "node:fs";
 import {
   compressionBrotli,
@@ -27,146 +26,118 @@ import routes from "./routes.js";
 import {
   ServerCompatRequest,
   ServerCompatResponse,
-} from "./gen/connectrpc/conformance/v1alpha1/server_compat_pb.js";
-import { HTTPVersion } from "./gen/connectrpc/conformance/v1alpha1/config_pb.js";
-import { pki } from "node-forge";
+} from "./gen/connectrpc/conformance/v1/server_compat_pb.js";
+import { HTTPVersion } from "./gen/connectrpc/conformance/v1/config_pb.js";
+import * as forge from "node-forge";
 import { Integer } from "asn1js";
 
-const { values: flags } = parseArgs({
-  options: {
-    json: {
-      type: "boolean",
-      description:
-        "whether to use the JSON format for marshaling / unmarshaling messages",
-      default: false,
-    },
-    host: {
-      type: "string",
-      description: "the host for the conformance server",
-      default: "127.0.0.1",
-    },
-    port: {
-      type: "string",
-      description: "the port for the conformance server",
-    },
-  },
-});
+export function run() {
+  const req = ServerCompatRequest.fromBinary(
+    readFileSync(process.stdin.fd).subarray(4)
+  );
 
-const req =
-  flags.json === true
-    ? ServerCompatRequest.fromJsonString(readFileSync(0, "utf-8"))
-    : ServerCompatRequest.fromBinary(
-        new Uint8Array(Buffer.from(readFileSync(0, "binary"), "binary"))
-      );
+  const adapter = connectNodeAdapter({
+    routes,
+    readMaxBytes: req.messageReceiveLimit,
+    acceptCompression: [compressionGzip, compressionBrotli],
+  });
 
-const adapter = connectNodeAdapter({
-  routes,
-  readMaxBytes: req.messageReceiveLimit,
-  acceptCompression: [compressionGzip, compressionBrotli],
-});
-
-let certBytes = "";
-let keyBytes = "";
-if (req.useTls) {
-  const keys = pki.rsa.generateKeyPair(2048);
-  const cert = pki.createCertificate();
-  cert.publicKey = keys.publicKey;
-  cert.serialNumber = new Integer({
-    value: Math.floor(Math.random() * Number.MIN_SAFE_INTEGER),
-  }).toString("hex");
-  cert.setSubject([
-    {
-      name: "organizationName",
-      value: "ConnectRPC",
-    },
-    {
-      name: "commonName",
-      value: "Conformance Server",
-    },
-  ]);
-  const now = new Date();
-  const notBefore = new Date();
-  notBefore.setDate(now.getDate() - 1);
-  const notAfter = new Date();
-  notAfter.setDate(now.getDate() + 7);
-  cert.validity.notBefore = notBefore;
-  cert.validity.notAfter = notAfter;
-  cert.setExtensions([
-    {
-      name: "keyUsage",
-      digitalSignature: true,
-      keyEncipherment: true,
-    },
-    {
-      name: "extKeyUsage",
-      serverAuth: true,
-    },
-    {
-      name: "dNSName",
-      value: "localhost",
-    },
-    {
-      name: "iPAddress",
-      value: "127.0.0.1",
-    },
-    {
-      name: "iPAddress",
-      value: "0:0:0:0:0:0:0:1",
-    },
-  ]);
-  cert.sign(keys.privateKey);
-  certBytes = pki.certificateToPem(cert);
-  keyBytes = pki.privateKeyToPem(keys.privateKey);
-}
-
-let server: http.Server | http2.Http2Server;
-if (req.useTls) {
-  switch (req.httpVersion) {
-    case HTTPVersion.HTTP_VERSION_1:
-      server = https.createServer({ key: keyBytes, cert: certBytes }, adapter);
-      break;
-    case HTTPVersion.HTTP_VERSION_2:
-      server = http2.createSecureServer(
-        { key: keyBytes, cert: certBytes },
-        adapter
-      );
-      break;
-    case HTTPVersion.HTTP_VERSION_3:
-      throw new Error("HTTP/3 is not supported");
-    default:
-      throw new Error("Unknown HTTP version");
+  let certBytes = "";
+  let keyBytes = "";
+  if (req.useTls) {
+    const keys = forge.pki.rsa.generateKeyPair(2048);
+    const cert = forge.pki.createCertificate();
+    cert.publicKey = keys.publicKey;
+    cert.serialNumber = new Integer({
+      value: Math.floor(Math.random() * Number.MIN_SAFE_INTEGER),
+    }).toString("hex");
+    cert.setSubject([
+      {
+        name: "organizationName",
+        value: "ConnectRPC",
+      },
+      {
+        name: "commonName",
+        value: "Conformance Server",
+      },
+    ]);
+    const now = new Date();
+    const notBefore = new Date();
+    notBefore.setDate(now.getDate() - 1);
+    const notAfter = new Date();
+    notAfter.setDate(now.getDate() + 7);
+    cert.validity.notBefore = notBefore;
+    cert.validity.notAfter = notAfter;
+    cert.setExtensions([
+      {
+        name: "keyUsage",
+        digitalSignature: true,
+        keyEncipherment: true,
+      },
+      {
+        name: "extKeyUsage",
+        serverAuth: true,
+      },
+      {
+        name: "dNSName",
+        value: "localhost",
+      },
+      {
+        name: "iPAddress",
+        value: "127.0.0.1",
+      },
+      {
+        name: "iPAddress",
+        value: "0:0:0:0:0:0:0:1",
+      },
+    ]);
+    cert.sign(keys.privateKey);
+    certBytes = forge.pki.certificateToPem(cert);
+    keyBytes = forge.pki.privateKeyToPem(keys.privateKey);
   }
-} else {
-  switch (req.httpVersion) {
-    case HTTPVersion.HTTP_VERSION_1:
-      server = http.createServer(adapter);
-      break;
-    case HTTPVersion.HTTP_VERSION_2:
-      server = http2.createServer(adapter);
-      break;
-    case HTTPVersion.HTTP_VERSION_3:
-      throw new Error("HTTP/3 is not supported");
-    default:
-      throw new Error("Unknown HTTP version");
-  }
-}
 
-server.listen(
-  flags.port !== undefined ? parseInt(flags.port, 10) : undefined,
-  flags.host,
-  () => {
+  let server: http.Server | http2.Http2Server;
+  if (req.useTls) {
+    switch (req.httpVersion) {
+      case HTTPVersion.HTTP_VERSION_1:
+        server = https.createServer(
+          { key: keyBytes, cert: certBytes },
+          adapter
+        );
+        break;
+      case HTTPVersion.HTTP_VERSION_2:
+        server = http2.createSecureServer(
+          { key: keyBytes, cert: certBytes },
+          adapter
+        );
+        break;
+      case HTTPVersion.HTTP_VERSION_3:
+        throw new Error("HTTP/3 is not supported");
+      default:
+        throw new Error("Unknown HTTP version");
+    }
+  } else {
+    switch (req.httpVersion) {
+      case HTTPVersion.HTTP_VERSION_1:
+        server = http.createServer(adapter);
+        break;
+      case HTTPVersion.HTTP_VERSION_2:
+        server = http2.createServer(adapter);
+        break;
+      case HTTPVersion.HTTP_VERSION_3:
+        throw new Error("HTTP/3 is not supported");
+      default:
+        throw new Error("Unknown HTTP version");
+    }
+  }
+
+  server.listen(undefined, "127.0.0.1", () => {
     const addrInfo = server.address() as net.AddressInfo;
     const res = new ServerCompatResponse({
       pemCert: Buffer.from(certBytes),
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    let data: Uint8Array;
-    if (flags.json === true) {
-      data = Buffer.from(res.toJsonString(), "utf-8");
-    } else {
-      data = res.toBinary();
-    }
-    process.stdout.write(data);
-  }
-);
+    process.stdout.write(res.toBinary());
+  });
+}

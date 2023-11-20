@@ -14,16 +14,16 @@
 
 import { Code, ConnectError } from "@connectrpc/connect";
 import type { ConnectRouter, HandlerContext } from "@connectrpc/connect";
-import { ConformanceService } from "./gen/connectrpc/conformance/v1alpha1/service_connect.js";
+import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 import { Any } from "@bufbuild/protobuf";
 import {
   ConformancePayload,
   ConformancePayload_RequestInfo,
-} from "./gen/connectrpc/conformance/v1alpha1/service_pb.js";
+} from "./gen/connectrpc/conformance/v1/service_pb.js";
 import type {
   UnaryResponseDefinition,
   StreamResponseDefinition,
-} from "./gen/connectrpc/conformance/v1alpha1/service_pb.js";
+} from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   appendProtoHeaders,
   connectErrorFromProto,
