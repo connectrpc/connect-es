@@ -24,9 +24,9 @@
         "import": "./dist/proxy/index.js",
         "require": "./dist/cjs/index.js"
       },
-      "import": "./dist/esm/index.js",
       "module": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js"
     }
   },
   "peerDependencies": {
