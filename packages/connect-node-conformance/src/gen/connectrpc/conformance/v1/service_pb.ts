@@ -1158,7 +1158,7 @@ export class StreamContents_StreamItem extends Message<StreamContents_StreamItem
   /**
    * if absent use actual length of payload
    *
-   * @generated from field: optional int32 length = 2;
+   * @generated from field: optional uint32 length = 2;
    */
   length?: number;
 
@@ -1176,7 +1176,7 @@ export class StreamContents_StreamItem extends Message<StreamContents_StreamItem
   static readonly typeName = "connectrpc.conformance.v1.StreamContents.StreamItem";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "flags", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
-    { no: 2, name: "length", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 2, name: "length", kind: "scalar", T: 13 /* ScalarType.UINT32 */, opt: true },
     { no: 3, name: "payload", kind: "message", T: MessageContents },
   ]);
 
