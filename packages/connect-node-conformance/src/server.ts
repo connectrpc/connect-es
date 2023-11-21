@@ -28,8 +28,14 @@ import {
   ServerCompatResponse,
 } from "./gen/connectrpc/conformance/v1/server_compat_pb.js";
 import { HTTPVersion } from "./gen/connectrpc/conformance/v1/config_pb.js";
-import * as forge from "node-forge";
-import { Integer } from "asn1js";
+import { createRegistry } from "@bufbuild/protobuf";
+import {
+  BidiStreamRequest,
+  ClientStreamRequest,
+  ServerStreamRequest,
+  UnaryRequest,
+} from "./gen/connectrpc/conformance/v1/service_pb.js";
+import { createCert } from "./tls.js";
 
 export function run() {
   const req = ServerCompatRequest.fromBinary(
@@ -40,104 +46,55 @@ export function run() {
     routes,
     readMaxBytes: req.messageReceiveLimit,
     acceptCompression: [compressionGzip, compressionBrotli],
+    jsonOptions: {
+      typeRegistry: createRegistry(
+        UnaryRequest,
+        ServerStreamRequest,
+        ClientStreamRequest,
+        BidiStreamRequest
+      ),
+    },
   });
 
-  let certBytes = "";
-  let keyBytes = "";
-  if (req.useTls) {
-    const keys = forge.pki.rsa.generateKeyPair(2048);
-    const cert = forge.pki.createCertificate();
-    cert.publicKey = keys.publicKey;
-    cert.serialNumber = new Integer({
-      value: Math.floor(Math.random() * Number.MIN_SAFE_INTEGER),
-    }).toString("hex");
-    cert.setSubject([
-      {
-        name: "organizationName",
-        value: "ConnectRPC",
-      },
-      {
-        name: "commonName",
-        value: "Conformance Server",
-      },
-    ]);
-    const now = new Date();
-    const notBefore = new Date();
-    notBefore.setDate(now.getDate() - 1);
-    const notAfter = new Date();
-    notAfter.setDate(now.getDate() + 7);
-    cert.validity.notBefore = notBefore;
-    cert.validity.notAfter = notAfter;
-    cert.setExtensions([
-      {
-        name: "keyUsage",
-        digitalSignature: true,
-        keyEncipherment: true,
-      },
-      {
-        name: "extKeyUsage",
-        serverAuth: true,
-      },
-      {
-        name: "dNSName",
-        value: "localhost",
-      },
-      {
-        name: "iPAddress",
-        value: "127.0.0.1",
-      },
-      {
-        name: "iPAddress",
-        value: "0:0:0:0:0:0:0:1",
-      },
-    ]);
-    cert.sign(keys.privateKey);
-    certBytes = forge.pki.certificateToPem(cert);
-    keyBytes = forge.pki.privateKeyToPem(keys.privateKey);
-  }
-
   let server: http.Server | http2.Http2Server;
+  let serverOptions: { cert?: string; key?: string } = {};
   if (req.useTls) {
-    switch (req.httpVersion) {
-      case HTTPVersion.HTTP_VERSION_1:
-        server = https.createServer(
-          { key: keyBytes, cert: certBytes },
-          adapter
-        );
-        break;
-      case HTTPVersion.HTTP_VERSION_2:
-        server = http2.createSecureServer(
-          { key: keyBytes, cert: certBytes },
-          adapter
-        );
-        break;
-      case HTTPVersion.HTTP_VERSION_3:
-        throw new Error("HTTP/3 is not supported");
-      default:
-        throw new Error("Unknown HTTP version");
-    }
-  } else {
-    switch (req.httpVersion) {
-      case HTTPVersion.HTTP_VERSION_1:
-        server = http.createServer(adapter);
-        break;
-      case HTTPVersion.HTTP_VERSION_2:
-        server = http2.createServer(adapter);
-        break;
-      case HTTPVersion.HTTP_VERSION_3:
-        throw new Error("HTTP/3 is not supported");
-      default:
-        throw new Error("Unknown HTTP version");
-    }
+    serverOptions = createCert();
+  }
+  switch (req.httpVersion) {
+    case HTTPVersion.HTTP_VERSION_1:
+      server = req.useTls
+        ? https.createServer(serverOptions, adapter)
+        : http.createServer(adapter);
+      break;
+    case HTTPVersion.HTTP_VERSION_2:
+      server = req.useTls
+        ? http2.createSecureServer(serverOptions, adapter)
+        : http2.createServer(adapter);
+      break;
+    case HTTPVersion.HTTP_VERSION_3:
+      throw new Error("HTTP/3 is not supported");
+    default:
+      throw new Error("Unknown HTTP version");
   }
 
+  process.on("SIGTERM", () => {
+    server.close();
+  });
   server.listen(undefined, "127.0.0.1", () => {
     const addrInfo = server.address() as net.AddressInfo;
     const res = new ServerCompatResponse({
-      pemCert: Buffer.from(certBytes),
+      pemCert:
+        serverOptions.cert !== undefined
+          ? Buffer.from(serverOptions.cert)
+          : undefined,
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    process.stdout.write(res.toBinary());
+    const data = res.toBinary();
+    const size = Buffer.alloc(4);
+    size.writeUInt32BE(data.byteLength);
+    process.stdout.write(size);
+    process.stdout.write(data);
   });
 }

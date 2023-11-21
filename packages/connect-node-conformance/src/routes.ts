@@ -155,7 +155,7 @@ export default ({ service }: ConnectRouter) => {
         await wait(def?.responseDelayMs ?? 0);
         yield {
           payload: new ConformancePayload({
-            requestInfo: reqInfo,
+            requestInfo: resNum === 0 ? reqInfo : undefined,
             data: def?.responseData[resNum],
           }),
         };

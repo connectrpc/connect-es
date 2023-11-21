@@ -45,7 +45,7 @@ export function convertToProtoHeaders(headers: Headers): ConformanceHeader[] {
     result.push(
       new ConformanceHeader({
         name: key,
-        value: value.split(",").map((e) => e.trim()),
+        value: [value],
       })
     );
   });
