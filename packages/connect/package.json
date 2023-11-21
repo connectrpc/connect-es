@@ -28,6 +28,7 @@
         "require": "./dist/cjs/index.js"
       },
       "import": "./dist/esm/index.js",
+      "module": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
     "./protocol": {
@@ -36,6 +37,7 @@
         "require": "./dist/cjs/protocol/index.js"
       },
       "import": "./dist/esm/protocol/index.js",
+      "module": "./dist/esm/protocol/index.js",
       "require": "./dist/cjs/protocol/index.js"
     },
     "./protocol-connect": {
@@ -44,6 +46,7 @@
         "require": "./dist/cjs/protocol-connect/index.js"
       },
       "import": "./dist/esm/protocol-connect/index.js",
+      "module": "./dist/esm/protocol-connect/index.js",
       "require": "./dist/cjs/protocol-connect/index.js"
     },
     "./protocol-grpc": {
@@ -52,6 +55,7 @@
         "require": "./dist/cjs/protocol-grpc/index.js"
       },
       "import": "./dist/esm/protocol-grpc/index.js",
+      "module": "./dist/esm/protocol-grpc/index.js",
       "require": "./dist/cjs/protocol-grpc/index.js"
     },
     "./protocol-grpc-web": {
@@ -60,6 +64,7 @@
         "require": "./dist/cjs/protocol-grpc-web/index.js"
       },
       "import": "./dist/esm/protocol-grpc-web/index.js",
+      "module": "./dist/esm/protocol-grpc-web/index.js",
       "require": "./dist/cjs/protocol-grpc-web/index.js"
     }
   },
