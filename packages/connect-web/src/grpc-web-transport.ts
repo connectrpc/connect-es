@@ -213,7 +213,7 @@ export function createGrpcWebTransport(
           if (trailer === undefined) {
             throw "missing trailer";
           }
-          validateTrailer(trailer);
+          validateTrailer(trailer, response.headers);
           if (message === undefined) {
             throw "missing message";
           }
@@ -279,7 +279,7 @@ export function createGrpcWebTransport(
             }
             trailerReceived = true;
             const trailer = trailerParse(data);
-            validateTrailer(trailer);
+            validateTrailer(trailer, undefined);
             trailer.forEach((value, key) => trailerTarget.set(key, value));
             continue;
           }

@@ -144,7 +144,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             },
             { propagateDownStreamError: false },
           );
-          validateTrailer(uRes.trailer);
+          validateTrailer(uRes.trailer, uRes.header);
           if (message === undefined) {
             throw new ConnectError(
               "protocol error: missing output message for unary method",
@@ -245,7 +245,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               async function* (iterable) {
                 yield* iterable;
                 if (!foundStatus) {
-                  validateTrailer(uRes.trailer);
+                  validateTrailer(uRes.trailer, undefined);
                 }
               },
               { propagateDownStreamError: true },
