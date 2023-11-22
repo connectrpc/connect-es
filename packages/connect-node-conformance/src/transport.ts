@@ -34,6 +34,7 @@ import {
   ServerStreamRequest,
   UnaryRequest,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
+import * as http2 from "node:http2";
 
 export function createTransport(req: ClientCompatRequest) {
   let scheme = "http://";
@@ -74,6 +75,14 @@ export function createTransport(req: ClientCompatRequest) {
       break;
   }
 
+  let clientCerts: Pick<http2.SecureClientSessionOptions, "cert" | "key"> = {};
+  if (req.clientTlsCreds !== undefined) {
+    clientCerts = {
+      key: Buffer.from(req.clientTlsCreds.key),
+      cert: Buffer.from(req.clientTlsCreds.cert),
+    };
+  }
+
   const sharedOptions = {
     baseUrl,
     httpVersion,
@@ -86,13 +95,17 @@ export function createTransport(req: ClientCompatRequest) {
         UnaryRequest,
         ServerStreamRequest,
         ClientStreamRequest,
-        BidiStreamRequest,
+        BidiStreamRequest
       ),
     },
     nodeOptions: {
       ca: Buffer.from(req.serverTlsCert),
+      ...clientCerts,
     },
-  };
+  } satisfies
+    | Parameters<typeof createConnectTransport>[0]
+    | Parameters<typeof createGrpcTransport>[0]
+    | Parameters<typeof createGrpcWebTransport>[0];
   switch (req.protocol) {
     case Protocol.CONNECT:
       return createConnectTransport({
