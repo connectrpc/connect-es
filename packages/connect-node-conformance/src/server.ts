@@ -57,9 +57,23 @@ export function run() {
   });
 
   let server: http.Server | http2.Http2Server;
-  let serverOptions: { cert?: string; key?: string } = {};
+  let serverOptions: {
+    cert?: string;
+    key?: string;
+    ca?: Buffer;
+    requestCert?: true;
+    rejectUnauthorized?: true;
+  } = {};
   if (req.useTls) {
     serverOptions = createCert();
+    if (req.clientTlsCert.length > 0) {
+      serverOptions = {
+        ...serverOptions,
+        requestCert: true,
+        rejectUnauthorized: true,
+        ca: Buffer.from(req.clientTlsCert),
+      };
+    }
   }
   switch (req.httpVersion) {
     case HTTPVersion.HTTP_VERSION_1:
