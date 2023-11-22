@@ -86,8 +86,11 @@ export function createTransport(req: ClientCompatRequest) {
         UnaryRequest,
         ServerStreamRequest,
         ClientStreamRequest,
-        BidiStreamRequest,
+        BidiStreamRequest
       ),
+    },
+    nodeOptions: {
+      ca: Buffer.from(req.serverTlsCert),
     },
   };
   switch (req.protocol) {
