@@ -16,28 +16,29 @@ import { ConnectError } from "@connectrpc/connect";
 import {
   Error as ConformanceError,
   Header as ConformanceHeader,
+  ConformancePayload_RequestInfo,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
-import { Any, Message } from "@bufbuild/protobuf";
+import { createRegistry, Any, Message } from "@bufbuild/protobuf";
+
+const detailsRegitry = createRegistry(ConformancePayload_RequestInfo);
 
 export function connectErrorFromProto(err: ConformanceError) {
-  // The ConnectErrror constructor accepts messages for details.
+  // The ConnectError constructor accepts messages for details.
   // The conformance error details are the raw google.protobuf.Any messages.
   // We need to convert them to `IncomingDetails` for connect to represent them
   // accurately.
-  const details: ConnectError["details"] = [];
-  for (const any of err.details) {
-    const slashIndex = any.typeUrl.lastIndexOf("/");
-    if (slashIndex < 0) {
-      throw new Error(`invalid typeUrl: ${any.typeUrl}`);
-    }
-    details.push({
-      type: any.typeUrl.substring(slashIndex + 1),
-      value: any.value,
-    });
-  }
-  const cErr = new ConnectError(err.message ?? "", err.code);
-  cErr.details = details;
-  return cErr;
+  return new ConnectError(
+    err.message ?? "",
+    err.code,
+    undefined,
+    err.details.map((d) => {
+      const m = d.unpack(detailsRegitry);
+      if (m === undefined) {
+        throw new Error(`Cannot unpack ${d.typeUrl}`);
+      }
+      return m;
+    }),
+  );
 }
 
 export function convertToProtoError(err: ConnectError | undefined) {
