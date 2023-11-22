@@ -53,7 +53,9 @@ function handleUnaryResponse(
 ) {
   appendProtoHeaders(ctx.responseHeader, def?.responseHeaders ?? []);
   appendProtoHeaders(ctx.responseTrailer, def?.responseTrailers ?? []);
+  const reqInfo = createRequestInfo(ctx, reqs);
   if (def?.response.case === "error") {
+    def.response.value.details.push(Any.pack(reqInfo));
     throw connectErrorFromProto(def.response.value);
   }
   return {
@@ -105,6 +107,9 @@ export default ({ service }: ConnectRouter) => {
         reqInfo = undefined;
       }
       if (def.error !== undefined) {
+        if (def.responseData.length === 0) {
+          def.error.details.push(Any.pack(createRequestInfo(ctx, [anyReq])));
+        }
         throw connectErrorFromProto(def.error);
       }
     },
@@ -161,6 +166,9 @@ export default ({ service }: ConnectRouter) => {
         };
       }
       if (def?.error !== undefined) {
+        if (def.responseData.length === 0) {
+          def.error.details.push(Any.pack(reqInfo));
+        }
         throw connectErrorFromProto(def.error);
       }
     },
