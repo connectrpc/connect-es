@@ -25,8 +25,7 @@ const detailsRegitry = createRegistry(ConformancePayload_RequestInfo);
 export function connectErrorFromProto(err: ConformanceError) {
   // The ConnectError constructor accepts messages for details.
   // The conformance error details are the raw google.protobuf.Any messages.
-  // We need to convert them to `IncomingDetails` for connect to represent them
-  // accurately.
+  // We need to unpack the Any messages for connect to represent them accurately.
   return new ConnectError(
     err.message ?? "",
     err.code,
