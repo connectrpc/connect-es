@@ -46,7 +46,7 @@ export function convertToProtoHeaders(headers: Headers): ConformanceHeader[] {
       new ConformanceHeader({
         name: key,
         value: [value],
-      })
+      }),
     );
   });
   return result;
@@ -54,7 +54,7 @@ export function convertToProtoHeaders(headers: Headers): ConformanceHeader[] {
 
 export function appendProtoHeaders(
   headers: Headers,
-  protoHeaders: ConformanceHeader[]
+  protoHeaders: ConformanceHeader[],
 ) {
   for (const header of protoHeaders) {
     for (const value of header.value) {
