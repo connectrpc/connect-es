@@ -1,3 +1,17 @@
+// Copyright 2021-2023 The Connect Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import {
   ClientCompatRequest,
   ClientCompatResponse,
@@ -5,24 +19,16 @@ import {
 } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import invoke from "./invoke.js";
 import { createTransport } from "./transport.js";
+import type { ReadStream } from "node:tty";
 
 export async function run() {
-  let resolveReady: () => void;
-  const ready = new Promise<void>((resolve) => (resolveReady = resolve));
-  process.stdin.once("readable", () => {
-    resolveReady();
-  });
-  await ready;
+  const it = readReqBuffers(process.stdin)[Symbol.asyncIterator]();
   for (;;) {
-    const size = process.stdin.read(4) as Buffer | null;
-    if (size === null) {
+    const next = await it.next();
+    if (next.done === true) {
       break;
     }
-    const reqData = process.stdin.read(size.readUInt32BE()) as Buffer | null;
-    if (reqData === null) {
-      throw new Error("Unexpected EOF");
-    }
-    const req = ClientCompatRequest.fromBinary(reqData);
+    const req = ClientCompatRequest.fromBinary(next.value);
     const res = new ClientCompatResponse({
       testName: req.testName,
     });
@@ -43,4 +49,28 @@ export async function run() {
   }
 }
 
-run();
+async function* readReqBuffers(stream: ReadStream) {
+  stream.on("error", (err) => {
+    throw err;
+  });
+  for (; !stream.readableEnded; ) {
+    const size = stream.read(4) as Buffer | null;
+    if (size === null) {
+      await new Promise((resolve) => {
+        stream.once("readable", resolve);
+        stream.once("end", resolve);
+      });
+      continue;
+    }
+    let chunk: Buffer | null = null;
+    // We are guaranteed to get the next chunk.
+    for (;;) {
+      chunk = stream.read(size.readUInt32BE()) as Buffer | null;
+      if (chunk !== null) {
+        break;
+      }
+      await new Promise((resolve) => stream.once("readable", resolve));
+    }
+    yield chunk;
+  }
+}

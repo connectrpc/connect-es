@@ -1,3 +1,17 @@
+// Copyright 2021-2023 The Connect Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import {
   createPromiseClient,
   PromiseClient,
@@ -40,27 +54,28 @@ async function unary(client: ConformanceClient, req: ClientCompatRequest) {
   }
   const reqHeader = new Headers();
   appendProtoHeaders(reqHeader, req.requestHeaders);
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
   let error: ConnectError | undefined = undefined;
+  const resHeaders: ConformanceHeader[] = [];
+  const resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
   try {
     const uRes = await client.unary(uReq, {
       headers: reqHeader,
       onHeader(headers) {
-        resHeaders = convertToProtoHeaders(headers);
+        resHeaders.push(...convertToProtoHeaders(headers));
       },
       onTrailer(trailers) {
-        resTrailers = convertToProtoHeaders(trailers);
+        resTrailers.push(...convertToProtoHeaders(trailers));
       },
     });
     payloads.push(uRes.payload!);
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
-    resTrailers = convertToProtoHeaders(error.metadata);
+    resHeaders.push(...convertToProtoHeaders(error.metadata));
+    resTrailers.push(...convertToProtoHeaders(error.metadata));
   }
   return new ClientResponseResult({
+    payloads: payloads,
     responseHeaders: resHeaders,
     responseTrailers: resTrailers,
     error: convertToProtoError(error),
@@ -69,7 +84,7 @@ async function unary(client: ConformanceClient, req: ClientCompatRequest) {
 
 async function serverStream(
   client: ConformanceClient,
-  req: ClientCompatRequest
+  req: ClientCompatRequest,
 ) {
   if (req.requestMessages.length !== 1) {
     throw new Error("ServerStream method requires exactly one request message");
@@ -78,31 +93,31 @@ async function serverStream(
   const uReq = new ServerStreamRequest();
   if (!msg.unpackTo(uReq)) {
     throw new Error(
-      "Could not unpack request message to server stream request"
+      "Could not unpack request message to server stream request",
     );
   }
   const reqHeader = new Headers();
   appendProtoHeaders(reqHeader, req.requestHeaders);
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
   let error: ConnectError | undefined = undefined;
+  const resHeaders: ConformanceHeader[] = [];
+  const resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
   try {
     for await (const msg of client.serverStream(uReq, {
       headers: reqHeader,
       onHeader(headers) {
-        resHeaders = convertToProtoHeaders(headers);
+        resHeaders.push(...convertToProtoHeaders(headers));
       },
       onTrailer(trailers) {
-        resTrailers = convertToProtoHeaders(trailers);
+        resTrailers.push(...convertToProtoHeaders(trailers));
       },
     })) {
       payloads.push(msg.payload!);
     }
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = [...resHeaders, ...convertToProtoHeaders(error.metadata)];
-    resTrailers = convertToProtoHeaders(error.metadata);
+    resHeaders.push(...convertToProtoHeaders(error.metadata));
+    resTrailers.push(...convertToProtoHeaders(error.metadata));
   }
   return new ClientResponseResult({
     responseHeaders: resHeaders,
@@ -114,13 +129,13 @@ async function serverStream(
 
 async function clientStream(
   client: ConformanceClient,
-  req: ClientCompatRequest
+  req: ClientCompatRequest,
 ) {
   const reqHeaders = new Headers();
   appendProtoHeaders(reqHeaders, req.requestHeaders);
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
   let error: ConnectError | undefined = undefined;
+  const resHeaders: ConformanceHeader[] = [];
+  const resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
   try {
     const csRes = await client.clientStream(
@@ -129,7 +144,7 @@ async function clientStream(
           const csReq = new ClientStreamRequest();
           if (!msg.unpackTo(csReq)) {
             throw new Error(
-              "Could not unpack request message to client stream request"
+              "Could not unpack request message to client stream request",
             );
           }
           await wait(req.requestDelayMs);
@@ -139,18 +154,18 @@ async function clientStream(
       {
         headers: reqHeaders,
         onHeader(headers) {
-          resHeaders = convertToProtoHeaders(headers);
+          resHeaders.push(...convertToProtoHeaders(headers));
         },
         onTrailer(trailers) {
-          resTrailers = convertToProtoHeaders(trailers);
+          resTrailers.push(...convertToProtoHeaders(trailers));
         },
-      }
+      },
     );
     payloads.push(csRes.payload!);
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
-    resTrailers = convertToProtoHeaders(error.metadata);
+    resHeaders.push(...convertToProtoHeaders(error.metadata));
+    resTrailers.push(...convertToProtoHeaders(error.metadata));
   }
   return new ClientResponseResult({
     responseHeaders: resHeaders,
@@ -163,31 +178,31 @@ async function clientStream(
 async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
   const reqHeaders = new Headers();
   appendProtoHeaders(reqHeaders, req.requestHeaders);
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
   let error: ConnectError | undefined = undefined;
+  const resHeaders: ConformanceHeader[] = [];
+  const resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
   try {
     const reqIt = createWritableIterable<BidiStreamRequest>();
     const sRes = client.bidiStream(reqIt, {
       headers: reqHeaders,
       onHeader(headers) {
-        resHeaders = convertToProtoHeaders(headers);
+        resHeaders.push(...convertToProtoHeaders(headers));
       },
       onTrailer(trailers) {
-        resTrailers = convertToProtoHeaders(trailers);
+        resTrailers.push(...convertToProtoHeaders(trailers));
       },
     });
     const resIt = sRes[Symbol.asyncIterator]();
     for (const msg of req.requestMessages) {
-      const csReq = new BidiStreamRequest();
-      if (!msg.unpackTo(csReq)) {
+      const bdReq = new BidiStreamRequest();
+      if (!msg.unpackTo(bdReq)) {
         throw new Error(
-          "Could not unpack request message to client stream request"
+          "Could not unpack request message to client stream request",
         );
       }
       await wait(req.requestDelayMs);
-      await reqIt.write(csReq);
+      await reqIt.write(bdReq);
       if (req.streamType === StreamType.FULL_DUPLEX_BIDI_STREAM) {
         const next = await resIt.next();
         if (next.done === true) {
@@ -207,8 +222,8 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
     }
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
-    resTrailers = convertToProtoHeaders(error.metadata);
+    resHeaders.push(...convertToProtoHeaders(error.metadata));
+    resTrailers.push(...convertToProtoHeaders(error.metadata));
   }
   return new ClientResponseResult({
     responseHeaders: resHeaders,
@@ -220,7 +235,7 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
 
 async function unimplemented(
   client: ConformanceClient,
-  req: ClientCompatRequest
+  req: ClientCompatRequest,
 ) {
   const msg = req.requestMessages[0];
   const unReq = new UnimplementedRequest();
@@ -229,23 +244,23 @@ async function unimplemented(
   }
   const reqHeader = new Headers();
   appendProtoHeaders(reqHeader, req.requestHeaders);
-  let resHeaders: ConformanceHeader[] | undefined = undefined;
-  let resTrailers: ConformanceHeader[] | undefined = undefined;
   let error: ConnectError | undefined = undefined;
+  const resHeaders: ConformanceHeader[] = [];
+  const resTrailers: ConformanceHeader[] = [];
   try {
     await client.unimplemented(unReq, {
       headers: reqHeader,
       onHeader(headers) {
-        resHeaders = convertToProtoHeaders(headers);
+        resHeaders.push(...convertToProtoHeaders(headers));
       },
       onTrailer(trailers) {
-        resTrailers = convertToProtoHeaders(trailers);
+        resTrailers.push(...convertToProtoHeaders(trailers));
       },
     });
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
-    resTrailers = convertToProtoHeaders(error.metadata);
+    resHeaders.push(...convertToProtoHeaders(error.metadata));
+    resTrailers.push(...convertToProtoHeaders(error.metadata));
   }
   return new ClientResponseResult({
     responseHeaders: resHeaders,

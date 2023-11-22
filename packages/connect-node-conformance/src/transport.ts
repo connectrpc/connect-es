@@ -1,3 +1,18 @@
+// Copyright 2021-2023 The Connect Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { createRegistry } from "@bufbuild/protobuf";
 import { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
   Codec,
@@ -13,6 +28,12 @@ import {
   createGrpcWebTransport,
 } from "@connectrpc/connect-node";
 import { Compression } from "@connectrpc/connect/protocol";
+import {
+  BidiStreamRequest,
+  ClientStreamRequest,
+  ServerStreamRequest,
+  UnaryRequest,
+} from "./gen/connectrpc/conformance/v1/service_pb.js";
 
 export function createTransport(req: ClientCompatRequest) {
   let scheme = "http://";
@@ -59,8 +80,16 @@ export function createTransport(req: ClientCompatRequest) {
     useBinaryFormat: req.codec === Codec.PROTO,
     sendCompression,
     defaultTimeoutMs: req.timeoutMs,
+    compressMinBytes: -1, // To account for empty messages
+    jsonOptions: {
+      typeRegistry: createRegistry(
+        UnaryRequest,
+        ServerStreamRequest,
+        ClientStreamRequest,
+        BidiStreamRequest,
+      ),
+    },
   };
-
   switch (req.protocol) {
     case Protocol.CONNECT:
       return createConnectTransport({
