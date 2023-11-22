@@ -53,7 +53,7 @@ export function convertToProtoError(err: ConnectError | undefined) {
         new Any({
           typeUrl: "type.googleapis.com/" + detail.type,
           value: detail.value,
-        })
+        }),
       );
     }
   }

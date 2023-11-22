@@ -22,13 +22,8 @@ import { createTransport } from "./transport.js";
 import type { ReadStream } from "node:tty";
 
 export async function run() {
-  const it = readReqBuffers(process.stdin)[Symbol.asyncIterator]();
-  for (;;) {
-    const next = await it.next();
-    if (next.done === true) {
-      break;
-    }
-    const req = ClientCompatRequest.fromBinary(next.value);
+  for await (const next of readReqBuffers(process.stdin)) {
+    const req = ClientCompatRequest.fromBinary(next);
     const res = new ClientCompatResponse({
       testName: req.testName,
     });
