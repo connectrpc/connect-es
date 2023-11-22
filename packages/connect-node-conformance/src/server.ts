@@ -39,7 +39,7 @@ import { createCert } from "./tls.js";
 
 export function run() {
   const req = ServerCompatRequest.fromBinary(
-    readFileSync(process.stdin.fd).subarray(4)
+    readFileSync(process.stdin.fd).subarray(4),
   );
 
   const adapter = connectNodeAdapter({
@@ -51,7 +51,7 @@ export function run() {
         UnaryRequest,
         ServerStreamRequest,
         ClientStreamRequest,
-        BidiStreamRequest
+        BidiStreamRequest,
       ),
     },
   });
