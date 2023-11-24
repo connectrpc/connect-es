@@ -72,7 +72,7 @@ export interface ConnectRouter {
   ): this;
   /**
    * Provides implementation for a single RPC given a method type.
-   * 
+   *
    * @private This is an experimental API. Please do not rely on it yet.
    */
   rpc<M extends MethodType>(
