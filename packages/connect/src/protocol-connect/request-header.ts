@@ -42,6 +42,7 @@ export function requestHeader(
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
+  setUserAgent: boolean,
 ): Headers {
   const result = new Headers(userProvidedHeaders ?? {});
   if (timeoutMs !== undefined) {
@@ -58,7 +59,9 @@ export function requestHeader(
       : contentTypeStreamJson,
   );
   result.set(headerProtocolVersion, protocolVersion);
-  result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
+  if (setUserAgent) {
+    result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
+  }
   return result;
 }
 
@@ -79,12 +82,14 @@ export function requestHeaderWithCompression(
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: Compression[],
   sendCompression: Compression | null,
+  setUserAgent: boolean,
 ): Headers {
   const result = requestHeader(
     methodKind,
     useBinaryFormat,
     timeoutMs,
     userProvidedHeaders,
+    setUserAgent,
   );
   if (sendCompression != null) {
     const name =

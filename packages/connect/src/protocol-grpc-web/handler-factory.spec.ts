@@ -182,7 +182,7 @@ describe("createHandlerFactory()", function () {
         httpVersion: "2.0",
         method: "POST",
         url: `https://example.com/${service.typeName}/${method.name}`,
-        header: requestHeader(true, timeoutMs, undefined),
+        header: requestHeader(true, timeoutMs, undefined, true),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: new AbortController().signal,
       });
@@ -284,7 +284,7 @@ describe("createHandlerFactory()", function () {
         httpVersion: "2.0",
         method: "POST",
         url: `https://example.com/${service.typeName}/${method.name}`,
-        header: requestHeader(true, undefined, undefined),
+        header: requestHeader(true, undefined, undefined, true),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: ac.signal,
       });

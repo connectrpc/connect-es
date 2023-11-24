@@ -102,6 +102,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             header,
             opt.acceptCompression,
             opt.sendCompression,
+            true,
           ),
           contextValues: contextValues ?? createContextValues(),
           message,
@@ -230,6 +231,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             header,
             opt.acceptCompression,
             opt.sendCompression,
+            true,
           ),
           contextValues: contextValues ?? createContextValues(),
           message: input,
@@ -287,7 +289,11 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                     }
                     endStreamReceived = true;
                     if (chunk.value.error) {
-                      throw chunk.value.error;
+                      const error = chunk.value.error;
+                      uRes.header.forEach((value, key) => {
+                        error.metadata.append(key, value);
+                      });
+                      throw error;
                     }
                     chunk.value.metadata.forEach((value, key) =>
                       res.trailer.set(key, value),

@@ -177,6 +177,7 @@ export function createConnectTransport(
             useBinaryFormat,
             timeoutMs,
             header,
+            false,
           ),
           contextValues: contextValues ?? createContextValues(),
           message,
@@ -257,6 +258,7 @@ export function createConnectTransport(
       async function* parseResponseBody(
         body: ReadableStream<Uint8Array>,
         trailerTarget: Headers,
+        header: Headers,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         let endStreamReceived = false;
@@ -270,7 +272,11 @@ export function createConnectTransport(
             endStreamReceived = true;
             const endStream = endStreamFromJson(data);
             if (endStream.error) {
-              throw endStream.error;
+              const error = endStream.error;
+              header.forEach((value, key) => {
+                error.metadata.append(key, value);
+              });
+              throw error;
             }
             endStream.metadata.forEach((value, key) =>
               trailerTarget.set(key, value),
@@ -323,6 +329,7 @@ export function createConnectTransport(
             useBinaryFormat,
             timeoutMs,
             header,
+            false,
           ),
           contextValues: contextValues ?? createContextValues(),
           message: input,
@@ -344,7 +351,7 @@ export function createConnectTransport(
             ...req,
             header: fRes.headers,
             trailer,
-            message: parseResponseBody(fRes.body, trailer),
+            message: parseResponseBody(fRes.body, trailer, fRes.headers),
           };
           return res;
         },

@@ -35,6 +35,9 @@ export const compressionGzip: Compression = {
     return gzip(bytes, {});
   },
   decompress(bytes, readMaxBytes) {
+    if (bytes.length == 0) {
+      return Promise.resolve(new Uint8Array(0));
+    }
     return wrapZLibErrors(
       gunzip(bytes, {
         maxOutputLength: readMaxBytes,
@@ -56,6 +59,9 @@ export const compressionBrotli: Compression = {
     return brotliCompress(bytes, {});
   },
   decompress(bytes, readMaxBytes) {
+    if (bytes.length == 0) {
+      return Promise.resolve(new Uint8Array(0));
+    }
     return wrapZLibErrors(
       brotliDecompress(bytes, {
         maxOutputLength: readMaxBytes,

@@ -168,7 +168,7 @@ export function createGrpcWebTransport(
             redirect: "error",
             mode: "cors",
           },
-          header: requestHeader(useBinaryFormat, timeoutMs, header),
+          header: requestHeader(useBinaryFormat, timeoutMs, header, false),
           contextValues: contextValues ?? createContextValues(),
           message,
         },
@@ -213,7 +213,7 @@ export function createGrpcWebTransport(
           if (trailer === undefined) {
             throw "missing trailer";
           }
-          validateTrailer(trailer);
+          validateTrailer(trailer, response.headers);
           if (message === undefined) {
             throw "missing message";
           }
@@ -250,6 +250,7 @@ export function createGrpcWebTransport(
         body: ReadableStream<Uint8Array>,
         foundStatus: boolean,
         trailerTarget: Headers,
+        header: Headers,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         if (foundStatus) {
@@ -279,7 +280,7 @@ export function createGrpcWebTransport(
             }
             trailerReceived = true;
             const trailer = trailerParse(data);
-            validateTrailer(trailer);
+            validateTrailer(trailer, header);
             trailer.forEach((value, key) => trailerTarget.set(key, value));
             continue;
           }
@@ -327,7 +328,7 @@ export function createGrpcWebTransport(
             redirect: "error",
             mode: "cors",
           },
-          header: requestHeader(useBinaryFormat, timeoutMs, header),
+          header: requestHeader(useBinaryFormat, timeoutMs, header, false),
           contextValues: contextValues ?? createContextValues(),
           message: input,
         },
@@ -348,7 +349,12 @@ export function createGrpcWebTransport(
             ...req,
             header: fRes.headers,
             trailer,
-            message: parseResponseBody(fRes.body, foundStatus, trailer),
+            message: parseResponseBody(
+              fRes.body,
+              foundStatus,
+              trailer,
+              fRes.headers,
+            ),
           };
           return res;
         },

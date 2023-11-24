@@ -17,11 +17,11 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@connectrpc/connect-web": "1.1.2",
-    "@connectrpc/connect": "1.1.2",
-    "@types/jasmine": "^4.3.5",
+    "@connectrpc/connect-web": "1.1.3",
+    "@connectrpc/connect": "1.1.3",
+    "@types/jasmine": "^5.0.0",
     "esbuild": "^0.16.12",
-    "jasmine": "^5.0.0",
+    "jasmine": "^5.1.0",
     "karma": "^6.4.2",
     "karma-browserstack-launcher": "^1.6.0",
     "karma-chrome-launcher": "^3.2.0",

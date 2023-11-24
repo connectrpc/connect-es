@@ -40,6 +40,10 @@ describe("compression", () => {
         const equal = payload.every((value, index) => b[index] === value);
         expect(equal).toBeTrue();
       });
+      it("should decompress zero-length payload", async () => {
+        const b = await compression.decompress(new Uint8Array(0), 0xffffffff);
+        expect(b.byteLength).toBe(0);
+      });
       it("should raise resource_exhausted if maxReadBytes exceeded", async () => {
         try {
           await compression.decompress(payloadCompressed, 2);

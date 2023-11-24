@@ -33,6 +33,7 @@ export function requestHeader(
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
+  setUserAgent: boolean,
 ): Headers {
   const result = new Headers(userProvidedHeaders ?? {});
   // Note that we do not support the grpc-web-text format.
@@ -46,7 +47,9 @@ export function requestHeader(
   // We use "connect-es/1.2.3" where gRPC would use "grpc-es/1.2.3".
   // See https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
   result.set(headerXUserAgent, "CONNECT_ES_USER_AGENT");
-  result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
+  if (setUserAgent) {
+    result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
+  }
   if (timeoutMs !== undefined) {
     result.set(headerTimeout, `${timeoutMs}m`);
   }
@@ -64,8 +67,14 @@ export function requestHeaderWithCompression(
   userProvidedHeaders: HeadersInit | undefined,
   acceptCompression: Compression[],
   sendCompression: Compression | null,
+  setUserAgent: boolean,
 ): Headers {
-  const result = requestHeader(useBinaryFormat, timeoutMs, userProvidedHeaders);
+  const result = requestHeader(
+    useBinaryFormat,
+    timeoutMs,
+    userProvidedHeaders,
+    setUserAgent,
+  );
   if (sendCompression != null) {
     result.set(headerEncoding, sendCompression.name);
   }
