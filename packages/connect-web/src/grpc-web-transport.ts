@@ -349,7 +349,12 @@ export function createGrpcWebTransport(
             ...req,
             header: fRes.headers,
             trailer,
-            message: parseResponseBody(fRes.body, foundStatus, trailer, fRes.headers),
+            message: parseResponseBody(
+              fRes.body,
+              foundStatus,
+              trailer,
+              fRes.headers,
+            ),
           };
           return res;
         },
