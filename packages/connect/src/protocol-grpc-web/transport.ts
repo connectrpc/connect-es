@@ -305,7 +305,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                       );
                     }
                     trailerReceived = true;
-                    validateTrailer(chunk.value, undefined);
+                    validateTrailer(chunk.value, uRes.header);
                     chunk.value.forEach((value, key) =>
                       res.trailer.set(key, value),
                     );

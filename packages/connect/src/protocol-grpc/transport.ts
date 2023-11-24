@@ -245,7 +245,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               async function* (iterable) {
                 yield* iterable;
                 if (!foundStatus) {
-                  validateTrailer(uRes.trailer, undefined);
+                  validateTrailer(uRes.trailer, uRes.header);
                 }
               },
               { propagateDownStreamError: true },

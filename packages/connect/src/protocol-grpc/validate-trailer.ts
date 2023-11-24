@@ -20,13 +20,10 @@ import { findTrailerError } from "./trailer-status.js";
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export function validateTrailer(
-  trailer: Headers,
-  header: Headers | undefined,
-): void {
+export function validateTrailer(trailer: Headers, header: Headers): void {
   const err = findTrailerError(trailer);
   if (err) {
-    header?.forEach((value, key) => {
+    header.forEach((value, key) => {
       err.metadata.append(key, value);
     });
     throw err;

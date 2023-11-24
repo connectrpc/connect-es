@@ -250,6 +250,7 @@ export function createGrpcWebTransport(
         body: ReadableStream<Uint8Array>,
         foundStatus: boolean,
         trailerTarget: Headers,
+        header: Headers,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         if (foundStatus) {
@@ -279,7 +280,7 @@ export function createGrpcWebTransport(
             }
             trailerReceived = true;
             const trailer = trailerParse(data);
-            validateTrailer(trailer, undefined);
+            validateTrailer(trailer, header);
             trailer.forEach((value, key) => trailerTarget.set(key, value));
             continue;
           }
@@ -348,7 +349,7 @@ export function createGrpcWebTransport(
             ...req,
             header: fRes.headers,
             trailer,
-            message: parseResponseBody(fRes.body, foundStatus, trailer),
+            message: parseResponseBody(fRes.body, foundStatus, trailer, fRes.headers),
           };
           return res;
         },
