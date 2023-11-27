@@ -20,9 +20,13 @@
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
+      "node": {
+        "import": "./dist/proxy/index.js",
+        "require": "./dist/cjs/index.js"
+      },
       "module": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "import": "./dist/proxy/index.js"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     }
   },
   "peerDependencies": {
