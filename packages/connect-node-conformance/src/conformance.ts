@@ -35,7 +35,7 @@ const downloadUrl = `https://github.com/connectrpc/conformance/releases/download
 
 export async function run() {
   const tempDir = getTempDir();
-  const artifactName = getArtificactNameForEnv();
+  const artifactName = getArtifactNameForEnv();
   const assetPath = joinPath(tempDir, artifactName);
   await download(`${downloadUrl}/${artifactName}`, assetPath);
   execFileSync(await extractBin(assetPath), process.argv.slice(2), {
@@ -99,7 +99,7 @@ function getTempDir() {
   return tempDir;
 }
 
-function getArtificactNameForEnv() {
+function getArtifactNameForEnv() {
   let build = "";
   let ext = ".tar.gz";
   switch (os.platform()) {
