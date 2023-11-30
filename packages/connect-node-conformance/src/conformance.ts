@@ -27,6 +27,7 @@ import * as tar from "tar-stream";
 import { pipeline } from "node:stream/promises";
 import { execFileSync } from "node:child_process";
 import { createGunzip } from "node:zlib";
+import { fetch } from "undici";
 
 const version = "v1.0.0-rc1";
 const name = "connectconformance";
