@@ -15,18 +15,17 @@
 import * as os from "node:os";
 import {
   readFileSync,
-  createReadStream,
   writeFileSync,
   existsSync,
   chmodSync,
   mkdirSync,
 } from "node:fs";
 import { join as joinPath } from "node:path";
-import { unzipSync } from "fflate";
+import { unzipSync, gunzipSync } from "fflate";
 import * as tar from "tar-stream";
 import { pipeline } from "node:stream/promises";
+import { Readable } from "node:stream";
 import { execFileSync } from "node:child_process";
-import { createGunzip } from "node:zlib";
 import { fetch } from "undici";
 
 const version = "v1.0.0-rc1";
@@ -86,7 +85,15 @@ async function extractBin(path: string) {
       stream.resume();
     }
   });
-  await pipeline(createReadStream(path), createGunzip(), extract);
+  await pipeline(
+    new Readable({
+      read() {
+        this.push(gunzipSync(readFileSync(path)));
+        this.push(null);
+      },
+    }),
+    extract,
+  );
   chmodSync(bin, 755);
   return bin;
 }
