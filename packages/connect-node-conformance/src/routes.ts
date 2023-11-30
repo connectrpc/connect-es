@@ -32,7 +32,7 @@ import {
 
 function createRequestInfo(
   ctx: HandlerContext,
-  reqs: Any[]
+  reqs: Any[],
 ): ConformancePayload_RequestInfo {
   const timeoutMs = ctx.timeoutMs();
   return new ConformancePayload_RequestInfo({
@@ -45,7 +45,7 @@ function createRequestInfo(
 function handleUnaryResponse(
   def: UnaryResponseDefinition | undefined,
   reqs: Any[],
-  ctx: HandlerContext
+  ctx: HandlerContext,
 ) {
   appendProtoHeaders(ctx.responseHeader, def?.responseHeaders ?? []);
   appendProtoHeaders(ctx.responseTrailer, def?.responseTrailers ?? []);
