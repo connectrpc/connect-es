@@ -214,10 +214,16 @@ testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/conne
 
 .PHONY: testnodeconformance
 testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node-conformance
+	# Server
 	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver
 	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver
 	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver
 	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver
+	# Client
+	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance --mode client --conf conformance.yaml -v ./bin/conformanceclient
+	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode client --conf conformance.yaml -v ./bin/conformanceclient
+	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode client --conf conformance.yaml -v ./bin/conformanceclient
+	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode client --conf conformance.yaml -v ./bin/conformanceclient
 
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
