@@ -155,7 +155,7 @@ $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-co
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-node-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-conformance/buf.gen.yaml packages/connect-node-conformance/package.jsob Makefile
+$(GEN)/connect-node-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-conformance/buf.gen.yaml packages/connect-node-conformance/package.json Makefile
 	rm -rf packages/connect-node-conformance/src/gen/*
 	npm run -w packages/connect-node-conformance generate
 	@mkdir -p $(@D)
