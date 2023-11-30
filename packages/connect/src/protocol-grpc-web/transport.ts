@@ -169,7 +169,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               Code.InvalidArgument,
             );
           }
-          validateTrailer(trailer);
+          validateTrailer(trailer, uRes.header);
           if (message === undefined) {
             throw new ConnectError(
               "protocol error: missing output message for unary method",
@@ -305,7 +305,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                       );
                     }
                     trailerReceived = true;
-                    validateTrailer(chunk.value);
+                    validateTrailer(chunk.value, uRes.header);
                     chunk.value.forEach((value, key) =>
                       res.trailer.set(key, value),
                     );

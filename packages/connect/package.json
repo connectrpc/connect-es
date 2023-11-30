@@ -23,29 +23,49 @@
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
+      "node": {
+        "import": "./dist/proxy/index.js",
+        "require": "./dist/cjs/index.js"
+      },
       "module": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "import": "./dist/proxy/index.js"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     },
     "./protocol": {
+      "node": {
+        "import": "./dist/proxy/protocol/index.js",
+        "require": "./dist/cjs/protocol/index.js"
+      },
       "module": "./dist/esm/protocol/index.js",
-      "require": "./dist/cjs/protocol/index.js",
-      "import": "./dist/proxy/protocol/index.js"
+      "import": "./dist/esm/protocol/index.js",
+      "require": "./dist/cjs/protocol/index.js"
     },
     "./protocol-connect": {
+      "node": {
+        "import": "./dist/proxy/protocol-connect/index.js",
+        "require": "./dist/cjs/protocol-connect/index.js"
+      },
       "module": "./dist/esm/protocol-connect/index.js",
-      "require": "./dist/cjs/protocol-connect/index.js",
-      "import": "./dist/proxy/protocol-connect/index.js"
+      "import": "./dist/esm/protocol-connect/index.js",
+      "require": "./dist/cjs/protocol-connect/index.js"
     },
     "./protocol-grpc": {
+      "node": {
+        "import": "./dist/proxy/protocol-grpc/index.js",
+        "require": "./dist/cjs/protocol-grpc/index.js"
+      },
       "module": "./dist/esm/protocol-grpc/index.js",
-      "require": "./dist/cjs/protocol-grpc/index.js",
-      "import": "./dist/proxy/protocol-grpc/index.js"
+      "import": "./dist/esm/protocol-grpc/index.js",
+      "require": "./dist/cjs/protocol-grpc/index.js"
     },
     "./protocol-grpc-web": {
+      "node": {
+        "import": "./dist/proxy/protocol-grpc-web/index.js",
+        "require": "./dist/cjs/protocol-grpc-web/index.js"
+      },
       "module": "./dist/esm/protocol-grpc-web/index.js",
-      "require": "./dist/cjs/protocol-grpc-web/index.js",
-      "import": "./dist/proxy/protocol-grpc-web/index.js"
+      "import": "./dist/esm/protocol-grpc-web/index.js",
+      "require": "./dist/cjs/protocol-grpc-web/index.js"
     }
   },
   "typesVersions": {
