@@ -119,6 +119,12 @@ $(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUI
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-node-conformance: $(BUILD)/connect-node $(GEN)/connect-node-conformance packages/connect-node-conformance/tsconfig.json packages/connect-node-conformance/conformance.yaml $(shell find packages/connect-node-conformance/src -name '*.ts')
+	npm run -w packages/connect-node-conformance clean
+	npm run -w packages/connect-node-conformance build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.json $(shell find packages/example/src -name '*.ts')
 	npm run -w packages/example lint
 	@mkdir -p $(@D)
@@ -146,6 +152,12 @@ $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-con
 $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-node-test/src/gen/*
 	npm run -w packages/connect-node-test generate https://github.com/connectrpc/conformance.git#ref=$(CONFORMANCE_VERSION),subdir=proto
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(GEN)/connect-node-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-conformance/buf.gen.yaml packages/connect-node-conformance/package.json Makefile
+	rm -rf packages/connect-node-conformance/src/gen/*
+	npm run -w packages/connect-node-conformance generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -178,7 +190,7 @@ clean: conformanceserverstop ## Delete build artifacts and installed dependencie
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testnode testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testnode testnodeconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
@@ -199,6 +211,13 @@ testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/conne
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	$(MAKE) conformanceserverstop
+
+.PHONY: testnodeconformance
+testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node-conformance
+	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver
+	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver
+	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver
+	cd packages/connect-node-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver
 
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
