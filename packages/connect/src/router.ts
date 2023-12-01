@@ -203,7 +203,7 @@ function whichProtocols(
       };
 
   const protocols: ProtocolHandlerFactory[] = [];
-  if (options.grpc !== false) {
+  if (options?.grpc !== false) {
     protocols.push(handlerFactoryGrpc(opt));
   }
   if (options.grpcWeb !== false) {
