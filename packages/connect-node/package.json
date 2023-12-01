@@ -40,7 +40,7 @@
     "@connectrpc/connect": "1.1.3"
   },
   "devDependencies": {
-    "@types/jasmine": "^5.0.0",
+    "@types/jasmine": "^5.1.4",
     "jasmine": "^5.1.0"
   },
   "files": [
