@@ -22,7 +22,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "fast-glob": "3.3.1",
+    "fast-glob": "3.3.2",
     "jscodeshift": "0.15.1",
     "semver": "^7.5.4"
   },
