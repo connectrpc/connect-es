@@ -115,15 +115,13 @@ export function getNodeErrorProps(reason: unknown): {
   return props;
 }
 
-/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
-
 /**
  * Returns a ConnectError for an HTTP/2 error code.
  */
 export function connectErrorFromH2ResetCode(
   rstCode: number,
 ): ConnectError | undefined {
-  switch (rstCode) {
+  switch (rstCode as H2Code) {
     case H2Code.PROTOCOL_ERROR:
     case H2Code.INTERNAL_ERROR:
     case H2Code.FLOW_CONTROL_ERROR:

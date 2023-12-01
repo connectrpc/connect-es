@@ -1,6 +1,6 @@
 import * as grpcWeb from 'grpc-web';
 
-import * as connectrpc_eliza_v1_eliza_pb from '../../../connectrpc/eliza/v1/eliza_pb';
+import * as connectrpc_eliza_v1_eliza_pb from '../../../connectrpc/eliza/v1/eliza_pb'; // proto import: "connectrpc/eliza/v1/eliza.proto"
 
 
 export class ElizaServiceClient {
