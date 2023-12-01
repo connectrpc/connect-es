@@ -121,7 +121,7 @@ export function getNodeErrorProps(reason: unknown): {
 export function connectErrorFromH2ResetCode(
   rstCode: number,
 ): ConnectError | undefined {
-  switch (rstCode) {
+  switch (rstCode as H2Code) {
     case H2Code.PROTOCOL_ERROR:
     case H2Code.INTERNAL_ERROR:
     case H2Code.FLOW_CONTROL_ERROR:
