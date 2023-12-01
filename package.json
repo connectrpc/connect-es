@@ -29,6 +29,6 @@
     "eslint-plugin-import": "^2.28.0",
     "eslint-plugin-n": "^16.3.1",
     "prettier": "^3.0.2",
-    "typescript": "5.3.0-beta"
+    "typescript": "5.3.2"
   }
 }
