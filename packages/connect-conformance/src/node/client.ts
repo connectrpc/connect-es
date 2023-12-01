@@ -18,7 +18,7 @@ import {
   ClientErrorResult,
 } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
 import invoke from "../invoke.js";
-import { createTransport } from "../transport.js";
+import { createTransport } from "./transport.js";
 import type { ReadStream } from "node:tty";
 
 export async function run() {
