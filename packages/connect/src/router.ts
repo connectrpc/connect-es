@@ -203,13 +203,13 @@ function whichProtocols(
       };
 
   const protocols: ProtocolHandlerFactory[] = [];
-  if (options?.grpc !== false) {
+  if (options.grpc !== false) {
     protocols.push(handlerFactoryGrpc(opt));
   }
-  if (options?.grpcWeb !== false) {
+  if (options.grpcWeb !== false) {
     protocols.push(handlerFactoryGrpcWeb(opt));
   }
-  if (options?.connect !== false) {
+  if (options.connect !== false) {
     protocols.push(handlerFactoryConnect(opt));
   }
   if (protocols.length === 0) {
