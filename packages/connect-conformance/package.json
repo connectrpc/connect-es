@@ -2,16 +2,16 @@
   "name": "@connectrpc/connect-node-conformance",
   "private": true,
   "bin": {
-    "conformanceserver": "bin/conformanceserver",
-    "conformanceclient": "bin/conformanceclient",
+    "conformancenodeserver": "bin/conformancenodeserver",
+    "conformancenodeclient": "bin/conformancenodeclient",
     "connectconformance": "bin/connectconformance"
   },
   "scripts": {
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.0-rc1",
     "clean": "rm -rf ./dist/cjs/*",
     "build": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
-    "test:server": "./bin/connectconformance --mode server --conf conformance.yaml -v ./bin/conformanceserver",
-    "test:client": "./bin/connectconformance --mode client --conf conformance.yaml -v ./bin/conformanceclient"
+    "test:node:server": "./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver",
+    "test:node:client": "./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.4.2",
