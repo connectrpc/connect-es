@@ -54,6 +54,10 @@ async function download(url: string, path: string) {
 }
 
 async function extractBin(path: string) {
+  const bin = joinPath(getTempDir(), `connectconformance-${version}.exe`);
+  if (existsSync(bin)) {
+    return bin;
+  }
   if (path.endsWith(".zip")) {
     const unzipped = unzipSync(readFileSync(path), {
       filter(file) {
@@ -66,11 +70,9 @@ async function extractBin(path: string) {
     if (binBytes === undefined) {
       throw new Error("Failed to extract connectconformance.exe");
     }
-    const bin = joinPath(getTempDir(), "connectconformance.exe");
     writeFileSync(bin, binBytes);
     return bin;
   }
-  const bin = joinPath(getTempDir(), "connectconformance");
   const extract = tar.extract();
   extract.on("entry", (header, stream, next) => {
     if (header.name === "connectconformance") {

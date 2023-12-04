@@ -26,9 +26,6 @@ import {
 } from "../gen/connectrpc/conformance/v1/service_pb.js";
 
 declare global {
-  interface Window {
-    __connect_compat_request__: string;
-  }
   //@ts-expect-error asd
   // eslint-disable-next-line no-shadow-restricted-names
   const arguments: [
