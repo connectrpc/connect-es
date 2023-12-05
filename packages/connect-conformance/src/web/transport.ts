@@ -40,8 +40,8 @@ export function createTransport(req: ClientCompatRequest) {
 
   switch (req.httpVersion) {
     case HTTPVersion.HTTP_VERSION_1:
-      break;
     case HTTPVersion.HTTP_VERSION_2:
+      break;
     case HTTPVersion.HTTP_VERSION_3:
       throw new Error("HTTP/2 and HTTP/3 are not supported");
     default:
@@ -69,7 +69,7 @@ export function createTransport(req: ClientCompatRequest) {
         UnaryRequest,
         ServerStreamRequest,
         ClientStreamRequest,
-        BidiStreamRequest,
+        BidiStreamRequest
       ),
     },
   } satisfies

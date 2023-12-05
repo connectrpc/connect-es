@@ -1,6 +1,7 @@
 features:
   versions:
     - HTTP_VERSION_1
+    - HTTP_VERSION_2
   protocols:
     - PROTOCOL_CONNECT
     - PROTOCOL_GRPC_WEB
@@ -12,6 +13,7 @@ features:
   streamTypes:
     - STREAM_TYPE_UNARY
     - STREAM_TYPE_SERVER_STREAM
+  supportsH2c: false
   supportsTls: true
   supportsTlsClientCerts: false
   supportsConnectGet: true
