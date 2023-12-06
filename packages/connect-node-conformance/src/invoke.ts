@@ -71,7 +71,14 @@ async function unary(client: ConformanceClient, req: ClientCompatRequest) {
     payloads.push(uRes.payload!);
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
@@ -116,7 +123,14 @@ async function serverStream(
     }
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
@@ -164,7 +178,14 @@ async function clientStream(
     payloads.push(csRes.payload!);
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
@@ -222,7 +243,14 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
     }
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
@@ -259,7 +287,14 @@ async function unimplemented(
     });
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
