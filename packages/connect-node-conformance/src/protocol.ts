@@ -18,7 +18,7 @@ import {
   Header as ConformanceHeader,
   ConformancePayload_RequestInfo,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
-import { createRegistry } from "@bufbuild/protobuf";
+import { createRegistry, Any, Message } from "@bufbuild/protobuf";
 
 const detailsRegitry = createRegistry(ConformancePayload_RequestInfo);
 
@@ -38,6 +38,30 @@ export function connectErrorFromProto(err: ConformanceError) {
       return m;
     }),
   );
+}
+
+export function convertToProtoError(err: ConnectError | undefined) {
+  if (err === undefined) {
+    return undefined;
+  }
+  const details: Any[] = [];
+  for (const detail of err.details) {
+    if (detail instanceof Message) {
+      details.push(Any.pack(detail));
+    } else {
+      details.push(
+        new Any({
+          typeUrl: "type.googleapis.com/" + detail.type,
+          value: detail.value,
+        }),
+      );
+    }
+  }
+  return new ConformanceError({
+    code: err.code,
+    message: err.rawMessage,
+    details,
+  });
 }
 
 export function convertToProtoHeaders(headers: Headers): ConformanceHeader[] {
@@ -62,4 +86,8 @@ export function appendProtoHeaders(
       headers.append(header.name, value);
     }
   }
+}
+
+export function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

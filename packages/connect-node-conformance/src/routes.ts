@@ -27,11 +27,8 @@ import {
   appendProtoHeaders,
   connectErrorFromProto,
   convertToProtoHeaders,
+  wait,
 } from "./protocol.js";
-
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function createRequestInfo(
   ctx: HandlerContext,
