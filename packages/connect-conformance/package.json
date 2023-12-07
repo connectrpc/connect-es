@@ -1,5 +1,5 @@
 {
-  "name": "@connectrpc/connect-node-conformance",
+  "name": "@connectrpc/connect-conformance",
   "private": true,
   "bin": {
     "conformancenodeserver": "bin/conformancenodeserver",
