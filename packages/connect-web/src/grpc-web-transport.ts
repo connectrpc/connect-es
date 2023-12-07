@@ -151,8 +151,8 @@ export function createGrpcWebTransport(
         timeoutMs === undefined
           ? options.defaultTimeoutMs
           : timeoutMs <= 0
-          ? undefined
-          : timeoutMs;
+            ? undefined
+            : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -311,8 +311,8 @@ export function createGrpcWebTransport(
         timeoutMs === undefined
           ? options.defaultTimeoutMs
           : timeoutMs <= 0
-          ? undefined
-          : timeoutMs;
+            ? undefined
+            : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: options.interceptors,
         signal,

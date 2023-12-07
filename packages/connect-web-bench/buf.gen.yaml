@@ -9,6 +9,6 @@ plugins:
   - plugin: buf.build/protocolbuffers/js:v3.21.2
     out: src/gen/grpcweb
     opt: import_style=commonjs
-  - plugin: buf.build/grpc/web:v1.4.2
+  - plugin: buf.build/grpc/web:v1.5.0
     out: src/gen/grpcweb
     opt: import_style=commonjs+dts,mode=grpcweb

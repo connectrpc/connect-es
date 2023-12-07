@@ -14,15 +14,15 @@
     "default": "./dist/esm/index.js"
   },
   "dependencies": {
-    "@connectrpc/connect": "1.1.3",
-    "@connectrpc/connect-express": "1.1.3",
-    "@connectrpc/connect-fastify": "1.1.3",
-    "@connectrpc/connect-node": "1.1.3",
-    "@connectrpc/connect-web": "1.1.3",
+    "@connectrpc/connect": "1.1.4",
+    "@connectrpc/connect-express": "1.1.4",
+    "@connectrpc/connect-fastify": "1.1.4",
+    "@connectrpc/connect-node": "1.1.4",
+    "@connectrpc/connect-web": "1.1.4",
     "@grpc/grpc-js": "^1.9.4",
     "@types/express": "^4.17.18",
     "@types/jasmine": "^5.0.0",
-    "esbuild": "^0.16.12",
+    "esbuild": "^0.19.8",
     "express": "^4.18.2",
     "fastify": "^4.22.1",
     "jasmine": "^5.1.0"
