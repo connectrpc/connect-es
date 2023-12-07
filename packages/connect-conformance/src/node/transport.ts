@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { createRegistry } from "@bufbuild/protobuf";
-import { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
+import { ClientCompatRequest } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
   Codec,
   HTTPVersion,
   Protocol,
   Compression as ConformanceCompression,
-} from "./gen/connectrpc/conformance/v1/config_pb.js";
+} from "../gen/connectrpc/conformance/v1/config_pb.js";
 import {
   createConnectTransport,
   createGrpcTransport,
@@ -33,7 +33,7 @@ import {
   ClientStreamRequest,
   ServerStreamRequest,
   UnaryRequest,
-} from "./gen/connectrpc/conformance/v1/service_pb.js";
+} from "../gen/connectrpc/conformance/v1/service_pb.js";
 import * as http2 from "node:http2";
 
 export function createTransport(req: ClientCompatRequest) {

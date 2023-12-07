@@ -22,20 +22,20 @@ import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
 import * as net from "node:net";
-import routes from "./routes.js";
+import routes from "../routes.js";
 import {
   ServerCompatRequest,
   ServerCompatResponse,
-} from "./gen/connectrpc/conformance/v1/server_compat_pb.js";
-import { HTTPVersion } from "./gen/connectrpc/conformance/v1/config_pb.js";
+} from "../gen/connectrpc/conformance/v1/server_compat_pb.js";
+import { HTTPVersion } from "../gen/connectrpc/conformance/v1/config_pb.js";
 import { createRegistry } from "@bufbuild/protobuf";
 import {
   BidiStreamRequest,
   ClientStreamRequest,
   ServerStreamRequest,
   UnaryRequest,
-} from "./gen/connectrpc/conformance/v1/service_pb.js";
-import { createCert } from "./tls.js";
+} from "../gen/connectrpc/conformance/v1/service_pb.js";
+import { createCert } from "../tls.js";
 
 export function run() {
   const req = ServerCompatRequest.fromBinary(
