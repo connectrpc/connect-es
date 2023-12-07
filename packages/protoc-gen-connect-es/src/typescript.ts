@@ -15,11 +15,7 @@
 import type { DescService } from "@bufbuild/protobuf";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import type { GeneratedFile, Schema } from "@bufbuild/protoplugin/ecmascript";
-import {
-  literalString,
-  makeJsDoc,
-  localName,
-} from "@bufbuild/protoplugin/ecmascript";
+import { localName } from "@bufbuild/protoplugin/ecmascript";
 
 export function generateTs(schema: Schema) {
   for (const protoFile of schema.files) {
@@ -39,14 +35,14 @@ function generateService(
 ) {
   const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } =
     schema.runtime;
-  f.print(makeJsDoc(service));
+  f.print(f.jsDoc(service));
   f.print(f.exportDecl("const", localName(service)), " = {");
-  f.print(`  typeName: `, literalString(service.typeName), `,`);
+  f.print(`  typeName: `, f.string(service.typeName), `,`);
   f.print("  methods: {");
   for (const method of service.methods) {
-    f.print(makeJsDoc(method, "    "));
+    f.print(f.jsDoc(method, "    "));
     f.print("    ", localName(method), ": {");
-    f.print(`      name: `, literalString(method.name), `,`);
+    f.print(`      name: `, f.string(method.name), `,`);
     f.print("      I: ", method.input, ",");
     f.print("      O: ", method.output, ",");
     f.print(
