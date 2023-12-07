@@ -71,7 +71,14 @@ async function unary(client: ConformanceClient, req: ClientCompatRequest) {
     payloads.push(uRes.payload!);
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
@@ -84,7 +91,7 @@ async function unary(client: ConformanceClient, req: ClientCompatRequest) {
 
 async function serverStream(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  req: ClientCompatRequest
 ) {
   if (req.requestMessages.length !== 1) {
     throw new Error("ServerStream method requires exactly one request message");
@@ -93,7 +100,7 @@ async function serverStream(
   const uReq = new ServerStreamRequest();
   if (!msg.unpackTo(uReq)) {
     throw new Error(
-      "Could not unpack request message to server stream request",
+      "Could not unpack request message to server stream request"
     );
   }
   const reqHeader = new Headers();
@@ -116,7 +123,14 @@ async function serverStream(
     }
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
@@ -129,7 +143,7 @@ async function serverStream(
 
 async function clientStream(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  req: ClientCompatRequest
 ) {
   const reqHeaders = new Headers();
   appendProtoHeaders(reqHeaders, req.requestHeaders);
@@ -144,7 +158,7 @@ async function clientStream(
           const csReq = new ClientStreamRequest();
           if (!msg.unpackTo(csReq)) {
             throw new Error(
-              "Could not unpack request message to client stream request",
+              "Could not unpack request message to client stream request"
             );
           }
           await wait(req.requestDelayMs);
@@ -159,12 +173,19 @@ async function clientStream(
         onTrailer(trailers) {
           resTrailers = convertToProtoHeaders(trailers);
         },
-      },
+      }
     );
     payloads.push(csRes.payload!);
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
@@ -198,7 +219,7 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
       const bdReq = new BidiStreamRequest();
       if (!msg.unpackTo(bdReq)) {
         throw new Error(
-          "Could not unpack request message to client stream request",
+          "Could not unpack request message to client stream request"
         );
       }
       await wait(req.requestDelayMs);
@@ -222,7 +243,14 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
     }
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
@@ -235,7 +263,7 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
 
 async function unimplemented(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  req: ClientCompatRequest
 ) {
   const msg = req.requestMessages[0];
   const unReq = new UnimplementedRequest();
@@ -259,7 +287,14 @@ async function unimplemented(
     });
   } catch (e) {
     error = ConnectError.from(e);
-    resHeaders = convertToProtoHeaders(error.metadata);
+    // We can't distinguish between headers and trailers here, so we just
+    // add the metadata to both.
+    //
+    // But if the headers are already set, we don't need to overwrite them.
+    resHeaders =
+      resHeaders.length === 0
+        ? convertToProtoHeaders(error.metadata)
+        : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
   return new ClientResponseResult({
