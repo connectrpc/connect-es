@@ -35,7 +35,7 @@ export function generateJs(schema: Schema) {
 function generateService(schema: Schema, f: GeneratedFile, service: DescService) {
  const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } = schema.runtime;
   f.print(makeJsDoc(service));
-  f.print("export const ", localName(service), " = {");
+  f.print(f.exportDecl("const", localName(service)), " = {");
   f.print(`  typeName: `, literalString(service.typeName), `,`);
   f.print("  methods: {");
   for (const method of service.methods) {

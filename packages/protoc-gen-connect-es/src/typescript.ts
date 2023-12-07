@@ -40,7 +40,7 @@ function generateService(
   const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } =
     schema.runtime;
   f.print(makeJsDoc(service));
-  f.print("export const ", localName(service), " = {");
+  f.print(f.exportDecl("const", localName(service)), " = {");
   f.print(`  typeName: `, literalString(service.typeName), `,`);
   f.print("  methods: {");
   for (const method of service.methods) {

@@ -35,7 +35,7 @@ export function generateDts(schema: Schema) {
 function generateService(schema: Schema, f: GeneratedFile, service: DescService) {
   const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } = schema.runtime;
   f.print(makeJsDoc(service));
-  f.print("export declare const ", localName(service), ": {");
+  f.print(f.exportDecl("declare const", localName(service)), ": {");
   f.print(`  readonly typeName: `, literalString(service.typeName), `,`);
   f.print("  readonly methods: {");
   for (const method of service.methods) {
