@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.27.2",
-    "@bufbuild/protoc-gen-es": "^1.4.2",
+    "@bufbuild/protoc-gen-es": "^1.6.0",
     "@connectrpc/protoc-gen-connect-es": "^1.1.4",
     "@types/express": "^4.17.18",
     "esbuild": "^0.19.8",
