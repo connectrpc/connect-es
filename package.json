@@ -23,9 +23,9 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.13.1",
-    "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.16.0",
     "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.28.0",
     "eslint-plugin-n": "^16.3.1",
