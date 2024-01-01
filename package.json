@@ -22,7 +22,7 @@
     "npm": ">=8"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.13.1",
+    "@arethetypeswrong/cli": "^0.13.5",
     "@typescript-eslint/parser": "^6.16.0",
     "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
