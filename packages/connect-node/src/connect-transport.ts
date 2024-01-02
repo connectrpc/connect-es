@@ -29,7 +29,7 @@ import { validateNodeTransportOptions } from "./node-transport-options.js";
  *
  * See createConnectTransport().
  */
-type ConnectTransportOptions = NodeTransportOptions & {
+export type ConnectTransportOptions = NodeTransportOptions & {
   /**
    * Base URI for all HTTP requests.
    *
