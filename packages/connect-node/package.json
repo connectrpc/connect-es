@@ -33,7 +33,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "undici": "^6.2.1"
+    "undici": "^5.28.2"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.4.2",
