@@ -170,6 +170,12 @@ describe("ConnectError", () => {
     it("works for ConnectError like errors", () => {
       expect(new ConnectError2("foo")).toBeInstanceOf(ConnectError);
     });
+    it("fails for other errors", () => {
+      expect(new Error("foo")).not.toBeInstanceOf(ConnectError);
+      expect(null).not.toBeInstanceOf(ConnectError);
+      expect(undefined).not.toBeInstanceOf(ConnectError);
+      expect("err").not.toBeInstanceOf(ConnectError);
+    });
   });
 });
 

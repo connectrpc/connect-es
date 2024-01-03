@@ -131,16 +131,17 @@ export class ConnectError extends Error {
   }
 
   static [Symbol.hasInstance](v: unknown): boolean {
+    if (!(v instanceof Error)) {
+      return false;
+    }
     if (Object.getPrototypeOf(v) === ConnectError.prototype) {
       return true;
     }
     return (
-      v instanceof Error &&
       v.name === "ConnectError" &&
       "code" in v &&
-      Object.values(Code).includes(v.code as keyof Code) &&
+      typeof v.code === "number" &&
       "metadata" in v &&
-      v.metadata instanceof Headers &&
       "details" in v &&
       Array.isArray(v.details) &&
       "rawMessage" in v &&
