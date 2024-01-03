@@ -131,6 +131,9 @@ export class ConnectError extends Error {
   }
 
   static [Symbol.hasInstance](v: unknown): boolean {
+    if (Object.getPrototypeOf(v) === ConnectError.prototype) {
+      return true;
+    }
     return (
       v instanceof Error &&
       v.name === "ConnectError" &&
