@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-express",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -37,8 +37,8 @@
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.4.2",
-    "@connectrpc/connect": "1.2.0",
-    "@connectrpc/connect-node": "1.2.0"
+    "@connectrpc/connect": "1.2.1",
+    "@connectrpc/connect-node": "1.2.1"
   },
   "files": [
     "dist/**"
