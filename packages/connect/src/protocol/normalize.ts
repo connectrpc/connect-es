@@ -23,7 +23,9 @@ export function normalize<T extends Message<T>>(
   type: MessageType<T>,
   message: T | PartialMessage<T>,
 ) {
-  return message instanceof Message ? message : new type(message);
+  return message instanceof type
+    ? message
+    : new type(message as PartialMessage<T>);
 }
 
 /**
