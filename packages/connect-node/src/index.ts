@@ -16,10 +16,14 @@
 import "./node-headers-polyfill.js";
 
 export { createGrpcWebTransport } from "./grpc-web-transport.js";
+export type { GrpcWebTransportOptions } from "./grpc-web-transport.js";
 export { createGrpcTransport } from "./grpc-transport.js";
+export type { GrpcTransportOptions } from "./grpc-transport.js";
 export { createConnectTransport } from "./connect-transport.js";
+export type { ConnectTransportOptions } from "./connect-transport.js";
 export { compressionBrotli, compressionGzip } from "./compression.js";
 export { connectNodeAdapter } from "./connect-node-adapter.js";
+export type { ConnectNodeAdapterOptions } from "./connect-node-adapter.js";
 
 export {
   universalRequestFromNodeRequest,
@@ -27,4 +31,6 @@ export {
 } from "./node-universal-handler.js";
 
 export { createNodeHttpClient } from "./node-universal-client.js";
+export type { NodeHttpClientOptions } from "./node-universal-client.js";
 export { Http2SessionManager } from "./http2-session-manager.js";
+export type { Http2SessionOptions } from "./http2-session-manager.js";

@@ -29,7 +29,7 @@ import { validateNodeTransportOptions } from "./node-transport-options.js";
  *
  * See createGrpcWebTransport().
  */
-type GrpcWebTransportOptions = NodeTransportOptions & {
+export type GrpcWebTransportOptions = NodeTransportOptions & {
   /**
    * Base URI for all HTTP requests.
    *

@@ -40,7 +40,7 @@ import { Http2SessionManager } from "./http2-session-manager.js";
  * Options for creating an UniversalClientFn using the Node.js `http`, `https`,
  * or `http2` module.
  */
-type NodeHttpClientOptions =
+export type NodeHttpClientOptions =
   | {
       /**
        * Use the Node.js `http` or `https` module.

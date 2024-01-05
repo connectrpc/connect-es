@@ -31,7 +31,7 @@ import type {
 } from "./node-universal-handler.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 
-interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
+export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
   /**
    * Route definitions. We recommend the following pattern:
    *
