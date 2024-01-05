@@ -21,8 +21,14 @@
     "node": ">=16",
     "npm": ">=8"
   },
+  "licenseHeader": {
+    "licenseType": "apache",
+    "yearRange": "2021-2024",
+    "copyrightHolder": "The Connect Authors"
+  },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.13.5",
+    "@bufbuild/license-header": "^0.0.4",
     "@typescript-eslint/parser": "^6.17.0",
     "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^6.17.0",

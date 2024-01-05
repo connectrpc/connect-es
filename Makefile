@@ -11,8 +11,6 @@ BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
 CONFORMANCE_VERSION := 33a9ec3dab3b7717bffde12701a86a5dbea66f2b
-LICENSE_HEADER_YEAR_RANGE := 2021-2023
-LICENSE_IGNORE := -e .tmp\/ -e node_modules\/ -e packages\/.*\/src\/gen\/ -e packages\/.*\/dist\/ -e scripts\/
 NODE21_VERSION ?= v21.1.0
 NODE20_VERSION ?= v20.9.0
 NODE18_VERSION ?= v18.16.0
@@ -24,10 +22,6 @@ node_modules: package-lock.json
 	npm ci
 
 node_modules/.bin/protoc-gen-es: node_modules
-
-$(BIN)/license-header: Makefile
-	@mkdir -p $(@D)
-	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@v1.1.0
 
 $(BIN)/node21: Makefile
 	@mkdir -p $(@D)
@@ -274,15 +268,9 @@ lint: node_modules $(BUILD)/connect $(BUILD)/connect-express $(BUILD)/connect-fa
 	npm run -w packages/connect-web attw
 
 .PHONY: format
-format: node_modules $(BIN)/license-header ## Format all files, adding license headers
+format: node_modules ## Format all files, adding license headers
 	npx prettier --write '**/*.{json,js,jsx,ts,tsx,css,mjs,cjs}' --log-level error
-	comm -23 \
-		<(git ls-files --cached --modified --others --no-empty-directory --exclude-standard | sort -u | grep -v $(LICENSE_IGNORE) ) \
-		<(git ls-files --deleted | sort -u) | \
-		xargs $(BIN)/license-header \
-			--license-type "apache" \
-			--copyright-holder "The Connect Authors" \
-			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
+	npx license-header --ignore 'packages/*/src/gen/**/*'
 
 .PHONY: bench
 bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark code size
