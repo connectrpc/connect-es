@@ -130,6 +130,26 @@ export class ConnectError extends Error {
     return new ConnectError(String(reason), code, undefined, undefined, reason);
   }
 
+  static [Symbol.hasInstance](v: unknown): boolean {
+    if (!(v instanceof Error)) {
+      return false;
+    }
+    if (Object.getPrototypeOf(v) === ConnectError.prototype) {
+      return true;
+    }
+    return (
+      v.name === "ConnectError" &&
+      "code" in v &&
+      typeof v.code === "number" &&
+      "metadata" in v &&
+      "details" in v &&
+      Array.isArray(v.details) &&
+      "rawMessage" in v &&
+      typeof v.rawMessage == "string" &&
+      "cause" in v
+    );
+  }
+
   /**
    * Retrieve error details from a ConnectError. On the wire, error details are
    * wrapped with google.protobuf.Any, so that a server or middleware can attach
