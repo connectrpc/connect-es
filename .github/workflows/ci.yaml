@@ -27,4 +27,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
       - name: make
-        run: make format build lint test bench checkdiff
+        run: make && make checkdiff
