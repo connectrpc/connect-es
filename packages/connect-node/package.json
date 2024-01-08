@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-node",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -37,7 +37,7 @@
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.4.2",
-    "@connectrpc/connect": "1.2.1"
+    "@connectrpc/connect": "1.3.0"
   },
   "devDependencies": {
     "@types/jasmine": "^5.0.0",
