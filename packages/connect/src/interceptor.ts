@@ -21,7 +21,7 @@ import type {
 import type { ContextValues } from "./context-values.js";
 
 /**
- * An interceptor can add logic to clients, similar to the decorators
+ * An interceptor can add logic to clients or servers, similar to the decorators
  * or middleware you may have seen in other libraries. Interceptors may
  * mutate the request and response, catch errors and retry/recover, emit
  * logs, or do nearly everything else.
@@ -39,6 +39,10 @@ import type { ContextValues } from "./context-values.js";
  * by a client goes through the outermost layer first. In the center, the
  * actual HTTP request is run by the transport. The response then comes back
  * through all layers and is returned to the client.
+ *
+ * Similarly, a request received by a server goes through the outermost layer
+ * first. In the center, the actual HTTP request is received by the handler. The
+ * response then comes back through all layers and is returned to the client.
  *
  * To implement that layering, Interceptors are functions that wrap a call
  * invocation. In an array of interceptors, the interceptor at the end of
@@ -147,7 +151,8 @@ interface RequestCommon<I extends Message<I>, O extends Message<O>> {
   readonly method: MethodInfo<I, O>;
 
   /**
-   * The URL the request is going to hit.
+   * The URL the request is going to hit for the clients or the
+   * URL received by the server.
    */
   readonly url: string;
 
@@ -194,4 +199,25 @@ interface ResponseCommon<I extends Message<I>, O extends Message<O>> {
    * has been read.
    */
   readonly trailer: Headers;
+}
+
+/**
+ * applyInterceptors takes the given UnaryFn or ServerStreamingFn, and wraps
+ * it with each of the given interceptors, returning a new UnaryFn or
+ * ServerStreamingFn.
+ */
+export function applyInterceptors<T>(
+  next: T,
+  interceptors: Interceptor[] | undefined,
+): T {
+  return (
+    (interceptors
+      ?.concat()
+      .reverse()
+      .reduce(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        (n, i) => i(n),
+        next as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      ) as T) ?? next
+  );
 }

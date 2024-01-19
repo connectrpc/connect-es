@@ -39,6 +39,7 @@ describe("validateUniversalHandlerOptions()", function () {
       maxTimeoutMs: Number.MAX_SAFE_INTEGER,
       shutdownSignal: undefined,
       requireConnectProtocolHeader: false,
+      interceptors: [],
     });
   });
   it("should accept inputs", function () {
@@ -63,6 +64,7 @@ describe("validateUniversalHandlerOptions()", function () {
       maxTimeoutMs: 888,
       shutdownSignal: new AbortController().signal,
       requireConnectProtocolHeader: true,
+      interceptors: [],
     };
     const o = validateUniversalHandlerOptions(i);
     expect(o).toEqual(i);

@@ -140,10 +140,17 @@ export function createConnectRouter(
   return {
     handlers,
     service(service, implementation, options) {
-      const { protocols } = whichProtocols(options, base);
+      const { protocols, options: serviceOptions } = whichProtocols(
+        options,
+        base,
+      );
       handlers.push(
         ...createUniversalServiceHandlers(
-          createServiceImplSpec(service, implementation),
+          createServiceImplSpec(
+            service,
+            implementation,
+            serviceOptions.interceptors,
+          ),
           protocols,
         ),
       );
@@ -172,11 +179,16 @@ export function createConnectRouter(
         impl = methodOrImpl as MethodImpl<MethodInfo>;
         opt = implementationOrOptions as Partial<UniversalHandlerOptions>;
       }
-      const { protocols } = whichProtocols(opt, base);
+      const { protocols, options: rpcOptions } = whichProtocols(opt, base);
 
       handlers.push(
         createUniversalMethodHandler(
-          createMethodImplSpec(service, method, impl),
+          createMethodImplSpec(
+            service,
+            method,
+            impl,
+            rpcOptions.interceptors ?? [],
+          ),
           protocols,
         ),
       );

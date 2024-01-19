@@ -18,10 +18,10 @@ import type {
   MessageType,
   MethodIdempotency,
   MethodInfo,
-  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
+import { MethodKind } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
@@ -30,6 +30,15 @@ import {
 } from "./protocol/signals.js";
 import { createContextValues } from "./context-values.js";
 import type { ContextValues } from "./context-values.js";
+import type {
+  Interceptor,
+  StreamRequest,
+  StreamResponse,
+  UnaryRequest,
+  UnaryResponse,
+} from "./interceptor.js";
+import { applyInterceptors } from "./interceptor.js";
+import { normalize, normalizeIterable } from "./protocol/normalize.js";
 
 // prettier-ignore
 /**
@@ -124,6 +133,11 @@ export interface HandlerContext {
    * Per RPC context values that can be used to pass data to handlers.
    */
   readonly values: ContextValues;
+
+  /**
+   * The URL received by the server.
+   */
+  readonly url: string;
 }
 
 /**
@@ -134,6 +148,7 @@ interface HandlerContextInit {
   method: MethodInfo;
   protocolName: string;
   requestMethod: string;
+  url: string;
   timeoutMs?: number;
   shutdownSignal?: AbortSignal;
   requestSignal?: AbortSignal;
@@ -251,17 +266,22 @@ export type ServiceImplSpec = {
  * Create an MethodImplSpec - a user-provided implementation for a method,
  * wrapped in a discriminated union type along with service and method metadata.
  */
-export function createMethodImplSpec<M extends MethodInfo>(
+export function createMethodImplSpec<
+  I extends Message<I>,
+  O extends Message<O>,
+  M extends MethodInfo<I, O>,
+>(
   service: ServiceType,
   method: M,
   impl: MethodImpl<M>,
-): MethodImplSpec {
+  interceptors?: Interceptor[],
+): MethodImplSpec<I, O> {
   return {
     kind: method.kind,
     service,
     method,
-    impl,
-  } as MethodImplSpec;
+    impl: withInterceptors(method, impl, interceptors),
+  } as MethodImplSpec<I, O>;
 }
 
 /**
@@ -271,6 +291,7 @@ export function createMethodImplSpec<M extends MethodInfo>(
 export function createServiceImplSpec<T extends ServiceType>(
   service: T,
   impl: Partial<ServiceImpl<T>>,
+  interceptors?: Interceptor[],
 ): ServiceImplSpec {
   const s: ServiceImplSpec = { service, methods: {} };
   for (const [localName, methodInfo] of Object.entries(service.methods)) {
@@ -283,7 +304,112 @@ export function createServiceImplSpec<T extends ServiceType>(
         throw new ConnectError(message, Code.Unimplemented);
       };
     }
-    s.methods[localName] = createMethodImplSpec(service, methodInfo, fn);
+    s.methods[localName] = createMethodImplSpec(
+      service,
+      methodInfo,
+      fn,
+      interceptors,
+    );
   }
   return s;
+}
+
+/**
+ * withInterceptors takes a MethodImpl and wraps it with the given interceptors
+ * and returns a new MethodImpl.
+ */
+function withInterceptors<
+  M extends MethodInfo<I, O>,
+  I extends Message<I>,
+  O extends Message<O>,
+>(method: M, impl: MethodImpl<M>, interceptors?: Interceptor[]): MethodImpl<M> {
+  if (interceptors === undefined || interceptors.length === 0) {
+    return impl;
+  }
+  switch (method.kind) {
+    case MethodKind.Unary:
+    case MethodKind.ClientStreaming:
+      return (async (
+        request: AsyncIterable<I> | I,
+        context: HandlerContext,
+      ) => {
+        const anyFn = async (req: StreamRequest<I, O> | UnaryRequest<I, O>) => {
+          const message = await (
+            impl as ClientStreamingImpl<I, O> | UnaryImpl<I, O>
+          )(req.message as I & AsyncIterable<I>, {
+            ...context,
+            service: req.service,
+            method: req.method,
+            requestHeader: req.header,
+            values: req.contextValues,
+            signal: req.signal,
+          });
+          return {
+            message: normalize(method.O, message),
+            stream: false,
+            service: req.service,
+            method: req.method,
+            header: context.responseHeader,
+            trailer: context.responseTrailer,
+          } as UnaryResponse<I, O>;
+        };
+        const next = applyInterceptors(anyFn, interceptors);
+        const res = await next({
+          init: {
+            method: context.requestMethod,
+          },
+          message: request,
+          url: context.url,
+          signal: context.signal,
+          service: context.service,
+          method: context.method,
+          header: context.requestHeader,
+          contextValues: context.values,
+          stream: method.kind === MethodKind.ClientStreaming,
+        } as StreamRequest<I, O> | UnaryRequest<I, O>);
+        return res.message;
+      }) as MethodImpl<M>;
+    case MethodKind.ServerStreaming:
+    case MethodKind.BiDiStreaming:
+      return function (request: AsyncIterable<I> | I, context: HandlerContext) {
+        // eslint-disable-next-line @typescript-eslint/require-await
+        const anyFn = async (req: StreamRequest<I, O> | UnaryRequest<I, O>) => {
+          const message = (
+            impl as ServerStreamingImpl<I, O> | BiDiStreamingImpl<I, O>
+          )(req.message as I & AsyncIterable<I>, {
+            ...context,
+            service: req.service,
+            method: req.method,
+            requestHeader: req.header,
+            values: req.contextValues,
+            signal: req.signal,
+          });
+          return {
+            message: normalizeIterable(method.O, message),
+            service: req.service,
+            method: req.method,
+            stream: true,
+            header: context.responseHeader,
+            trailer: context.responseTrailer,
+          } as StreamResponse<I, O>;
+        };
+        const next = applyInterceptors(anyFn, interceptors);
+        return (async function* () {
+          const res = await next({
+            init: {
+              method: context.requestMethod,
+            },
+            message: request,
+            url: context.url,
+            signal: context.signal,
+            service: context.service,
+            contextValues: context.values,
+            header: context.requestHeader,
+            method: context.method as MethodInfo<I, O>,
+            stream: method.kind === MethodKind.BiDiStreaming,
+          } as StreamRequest<I, O> | UnaryRequest<I, O>);
+          yield* res.message;
+        })();
+      } as unknown as MethodImpl<M>;
+  }
 }

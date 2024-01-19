@@ -38,6 +38,7 @@ import type { ProtocolHandlerFactory } from "./protocol-handler-factory.js";
 import { validateReadWriteMaxBytes } from "./limit-io.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
+import type { Interceptor } from "../interceptor.js";
 
 /**
  * Common options for handlers.
@@ -116,6 +117,12 @@ export interface UniversalHandlerOptions {
    * protocol.
    */
   requireConnectProtocolHeader: boolean;
+
+  /**
+   * Interceptors that should be applied to all calls running through
+   * this router. See the Interceptor type for details.
+   */
+  interceptors: Interceptor[];
 }
 
 /**
@@ -186,6 +193,7 @@ export function validateUniversalHandlerOptions(
     maxTimeoutMs,
     shutdownSignal: opt.shutdownSignal,
     requireConnectProtocolHeader,
+    interceptors: opt.interceptors ?? [],
   };
 }
 

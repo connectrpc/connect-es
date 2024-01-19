@@ -190,6 +190,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       shutdownSignal: opt.shutdownSignal,
       requestSignal: req.signal,
       requestHeader: req.header,
+      url: req.url,
       responseHeader: {
         [headerContentType]: type.binary
           ? contentTypeUnaryProto
@@ -375,6 +376,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       shutdownSignal: opt.shutdownSignal,
       requestSignal: req.signal,
       requestHeader: req.header,
+      url: req.url,
       responseHeader: {
         [headerContentType]: type.binary
           ? contentTypeStreamProto

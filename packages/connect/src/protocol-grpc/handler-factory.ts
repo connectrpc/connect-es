@@ -122,6 +122,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       shutdownSignal: opt.shutdownSignal,
       requestSignal: req.signal,
       requestHeader: req.header,
+      url: req.url,
       responseHeader: {
         [headerContentType]: type.binary ? contentTypeProto : contentTypeJson,
       },
