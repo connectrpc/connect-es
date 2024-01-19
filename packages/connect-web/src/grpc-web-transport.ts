@@ -219,6 +219,8 @@ export function createGrpcWebTransport(
           }
           return <UnaryResponse<I, O>>{
             stream: false,
+            service,
+            method,
             header: response.headers,
             message,
             trailer,
