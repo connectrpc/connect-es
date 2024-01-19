@@ -219,7 +219,7 @@ export function createConnectTransport(
             response.headers,
           );
 
-          return <UnaryResponse<I, O>>{
+          return {
             stream: false,
             service,
             method,

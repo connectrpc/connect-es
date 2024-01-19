@@ -217,7 +217,7 @@ export function createGrpcWebTransport(
           if (message === undefined) {
             throw "missing message";
           }
-          return <UnaryResponse<I, O>>{
+          return {
             stream: false,
             service,
             method,
