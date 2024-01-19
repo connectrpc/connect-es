@@ -242,7 +242,12 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
         serialization,
         reqBody,
       );
-      const output = await invokeUnaryImplementation(spec, context, input);
+      const output = await invokeUnaryImplementation(
+        spec,
+        context,
+        input,
+        opt.interceptors,
+      );
       body = serialization.getO(type.binary).serialize(output);
     } catch (e) {
       let error: ConnectError | undefined;
@@ -424,6 +429,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     const it = transformInvokeImplementation<I, O>(
       spec,
       context,
+      opt.interceptors,
     )(inputIt)[Symbol.asyncIterator]();
     const outputIt = pipe(
       // We wrap the iterator in an async iterator to ensure that the
