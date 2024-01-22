@@ -21,6 +21,7 @@ import {
   createMethodImplSpec,
 } from "../implementation.js";
 import type { MethodImplSpec } from "../implementation.js";
+import { readAll } from "./async-iterable-helper.spec.js";
 
 const TestService = {
   typeName: "handwritten.TestService",
@@ -98,7 +99,7 @@ describe("transformInvokeImplementation()", () => {
           expect(res.header.get("Key")).toEqual("bar");
           expect(res.method).toEqual(TestService.methods.unary);
           res.header.set("Key", "baz");
-          return res;
+          return { ...res, trailer: new Headers({ TKey: "tfoo" }) };
         },
         (next) => async (req) => {
           expect(req.header.get("Key")).toEqual("bar");
@@ -108,7 +109,7 @@ describe("transformInvokeImplementation()", () => {
     )(createAsyncIterable([new Int32Value({ value: 1 })]));
     expect(await readAll(output)).toEqual([new StringValue({ value: "foo" })]);
     expect(context.responseHeader.get("Key")).toEqual("baz");
-    expect(context.responseTrailer.get("TKey")).toEqual("tbar");
+    expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
   });
   it("should apply interceptors to client streaming calls", async () => {
     const context = createHandlerContext({
@@ -146,7 +147,7 @@ describe("transformInvokeImplementation()", () => {
           expect(res.header.get("Key")).toEqual("bar");
           expect(res.method).toEqual(TestService.methods.clientStreaming);
           res.header.set("Key", "baz");
-          return res;
+          return { ...res, trailer: new Headers({ TKey: "tfoo" }) };
         },
         (next) => async (req) => {
           expect(req.header.get("Key")).toEqual("bar");
@@ -156,7 +157,7 @@ describe("transformInvokeImplementation()", () => {
     )(createAsyncIterable([new Int32Value({ value: 1 })]));
     expect(await readAll(output)).toEqual([new StringValue({ value: "foo" })]);
     expect(context.responseHeader.get("Key")).toEqual("baz");
-    expect(context.responseTrailer.get("TKey")).toEqual("tbar");
+    expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
   });
   it("should apply interceptors to server streaming calls", async () => {
     const context = createHandlerContext({
@@ -200,6 +201,7 @@ describe("transformInvokeImplementation()", () => {
           res.header.set("Key", "baz");
           return {
             ...res,
+            trailer: new Headers({ TKey: "tfoo" }),
             message: createAsyncIterable(responses),
           } as typeof res;
         },
@@ -211,7 +213,7 @@ describe("transformInvokeImplementation()", () => {
     )(createAsyncIterable([new Int32Value({ value: 1 })]));
     expect(await readAll(output)).toEqual([new StringValue({ value: "foo" })]);
     expect(context.responseHeader.get("Key")).toEqual("baz");
-    expect(context.responseTrailer.get("TKey")).toEqual("tbar");
+    expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
   });
   it("should apply interceptors to bidi streaming calls", async () => {
     const context = createHandlerContext({
@@ -255,6 +257,7 @@ describe("transformInvokeImplementation()", () => {
           res.header.set("Key", "baz");
           return {
             ...res,
+            trailer: new Headers({ TKey: "tfoo" }),
             message: createAsyncIterable(responses),
           } as typeof res;
         },
@@ -266,14 +269,6 @@ describe("transformInvokeImplementation()", () => {
     )(createAsyncIterable([new Int32Value({ value: 1 })]));
     expect(await readAll(output)).toEqual([new StringValue({ value: "foo" })]);
     expect(context.responseHeader.get("Key")).toEqual("baz");
-    expect(context.responseTrailer.get("TKey")).toEqual("tbar");
+    expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
   });
 });
-
-async function readAll<T>(it: AsyncIterable<T>) {
-  const res: T[] = [];
-  for await (const next of it) {
-    res.push(next);
-  }
-  return res;
-}

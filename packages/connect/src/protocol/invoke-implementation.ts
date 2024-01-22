@@ -130,7 +130,7 @@ export function transformInvokeImplementation<
           };
         };
         const next = applyInterceptors(anyFn, interceptors);
-        const { message } = await next({
+        const { message, header, trailer } = await next({
           init: {
             method: context.requestMethod,
           },
@@ -143,6 +143,8 @@ export function transformInvokeImplementation<
           contextValues: context.values,
           stream: false,
         });
+        copyHeaders(header, context.responseHeader);
+        copyHeaders(trailer, context.responseTrailer);
         yield message;
         const input2 = await inputIt.next();
         if (input2.done !== true) {
@@ -186,7 +188,7 @@ export function transformInvokeImplementation<
           };
         };
         const next = applyInterceptors(anyFn, interceptors);
-        const { message } = await next({
+        const { message, header, trailer } = await next({
           init: {
             method: context.requestMethod,
           },
@@ -199,6 +201,8 @@ export function transformInvokeImplementation<
           contextValues: context.values,
           stream: false,
         });
+        copyHeaders(header, context.responseHeader);
+        copyHeaders(trailer, context.responseTrailer);
         yield* message;
         const input2 = await inputIt.next();
         if (input2.done !== true) {
@@ -234,7 +238,7 @@ export function transformInvokeImplementation<
           };
         };
         const next = applyInterceptors(anyFn, interceptors);
-        const { message } = await next({
+        const { message, header, trailer } = await next({
           init: {
             method: context.requestMethod,
           },
@@ -247,6 +251,8 @@ export function transformInvokeImplementation<
           contextValues: context.values,
           stream: true,
         });
+        copyHeaders(header, context.responseHeader);
+        copyHeaders(trailer, context.responseTrailer);
         yield message;
       };
     }
@@ -276,7 +282,7 @@ export function transformInvokeImplementation<
           };
         };
         const next = applyInterceptors(anyFn, interceptors);
-        const { message } = await next({
+        const { message, header, trailer } = await next({
           init: {
             method: context.requestMethod,
           },
@@ -289,7 +295,21 @@ export function transformInvokeImplementation<
           contextValues: context.values,
           stream: true,
         });
+        copyHeaders(header, context.responseHeader);
+        copyHeaders(trailer, context.responseTrailer);
         yield* message;
       };
   }
+}
+
+function copyHeaders(from: Headers, to: Headers) {
+  if (from === to) {
+    return;
+  }
+  to.forEach((_, key) => {
+    to.delete(key);
+  });
+  from.forEach((value, key) => {
+    to.set(key, value);
+  });
 }
