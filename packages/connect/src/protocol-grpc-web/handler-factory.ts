@@ -131,6 +131,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       shutdownSignal: opt.shutdownSignal,
       requestSignal: req.signal,
       requestHeader: req.header,
+      url: req.url,
       responseHeader: {
         [headerContentType]: type.binary ? contentTypeProto : contentTypeJson,
       },
@@ -173,6 +174,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     const it = transformInvokeImplementation<I, O>(
       spec,
       context,
+      opt.interceptors,
     )(inputIt)[Symbol.asyncIterator]();
     const outputIt = pipe(
       // We wrap the iterator in an async iterator to ensure that the

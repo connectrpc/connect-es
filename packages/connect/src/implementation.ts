@@ -18,10 +18,10 @@ import type {
   MessageType,
   MethodIdempotency,
   MethodInfo,
-  MethodKind,
   PartialMessage,
   ServiceType,
 } from "@bufbuild/protobuf";
+import { MethodKind } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
@@ -124,6 +124,11 @@ export interface HandlerContext {
    * Per RPC context values that can be used to pass data to handlers.
    */
   readonly values: ContextValues;
+
+  /**
+   * The URL received by the server.
+   */
+  readonly url: string;
 }
 
 /**
@@ -134,6 +139,7 @@ interface HandlerContextInit {
   method: MethodInfo;
   protocolName: string;
   requestMethod: string;
+  url: string;
   timeoutMs?: number;
   shutdownSignal?: AbortSignal;
   requestSignal?: AbortSignal;

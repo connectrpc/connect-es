@@ -33,6 +33,7 @@ describe("createHandlerContext()", function () {
     method: TestService.methods.unary,
     protocolName: "foo",
     requestMethod: "GET",
+    url: "https://example.com/foo",
   };
 
   describe("signal", function () {
