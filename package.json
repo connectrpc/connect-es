@@ -6,6 +6,7 @@
     "./packages/connect-web",
     "./packages/connect-node",
     "./packages/connect-fastify",
+    "./packages/connect-nest",
     "./packages/connect-next",
     "./packages/connect-express",
     "./packages/connect-node-test",

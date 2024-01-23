@@ -89,6 +89,12 @@ $(BUILD)/connect-express: $(BUILD)/connect $(BUILD)/connect-node packages/connec
 	@mkdir -p $(@D)
 	@touch $(@)
 
+$(BUILD)/connect-nest: $(BUILD)/connect $(BUILD)/connect-node packages/connect-nest/tsconfig.json $(shell find packages/connect-nest/src -name '*.ts')
+	npm run -w packages/connect-nest clean
+	npm run -w packages/connect-nest build
+	@mkdir -p $(@D)
+	@touch $(@)
+
 $(BUILD)/connect-next: $(BUILD)/connect $(BUILD)/connect-node packages/connect-next/tsconfig.json $(shell find packages/connect-next/src -name '*.ts')
 	npm run -w packages/connect-next clean
 	npm run -w packages/connect-next build
@@ -107,7 +113,7 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test packages
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
+$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-nest $(BUILD)/connect-next $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
 	npm run -w packages/connect-node-test clean
 	npm run -w packages/connect-node-test build
 	@mkdir -p $(@D)
@@ -181,7 +187,7 @@ clean: conformanceserverstop ## Delete build artifacts and installed dependencie
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
+build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-nest $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
 test: testconnectpackage testconnectnodepackage testnode testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
@@ -257,12 +263,13 @@ testconnectmigrate: $(BUILD)/connect-migrate
 	npm run -w packages/connect-migrate test
 
 .PHONY: lint
-lint: node_modules $(BUILD)/connect $(BUILD)/connect-express $(BUILD)/connect-fastify $(BUILD)/connect-next $(BUILD)/connect-node $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
+lint: node_modules $(BUILD)/connect $(BUILD)/connect-express $(BUILD)/connect-fastify $(BUILD)/connect-nest $(BUILD)/connect-next $(BUILD)/connect-node $(BUILD)/connect-web $(GEN)/connect-web-bench ## Lint all files
 	npx eslint --max-warnings 0 .
 	@# Check type exports on npm packages to verify they're correct
 	npm run -w packages/connect attw
 	npm run -w packages/connect-express attw
 	npm run -w packages/connect-fastify attw
+	npm run -w packages/connect-nest attw
 	npm run -w packages/connect-next attw
 	npm run -w packages/connect-node attw
 	npm run -w packages/connect-web attw
@@ -299,6 +306,7 @@ release: all ## Release npm packages
 		--workspace packages/connect-node \
 		--workspace packages/connect-fastify \
 		--workspace packages/connect-express \
+		--workspace packages/connect-nest \
 		--workspace packages/connect-next \
 		--workspace packages/protoc-gen-connect-es \
 		--workspace packages/connect-migrate \

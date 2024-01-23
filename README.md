@@ -19,7 +19,7 @@ service ElizaService {
 And with the magic of code generation, this schema produces servers and clients:
 
 ```ts
-const answer = await eliza.say({sentence: "I feel happy."});
+const answer = await eliza.say({ sentence: "I feel happy." });
 console.log(answer);
 // {sentence: 'When you feel happy, what do you do?'}
 ```
@@ -43,7 +43,6 @@ gRPC-web protocols, and Connect's [own protocol](https://connectrpc.com/docs/pro
 optimized for the web. This gives you unparalleled interoperability across many
 platforms and languages, with type-safety end-to-end.
 
-
 ## Get started on the web
 
 Follow our [10 minute tutorial](https://connectrpc.com/docs/web/getting-started) where
@@ -56,7 +55,6 @@ We support all modern web browsers that implement the widely available
 [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).
 
-
 ## Get started on Node.js
 
 Follow our [10 minute tutorial](https://connectrpc.com/docs/node/getting-started)
@@ -67,7 +65,6 @@ You can serve your Connect RPCs with vanilla Node.js, or use our [server plugins
 for **Fastify**, **Next.js**, and **Express**. We support Node.js v16 and later with
 the builtin `http` and `http2` modules.
 
-
 ## Other platforms
 
 Would you like to use Connect on other platforms like Bun, Deno, Vercel’s Edge Runtime,
@@ -75,7 +72,6 @@ or Cloudflare Workers? We’d love to learn about your use cases and what you’
 with Connect. You can reach us either through the [Buf Slack](https://buf.build/links/slack/)
 or by filing a [GitHub issue](https://github.com/connectrpc/connect-es/issues) and we’d
 be more than happy to chat!
-
 
 ## Packages
 
@@ -93,28 +89,28 @@ be more than happy to chat!
   Serve your RPCs with [Next.js](https://nextjs.org/) API routes.
 - [@connectrpc/connect-express](https://www.npmjs.com/package/@connectrpc/connect-express):
   Adds your services to an [Express](https://expressjs.com/) server.
+- [@connectrpc/connect-nest](https://www.npmjs.com/package/@connectrpc/connect-nest):
+  Serve your RPCs with [Nestjs](https://https://nestjs.com) Decorators.
 
 The libraries and the generated code are compatible with ES2017 and TypeScript 4.1.
 
-
 ## Ecosystem
 
-* [examples-es](https://github.com/connectrpc/examples-es):
+- [examples-es](https://github.com/connectrpc/examples-es):
   Examples for using Connect with various TypeScript web frameworks and tooling
-* [connect-query-es](https://github.com/connectrpc/connect-query-es):
+- [connect-query-es](https://github.com/connectrpc/connect-query-es):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
-* [connect-playwright-es](https://github.com/connectrpc/connect-playwright-es):
+- [connect-playwright-es](https://github.com/connectrpc/connect-playwright-es):
   Playwright tests for your Connect application
-* [connect-swift](https://github.com/connectrpc/connect-swift):
+- [connect-swift](https://github.com/connectrpc/connect-swift):
   Idiomatic gRPC & Connect RPCs for Swift
-* [connect-go](https://github.com/connectrpc/connect-go):
+- [connect-go](https://github.com/connectrpc/connect-go):
   Go implementation of gRPC, gRPC-Web, and Connect
-* [examples-go](https://github.com/connectrpc/examples-go):
+- [examples-go](https://github.com/connectrpc/examples-go):
   Example RPC service powering https://demo.connectrpc.com and built with connect-go
-* [conformance](https://github.com/connectrpc/conformance):
+- [conformance](https://github.com/connectrpc/conformance):
   gRPC-Web and Connect interoperability tests
-* [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
-
+- [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
 
 ## Status: Stable
 
