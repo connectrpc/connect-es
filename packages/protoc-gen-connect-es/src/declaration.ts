@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,11 +15,7 @@
 import type { DescService } from "@bufbuild/protobuf";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import type { GeneratedFile, Schema } from "@bufbuild/protoplugin/ecmascript";
-import {
-  literalString,
-  makeJsDoc,
-  localName,
-} from "@bufbuild/protoplugin/ecmascript";
+import { localName } from "@bufbuild/protoplugin/ecmascript";
 
 export function generateDts(schema: Schema) {
   for (const protoFile of schema.files) {
@@ -34,14 +30,14 @@ export function generateDts(schema: Schema) {
 // prettier-ignore
 function generateService(schema: Schema, f: GeneratedFile, service: DescService) {
   const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } = schema.runtime;
-  f.print(makeJsDoc(service));
-  f.print("export declare const ", localName(service), ": {");
-  f.print(`  readonly typeName: `, literalString(service.typeName), `,`);
+  f.print(f.jsDoc(service));
+  f.print(f.exportDecl("declare const", localName(service)), ": {");
+  f.print(`  readonly typeName: `, f.string(service.typeName), `,`);
   f.print("  readonly methods: {");
   for (const method of service.methods) {
-    f.print(makeJsDoc(method, "    "));
+    f.print(f.jsDoc(method, "    "));
     f.print("    readonly ", localName(method), ": {");
-    f.print(`      readonly name: `, literalString(method.name), `,`);
+    f.print(`      readonly name: `, f.string(method.name), `,`);
     f.print("      readonly I: typeof ", method.input, ",");
     f.print("      readonly O: typeof ", method.output, ",");
     f.print("      readonly kind: ", rtMethodKind, ".", MethodKind[method.methodKind], ",");

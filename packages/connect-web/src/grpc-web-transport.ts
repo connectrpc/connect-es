@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -151,8 +151,8 @@ export function createGrpcWebTransport(
         timeoutMs === undefined
           ? options.defaultTimeoutMs
           : timeoutMs <= 0
-          ? undefined
-          : timeoutMs;
+            ? undefined
+            : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -217,8 +217,10 @@ export function createGrpcWebTransport(
           if (message === undefined) {
             throw "missing message";
           }
-          return <UnaryResponse<I, O>>{
+          return {
             stream: false,
+            service,
+            method,
             header: response.headers,
             message,
             trailer,
@@ -311,8 +313,8 @@ export function createGrpcWebTransport(
         timeoutMs === undefined
           ? options.defaultTimeoutMs
           : timeoutMs <= 0
-          ? undefined
-          : timeoutMs;
+            ? undefined
+            : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: options.interceptors,
         signal,

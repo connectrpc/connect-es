@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,14 @@ import { Code } from "../code.js";
 import type { HandlerContext, MethodImplSpec } from "../implementation.js";
 import type { AsyncIterableTransform } from "./async-iterable.js";
 import { normalize, normalizeIterable } from "./normalize.js";
+import type {
+  Interceptor,
+  StreamRequest,
+  StreamResponse,
+  UnaryRequest,
+  UnaryResponse,
+} from "../interceptor.js";
+import { applyInterceptors } from "../interceptor.js";
 
 /**
  * Invoke a user-provided implementation of a unary RPC. Returns a normalized
@@ -32,9 +40,45 @@ export async function invokeUnaryImplementation<
   spec: MethodImplSpec<I, O> & { kind: MethodKind.Unary },
   context: HandlerContext,
   input: I,
+  interceptors: Interceptor[],
 ): Promise<O> {
-  const output = await spec.impl(input, context);
-  return normalize(spec.method.O, output);
+  const anyFn = async (
+    req: UnaryRequest<I, O>,
+  ): Promise<UnaryResponse<I, O>> => {
+    return {
+      message: normalize(
+        spec.method.O,
+        await spec.impl(req.message, {
+          ...context,
+          service: req.service,
+          method: req.method,
+          requestHeader: req.header,
+          values: req.contextValues,
+          signal: req.signal,
+        }),
+      ),
+      stream: false,
+      service: req.service,
+      method: req.method,
+      header: context.responseHeader,
+      trailer: context.responseTrailer,
+    };
+  };
+  const next = applyInterceptors(anyFn, interceptors);
+  const { message } = await next({
+    init: {
+      method: context.requestMethod,
+    },
+    message: input,
+    url: context.url,
+    signal: context.signal,
+    service: spec.service,
+    method: spec.method,
+    header: context.requestHeader,
+    contextValues: context.values,
+    stream: false,
+  });
+  return message;
 }
 
 /**
@@ -50,6 +94,7 @@ export function transformInvokeImplementation<
 >(
   spec: MethodImplSpec<I, O>,
   context: HandlerContext,
+  interceptors: Interceptor[],
 ): AsyncIterableTransform<I, O> {
   switch (spec.kind) {
     case MethodKind.Unary:
@@ -62,7 +107,45 @@ export function transformInvokeImplementation<
             Code.InvalidArgument,
           );
         }
-        yield normalize(spec.method.O, await spec.impl(input1.value, context));
+        const anyFn = async (
+          req: UnaryRequest<I, O>,
+        ): Promise<UnaryResponse<I, O>> => {
+          return {
+            message: normalize(
+              spec.method.O,
+              await spec.impl(req.message, {
+                ...context,
+                service: req.service,
+                method: req.method,
+                requestHeader: req.header,
+                values: req.contextValues,
+                signal: req.signal,
+              }),
+            ),
+            stream: false,
+            service: req.service,
+            method: req.method,
+            header: context.responseHeader,
+            trailer: context.responseTrailer,
+          };
+        };
+        const next = applyInterceptors(anyFn, interceptors);
+        const { message, header, trailer } = await next({
+          init: {
+            method: context.requestMethod,
+          },
+          message: input1.value,
+          url: context.url,
+          signal: context.signal,
+          service: spec.service,
+          method: spec.method,
+          header: context.requestHeader,
+          contextValues: context.values,
+          stream: false,
+        });
+        copyHeaders(header, context.responseHeader);
+        copyHeaders(trailer, context.responseTrailer);
+        yield message;
         const input2 = await inputIt.next();
         if (input2.done !== true) {
           throw new ConnectError(
@@ -81,10 +164,46 @@ export function transformInvokeImplementation<
             Code.InvalidArgument,
           );
         }
-        yield* normalizeIterable(
-          spec.method.O,
-          spec.impl(input1.value, context),
-        );
+        const anyFn = async (
+          req: UnaryRequest<I, O>,
+          // eslint-disable-next-line @typescript-eslint/require-await
+        ): Promise<StreamResponse<I, O>> => {
+          return {
+            message: normalizeIterable(
+              spec.method.O,
+              spec.impl(req.message, {
+                ...context,
+                service: req.service,
+                method: req.method,
+                requestHeader: req.header,
+                values: req.contextValues,
+                signal: req.signal,
+              }),
+            ),
+            stream: true,
+            service: req.service,
+            method: req.method,
+            header: context.responseHeader,
+            trailer: context.responseTrailer,
+          };
+        };
+        const next = applyInterceptors(anyFn, interceptors);
+        const { message, header, trailer } = await next({
+          init: {
+            method: context.requestMethod,
+          },
+          message: input1.value,
+          url: context.url,
+          signal: context.signal,
+          service: spec.service,
+          method: spec.method,
+          header: context.requestHeader,
+          contextValues: context.values,
+          stream: false,
+        });
+        copyHeaders(header, context.responseHeader);
+        copyHeaders(trailer, context.responseTrailer);
+        yield* message;
         const input2 = await inputIt.next();
         if (input2.done !== true) {
           throw new ConnectError(
@@ -96,12 +215,101 @@ export function transformInvokeImplementation<
     }
     case MethodKind.ClientStreaming: {
       return async function* clientStreaming(input: AsyncIterable<I>) {
-        yield normalize(spec.method.O, await spec.impl(input, context));
+        const anyFn = async (
+          req: StreamRequest<I, O>,
+        ): Promise<UnaryResponse<I, O>> => {
+          return {
+            message: normalize(
+              spec.method.O,
+              await spec.impl(req.message, {
+                ...context,
+                service: req.service,
+                method: req.method,
+                requestHeader: req.header,
+                values: req.contextValues,
+                signal: req.signal,
+              }),
+            ),
+            stream: false,
+            service: req.service,
+            method: req.method,
+            header: context.responseHeader,
+            trailer: context.responseTrailer,
+          };
+        };
+        const next = applyInterceptors(anyFn, interceptors);
+        const { message, header, trailer } = await next({
+          init: {
+            method: context.requestMethod,
+          },
+          message: input,
+          url: context.url,
+          signal: context.signal,
+          service: spec.service,
+          method: spec.method,
+          header: context.requestHeader,
+          contextValues: context.values,
+          stream: true,
+        });
+        copyHeaders(header, context.responseHeader);
+        copyHeaders(trailer, context.responseTrailer);
+        yield message;
       };
     }
     case MethodKind.BiDiStreaming:
-      return function biDiStreaming(input: AsyncIterable<I>) {
-        return normalizeIterable(spec.method.O, spec.impl(input, context));
+      return async function* biDiStreaming(input: AsyncIterable<I>) {
+        const anyFn = async (
+          req: StreamRequest<I, O>,
+          // eslint-disable-next-line @typescript-eslint/require-await
+        ): Promise<StreamResponse<I, O>> => {
+          return {
+            message: normalizeIterable(
+              spec.method.O,
+              spec.impl(req.message, {
+                ...context,
+                service: req.service,
+                method: req.method,
+                requestHeader: req.header,
+                values: req.contextValues,
+                signal: req.signal,
+              }),
+            ),
+            stream: true,
+            service: req.service,
+            method: req.method,
+            header: context.responseHeader,
+            trailer: context.responseTrailer,
+          };
+        };
+        const next = applyInterceptors(anyFn, interceptors);
+        const { message, header, trailer } = await next({
+          init: {
+            method: context.requestMethod,
+          },
+          message: input,
+          url: context.url,
+          signal: context.signal,
+          service: spec.service,
+          method: spec.method,
+          header: context.requestHeader,
+          contextValues: context.values,
+          stream: true,
+        });
+        copyHeaders(header, context.responseHeader);
+        copyHeaders(trailer, context.responseTrailer);
+        yield* message;
       };
   }
+}
+
+function copyHeaders(from: Headers, to: Headers) {
+  if (from === to) {
+    return;
+  }
+  to.forEach((_, key) => {
+    to.delete(key);
+  });
+  from.forEach((value, key) => {
+    to.set(key, value);
+  });
 }

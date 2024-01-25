@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ export interface Http2SessionOptions {
    * Defaults to 15 seconds. This option is only used if a value for
    * pingIntervalMs is provided.
    *
-   * This option is equivalent to GRPC_ARG_KEEPALIVE_TIME_MS in gRPC Core.
+   * This option is equivalent to GRPC_ARG_KEEPALIVE_TIMEOUT_MS in gRPC Core.
    */
   pingTimeoutMs?: number;
 

@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import type {
   UnaryRequest,
   UnaryResponse,
 } from "../interceptor.js";
+import { applyInterceptors } from "../interceptor.js";
 import { ConnectError } from "../connect-error.js";
 import {
   createDeadlineSignal,
@@ -185,25 +186,4 @@ function setupSignal(opt: {
       controller.abort();
     },
   ];
-}
-
-/**
- * applyInterceptors takes the given UnaryFn or ServerStreamingFn, and wraps
- * it with each of the given interceptors, returning a new UnaryFn or
- * ServerStreamingFn.
- */
-function applyInterceptors<T>(
-  next: T,
-  interceptors: Interceptor[] | undefined,
-): T {
-  return (
-    (interceptors
-      ?.concat()
-      .reverse()
-      .reduce(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        (n, i) => i(n),
-        next as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-      ) as T) ?? next
-  );
 }

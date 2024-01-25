@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -155,8 +155,8 @@ export function createConnectTransport(
         timeoutMs === undefined
           ? options.defaultTimeoutMs
           : timeoutMs <= 0
-          ? undefined
-          : timeoutMs;
+            ? undefined
+            : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -219,7 +219,7 @@ export function createConnectTransport(
             response.headers,
           );
 
-          return <UnaryResponse<I, O>>{
+          return {
             stream: false,
             service,
             method,
@@ -307,8 +307,8 @@ export function createConnectTransport(
         timeoutMs === undefined
           ? options.defaultTimeoutMs
           : timeoutMs <= 0
-          ? undefined
-          : timeoutMs;
+            ? undefined
+            : timeoutMs;
       return await runStreamingCall<I, O>({
         interceptors: options.interceptors,
         timeoutMs,

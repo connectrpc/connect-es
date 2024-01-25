@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -122,6 +122,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       shutdownSignal: opt.shutdownSignal,
       requestSignal: req.signal,
       requestHeader: req.header,
+      url: req.url,
       responseHeader: {
         [headerContentType]: type.binary ? contentTypeProto : contentTypeJson,
       },
@@ -159,6 +160,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     const it = transformInvokeImplementation<I, O>(
       spec,
       context,
+      opt.interceptors,
     )(inputIt)[Symbol.asyncIterator]();
     const outputIt = pipe(
       // We wrap the iterator in an async iterator to ensure that the

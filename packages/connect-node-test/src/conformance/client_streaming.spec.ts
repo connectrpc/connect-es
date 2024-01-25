@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,9 +35,8 @@ describe("client_streaming", () => {
         await new Promise((resolve) => setTimeout(resolve, 1));
       }
       const client = createPromiseClient(TestService, transport());
-      const { aggregatedPayloadSize } = await client.streamingInputCall(
-        input(),
-      );
+      const { aggregatedPayloadSize } =
+        await client.streamingInputCall(input());
       expect(aggregatedPayloadSize).toBe(sizes.reduce((p, c) => p + c, 0));
     });
   });

@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ export function getNodeErrorProps(reason: unknown): {
 export function connectErrorFromH2ResetCode(
   rstCode: number,
 ): ConnectError | undefined {
-  switch (rstCode) {
+  switch (rstCode as H2Code) {
     case H2Code.PROTOCOL_ERROR:
     case H2Code.INTERNAL_ERROR:
     case H2Code.FLOW_CONTROL_ERROR:

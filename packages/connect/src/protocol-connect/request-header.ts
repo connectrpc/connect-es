@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,8 +55,8 @@ export function requestHeader(
         ? contentTypeUnaryProto
         : contentTypeUnaryJson
       : useBinaryFormat
-      ? contentTypeStreamProto
-      : contentTypeStreamJson,
+        ? contentTypeStreamProto
+        : contentTypeStreamJson,
   );
   result.set(headerProtocolVersion, protocolVersion);
   if (setUserAgent) {

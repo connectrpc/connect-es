@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import { validateNodeTransportOptions } from "./node-transport-options.js";
  *
  * See createGrpcTransport().
  */
-type GrpcTransportOptions = NodeTransportOptions & {
+export type GrpcTransportOptions = NodeTransportOptions & {
   /**
    * Base URI for all HTTP requests.
    *

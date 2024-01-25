@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ export function normalize<T extends Message<T>>(
   type: MessageType<T>,
   message: T | PartialMessage<T>,
 ) {
-  return message instanceof Message ? message : new type(message);
+  return message instanceof type
+    ? message
+    : new type(message as PartialMessage<T>);
 }
 
 /**

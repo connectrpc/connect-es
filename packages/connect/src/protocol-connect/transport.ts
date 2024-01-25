@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,8 +83,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         timeoutMs === undefined
           ? opt.defaultTimeoutMs
           : timeoutMs <= 0
-          ? undefined
-          : timeoutMs;
+            ? undefined
+            : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -208,8 +208,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         timeoutMs === undefined
           ? opt.defaultTimeoutMs
           : timeoutMs <= 0
-          ? undefined
-          : timeoutMs;
+            ? undefined
+            : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
         signal,

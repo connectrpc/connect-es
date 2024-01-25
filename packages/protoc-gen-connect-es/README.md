@@ -125,6 +125,18 @@ in import paths with the given value. For example, set
 - `import_extension=none` to remove the `.js` extension
 - `import_extension=.ts` to replace the `.js` extension with `.ts`
 
+### `js_import_style`
+
+By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es)
+(and all other plugins based on [@bufbuild/protoplugin](https://www.npmjs.com/package/@bufbuild/protoplugin))
+generate ECMAScript `import` and `export` statements. For use cases where
+CommonJS is difficult to avoid, this option can be used to generate CommonJS
+`require()` calls.
+
+Possible values:
+- `js_import_style=module` generate ECMAScript `import` / `export` statements -
+  the default behavior.
+- `js_import_style=legacy_commonjs` generate CommonJS `require()` calls.
 
 ### `keep_empty_files=true`
 

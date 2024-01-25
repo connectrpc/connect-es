@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - uses: bufbuild/buf-setup-action@v1.27.2
+      - uses: bufbuild/buf-setup-action@v1.28.1
         with:
           github_token: ${{ github.token }}
       - name: cache
@@ -27,4 +27,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
       - name: make
-        run: make format build lint test bench checkdiff
+        run: make && make checkdiff

@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect",
-  "version": "1.1.3",
+  "version": "1.3.0",
   "description": "Type-safe APIs with Protobuf and TypeScript.",
   "license": "Apache-2.0",
   "repository": {
@@ -88,9 +88,9 @@
     "@bufbuild/protobuf": "^1.4.2"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^1.4.2",
+    "@bufbuild/protoc-gen-es": "^1.6.0",
     "@types/jasmine": "^5.0.0",
     "jasmine": "^5.1.0",
-    "undici": "^5.26.2"
+    "undici": "^5.28.2"
   }
 }

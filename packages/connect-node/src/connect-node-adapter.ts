@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import type {
 } from "./node-universal-handler.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 
-interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
+export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
   /**
    * Route definitions. We recommend the following pattern:
    *

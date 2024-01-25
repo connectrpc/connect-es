@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ describe("validateUniversalHandlerOptions()", function () {
       maxTimeoutMs: Number.MAX_SAFE_INTEGER,
       shutdownSignal: undefined,
       requireConnectProtocolHeader: false,
+      interceptors: [],
     });
   });
   it("should accept inputs", function () {
@@ -63,6 +64,7 @@ describe("validateUniversalHandlerOptions()", function () {
       maxTimeoutMs: 888,
       shutdownSignal: new AbortController().signal,
       requireConnectProtocolHeader: true,
+      interceptors: [],
     };
     const o = validateUniversalHandlerOptions(i);
     expect(o).toEqual(i);

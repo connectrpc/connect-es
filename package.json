@@ -21,15 +21,21 @@
     "node": ">=16",
     "npm": ">=8"
   },
+  "licenseHeader": {
+    "licenseType": "apache",
+    "yearRange": "2021-2024",
+    "copyrightHolder": "The Connect Authors"
+  },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.13.1",
-    "@typescript-eslint/eslint-plugin": "^6.10.0",
-    "@typescript-eslint/parser": "^6.10.0",
-    "eslint": "^8.50.0",
+    "@arethetypeswrong/cli": "^0.13.5",
+    "@bufbuild/license-header": "^0.0.4",
+    "@typescript-eslint/parser": "^6.17.0",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
     "eslint-import-resolver-typescript": "^3.6.1",
-    "eslint-plugin-import": "^2.28.0",
-    "eslint-plugin-n": "^16.3.1",
+    "eslint-plugin-n": "^16.6.0",
+    "eslint-plugin-import": "^2.29.1",
     "prettier": "^3.0.2",
-    "typescript": "5.2.2"
+    "typescript": "5.3.3"
   }
 }

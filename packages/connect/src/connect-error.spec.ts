@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,32 @@ import { Code } from "./code.js";
 import { node16FetchHeadersPolyfill } from "./node16-polyfill-helper.spec.js";
 
 node16FetchHeadersPolyfill();
+
+class ConnectError2 extends Error {
+  readonly code: Code;
+  readonly metadata: Headers;
+  details: Message[];
+  readonly rawMessage: string;
+  override name = "ConnectError";
+  cause: unknown;
+
+  constructor(
+    message: string,
+    code: Code = Code.Unknown,
+    metadata?: HeadersInit,
+    outgoingDetails?: Message[],
+    cause?: unknown,
+  ) {
+    super(message);
+    // see https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html#example
+    Object.setPrototypeOf(this, new.target.prototype);
+    this.rawMessage = message;
+    this.code = code;
+    this.metadata = new Headers(metadata ?? {});
+    this.details = outgoingDetails ?? [];
+    this.cause = cause;
+  }
+}
 
 describe("ConnectError", () => {
   describe("constructor", () => {
@@ -135,6 +161,20 @@ describe("ConnectError", () => {
       expect(got.code).toBe(Code.Unknown);
       expect(got.rawMessage).toBe("Not permitted");
       expect(got.cause).toBe(error);
+    });
+  });
+  describe("instanceof", () => {
+    it("works for the actual ConnectError", () => {
+      expect(new ConnectError("foo")).toBeInstanceOf(ConnectError);
+    });
+    it("works for ConnectError like errors", () => {
+      expect(new ConnectError2("foo")).toBeInstanceOf(ConnectError);
+    });
+    it("fails for other errors", () => {
+      expect(new Error("foo")).not.toBeInstanceOf(ConnectError);
+      expect(null).not.toBeInstanceOf(ConnectError);
+      expect(undefined).not.toBeInstanceOf(ConnectError);
+      expect("err").not.toBeInstanceOf(ConnectError);
     });
   });
 });
