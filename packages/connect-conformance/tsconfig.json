@@ -2,6 +2,6 @@
   "include": ["src/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+  },
 }
