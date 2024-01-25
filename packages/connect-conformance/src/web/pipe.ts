@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,12 @@
 
 import * as net from "node:net";
 
+/**
+ * This is a proxy 'client-under-test' that pipes stdin/stdout to the unix socket.
+ *
+ * This is used to run the conformance tests where the clients don't support
+ * stdin/stdout. This is used for testing the web client.
+ */
 export function run() {
   const conn = net.connect(process.argv[2], () => {
     process.stdin.pipe(conn);

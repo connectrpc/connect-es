@@ -1,4 +1,4 @@
-// Copyright 2021-2023 The Connect Authors
+// Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import {
   BidiStreamRequest,
   ConformancePayload_RequestInfo,
   UnimplementedRequest,
-} from "../gen/connectrpc/conformance/v1/service_pb";
+} from "../gen/connectrpc/conformance/v1/service_pb.js";
 
 const typeRegistry = createRegistry(
   UnaryRequest,
@@ -45,10 +45,14 @@ const typeRegistry = createRegistry(
   UnimplementedRequest,
 );
 
+/**
+ * Checkout the README to learn about the high level architecture of the
+ * test.
+ */
 describe("Connect Conformance", () => {
   it("Connect Conformance", async () => {
     const buildResult = await esbuild.build({
-      entryPoints: ["./src/web/client-entry.ts"],
+      entryPoints: ["./src/web/entry.ts"],
       bundle: true,
       format: "esm",
       write: false,

@@ -155,12 +155,6 @@ $(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-conformance/buf.gen.yaml packages/connect-conformance/package.json Makefile
-	rm -rf packages/connect-conformance/src/gen/*
-	npm run -w packages/connect-conformance generate
-	@mkdir -p $(@D)
-	@touch $(@)
-
 $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-bench/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-bench/src/gen/*
 	npm run -w packages/connect-web-bench generate buf.build/connectrpc/eliza:8bde2b90ec0a7f23df3de5824bed0b6ea2043305

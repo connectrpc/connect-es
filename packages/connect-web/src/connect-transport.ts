@@ -155,8 +155,8 @@ export function createConnectTransport(
         timeoutMs === undefined
           ? options.defaultTimeoutMs
           : timeoutMs <= 0
-            ? undefined
-            : timeoutMs;
+          ? undefined
+          : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -307,8 +307,8 @@ export function createConnectTransport(
         timeoutMs === undefined
           ? options.defaultTimeoutMs
           : timeoutMs <= 0
-            ? undefined
-            : timeoutMs;
+          ? undefined
+          : timeoutMs;
       return await runStreamingCall<I, O>({
         interceptors: options.interceptors,
         timeoutMs,

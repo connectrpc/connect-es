@@ -55,8 +55,8 @@ export function requestHeader(
         ? contentTypeUnaryProto
         : contentTypeUnaryJson
       : useBinaryFormat
-        ? contentTypeStreamProto
-        : contentTypeStreamJson,
+      ? contentTypeStreamProto
+      : contentTypeStreamJson,
   );
   result.set(headerProtocolVersion, protocolVersion);
   if (setUserAgent) {

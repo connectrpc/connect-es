@@ -83,8 +83,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         timeoutMs === undefined
           ? opt.defaultTimeoutMs
           : timeoutMs <= 0
-            ? undefined
-            : timeoutMs;
+          ? undefined
+          : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -208,8 +208,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         timeoutMs === undefined
           ? opt.defaultTimeoutMs
           : timeoutMs <= 0
-            ? undefined
-            : timeoutMs;
+          ? undefined
+          : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
         signal,
