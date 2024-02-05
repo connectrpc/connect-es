@@ -293,7 +293,7 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 .PHONY: release
 release: all ## Release npm packages
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
-	npm publish \
+	npm publish --tag next \
 		--workspace packages/connect \
 		--workspace packages/connect-web \
 		--workspace packages/connect-node \
