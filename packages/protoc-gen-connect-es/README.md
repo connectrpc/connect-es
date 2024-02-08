@@ -147,6 +147,16 @@ empty files, to allow for smooth interoperation with Bazel and similar
 tooling that requires all output files to be declared ahead of time.
 Unless you use Bazel, it is very unlikely that you need this option.
 
+### `ts_nocheck=false`
+
+By default, [protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es)
+(and all other plugins based on [@bufbuild/protoplugin](https://www.npmjs.com/package/@bufbuild/protoplugin))
+generate an annotation at the top of each file: `// @ts-nocheck`.
+
+We generate the annotation to support a wide of compiler configurations and
+future changes to the language. But there can be situation where the annotation
+shadows an underlying problem, for example an unresolvable import. To remove
+the annotation and to enable type checks, set the plugin option `ts_nocheck=false`.
 
 ## Example generated code
 
