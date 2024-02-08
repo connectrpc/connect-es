@@ -149,7 +149,7 @@ Unless you use Bazel, it is very unlikely that you need this option.
 
 ### `ts_nocheck=false`
 
-By default, [protoc-gen-es](https://www.npmjs.com/package/@bufbuild/protoc-gen-es)
+By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es)
 (and all other plugins based on [@bufbuild/protoplugin](https://www.npmjs.com/package/@bufbuild/protoplugin))
 generate an annotation at the top of each file: `// @ts-nocheck`.
 
