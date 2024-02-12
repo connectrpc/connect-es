@@ -75,8 +75,6 @@ export function run() {
         requestCert: true,
         rejectUnauthorized: true,
         ca: Buffer.from(req.clientTlsCert),
-        highWaterMark:
-          req.messageReceiveLimit === 0 ? undefined : req.messageReceiveLimit,
       };
     }
   }
@@ -84,15 +82,7 @@ export function run() {
     case HTTPVersion.HTTP_VERSION_1:
       server = req.useTls
         ? https.createServer(serverOptions, adapter)
-        : http.createServer(
-            {
-              highWaterMark:
-                req.messageReceiveLimit === 0
-                  ? undefined
-                  : req.messageReceiveLimit,
-            },
-            adapter,
-          );
+        : http.createServer(adapter);
       break;
     case HTTPVersion.HTTP_VERSION_2:
       server = req.useTls
