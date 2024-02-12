@@ -42,7 +42,7 @@ function createRequestInfo(
   });
 }
 
-function handleUnaryResponse(
+async function handleUnaryResponse(
   def: UnaryResponseDefinition | undefined,
   reqs: Any[],
   ctx: HandlerContext,
@@ -53,6 +53,9 @@ function handleUnaryResponse(
   if (def?.response.case === "error") {
     def.response.value.details.push(Any.pack(reqInfo));
     throw connectErrorFromProto(def.response.value);
+  }
+  if (def?.responseDelayMs !== undefined) {
+    await wait(def.responseDelayMs);
   }
   return {
     payload: new ConformancePayload({
@@ -65,6 +68,9 @@ function handleUnaryResponse(
 export default ({ service }: ConnectRouter) => {
   service(ConformanceService, {
     unary(req, ctx) {
+      return handleUnaryResponse(req.responseDefinition, [Any.pack(req)], ctx);
+    },
+    idempotentUnary(req, ctx) {
       return handleUnaryResponse(req.responseDefinition, [Any.pack(req)], ctx);
     },
     async clientStream(reqIt, ctx) {

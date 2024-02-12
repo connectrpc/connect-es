@@ -31,6 +31,7 @@ import { Compression } from "@connectrpc/connect/protocol";
 import {
   BidiStreamRequest,
   ClientStreamRequest,
+  IdempotentUnaryRequest,
   ServerStreamRequest,
   UnaryRequest,
 } from "../gen/connectrpc/conformance/v1/service_pb.js";
@@ -58,13 +59,16 @@ export function createTransport(req: ClientCompatRequest) {
   }
 
   let sendCompression: Compression | undefined = undefined;
+  let acceptCompression: Compression[] = [];
 
   switch (req.compression) {
     case ConformanceCompression.GZIP:
       sendCompression = compressionGzip;
+      acceptCompression = [compressionGzip];
       break;
     case ConformanceCompression.BR:
       sendCompression = compressionBrotli;
+      acceptCompression = [compressionBrotli];
       break;
     case ConformanceCompression.DEFLATE:
     case ConformanceCompression.SNAPPY:
@@ -88,6 +92,7 @@ export function createTransport(req: ClientCompatRequest) {
     httpVersion,
     useBinaryFormat: req.codec === Codec.PROTO,
     sendCompression,
+    acceptCompression: acceptCompression,
     defaultTimeoutMs: req.timeoutMs,
     compressMinBytes: -1, // To account for empty messages
     jsonOptions: {
@@ -96,6 +101,7 @@ export function createTransport(req: ClientCompatRequest) {
         ServerStreamRequest,
         ClientStreamRequest,
         BidiStreamRequest,
+        IdempotentUnaryRequest,
       ),
     },
     nodeOptions: {

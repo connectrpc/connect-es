@@ -30,6 +30,7 @@ import {
   ConformancePayload,
   BidiStreamRequest,
   UnimplementedRequest,
+  IdempotentUnaryRequest,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   convertToProtoError,
@@ -43,12 +44,38 @@ import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
 
 type ConformanceClient = PromiseClient<typeof ConformanceService>;
 
-async function unary(client: ConformanceClient, req: ClientCompatRequest) {
+function getCancelTiming(req: ClientCompatRequest) {
+  const def = {
+    beforeCloseSend: undefined,
+    afterCloseSendMs: -1,
+    afterNumResponses: -1,
+  };
+  switch (req.cancel?.cancelTiming.case) {
+    case "beforeCloseSend":
+      return { ...def, beforeCloseSend: {} };
+    case "afterCloseSendMs":
+      return {
+        ...def,
+        afterCloseSendMs: req.cancel.cancelTiming.value,
+      };
+    case "afterNumResponses":
+      return { ...def, afterNumResponses: req.cancel.cancelTiming.value };
+    case undefined:
+      return def;
+  }
+}
+
+async function unary(
+  client: ConformanceClient,
+  req: ClientCompatRequest,
+  idempotent: boolean = false,
+) {
   if (req.requestMessages.length !== 1) {
     throw new Error("Unary method requires exactly one request message");
   }
+  req.cancel;
   const msg = req.requestMessages[0];
-  const uReq = new UnaryRequest();
+  const uReq = idempotent ? new IdempotentUnaryRequest() : new UnaryRequest();
   if (!msg.unpackTo(uReq)) {
     throw new Error("Could not unpack request message to unary request");
   }
@@ -59,7 +86,12 @@ async function unary(client: ConformanceClient, req: ClientCompatRequest) {
   let resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
   try {
-    const uRes = await client.unary(uReq, {
+    let call = client.unary;
+    if (idempotent) {
+      call = client.idempotentUnary;
+    }
+    await wait(req.requestDelayMs);
+    const uRes = await call(uReq, {
       headers: reqHeader,
       onHeader(headers) {
         resHeaders = convertToProtoHeaders(headers);
@@ -109,17 +141,30 @@ async function serverStream(
   let resHeaders: ConformanceHeader[] = [];
   let resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
+  const cancelTiming = getCancelTiming(req);
+  const controller = new AbortController();
   try {
-    for await (const msg of client.serverStream(uReq, {
+    await wait(req.requestDelayMs);
+    const res = client.serverStream(uReq, {
       headers: reqHeader,
+      signal: controller.signal,
       onHeader(headers) {
         resHeaders = convertToProtoHeaders(headers);
       },
       onTrailer(trailers) {
         resTrailers = convertToProtoHeaders(trailers);
       },
-    })) {
+    });
+    if (cancelTiming.afterNumResponses == 0) {
+      controller.abort();
+    }
+    let count = 0;
+    for await (const msg of res) {
       payloads.push(msg.payload!);
+      count++;
+      if (count === cancelTiming.afterNumResponses) {
+        controller.abort();
+      }
     }
   } catch (e) {
     error = ConnectError.from(e);
@@ -151,6 +196,8 @@ async function clientStream(
   let resHeaders: ConformanceHeader[] = [];
   let resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
+  const cancelTiming = getCancelTiming(req);
+  const controller = new AbortController();
   try {
     const csRes = await client.clientStream(
       (async function* () {
@@ -164,8 +211,16 @@ async function clientStream(
           await wait(req.requestDelayMs);
           yield csReq;
         }
+        if (cancelTiming.beforeCloseSend !== undefined) {
+          controller.abort();
+        } else if (cancelTiming.afterCloseSendMs >= 0) {
+          setTimeout(() => {
+            controller.abort();
+          }, cancelTiming.afterCloseSendMs);
+        }
       })(),
       {
+        signal: controller.signal,
         headers: reqHeaders,
         onHeader(headers) {
           resHeaders = convertToProtoHeaders(headers);
@@ -203,9 +258,13 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
   let resHeaders: ConformanceHeader[] = [];
   let resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
+  const cancelTiming = getCancelTiming(req);
+  const controller = new AbortController();
+  let recvCount = 0;
   try {
     const reqIt = createWritableIterable<BidiStreamRequest>();
     const sRes = client.bidiStream(reqIt, {
+      signal: controller.signal,
       headers: reqHeaders,
       onHeader(headers) {
         resHeaders = convertToProtoHeaders(headers);
@@ -225,19 +284,41 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
       await wait(req.requestDelayMs);
       await reqIt.write(bdReq);
       if (req.streamType === StreamType.FULL_DUPLEX_BIDI_STREAM) {
+        if (cancelTiming.afterNumResponses === 0) {
+          controller.abort();
+        }
         const next = await resIt.next();
         if (next.done === true) {
           continue;
         }
+        recvCount++;
+        if (cancelTiming.afterNumResponses === recvCount) {
+          controller.abort();
+        }
         payloads.push(next.value.payload!);
       }
     }
+    if (cancelTiming.beforeCloseSend !== undefined) {
+      controller.abort();
+    }
     reqIt.close();
+    if (cancelTiming.afterCloseSendMs >= 0) {
+      setTimeout(() => {
+        controller.abort();
+      }, cancelTiming.afterCloseSendMs);
+    }
+    if (cancelTiming.afterNumResponses === 0) {
+      controller.abort();
+    }
     // Drain the response iterator
     for (;;) {
       const next = await resIt.next();
       if (next.done === true) {
         break;
+      }
+      recvCount++;
+      if (cancelTiming.afterNumResponses === recvCount) {
+        controller.abort();
       }
       payloads.push(next.value.payload!);
     }
@@ -306,9 +387,12 @@ async function unimplemented(
 
 export default (transport: Transport, req: ClientCompatRequest) => {
   const client = createPromiseClient(ConformanceService, transport);
+
   switch (req.method) {
     case ConformanceService.methods.unary.name:
       return unary(client, req);
+    case ConformanceService.methods.idempotentUnary.name:
+      return unary(client, req, true);
     case ConformanceService.methods.serverStream.name:
       return serverStream(client, req);
     case ConformanceService.methods.clientStream.name:
