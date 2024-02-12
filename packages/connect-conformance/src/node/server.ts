@@ -32,6 +32,7 @@ import { createRegistry } from "@bufbuild/protobuf";
 import {
   BidiStreamRequest,
   ClientStreamRequest,
+  IdempotentUnaryRequest,
   ServerStreamRequest,
   UnaryRequest,
 } from "../gen/connectrpc/conformance/v1/service_pb.js";
@@ -52,6 +53,7 @@ export function run() {
         ServerStreamRequest,
         ClientStreamRequest,
         BidiStreamRequest,
+        IdempotentUnaryRequest,
       ),
     },
   });
@@ -63,6 +65,7 @@ export function run() {
     ca?: Buffer;
     requestCert?: true;
     rejectUnauthorized?: true;
+    highWaterMark?: number;
   } = {};
   if (req.useTls) {
     serverOptions = createCert();
