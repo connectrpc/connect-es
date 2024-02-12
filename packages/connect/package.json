@@ -88,7 +88,7 @@
     "@bufbuild/protobuf": "^1.4.2"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^1.6.0",
+    "@bufbuild/protoc-gen-es": "^1.7.2",
     "@types/jasmine": "^5.0.0",
     "jasmine": "^5.1.0",
     "undici": "^5.28.2"
