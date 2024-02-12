@@ -24,7 +24,7 @@
     "@types/jasmine": "^5.0.0",
     "esbuild": "^0.19.8",
     "express": "^4.18.2",
-    "fastify": "^4.25.2",
+    "fastify": "^4.26.0",
     "jasmine": "^5.1.0"
   }
 }
