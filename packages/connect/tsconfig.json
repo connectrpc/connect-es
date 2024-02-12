@@ -3,8 +3,8 @@
     "src/index.ts",
     "src/protocol-connect/index.ts",
     "src/protocol-grpc/index.ts",
-    "src/protocol-grpc-web/index.ts"
+    "src/protocol-grpc-web/index.ts",
   ],
   "include": ["src/**/*.spec.ts"],
-  "extends": "../../tsconfig.base.json"
+  "extends": "../../tsconfig.base.json",
 }
