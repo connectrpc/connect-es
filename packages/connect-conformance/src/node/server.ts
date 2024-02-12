@@ -32,6 +32,7 @@ import { createRegistry } from "@bufbuild/protobuf";
 import {
   BidiStreamRequest,
   ClientStreamRequest,
+  IdempotentUnaryRequest,
   ServerStreamRequest,
   UnaryRequest,
 } from "../gen/connectrpc/conformance/v1/service_pb.js";
@@ -52,6 +53,7 @@ export function run() {
         ServerStreamRequest,
         ClientStreamRequest,
         BidiStreamRequest,
+        IdempotentUnaryRequest,
       ),
     },
   });
@@ -63,6 +65,7 @@ export function run() {
     ca?: Buffer;
     requestCert?: true;
     rejectUnauthorized?: true;
+    highWaterMark?: number;
   } = {};
   if (req.useTls) {
     serverOptions = createCert();
@@ -72,6 +75,8 @@ export function run() {
         requestCert: true,
         rejectUnauthorized: true,
         ca: Buffer.from(req.clientTlsCert),
+        highWaterMark:
+          req.messageReceiveLimit === 0 ? undefined : req.messageReceiveLimit,
       };
     }
   }
@@ -79,7 +84,15 @@ export function run() {
     case HTTPVersion.HTTP_VERSION_1:
       server = req.useTls
         ? https.createServer(serverOptions, adapter)
-        : http.createServer(adapter);
+        : http.createServer(
+            {
+              highWaterMark:
+                req.messageReceiveLimit === 0
+                  ? undefined
+                  : req.messageReceiveLimit,
+            },
+            adapter,
+          );
       break;
     case HTTPVersion.HTTP_VERSION_2:
       server = req.useTls

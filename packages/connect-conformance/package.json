@@ -7,7 +7,7 @@
     "connectconformance": "bin/connectconformance"
   },
   "scripts": {
-    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.0-rc1",
+    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.0-rc2",
     "clean": "rm -rf ./dist/cjs/*",
     "build": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
     "test:node:server": "./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver",
