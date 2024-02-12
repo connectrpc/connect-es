@@ -65,6 +65,13 @@ export class UnaryResponseDefinition extends Message<UnaryResponseDefinition> {
   responseTrailers: Header[] = [];
 
   /**
+   * Wait this many milliseconds before sending a response message
+   *
+   * @generated from field: uint32 response_delay_ms = 6;
+   */
+  responseDelayMs = 0;
+
+  /**
    * This field is only used by the reference server. If you are implementing a
    * server under test, you can ignore this field or respond with an error if the
    * server receives a request where it is set.
@@ -87,6 +94,7 @@ export class UnaryResponseDefinition extends Message<UnaryResponseDefinition> {
     { no: 2, name: "response_data", kind: "scalar", T: 12 /* ScalarType.BYTES */, oneof: "response" },
     { no: 3, name: "error", kind: "message", T: Error, oneof: "response" },
     { no: 4, name: "response_trailers", kind: "message", T: Header, repeated: true },
+    { no: 6, name: "response_delay_ms", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 5, name: "raw_response", kind: "message", T: RawHTTPResponse },
   ]);
 
@@ -280,6 +288,92 @@ export class UnaryResponse extends Message<UnaryResponse> {
 
   static equals(a: UnaryResponse | PlainMessage<UnaryResponse> | undefined, b: UnaryResponse | PlainMessage<UnaryResponse> | undefined): boolean {
     return proto3.util.equals(UnaryResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message connectrpc.conformance.v1.IdempotentUnaryRequest
+ */
+export class IdempotentUnaryRequest extends Message<IdempotentUnaryRequest> {
+  /**
+   * The response definition which should be returned in the conformance payload
+   *
+   * @generated from field: connectrpc.conformance.v1.UnaryResponseDefinition response_definition = 1;
+   */
+  responseDefinition?: UnaryResponseDefinition;
+
+  /**
+   * Additional data. Only used to pad the request size to test large request messages.
+   *
+   * @generated from field: bytes request_data = 2;
+   */
+  requestData = new Uint8Array(0);
+
+  constructor(data?: PartialMessage<IdempotentUnaryRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "connectrpc.conformance.v1.IdempotentUnaryRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "response_definition", kind: "message", T: UnaryResponseDefinition },
+    { no: 2, name: "request_data", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): IdempotentUnaryRequest {
+    return new IdempotentUnaryRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): IdempotentUnaryRequest {
+    return new IdempotentUnaryRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): IdempotentUnaryRequest {
+    return new IdempotentUnaryRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: IdempotentUnaryRequest | PlainMessage<IdempotentUnaryRequest> | undefined, b: IdempotentUnaryRequest | PlainMessage<IdempotentUnaryRequest> | undefined): boolean {
+    return proto3.util.equals(IdempotentUnaryRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message connectrpc.conformance.v1.IdempotentUnaryResponse
+ */
+export class IdempotentUnaryResponse extends Message<IdempotentUnaryResponse> {
+  /**
+   * The conformance payload to respond with.
+   *
+   * @generated from field: connectrpc.conformance.v1.ConformancePayload payload = 1;
+   */
+  payload?: ConformancePayload;
+
+  constructor(data?: PartialMessage<IdempotentUnaryResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "connectrpc.conformance.v1.IdempotentUnaryResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "payload", kind: "message", T: ConformancePayload },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): IdempotentUnaryResponse {
+    return new IdempotentUnaryResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): IdempotentUnaryResponse {
+    return new IdempotentUnaryResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): IdempotentUnaryResponse {
+    return new IdempotentUnaryResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: IdempotentUnaryResponse | PlainMessage<IdempotentUnaryResponse> | undefined, b: IdempotentUnaryResponse | PlainMessage<IdempotentUnaryResponse> | undefined): boolean {
+    return proto3.util.equals(IdempotentUnaryResponse, a, b);
   }
 }
 

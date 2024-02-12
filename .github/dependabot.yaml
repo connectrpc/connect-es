@@ -15,3 +15,32 @@ updates:
       timezone: UTC
       time: "07:00"
     open-pull-requests-limit: 50
+    groups:
+      bench:
+        patterns:
+          - "google-protobuf"
+          - "grpc-web"
+          - "brotli"
+          - "@bufbuild/protobuf"
+          - "@bufbuild/protoc-gen-es"
+          - "esbuild"
+      protobuf-es:
+        patterns:
+          - "@bufbuild/protobuf"
+          - "@bufbuild/protoplugin"
+          - "@bufbuild/protoc-gen-es"
+      build:
+        patterns:
+          - "typescript"
+          - "tsx"
+          - "@bufbuild/protobuf"
+      lint:
+        patterns:
+          - "@typescript-eslint/*"
+          - "eslint-*"
+          - "eslint"
+          - "@arethetypeswrong/*"
+      format:
+        patterns:
+          - "prettier"
+          - "@bufbuild/license-header"
