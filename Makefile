@@ -222,6 +222,10 @@ testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(B
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 
+.PHONY: testcloudflareconformance
+testcloudflareconformance: $(BUILD)/connect-conformance
+	npm run -w packages/connect-conformance test:cloudflare:server
+
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
 	$(MAKE) conformanceserverrun

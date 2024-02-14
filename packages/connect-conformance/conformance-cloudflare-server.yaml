@@ -1,0 +1,27 @@
+features:
+  versions:
+    - HTTP_VERSION_1
+    - HTTP_VERSION_2
+  protocols:
+    - PROTOCOL_CONNECT
+    # - PROTOCOL_GRPC
+    - PROTOCOL_GRPC_WEB
+  codecs:
+    - CODEC_PROTO
+    - CODEC_JSON
+  compressions:
+    - COMPRESSION_IDENTITY
+    - COMPRESSION_GZIP
+    - COMPRESSION_DEFLATE
+  supportsTls: true
+  supportsTlsClientCerts: false
+  supportsConnectGet: true
+  supportsHalfDuplexBidiOverHttp1: true
+  requiresConnectVersionHeader: false
+  supportsMessageReceiveLimit: false
+excludeCases:
+  - useTls: false
+  - protocol: PROTOCOL_CONNECT
+    streamType: STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
+  - protocol: PROTOCOL_GRPC_WEB
+    streamType: STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
