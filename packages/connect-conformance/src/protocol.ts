@@ -91,3 +91,55 @@ export function appendProtoHeaders(
 export function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/**
+ * Input from the conformance runner is a stream of size-delimited buffers.
+ *
+ * This function reads the stream and yields the buffers. Each buffer represents a
+ *  a ClientCompatRequest.
+ */
+export async function* readSizeDelimitedBuffers(
+  stream: AsyncIterable<Uint8Array>,
+) {
+  // append chunk to buffer, returning updated buffer
+  function append(buffer: Uint8Array, chunk: Uint8Array): Uint8Array {
+    const n = new Uint8Array(buffer.byteLength + chunk.byteLength);
+    n.set(buffer);
+    n.set(chunk, buffer.length);
+    return n;
+  }
+  let buffer = new Uint8Array(0);
+  for await (const chunk of stream) {
+    buffer = append(buffer, chunk);
+    for (;;) {
+      if (buffer.byteLength < 4) {
+        // size is incomplete, buffer more data
+        break;
+      }
+      const size = new DataView(
+        buffer.buffer.slice(buffer.byteOffset),
+      ).getUint32(0);
+      if (size + 4 > buffer.byteLength) {
+        // message is incomplete, buffer more data
+        break;
+      }
+      yield buffer.subarray(4, size + 4);
+      buffer = buffer.subarray(size + 4);
+    }
+  }
+  if (buffer.byteLength > 0) {
+    throw new Error("incomplete data");
+  }
+}
+
+/**
+ * Output to the conformance runner is a size-delimited buffer.
+ *
+ * This function takes a buffer and returns a size-delimited buffer.
+ */
+export function writeSizeDelimitedBuffer(buffer: Uint8Array) {
+  const sizeDelimited = new Uint8Array(4 + buffer.byteLength);
+  new DataView(sizeDelimited.buffer).setUint32(0, buffer.byteLength);
+  sizeDelimited.set(buffer, 4);
+  return sizeDelimited;
+}

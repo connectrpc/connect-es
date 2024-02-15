@@ -17,6 +17,7 @@ NODE18_VERSION ?= v18.16.0
 NODE16_VERSION ?= v16.20.0
 NODE_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
+CONFORMANCE_BROWSER ?= chrome
 
 node_modules: package-lock.json
 	npm ci
@@ -207,7 +208,7 @@ testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/conne
 	$(MAKE) conformanceserverstop
 
 .PHONY: testconformance
-testconformance: testnodeconformance
+testconformance: testnodeconformance testwebconformance
 
 .PHONY: testnodeconformance
 testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-conformance
@@ -221,6 +222,20 @@ testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(B
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
+
+.PHONY: testwebconformance
+testwebconformance: $(BUILD)/connect-conformance
+	npm run -w packages/connect-conformance test:web -- --browser chrome --headless
+	npm run -w packages/connect-conformance test:web -- --browser firefox --headless
+	npm run -w packages/connect-conformance test:web -- --browser node
+	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
+ifeq ($(NODE_OS),darwin)
+		npm run -w packages/connect-conformance test:web -- --browser safari --headless
+endif
+
+.PHONY: testwebconformancelocal
+testwebconformancelocal: $(BUILD)/connect-conformance
+	npm run -w packages/connect-conformance test:web -- --browser $(CONFORMANCE_BROWSER)
 
 .PHONY: testcloudflareconformance
 testcloudflareconformance: $(BUILD)/connect-conformance

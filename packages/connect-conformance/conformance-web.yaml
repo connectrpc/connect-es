@@ -1,0 +1,21 @@
+features:
+  versions:
+    - HTTP_VERSION_1
+    - HTTP_VERSION_2
+  protocols:
+    - PROTOCOL_CONNECT
+    - PROTOCOL_GRPC_WEB
+  codecs:
+    - CODEC_PROTO
+    - CODEC_JSON
+  compressions:
+    - COMPRESSION_IDENTITY
+  streamTypes:
+    - STREAM_TYPE_UNARY
+    - STREAM_TYPE_SERVER_STREAM
+  supportsTls: true
+  supportsH2c: false
+  supportsTlsClientCerts: false
+  supportsConnectGet: true
+  supportsHalfDuplexBidiOverHttp1: false
+  requiresConnectVersionHeader: false
