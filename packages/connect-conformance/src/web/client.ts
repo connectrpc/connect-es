@@ -71,7 +71,9 @@ async function runBrowser() {
         "goog:chromeOptions": {
           args: [
             "--disable-gpu",
-            ...(flags.headless === true ? ["--headless"] : []),
+            flags.headless === true
+              ? "--headless"
+              : "--auto-open-devtools-for-tabs",
           ],
         },
       };
@@ -81,7 +83,7 @@ async function runBrowser() {
         ...capabilities,
         browserName: "firefox",
         "moz:firefoxOptions": {
-          args: flags.headless === true ? ["-headless"] : [],
+          args: [flags.headless === true ? "-headless" : "--devtools"],
         },
       };
       break;
@@ -114,7 +116,14 @@ async function runBrowser() {
       writeSizeDelimitedBuffer(new Uint8Array(invokeResult)),
     );
   }
-  await browser.deleteSession();
+  if (flags.headless === true) {
+    await browser.deleteSession();
+  } else {
+    await browser.executeScript(
+      `document.write("Tests done. You can inspect requests in the network explorer.")`,
+      [],
+    );
+  }
 }
 
 async function buildBrowserScript() {
