@@ -23,7 +23,11 @@ export function run() {
   const req = ServerCompatRequest.fromBinary(
     readFileSync(process.stdin.fd).subarray(4),
   );
-  // Keep the process alive for the duration of the test.
+  // Keep the process alive for the duration of the test because
+  // we do not start the server here  but in the script "test:cloudflare:server"
+  //  before starting the test. We have limited control over the what can be
+  // configured in the cloudflare worker environment. Except for the
+  // requestMessageLimit the server ends up being the same.
   const timeout = setInterval(() => {}, 5000);
   process.once("SIGTERM", () => {
     clearInterval(timeout);

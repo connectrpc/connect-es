@@ -81,6 +81,8 @@ export function createWorkerHandler<Env>(options: WokerHandlerOptions<Env>) {
           new Response("Not found", { status: 404 })
         );
       }
+      // https://github.com/wintercg/fetch/issues/23
+      //
       // Cloudflare handles compression for unary requests, so we explicitly set Accept-Encoding to identity.
       //
       // Cloudflare doesn't let modify the headers of the incoming request, so we need to
