@@ -208,7 +208,7 @@ testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/conne
 	$(MAKE) conformanceserverstop
 
 .PHONY: testconformance
-testconformance: testnodeconformance
+testconformance: testnodeconformance testwebconformance
 
 .PHONY: testnodeconformance
 testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-conformance
@@ -229,9 +229,8 @@ testwebconformance: $(BUILD)/connect-conformance
 	npm run -w packages/connect-conformance test:web -- --browser firefox --headless
 	npm run -w packages/connect-conformance test:web -- --browser node
 	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
-	@# Safari does not support headless mode.
 ifeq ($(NODE_OS),darwin)
-		npm run -w packages/connect-conformance test:web -- --browser safari
+		npm run -w packages/connect-conformance test:web -- --browser safari --headless
 endif
 
 .PHONY: testwebconformancelocal

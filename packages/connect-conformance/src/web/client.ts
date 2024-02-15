@@ -91,6 +91,7 @@ async function runBrowser() {
       capabilities = {
         ...capabilities,
         browserName: "safari",
+        // Safari does not support headless mode
       };
       break;
     default:
