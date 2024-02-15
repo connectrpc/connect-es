@@ -222,6 +222,15 @@ testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(B
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 
+.PHONY: testwebconformance
+testwebconformance: $(BUILD)/connect-conformance
+	npm run -w packages/connect-conformance test:web -- --browser chrome
+	npm run -w packages/connect-conformance test:web -- --browser firefox
+	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.	
+ifeq ($(NODE_OS),darwin)
+		npm run -w packages/connect-conformance test:web -- --browser safari
+endif
+
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
 	$(MAKE) conformanceserverrun

@@ -18,11 +18,11 @@ import {
   ClientErrorResult,
 } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
 import invoke from "../invoke.js";
+import { readSizeDelimitedBuffers } from "../protocol.js";
 import { createTransport } from "./transport.js";
-import type { ReadStream } from "node:tty";
 
 export async function run() {
-  for await (const next of readReqBuffers(process.stdin)) {
+  for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const req = ClientCompatRequest.fromBinary(next);
     const res = new ClientCompatResponse({
       testName: req.testName,
@@ -41,31 +41,5 @@ export async function run() {
     resSize.writeUInt32BE(resData.length);
     process.stdout.write(resSize);
     process.stdout.write(resData);
-  }
-}
-
-async function* readReqBuffers(stream: ReadStream) {
-  stream.on("error", (err) => {
-    throw err;
-  });
-  for (; !stream.readableEnded; ) {
-    const size = stream.read(4) as Buffer | null;
-    if (size === null) {
-      await new Promise((resolve) => {
-        stream.once("readable", resolve);
-        stream.once("end", resolve);
-      });
-      continue;
-    }
-    let chunk: Buffer | null = null;
-    // We are guaranteed to get the next chunk.
-    for (;;) {
-      chunk = stream.read(size.readUInt32BE()) as Buffer | null;
-      if (chunk !== null) {
-        break;
-      }
-      await new Promise((resolve) => stream.once("readable", resolve));
-    }
-    yield chunk;
   }
 }
