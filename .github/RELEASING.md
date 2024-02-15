@@ -15,7 +15,7 @@
 2. Make sure you are on the latest main, and create a new git branch.
 3. Set the new version across all packages within the monorepo with the following 
    command: `make setversion SET_VERSION=1.2.3`
-4. Commit, push, and open a pull request with the title "Release 1.2.3".
+4. Commit, push, and open a pull request with the title "Release 1.2.3". The PR title must start with "Release" to trigger the conformance tests in CI. See the conformance tests [README](/packages/connect-conformance/README.md) for more details.
 5. Edit the PR description with release notes. See the section below for details.
 6. Make sure CI passed on your PR and ask a maintainer for review.
 7. After approval, run the following command to publish to npmjs.com: `make release`. 

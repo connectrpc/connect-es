@@ -1,0 +1,34 @@
+name: Cloudflare Conformance Tests
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  test:
+    if: github.event_name != 'pull_request' || startsWith(github.event.pull_request.title, 'Release ')
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-setup-action@v1.29.0
+        with:
+          github_token: ${{ github.token }}
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.tmp
+            .tmp
+          key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-connect-web-ci-
+      - name: build
+        run: make build
+      - name: test
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_WORKERS_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_SERVER_HOST}}
+        run: make testcloudflareconformance
