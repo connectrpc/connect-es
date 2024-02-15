@@ -44,6 +44,9 @@ export function createTransport(req: ClientCompatRequest) {
     case HTTPVersion.HTTP_VERSION_2:
       break;
     case HTTPVersion.HTTP_VERSION_3:
+      // We can't enforce this but conformance runner expects test to be run on H/3 but advertises H/1 and H/2
+      //
+      // TODO: Once it is fixed in conformance runner, we should remove this check.
       throw new Error("HTTP/3 is not supported");
     default:
       throw new Error("Unknown HTTP version");
