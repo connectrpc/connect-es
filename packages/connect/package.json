@@ -23,27 +23,22 @@
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
-      "module": "./dist/esm/index.js",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
     "./protocol": {
-      "module": "./dist/esm/protocol/index.js",
       "import": "./dist/esm/protocol/index.js",
       "require": "./dist/cjs/protocol/index.js"
     },
     "./protocol-connect": {
-      "module": "./dist/esm/protocol-connect/index.js",
       "import": "./dist/esm/protocol-connect/index.js",
       "require": "./dist/cjs/protocol-connect/index.js"
     },
     "./protocol-grpc": {
-      "module": "./dist/esm/protocol-grpc/index.js",
       "import": "./dist/esm/protocol-grpc/index.js",
       "require": "./dist/cjs/protocol-grpc/index.js"
     },
     "./protocol-grpc-web": {
-      "module": "./dist/esm/protocol-grpc-web/index.js",
       "import": "./dist/esm/protocol-grpc-web/index.js",
       "require": "./dist/cjs/protocol-grpc-web/index.js"
     }
