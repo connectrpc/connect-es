@@ -10,7 +10,7 @@ Browser tests are run on every commit.
 
 ### Running tests in a headless browser
 
-Run `make testwebconformance` to run the tests in a headless browser. It runs tests in chrome and firefox, safari if running on a mac. As a special case it also runs the
+Run `make testwebconformance` to run the tests in a headless browser. It runs tests in chrome and firefox, safari if running on a mac. Safari requires users to enable the 'Allow Remote Automation' option in Safari's Develop menu. As a special case it also runs the
 tests in node.
 
 ### Running tests in a local browser
