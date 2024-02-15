@@ -18,7 +18,10 @@ import {
   ClientErrorResult,
 } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
 import invoke from "../invoke.js";
-import { readSizeDelimitedBuffers } from "../protocol.js";
+import {
+  readSizeDelimitedBuffers,
+  writeSizeDelimitedBuffer,
+} from "../protocol.js";
 import { createTransport } from "./transport.js";
 
 export async function run() {
@@ -36,10 +39,6 @@ export async function run() {
         value: new ClientErrorResult({ message: (e as Error).message }),
       };
     }
-    const resData = res.toBinary();
-    const resSize = Buffer.alloc(4);
-    resSize.writeUInt32BE(resData.length);
-    process.stdout.write(resSize);
-    process.stdout.write(resData);
+    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
   }
 }

@@ -4,6 +4,7 @@
   "bin": {
     "conformancenodeserver": "bin/conformancenodeserver",
     "conformancenodeclient": "bin/conformancenodeclient",
+    "conformancewebclient": "bin/conformancewebclient",
     "connectconformance": "bin/connectconformance"
   },
   "scripts": {

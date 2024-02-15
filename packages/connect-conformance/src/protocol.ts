@@ -131,3 +131,15 @@ export async function* readSizeDelimitedBuffers(
     throw new Error("incomplete data");
   }
 }
+
+/**
+ * Output to the conformance runner is a size-delimited buffer.
+ *
+ * This function takes a buffer and returns a size-delimited buffer.
+ */
+export function writeSizeDelimitedBuffer(buffer: Uint8Array) {
+  const sizeDelimited = new Uint8Array(4 + buffer.byteLength);
+  new DataView(sizeDelimited.buffer).setUint32(0, buffer.byteLength);
+  sizeDelimited.set(buffer, 4);
+  return sizeDelimited;
+}

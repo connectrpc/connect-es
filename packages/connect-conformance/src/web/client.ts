@@ -12,22 +12,53 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ClientCompatResponse } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import { Buffer } from "node:buffer";
 import { remote } from "webdriverio";
 import type { RemoteOptions } from "webdriverio";
 import * as esbuild from "esbuild";
 import { parseArgs } from "node:util";
-import { readSizeDelimitedBuffers } from "../protocol.js";
+import {
+  readSizeDelimitedBuffers,
+  writeSizeDelimitedBuffer,
+} from "../protocol.js";
+import {
+  ClientCompatRequest,
+  ClientCompatResponse,
+  ClientErrorResult,
+} from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
+import invoke from "../invoke.js";
+import { createTransport } from "./transport.js";
 
 const { values: flags } = parseArgs({
   args: process.argv.slice(2),
   options: {
     browser: { type: "string", default: "chrome" },
+    headless: { type: "boolean" },
   },
 });
 
 export async function run() {
+  if (flags.browser !== "node") {
+    await runBrowser();
+  }
+  for await (const next of readSizeDelimitedBuffers(process.stdin)) {
+    const req = ClientCompatRequest.fromBinary(next);
+    const res = new ClientCompatResponse({
+      testName: req.testName,
+    });
+    try {
+      const invokeResult = await invoke(createTransport(req), req);
+      res.result = { case: "response", value: invokeResult };
+    } catch (e) {
+      res.result = {
+        case: "error",
+        value: new ClientErrorResult({ message: (e as Error).message }),
+      };
+    }
+    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+  }
+}
+
+async function runBrowser() {
   let capabilities: RemoteOptions["capabilities"] = {
     acceptInsecureCerts: true,
   };
@@ -38,7 +69,10 @@ export async function run() {
         ...capabilities,
         browserName: "chrome",
         "goog:chromeOptions": {
-          args: ["--disable-gpu", "--headless"],
+          args: [
+            "--disable-gpu",
+            ...(flags.headless === true ? ["--headless"] : []),
+          ],
         },
       };
       break;
@@ -47,7 +81,7 @@ export async function run() {
         ...capabilities,
         browserName: "firefox",
         "moz:firefoxOptions": {
-          args: ["-headless"],
+          args: flags.headless === true ? ["-headless"] : [],
         },
       };
       break;
@@ -63,6 +97,8 @@ export async function run() {
   const browser = await remote({
     // webdriverio prints all the logs to stdout, this will interfere with the conformance test output
     // so we set the log level to silent
+    //
+    // TODO: look for a way to redirect the logs to a file/stderr
     logLevel: "silent",
     capabilities,
   });
@@ -74,12 +110,9 @@ export async function run() {
       },
       Array.from(next),
     );
-    const res = ClientCompatResponse.fromBinary(new Uint8Array(invokeResult));
-    const resData = res.toBinary();
-    const resSize = Buffer.alloc(4);
-    resSize.writeUInt32BE(resData.length);
-    process.stdout.write(resSize);
-    process.stdout.write(resData);
+    process.stdout.write(
+      writeSizeDelimitedBuffer(new Uint8Array(invokeResult)),
+    );
   }
   await browser.deleteSession();
 }

@@ -17,6 +17,7 @@ NODE18_VERSION ?= v18.16.0
 NODE16_VERSION ?= v16.20.0
 NODE_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
+CONFORMANCE_BROWSER ?= chrome
 
 node_modules: package-lock.json
 	npm ci
@@ -224,12 +225,18 @@ testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(B
 
 .PHONY: testwebconformance
 testwebconformance: $(BUILD)/connect-conformance
-	npm run -w packages/connect-conformance test:web -- --browser chrome
-	npm run -w packages/connect-conformance test:web -- --browser firefox
-	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.	
+	npm run -w packages/connect-conformance test:web -- --browser chrome --headless
+	npm run -w packages/connect-conformance test:web -- --browser firefox --headless
+	npm run -w packages/connect-conformance test:web -- --browser node
+	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
+	@# Safari does not support headless mode.
 ifeq ($(NODE_OS),darwin)
 		npm run -w packages/connect-conformance test:web -- --browser safari
 endif
+
+.PHONY: testwebconformancelocal
+testwebconformancelocal: $(BUILD)/connect-conformance
+	npm run -w packages/connect-conformance test:web -- --browser $(CONFORMANCE_BROWSER)
 
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test

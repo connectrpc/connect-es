@@ -44,7 +44,7 @@ export function createTransport(req: ClientCompatRequest) {
     case HTTPVersion.HTTP_VERSION_2:
       break;
     case HTTPVersion.HTTP_VERSION_3:
-      throw new Error("HTTP/2 and HTTP/3 are not supported");
+      throw new Error("HTTP/3 is not supported");
     default:
       throw new Error("Unknown HTTP version");
   }
