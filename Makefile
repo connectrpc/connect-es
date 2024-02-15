@@ -238,6 +238,10 @@ endif
 testwebconformancelocal: $(BUILD)/connect-conformance
 	npm run -w packages/connect-conformance test:web -- --browser $(CONFORMANCE_BROWSER)
 
+.PHONY: testcloudflareconformance
+testcloudflareconformance: $(BUILD)/connect-conformance
+	npm run -w packages/connect-conformance test:cloudflare:server
+
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
 	$(MAKE) conformanceserverrun
