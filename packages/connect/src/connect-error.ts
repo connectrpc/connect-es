@@ -14,12 +14,12 @@
 
 import { Code } from "./code.js";
 import type {
+  Message,
   AnyMessage,
   IMessageTypeRegistry,
   JsonValue,
   MessageType,
 } from "@bufbuild/protobuf";
-import { Message } from "@bufbuild/protobuf";
 import { codeToString } from "./protocol-connect/code-string.js";
 
 /**
@@ -172,7 +172,7 @@ export class ConnectError extends Error {
         : typeOrRegistry;
     const details: AnyMessage[] = [];
     for (const data of this.details) {
-      if (data instanceof Message) {
+      if ("getType" in data) {
         if (registry.findMessage(data.getType().typeName)) {
           details.push(data);
         }

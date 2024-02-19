@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, protoBase64 } from "@bufbuild/protobuf";
+import { protoBase64 } from "@bufbuild/protobuf";
 import type {
   JsonObject,
   JsonValue,
@@ -132,7 +132,7 @@ export function errorToJson(
     };
     o.details = error.details
       .map((value) => {
-        if (value instanceof Message) {
+        if ("getType" in value) {
           const i: IncomingDetail = {
             type: value.getType().typeName,
             value: value.toBinary(),
