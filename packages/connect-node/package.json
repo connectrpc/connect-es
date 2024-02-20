@@ -9,10 +9,9 @@
   },
   "scripts": {
     "clean": "rm -rf ./dist/*",
-    "build": "npm run build:cjs && npm run build:esm && npm run build:proxy",
+    "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
-    "build:proxy": "node ../../scripts/gen-esm-proxy.mjs .",
     "attw": "attw --pack",
     "jasmine": "jasmine --config=jasmine.json"
   },
@@ -20,11 +19,6 @@
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
-      "node": {
-        "import": "./dist/proxy/index.js",
-        "require": "./dist/cjs/index.js"
-      },
-      "module": "./dist/esm/index.js",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     }
