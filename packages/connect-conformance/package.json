@@ -27,7 +27,7 @@
     "asn1js": "^3.0.5",
     "fflate": "^0.8.1",
     "tar-stream": "^3.1.7",
-    "undici": "^5.28.2",
+    "undici": "^5.28.3",
     "webdriverio": "^8.32.2",
     "esbuild": "^0.20.0"
   },
