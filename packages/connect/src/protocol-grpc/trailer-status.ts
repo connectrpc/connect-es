@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Any, Message } from "@bufbuild/protobuf";
+import { Any } from "@bufbuild/protobuf";
 import { Status } from "./gen/status_pb.js";
 import { ConnectError } from "../connect-error.js";
 import { decodeBinaryHeader, encodeBinaryHeader } from "../http-headers.js";
@@ -52,7 +52,7 @@ export function setTrailerStatus(
         code: error.code,
         message: error.rawMessage,
         details: error.details.map((value) =>
-          value instanceof Message
+          "getType" in value
             ? Any.pack(value)
             : new Any({
                 typeUrl: `type.googleapis.com/${value.type}`,
