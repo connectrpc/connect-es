@@ -14,9 +14,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - uses: bufbuild/buf-setup-action@v1.29.0
-        with:
-          github_token: ${{ github.token }}
       - name: cache
         uses: actions/cache@v4
         with:
