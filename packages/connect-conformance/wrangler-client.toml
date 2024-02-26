@@ -1,0 +1,3 @@
+name = "conformance-client"
+main = "dist/esm/cloudflare/client-worker.js"
+compatibility_date = "2023-10-02"             # Enables stream APIs
