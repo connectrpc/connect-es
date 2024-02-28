@@ -1,7 +1,7 @@
 {
   "include": ["src/**/*.ts"],
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
+    "allowSyntheticDefaultImports": true
   },
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.base.json"
 }
