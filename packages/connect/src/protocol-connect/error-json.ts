@@ -41,15 +41,14 @@ export function errorFromJson(
   if (
     typeof jsonValue !== "object" ||
     jsonValue == null ||
-    Array.isArray(jsonValue) ||
-    !("code" in jsonValue) ||
-    typeof jsonValue.code !== "string"
+    Array.isArray(jsonValue)
   ) {
     throw fallback;
   }
-  const code = codeFromString(jsonValue.code);
-  if (code === undefined) {
-    throw fallback;
+  let code = Code.Unknown
+  if (("code" in jsonValue) &&
+    typeof jsonValue.code === "string") {
+    code = codeFromString(jsonValue.code) ?? code;
   }
   const message = jsonValue.message;
   if (message != null && typeof message !== "string") {
@@ -151,7 +150,7 @@ export function errorToJson(
       })
       .map(({ value, ...rest }) => ({
         ...rest,
-        value: protoBase64.enc(value),
+        value: protoBase64.enc(value).replace(/=+$/, ""),
       }));
   }
   return o;

@@ -1,4 +1,4 @@
-// Copyright 2023 The Connect Authors
+// Copyright 2023-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,18 +40,25 @@ import { HTTPVersion, Protocol } from "./config_pb.js";
  */
 export class ServerCompatRequest extends Message<ServerCompatRequest> {
   /**
+   * The protocol that will be used.
+   *
    * @generated from field: connectrpc.conformance.v1.Protocol protocol = 1;
    */
   protocol = Protocol.UNSPECIFIED;
 
   /**
+   * The HTTP version that will be used.
+   *
    * @generated from field: connectrpc.conformance.v1.HTTPVersion http_version = 2;
    */
   httpVersion = HTTPVersion.HTTP_VERSION_UNSPECIFIED;
 
   /**
-   * if true, generate a self-signed cert and include it in the
-   * ServerCompatResponse along with the actual port
+   * If true, generate a self-signed cert and include it in the
+   * ServerCompatResponse along with the actual port. Clients
+   * will be configured to trust this cert when connecting.
+   * If false, the server should not use TLS and instead use
+   * a plain-text/unencrypted socket.
    *
    * @generated from field: bool use_tls = 4;
    */
@@ -117,11 +124,15 @@ export class ServerCompatRequest extends Message<ServerCompatRequest> {
  */
 export class ServerCompatResponse extends Message<ServerCompatResponse> {
   /**
+   * The host where the server is running.
+   *
    * @generated from field: string host = 1;
    */
   host = "";
 
   /**
+   * The port where the server is listening.
+   *
    * @generated from field: uint32 port = 2;
    */
   port = 0;
@@ -161,46 +172,6 @@ export class ServerCompatResponse extends Message<ServerCompatResponse> {
 
   static equals(a: ServerCompatResponse | PlainMessage<ServerCompatResponse> | undefined, b: ServerCompatResponse | PlainMessage<ServerCompatResponse> | undefined): boolean {
     return proto3.util.equals(ServerCompatResponse, a, b);
-  }
-}
-
-/**
- * The server doesn't support the requested protocol, or had a runtime error
- * while starting up.
- *
- * @generated from message connectrpc.conformance.v1.ServerErrorResult
- */
-export class ServerErrorResult extends Message<ServerErrorResult> {
-  /**
-   * @generated from field: string message = 1;
-   */
-  message = "";
-
-  constructor(data?: PartialMessage<ServerErrorResult>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "connectrpc.conformance.v1.ServerErrorResult";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ServerErrorResult {
-    return new ServerErrorResult().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ServerErrorResult {
-    return new ServerErrorResult().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ServerErrorResult {
-    return new ServerErrorResult().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ServerErrorResult | PlainMessage<ServerErrorResult> | undefined, b: ServerErrorResult | PlainMessage<ServerErrorResult> | undefined): boolean {
-    return proto3.util.equals(ServerErrorResult, a, b);
   }
 }
 

@@ -89,7 +89,7 @@ export function endStreamFromJson(
     }
   }
   const error =
-    "error" in jsonValue
+    "error" in jsonValue && jsonValue.error != null
       ? errorFromJson(jsonValue.error, metadata, parseErr)
       : undefined;
   return { metadata, error };

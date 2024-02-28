@@ -28,7 +28,7 @@ import { Readable } from "node:stream";
 import { execFileSync } from "node:child_process";
 import { fetch } from "undici";
 
-const version = "v1.0.0-rc1";
+const version = "v1.0.0-rc3";
 const name = "connectconformance";
 const downloadUrl = `https://github.com/connectrpc/conformance/releases/download/${version}`;
 

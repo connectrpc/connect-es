@@ -1,4 +1,4 @@
-// Copyright 2023 The Connect Authors
+// Copyright 2023-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -214,6 +214,116 @@ proto3.util.setEnumType(StreamType, "connectrpc.conformance.v1.StreamType", [
 ]);
 
 /**
+ * @generated from enum connectrpc.conformance.v1.Code
+ */
+export enum Code {
+  /**
+   * @generated from enum value: CODE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: CODE_CANCELED = 1;
+   */
+  CANCELED = 1,
+
+  /**
+   * @generated from enum value: CODE_UNKNOWN = 2;
+   */
+  UNKNOWN = 2,
+
+  /**
+   * @generated from enum value: CODE_INVALID_ARGUMENT = 3;
+   */
+  INVALID_ARGUMENT = 3,
+
+  /**
+   * @generated from enum value: CODE_DEADLINE_EXCEEDED = 4;
+   */
+  DEADLINE_EXCEEDED = 4,
+
+  /**
+   * @generated from enum value: CODE_NOT_FOUND = 5;
+   */
+  NOT_FOUND = 5,
+
+  /**
+   * @generated from enum value: CODE_ALREADY_EXISTS = 6;
+   */
+  ALREADY_EXISTS = 6,
+
+  /**
+   * @generated from enum value: CODE_PERMISSION_DENIED = 7;
+   */
+  PERMISSION_DENIED = 7,
+
+  /**
+   * @generated from enum value: CODE_RESOURCE_EXHAUSTED = 8;
+   */
+  RESOURCE_EXHAUSTED = 8,
+
+  /**
+   * @generated from enum value: CODE_FAILED_PRECONDITION = 9;
+   */
+  FAILED_PRECONDITION = 9,
+
+  /**
+   * @generated from enum value: CODE_ABORTED = 10;
+   */
+  ABORTED = 10,
+
+  /**
+   * @generated from enum value: CODE_OUT_OF_RANGE = 11;
+   */
+  OUT_OF_RANGE = 11,
+
+  /**
+   * @generated from enum value: CODE_UNIMPLEMENTED = 12;
+   */
+  UNIMPLEMENTED = 12,
+
+  /**
+   * @generated from enum value: CODE_INTERNAL = 13;
+   */
+  INTERNAL = 13,
+
+  /**
+   * @generated from enum value: CODE_UNAVAILABLE = 14;
+   */
+  UNAVAILABLE = 14,
+
+  /**
+   * @generated from enum value: CODE_DATA_LOSS = 15;
+   */
+  DATA_LOSS = 15,
+
+  /**
+   * @generated from enum value: CODE_UNAUTHENTICATED = 16;
+   */
+  UNAUTHENTICATED = 16,
+}
+// Retrieve enum metadata with: proto3.getEnumType(Code)
+proto3.util.setEnumType(Code, "connectrpc.conformance.v1.Code", [
+  { no: 0, name: "CODE_UNSPECIFIED" },
+  { no: 1, name: "CODE_CANCELED" },
+  { no: 2, name: "CODE_UNKNOWN" },
+  { no: 3, name: "CODE_INVALID_ARGUMENT" },
+  { no: 4, name: "CODE_DEADLINE_EXCEEDED" },
+  { no: 5, name: "CODE_NOT_FOUND" },
+  { no: 6, name: "CODE_ALREADY_EXISTS" },
+  { no: 7, name: "CODE_PERMISSION_DENIED" },
+  { no: 8, name: "CODE_RESOURCE_EXHAUSTED" },
+  { no: 9, name: "CODE_FAILED_PRECONDITION" },
+  { no: 10, name: "CODE_ABORTED" },
+  { no: 11, name: "CODE_OUT_OF_RANGE" },
+  { no: 12, name: "CODE_UNIMPLEMENTED" },
+  { no: 13, name: "CODE_INTERNAL" },
+  { no: 14, name: "CODE_UNAVAILABLE" },
+  { no: 15, name: "CODE_DATA_LOSS" },
+  { no: 16, name: "CODE_UNAUTHENTICATED" },
+]);
+
+/**
  * Config defines the configuration for running conformance tests.
  * This enumerates all of the "flavors" of the test suite to run.
  *
@@ -277,6 +387,11 @@ export class Config extends Message<Config> {
 }
 
 /**
+ * Features define the feature set that a client or server supports. They are
+ * used to determine the server configurations and test cases that
+ * will be run. They are defined in YAML files and are specified as part of the
+ * --conf flag to the test runner.
+ *
  * TODO: we could probably model some of the constraints on what are valid vs.
  *       invalid (i.e. conflicting/impossible) features using protovalidate rules
  *
@@ -284,6 +399,7 @@ export class Config extends Message<Config> {
  */
 export class Features extends Message<Features> {
   /**
+   * Supported HTTP versions.
    * If empty, HTTP 1.1 and HTTP/2 are assumed.
    *
    * @generated from field: repeated connectrpc.conformance.v1.HTTPVersion versions = 1;
@@ -291,6 +407,7 @@ export class Features extends Message<Features> {
   versions: HTTPVersion[] = [];
 
   /**
+   * Supported protocols.
    * If empty, all three are assumed: Connect, gRPC, and gRPC-Web.
    *
    * @generated from field: repeated connectrpc.conformance.v1.Protocol protocols = 2;
@@ -298,6 +415,7 @@ export class Features extends Message<Features> {
   protocols: Protocol[] = [];
 
   /**
+   * Supported codecs.
    * If empty, "proto" and "json" are assumed.
    *
    * @generated from field: repeated connectrpc.conformance.v1.Codec codecs = 3;
@@ -305,6 +423,7 @@ export class Features extends Message<Features> {
   codecs: Codec[] = [];
 
   /**
+   * Supported compression algorithms.
    * If empty, "identity" and "gzip" are assumed.
    *
    * @generated from field: repeated connectrpc.conformance.v1.Compression compressions = 4;
@@ -312,6 +431,7 @@ export class Features extends Message<Features> {
   compressions: Compression[] = [];
 
   /**
+   * Supported stream types.
    * If empty, all stream types are assumed. This is usually for
    * clients, since some client environments may not be able to
    * support certain kinds of streaming operations, especially
@@ -322,6 +442,7 @@ export class Features extends Message<Features> {
   streamTypes: StreamType[] = [];
 
   /**
+   * Whether H2C (unencrypted, non-TLS HTTP/2 over cleartext) is supported.
    * If absent, true is assumed.
    *
    * @generated from field: optional bool supports_h2c = 6;
@@ -329,6 +450,7 @@ export class Features extends Message<Features> {
   supportsH2c?: boolean;
 
   /**
+   * Whether TLS is supported.
    * If absent, true is assumed.
    *
    * @generated from field: optional bool supports_tls = 7;
@@ -336,6 +458,7 @@ export class Features extends Message<Features> {
   supportsTls?: boolean;
 
   /**
+   * Whether the client supports TLS certificates.
    * If absent, false is assumed. This should not be set if
    * supports_tls is false.
    *
@@ -344,6 +467,7 @@ export class Features extends Message<Features> {
   supportsTlsClientCerts?: boolean;
 
   /**
+   * Whether trailers are supported.
    * If absent, true is assumed. If false, implies that gRPC protocol is not allowed.
    *
    * @generated from field: optional bool supports_trailers = 9;
@@ -351,6 +475,7 @@ export class Features extends Message<Features> {
   supportsTrailers?: boolean;
 
   /**
+   * Whether half duplex bidi streams are supported over HTTP/1.1.
    * If absent, false is assumed.
    *
    * @generated from field: optional bool supports_half_duplex_bidi_over_http1 = 10;
@@ -358,6 +483,7 @@ export class Features extends Message<Features> {
   supportsHalfDuplexBidiOverHttp1?: boolean;
 
   /**
+   * Whether Connect via GET is supported.
    * If absent, true is assumed.
    *
    * @generated from field: optional bool supports_connect_get = 11;
@@ -365,16 +491,10 @@ export class Features extends Message<Features> {
   supportsConnectGet?: boolean;
 
   /**
-   * If absent, false is assumed.
-   *
-   * @generated from field: optional bool requires_connect_version_header = 12;
-   */
-  requiresConnectVersionHeader?: boolean;
-
-  /**
+   * Whether a message receive limit is supported.
    * If absent, true is assumed.
    *
-   * @generated from field: optional bool supports_message_receive_limit = 13;
+   * @generated from field: optional bool supports_message_receive_limit = 12;
    */
   supportsMessageReceiveLimit?: boolean;
 
@@ -397,8 +517,7 @@ export class Features extends Message<Features> {
     { no: 9, name: "supports_trailers", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 10, name: "supports_half_duplex_bidi_over_http1", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 11, name: "supports_connect_get", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 12, name: "requires_connect_version_header", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 13, name: "supports_message_receive_limit", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 12, name: "supports_message_receive_limit", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Features {
@@ -419,6 +538,11 @@ export class Features extends Message<Features> {
 }
 
 /**
+ * ConfigCase represents a single resolved configuration case. When tests are
+ * run, the Config and the supported features therein are used to compute all
+ * of the cases relevant to the implementation under test. These configuration
+ * cases are then used to select which test cases are applicable.
+ *
  * TODO: we could probably model some of the constraints on what is a valid
  *       vs. invalid config case using protovalidate rules
  *

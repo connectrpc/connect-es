@@ -9,7 +9,7 @@
     "connectconformance": "bin/connectconformance"
   },
   "scripts": {
-    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.0-rc2",
+    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.0-rc3",
     "clean": "rm -rf ./dist/cjs/*",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",

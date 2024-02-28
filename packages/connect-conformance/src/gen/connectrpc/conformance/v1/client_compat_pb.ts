@@ -1,4 +1,4 @@
-// Copyright 2023 The Connect Authors
+// Copyright 2023-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,36 +31,57 @@ import { ConformancePayload, Error, Header, RawHTTPRequest } from "./service_pb.
  */
 export class ClientCompatRequest extends Message<ClientCompatRequest> {
   /**
+   * The name of the test that this request is performing.
+   * When writing test cases, this is a required field.
+   *
    * @generated from field: string test_name = 1;
    */
   testName = "";
 
   /**
+   * Test suite YAML definitions should NOT set values for these next
+   * nine fields (fields 2 - 10). They are automatically populated by the test
+   * runner. If a test is specific to one of these values, it should instead be
+   * indicated in the test suite itself (where it defines the required
+   * features and relevant values for these fields).
+   *
+   * The HTTP version to use for the test (i.e. HTTP/1.1, HTTP/2, HTTP/3).
+   *
    * @generated from field: connectrpc.conformance.v1.HTTPVersion http_version = 2;
    */
   httpVersion = HTTPVersion.HTTP_VERSION_UNSPECIFIED;
 
   /**
+   * The protocol to use for the test (i.e. Connect, gRPC, gRPC-web).
+   *
    * @generated from field: connectrpc.conformance.v1.Protocol protocol = 3;
    */
   protocol = Protocol.UNSPECIFIED;
 
   /**
+   * The codec to use for the test (i.e. JSON, proto/binary).
+   *
    * @generated from field: connectrpc.conformance.v1.Codec codec = 4;
    */
   codec = Codec.UNSPECIFIED;
 
   /**
+   * The compression to use for the test (i.e. brotli, gzip, identity).
+   *
    * @generated from field: connectrpc.conformance.v1.Compression compression = 5;
    */
   compression = Compression.UNSPECIFIED;
 
   /**
+   * The server host that this request will be sent to.
+   *
    * @generated from field: string host = 6;
    */
   host = "";
 
   /**
+   * The server port that this request will be sent to.
+   *
    * @generated from field: uint32 port = 7;
    */
   port = 0;
@@ -92,16 +113,27 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
   messageReceiveLimit = 0;
 
   /**
-   * @generated from field: string service = 11;
+   * The fully-qualified name of the service this test will interact with.
+   * If specified, method must also be specified.
+   * If not specified, defaults to "connectrpc.conformance.v1.ConformanceService".
+   *
+   * @generated from field: optional string service = 11;
    */
-  service = "";
+  service?: string;
 
   /**
-   * @generated from field: string method = 12;
+   * The method on `service` that will be called.
+   * If specified, service must also be specified.
+   * If not specified, the test runner will auto-populate this field based on the stream_type.
+   *
+   * @generated from field: optional string method = 12;
    */
-  method = "";
+  method?: string;
 
   /**
+   * The stream type of `method` (i.e. Unary, Client-Streaming, Server-Streaming, Full Duplex Bidi, or Half Duplex Bidi).
+   * When writing test cases, this is a required field.
+   *
    * @generated from field: connectrpc.conformance.v1.StreamType stream_type = 13;
    */
   streamType = StreamType.UNSPECIFIED;
@@ -116,20 +148,32 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
   useGetHttpMethod = false;
 
   /**
+   * Any request headers that should be sent as part of the request.
+   * These include only custom header metadata. Headers that are
+   * part of the relevant protocol (such as "content-type", etc) should
+   * not be stated here.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.Header request_headers = 15;
    */
   requestHeaders: Header[] = [];
 
   /**
-   * There will be exactly one for unary and server-stream methods.
+   * The actual request messages that will sent to the server.
+   * The type URL for all entries should be equal to the request type of the
+   * method.
+   * There must be exactly one for unary and server-stream methods but
+   * can be zero or more for client- and bidi-stream methods.
    * For client- and bidi-stream methods, all entries will have the
-   * same type URL (which matches the request type of the method).
+   * same type URL.
    *
    * @generated from field: repeated google.protobuf.Any request_messages = 16;
    */
   requestMessages: Any[] = [];
 
   /**
+   * The timeout, in milliseconds, for the request. This is equivalent to a
+   * deadline for the request. If unset, there will be no timeout.
+   *
    * @generated from field: optional uint32 timeout_ms = 17;
    */
   timeoutMs?: number;
@@ -184,8 +228,8 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
     { no: 8, name: "server_tls_cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
     { no: 9, name: "client_tls_creds", kind: "message", T: ClientCompatRequest_TLSCreds },
     { no: 10, name: "message_receive_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
-    { no: 11, name: "service", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 12, name: "method", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 11, name: "service", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 12, name: "method", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 13, name: "stream_type", kind: "enum", T: proto3.getEnumType(StreamType) },
     { no: 14, name: "use_get_http_method", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 15, name: "request_headers", kind: "message", T: Header, repeated: true },
@@ -339,11 +383,23 @@ export class ClientCompatRequest_Cancel extends Message<ClientCompatRequest_Canc
  */
 export class ClientCompatResponse extends Message<ClientCompatResponse> {
   /**
+   * The test name that this response applies to.
+   *
    * @generated from field: string test_name = 1;
    */
   testName = "";
 
   /**
+   * These fields determine the outcome of the request.
+   *
+   * With regards to errors, any unexpected errors that prevent the client from
+   * issuing the RPC and following the instructions implied by the request can
+   * be reported as an error. These would be errors creating an RPC client from
+   * the request parameters or unsupported/illegal values in the request
+   * (e.g. a unary request that defines zero or multiple request messages).
+   *
+   * However, once the RPC is issued, any resulting error should instead be encoded in response.
+   *
    * @generated from oneof connectrpc.conformance.v1.ClientCompatResponse.result
    */
   result: {
@@ -360,16 +416,6 @@ export class ClientCompatResponse extends Message<ClientCompatResponse> {
     case: "error";
   } | { case: undefined; value?: undefined } = { case: undefined };
 
-  /**
-   * This field is used only by the reference client, and it can be used
-   * to provide additional feedback about problems observed in the server
-   * response. If non-empty, the test case is considered failed even if
-   * the result above matches all expectations.
-   *
-   * @generated from field: repeated string feedback = 4;
-   */
-  feedback: string[] = [];
-
   constructor(data?: PartialMessage<ClientCompatResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -381,7 +427,6 @@ export class ClientCompatResponse extends Message<ClientCompatResponse> {
     { no: 1, name: "test_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "response", kind: "message", T: ClientResponseResult, oneof: "result" },
     { no: 3, name: "error", kind: "message", T: ClientErrorResult, oneof: "result" },
-    { no: 4, name: "feedback", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ClientCompatResponse {
@@ -403,29 +448,40 @@ export class ClientCompatResponse extends Message<ClientCompatResponse> {
 
 /**
  * The result of a ClientCompatRequest, which may or may not be successful.
+ * The client will build this message and return it back to the test runner.
  *
  * @generated from message connectrpc.conformance.v1.ClientResponseResult
  */
 export class ClientResponseResult extends Message<ClientResponseResult> {
   /**
+   * All response headers read from the response.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.Header response_headers = 1;
    */
   responseHeaders: Header[] = [];
 
   /**
+   * Servers should echo back payloads that they received as part of the request.
+   * This field should contain all the payloads the server echoed back. Note that
+   * There will be zero-to-one for unary and client-stream methods and
+   * zero-to-many for server- and bidi-stream methods.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.ConformancePayload payloads = 2;
    */
   payloads: ConformancePayload[] = [];
 
   /**
    * The error received from the actual RPC invocation. Note this is not representative
-   * of a runtime error and should always be the proto equivalent of a Connect error.
+   * of a runtime error and should always be the proto equivalent of a Connect
+   * or gRPC error.
    *
    * @generated from field: connectrpc.conformance.v1.Error error = 3;
    */
   error?: Error;
 
   /**
+   * All response headers read from the response.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.Header response_trailers = 4;
    */
   responseTrailers: Header[] = [];
@@ -439,28 +495,26 @@ export class ClientResponseResult extends Message<ClientResponseResult> {
   numUnsentRequests = 0;
 
   /**
-   * The HTTP status code of the response.
+   * The following field is only set by the reference client. It communicates
+   * the underlying HTTP status code of the server's response.
+   * If you are implementing a client-under-test, you should ignore this field
+   * and leave it unset.
    *
-   * @generated from field: int32 actual_status_code = 6;
+   * @generated from field: optional int32 http_status_code = 6;
    */
-  actualStatusCode = 0;
+  httpStatusCode?: number;
 
   /**
-   * When processing an error from a Connect server, this should contain
-   * the actual JSON received on the wire.
+   * This field is used only by the reference client, and it can be used
+   * to provide additional feedback about problems observed in the server
+   * response or in client processing of the response. If non-empty, the test
+   * case is considered failed even if the result above matches all expectations.
+   * If you are implementing a client-under-test, you should ignore this field
+   * and leave it unset.
    *
-   * @generated from field: google.protobuf.Struct connect_error_raw = 7;
+   * @generated from field: repeated string feedback = 7;
    */
-  connectErrorRaw?: Struct;
-
-  /**
-   * Any HTTP trailers observed after the response body. These do NOT
-   * include trailers that conveyed via the body, as done in the gRPC-Web
-   * and Connect streaming protocols.
-   *
-   * @generated from field: repeated connectrpc.conformance.v1.Header actual_http_trailers = 8;
-   */
-  actualHttpTrailers: Header[] = [];
+  feedback: string[] = [];
 
   constructor(data?: PartialMessage<ClientResponseResult>) {
     super();
@@ -475,9 +529,8 @@ export class ClientResponseResult extends Message<ClientResponseResult> {
     { no: 3, name: "error", kind: "message", T: Error },
     { no: 4, name: "response_trailers", kind: "message", T: Header, repeated: true },
     { no: 5, name: "num_unsent_requests", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 6, name: "actual_status_code", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 7, name: "connect_error_raw", kind: "message", T: Struct },
-    { no: 8, name: "actual_http_trailers", kind: "message", T: Header, repeated: true },
+    { no: 6, name: "http_status_code", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 7, name: "feedback", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ClientResponseResult {
@@ -506,6 +559,10 @@ export class ClientResponseResult extends Message<ClientResponseResult> {
  */
 export class ClientErrorResult extends Message<ClientErrorResult> {
   /**
+   * A message describing the error that occurred. This string will be shown to
+   * users running conformance tests so it should include any relevant details
+   * that may help troubleshoot or remedy the error.
+   *
    * @generated from field: string message = 1;
    */
   message = "";
@@ -535,6 +592,82 @@ export class ClientErrorResult extends Message<ClientErrorResult> {
 
   static equals(a: ClientErrorResult | PlainMessage<ClientErrorResult> | undefined, b: ClientErrorResult | PlainMessage<ClientErrorResult> | undefined): boolean {
     return proto3.util.equals(ClientErrorResult, a, b);
+  }
+}
+
+/**
+ * Details about various values as observed on the wire. This message is used
+ * only by the reference client when reporting results and should not be populated
+ * by clients under test.
+ *
+ * @generated from message connectrpc.conformance.v1.WireDetails
+ */
+export class WireDetails extends Message<WireDetails> {
+  /**
+   * The HTTP status code of the response.
+   *
+   * @generated from field: int32 actual_status_code = 1;
+   */
+  actualStatusCode = 0;
+
+  /**
+   * When processing an error from a Connect server, this should contain
+   * the actual JSON received on the wire.
+   *
+   * @generated from field: google.protobuf.Struct connect_error_raw = 2;
+   */
+  connectErrorRaw?: Struct;
+
+  /**
+   * Any HTTP trailers observed after the response body. These do NOT
+   * include trailers that conveyed via the body, as done in the gRPC-Web
+   * and Connect streaming protocols.
+   *
+   * @generated from field: repeated connectrpc.conformance.v1.Header actual_http_trailers = 3;
+   */
+  actualHttpTrailers: Header[] = [];
+
+  /**
+   * Any trailers that were transmitted in the final message of the
+   * response body for a gRPC-Web response. This could differ from the
+   * ClientResponseResult.response_trailers field since the RPC client
+   * library might canonicalize keys and it might choose to remove
+   * "grpc-status" et al from the set of metadata. This field will
+   * capture all of the entries and their exact on-the-wire spelling
+   * and formatting.
+   *
+   * @generated from field: optional string actual_grpcweb_trailers = 4;
+   */
+  actualGrpcwebTrailers?: string;
+
+  constructor(data?: PartialMessage<WireDetails>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "connectrpc.conformance.v1.WireDetails";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "actual_status_code", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "connect_error_raw", kind: "message", T: Struct },
+    { no: 3, name: "actual_http_trailers", kind: "message", T: Header, repeated: true },
+    { no: 4, name: "actual_grpcweb_trailers", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WireDetails {
+    return new WireDetails().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WireDetails {
+    return new WireDetails().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WireDetails {
+    return new WireDetails().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WireDetails | PlainMessage<WireDetails> | undefined, b: WireDetails | PlainMessage<WireDetails> | undefined): boolean {
+    return proto3.util.equals(WireDetails, a, b);
   }
 }
 

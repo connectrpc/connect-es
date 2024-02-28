@@ -1,4 +1,4 @@
-// Copyright 2023 The Connect Authors
+// Copyright 2023-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,16 +32,26 @@ import { ClientCompatRequest, ClientResponseResult } from "./client_compat_pb.js
  */
 export class TestSuite extends Message<TestSuite> {
   /**
+   * Test suite name. When writing test suites, this is a required field.
+   *
    * @generated from field: string name = 1;
    */
   name = "";
 
   /**
+   * The mode (client or server) that this test suite applies to. This is used
+   * in conjunction with the `--mode` flag passed to the conformance runner
+   * binary. If the mode on the suite is set to client, the tests will only be
+   * run if `--mode client` is set on the command to the test runner.
+   * Likewise if mode is server. If this is unset, the test case will be run in both modes.
+   *
    * @generated from field: connectrpc.conformance.v1.TestSuite.TestMode mode = 2;
    */
   mode = TestSuite_TestMode.UNSPECIFIED;
 
   /**
+   * The actual test cases in the suite.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.TestCase test_cases = 3;
    */
   testCases: TestCase[] = [];
@@ -87,7 +97,8 @@ export class TestSuite extends Message<TestSuite> {
   connectVersionMode = TestSuite_ConnectVersionMode.UNSPECIFIED;
 
   /**
-   * If true, the cases in this suite rely on TLS.
+   * If true, the cases in this suite rely on TLS and will only be run against
+   * TLS server configurations.
    *
    * @generated from field: bool relies_on_tls = 9;
    */
@@ -266,7 +277,25 @@ export class TestCase extends Message<TestCase> {
   expandRequests: TestCase_ExpandedSize[] = [];
 
   /**
-   * Defines the expected response to the above RPC. Many
+   * Defines the expected response to the above RPC. The expected response for
+   * a test is auto-generated based on the request details. The conformance runner
+   * will determine what the response should be according to the values specified
+   * in the test suite and individual test cases.
+   *
+   * This value can also be specified explicitly in the test case YAML. However,
+   * this is typically only needed for exception test cases. If the expected
+   * response is mostly re-stating the response definition that appears in the
+   * requests, test cases should rely on the auto-generation if possible.
+   * Otherwise, specifying an expected response can make the test YAML overly
+   * verbose and harder to read, write, and maintain.
+   *
+   * If the test induces behavior that prevents the server from sending or client
+   * from receiving the full response definition, it will be necessary to define
+   * the expected response explicitly. Timeouts, cancellations, and exceeding
+   * message size limits are good examples of this.
+   *
+   * Specifying an expected response explicitly in test definitions will override
+   * the auto-generation of the test runner.
    *
    * @generated from field: connectrpc.conformance.v1.ClientResponseResult expected_response = 3;
    */
@@ -307,6 +336,11 @@ export class TestCase extends Message<TestCase> {
  */
 export class TestCase_ExpandedSize extends Message<TestCase_ExpandedSize> {
   /**
+   * The size, in bytes, relative to the limit. For example, to expand to a
+   * size that is exactly equal to the limit, this should be set to zero.
+   * Any value greater than zero indicates that the request size will be that
+   * many bytes over the limit.
+   *
    * @generated from field: optional int32 size_relative_to_limit = 1;
    */
   sizeRelativeToLimit?: number;
