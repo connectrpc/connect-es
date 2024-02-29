@@ -45,9 +45,8 @@ export function errorFromJson(
   ) {
     throw fallback;
   }
-  let code = Code.Unknown
-  if (("code" in jsonValue) &&
-    typeof jsonValue.code === "string") {
+  let code = Code.Unknown;
+  if ("code" in jsonValue && typeof jsonValue.code === "string") {
     code = codeFromString(jsonValue.code) ?? code;
   }
   const message = jsonValue.message;

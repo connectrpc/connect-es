@@ -72,7 +72,7 @@ export function validateResponseWithCompression(
     if (!compression) {
       throw new ConnectError(
         `unsupported response encoding "${encoding}"`,
-        Code.InvalidArgument,
+        Code.Internal,
         headers,
       );
     }
