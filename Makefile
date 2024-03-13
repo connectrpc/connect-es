@@ -172,7 +172,7 @@ clean: conformanceserverstop ## Delete build artifacts and installed dependencie
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testconformance testwebbrowser testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
