@@ -48,7 +48,7 @@ describe("unsupported content encoding", () => {
             },
             rejectUnauthorized,
           });
-          expect(res.status).toBe(404);
+          expect(res.status).toBe(501);
           const err = errorFromJsonBytes(
             res.body,
             undefined,
