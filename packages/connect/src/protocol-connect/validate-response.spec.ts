@@ -66,9 +66,7 @@ describe("Connect validateResponse()", function () {
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          "[invalid_argument] HTTP 400",
-        );
+        expect(ConnectError.from(e).message).toBe("[internal] HTTP 400");
       }
     });
     it("should return an error for HTTP error status if content type is JSON", function () {
@@ -80,8 +78,8 @@ describe("Connect validateResponse()", function () {
         }),
       );
       expect(result.isUnaryError).toBeTrue();
-      expect(result.unaryError?.code).toBe(Code.InvalidArgument);
-      expect(result.unaryError?.message).toBe("[invalid_argument] HTTP 400");
+      expect(result.unaryError?.code).toBe(Code.Internal);
+      expect(result.unaryError?.message).toBe("[internal] HTTP 400");
     });
   });
   describe("with streaming", function () {
