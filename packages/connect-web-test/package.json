@@ -5,9 +5,6 @@
     "clean": "rm -rf ./dist/esm/*",
     "generate": "buf generate",
     "build": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm",
-    "jasmine": "jasmine --config=jasmine.json",
-    "karma": "karma start karma.conf.cjs",
-    "karma-serve": "karma start karma.serve.conf.cjs",
     "karma-browserstack": "karma start karma.browserstack.conf.cjs"
   },
   "type": "module",

@@ -108,12 +108,6 @@ $(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test packages
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
-	npm run -w packages/connect-node-test clean
-	npm run -w packages/connect-node-test build
-	@mkdir -p $(@D)
-	@touch $(@)
-
 $(BUILD)/connect-conformance: $(BUILD)/connect-node $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
 	npm run -w packages/connect-conformance clean
 	npm run -w packages/connect-conformance build
@@ -139,14 +133,7 @@ $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(
 
 $(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-test/src/gen/*
-	npm run -w packages/connect-web-test generate https://github.com/connectrpc/conformance.git#tag=$(CONFORMANCE_VERSION),subdir=proto
 	npm run -w packages/connect-web-test generate buf.build/connectrpc/eliza:8bde2b90ec0a7f23df3de5824bed0b6ea2043305
-	@mkdir -p $(@D)
-	@touch $(@)
-
-$(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
-	rm -rf packages/connect-node-test/src/gen/*
-	npm run -w packages/connect-node-test generate https://github.com/connectrpc/conformance.git#tag=$(CONFORMANCE_VERSION),subdir=proto
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -185,7 +172,7 @@ clean: conformanceserverstop ## Delete build artifacts and installed dependencie
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testnode testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
@@ -197,15 +184,6 @@ testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-
-.PHONY: testnode
-testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node-test
-	$(MAKE) conformanceserverrun
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	$(MAKE) conformanceserverstop
 
 .PHONY: testconformance
 testconformance: testnodeconformance testwebconformance
@@ -240,32 +218,6 @@ testwebconformancelocal: $(BUILD)/connect-conformance
 .PHONY: testcloudflareconformance
 testcloudflareconformance: $(BUILD)/connect-conformance
 	npm run -w packages/connect-conformance test:cloudflare:server
-
-.PHONY: testwebnode
-testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
-	$(MAKE) conformanceserverrun
-	$(MAKE) connectnodeserverrun
-	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node20 ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node21 ../../node_modules/.bin/jasmine --config=jasmine.json
-	$(MAKE) conformanceserverstop
-	$(MAKE) connectnodeserverstop
-
-.PHONY: testwebbrowser
-testwebbrowser: $(BUILD)/connect-web-test
-	$(MAKE) conformanceserverrun
-	$(MAKE) connectnodeserverrun
-	npm run -w packages/connect-web-test karma
-	$(MAKE) conformanceserverstop
-	$(MAKE) connectnodeserverstop
-
-.PHONY: testwebbrowserlocal
-testwebbrowserlocal: $(BUILD)/connect-web-test
-	$(MAKE) conformanceserverrun
-	$(MAKE) connectnodeserverrun
-	npm run -w packages/connect-web-test karma-serve
-	$(MAKE) conformanceserverstop
-	$(MAKE) connectnodeserverstop
 
 .PHONY: testwebbrowserstack
 testwebbrowserstack: $(BUILD)/connect-web-test
@@ -334,18 +286,6 @@ conformanceserverrun: conformanceserverstop
 	docker run --rm --name servergrpc -p 8083:8083 -d \
 		connectrpc/conformance:$(CONFORMANCE_VERSION) \
 		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
-
-.PHONY: connectnodeserverrun
-connectnodeserverrun: $(BUILD)/connect-node-test
-	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs restart
-
-.PHONY: connectnodeserverstop
-connectnodeserverstop: $(BUILD)/connect-node-test
-	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs stop
-
-.PHONY: updatelocalhostcert
-updatelocalhostcert:
-	openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -days 300 -keyout packages/connect-node-test/localhost-key.pem -out packages/connect-node-test/localhost-cert.pem
 
 .PHONY: checkdiff
 checkdiff:
