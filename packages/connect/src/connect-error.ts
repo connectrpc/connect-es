@@ -134,9 +134,6 @@ export class ConnectError extends Error {
     if (!(v instanceof Error)) {
       return false;
     }
-    if (Object.getPrototypeOf(v) === ConnectError.prototype) {
-      return true;
-    }
     return (
       v.name === "ConnectError" &&
       "code" in v &&
