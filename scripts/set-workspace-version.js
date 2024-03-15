@@ -16,6 +16,8 @@
 
 import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import { existsSync } from "node:fs";
+import assert from "node:assert";
 
 if (process.argv.length < 3) {
   process.stderr.write(
@@ -35,11 +37,15 @@ if (process.argv.length < 3) {
 try {
   const newVersion = process.argv[2];
   const packagesDir = "packages";
+  const lockFile = "package-lock.json";
   const packages = readPackages(packagesDir);
-  const updates = setVersion(packages, newVersion);
-  updates.push(...syncDeps(packages));
+  const lock = tryReadLock(lockFile);
+  const updates = setVersion(packages, lock, newVersion);
   if (updates.length > 0) {
     writePackages(packagesDir, packages);
+    if (lock) {
+      writeLock(lockFile, lock);
+    }
     process.stdout.write(formatUpdates(updates) + "\n");
   }
 } catch (e) {
@@ -47,25 +53,37 @@ try {
   process.exit(1);
 }
 
-function setVersion(packages, newVersion) {
+function setVersion(packages, lock, newVersion) {
   const updates = [];
   for (const pkg of packages) {
     if (typeof pkg.version !== "string") {
       continue;
     }
+    assert(pkg.name);
     if (pkg.version === newVersion) {
       continue;
+    }
+    pkg.version = newVersion;
+    if (lock) {
+      const l = Array.from(Object.values(lock.packages)).find(
+        (l) => l.name === pkg.name,
+      );
+      assert(l);
+      l.version = newVersion;
     }
     updates.push({
       package: pkg,
       message: `updated version from ${pkg.version} to ${newVersion}`,
     });
-    pkg.version = newVersion;
+  }
+  updates.push(...syncDeps(packages, packages));
+  if (lock) {
+    syncDeps(Object.values(lock.packages), packages);
   }
   return updates;
 }
 
-function syncDeps(packages) {
+function syncDeps(packages, deps) {
   const updates = [];
   for (const pkg of packages) {
     for (const key of [
@@ -78,7 +96,7 @@ function syncDeps(packages) {
         continue;
       }
       for (const [name, version] of Object.entries(pkg[key])) {
-        const dep = packages.find((x) => x.name === name);
+        const dep = deps.find((x) => x.name === name);
         if (!dep) {
           continue;
         }
@@ -89,6 +107,8 @@ function syncDeps(packages) {
           wantVersion = "~" + wantVersion;
         } else if (version.startsWith("=")) {
           wantVersion = "=" + wantVersion;
+        } else if (version === "*") {
+          wantVersion = "*";
         }
         if (wantVersion === version) {
           continue;
@@ -96,7 +116,7 @@ function syncDeps(packages) {
         pkg[key][name] = wantVersion;
         updates.push({
           package: pkg,
-          message: `updated ${key}["${name}"] from ${version} to ${dep.version}`,
+          message: `updated ${key}["${name}"] from ${version} to ${wantVersion}`,
         });
       }
     }
@@ -124,11 +144,13 @@ function readPackagesByPath(packagesDir) {
       continue;
     }
     const path = join(packagesDir, entry.name, "package.json");
-    const pkg = JSON.parse(readFileSync(path, "utf-8"));
-    if (!pkg.name) {
-      throw new Error(`${path} is missing "name"`);
+    if (existsSync(path)) {
+      const pkg = JSON.parse(readFileSync(path, "utf-8"));
+      if (!pkg.name) {
+        throw new Error(`${path} is missing "name"`);
+      }
+      packages[path] = pkg;
     }
-    packages[path] = pkg;
   }
   return packages;
 }
@@ -149,4 +171,19 @@ function formatUpdates(updates) {
     }
   }
   return lines.join("\n");
+}
+
+function tryReadLock(lockFile) {
+  if (!existsSync(lockFile)) {
+    return null;
+  }
+  const lock = JSON.parse(readFileSync(lockFile, "utf-8"));
+  assert(lock.lockfileVersion === 3);
+  assert(typeof lock.packages == "object");
+  assert(lock.packages !== null);
+  return lock;
+}
+
+function writeLock(lockFile, lock) {
+  writeFileSync(lockFile, JSON.stringify(lock, null, 2) + "\n");
 }
