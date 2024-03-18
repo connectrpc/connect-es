@@ -337,7 +337,7 @@ describe("createHandlerFactory()", function () {
           body: createAsyncIterable([new Uint8Array(0)]),
           signal: new AbortController().signal,
         });
-        expect(res.status).toBe(408);
+        expect(res.status).toBe(504);
         expect(res.body).toBeDefined();
         if (res.body !== undefined) {
           const err = errorFromJsonBytes(
