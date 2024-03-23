@@ -56,3 +56,7 @@ export {
 } from "./implementation.js";
 export type { ServiceImplSpec, MethodImplSpec } from "./implementation.js";
 export { createRouterTransport } from "./router-transport.js";
+export {
+  UniversalHandler,
+  UniversalHandlerOptions,
+} from "./protocol/universal-handler.js";
