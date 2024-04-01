@@ -644,3 +644,50 @@ export class ConfigCase extends Message<ConfigCase> {
   }
 }
 
+/**
+ * TLSCreds represents credentials for TLS. It includes both a
+ * certificate and corresponding private key. Both are encoded
+ * in PEM format.
+ *
+ * @generated from message connectrpc.conformance.v1.TLSCreds
+ */
+export class TLSCreds extends Message<TLSCreds> {
+  /**
+   * @generated from field: bytes cert = 1;
+   */
+  cert = new Uint8Array(0);
+
+  /**
+   * @generated from field: bytes key = 2;
+   */
+  key = new Uint8Array(0);
+
+  constructor(data?: PartialMessage<TLSCreds>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "connectrpc.conformance.v1.TLSCreds";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+    { no: 2, name: "key", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TLSCreds {
+    return new TLSCreds().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TLSCreds {
+    return new TLSCreds().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TLSCreds {
+    return new TLSCreds().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TLSCreds | PlainMessage<TLSCreds> | undefined, b: TLSCreds | PlainMessage<TLSCreds> | undefined): boolean {
+    return proto3.util.equals(TLSCreds, a, b);
+  }
+}
+

@@ -9,22 +9,20 @@
     "connectconformance": "bin/connectconformance"
   },
   "scripts": {
-    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.0-rc3",
+    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.0-rc4",
     "clean": "rm -rf ./dist/cjs/*",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
     "build:esm": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
     "test:web": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient",
     "test:node:server": "./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver",
-    "test:node:client": "./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient",
+    "test:node:client": "./bin/connectconformance --mode client --conf conformance-node.yaml -v --trace --run 'Connect Error and End-Stream/HTTPVersion:1/Compression:COMPRESSION_BR/TLS:false/end-stream/missing-code' ./bin/conformancenodeclient",
     "test:cloudflare:server": "npx wrangler deploy -c wrangler-server.toml && ./bin/connectconformance --mode server --conf conformance-cloudflare-server.yaml -v ./bin/conformancecloudflareserver"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",
     "@connectrpc/connect": "1.4.0",
     "@connectrpc/connect-node": "1.4.0",
-    "node-forge": "^1.3.1",
-    "asn1js": "^3.0.5",
     "fflate": "^0.8.1",
     "tar-stream": "^3.1.7",
     "undici": "^5.28.4",

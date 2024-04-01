@@ -18,7 +18,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Any, Empty, Message, proto3, Struct } from "@bufbuild/protobuf";
-import { Codec, Compression, HTTPVersion, Protocol, StreamType } from "./config_pb.js";
+import { Codec, Compression, HTTPVersion, Protocol, StreamType, TLSCreds } from "./config_pb.js";
 import { ConformancePayload, Error, Header, RawHTTPRequest } from "./service_pb.js";
 
 /**
@@ -100,9 +100,9 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
    * authenticate with the server. This will only be present
    * when server_tls_cert is non-empty.
    *
-   * @generated from field: connectrpc.conformance.v1.ClientCompatRequest.TLSCreds client_tls_creds = 9;
+   * @generated from field: connectrpc.conformance.v1.TLSCreds client_tls_creds = 9;
    */
-  clientTlsCreds?: ClientCompatRequest_TLSCreds;
+  clientTlsCreds?: TLSCreds;
 
   /**
    * If non-zero, indicates the maximum size in bytes for a message.
@@ -226,7 +226,7 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
     { no: 6, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "port", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 8, name: "server_tls_cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 9, name: "client_tls_creds", kind: "message", T: ClientCompatRequest_TLSCreds },
+    { no: 9, name: "client_tls_creds", kind: "message", T: TLSCreds },
     { no: 10, name: "message_receive_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 11, name: "service", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 12, name: "method", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
@@ -254,49 +254,6 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
 
   static equals(a: ClientCompatRequest | PlainMessage<ClientCompatRequest> | undefined, b: ClientCompatRequest | PlainMessage<ClientCompatRequest> | undefined): boolean {
     return proto3.util.equals(ClientCompatRequest, a, b);
-  }
-}
-
-/**
- * @generated from message connectrpc.conformance.v1.ClientCompatRequest.TLSCreds
- */
-export class ClientCompatRequest_TLSCreds extends Message<ClientCompatRequest_TLSCreds> {
-  /**
-   * @generated from field: bytes cert = 1;
-   */
-  cert = new Uint8Array(0);
-
-  /**
-   * @generated from field: bytes key = 2;
-   */
-  key = new Uint8Array(0);
-
-  constructor(data?: PartialMessage<ClientCompatRequest_TLSCreds>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "connectrpc.conformance.v1.ClientCompatRequest.TLSCreds";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 2, name: "key", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ClientCompatRequest_TLSCreds {
-    return new ClientCompatRequest_TLSCreds().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ClientCompatRequest_TLSCreds {
-    return new ClientCompatRequest_TLSCreds().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ClientCompatRequest_TLSCreds {
-    return new ClientCompatRequest_TLSCreds().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ClientCompatRequest_TLSCreds | PlainMessage<ClientCompatRequest_TLSCreds> | undefined, b: ClientCompatRequest_TLSCreds | PlainMessage<ClientCompatRequest_TLSCreds> | undefined): boolean {
-    return proto3.util.equals(ClientCompatRequest_TLSCreds, a, b);
   }
 }
 

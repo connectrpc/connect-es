@@ -104,7 +104,7 @@ export function transformInvokeImplementation<
         if (input1.done === true) {
           throw new ConnectError(
             "protocol error: missing input message for unary method",
-            Code.InvalidArgument,
+            Code.Unimplemented,
           );
         }
         const anyFn = async (
@@ -150,7 +150,7 @@ export function transformInvokeImplementation<
         if (input2.done !== true) {
           throw new ConnectError(
             "protocol error: received extra input message for unary method",
-            Code.InvalidArgument,
+            Code.Unimplemented,
           );
         }
       };
@@ -161,7 +161,7 @@ export function transformInvokeImplementation<
         if (input1.done === true) {
           throw new ConnectError(
             "protocol error: missing input message for server-streaming method",
-            Code.InvalidArgument,
+            Code.Unimplemented,
           );
         }
         const anyFn = async (
@@ -208,7 +208,7 @@ export function transformInvokeImplementation<
         if (input2.done !== true) {
           throw new ConnectError(
             "protocol error: received extra input message for server-streaming method",
-            Code.InvalidArgument,
+            Code.Unimplemented,
           );
         }
       };

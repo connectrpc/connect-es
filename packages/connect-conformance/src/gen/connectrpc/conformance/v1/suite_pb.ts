@@ -18,7 +18,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
-import { Codec, Compression, HTTPVersion, Protocol } from "./config_pb.js";
+import { Code, Codec, Compression, HTTPVersion, Protocol } from "./config_pb.js";
 import { ClientCompatRequest, ClientResponseResult } from "./client_compat_pb.js";
 
 /**
@@ -301,6 +301,17 @@ export class TestCase extends Message<TestCase> {
    */
   expectedResponse?: ClientResponseResult;
 
+  /**
+   * When expected_response indicates that an error is expected, in some cases, the
+   * actual error code returned may be flexible. In that case, this field provides
+   * other acceptable error codes, in addition to the one indicated in the
+   * expected_response. As long as the actual error's code matches any of these, the
+   * error is considered conformant, and the test case can pass.
+   *
+   * @generated from field: repeated connectrpc.conformance.v1.Code other_allowed_error_codes = 4;
+   */
+  otherAllowedErrorCodes: Code[] = [];
+
   constructor(data?: PartialMessage<TestCase>) {
     super();
     proto3.util.initPartial(data, this);
@@ -312,6 +323,7 @@ export class TestCase extends Message<TestCase> {
     { no: 1, name: "request", kind: "message", T: ClientCompatRequest },
     { no: 2, name: "expand_requests", kind: "message", T: TestCase_ExpandedSize, repeated: true },
     { no: 3, name: "expected_response", kind: "message", T: ClientResponseResult },
+    { no: 4, name: "other_allowed_error_codes", kind: "enum", T: proto3.getEnumType(Code), repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TestCase {
