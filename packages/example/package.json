@@ -23,6 +23,6 @@
     "@connectrpc/protoc-gen-connect-es": "^1.4.0",
     "@types/express": "^4.17.18",
     "esbuild": "^0.19.8",
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.3"
   }
 }
