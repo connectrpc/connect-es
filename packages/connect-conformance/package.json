@@ -28,14 +28,14 @@
     "fflate": "^0.8.1",
     "tar-stream": "^3.1.7",
     "undici": "^5.28.3",
-    "webdriverio": "^8.32.2",
+    "webdriverio": "^8.35.1",
     "esbuild": "^0.20.0"
   },
   "devDependencies": {
     "@types/node-forge": "^1.3.9",
     "@types/tar-stream": "^3.1.3",
     "@types/debug": "^4.1.12",
-    "@cloudflare/workers-types": "^4.20231121.0",
+    "@cloudflare/workers-types": "^4.20240329.0",
     "wrangler": "^3.41.0"
   }
 }
