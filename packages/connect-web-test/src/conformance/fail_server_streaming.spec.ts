@@ -55,7 +55,7 @@ describe("fail_server_streaming", () => {
       const client = createCallbackClient(TestService, transport());
       client.failStreamingOutputCall(
         request,
-        (response) => {          
+        (response) => {
           expect(response)
             .withContext("did not expect any response message")
             .toBeUndefined();
