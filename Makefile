@@ -225,12 +225,12 @@ testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(B
 
 .PHONY: testwebconformance
 testwebconformance: $(BUILD)/connect-conformance
-	npm run -w packages/connect-conformance test:web -- --browser chrome --headless
-	npm run -w packages/connect-conformance test:web -- --browser firefox --headless
-	npm run -w packages/connect-conformance test:web -- --browser node
+	npm run -w packages/connect-conformance test:web:chrome
+	npm run -w packages/connect-conformance test:web:firefox
+	npm run -w packages/connect-conformance test:web:node
 	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
 ifeq ($(NODE_OS),darwin)
-		npm run -w packages/connect-conformance test:web -- --browser safari --headless
+		npm run -w packages/connect-conformance test:web:safari
 endif
 
 .PHONY: testwebconformancelocal
