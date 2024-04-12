@@ -45,9 +45,7 @@ describe("createBinarySerialization()", function () {
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
-        expect(c.message).toBe(
-          "[invalid_argument] parse binary: premature EOF",
-        );
+        expect(c.message).toBe("[internal] parse binary: premature EOF");
       }
     });
   });

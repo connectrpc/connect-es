@@ -9,14 +9,14 @@
     "connectconformance": "bin/connectconformance"
   },
   "scripts": {
-    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.0-rc4",
+    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.1",
     "clean": "rm -rf ./dist/cjs/*",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
     "build:esm": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
-    "test:web": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient",
+    "test:web": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser chrome",
     "test:node:server": "./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver",
-    "test:node:client": "./bin/connectconformance --mode client --conf conformance-node.yaml -v --trace --run 'Connect Error and End-Stream/HTTPVersion:1/Compression:COMPRESSION_BR/TLS:false/end-stream/missing-code' ./bin/conformancenodeclient",
+    "test:node:client": "./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient",
     "test:cloudflare:server": "npx wrangler deploy -c wrangler-server.toml && ./bin/connectconformance --mode server --conf conformance-cloudflare-server.yaml -v ./bin/conformancecloudflareserver"
   },
   "dependencies": {

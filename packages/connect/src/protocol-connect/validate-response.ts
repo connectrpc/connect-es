@@ -32,6 +32,7 @@ import type { Compression } from "../protocol/compression.js";
  */
 export function validateResponse(
   methodKind: MethodKind,
+  useBinaryFormat: boolean,
   status: number,
   headers: Headers,
 ):
@@ -51,6 +52,20 @@ export function validateResponse(
     }
     throw errorFromStatus;
   }
+  const allowedContentType = {
+    binary: useBinaryFormat,
+    stream: methodKind !== MethodKind.Unary,
+  } satisfies ReturnType<typeof parseContentType>;
+  if (
+    parsedType?.binary !== allowedContentType.binary ||
+    parsedType.stream !== allowedContentType.stream
+  ) {
+    throw new ConnectError(
+      `unsupported content type ${mimeType}`,
+      parsedType === undefined ? Code.Unknown : Code.Internal,
+      headers,
+    );
+  }
   return { isUnaryError: false };
 }
 
@@ -64,6 +79,7 @@ export function validateResponse(
 export function validateResponseWithCompression(
   methodKind: MethodKind,
   acceptCompression: Compression[],
+  useBinaryFormat: boolean,
   status: number,
   headers: Headers,
 ): ReturnType<typeof validateResponse> & {
@@ -85,6 +101,6 @@ export function validateResponseWithCompression(
   }
   return {
     compression,
-    ...validateResponse(methodKind, status, headers),
+    ...validateResponse(methodKind, useBinaryFormat, status, headers),
   };
 }

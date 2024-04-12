@@ -33,7 +33,7 @@ import type { Compression } from "../protocol/compression.js";
 export function validateResponse(
   status: number,
   headers: Headers,
-): { foundStatus: boolean } {
+): { foundStatus: boolean; headerError: ConnectError | undefined } {
   if (status != 200) {
     throw new ConnectError(
       `HTTP ${status}`,
@@ -41,11 +41,10 @@ export function validateResponse(
       headers,
     );
   }
-  const err = findTrailerError(headers);
-  if (err) {
-    throw err;
-  }
-  return { foundStatus: headers.has(headerGrpcStatus) };
+  return {
+    foundStatus: headers.has(headerGrpcStatus),
+    headerError: findTrailerError(headers),
+  };
 }
 
 /**
@@ -63,8 +62,12 @@ export function validateResponseWithCompression(
   acceptCompression: Compression[],
   status: number,
   headers: Headers,
-): { foundStatus: boolean; compression: Compression | undefined } {
-  const { foundStatus } = validateResponse(status, headers);
+): {
+  foundStatus: boolean;
+  compression: Compression | undefined;
+  headerError: ConnectError | undefined;
+} {
+  const { foundStatus, headerError } = validateResponse(status, headers);
   let compression: Compression | undefined;
   const encoding = headers.get(headerEncoding);
   if (encoding !== null && encoding.toLowerCase() !== "identity") {
@@ -80,5 +83,6 @@ export function validateResponseWithCompression(
   return {
     foundStatus,
     compression,
+    headerError,
   };
 }

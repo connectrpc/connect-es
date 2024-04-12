@@ -50,7 +50,7 @@ export interface EndStreamResponse {
 export function endStreamFromJson(
   data: Uint8Array | string,
 ): EndStreamResponse {
-  const parseErr = new ConnectError("invalid end stream", Code.InvalidArgument);
+  const parseErr = new ConnectError("invalid end stream", Code.Unknown);
   let jsonValue: JsonValue;
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

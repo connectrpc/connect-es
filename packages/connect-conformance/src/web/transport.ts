@@ -67,7 +67,7 @@ export function createTransport(req: ClientCompatRequest) {
   const sharedOptions = {
     baseUrl,
     useBinaryFormat: req.codec === Codec.PROTO,
-    defaultTimeoutMs: req.timeoutMs,
+    defaultTimeoutMs: req.timeoutMs,    
     jsonOptions: {
       typeRegistry: createRegistry(
         UnaryRequest,
@@ -83,7 +83,7 @@ export function createTransport(req: ClientCompatRequest) {
   switch (req.protocol) {
     case Protocol.CONNECT:
       return createConnectTransport({
-        ...sharedOptions,
+        ...sharedOptions,        
         useHttpGet: req.useGetHttpMethod,
       });
 

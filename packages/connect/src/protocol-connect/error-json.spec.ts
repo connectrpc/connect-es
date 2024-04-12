@@ -101,56 +101,60 @@ describe("errorFromJson()", () => {
     expect(error.rawMessage).toBe("");
   });
   it("with invalid code throws fallback", () => {
-    expect(() =>
-      errorFromJson(
-        {
-          code: "wrong code",
-          message: "Not permitted",
-        },
-        undefined,
-        new ConnectError("foo", Code.ResourceExhausted),
-      ),
-    ).toThrowError("[resource_exhausted] foo");
+    const e = errorFromJson(
+      {
+        code: "wrong code",
+        message: "Not permitted",
+      },
+      undefined,
+      new ConnectError("foo", Code.ResourceExhausted),
+    );
+    expect(e).toBeInstanceOf(ConnectError);
+    expect(ConnectError.from(e).message).toBe(
+      "[resource_exhausted] Not permitted",
+    );
   });
-  it("with invalid code throws fallback with metadata", () => {
-    try {
-      errorFromJson(
-        {
-          code: "wrong code",
-          message: "Not permitted",
-        },
-        new Headers({ foo: "bar" }),
-        new ConnectError("foo", Code.ResourceExhausted),
-      );
-      fail("expected error");
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConnectError);
-      expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
-      expect(ConnectError.from(e).metadata.get("foo")).toBe("bar");
-    }
+  it("with invalid code returns fallback code with metadata", () => {
+    const e = errorFromJson(
+      {
+        code: "wrong code",
+        message: "Not permitted",
+      },
+      new Headers({ foo: "bar" }),
+      new ConnectError("foo", Code.ResourceExhausted),
+    );
+    expect(e).toBeInstanceOf(ConnectError);
+    expect(ConnectError.from(e).message).toBe(
+      "[resource_exhausted] Not permitted",
+    );
+    expect(ConnectError.from(e).metadata.get("foo")).toBe("bar");
   });
-  it("with code Ok throws fallback", () => {
-    expect(() =>
-      errorFromJson(
-        {
-          code: "ok",
-          message: "Not permitted",
-        },
-        undefined,
-        new ConnectError("foo", Code.ResourceExhausted),
-      ),
-    ).toThrowError("[resource_exhausted] foo");
+  it("with code Ok returns fallback code", () => {
+    const e = errorFromJson(
+      {
+        code: "ok",
+        message: "Not permitted",
+      },
+      undefined,
+      new ConnectError("foo", Code.ResourceExhausted),
+    );
+    expect(e).toBeInstanceOf(ConnectError);
+    expect(ConnectError.from(e).message).toBe(
+      "[resource_exhausted] Not permitted",
+    );
   });
-  it("with missing code throws fallback", () => {
-    expect(() =>
-      errorFromJson(
-        {
-          message: "Not permitted",
-        },
-        undefined,
-        new ConnectError("foo", Code.ResourceExhausted),
-      ),
-    ).toThrowError("[resource_exhausted] foo");
+  it("with missing code returns fallback code", () => {
+    const e = errorFromJson(
+      {
+        message: "Not permitted",
+      },
+      undefined,
+      new ConnectError("foo", Code.ResourceExhausted),
+    );
+    expect(e).toBeInstanceOf(ConnectError);
+    expect(ConnectError.from(e).message).toBe(
+      "[resource_exhausted] Not permitted",
+    );
   });
   describe("with details", () => {
     type ErrorDetail = Message<ErrorDetail> & {

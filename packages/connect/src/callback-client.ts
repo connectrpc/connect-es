@@ -154,6 +154,7 @@ function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
         onResponse(message);
       }
       options.onTrailer?.(response.trailer);
+      console.log("HERE")
       onClose(undefined);
     }
     run().catch((reason) => {

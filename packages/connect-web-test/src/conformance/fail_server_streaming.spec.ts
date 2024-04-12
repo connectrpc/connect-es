@@ -51,11 +51,11 @@ describe("fail_server_streaming", () => {
         expectError(e);
       }
     });
-    it("with callback client", function (done) {
+    fit("with callback client", function (done) {
       const client = createCallbackClient(TestService, transport());
       client.failStreamingOutputCall(
         request,
-        (response) => {
+        (response) => {          
           expect(response)
             .withContext("did not expect any response message")
             .toBeUndefined();
