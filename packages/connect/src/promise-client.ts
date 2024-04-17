@@ -176,7 +176,7 @@ export function createClientStreamingFn<
     }
     if (count > 1) {
       throw new ConnectError(
-        "protocol error: received extra messages for client steaming method",
+        "protocol error: received extra messages for client streaming method",
         Code.Unimplemented,
       );
     }

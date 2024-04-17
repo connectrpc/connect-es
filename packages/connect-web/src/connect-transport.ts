@@ -277,7 +277,7 @@ export function createConnectTransport(
           const { flags, data } = result.value;
           if ((flags & compressedFlag) === compressedFlag) {
             throw new ConnectError(
-              `protocol error: recevied unsupported compressed output`,
+              `protocol error: received unsupported compressed output`,
               Code.Internal,
             );
           }

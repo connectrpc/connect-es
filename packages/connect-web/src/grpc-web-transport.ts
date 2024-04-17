@@ -203,7 +203,7 @@ export function createGrpcWebTransport(
             const { flags, data } = r.value;
             if ((flags & compressedFlag) === compressedFlag) {
               throw new ConnectError(
-                `protocol error: recevied unsupported compressed output`,
+                `protocol error: received unsupported compressed output`,
                 Code.Internal,
               );
             }
