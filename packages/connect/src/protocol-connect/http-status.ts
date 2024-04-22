@@ -16,34 +16,22 @@ import { Code } from "../code.js";
 
 /**
  * Determine the Connect error code for the given HTTP status code.
- * See https://connectrpc.com/docs/protocol#error-codes
+ * See https://connectrpc.com/docs/protocol/#http-to-error-code
  *
  * @private Internal code, does not follow semantic versioning.
  */
 export function codeFromHttpStatus(httpStatus: number): Code {
   switch (httpStatus) {
     case 400: // Bad Request
-      return Code.InvalidArgument;
+      return Code.Internal;
     case 401: // Unauthorized
       return Code.Unauthenticated;
     case 403: // Forbidden
       return Code.PermissionDenied;
     case 404: // Not Found
       return Code.Unimplemented;
-    case 408: // Request Timeout
-      return Code.DeadlineExceeded;
-    case 409: // Conflict
-      return Code.Aborted;
-    case 412: // Precondition Failed
-      return Code.FailedPrecondition;
-    case 413: // Payload Too Large
-      return Code.ResourceExhausted;
-    case 415: // Unsupported Media Type
-      return Code.Internal;
     case 429: // Too Many Requests
       return Code.Unavailable;
-    case 431: // Request Header Fields Too Large
-      return Code.ResourceExhausted;
     case 502: // Bad Gateway
       return Code.Unavailable;
     case 503: // Service Unavailable
@@ -64,13 +52,13 @@ export function codeFromHttpStatus(httpStatus: number): Code {
 export function codeToHttpStatus(code: Code): number {
   switch (code) {
     case Code.Canceled:
-      return 408; // Request Timeout
+      return 499; // Client Closed Request
     case Code.Unknown:
       return 500; // Internal Server Error
     case Code.InvalidArgument:
       return 400; // Bad Request
     case Code.DeadlineExceeded:
-      return 408; // Request Timeout
+      return 504; // Gateway Timeout
     case Code.NotFound:
       return 404; // Not Found
     case Code.AlreadyExists:
@@ -80,13 +68,13 @@ export function codeToHttpStatus(code: Code): number {
     case Code.ResourceExhausted:
       return 429; // Too Many Requests
     case Code.FailedPrecondition:
-      return 412; // Precondition Failed
+      return 400; // Bad Request
     case Code.Aborted:
       return 409; // Conflict
     case Code.OutOfRange:
       return 400; // Bad Request
     case Code.Unimplemented:
-      return 404; // Not Found
+      return 501; // Not Implemented
     case Code.Internal:
       return 500; // Internal Server Error
     case Code.Unavailable:

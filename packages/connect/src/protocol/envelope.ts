@@ -147,7 +147,7 @@ export async function envelopeDecompress(
     if (!compression) {
       throw new ConnectError(
         "received compressed envelope, but do not know how to decompress",
-        Code.InvalidArgument,
+        Code.Internal,
       );
     }
     data = await compression.decompress(data, readMaxBytes);

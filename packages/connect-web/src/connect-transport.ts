@@ -32,7 +32,12 @@ import type {
   UnaryResponse,
   ContextValues,
 } from "@connectrpc/connect";
-import { appendHeaders, createContextValues } from "@connectrpc/connect";
+import {
+  Code,
+  ConnectError,
+  appendHeaders,
+  createContextValues,
+} from "@connectrpc/connect";
 import {
   createClientMethodSerializers,
   createEnvelopeReadableStream,
@@ -41,6 +46,7 @@ import {
   encodeEnvelope,
   runStreamingCall,
   runUnaryCall,
+  compressedFlag,
 } from "@connectrpc/connect/protocol";
 import {
   endStreamFlag,
@@ -205,6 +211,7 @@ export function createConnectTransport(
           });
           const { isUnaryError, unaryError } = validateResponse(
             method.kind,
+            useBinaryFormat,
             response.status,
             response.headers,
           );
@@ -268,6 +275,12 @@ export function createConnectTransport(
             break;
           }
           const { flags, data } = result.value;
+          if ((flags & compressedFlag) === compressedFlag) {
+            throw new ConnectError(
+              `protocol error: received unsupported compressed output`,
+              Code.Internal,
+            );
+          }
           if ((flags & endStreamFlag) === endStreamFlag) {
             endStreamReceived = true;
             const endStream = endStreamFromJson(data);
@@ -342,7 +355,12 @@ export function createConnectTransport(
             signal: req.signal,
             body: await createRequestBody(req.message),
           });
-          validateResponse(method.kind, fRes.status, fRes.headers);
+          validateResponse(
+            method.kind,
+            useBinaryFormat,
+            fRes.status,
+            fRes.headers,
+          );
           if (fRes.body === null) {
             throw "missing response body";
           }

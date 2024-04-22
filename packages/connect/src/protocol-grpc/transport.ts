@@ -48,6 +48,7 @@ import type { CommonTransportOptions } from "../protocol/transport-options.js";
 import type { Transport } from "../transport.js";
 import { createContextValues } from "../context-values.js";
 import type { ContextValues } from "../context-values.js";
+import { headerGrpcStatus } from "./headers.js";
 
 /**
  * Create a Transport for the gRPC protocol.
@@ -119,7 +120,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               },
             ),
           });
-          const { compression } = validateResponseWithCompression(
+          const { compression, headerError } = validateResponseWithCompression(
             opt.acceptCompression,
             uRes.status,
             uRes.header,
@@ -135,7 +136,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                 if (message !== undefined) {
                   throw new ConnectError(
                     "protocol error: received extra output message for unary method",
-                    Code.InvalidArgument,
+                    Code.Unimplemented,
                   );
                 }
                 message = chunk;
@@ -148,7 +149,15 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           if (message === undefined) {
             throw new ConnectError(
               "protocol error: missing output message for unary method",
-              Code.InvalidArgument,
+              uRes.trailer.has(headerGrpcStatus)
+                ? Code.Unimplemented
+                : Code.Unknown,
+            );
+          }
+          if (headerError) {
+            throw new ConnectError(
+              "protocol error: received output message for unary method with error status",
+              Code.Unknown,
             );
           }
           return <UnaryResponse<I, O>>{
@@ -225,11 +234,15 @@ export function createTransport(opt: CommonTransportOptions): Transport {
               { propagateDownStreamError: true },
             ),
           });
-          const { compression, foundStatus } = validateResponseWithCompression(
-            opt.acceptCompression,
-            uRes.status,
-            uRes.header,
-          );
+          const { compression, foundStatus, headerError } =
+            validateResponseWithCompression(
+              opt.acceptCompression,
+              uRes.status,
+              uRes.header,
+            );
+          if (headerError) {
+            throw headerError;
+          }
           const res: StreamResponse<I, O> = {
             ...req,
             header: uRes.header,

@@ -225,12 +225,12 @@ testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(B
 
 .PHONY: testwebconformance
 testwebconformance: $(BUILD)/connect-conformance
-	npm run -w packages/connect-conformance test:web -- --browser chrome --headless
-	npm run -w packages/connect-conformance test:web -- --browser firefox --headless
-	npm run -w packages/connect-conformance test:web -- --browser node
+	npm run -w packages/connect-conformance test:web:chrome
+	npm run -w packages/connect-conformance test:web:firefox
+	npm run -w packages/connect-conformance test:web:node
 	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
 ifeq ($(NODE_OS),darwin)
-		npm run -w packages/connect-conformance test:web -- --browser safari --headless
+		npm run -w packages/connect-conformance test:web:safari
 endif
 
 .PHONY: testwebconformancelocal
@@ -299,9 +299,7 @@ bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark c
 .PHONY: setversion
 setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
 	node scripts/set-workspace-version.js $(SET_VERSION)
-	rm package-lock.json
-	rm -rf node_modules
-	npm i
+	npm ci
 	$(MAKE) all
 
 # Recommended procedure:

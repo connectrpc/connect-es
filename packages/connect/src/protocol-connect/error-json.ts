@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, protoBase64 } from "@bufbuild/protobuf";
+import { protoBase64 } from "@bufbuild/protobuf";
 import type {
   JsonObject,
   JsonValue,
@@ -41,15 +41,13 @@ export function errorFromJson(
   if (
     typeof jsonValue !== "object" ||
     jsonValue == null ||
-    Array.isArray(jsonValue) ||
-    !("code" in jsonValue) ||
-    typeof jsonValue.code !== "string"
+    Array.isArray(jsonValue)
   ) {
     throw fallback;
   }
-  const code = codeFromString(jsonValue.code);
-  if (code === undefined) {
-    throw fallback;
+  let code = fallback.code;
+  if ("code" in jsonValue && typeof jsonValue.code === "string") {
+    code = codeFromString(jsonValue.code) ?? code;
   }
   const message = jsonValue.message;
   if (message != null && typeof message !== "string") {
@@ -132,7 +130,7 @@ export function errorToJson(
     };
     o.details = error.details
       .map((value) => {
-        if (value instanceof Message) {
+        if ("getType" in value) {
           const i: IncomingDetail = {
             type: value.getType().typeName,
             value: value.toBinary(),
@@ -151,7 +149,7 @@ export function errorToJson(
       })
       .map(({ value, ...rest }) => ({
         ...rest,
-        value: protoBase64.enc(value),
+        value: protoBase64.enc(value).replace(/=+$/, ""),
       }));
   }
   return o;

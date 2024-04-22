@@ -36,7 +36,6 @@ import {
   ServerStreamRequest,
   UnaryRequest,
 } from "../gen/connectrpc/conformance/v1/service_pb.js";
-import { createCert } from "../tls.js";
 import { writeSizeDelimitedBuffer } from "../protocol.js";
 
 export function run() {
@@ -68,8 +67,11 @@ export function run() {
     rejectUnauthorized?: true;
     highWaterMark?: number;
   } = {};
-  if (req.useTls) {
-    serverOptions = createCert();
+  if (req.useTls && req.serverCreds !== undefined) {
+    serverOptions = {
+      key: req.serverCreds.key.toString(),
+      cert: req.serverCreds.cert.toString(),
+    };
     if (req.clientTlsCert.length > 0) {
       serverOptions = {
         ...serverOptions,

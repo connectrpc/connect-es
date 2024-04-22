@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Type-safe APIs with Protobuf and TypeScript.",
   "license": "Apache-2.0",
   "repository": {
@@ -11,10 +11,9 @@
   "scripts": {
     "clean": "rm -rf ./dist/*",
     "generate": "buf generate src/protocol-grpc/proto",
-    "build": "npm run build:cjs && npm run build:esm && npm run build:proxy && node scripts/update-user-agent.mjs",
+    "build": "npm run build:cjs && npm run build:esm && node scripts/update-user-agent.mjs",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
-    "build:proxy": "node ../../scripts/gen-esm-proxy.mjs . protocol protocol-connect protocol-grpc protocol-grpc-web",
     "jasmine": "jasmine --config=jasmine.json",
     "attw": "attw --pack"
   },
@@ -23,47 +22,22 @@
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
-      "node": {
-        "import": "./dist/proxy/index.js",
-        "require": "./dist/cjs/index.js"
-      },
-      "module": "./dist/esm/index.js",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
     "./protocol": {
-      "node": {
-        "import": "./dist/proxy/protocol/index.js",
-        "require": "./dist/cjs/protocol/index.js"
-      },
-      "module": "./dist/esm/protocol/index.js",
       "import": "./dist/esm/protocol/index.js",
       "require": "./dist/cjs/protocol/index.js"
     },
     "./protocol-connect": {
-      "node": {
-        "import": "./dist/proxy/protocol-connect/index.js",
-        "require": "./dist/cjs/protocol-connect/index.js"
-      },
-      "module": "./dist/esm/protocol-connect/index.js",
       "import": "./dist/esm/protocol-connect/index.js",
       "require": "./dist/cjs/protocol-connect/index.js"
     },
     "./protocol-grpc": {
-      "node": {
-        "import": "./dist/proxy/protocol-grpc/index.js",
-        "require": "./dist/cjs/protocol-grpc/index.js"
-      },
-      "module": "./dist/esm/protocol-grpc/index.js",
       "import": "./dist/esm/protocol-grpc/index.js",
       "require": "./dist/cjs/protocol-grpc/index.js"
     },
     "./protocol-grpc-web": {
-      "node": {
-        "import": "./dist/proxy/protocol-grpc-web/index.js",
-        "require": "./dist/cjs/protocol-grpc-web/index.js"
-      },
-      "module": "./dist/esm/protocol-grpc-web/index.js",
       "import": "./dist/esm/protocol-grpc-web/index.js",
       "require": "./dist/cjs/protocol-grpc-web/index.js"
     }
@@ -88,9 +62,9 @@
     "@bufbuild/protobuf": "^1.4.2"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^1.6.0",
+    "@bufbuild/protoc-gen-es": "^1.8.0",
     "@types/jasmine": "^5.0.0",
     "jasmine": "^5.1.0",
-    "undici": "^5.28.2"
+    "undici": "^5.28.4"
   }
 }

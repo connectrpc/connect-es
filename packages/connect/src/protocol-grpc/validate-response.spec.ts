@@ -21,7 +21,13 @@ describe("gRPC validateResponse()", function () {
     headers: Record<string, string>,
   ): ConnectError | undefined {
     try {
-      validateResponse(httpStatus, new Headers(headers));
+      const { headerError } = validateResponse(
+        httpStatus,
+        new Headers(headers),
+      );
+      if (headerError) {
+        throw headerError;
+      }
       return undefined;
     } catch (e) {
       if (e instanceof ConnectError) {

@@ -17,5 +17,4 @@ features:
   supportsTlsClientCerts: true
   supportsConnectGet: true
   supportsHalfDuplexBidiOverHttp1: false
-  requiresConnectVersionHeader: false
-  supportsMessageReceiveLimit: true
+  supportsMessageReceiveLimit: false

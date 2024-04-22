@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-migrate",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "This tool updates your Connect project to use the new @connectrpc packages.",
   "license": "Apache-2.0",
   "repository": {
@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "fast-glob": "3.3.2",
-    "jscodeshift": "0.15.1",
+    "jscodeshift": "0.15.2",
     "semver": "^7.5.4"
   },
   "devDependencies": {

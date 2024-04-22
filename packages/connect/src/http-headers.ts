@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { BinaryReadOptions, MessageType } from "@bufbuild/protobuf";
-import { Message, protoBase64 } from "@bufbuild/protobuf";
+import type {
+  Message,
+  BinaryReadOptions,
+  MessageType,
+} from "@bufbuild/protobuf";
+import { protoBase64 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 
@@ -30,7 +34,7 @@ export function encodeBinaryHeader(
   value: Uint8Array | ArrayBufferLike | Message | string,
 ): string {
   let bytes: Uint8Array;
-  if (value instanceof Message) {
+  if (typeof value == "object" && "getType" in value) {
     bytes = value.toBinary();
   } else if (typeof value == "string") {
     bytes = new TextEncoder().encode(value);

@@ -103,8 +103,8 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
       )
       .then(
         (response) => {
-          options?.onHeader?.(response.header);
-          options?.onTrailer?.(response.trailer);
+          options.onHeader?.(response.header);
+          options.onTrailer?.(response.trailer);
           callback(undefined, response.message);
         },
         (reason) => {

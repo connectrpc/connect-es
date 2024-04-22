@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-node",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -9,10 +9,9 @@
   },
   "scripts": {
     "clean": "rm -rf ./dist/*",
-    "build": "npm run build:cjs && npm run build:esm && npm run build:proxy",
+    "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
-    "build:proxy": "node ../../scripts/gen-esm-proxy.mjs .",
     "attw": "attw --pack",
     "jasmine": "jasmine --config=jasmine.json"
   },
@@ -20,11 +19,6 @@
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
-      "node": {
-        "import": "./dist/proxy/index.js",
-        "require": "./dist/cjs/index.js"
-      },
-      "module": "./dist/esm/index.js",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     }
@@ -33,11 +27,11 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "undici": "^5.28.2"
+    "undici": "^5.28.4"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.4.2",
-    "@connectrpc/connect": "1.3.0"
+    "@connectrpc/connect": "1.4.0"
   },
   "devDependencies": {
     "@types/jasmine": "^5.0.0",

@@ -27,15 +27,15 @@
     "copyrightHolder": "The Connect Authors"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.13.6",
+    "@arethetypeswrong/cli": "^0.15.2",
     "@bufbuild/license-header": "^0.0.4",
-    "@typescript-eslint/parser": "^6.20.0",
+    "@typescript-eslint/parser": "^7.4.0",
     "eslint": "^8.56.0",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/eslint-plugin": "^7.4.0",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-import": "^2.29.1",
     "prettier": "^3.2.4",
-    "typescript": "5.3.3"
+    "typescript": "5.4.3"
   }
 }
