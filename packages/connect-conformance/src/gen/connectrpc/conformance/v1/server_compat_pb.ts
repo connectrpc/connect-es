@@ -1,4 +1,4 @@
-// Copyright 2023 The Connect Authors
+// Copyright 2023-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3 } from "@bufbuild/protobuf";
-import { HTTPVersion, Protocol } from "./config_pb.js";
+import { HTTPVersion, Protocol, TLSCreds } from "./config_pb.js";
 
 /**
  * Describes one configuration for an RPC server. The server is
@@ -40,18 +40,33 @@ import { HTTPVersion, Protocol } from "./config_pb.js";
  */
 export class ServerCompatRequest extends Message<ServerCompatRequest> {
   /**
+   * Signals to the server that it must support at least this protocol. Note
+   * that it is fine to support others.
+   * For example if `PROTOCOL_CONNECT` is specified, the server _must_ support
+   * at least Connect, but _may_ also support gRPC or gRPC-web.
+   *
    * @generated from field: connectrpc.conformance.v1.Protocol protocol = 1;
    */
   protocol = Protocol.UNSPECIFIED;
 
   /**
+   * Signals to the server the minimum HTTP version to support. As with
+   * `protocol`, it is fine to support other versions. For example, if
+   * `HTTP_VERSION_2` is specified, the server _must_ support HTTP/2, but _may_ also
+   * support HTTP/1.1 or HTTP/3.
+   *
    * @generated from field: connectrpc.conformance.v1.HTTPVersion http_version = 2;
    */
   httpVersion = HTTPVersion.HTTP_VERSION_UNSPECIFIED;
 
   /**
-   * if true, generate a self-signed cert and include it in the
-   * ServerCompatResponse along with the actual port
+   * If true, generate a certificate that clients will be configured to trust
+   * when connecting and return it in the `pem_cert` field of the `ServerCompatResponse`.
+   * The certificate can be any TLS certificate where the subject matches the
+   * value sent back in the `host` field of the `ServerCompatResponse`.
+   * Self-signed certificates (and `localhost` as the subject) are allowed.
+   * If false, the server should not use TLS and instead use
+   * a plain-text/unencrypted socket.
    *
    * @generated from field: bool use_tls = 4;
    */
@@ -78,6 +93,28 @@ export class ServerCompatRequest extends Message<ServerCompatRequest> {
    */
   messageReceiveLimit = 0;
 
+  /**
+   * If use_tls is true, this provides details for a self-signed TLS
+   * cert that the server may use.
+   *
+   * The provided certificate is only good for loopback communication:
+   * it uses "localhost" and "127.0.0.1" as the IP and DNS names in
+   * the certificate's subject. If the server needs a different subject
+   * or the client is in an environment where configuring trust of a
+   * self-signed certificate is difficult or infeasible.
+   *
+   * If the server implementation chooses to use these credentials,
+   * it must echo back the certificate in the ServerCompatResponse and
+   * should also leave the host field empty or explicitly set to
+   * "127.0.0.1".
+   *
+   * If it chooses to use a different certificate and key, it must send
+   * back the corresponding certificate in the ServerCompatResponse.
+   *
+   * @generated from field: connectrpc.conformance.v1.TLSCreds server_creds = 7;
+   */
+  serverCreds?: TLSCreds;
+
   constructor(data?: PartialMessage<ServerCompatRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -91,6 +128,7 @@ export class ServerCompatRequest extends Message<ServerCompatRequest> {
     { no: 4, name: "use_tls", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 5, name: "client_tls_cert", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
     { no: 6, name: "message_receive_limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
+    { no: 7, name: "server_creds", kind: "message", T: TLSCreds },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ServerCompatRequest {
@@ -117,18 +155,25 @@ export class ServerCompatRequest extends Message<ServerCompatRequest> {
  */
 export class ServerCompatResponse extends Message<ServerCompatResponse> {
   /**
+   * The host where the server is running. This should usually be `127.0.0.1`,
+   * unless your program actually starts a remote server to which the client
+   * should connect.
+   *
    * @generated from field: string host = 1;
    */
   host = "";
 
   /**
+   * The port where the server is listening.
+   *
    * @generated from field: uint32 port = 2;
    */
   port = 0;
 
   /**
-   * The server's PEM-encoded certificate, so the
-   * client can verify it when connecting via TLS.
+   * The TLS certificate, in PEM format, if `use_tls` was set
+   * to `true`. Clients will verify this certificate when connecting via TLS.
+   * If `use_tls` was set to `false`, this should always be empty.
    *
    * @generated from field: bytes pem_cert = 3;
    */
@@ -161,46 +206,6 @@ export class ServerCompatResponse extends Message<ServerCompatResponse> {
 
   static equals(a: ServerCompatResponse | PlainMessage<ServerCompatResponse> | undefined, b: ServerCompatResponse | PlainMessage<ServerCompatResponse> | undefined): boolean {
     return proto3.util.equals(ServerCompatResponse, a, b);
-  }
-}
-
-/**
- * The server doesn't support the requested protocol, or had a runtime error
- * while starting up.
- *
- * @generated from message connectrpc.conformance.v1.ServerErrorResult
- */
-export class ServerErrorResult extends Message<ServerErrorResult> {
-  /**
-   * @generated from field: string message = 1;
-   */
-  message = "";
-
-  constructor(data?: PartialMessage<ServerErrorResult>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "connectrpc.conformance.v1.ServerErrorResult";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ServerErrorResult {
-    return new ServerErrorResult().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ServerErrorResult {
-    return new ServerErrorResult().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ServerErrorResult {
-    return new ServerErrorResult().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ServerErrorResult | PlainMessage<ServerErrorResult> | undefined, b: ServerErrorResult | PlainMessage<ServerErrorResult> | undefined): boolean {
-    return proto3.util.equals(ServerErrorResult, a, b);
   }
 }
 

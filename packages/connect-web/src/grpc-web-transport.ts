@@ -31,8 +31,9 @@ import type {
   UnaryResponse,
   ContextValues,
 } from "@connectrpc/connect";
-import { createContextValues } from "@connectrpc/connect";
+import { createContextValues, ConnectError, Code } from "@connectrpc/connect";
 import {
+  compressedFlag,
   createClientMethodSerializers,
   createEnvelopeReadableStream,
   createMethodUrl,
@@ -41,6 +42,7 @@ import {
   runUnaryCall,
 } from "@connectrpc/connect/protocol";
 import {
+  headerGrpcStatus,
   requestHeader,
   trailerFlag,
   trailerParse,
@@ -180,8 +182,12 @@ export function createGrpcWebTransport(
             signal: req.signal,
             body: encodeEnvelope(0, serialize(req.message)),
           });
-          validateResponse(response.status, response.headers);
+          const { headerError } = validateResponse(
+            response.status,
+            response.headers,
+          );
           if (!response.body) {
+            if (headerError !== undefined) throw headerError;
             throw "missing response body";
           }
           const reader = createEnvelopeReadableStream(
@@ -195,6 +201,12 @@ export function createGrpcWebTransport(
               break;
             }
             const { flags, data } = r.value;
+            if ((flags & compressedFlag) === compressedFlag) {
+              throw new ConnectError(
+                `protocol error: received unsupported compressed output`,
+                Code.Internal,
+              );
+            }
             if (flags === trailerFlag) {
               if (trailer !== undefined) {
                 throw "extra trailer";
@@ -206,16 +218,25 @@ export function createGrpcWebTransport(
               continue;
             }
             if (message !== undefined) {
-              throw "extra message";
+              throw new ConnectError("extra message", Code.Unimplemented);
             }
             message = parse(data);
           }
           if (trailer === undefined) {
-            throw "missing trailer";
+            if (headerError !== undefined) throw headerError;
+            throw new ConnectError(
+              "missing trailer",
+              response.headers.has(headerGrpcStatus)
+                ? Code.Unimplemented
+                : Code.Unknown,
+            );
           }
           validateTrailer(trailer, response.headers);
           if (message === undefined) {
-            throw "missing message";
+            throw new ConnectError(
+              "missing message",
+              trailer.has(headerGrpcStatus) ? Code.Unimplemented : Code.Unknown,
+            );
           }
           return {
             stream: false,
@@ -253,6 +274,7 @@ export function createGrpcWebTransport(
         foundStatus: boolean,
         trailerTarget: Headers,
         header: Headers,
+        headerError: ConnectError | undefined,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         if (foundStatus) {
@@ -293,6 +315,9 @@ export function createGrpcWebTransport(
           continue;
         }
         if (!trailerReceived) {
+          if (headerError) {
+            throw headerError;
+          }
           throw "missing trailer";
         }
       }
@@ -342,8 +367,14 @@ export function createGrpcWebTransport(
             signal: req.signal,
             body: await createRequestBody(req.message),
           });
-          const { foundStatus } = validateResponse(fRes.status, fRes.headers);
+          const { foundStatus, headerError } = validateResponse(
+            fRes.status,
+            fRes.headers,
+          );
           if (!fRes.body) {
+            if (headerError != undefined) {
+              throw headerError;
+            }
             throw "missing response body";
           }
           const trailer = new Headers();
@@ -356,6 +387,7 @@ export function createGrpcWebTransport(
               foundStatus,
               trailer,
               fRes.headers,
+              headerError,
             ),
           };
           return res;

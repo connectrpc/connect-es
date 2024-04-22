@@ -1,4 +1,4 @@
-// Copyright 2023 The Connect Authors
+// Copyright 2023-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,19 +26,19 @@ import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
  *
  * Test servers must implement the service as described.
  *
- * A unary operation. The request indicates the response headers and trailers
- * and also indicates either a response message or an error to send back.
- *
- * Response message data is specified as bytes. The service should echo back
- * request properties in the ConformancePayload and then include the message
- * data in the data field.
- *
  * @generated from service connectrpc.conformance.v1.ConformanceService
  */
 export const ConformanceService = {
   typeName: "connectrpc.conformance.v1.ConformanceService",
   methods: {
     /**
+     * A unary operation. The request indicates the response headers and trailers
+     * and also indicates either a response message or an error to send back.
+     *
+     * Response message data is specified as bytes. The service should echo back
+     * request properties in the ConformancePayload and then include the message
+     * data in the data field.
+     *
      * If the response_delay_ms duration is specified, the server should wait the
      * given duration after reading the request before sending the corresponding
      * response.

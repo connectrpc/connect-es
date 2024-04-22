@@ -163,13 +163,21 @@ export function createClientStreamingFn<
     );
     options?.onHeader?.(response.header);
     let singleMessage: O | undefined;
+    let count = 0;
     for await (const message of response.message) {
       singleMessage = message;
+      count++;
     }
     if (!singleMessage) {
       throw new ConnectError(
         "protocol error: missing response message",
-        Code.Internal,
+        Code.Unimplemented,
+      );
+    }
+    if (count > 1) {
+      throw new ConnectError(
+        "protocol error: received extra messages for client streaming method",
+        Code.Unimplemented,
       );
     }
     options?.onTrailer?.(response.trailer);

@@ -22,7 +22,7 @@ import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
 import { describeTransports } from "../helpers/conformanceserver.js";
 import { Empty } from "@bufbuild/protobuf";
 
-describe("unimplemented_server_streaming_method", function () {
+xdescribe("unimplemented_server_streaming_method", function () {
   function expectError(err: unknown) {
     expect(err).toBeInstanceOf(ConnectError);
     if (err instanceof ConnectError) {

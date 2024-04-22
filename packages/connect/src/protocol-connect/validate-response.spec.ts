@@ -22,6 +22,7 @@ describe("Connect validateResponse()", function () {
     it("should be successful for HTTP 200 with proper unary JSON content type", function () {
       const r = validateResponse(
         MethodKind.Unary,
+        false,
         200,
         new Headers({ "Content-Type": "application/json" }),
       );
@@ -31,6 +32,7 @@ describe("Connect validateResponse()", function () {
     it("should return error for HTTP 204", function () {
       const r = validateResponse(
         MethodKind.Unary,
+        false,
         204,
         new Headers({ "Content-Type": "application/json" }),
       );
@@ -40,6 +42,7 @@ describe("Connect validateResponse()", function () {
     it("should include headers as error metadata", function () {
       const r = validateResponse(
         MethodKind.Unary,
+        false,
         204,
         new Headers({ "Content-Type": "application/json", Foo: "Bar" }),
       );
@@ -48,6 +51,7 @@ describe("Connect validateResponse()", function () {
     it("should be successful for HTTP 200 with proper unary proto content type", function () {
       const r = validateResponse(
         MethodKind.Unary,
+        true,
         200,
         new Headers({ "Content-Type": "application/proto" }),
       );
@@ -58,6 +62,7 @@ describe("Connect validateResponse()", function () {
       try {
         validateResponse(
           MethodKind.Unary,
+          true,
           400,
           new Headers({
             "Content-Type": "application/proto",
@@ -72,6 +77,7 @@ describe("Connect validateResponse()", function () {
     it("should return an error for HTTP error status if content type is JSON", function () {
       const result = validateResponse(
         MethodKind.Unary,
+        true,
         400,
         new Headers({
           "Content-Type": "application/json",
@@ -87,6 +93,7 @@ describe("Connect validateResponse()", function () {
       try {
         validateResponse(
           MethodKind.BiDiStreaming,
+          true,
           400,
           new Headers({
             "Content-Type": "application/connect+proto",

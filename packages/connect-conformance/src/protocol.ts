@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "@connectrpc/connect";
+import { ConnectError, Code } from "@connectrpc/connect";
 import {
   Error as ConformanceError,
   Header as ConformanceHeader,
   ConformancePayload_RequestInfo,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
+import { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
 import { createRegistry, Any, Message } from "@bufbuild/protobuf";
 
 const detailsRegitry = createRegistry(ConformancePayload_RequestInfo);
@@ -28,7 +29,7 @@ export function connectErrorFromProto(err: ConformanceError) {
   // We need to unpack the Any messages for connect to represent them accurately.
   return new ConnectError(
     err.message ?? "",
-    err.code,
+    err.code as unknown as Code,
     undefined,
     err.details.map((d) => {
       const m = d.unpack(detailsRegitry);
@@ -58,7 +59,7 @@ export function convertToProtoError(err: ConnectError | undefined) {
     }
   }
   return new ConformanceError({
-    code: err.code,
+    code: err.code as unknown as ConformanceCode,
     message: err.rawMessage,
     details,
   });

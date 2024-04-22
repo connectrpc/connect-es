@@ -192,7 +192,7 @@ export function createBinarySerialization<T extends Message<T>>(
         return messageType.fromBinary(data, options);
       } catch (e) {
         const m = e instanceof Error ? e.message : String(e);
-        throw new ConnectError(`parse binary: ${m}`, Code.InvalidArgument);
+        throw new ConnectError(`parse binary: ${m}`, Code.Internal);
       }
     },
     serialize(data: T): Uint8Array {

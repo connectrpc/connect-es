@@ -1,4 +1,4 @@
-// Copyright 2023 The Connect Authors
+// Copyright 2023-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Any, Message, proto3 } from "@bufbuild/protobuf";
-import { Compression } from "./config_pb.js";
+import { Code, Compression } from "./config_pb.js";
 
 /**
  * A definition of a response to be sent from a single-response endpoint.
@@ -727,6 +727,9 @@ export class UnimplementedResponse extends Message<UnimplementedResponse> {
  */
 export class ConformancePayload extends Message<ConformancePayload> {
   /**
+   * Any response data specified in the response definition to the server should be
+   * echoed back here.
+   *
    * @generated from field: bytes data = 1;
    */
   data = new Uint8Array(0);
@@ -847,6 +850,8 @@ export class ConformancePayload_RequestInfo extends Message<ConformancePayload_R
  */
 export class ConformancePayload_ConnectGetInfo extends Message<ConformancePayload_ConnectGetInfo> {
   /**
+   * The query params observed in the request URL.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.Header query_params = 1;
    */
   queryParams: Header[] = [];
@@ -886,9 +891,12 @@ export class ConformancePayload_ConnectGetInfo extends Message<ConformancePayloa
  */
 export class Error extends Message<Error> {
   /**
-   * @generated from field: int32 code = 1;
+   * The error code.
+   * For a list of Connect error codes see: https://connectrpc.com/docs/protocol#error-codes
+   *
+   * @generated from field: connectrpc.conformance.v1.Code code = 1;
    */
-  code = 0;
+  code = Code.UNSPECIFIED;
 
   /**
    * If this value is absent in a test case response definition, the contents of the
@@ -901,6 +909,9 @@ export class Error extends Message<Error> {
   message?: string;
 
   /**
+   * Errors in Connect and gRPC protocols can have arbitrary messages
+   * attached to them, which are known as error details.
+   *
    * @generated from field: repeated google.protobuf.Any details = 3;
    */
   details: Any[] = [];
@@ -913,7 +924,7 @@ export class Error extends Message<Error> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "connectrpc.conformance.v1.Error";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "code", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 1, name: "code", kind: "enum", T: proto3.getEnumType(Code) },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "details", kind: "message", T: Any, repeated: true },
   ]);
@@ -942,11 +953,17 @@ export class Error extends Message<Error> {
  */
 export class Header extends Message<Header> {
   /**
+   * Header/trailer name (key).
+   *
    * @generated from field: string name = 1;
    */
   name = "";
 
   /**
+   * Header/trailer value. This is repeated to explicitly support headers and
+   * trailers where a key is repeated. In such a case, these values must be in
+   * the same order as which values appeared in the header or trailer block.
+   *
    * @generated from field: repeated string value = 2;
    */
   value: string[] = [];
@@ -989,16 +1006,22 @@ export class Header extends Message<Header> {
  */
 export class RawHTTPRequest extends Message<RawHTTPRequest> {
   /**
+   * The HTTP verb (i.e. GET , POST).
+   *
    * @generated from field: string verb = 1;
    */
   verb = "";
 
   /**
+   * The URI to send the request to.
+   *
    * @generated from field: string uri = 2;
    */
   uri = "";
 
   /**
+   * Any headers to set on the request.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.Header headers = 3;
    */
   headers: Header[] = [];
@@ -1012,6 +1035,9 @@ export class RawHTTPRequest extends Message<RawHTTPRequest> {
   rawQueryParams: Header[] = [];
 
   /**
+   * This provides an easier way to define a complex binary query param
+   * than having to write literal base64-encoded bytes in raw_query_params.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.RawHTTPRequest.EncodedQueryParam encoded_query_params = 5;
    */
   encodedQueryParams: RawHTTPRequest_EncodedQueryParam[] = [];
@@ -1073,18 +1099,19 @@ export class RawHTTPRequest extends Message<RawHTTPRequest> {
 }
 
 /**
- * This provides an easier way to define a complex binary query param
- * than having to write literal base64-encoded bytes in raw_query_params.
- *
  * @generated from message connectrpc.conformance.v1.RawHTTPRequest.EncodedQueryParam
  */
 export class RawHTTPRequest_EncodedQueryParam extends Message<RawHTTPRequest_EncodedQueryParam> {
   /**
+   * Query param name.
+   *
    * @generated from field: string name = 1;
    */
   name = "";
 
   /**
+   * Query param value.
+   *
    * @generated from field: connectrpc.conformance.v1.MessageContents value = 2;
    */
   value?: MessageContents;
@@ -1212,6 +1239,8 @@ export class MessageContents extends Message<MessageContents> {
  */
 export class StreamContents extends Message<StreamContents> {
   /**
+   * The messages in the stream.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.StreamContents.StreamItem items = 1;
    */
   items: StreamContents_StreamItem[] = [];
@@ -1306,11 +1335,15 @@ export class StreamContents_StreamItem extends Message<StreamContents_StreamItem
  */
 export class RawHTTPResponse extends Message<RawHTTPResponse> {
   /**
+   * If status code is not specified, it will default to a 200 response code.
+   *
    * @generated from field: uint32 status_code = 1;
    */
   statusCode = 0;
 
   /**
+   * Headers to be set on the response.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.Header headers = 2;
    */
   headers: Header[] = [];
@@ -1338,6 +1371,8 @@ export class RawHTTPResponse extends Message<RawHTTPResponse> {
   } | { case: undefined; value?: undefined } = { case: undefined };
 
   /**
+   * Trailers to be set on the response.
+   *
    * @generated from field: repeated connectrpc.conformance.v1.Header trailers = 5;
    */
   trailers: Header[] = [];
