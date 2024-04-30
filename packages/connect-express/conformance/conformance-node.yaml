@@ -5,7 +5,7 @@ features:
   protocols:
     - PROTOCOL_CONNECT
     - PROTOCOL_GRPC
-    # - PROTOCOL_GRPC_WEB
+    - PROTOCOL_GRPC_WEB
   codecs:
     - CODEC_PROTO
     - CODEC_JSON
@@ -13,8 +13,8 @@ features:
     - COMPRESSION_IDENTITY
     - COMPRESSION_GZIP
     - COMPRESSION_BR
-  supportsTls: false
-  supportsTlsClientCerts: false
+  supportsTls: true
+  supportsTlsClientCerts: true
   supportsConnectGet: true
   supportsHalfDuplexBidiOverHttp1: false
   supportsMessageReceiveLimit: false
