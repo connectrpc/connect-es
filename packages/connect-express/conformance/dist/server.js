@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { readFileSync } from "node:fs";
-import { compressionBrotli, compressionGzip, connectNodeAdapter, } from "@connectrpc/connect-node";
+import { compressionBrotli, compressionGzip } from "@connectrpc/connect-node";
 import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
@@ -22,16 +22,33 @@ import { ServerCompatRequest, ServerCompatResponse, } from "./gen/connectrpc/con
 import { HTTPVersion } from "./gen/connectrpc/conformance/v1/config_pb.js";
 import { createRegistry } from "@bufbuild/protobuf";
 import { BidiStreamRequest, ClientStreamRequest, IdempotentUnaryRequest, ServerStreamRequest, UnaryRequest, } from "./gen/connectrpc/conformance/v1/service_pb.js";
+import express from "express";
+import { expressConnectMiddleware } from "@connectrpc/connect-express";
 export function run() {
     const req = ServerCompatRequest.fromBinary(readFileSync(process.stdin.fd).subarray(4));
-    const adapter = connectNodeAdapter({
+    const app = express();
+    app.use(expressConnectMiddleware({
         routes,
         readMaxBytes: req.messageReceiveLimit,
         acceptCompression: [compressionGzip, compressionBrotli],
         jsonOptions: {
             typeRegistry: createRegistry(UnaryRequest, ServerStreamRequest, ClientStreamRequest, BidiStreamRequest, IdempotentUnaryRequest),
         },
-    });
+    }));
+    // const adapter = connectNodeAdapter({
+    //   routes,
+    //   readMaxBytes: req.messageReceiveLimit,
+    //   acceptCompression: [compressionGzip, compressionBrotli],
+    //   jsonOptions: {
+    //     typeRegistry: createRegistry(
+    //       UnaryRequest,
+    //       ServerStreamRequest,
+    //       ClientStreamRequest,
+    //       BidiStreamRequest,
+    //       IdempotentUnaryRequest,
+    //     ),
+    //   },
+    // });
     let server;
     let serverOptions = {};
     if (req.useTls && req.serverCreds !== undefined) {
@@ -46,14 +63,15 @@ export function run() {
     switch (req.httpVersion) {
         case HTTPVersion.HTTP_VERSION_1:
             server = req.useTls
-                ? https.createServer(serverOptions, adapter)
-                : http.createServer(adapter);
+                ? https.createServer(serverOptions, app)
+                : http.createServer(app);
             break;
         case HTTPVersion.HTTP_VERSION_2:
-            server = req.useTls
-                ? http2.createSecureServer(serverOptions, adapter)
-                : http2.createServer(adapter);
-            break;
+            throw new Error("HTTP/2 is not supported");
+        // server = req.useTls
+        //   ? http2.createSecureServer(serverOptions, app)
+        //   : http2.createServer(app);
+        // break;
         case HTTPVersion.HTTP_VERSION_3:
             throw new Error("HTTP/3 is not supported");
         default:
