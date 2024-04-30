@@ -89,10 +89,6 @@ export function run() {
       break;
     case HTTPVersion.HTTP_VERSION_2:
       throw new Error("HTTP/2 is not supported");
-    // server = req.useTls
-    //   ? http2.createSecureServer(serverOptions, app)
-    //   : http2.createServer(app);
-    // break;
     case HTTPVersion.HTTP_VERSION_3:
       throw new Error("HTTP/3 is not supported");
     default:
