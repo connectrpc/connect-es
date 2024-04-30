@@ -85,7 +85,6 @@ async function extractBin(path: string) {
       stream.resume();
     }
   });
-  process.stderr.write("awaiting on you all");
   await pipeline(
     new Readable({
       read() {

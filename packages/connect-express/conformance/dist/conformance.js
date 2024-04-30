@@ -73,7 +73,6 @@ async function extractBin(path) {
             stream.resume();
         }
     });
-    process.stderr.write("awaiting on you all");
     await pipeline(new Readable({
         read() {
             this.push(gunzipSync(readFileSync(path)));
