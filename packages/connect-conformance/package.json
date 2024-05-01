@@ -30,7 +30,7 @@
     "fflate": "^0.8.1",
     "tar-stream": "^3.1.7",
     "undici": "^5.28.4",
-    "webdriverio": "^8.35.1",
+    "webdriverio": "^8.36.1",
     "esbuild": "^0.20.0"
   },
   "devDependencies": {
