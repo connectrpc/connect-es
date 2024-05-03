@@ -18,7 +18,6 @@ import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
 import * as net from "node:net";
-import routes from "./routes.js";
 import {
   ServerCompatRequest,
   ServerCompatResponse,
@@ -32,6 +31,7 @@ import {
   ServerStreamRequest,
   UnaryRequest,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
+import { routes } from "@connectrpc/connect-conformance";
 import express from "express";
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
 

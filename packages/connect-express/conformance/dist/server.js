@@ -17,11 +17,11 @@ import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
 import * as net from "node:net";
-import routes from "./routes.js";
 import { ServerCompatRequest, ServerCompatResponse, } from "./gen/connectrpc/conformance/v1/server_compat_pb.js";
 import { HTTPVersion } from "./gen/connectrpc/conformance/v1/config_pb.js";
 import { createRegistry } from "@bufbuild/protobuf";
 import { BidiStreamRequest, ClientStreamRequest, IdempotentUnaryRequest, ServerStreamRequest, UnaryRequest, } from "./gen/connectrpc/conformance/v1/service_pb.js";
+import { routes } from "@connectrpc/connect-conformance";
 import express from "express";
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
 export function run() {
@@ -35,20 +35,6 @@ export function run() {
             typeRegistry: createRegistry(UnaryRequest, ServerStreamRequest, ClientStreamRequest, BidiStreamRequest, IdempotentUnaryRequest),
         },
     }));
-    // const adapter = connectNodeAdapter({
-    //   routes,
-    //   readMaxBytes: req.messageReceiveLimit,
-    //   acceptCompression: [compressionGzip, compressionBrotli],
-    //   jsonOptions: {
-    //     typeRegistry: createRegistry(
-    //       UnaryRequest,
-    //       ServerStreamRequest,
-    //       ClientStreamRequest,
-    //       BidiStreamRequest,
-    //       IdempotentUnaryRequest,
-    //     ),
-    //   },
-    // });
     let server;
     let serverOptions = {};
     if (req.useTls && req.serverCreds !== undefined) {
@@ -68,10 +54,6 @@ export function run() {
             break;
         case HTTPVersion.HTTP_VERSION_2:
             throw new Error("HTTP/2 is not supported");
-        // server = req.useTls
-        //   ? http2.createSecureServer(serverOptions, app)
-        //   : http2.createServer(app);
-        // break;
         case HTTPVersion.HTTP_VERSION_3:
             throw new Error("HTTP/3 is not supported");
         default:
