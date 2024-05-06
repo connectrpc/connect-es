@@ -16,7 +16,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import type { Compression } from "@connectrpc/connect/protocol";
 
 export const compressionGzip = createCompression("gzip");
-export const compressionDeflate = createCompression("deflate-raw");
+export const compressionDeflate = createCompression("deflate");
 
 function createCompression(name: CompressionFormat): Compression {
   return {

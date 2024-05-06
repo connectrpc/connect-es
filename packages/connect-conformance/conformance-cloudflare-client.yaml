@@ -12,7 +12,7 @@ features:
   compressions:
     - COMPRESSION_IDENTITY
     - COMPRESSION_GZIP
-    # - COMPRESSION_DEFLATE
+    - COMPRESSION_DEFLATE
   supportsTls: true
   supportsTlsClientCerts: false
   supportsConnectGet: true
