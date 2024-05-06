@@ -16,10 +16,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import type { Compression } from "@connectrpc/connect/protocol";
 
 export const compressionGzip = createCompression("gzip");
-export const compressionDeflate = {
-  ...createCompression("deflate-raw"),
-  name: "deflate",
-};
+export const compressionDeflate = createCompression("deflate");
 
 function createCompression(name: CompressionFormat): Compression {
   return {
@@ -55,7 +52,7 @@ async function readAll(
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let length = 0;
-  for (;;) {
+  for (; ;) {
     const next = await reader.read();
     if (next.value !== undefined) {
       chunks.push(next.value as Uint8Array);
