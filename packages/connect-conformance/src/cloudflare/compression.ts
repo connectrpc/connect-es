@@ -52,7 +52,7 @@ async function readAll(
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let length = 0;
-  for (; ;) {
+  for (;;) {
     const next = await reader.read();
     if (next.value !== undefined) {
       chunks.push(next.value as Uint8Array);
