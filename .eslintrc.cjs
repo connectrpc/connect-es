@@ -91,7 +91,7 @@ module.exports = {
       },
       extends: ["eslint:recommended", "plugin:n/recommended"],
       rules: {
-        "n/shebang": "off", // this rule reports _any_ shebang outside of an npm binary as an error
+        "n/hashbang": "off", // this rule reports _any_ hashbang outside of an npm binary as an error
         "n/prefer-global/process": "off",
         "n/no-process-exit": "off",
         "n/exports-style": ["error", "module.exports"],
