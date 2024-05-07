@@ -1,8 +1,8 @@
 version: v1
 plugins:
   - plugin: es
-    out: conformance/gen
+    out: src/gen
     opt: ts_nocheck=false,target=ts
   - plugin: connect-es
-    out: conformance/gen
+    out: src/gen
     opt: ts_nocheck=false,target=ts

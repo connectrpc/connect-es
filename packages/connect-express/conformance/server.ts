@@ -18,20 +18,18 @@ import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
 import * as net from "node:net";
-import {
-  ServerCompatRequest,
-  ServerCompatResponse,
-} from "./gen/connectrpc/conformance/v1/server_compat_pb.js";
-import { HTTPVersion } from "./gen/connectrpc/conformance/v1/config_pb.js";
 import { createRegistry } from "@bufbuild/protobuf";
 import {
+  routes,
   BidiStreamRequest,
   ClientStreamRequest,
+  HTTPVersion,
   IdempotentUnaryRequest,
+  ServerCompatRequest,
+  ServerCompatResponse,
   ServerStreamRequest,
   UnaryRequest,
-} from "./gen/connectrpc/conformance/v1/service_pb.js";
-import { routes } from "@connectrpc/connect-conformance";
+} from "@connectrpc/conformance";
 import express from "express";
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
 
