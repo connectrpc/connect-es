@@ -1,5 +1,5 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S npx tsx
 
-import { run } from "../dist/server.js";
+import { run } from "../server.ts";
 
 run();
