@@ -27,7 +27,7 @@ import {
   compressionBrotli,
   createGrpcWebTransport,
 } from "@connectrpc/connect-node";
-import type { Compression } from "@connectrpc/connect/protocol";
+import { Compression } from "@connectrpc/connect/protocol";
 import {
   BidiStreamRequest,
   ClientStreamRequest,

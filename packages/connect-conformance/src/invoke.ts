@@ -14,7 +14,7 @@
 
 import {
   createPromiseClient,
-  type PromiseClient,
+  PromiseClient,
   ConnectError,
 } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
