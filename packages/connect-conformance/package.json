@@ -1,6 +1,13 @@
 {
   "name": "@connectrpc/connect-conformance",
   "private": true,
+  "bin": {
+    "conformancenodeserver": "bin/conformancenodeserver.js",
+    "conformancenodeclient": "bin/conformancenodeclient.js",
+    "conformancewebclient": "bin/conformancewebclient.js",
+    "conformancecloudflareserver": "bin/conformancecloudflareserver.js",
+    "connectconformance": "bin/connectconformance.js"
+  },
   "type": "module",
   "scripts": {
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
