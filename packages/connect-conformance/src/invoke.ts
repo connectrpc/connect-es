@@ -12,12 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  createPromiseClient,
-  type PromiseClient,
-  ConnectError,
-} from "@connectrpc/connect";
-import type { Transport } from "@connectrpc/connect";
+import { createPromiseClient, ConnectError } from "@connectrpc/connect";
+import type { PromiseClient, Transport } from "@connectrpc/connect";
 import {
   ClientCompatRequest,
   ClientResponseResult,

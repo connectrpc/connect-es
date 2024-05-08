@@ -88,7 +88,7 @@ export function run() {
         server = fastify(opts).register(fastifyConnectPlugin, pluginOpts);
       } else {
         // HTTP/1.1 server
-        let opts: FastifyHttpOptions<http.Server> = {};
+        const opts: FastifyHttpOptions<http.Server> = {};
         server = fastify(opts).register(fastifyConnectPlugin, pluginOpts);
       }
       break;
@@ -116,7 +116,7 @@ export function run() {
         server = fastify(opts).register(fastifyConnectPlugin, pluginOpts);
       } else {
         // HTTP/2 over Cleartext server
-        let opts: FastifyHttp2Options<http2.Http2Server> = {
+        const opts: FastifyHttp2Options<http2.Http2Server> = {
           http2: true,
         };
         server = fastify(opts).register(fastifyConnectPlugin, pluginOpts);
@@ -129,14 +129,14 @@ export function run() {
   }
 
   process.on("SIGTERM", () => {
-    server.close();
+    void server.close();
   });
   server.listen({ host: "127.0.0.1", port: 0 }, () => {
     const addrInfo = server.addresses()[0];
     const res = new ServerCompatResponse({
       pemCert:
-        req.serverCreds?.cert !== undefined
-          ? Buffer.from(req.serverCreds?.cert)
+        req.serverCreds !== undefined
+          ? Buffer.from(req.serverCreds.cert)
           : undefined,
       host: addrInfo.address,
       port: addrInfo.port,
