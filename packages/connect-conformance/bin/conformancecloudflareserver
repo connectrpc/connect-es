@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-const { run } = require("../dist/cjs/cloudflare/server.js");
+import { run } from "../dist/esm/cloudflare/server.js";
 
 run();

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-const { run } = require("../dist/cjs/node/client.js");
+import { run } from "../dist/esm/node/client.js";
 
 run();
