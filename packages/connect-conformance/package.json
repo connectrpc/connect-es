@@ -5,7 +5,7 @@
   "scripts": {
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
     "clean": "rm -rf ./dist/*",
-    "build": "tsc --project tsconfig.json --module ES2015 --outDir ./dist",
+    "build": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist --declaration --declarationDir ./dist",
     "test:web:chrome": "./bin/connectconformance.js --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient.js --browser chrome --headless",
     "test:web:firefox": "./bin/connectconformance.js --mode client --conf conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./bin/conformancewebclient.js --browser firefox --headless",
     "test:web:safari": "./bin/connectconformance.js --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient.js --browser safari --headless",
@@ -13,6 +13,8 @@
     "test:web": "./bin/connectconformance.js --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient.js",
     "test:cloudflare:server": "npx wrangler deploy -c wrangler-server.toml && ./bin/connectconformance.js --mode server --conf conformance-cloudflare-server.yaml -v ./bin/conformancecloudflareserver.js"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",
     "@connectrpc/connect": "1.4.0",

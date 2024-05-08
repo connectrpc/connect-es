@@ -13,8 +13,7 @@
     "./packages/connect-web-bench",
     "./packages/example",
     "./packages/connect-migrate",
-    "./packages/connect-conformance",
-    "./packages/conformance"
+    "./packages/connect-conformance"
   ],
   "type": "module",
   "engineStrict": true,
