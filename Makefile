@@ -213,15 +213,15 @@ testconformance: testnodeconformance testwebconformance
 .PHONY: testnodeconformance
 testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-conformance
 	# Server
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance.js --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver.js
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance.js --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver.js
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance.js --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver.js
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance.js --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver.js
+	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
+	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
+	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
+	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
 	# Client
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance.js --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient.js
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance.js --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient.js
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance.js --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient.js
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance.js --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient.js
+	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
+	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
+	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
+	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 
 .PHONY: testwebconformance
 testwebconformance: $(BUILD)/connect-conformance
