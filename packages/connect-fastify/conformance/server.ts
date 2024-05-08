@@ -28,7 +28,7 @@ import {
   ServerCompatResponse,
   ServerStreamRequest,
   UnaryRequest,
-} from "@connectrpc/conformance";
+} from "@connectrpc/connect-conformance";
 import {
   fastify,
   FastifyHttpOptions,

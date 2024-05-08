@@ -212,7 +212,7 @@ testconformance: testnodeconformance testwebconformance
 
 .PHONY: testnodeconformance
 testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-conformance
-	# Server
+	# Vanilla Node Server
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
@@ -222,6 +222,10 @@ testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(B
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
 	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
+	# Express Server
+	npm run -w packages/connect-express conformance
+	# Fastify Server
+	npm run -w packages/connect-fastify conformance
 
 .PHONY: testwebconformance
 testwebconformance: $(BUILD)/connect-conformance
