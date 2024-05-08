@@ -6,14 +6,12 @@
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
     "clean": "rm -rf ./dist/*",
     "build": "tsc --project tsconfig.json --module ES2015 --outDir ./dist",
-    "test:web:chrome": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser chrome --headless",
-    "test:web:firefox": "./bin/connectconformance --mode client --conf conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./bin/conformancewebclient --browser firefox --headless",
-    "test:web:safari": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser safari --headless",
-    "test:web:node": "./bin/connectconformance --mode client --conf conformance-web-node.yaml -v -- ./bin/conformancewebclient --browser node",
-    "test:web": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient",
-    "test:node:server": "./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver",
-    "test:node:client": "./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient",
-    "test:cloudflare:server": "npx wrangler deploy -c wrangler-server.toml && ./bin/connectconformance --mode server --conf conformance-cloudflare-server.yaml -v ./bin/conformancecloudflareserver"
+    "test:web:chrome": "./bin/connectconformance.js --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient.js --browser chrome --headless",
+    "test:web:firefox": "./bin/connectconformance.js --mode client --conf conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./bin/conformancewebclient.js --browser firefox --headless",
+    "test:web:safari": "./bin/connectconformance.js --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient.js --browser safari --headless",
+    "test:web:node": "./bin/connectconformance.js --mode client --conf conformance-web-node.yaml -v -- ./bin/conformancewebclient.js --browser node",
+    "test:web": "./bin/connectconformance.js --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient.js",
+    "test:cloudflare:server": "npx wrangler deploy -c wrangler-server.toml && ./bin/connectconformance.js --mode server --conf conformance-cloudflare-server.yaml -v ./bin/conformancecloudflareserver.js"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",

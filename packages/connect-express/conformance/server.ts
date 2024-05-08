@@ -29,7 +29,7 @@ import {
   ServerCompatResponse,
   ServerStreamRequest,
   UnaryRequest,
-} from "@connectrpc/conformance";
+} from "@connectrpc/connect-conformance";
 import express from "express";
 import { expressConnectMiddleware } from "@connectrpc/connect-express";
 
