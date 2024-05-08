@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { run } from "../dist/esm/cloudflare/server.js";
+import { run } from "../dist/cloudflare/server.js";
 
 run();

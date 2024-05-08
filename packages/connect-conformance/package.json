@@ -4,10 +4,8 @@
   "type": "module",
   "scripts": {
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
-    "clean": "rm -rf ./dist/cjs/*",
-    "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
-    "build:esm": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
+    "clean": "rm -rf ./dist/*",
+    "build": "tsc --project tsconfig.json --module ES2015 --outDir ./dist",
     "test:web:chrome": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser chrome --headless",
     "test:web:firefox": "./bin/connectconformance --mode client --conf conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./bin/conformancewebclient --browser firefox --headless",
     "test:web:safari": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser safari --headless",

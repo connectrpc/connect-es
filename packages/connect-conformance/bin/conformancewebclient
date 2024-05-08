@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { run } from "../dist/esm/web/client.js";
+import { run } from "../dist/web/client.js";
 
 run();
