@@ -91,7 +91,7 @@ export function run() {
     case HTTPVersion.HTTP_VERSION_1:
       if (req.useTls && req.serverCreds !== undefined) {
         // HTTPS/1.1 server
-        let opts: FastifyHttpsOptions<https.Server> = {
+        const opts: FastifyHttpsOptions<https.Server> = {
           https: {
             ...httpsConfig,
           },
@@ -106,7 +106,7 @@ export function run() {
     case HTTPVersion.HTTP_VERSION_2:
       if (req.useTls && req.serverCreds !== undefined) {
         // HTTP/2 server
-        let opts: FastifyHttp2SecureOptions<http2.Http2SecureServer> = {
+        const opts: FastifyHttp2SecureOptions<http2.Http2SecureServer> = {
           http2: true,
           https: httpsConfig,
         };
