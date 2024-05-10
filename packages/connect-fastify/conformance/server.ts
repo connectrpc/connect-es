@@ -64,27 +64,38 @@ export function run() {
     | FastifyInstance<http2.Http2Server>
     | FastifyInstance<http2.Http2SecureServer>;
 
+  let httpsConfig: {
+    cert?: string;
+    key?: string;
+    ca?: Buffer;
+    requestCert?: true;
+    rejectUnauthorized?: true;
+    http2?: boolean;
+  } = {};
+  if (req.useTls && req.serverCreds !== undefined) {
+    httpsConfig = {
+      key: req.serverCreds.key.toString(),
+      cert: req.serverCreds.cert.toString(),
+    };
+    if (req.clientTlsCert.length > 0) {
+      httpsConfig = {
+        ...httpsConfig,
+        requestCert: true,
+        rejectUnauthorized: true,
+        ca: Buffer.from(req.clientTlsCert),
+      };
+    }
+  }
+
   switch (req.httpVersion) {
     case HTTPVersion.HTTP_VERSION_1:
       if (req.useTls && req.serverCreds !== undefined) {
         // HTTPS/1.1 server
         let opts: FastifyHttpsOptions<https.Server> = {
           https: {
-            key: req.serverCreds.key.toString(),
-            cert: req.serverCreds.cert.toString(),
+            ...httpsConfig,
           },
         };
-        if (req.clientTlsCert.length > 0) {
-          opts = {
-            ...opts,
-            https: {
-              ...opts.https,
-              requestCert: true,
-              rejectUnauthorized: true,
-              ca: Buffer.from(req.clientTlsCert),
-            },
-          };
-        }
         server = fastify(opts).register(fastifyConnectPlugin, pluginOpts);
       } else {
         // HTTP/1.1 server
@@ -97,22 +108,8 @@ export function run() {
         // HTTP/2 server
         let opts: FastifyHttp2SecureOptions<http2.Http2SecureServer> = {
           http2: true,
-          https: {
-            key: req.serverCreds.key.toString(),
-            cert: req.serverCreds.cert.toString(),
-          },
+          https: httpsConfig,
         };
-        if (req.clientTlsCert.length > 0) {
-          opts = {
-            ...opts,
-            https: {
-              ...opts.https,
-              requestCert: true,
-              rejectUnauthorized: true,
-              ca: Buffer.from(req.clientTlsCert),
-            },
-          };
-        }
         server = fastify(opts).register(fastifyConnectPlugin, pluginOpts);
       } else {
         // HTTP/2 over Cleartext server
