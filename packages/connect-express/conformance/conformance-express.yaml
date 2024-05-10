@@ -1,8 +1,12 @@
 features:
   versions:
     - HTTP_VERSION_1
+    # Express does not support HTTP/2
+    # - HTTP_VERSION_2
   protocols:
     - PROTOCOL_CONNECT
+    # We can't test gRPC unless we support HTTP/2
+    # - PROTOCOL_GRPC
     - PROTOCOL_GRPC_WEB
   codecs:
     - CODEC_PROTO
