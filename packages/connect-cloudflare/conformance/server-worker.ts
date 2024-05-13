@@ -15,10 +15,8 @@
 import { createWorkerHandler } from "./handler.js";
 import { createRegistry } from "@bufbuild/protobuf";
 
-import { default as routes } from "./routes.js";
-// import { routes } from "@connectrpc/connect-conformance";
-
 import {
+  routes,
   UnaryRequest,
   ServerStreamRequest,
   ClientStreamRequest,
