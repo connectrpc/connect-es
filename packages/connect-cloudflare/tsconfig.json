@@ -1,0 +1,7 @@
+{
+  "files": ["conformance/server-worker.ts"],
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true
+  },
+  "extends": "../../tsconfig.base.json"
+}

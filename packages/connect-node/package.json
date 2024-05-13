@@ -13,7 +13,10 @@
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
     "attw": "attw --pack",
-    "jasmine": "jasmine --config=jasmine.json"
+    "jasmine": "jasmine --config=jasmine.json",
+    "conformance": "npm run conformance:server && npm run conformance:client",
+    "conformance:server": "tsc --noEmit && ./conformance/bin/connectconformance --mode server --conf ./conformance/conformance-node.yaml -v ./conformance/bin/conformanceserver",
+    "conformance:client": "tsc --noEmit && ./conformance/bin/connectconformance --mode client --conf ./conformance/conformance-node.yaml -v ./conformance/bin/conformanceclient"
   },
   "type": "module",
   "main": "./dist/cjs/index.js",

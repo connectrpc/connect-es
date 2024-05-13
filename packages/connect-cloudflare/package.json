@@ -1,0 +1,27 @@
+{
+  "name": "@connectrpc/connect-cloudflare",
+  "private": true,
+  "bin": {
+    "conformancenodeserver": "bin/conformancenodeserver",
+    "conformancenodeclient": "bin/conformancenodeclient",
+    "conformancewebclient": "bin/conformancewebclient",
+    "conformancecloudflareserver": "bin/conformancecloudflareserver",
+    "connectconformance": "bin/connectconformance"
+  },
+  "scripts": {
+    "conformance": "npx wrangler deploy -c ./conformance/wrangler-server.toml && ./bin/connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v ./bin/conformanceserver"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^1.7.2",
+    "@connectrpc/connect": "1.4.0",
+    "@connectrpc/connect-node": "1.4.0",
+    "fflate": "^0.8.1",
+    "tar-stream": "^3.1.7",
+    "undici": "^5.28.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240329.0",
+    "wrangler": "^3.53.0",
+    "tsx": "^4.10.2"
+  }
+}
