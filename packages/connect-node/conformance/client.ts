@@ -16,10 +16,11 @@ import {
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
+  invoke,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
-import { invoke, createTransport } from "@connectrpc/connect-conformance/node";
+import { createTransport } from "@connectrpc/connect-conformance/node";
 
 export async function run() {
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {

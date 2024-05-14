@@ -13,6 +13,7 @@
 // limitations under the License.
 
 export { default as routes } from "./routes.js";
+export { default as invoke } from "./invoke.js";
 export {
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,

@@ -1,10 +1,6 @@
 {
   "name": "@connectrpc/connect-conformance",
   "private": true,
-  "bin": {
-    "conformancewebclient": "bin/conformancewebclient",
-    "connectconformance": "bin/connectconformance"
-  },
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
@@ -16,17 +12,19 @@
       "require": "./dist/cjs/node/index.js"
     }
   },
+  "typesVersions": {
+    "*": {
+      "node": [
+        "./dist/cjs/node/index.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
     "clean": "rm -rf ./dist/cjs/*",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs",
-    "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm && echo >./dist/esm/package.json '{\"type\":\"module\"}'",
-    "test:web:chrome": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser chrome --headless",
-    "test:web:firefox": "./bin/connectconformance --mode client --conf conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./bin/conformancewebclient --browser firefox --headless",
-    "test:web:safari": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser safari --headless",
-    "test:web:node": "./bin/connectconformance --mode client --conf conformance-web-node.yaml -v -- ./bin/conformancewebclient --browser node",
-    "test:web": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient"
+    "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm && echo >./dist/esm/package.json '{\"type\":\"module\"}'"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",
@@ -35,7 +33,6 @@
     "fflate": "^0.8.1",
     "tar-stream": "^3.1.7",
     "undici": "^5.28.4",
-    "webdriverio": "^8.36.1",
     "esbuild": "^0.20.0"
   },
   "devDependencies": {

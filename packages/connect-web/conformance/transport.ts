@@ -13,24 +13,22 @@
 // limitations under the License.
 
 import { createRegistry } from "@bufbuild/protobuf";
-import { ClientCompatRequest } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
+  ClientCompatRequest,
   Codec,
   HTTPVersion,
   Protocol,
   Compression as ConformanceCompression,
-} from "../gen/connectrpc/conformance/v1/config_pb.js";
-import {
-  createConnectTransport,
-  createGrpcWebTransport,
-} from "@connectrpc/connect-web";
-import {
   BidiStreamRequest,
   ClientStreamRequest,
   IdempotentUnaryRequest,
   ServerStreamRequest,
   UnaryRequest,
-} from "../gen/connectrpc/conformance/v1/service_pb.js";
+} from "@connectrpc/connect-conformance";
+import {
+  createConnectTransport,
+  createGrpcWebTransport,
+} from "@connectrpc/connect-web";
 
 export function createTransport(req: ClientCompatRequest) {
   let scheme = "http://";

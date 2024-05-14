@@ -14,11 +14,11 @@
 
 import { ConnectError } from "@connectrpc/connect";
 import {
+  invoke,
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-} from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import invoke from "../invoke.js";
+} from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
 
 declare global {

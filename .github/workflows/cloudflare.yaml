@@ -19,9 +19,9 @@ jobs:
           path: |
             ~/.tmp
             .tmp
-          key: ${{ runner.os }}-connect-web-ci-${{ hashFiles('Makefile') }}
+          key: ${{ runner.os }}-connect-conformance-ci-${{ hashFiles('Makefile') }}
           restore-keys: |
-            ${{ runner.os }}-connect-web-ci-
+            ${{ runner.os }}-connect-conformance-ci-
       - name: build
         run: make build
       - name: test
