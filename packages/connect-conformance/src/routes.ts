@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import type { ConnectRouter, HandlerContext } from "@connectrpc/connect";
-import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 import { Any } from "@bufbuild/protobuf";
+import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 import {
   ConformancePayload,
   ConformancePayload_RequestInfo,

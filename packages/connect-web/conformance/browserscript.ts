@@ -19,7 +19,7 @@ import {
   ClientCompatResponse,
   ClientErrorResult,
 } from "@connectrpc/connect-conformance";
-import { createTransport } from "./transport.js";
+import { createTransport } from "@connectrpc/connect-conformance/web";
 
 declare global {
   interface Window {
@@ -28,7 +28,7 @@ declare global {
 }
 
 // The main entry point into the browser code running in Puppeteer/headless Chrome.
-// This function is invoked by the page.evalulate call in grpcwebclient.
+// This function is invoked by the page.evaluate call in grpcwebclient.
 async function runTestCase(data: number[]): Promise<number[]> {
   const req = ClientCompatRequest.fromBinary(new Uint8Array(data));
   const res = new ClientCompatResponse({
