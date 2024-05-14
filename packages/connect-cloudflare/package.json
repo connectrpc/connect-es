@@ -2,10 +2,7 @@
   "name": "@connectrpc/connect-cloudflare",
   "private": true,
   "bin": {
-    "conformancenodeserver": "bin/conformancenodeserver",
-    "conformancenodeclient": "bin/conformancenodeclient",
-    "conformancewebclient": "bin/conformancewebclient",
-    "conformancecloudflareserver": "bin/conformancecloudflareserver",
+    "conformanceserver": "bin/conformanceserver",
     "connectconformance": "bin/connectconformance"
   },
   "scripts": {

@@ -13,13 +13,10 @@
 // limitations under the License.
 
 export { default as routes } from "./routes.js";
-export { run } from "./conformance.js";
 export {
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "./protocol.js";
-export { default as invoke } from "./invoke.js";
-export { createTransport } from "./node/transport.js";
 
 export * from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 export * from "./gen/connectrpc/conformance/v1/config_pb.js";

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { run } from "@connectrpc/connect-conformance";
+import { run } from "@connectrpc/connect-conformance/node";
 
 run();
