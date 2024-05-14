@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createWorkerHandler } from "./handler.js";
 import { createRegistry } from "@bufbuild/protobuf";
-
 import {
   routes,
   UnaryRequest,
@@ -23,6 +21,7 @@ import {
   BidiStreamRequest,
   IdempotentUnaryRequest,
 } from "@connectrpc/connect-conformance";
+import { createWorkerHandler } from "./handler.js";
 import { compressionDeflate, compressionGzip } from "./compression.js";
 
 export default createWorkerHandler({

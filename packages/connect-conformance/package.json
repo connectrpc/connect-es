@@ -26,8 +26,7 @@
     "test:web:firefox": "./bin/connectconformance --mode client --conf conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./bin/conformancewebclient --browser firefox --headless",
     "test:web:safari": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser safari --headless",
     "test:web:node": "./bin/connectconformance --mode client --conf conformance-web-node.yaml -v -- ./bin/conformancewebclient --browser node",
-    "test:web": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient",
-    "test:cloudflare:server": "npx wrangler deploy -c wrangler-server.toml && ./bin/connectconformance --mode server --conf conformance-cloudflare-server.yaml -v ./bin/conformancecloudflareserver"
+    "test:web": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",

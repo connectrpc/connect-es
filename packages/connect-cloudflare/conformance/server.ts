@@ -24,7 +24,7 @@ export function run() {
     readFileSync(process.stdin.fd).subarray(4),
   );
   // Keep the process alive for the duration of the test because
-  // we do not start the server here  but in the script "test:cloudflare:server"
+  // we do not start the server here  but in the script "conformance:server"
   //  before starting the test. We have limited control over the what can be
   // configured in the cloudflare worker environment. Except for the
   // requestMessageLimit the server ends up being the same.
