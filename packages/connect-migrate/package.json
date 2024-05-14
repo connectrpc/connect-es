@@ -27,7 +27,8 @@
     "semver": "^7.5.4"
   },
   "devDependencies": {
-    "@types/jscodeshift": "0.11.11"
+    "@types/jscodeshift": "0.11.11",
+    "@types/semver": "^7.5.8"
   },
   "files": [
     "dist",
