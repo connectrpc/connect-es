@@ -17,6 +17,7 @@ import * as tls from "node:tls";
 import {
   ServerCompatRequest,
   ServerCompatResponse,
+  writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
 
 export function run() {
@@ -39,9 +40,5 @@ export function run() {
       ? Buffer.from(tls.rootCertificates.join("\n"))
       : undefined,
   });
-  const data = res.toBinary();
-  const size = Buffer.alloc(4);
-  size.writeUInt32BE(data.byteLength);
-  process.stdout.write(size);
-  process.stdout.write(data);
+  process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
 }

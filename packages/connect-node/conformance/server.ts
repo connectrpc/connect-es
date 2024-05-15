@@ -25,6 +25,7 @@ import * as net from "node:net";
 import { createRegistry } from "@bufbuild/protobuf";
 import {
   routes,
+  writeSizeDelimitedBuffer,
   BidiStreamRequest,
   ClientStreamRequest,
   HTTPVersion,
@@ -108,10 +109,6 @@ export function run() {
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    const data = res.toBinary();
-    const size = Buffer.alloc(4);
-    size.writeUInt32BE(data.byteLength);
-    process.stdout.write(size);
-    process.stdout.write(data);
+    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
   });
 }

@@ -2,8 +2,9 @@
   "name": "@connectrpc/connect-cloudflare",
   "private": true,
   "scripts": {
-    "conformance": "tsc --noEmit && npm run conformance:server",
-    "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v ./bin/conformanceserver"
+    "conformance": "tsc --noEmit && npm run conformance:server && npm run conformance:client",
+    "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v ./bin/conformanceserver",
+    "conformance:client": "npx wrangler deploy -c ./conformance/wrangler-client.toml && connectconformance --mode client --conf ./conformance/conformance-cloudflare-client.yaml -v --known-failing 'Connect Compressed Error and End-Stream/*/TLS:true/error/compressed' --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY  -- ./bin/conformanceclient"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",

@@ -1,0 +1,28 @@
+features:
+  versions:
+    - HTTP_VERSION_1
+    - HTTP_VERSION_2
+  protocols:
+    - PROTOCOL_CONNECT
+    # - PROTOCOL_GRPC Cloudflare turns gRPC-Web requests to gRPC, if the invoking request is gRPC. It doesn't directly support gRPC.
+    - PROTOCOL_GRPC_WEB
+  codecs:
+    - CODEC_PROTO
+    - CODEC_JSON
+  compressions:
+    - COMPRESSION_IDENTITY
+    - COMPRESSION_GZIP
+    - COMPRESSION_DEFLATE
+  supportsTls: true
+  supportsTlsClientCerts: false
+  supportsConnectGet: true
+  supportsHalfDuplexBidiOverHttp1: false
+  supportsMessageReceiveLimit: false
+excludeCases:
+  - useTls: false
+  - protocol: PROTOCOL_CONNECT
+    streamType: STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
+  - protocol: PROTOCOL_GRPC_WEB
+    streamType: STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
+  - compression: COMPRESSION_DEFLATE
+    streamType: STREAM_TYPE_UNARY

@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     if: github.event_name != 'pull_request' || startsWith(github.event.pull_request.title, 'Release ')
-    runs-on: ubuntu-22.04
+    runs-on: conformance
     steps:
       - uses: actions/checkout@v4
       - name: cache
@@ -23,9 +23,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-connect-conformance-ci-
       - name: build
-        run: make build
+        run: make .tmp/build/connect-conformance
       - name: test
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_WORKERS_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_SERVER_HOST}}
+          CLOUDFLARE_WORKERS_CLIENT_HOST: ${{ vars.CLOUDFLARE_WORKERS_CLIENT_HOST}}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST}}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_KEY }}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_CERT }}
+          TEMP: .tmp/build
         run: make testcloudflareconformance
