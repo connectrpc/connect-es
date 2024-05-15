@@ -36,8 +36,8 @@ Client tests on Cloudflare require a live server with valid TLS. To run the test
 * Provision a VM with a static public IP address.
 * Reserve a domain (can be a subdomain) and point it to the public IP address from the previous step.
 * Use [certbot](https://certbot.eff.org/) to setup automatic certificate renewal for the domain.
-* Using iptables, redirect traffic from port 443 to a non-priviliged port say 8181.
+* Using iptables, redirect traffic from port 443 to a non-privileged port say 8181.
 * Create a dedicated user to run the action runner.
 * Make sure the user has the necessary permissions to run the conformance runner, read the cert and key that certbot maintains.
 * Follow the steps [here](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners) to add a self-hosted runner to the repository.
-* Cofigure the runner app to [run as a service](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/configuring-the-self-hosted-runner-application-as-a-service) with the created user.
+* Configure the runner app to [run as a service](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/configuring-the-self-hosted-runner-application-as-a-service) with the created user.

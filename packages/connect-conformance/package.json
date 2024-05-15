@@ -23,7 +23,7 @@
     "test:node:server": "./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver",
     "test:node:client": "./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient",
     "test:cloudflare:server": "npx wrangler deploy -c wrangler-server.toml && ./bin/connectconformance --mode server --conf conformance-cloudflare-server.yaml -v -- ./bin/conformancecloudflareserver",
-    "test:cloudflare:client": "npx wrangler deploy -c wrangler-client.toml && ./bin/connectconformance --mode client --conf conformance-cloudflare-client.yaml -v --known-failing 'Connect Compressed Error and End-Stream/*/TLS:true/error/compressed' --bind 0.0.0.0 --port 8181 --cert $CLOUDFALRE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFALRE_WORKERS_REFERENCE_SERVER_KEY  -- ./bin/conformancecloudflareclient"
+    "test:cloudflare:client": "npx wrangler deploy -c wrangler-client.toml && ./bin/connectconformance --mode client --conf conformance-cloudflare-client.yaml -v --known-failing 'Connect Compressed Error and End-Stream/*/TLS:true/error/compressed' --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY  -- ./bin/conformancecloudflareclient"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",
