@@ -6,10 +6,10 @@ It uses the [conformance runner](https://github.com/connectrpc/conformance/relea
 
 ## Running conformance tests
 
-`npm run conformance` - runs all conformance tests for client and server.
+Run `make testnodeconformance` to run all Node conformance tests for both server and client. 
+The above command is also available as an npm script: `npm run conformance`.
 
-`npm run conformance:client` - runs only client conformance tests.
+The individual tests for server and client can also be run via npm:
 
-`npm run conformance:server` - runs only server conformance tests.
-
-
+`npm run conformance:server`
+`npm run conformance:client`
