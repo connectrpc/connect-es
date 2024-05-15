@@ -16,7 +16,7 @@ The package exposes three paths for imports:
   Connect-Node transport. Note that since Node is used to initiate the conformance runner, the main `run` entrypoint is 
   also located at this path.
 * `@connectrpc/connect-conformance/web` - contains exports meant to run inside a web environment (i.e. a browser) such
-  creating a Connect-Web transport..
+  as creating a Connect-Web transport.
 
 ## Updating the conformance version
 

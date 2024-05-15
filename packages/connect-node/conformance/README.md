@@ -4,8 +4,6 @@ This directory provides conformance test coverage for @connectrpc/connect-node f
 
 It uses the [conformance runner](https://github.com/connectrpc/conformance/releases) to run the tests.
 
-The [conformance](conformance) directory contains the entry points for tests. 
-
 ## Running conformance tests
 
 `npm run conformance` - runs all conformance tests for client and server.
