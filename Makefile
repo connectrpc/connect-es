@@ -114,7 +114,7 @@ $(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUI
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-conformance: $(BUILD)/connect-node $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
+$(BUILD)/connect-conformance: $(BUILD)/connect-node $(BUILD)/connect-web $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
 	npm run -w packages/connect-conformance clean
 	npm run -w packages/connect-conformance build
 	@mkdir -p $(@D)
@@ -240,6 +240,7 @@ testwebconformancelocal: $(BUILD)/connect-conformance
 .PHONY: testcloudflareconformance
 testcloudflareconformance: $(BUILD)/connect-conformance
 	npm run -w packages/connect-conformance test:cloudflare:server
+	npm run -w packages/connect-conformance test:cloudflare:client
 
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
