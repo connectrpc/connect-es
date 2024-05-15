@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "conformance": "tsc --noEmit && npm run conformance:server",
-    "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && ./bin/connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v ./bin/conformanceserver"
+    "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v ./bin/conformanceserver"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",
@@ -12,6 +12,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240329.0",
     "wrangler": "^3.53.0",
-    "tsx": "^4.10.2"
+    "tsx": "^4.10.2",
+    "@connectrpc/connect-conformance": "^1.4.0"
   }
 }

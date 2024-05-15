@@ -24,7 +24,7 @@ import {
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
-import { createTransport } from "@connectrpc/connect-conformance/web";
+import { createTransport } from "./transport.js";
 
 const { values: flags } = parseArgs({
   args: process.argv.slice(2),

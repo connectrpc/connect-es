@@ -13,11 +13,11 @@
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
     "attw": "attw --pack",
-    "conformance:client:chrome": "./conformance/bin/connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/bin/conformanceclient --browser chrome --headless",
-    "conformance:client:firefox": "./conformance/bin/connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./conformance/bin/conformanceclient --browser firefox --headless",
-    "conformance:client:safari": "./conformance/bin/connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/bin/conformanceclient --browser safari --headless",
-    "conformance:client:node": "./conformance/bin/connectconformance --mode client --conf ./conformance/conformance-web-node.yaml -v -- ./conformance/bin/conformanceclient --browser node",
-    "conformance:client:browser": "./conformance/bin/connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/bin/conformanceclient"
+    "conformance:client:chrome": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/bin/conformanceclient --browser chrome --headless",
+    "conformance:client:firefox": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./conformance/bin/conformanceclient --browser firefox --headless",
+    "conformance:client:safari": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/bin/conformanceclient --browser safari --headless",
+    "conformance:client:node": "connectconformance --mode client --conf ./conformance/conformance-web-node.yaml -v -- ./conformance/bin/conformanceclient --browser node",
+    "conformance:client:browser": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/bin/conformanceclient"
   },
   "type": "module",
   "sideEffects": false,
@@ -29,7 +29,8 @@
     }
   },
   "devDependencies": {
-    "webdriverio": "^8.36.1"
+    "webdriverio": "^8.36.1",
+    "@connectrpc/connect-conformance": "^1.4.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.4.2",

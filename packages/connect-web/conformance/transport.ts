@@ -13,29 +13,22 @@
 // limitations under the License.
 
 import { createRegistry } from "@bufbuild/protobuf";
-import { ClientCompatRequest } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import {
-  Codec,
-  HTTPVersion,
-  Protocol,
-  Compression as ConformanceCompression,
-} from "../gen/connectrpc/conformance/v1/config_pb.js";
 import {
   createConnectTransport,
-  createGrpcTransport,
-  compressionGzip,
-  compressionBrotli,
   createGrpcWebTransport,
-} from "@connectrpc/connect-node";
-import type { Compression } from "@connectrpc/connect/protocol";
+} from "@connectrpc/connect-web";
 import {
   BidiStreamRequest,
+  ClientCompatRequest,
   ClientStreamRequest,
+  Codec,
+  Compression as ConformanceCompression,
+  HTTPVersion,
   IdempotentUnaryRequest,
+  Protocol,
   ServerStreamRequest,
   UnaryRequest,
-} from "../gen/connectrpc/conformance/v1/service_pb.js";
-import * as http2 from "node:http2";
+} from "@connectrpc/connect-conformance";
 
 export function createTransport(req: ClientCompatRequest) {
   let scheme = "http://";
@@ -44,32 +37,22 @@ export function createTransport(req: ClientCompatRequest) {
   }
   const baseUrl = `${scheme}${req.host}:${req.port}`;
 
-  let httpVersion: "1.1" | "2";
   switch (req.httpVersion) {
     case HTTPVersion.HTTP_VERSION_1:
-      httpVersion = "1.1";
-      break;
     case HTTPVersion.HTTP_VERSION_2:
-      httpVersion = "2";
       break;
     case HTTPVersion.HTTP_VERSION_3:
+      // We can't enforce this but conformance runner expects test to be run on H/3 but advertises H/1 and H/2
+      //
+      // TODO: Once it is fixed in conformance runner, we should remove this check.
       throw new Error("HTTP/3 is not supported");
     default:
       throw new Error("Unknown HTTP version");
   }
 
-  let sendCompression: Compression | undefined = undefined;
-  let acceptCompression: Compression[] = [];
-
   switch (req.compression) {
     case ConformanceCompression.GZIP:
-      sendCompression = compressionGzip;
-      acceptCompression = [compressionGzip];
-      break;
     case ConformanceCompression.BR:
-      sendCompression = compressionBrotli;
-      acceptCompression = [compressionBrotli];
-      break;
     case ConformanceCompression.DEFLATE:
     case ConformanceCompression.SNAPPY:
     case ConformanceCompression.ZSTD:
@@ -79,22 +62,10 @@ export function createTransport(req: ClientCompatRequest) {
       break;
   }
 
-  let clientCerts: Pick<http2.SecureClientSessionOptions, "cert" | "key"> = {};
-  if (req.clientTlsCreds !== undefined) {
-    clientCerts = {
-      key: Buffer.from(req.clientTlsCreds.key),
-      cert: Buffer.from(req.clientTlsCreds.cert),
-    };
-  }
-
   const sharedOptions = {
     baseUrl,
-    httpVersion,
     useBinaryFormat: req.codec === Codec.PROTO,
-    sendCompression,
-    acceptCompression: acceptCompression,
     defaultTimeoutMs: req.timeoutMs,
-    compressMinBytes: -1, // To account for empty messages
     jsonOptions: {
       typeRegistry: createRegistry(
         UnaryRequest,
@@ -104,13 +75,8 @@ export function createTransport(req: ClientCompatRequest) {
         IdempotentUnaryRequest,
       ),
     },
-    nodeOptions: {
-      ca: Buffer.from(req.serverTlsCert),
-      ...clientCerts,
-    },
   } satisfies
     | Parameters<typeof createConnectTransport>[0]
-    | Parameters<typeof createGrpcTransport>[0]
     | Parameters<typeof createGrpcWebTransport>[0];
   switch (req.protocol) {
     case Protocol.CONNECT:
@@ -118,10 +84,11 @@ export function createTransport(req: ClientCompatRequest) {
         ...sharedOptions,
         useHttpGet: req.useGetHttpMethod,
       });
-    case Protocol.GRPC:
-      return createGrpcTransport({ ...sharedOptions });
+
     case Protocol.GRPC_WEB:
       return createGrpcWebTransport({ ...sharedOptions });
+    case Protocol.GRPC:
+      throw new Error("GRPC is not supported");
     default:
       throw new Error("Unknown protocol");
   }

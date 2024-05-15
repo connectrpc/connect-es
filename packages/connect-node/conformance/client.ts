@@ -20,7 +20,7 @@ import {
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
-import { createTransport } from "@connectrpc/connect-conformance/node";
+import { createTransport } from "./transport.js";
 
 export async function run() {
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {

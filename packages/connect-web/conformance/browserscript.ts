@@ -19,7 +19,7 @@ import {
   ClientCompatResponse,
   ClientErrorResult,
 } from "@connectrpc/connect-conformance";
-import { createTransport } from "@connectrpc/connect-conformance/web";
+import { createTransport } from "./transport.js";
 
 declare global {
   interface Window {
