@@ -16,7 +16,9 @@ import {
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-} from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
+  readSizeDelimitedBuffers,
+  writeSizeDelimitedBuffer,
+} from "@connectrpc/connect-conformance";
 import {
   createConnectTransport,
   createGrpcTransport,
@@ -26,10 +28,6 @@ import { createPromiseClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { InvokeService } from "./invoke-service.js";
 import { parseArgs } from "node:util";
-import {
-  readSizeDelimitedBuffers,
-  writeSizeDelimitedBuffer,
-} from "../protocol.js";
 
 const { values: flags } = parseArgs({
   args: process.argv.slice(2),
