@@ -13,7 +13,7 @@ Run `make testwebconformance` to run all conformance tests in the following head
 * Chrome
 * Firefox
 * Node 
-* Safari (only if running in OSX. Safari requires users to enable the `Allow Remote Automation` option in Safari's Develop menu. 
+* Safari (only if running in OSX. Safari requires users to enable the `Allow Remote Automation` option in Safari's Develop menu)
 
 The individual tests can also be run via npm:
 
