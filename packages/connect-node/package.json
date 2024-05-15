@@ -15,8 +15,8 @@
     "attw": "attw --pack",
     "jasmine": "jasmine --config=jasmine.json",
     "conformance": "npm run conformance:server && npm run conformance:client",
-    "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v ./conformance/bin/conformanceserver",
-    "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v ./conformance/bin/conformanceclient"
+    "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v ./conformance/server.ts",
+    "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v ./conformance/client.ts"
   },
   "type": "module",
   "main": "./dist/cjs/index.js",

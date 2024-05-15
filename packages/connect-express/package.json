@@ -13,7 +13,7 @@
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
     "attw": "attw --pack",
-    "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-express.yaml -v ./conformance/bin/conformanceserver"
+    "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-express.yaml -v ./conformance/server.ts"
   },
   "type": "module",
   "sideEffects": false,
