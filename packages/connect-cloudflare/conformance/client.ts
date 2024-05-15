@@ -64,4 +64,4 @@ export async function run() {
     process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
   }
 }
-run();
+void run();

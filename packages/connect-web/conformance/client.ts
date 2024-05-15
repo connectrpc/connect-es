@@ -124,4 +124,4 @@ async function buildBrowserScript() {
   }
   return buildResult.outputFiles[0].text;
 }
-run();
+void run();
