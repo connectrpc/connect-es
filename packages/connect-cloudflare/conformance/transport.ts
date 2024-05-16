@@ -33,7 +33,7 @@ import type { Compression } from "@connectrpc/connect/protocol";
 import { compressionDeflate, compressionGzip } from "./compression.js";
 
 /**
- * Configure a transport for a client from @connectrpc/connect-node under test.
+ * Configure a transport for a client running as a Cloudflare Worker under test.
  *
  * The conformance test runner describes the call we should make in the
  * message connectrpc.conformance.v1.ClientCompatRequest. We create a transport
