@@ -12,24 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
-import type { ServiceType } from "@bufbuild/protobuf";
-import {
-  ClientCompatRequest,
-  ClientCompatResponse,
-} from "../gen/connectrpc/conformance/v1/client_compat_pb";
+export { default as routes } from "./routes.js";
+export { default as invoke } from "./invoke.js";
+export {
+  readSizeDelimitedBuffers,
+  writeSizeDelimitedBuffer,
+} from "./protocol.js";
 
-/**
- * Used to relay the test request to the worker.
- */
-export const InvokeService = {
-  typeName: "conformance.v1.InvokeService",
-  methods: {
-    invoke: {
-      name: "Invoke",
-      kind: MethodKind.Unary,
-      I: ClientCompatRequest,
-      O: ClientCompatResponse,
-    },
-  },
-} satisfies ServiceType;
+export * from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
+export * from "./gen/connectrpc/conformance/v1/config_pb.js";
+export * from "./gen/connectrpc/conformance/v1/server_compat_pb.js";
+export * from "./gen/connectrpc/conformance/v1/service_connect.js";
+export * from "./gen/connectrpc/conformance/v1/service_pb.js";
+export * from "./gen/connectrpc/conformance/v1/suite_pb.js";

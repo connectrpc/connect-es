@@ -1,3 +1,5 @@
+#!/usr/bin/env -S npx tsx
+
 // Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,15 +19,13 @@ import type { RemoteOptions } from "webdriverio";
 import * as esbuild from "esbuild";
 import { parseArgs } from "node:util";
 import {
-  readSizeDelimitedBuffers,
-  writeSizeDelimitedBuffer,
-} from "../protocol.js";
-import {
+  invoke,
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-} from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import invoke from "../invoke.js";
+  readSizeDelimitedBuffers,
+  writeSizeDelimitedBuffer,
+} from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
 
 const { values: flags } = parseArgs({
@@ -36,7 +36,14 @@ const { values: flags } = parseArgs({
   },
 });
 
-export async function run() {
+void main();
+/**
+ * This program implements a client under test for the connect conformance test
+ * runner. It reads ClientCompatRequest messages from stdin. For each request,
+ * it makes a call, and reports the result with a ClientCompatResponse message
+ * to stdout.
+ */
+async function main() {
   if (flags.browser !== "node") {
     await runBrowser();
   }
@@ -129,7 +136,7 @@ async function runBrowser() {
 
 async function buildBrowserScript() {
   const buildResult = await esbuild.build({
-    entryPoints: ["./src/web/browserscript.ts"],
+    entryPoints: ["./conformance/browserscript.ts"],
     bundle: true,
     write: false,
   });

@@ -14,11 +14,11 @@
 
 import { ConnectError } from "@connectrpc/connect";
 import {
+  invoke,
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-} from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import invoke from "../invoke.js";
+} from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
 
 declare global {
@@ -28,7 +28,7 @@ declare global {
 }
 
 // The main entry point into the browser code running in Puppeteer/headless Chrome.
-// This function is invoked by the page.evalulate call in grpcwebclient.
+// This function is invoked by the page.evaluate call in grpcwebclient.
 async function runTestCase(data: number[]): Promise<number[]> {
   const req = ClientCompatRequest.fromBinary(new Uint8Array(data));
   const res = new ClientCompatResponse({

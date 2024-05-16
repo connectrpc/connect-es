@@ -1,3 +1,5 @@
+#!/usr/bin/env -S npx tsx
+
 // Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +18,21 @@ import {
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-} from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import invoke from "../invoke.js";
-import {
+  invoke,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
-} from "../protocol.js";
+} from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
 
-export async function run() {
+void main();
+
+/**
+ * This program implements a client under test for the connect conformance test
+ * runner. It reads ClientCompatRequest messages from stdin. For each request,
+ * it makes a call, and reports the result with a ClientCompatResponse message
+ * to stdout.
+ */
+async function main() {
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const req = ClientCompatRequest.fromBinary(next);
     const res = new ClientCompatResponse({

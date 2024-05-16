@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createWorkerHandler } from "./handler.js";
 import { createRegistry } from "@bufbuild/protobuf";
-
-import routes from "../routes.js";
 import {
+  routes,
   UnaryRequest,
   ServerStreamRequest,
   ClientStreamRequest,
   BidiStreamRequest,
   IdempotentUnaryRequest,
-} from "../gen/connectrpc/conformance/v1/service_pb.js";
+} from "@connectrpc/connect-conformance";
+import { createWorkerHandler } from "./handler.js";
 import { compressionDeflate, compressionGzip } from "./compression.js";
 
 export default createWorkerHandler({

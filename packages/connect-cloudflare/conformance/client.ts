@@ -1,3 +1,5 @@
+#!/usr/bin/env -S npx tsx
+
 // Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +18,9 @@ import {
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-} from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
+  readSizeDelimitedBuffers,
+  writeSizeDelimitedBuffer,
+} from "@connectrpc/connect-conformance";
 import {
   createConnectTransport,
   createGrpcTransport,
@@ -26,10 +30,6 @@ import { createPromiseClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { InvokeService } from "./invoke-service.js";
 import { parseArgs } from "node:util";
-import {
-  readSizeDelimitedBuffers,
-  writeSizeDelimitedBuffer,
-} from "../protocol.js";
 
 const { values: flags } = parseArgs({
   args: process.argv.slice(2),
@@ -41,7 +41,15 @@ const { values: flags } = parseArgs({
   },
 });
 
-export async function run() {
+void main();
+
+/**
+ * This program implements a client under test for the connect conformance test
+ * runner. It reads ClientCompatRequest messages from stdin. For each request,
+ * it makes a call, and reports the result with a ClientCompatResponse message
+ * to stdout.
+ */
+async function main() {
   const workerUrl = `https://${process.env["CLOUDFLARE_WORKERS_CLIENT_HOST"]}/`;
   const transportOptions = { baseUrl: workerUrl, httpVersion: "2" } as const;
   let transport: Transport;

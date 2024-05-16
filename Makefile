@@ -211,36 +211,31 @@ testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/conne
 testconformance: testnodeconformance testwebconformance
 
 .PHONY: testnodeconformance
-testnodeconformance: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-conformance
-	# Server
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver
-	# Client
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node16 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node18 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node20 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
-	cd packages/connect-conformance && PATH="$(abspath $(BIN)):$(PATH)" node21 ./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient
+testnodeconformance: $(BUILD)/connect-conformance $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express
+	# Vanilla Node Server and Client
+	npm run -w packages/connect-node conformance
+	# Express Server
+	npm run -w packages/connect-express conformance
+	# Fastify Server
+	npm run -w packages/connect-fastify conformance
 
 .PHONY: testwebconformance
 testwebconformance: $(BUILD)/connect-conformance
-	npm run -w packages/connect-conformance test:web:chrome
-	npm run -w packages/connect-conformance test:web:firefox
-	npm run -w packages/connect-conformance test:web:node
+	npm run -w packages/connect-web conformance:client:chrome
+	npm run -w packages/connect-web conformance:client:firefox
+	npm run -w packages/connect-web conformance:client:node
 	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
 ifeq ($(NODE_OS),darwin)
-		npm run -w packages/connect-conformance test:web:safari
+	npm run -w packages/connect-web conformance:client:safari
 endif
 
 .PHONY: testwebconformancelocal
 testwebconformancelocal: $(BUILD)/connect-conformance
-	npm run -w packages/connect-conformance test:web -- --browser $(CONFORMANCE_BROWSER)
+	npm run -w packages/connect-web conformance:client:browser -- --browser $(CONFORMANCE_BROWSER)
 
 .PHONY: testcloudflareconformance
 testcloudflareconformance: $(BUILD)/connect-conformance
-	npm run -w packages/connect-conformance test:cloudflare:server
-	npm run -w packages/connect-conformance test:cloudflare:client
+	npm run -w packages/connect-cloudflare conformance
 
 .PHONY: testwebnode
 testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test

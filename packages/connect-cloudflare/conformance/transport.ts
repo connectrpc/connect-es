@@ -13,20 +13,18 @@
 // limitations under the License.
 
 import { createRegistry } from "@bufbuild/protobuf";
-import { ClientCompatRequest } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import {
-  Codec,
-  HTTPVersion,
-  Protocol,
-  Compression as ConformanceCompression,
-} from "../gen/connectrpc/conformance/v1/config_pb.js";
 import {
   BidiStreamRequest,
+  ClientCompatRequest,
   ClientStreamRequest,
   IdempotentUnaryRequest,
   ServerStreamRequest,
   UnaryRequest,
-} from "../gen/connectrpc/conformance/v1/service_pb.js";
+  Codec,
+  HTTPVersion,
+  Protocol,
+  Compression as ConformanceCompression,
+} from "@connectrpc/connect-conformance";
 import { createTransport as createConnectTransport } from "@connectrpc/connect/protocol-connect";
 import { createTransport as createGrpcTransport } from "@connectrpc/connect/protocol-grpc";
 import { createTransport as createGrpcWebTransport } from "@connectrpc/connect/protocol-grpc-web";
@@ -34,6 +32,14 @@ import { createFetchClient } from "@connectrpc/connect/protocol";
 import type { Compression } from "@connectrpc/connect/protocol";
 import { compressionDeflate, compressionGzip } from "./compression.js";
 
+/**
+ * Configure a transport for a client running as a Cloudflare Worker under test.
+ *
+ * The conformance test runner describes the call we should make in the
+ * message connectrpc.conformance.v1.ClientCompatRequest. We create a transport
+ * for the call, with the corresponding protocol, HTTP version, compression, and
+ * other details. If a configuration is not supported, we raise an error.
+ */
 export function createTransport(req: ClientCompatRequest) {
   let scheme = "https://";
   if (req.serverTlsCert.length > 0) {

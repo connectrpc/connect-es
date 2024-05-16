@@ -1,3 +1,5 @@
+#!/usr/bin/env -S npx tsx
+
 // Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,16 +19,24 @@ import * as tls from "node:tls";
 import {
   ServerCompatRequest,
   ServerCompatResponse,
-} from "../gen/connectrpc/conformance/v1/server_compat_pb.js";
-import { writeSizeDelimitedBuffer } from "../protocol.js";
+  writeSizeDelimitedBuffer,
+} from "@connectrpc/connect-conformance";
 
-export function run() {
+main();
+
+/**
+ * This program implements a server under test for the connect conformance test
+ * runner. It reads ServerCompatRequest messages from stdin, starts the server
+ * with the requested configuration, and writes a ServerCompatResponse with the
+ * server's port and other details to stdout.
+ */
+function main() {
   const req = ServerCompatRequest.fromBinary(
     readFileSync(process.stdin.fd).subarray(4),
   );
   // Keep the process alive for the duration of the test because
-  // we do not start the server here  but in the script "test:cloudflare:server"
-  //  before starting the test. We have limited control over the what can be
+  // we do not start the server here  but in the script "conformance:server"
+  // before starting the test. We have limited control over the what can be
   // configured in the cloudflare worker environment. Except for the
   // requestMessageLimit the server ends up being the same.
   const timeout = setInterval(() => {}, 5000);

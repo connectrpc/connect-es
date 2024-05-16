@@ -1,4 +1,7 @@
 {
-  "files": ["src/index.ts"],
-  "extends": "../../tsconfig.base.json"
+  "files": ["src/index.ts", "conformance/server.ts"],
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true
+  }
 }

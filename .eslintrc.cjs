@@ -43,7 +43,7 @@ module.exports = {
       .filter((dir) => existsSync(join(dir, "tsconfig.json")))
       .map((dir) => {
         return {
-          files: [join(dir, "src/**/*.ts")],
+          files: [join(dir, "src/**/*.ts"), join(dir, "conformance/**/*.ts")],
           parser: "@typescript-eslint/parser",
           parserOptions: {
             project: "./tsconfig.json",

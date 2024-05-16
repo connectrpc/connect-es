@@ -13,25 +13,31 @@
 // limitations under the License.
 
 import { createRegistry } from "@bufbuild/protobuf";
-import { ClientCompatRequest } from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import {
-  Codec,
-  HTTPVersion,
-  Protocol,
-  Compression as ConformanceCompression,
-} from "../gen/connectrpc/conformance/v1/config_pb.js";
 import {
   createConnectTransport,
   createGrpcWebTransport,
 } from "@connectrpc/connect-web";
 import {
   BidiStreamRequest,
+  ClientCompatRequest,
   ClientStreamRequest,
+  Codec,
+  Compression as ConformanceCompression,
+  HTTPVersion,
   IdempotentUnaryRequest,
+  Protocol,
   ServerStreamRequest,
   UnaryRequest,
-} from "../gen/connectrpc/conformance/v1/service_pb.js";
+} from "@connectrpc/connect-conformance";
 
+/**
+ * Configure a transport for a client from @connectrpc/connect-web under test.
+ *
+ * The conformance test runner describes the call we should make in the
+ * message connectrpc.conformance.v1.ClientCompatRequest. We create a transport
+ * for the call, with the corresponding protocol, HTTP version, compression, and
+ * other details. If a configuration is not supported, we raise an error.
+ */
 export function createTransport(req: ClientCompatRequest) {
   let scheme = "http://";
   if (req.serverTlsCert.length > 0) {

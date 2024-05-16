@@ -28,7 +28,9 @@ import { Readable } from "node:stream";
 import { execFileSync } from "node:child_process";
 import { fetch } from "undici";
 
+// Note: if changing this version, the `generate` command inside package.json must also be changed to match.
 const version = "v1.0.2";
+
 const name = "connectconformance";
 const downloadUrl = `https://github.com/connectrpc/conformance/releases/download/${version}`;
 

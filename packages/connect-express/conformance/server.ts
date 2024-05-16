@@ -1,3 +1,5 @@
+#!/usr/bin/env -S npx tsx
+
 // Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,50 +15,56 @@
 // limitations under the License.
 
 import { readFileSync } from "node:fs";
-import {
-  compressionBrotli,
-  compressionGzip,
-  connectNodeAdapter,
-} from "@connectrpc/connect-node";
+import { compressionBrotli, compressionGzip } from "@connectrpc/connect-node";
 import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
 import * as net from "node:net";
-import routes from "../routes.js";
-import {
-  ServerCompatRequest,
-  ServerCompatResponse,
-} from "../gen/connectrpc/conformance/v1/server_compat_pb.js";
-import { HTTPVersion } from "../gen/connectrpc/conformance/v1/config_pb.js";
 import { createRegistry } from "@bufbuild/protobuf";
 import {
+  routes,
   BidiStreamRequest,
   ClientStreamRequest,
+  HTTPVersion,
   IdempotentUnaryRequest,
+  ServerCompatRequest,
+  ServerCompatResponse,
   ServerStreamRequest,
   UnaryRequest,
-} from "../gen/connectrpc/conformance/v1/service_pb.js";
-import { writeSizeDelimitedBuffer } from "../protocol.js";
+} from "@connectrpc/connect-conformance";
+import express from "express";
+import { expressConnectMiddleware } from "@connectrpc/connect-express";
 
-export function run() {
+main();
+
+/**
+ * This program implements a server under test for the connect conformance test
+ * runner. It reads ServerCompatRequest messages from stdin, starts the server
+ * with the requested configuration, and writes a ServerCompatResponse with the
+ * server's port and other details to stdout.
+ */
+function main() {
   const req = ServerCompatRequest.fromBinary(
     readFileSync(process.stdin.fd).subarray(4),
   );
 
-  const adapter = connectNodeAdapter({
-    routes,
-    readMaxBytes: req.messageReceiveLimit,
-    acceptCompression: [compressionGzip, compressionBrotli],
-    jsonOptions: {
-      typeRegistry: createRegistry(
-        UnaryRequest,
-        ServerStreamRequest,
-        ClientStreamRequest,
-        BidiStreamRequest,
-        IdempotentUnaryRequest,
-      ),
-    },
-  });
+  const app = express();
+  app.use(
+    expressConnectMiddleware({
+      routes,
+      readMaxBytes: req.messageReceiveLimit,
+      acceptCompression: [compressionGzip, compressionBrotli],
+      jsonOptions: {
+        typeRegistry: createRegistry(
+          UnaryRequest,
+          ServerStreamRequest,
+          ClientStreamRequest,
+          BidiStreamRequest,
+          IdempotentUnaryRequest,
+        ),
+      },
+    }),
+  );
 
   let server: http.Server | http2.Http2Server;
   let serverOptions: {
@@ -84,14 +92,11 @@ export function run() {
   switch (req.httpVersion) {
     case HTTPVersion.HTTP_VERSION_1:
       server = req.useTls
-        ? https.createServer(serverOptions, adapter)
-        : http.createServer(adapter);
+        ? https.createServer(serverOptions, app)
+        : http.createServer(app);
       break;
     case HTTPVersion.HTTP_VERSION_2:
-      server = req.useTls
-        ? http2.createSecureServer(serverOptions, adapter)
-        : http2.createServer(adapter);
-      break;
+      throw new Error("HTTP/2 is not supported");
     case HTTPVersion.HTTP_VERSION_3:
       throw new Error("HTTP/3 is not supported");
     default:
@@ -111,6 +116,10 @@ export function run() {
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+    const data = res.toBinary();
+    const size = Buffer.alloc(4);
+    size.writeUInt32BE(data.byteLength);
+    process.stdout.write(size);
+    process.stdout.write(data);
   });
 }

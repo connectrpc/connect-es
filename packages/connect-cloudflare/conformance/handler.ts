@@ -25,7 +25,7 @@ import type {
 import type { UniversalHandler } from "@connectrpc/connect/protocol";
 import type { ExecutionContext } from "@cloudflare/workers-types";
 
-interface WokerHandlerOptions<Env> extends ConnectRouterOptions {
+interface WorkerHandlerOptions<Env> extends ConnectRouterOptions {
   /**
    * Route definitions. We recommend the following pattern:
    *
@@ -64,7 +64,7 @@ interface WokerHandlerOptions<Env> extends ConnectRouterOptions {
 /**
  * Creates new worker handler for the given Connect API routes.
  */
-export function createWorkerHandler<Env>(options: WokerHandlerOptions<Env>) {
+export function createWorkerHandler<Env>(options: WorkerHandlerOptions<Env>) {
   const router = createConnectRouter(options);
   options.routes(router);
   const paths = new Map<string, UniversalHandler>();

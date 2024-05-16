@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { ConnectError, Code } from "@connectrpc/connect";
+import { createRegistry, Any, Message } from "@bufbuild/protobuf";
 import {
   Error as ConformanceError,
   Header as ConformanceHeader,
   ConformancePayload_RequestInfo,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
-import { createRegistry, Any, Message } from "@bufbuild/protobuf";
 
 const detailsRegitry = createRegistry(ConformancePayload_RequestInfo);
 

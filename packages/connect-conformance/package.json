@@ -1,45 +1,34 @@
 {
   "name": "@connectrpc/connect-conformance",
+  "version": "1.4.0",
   "private": true,
+  "main": "./dist/cjs/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "bin": {
-    "conformancenodeserver": "bin/conformancenodeserver",
-    "conformancenodeclient": "bin/conformancenodeclient",
-    "conformancewebclient": "bin/conformancewebclient",
-    "conformancecloudflareserver": "bin/conformancecloudflareserver",
-    "conformancecloudflareclient": "bin/conformancecloudflareclient",
     "connectconformance": "bin/connectconformance"
   },
   "scripts": {
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
-    "clean": "rm -rf ./dist/cjs/*",
+    "clean": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
-    "build:esm": "tsc --project tsconfig.json --module ES2015 --outDir ./dist/esm",
-    "test:web:chrome": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser chrome --headless",
-    "test:web:firefox": "./bin/connectconformance --mode client --conf conformance-web.yaml -v --known-failing '**/server-stream/cancel-after-zero-responses' --known-failing '**/server-stream/cancel-after-responses' -- ./bin/conformancewebclient --browser firefox --headless",
-    "test:web:safari": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient --browser safari --headless",
-    "test:web:node": "./bin/connectconformance --mode client --conf conformance-web-node.yaml -v -- ./bin/conformancewebclient --browser node",
-    "test:web": "./bin/connectconformance --mode client --conf conformance-web.yaml -v -- ./bin/conformancewebclient",
-    "test:node:server": "./bin/connectconformance --mode server --conf conformance-node.yaml -v ./bin/conformancenodeserver",
-    "test:node:client": "./bin/connectconformance --mode client --conf conformance-node.yaml -v ./bin/conformancenodeclient",
-    "test:cloudflare:server": "npx wrangler deploy -c wrangler-server.toml && ./bin/connectconformance --mode server --conf conformance-cloudflare-server.yaml -v -- ./bin/conformancecloudflareserver",
-    "test:cloudflare:client": "npx wrangler deploy -c wrangler-client.toml && ./bin/connectconformance --mode client --conf conformance-cloudflare-client.yaml -v --known-failing 'Connect Compressed Error and End-Stream/*/TLS:true/error/compressed' --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY  -- ./bin/conformancecloudflareclient"
+    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs",
+    "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm && echo >./dist/esm/package.json '{\"type\":\"module\"}'"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.7.2",
     "@connectrpc/connect": "1.4.0",
-    "@connectrpc/connect-node": "1.4.0",
     "fflate": "^0.8.1",
     "tar-stream": "^3.1.7",
-    "undici": "^5.28.4",
-    "webdriverio": "^8.36.1",
-    "esbuild": "^0.20.0"
+    "undici": "^5.28.4"
   },
   "devDependencies": {
     "@types/node-forge": "^1.3.9",
     "@types/tar-stream": "^3.1.3",
-    "@types/debug": "^4.1.12",
-    "@cloudflare/workers-types": "^4.20240329.0",
-    "wrangler": "^3.53.0"
+    "@types/debug": "^4.1.12"
   }
 }

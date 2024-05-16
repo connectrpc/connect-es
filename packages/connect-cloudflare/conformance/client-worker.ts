@@ -15,20 +15,18 @@
 import { createRegistry } from "@bufbuild/protobuf";
 
 import {
+  invoke,
+  BidiStreamRequest,
   ClientCompatResponse,
   ClientErrorResult,
-} from "../gen/connectrpc/conformance/v1/client_compat_pb.js";
-import { createTransport } from "./transport.js";
-import invoke from "../invoke.js";
-import {
-  UnaryRequest,
-  ServerStreamRequest,
   ClientStreamRequest,
-  BidiStreamRequest,
-  UnimplementedRequest,
-  ConformancePayload_RequestInfo,
   IdempotentUnaryRequest,
-} from "../gen/connectrpc/conformance/v1/service_pb.js";
+  ConformancePayload_RequestInfo,
+  ServerStreamRequest,
+  UnaryRequest,
+  UnimplementedRequest,
+} from "@connectrpc/connect-conformance";
+import { createTransport } from "./transport.js";
 import { createWorkerHandler } from "./handler.js";
 import { InvokeService } from "./invoke-service.js";
 

@@ -10,10 +10,13 @@
   "scripts": {
     "clean": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
-    "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
+    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:esm": "tsc --project tsconfig.build.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
     "attw": "attw --pack",
-    "jasmine": "jasmine --config=jasmine.json"
+    "jasmine": "jasmine --config=jasmine.json",
+    "conformance": "npm run conformance:server && npm run conformance:client",
+    "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v ./conformance/server.ts",
+    "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v ./conformance/client.ts"
   },
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -35,7 +38,8 @@
   },
   "devDependencies": {
     "@types/jasmine": "^5.0.0",
-    "jasmine": "^5.1.0"
+    "jasmine": "^5.1.0",
+    "@connectrpc/connect-conformance": "^1.4.0"
   },
   "files": [
     "dist/**"

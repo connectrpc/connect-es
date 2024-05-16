@@ -10,9 +10,10 @@
   "scripts": {
     "clean": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
-    "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
-    "attw": "attw --pack"
+    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:esm": "tsc --project tsconfig.build.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
+    "attw": "attw --pack",
+    "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-fastify.yaml -v ./conformance/server.ts"
   },
   "type": "module",
   "sideEffects": false,
@@ -25,6 +26,9 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@connectrpc/connect-conformance": "^1.4.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.4.2",
