@@ -35,6 +35,14 @@ import {
 import type { Compression } from "@connectrpc/connect/protocol";
 import * as http2 from "node:http2";
 
+/**
+ * Configure a transport for a client from @connectrpc/connect-node under test.
+ *
+ * The conformance test runner describes the call we should make in the
+ * message connectrpc.conformance.v1.ClientCompatRequest. We create a transport
+ * for the call, with the corresponding protocol, HTTP version, compression, and
+ * other details. If a configuration is not supported, we raise an error.
+ */
 export function createTransport(req: ClientCompatRequest) {
   let scheme = "http://";
   if (req.serverTlsCert.length > 0) {
