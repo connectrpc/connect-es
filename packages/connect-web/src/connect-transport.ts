@@ -93,6 +93,13 @@ export interface ConnectTransportOptions {
   credentials?: RequestCredentials;
 
   /**
+   * Controls what the fetch client will do with redirects. The default
+   * value is "error". For reference, see
+   * https://fetch.spec.whatwg.org/#concept-request-redirect-mode
+   */
+  redirect ?: RequestRedirect
+
+  /**
    * Interceptors that should be applied to all calls running through
    * this transport. See the Interceptor type for details.
    */
@@ -175,7 +182,7 @@ export function createConnectTransport(
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",
-            redirect: "error",
+            redirect: options.redirect ?? "error",
             mode: "cors",
           },
           header: requestHeader(
@@ -334,7 +341,7 @@ export function createConnectTransport(
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",
-            redirect: "error",
+            redirect: options.redirect ?? "error",
             mode: "cors",
           },
           header: requestHeader(
