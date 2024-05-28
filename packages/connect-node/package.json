@@ -16,7 +16,7 @@
     "jasmine": "jasmine --config=jasmine.json",
     "conformance": "npm run conformance:server && npm run conformance:client",
     "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v ./conformance/server.ts",
-    "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v ./conformance/client.ts"
+    "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v ./conformance/client.ts && tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node-callbacks.yaml --known-failing @./conformance/known-failing.txt -v ./conformance/client.ts -- --useCallbackClient"
   },
   "type": "module",
   "main": "./dist/cjs/index.js",

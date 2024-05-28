@@ -26,7 +26,7 @@ import {
   createGrpcTransport,
   createGrpcWebTransport,
 } from "@connectrpc/connect-node";
-import { createPromiseClient } from "@connectrpc/connect";
+import { createCallbackClient, createPromiseClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { InvokeService } from "./invoke-service.js";
 import { parseArgs } from "node:util";
@@ -38,6 +38,7 @@ const { values: flags } = parseArgs({
       type: "string",
       default: "connect",
     },
+    useCallbackClient: { type: "boolean" },
   },
 });
 
@@ -66,23 +67,47 @@ async function main() {
     default:
       throw new Error(`Unknown protocol: ${flags.protocol}`);
   }
-  const client = createPromiseClient(InvokeService, transport);
-  for await (const next of readSizeDelimitedBuffers(process.stdin)) {
-    const req = ClientCompatRequest.fromBinary(next);
-    req.host = process.env["CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST"]!;
-    let res = new ClientCompatResponse({
-      testName: req.testName,
-    });
-    try {
-      res = await client.invoke(req);
-    } catch (e) {
-      res.result = {
-        case: "error",
-        value: new ClientErrorResult({
-          message: (e as Error).message,
-        }),
-      };
+  if (flags.useCallbackClient) {
+    const client = createCallbackClient(InvokeService, transport);
+    for await (const next of readSizeDelimitedBuffers(process.stdin)) {
+      const req = ClientCompatRequest.fromBinary(next);
+      req.host = process.env["CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST"]!;
+      let res = new ClientCompatResponse({
+        testName: req.testName,
+      });
+      client.invoke(req, (err, resp) => {
+        if (err !== undefined) {
+          res.result = {
+            case: "error",
+            value: new ClientErrorResult({
+              message: err.message,
+            }),
+          };
+        } else {
+          res = resp;
+        }
+        process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+      });
     }
-    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+  } else {
+    const client = createPromiseClient(InvokeService, transport);
+    for await (const next of readSizeDelimitedBuffers(process.stdin)) {
+      const req = ClientCompatRequest.fromBinary(next);
+      req.host = process.env["CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST"]!;
+      let res = new ClientCompatResponse({
+        testName: req.testName,
+      });
+      try {
+        res = await client.invoke(req);
+      } catch (e) {
+        res.result = {
+          case: "error",
+          value: new ClientErrorResult({
+            message: (e as Error).message,
+          }),
+        };
+      }
+      process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+    }
   }
 }

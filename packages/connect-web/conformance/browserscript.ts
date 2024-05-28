@@ -14,7 +14,8 @@
 
 import { ConnectError } from "@connectrpc/connect";
 import {
-  invoke,
+  callbackInvoke,
+  promiseInvoke,
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
@@ -23,18 +24,30 @@ import { createTransport } from "./transport.js";
 
 declare global {
   interface Window {
-    runTestCase: (data: number[]) => Promise<number[]>;
+    runTestCase: (
+      data: number[],
+      useCallbackClient: boolean,
+    ) => Promise<number[]>;
   }
 }
 
 // The main entry point into the browser code running in Puppeteer/headless Chrome.
 // This function is invoked by the page.evaluate call in grpcwebclient.
-async function runTestCase(data: number[]): Promise<number[]> {
+async function runTestCase(
+  data: number[],
+  useCallbackClient: boolean,
+): Promise<number[]> {
   const req = ClientCompatRequest.fromBinary(new Uint8Array(data));
   const res = new ClientCompatResponse({
     testName: req.testName,
   });
   try {
+    let invoke;
+    if (useCallbackClient) {
+      invoke = callbackInvoke;
+    } else {
+      invoke = promiseInvoke;
+    }
     const result = await invoke(createTransport(req), req);
     res.result = { case: "response", value: result };
   } catch (err) {

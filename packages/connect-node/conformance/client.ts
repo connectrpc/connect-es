@@ -14,15 +14,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { parseArgs } from "node:util";
 import {
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-  invoke,
+  callbackInvoke,
+  promiseInvoke,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
+
+const { values: flags } = parseArgs({
+  args: process.argv.slice(2),
+  options: {
+    useCallbackClient: { type: "boolean" },
+  },
+});
 
 void main();
 
@@ -33,6 +42,12 @@ void main();
  * to stdout.
  */
 async function main() {
+  let invoke;
+  if (flags.useCallbackClient) {
+    invoke = callbackInvoke;
+  } else {
+    invoke = promiseInvoke;
+  }
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const req = ClientCompatRequest.fromBinary(next);
     const res = new ClientCompatResponse({

@@ -33,33 +33,13 @@ import {
   convertToProtoHeaders,
   appendProtoHeaders,
   wait,
+  getCancelTiming,
 } from "./protocol.js";
 import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 import { createWritableIterable } from "@connectrpc/connect/protocol";
 import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
 
 type ConformanceClient = PromiseClient<typeof ConformanceService>;
-
-function getCancelTiming(req: ClientCompatRequest) {
-  const def = {
-    beforeCloseSend: undefined,
-    afterCloseSendMs: -1,
-    afterNumResponses: -1,
-  };
-  switch (req.cancel?.cancelTiming.case) {
-    case "beforeCloseSend":
-      return { ...def, beforeCloseSend: {} };
-    case "afterCloseSendMs":
-      return {
-        ...def,
-        afterCloseSendMs: req.cancel.cancelTiming.value,
-      };
-    case "afterNumResponses":
-      return { ...def, afterNumResponses: req.cancel.cancelTiming.value };
-    case undefined:
-      return def;
-  }
-}
 
 async function unary(
   client: ConformanceClient,
@@ -381,7 +361,7 @@ async function unimplemented(
   });
 }
 
-export default (transport: Transport, req: ClientCompatRequest) => {
+export function invoke(transport: Transport, req: ClientCompatRequest) {
   const client = createPromiseClient(ConformanceService, transport);
 
   switch (req.method) {
@@ -400,4 +380,4 @@ export default (transport: Transport, req: ClientCompatRequest) => {
     default:
       throw new Error(`Unknown method: ${req.method}`);
   }
-};
+}
