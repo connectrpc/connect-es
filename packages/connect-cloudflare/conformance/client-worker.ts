@@ -15,7 +15,6 @@
 import { createRegistry } from "@bufbuild/protobuf";
 
 import {
-  callbackInvoke,
   promiseInvoke,
   BidiStreamRequest,
   ClientCompatResponse,
