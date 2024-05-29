@@ -194,6 +194,7 @@ async function unimplemented(
   return new Promise<ClientResponseResult>((resolve) => {
     client.unimplemented(
       unReq,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       (err, _) => {
         if (err !== undefined) {
           error = ConnectError.from(err);

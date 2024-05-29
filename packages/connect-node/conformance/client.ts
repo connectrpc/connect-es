@@ -43,7 +43,7 @@ void main();
  */
 async function main() {
   let invoke;
-  if (flags.useCallbackClient) {
+  if (flags.useCallbackClient === true) {
     invoke = callbackInvoke;
   } else {
     invoke = promiseInvoke;

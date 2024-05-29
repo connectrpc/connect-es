@@ -86,7 +86,7 @@ async function main() {
 }
 
 function getInvokeFn(transport: Transport) {
-  if (flags.useCallbackClient) {
+  if (flags.useCallbackClient === true) {
     const client = createCallbackClient(InvokeService, transport);
     return async (req: ClientCompatRequest, res: ClientCompatResponse) => {
       return await invokeCallbackClient(client, req, res);
