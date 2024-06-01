@@ -19,7 +19,7 @@
     "@connectrpc/connect-fastify": "1.4.0",
     "@connectrpc/connect-node": "1.4.0",
     "@connectrpc/connect-web": "1.4.0",
-    "@grpc/grpc-js": "^1.10.6",
+    "@grpc/grpc-js": "^1.10.8",
     "@types/express": "^4.17.18",
     "@types/jasmine": "^5.0.0",
     "esbuild": "^0.19.8",
