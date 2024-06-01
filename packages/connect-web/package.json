@@ -29,7 +29,7 @@
     }
   },
   "devDependencies": {
-    "webdriverio": "^8.36.1",
+    "webdriverio": "^8.38.0",
     "@connectrpc/connect-conformance": "^1.4.0"
   },
   "peerDependencies": {
