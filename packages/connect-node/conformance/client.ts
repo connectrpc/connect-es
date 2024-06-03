@@ -18,7 +18,7 @@ import {
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-  invoke,
+  invokeWithPromiseClient,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
@@ -39,7 +39,10 @@ async function main() {
       testName: req.testName,
     });
     try {
-      const invokeResult = await invoke(createTransport(req), req);
+      const invokeResult = await invokeWithPromiseClient(
+        createTransport(req),
+        req,
+      );
       res.result = { case: "response", value: invokeResult };
     } catch (e) {
       res.result = {
