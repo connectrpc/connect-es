@@ -1,5 +1,4 @@
-# These tests are failing as follows:
-# - in all browsers/environments with the callback client, cancellations are calling the end-of-stream callback with an undefined error if a call is cancelled.
-# - in firefox with the promise client, the error is actual error {code: 2 (unknown), message: "AbortError: The operation was aborted. "} does not match expected code 1 (canceled)
+# The callback client does not pass a cancelled error to the end-of-stream callback for cancellations. This is intentional behavior as it is the user's
+# responsibility to handle this on the client side.
 **/server-stream/cancel-after-zero-responses
 **/server-stream/cancel-after-responses
