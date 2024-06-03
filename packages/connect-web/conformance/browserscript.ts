@@ -14,8 +14,8 @@
 
 import { ConnectError } from "@connectrpc/connect";
 import {
-  callbackInvoke,
-  promiseInvoke,
+  invokeWithCallbackClient,
+  invokeWithPromiseClient,
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
@@ -44,9 +44,9 @@ async function runTestCase(
   try {
     let invoke;
     if (useCallbackClient) {
-      invoke = callbackInvoke;
+      invoke = invokeWithCallbackClient;
     } else {
-      invoke = promiseInvoke;
+      invoke = invokeWithPromiseClient;
     }
     const result = await invoke(createTransport(req), req);
     res.result = { case: "response", value: result };
