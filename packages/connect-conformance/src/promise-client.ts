@@ -41,6 +41,30 @@ import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
 
 type ConformanceClient = PromiseClient<typeof ConformanceService>;
 
+export function invokeWithPromiseClient(
+  transport: Transport,
+  req: ClientCompatRequest,
+) {
+  const client = createPromiseClient(ConformanceService, transport);
+
+  switch (req.method) {
+    case ConformanceService.methods.unary.name:
+      return unary(client, req);
+    case ConformanceService.methods.idempotentUnary.name:
+      return unary(client, req, true);
+    case ConformanceService.methods.serverStream.name:
+      return serverStream(client, req);
+    case ConformanceService.methods.clientStream.name:
+      return clientStream(client, req);
+    case ConformanceService.methods.bidiStream.name:
+      return bidiStream(client, req);
+    case ConformanceService.methods.unimplemented.name:
+      return unimplemented(client, req);
+    default:
+      throw new Error(`Unknown method: ${req.method}`);
+  }
+}
+
 async function unary(
   client: ConformanceClient,
   req: ClientCompatRequest,
@@ -359,25 +383,4 @@ async function unimplemented(
     responseTrailers: resTrailers,
     error: convertToProtoError(error),
   });
-}
-
-export function invoke(transport: Transport, req: ClientCompatRequest) {
-  const client = createPromiseClient(ConformanceService, transport);
-
-  switch (req.method) {
-    case ConformanceService.methods.unary.name:
-      return unary(client, req);
-    case ConformanceService.methods.idempotentUnary.name:
-      return unary(client, req, true);
-    case ConformanceService.methods.serverStream.name:
-      return serverStream(client, req);
-    case ConformanceService.methods.clientStream.name:
-      return clientStream(client, req);
-    case ConformanceService.methods.bidiStream.name:
-      return bidiStream(client, req);
-    case ConformanceService.methods.unimplemented.name:
-      return unimplemented(client, req);
-    default:
-      throw new Error(`Unknown method: ${req.method}`);
-  }
 }

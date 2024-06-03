@@ -14,24 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { parseArgs } from "node:util";
 import {
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
-  callbackInvoke,
-  promiseInvoke,
+  invokeWithPromiseClient,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
-
-const { values: flags } = parseArgs({
-  args: process.argv.slice(2),
-  options: {
-    useCallbackClient: { type: "boolean" },
-  },
-});
 
 void main();
 
@@ -42,19 +33,16 @@ void main();
  * to stdout.
  */
 async function main() {
-  let invoke;
-  if (flags.useCallbackClient === true) {
-    invoke = callbackInvoke;
-  } else {
-    invoke = promiseInvoke;
-  }
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const req = ClientCompatRequest.fromBinary(next);
     const res = new ClientCompatResponse({
       testName: req.testName,
     });
     try {
-      const invokeResult = await invoke(createTransport(req), req);
+      const invokeResult = await invokeWithPromiseClient(
+        createTransport(req),
+        req,
+      );
       res.result = { case: "response", value: invokeResult };
     } catch (e) {
       res.result = {

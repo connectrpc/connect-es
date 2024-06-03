@@ -15,7 +15,7 @@
 import { createRegistry } from "@bufbuild/protobuf";
 
 import {
-  promiseInvoke,
+  invokeWithPromiseClient,
   BidiStreamRequest,
   ClientCompatResponse,
   ClientErrorResult,
@@ -49,7 +49,10 @@ export default createWorkerHandler({
           testName: req.testName,
         });
         try {
-          const invokeResult = await promiseInvoke(createTransport(req), req);
+          const invokeResult = await invokeWithPromiseClient(
+            createTransport(req),
+            req,
+          );
           res.result = { case: "response", value: invokeResult };
         } catch (e) {
           res.result = {

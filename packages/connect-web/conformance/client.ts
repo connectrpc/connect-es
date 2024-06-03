@@ -19,8 +19,8 @@ import type { RemoteOptions } from "webdriverio";
 import * as esbuild from "esbuild";
 import { parseArgs } from "node:util";
 import {
-  callbackInvoke,
-  promiseInvoke,
+  invokeWithCallbackClient,
+  invokeWithPromiseClient,
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
@@ -48,9 +48,9 @@ void main();
 async function main() {
   let invoke;
   if (flags.useCallbackClient === true) {
-    invoke = callbackInvoke;
+    invoke = invokeWithCallbackClient;
   } else {
-    invoke = promiseInvoke;
+    invoke = invokeWithPromiseClient;
   }
 
   if (flags.browser !== "node") {

@@ -37,6 +37,26 @@ import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_conn
 
 type ConformanceClient = CallbackClient<typeof ConformanceService>;
 
+export function invokeWithCallbackClient(
+  transport: Transport,
+  req: ClientCompatRequest,
+): Promise<ClientResponseResult> {
+  const client = createCallbackClient(ConformanceService, transport);
+
+  switch (req.method) {
+    case ConformanceService.methods.unary.name:
+      return unary(client, req);
+    case ConformanceService.methods.idempotentUnary.name:
+      return unary(client, req, true);
+    case ConformanceService.methods.serverStream.name:
+      return serverStream(client, req);
+    case ConformanceService.methods.unimplemented.name:
+      return unimplemented(client, req);
+    default:
+      throw new Error(`Unknown method: ${req.method}`);
+  }
+}
+
 async function unary(
   client: ConformanceClient,
   req: ClientCompatRequest,
@@ -45,7 +65,6 @@ async function unary(
   if (req.requestMessages.length !== 1) {
     throw new Error("Unary method requires exactly one request message");
   }
-  req.cancel;
   const msg = req.requestMessages[0];
   const uReq = idempotent ? new IdempotentUnaryRequest() : new UnaryRequest();
   if (!msg.unpackTo(uReq)) {
@@ -227,24 +246,4 @@ async function unimplemented(
       },
     );
   });
-}
-
-export function invoke(
-  transport: Transport,
-  req: ClientCompatRequest,
-): Promise<ClientResponseResult> {
-  const client = createCallbackClient(ConformanceService, transport);
-
-  switch (req.method) {
-    case ConformanceService.methods.unary.name:
-      return unary(client, req);
-    case ConformanceService.methods.idempotentUnary.name:
-      return unary(client, req, true);
-    case ConformanceService.methods.serverStream.name:
-      return serverStream(client, req);
-    case ConformanceService.methods.unimplemented.name:
-      return unimplemented(client, req);
-    default:
-      throw new Error(`Unknown method: ${req.method}`);
-  }
 }
