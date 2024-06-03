@@ -1,3 +1,0 @@
-# When using the callback client, cancellations are calling the end-of-stream callback with an undefined error if a call is cancelled.
-**/server-stream/cancel-after-zero-responses
-**/server-stream/cancel-after-responses
