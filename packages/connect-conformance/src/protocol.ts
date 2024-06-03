@@ -20,8 +20,30 @@ import {
   ConformancePayload_RequestInfo,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
+import { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 
 const detailsRegitry = createRegistry(ConformancePayload_RequestInfo);
+
+export function getCancelTiming(req: ClientCompatRequest) {
+  const def = {
+    beforeCloseSend: undefined,
+    afterCloseSendMs: -1,
+    afterNumResponses: -1,
+  };
+  switch (req.cancel?.cancelTiming.case) {
+    case "beforeCloseSend":
+      return { ...def, beforeCloseSend: {} };
+    case "afterCloseSendMs":
+      return {
+        ...def,
+        afterCloseSendMs: req.cancel.cancelTiming.value,
+      };
+    case "afterNumResponses":
+      return { ...def, afterNumResponses: req.cancel.cancelTiming.value };
+    case undefined:
+      return def;
+  }
+}
 
 export function connectErrorFromProto(err: ConformanceError) {
   // The ConnectError constructor accepts messages for details.

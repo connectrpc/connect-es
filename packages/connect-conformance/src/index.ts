@@ -13,7 +13,8 @@
 // limitations under the License.
 
 export { default as routes } from "./routes.js";
-export { default as invoke } from "./invoke.js";
+export { invokeWithPromiseClient } from "./promise-client.js";
+export { invokeWithCallbackClient } from "./callback-client.js";
 export {
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,

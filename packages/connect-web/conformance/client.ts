@@ -19,7 +19,8 @@ import type { RemoteOptions } from "webdriverio";
 import * as esbuild from "esbuild";
 import { parseArgs } from "node:util";
 import {
-  invoke,
+  invokeWithCallbackClient,
+  invokeWithPromiseClient,
   ClientCompatRequest,
   ClientCompatResponse,
   ClientErrorResult,
@@ -33,6 +34,7 @@ const { values: flags } = parseArgs({
   options: {
     browser: { type: "string", default: "chrome" },
     headless: { type: "boolean" },
+    useCallbackClient: { type: "boolean" },
   },
 });
 
@@ -44,9 +46,20 @@ void main();
  * to stdout.
  */
 async function main() {
-  if (flags.browser !== "node") {
-    await runBrowser();
+  let invoke;
+  if (flags.useCallbackClient === true) {
+    invoke = invokeWithCallbackClient;
+  } else {
+    invoke = invokeWithPromiseClient;
   }
+
+  if (flags.browser !== "node") {
+    // If this is not Node, then run using the specified browser
+    await runBrowser();
+    return;
+  }
+
+  // Otherwise, run the conformance tests using Node as the environment
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const req = ClientCompatRequest.fromBinary(next);
     const res = new ClientCompatResponse({
@@ -115,10 +128,11 @@ async function runBrowser() {
   await browser.executeScript(await buildBrowserScript(), []);
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const invokeResult = await browser.executeAsync(
-      (reqBytes, done: (res: number[]) => void) => {
-        void window.runTestCase(reqBytes).then(done);
+      (reqBytes, useCallbackClient, done: (res: number[]) => void) => {
+        void window.runTestCase(reqBytes, useCallbackClient).then(done);
       },
       Array.from(next),
+      flags.useCallbackClient,
     );
     process.stdout.write(
       writeSizeDelimitedBuffer(new Uint8Array(invokeResult)),

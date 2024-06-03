@@ -33,6 +33,7 @@ import {
   convertToProtoHeaders,
   appendProtoHeaders,
   wait,
+  getCancelTiming,
 } from "./protocol.js";
 import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 import { createWritableIterable } from "@connectrpc/connect/protocol";
@@ -40,24 +41,27 @@ import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
 
 type ConformanceClient = PromiseClient<typeof ConformanceService>;
 
-function getCancelTiming(req: ClientCompatRequest) {
-  const def = {
-    beforeCloseSend: undefined,
-    afterCloseSendMs: -1,
-    afterNumResponses: -1,
-  };
-  switch (req.cancel?.cancelTiming.case) {
-    case "beforeCloseSend":
-      return { ...def, beforeCloseSend: {} };
-    case "afterCloseSendMs":
-      return {
-        ...def,
-        afterCloseSendMs: req.cancel.cancelTiming.value,
-      };
-    case "afterNumResponses":
-      return { ...def, afterNumResponses: req.cancel.cancelTiming.value };
-    case undefined:
-      return def;
+export function invokeWithPromiseClient(
+  transport: Transport,
+  req: ClientCompatRequest,
+) {
+  const client = createPromiseClient(ConformanceService, transport);
+
+  switch (req.method) {
+    case ConformanceService.methods.unary.name:
+      return unary(client, req);
+    case ConformanceService.methods.idempotentUnary.name:
+      return unary(client, req, true);
+    case ConformanceService.methods.serverStream.name:
+      return serverStream(client, req);
+    case ConformanceService.methods.clientStream.name:
+      return clientStream(client, req);
+    case ConformanceService.methods.bidiStream.name:
+      return bidiStream(client, req);
+    case ConformanceService.methods.unimplemented.name:
+      return unimplemented(client, req);
+    default:
+      throw new Error(`Unknown method: ${req.method}`);
   }
 }
 
@@ -380,24 +384,3 @@ async function unimplemented(
     error: convertToProtoError(error),
   });
 }
-
-export default (transport: Transport, req: ClientCompatRequest) => {
-  const client = createPromiseClient(ConformanceService, transport);
-
-  switch (req.method) {
-    case ConformanceService.methods.unary.name:
-      return unary(client, req);
-    case ConformanceService.methods.idempotentUnary.name:
-      return unary(client, req, true);
-    case ConformanceService.methods.serverStream.name:
-      return serverStream(client, req);
-    case ConformanceService.methods.clientStream.name:
-      return clientStream(client, req);
-    case ConformanceService.methods.bidiStream.name:
-      return bidiStream(client, req);
-    case ConformanceService.methods.unimplemented.name:
-      return unimplemented(client, req);
-    default:
-      throw new Error(`Unknown method: ${req.method}`);
-  }
-};
