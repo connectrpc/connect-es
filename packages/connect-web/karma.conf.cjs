@@ -15,15 +15,17 @@
 module.exports = function (config) {
   config.set({
     frameworks: ["jasmine"],
-    files: ["src/**/*.ts"],
+    files: ["src/*.spec.ts"],
     exclude: [],
     singleRun: true,
     reporters: ["progress"],
     browsers: ["ChromeCustom"],
-    preprocessors: { "/**/*.ts": "esbuild" },
+    preprocessors: { "src/*.spec.ts": "esbuild" },
     esbuild: {
       target: "esnext",
       tsconfig: "./tsconfig.json",
+      // Needed because the package.json file for connect-web is marked as no side effects
+      ignoreAnnotations: true,
     },
     customLaunchers: {
       ChromeCustom: {
