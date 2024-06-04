@@ -7,12 +7,12 @@
     "conformance:client": "npx wrangler deploy -c ./conformance/wrangler-client.toml && connectconformance --mode client --conf ./conformance/conformance-cloudflare-client.yaml -v --known-failing @./conformance/known-failing-client.txt --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY  -- ./conformance/client.ts"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^1.7.2",
+    "@bufbuild/protobuf": "^1.10.0",
     "@connectrpc/connect": "1.4.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240329.0",
-    "wrangler": "^3.53.0",
+    "@cloudflare/workers-types": "^4.20240603.0",
+    "wrangler": "^3.58.0",
     "tsx": "^4.11.0",
     "@connectrpc/connect-conformance": "^1.4.0"
   }

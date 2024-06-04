@@ -31,7 +31,7 @@
     "@connectrpc/connect-conformance": "^1.4.0"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.4.2",
+    "@bufbuild/protobuf": "^1.10.0",
     "fastify": "^4.22.1",
     "@connectrpc/connect": "1.4.0",
     "@connectrpc/connect-node": "1.4.0"
