@@ -20,7 +20,7 @@
     "build:esm": "tsc --project tsconfig.json --module ES2015 --verbatimModuleSyntax --outDir ./dist/esm --declaration --declarationDir ./dist/esm && echo >./dist/esm/package.json '{\"type\":\"module\"}'"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^1.7.2",
+    "@bufbuild/protobuf": "^1.10.0",
     "@connectrpc/connect": "1.4.0",
     "fflate": "^0.8.1",
     "tar-stream": "^3.1.7",
