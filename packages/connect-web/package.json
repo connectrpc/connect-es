@@ -33,7 +33,7 @@
     "@connectrpc/connect-conformance": "^1.4.0"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.4.2",
+    "@bufbuild/protobuf": "^1.10.0",
     "@connectrpc/connect": "1.4.0"
   },
   "files": [
