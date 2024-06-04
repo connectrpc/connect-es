@@ -18,8 +18,8 @@
     "tsx": "^4.11.0"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.31.0",
-    "@bufbuild/protoc-gen-es": "^1.9.0",
+    "@bufbuild/buf": "^1.32.2",
+    "@bufbuild/protoc-gen-es": "^1.10.0",
     "@connectrpc/protoc-gen-connect-es": "^1.4.0",
     "@types/express": "^4.17.18",
     "esbuild": "^0.19.8",
