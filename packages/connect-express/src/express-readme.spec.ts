@@ -16,9 +16,9 @@ import * as http from "http";
 import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
 import { createPromiseClient } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
-import { expressConnectMiddleware } from "@connectrpc/connect-express";
 import { createGrpcWebTransport } from "@connectrpc/connect-node";
-import { importExpress } from "./helpers/import-express.js";
+import express from "express";
+import { expressConnectMiddleware } from "./express-connect-middleware.js";
 
 describe("express readme", function () {
   interface SayR extends Message<SayR> {
@@ -65,7 +65,6 @@ describe("express readme", function () {
     }
 
     async function startServer() {
-      const express = await importExpress();
       return await new Promise<http.Server>((resolve) => {
         const app = express();
         app.use(expressConnectMiddleware({ routes }));

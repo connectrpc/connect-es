@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { ConnectError } from "@connectrpc/connect";
-import { compressionBrotli, compressionGzip } from "@connectrpc/connect-node";
 import * as zlib from "zlib";
+import { compressionBrotli, compressionGzip } from "./compression.js";
 
 describe("compression", () => {
   const payload = new TextEncoder().encode(

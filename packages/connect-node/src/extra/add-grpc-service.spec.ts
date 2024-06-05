@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
+import { ConformanceService } from "@connectrpc/connect-conformance";
 import * as grpc from "@grpc/grpc-js";
 import { addGrpcService } from "./add-grpc-service.js";
 
@@ -21,38 +21,23 @@ import { addGrpcService } from "./add-grpc-service.js";
 describe("addGrpcService()", () => {
   it("should not raise errors when adding the service", (done) => {
     const server = new grpc.Server();
-    addGrpcService(server, TestService, {
-      cacheableUnaryCall(call, callback) {
+    addGrpcService(server, ConformanceService, {
+      unimplemented(call) {
         //
       },
-      emptyCall(call, callback) {
+      idempotentUnary(call, callback) {
         //
       },
-      failStreamingOutputCall(call) {
+      bidiStream(call) {
         //
       },
-      failUnaryCall(call, callback) {
+      clientStream(call, callback) {
         //
       },
-      fullDuplexCall(call) {
+      serverStream(call) {
         //
       },
-      halfDuplexCall(call) {
-        //
-      },
-      streamingInputCall(call, callback) {
-        //
-      },
-      streamingOutputCall(call) {
-        //
-      },
-      unaryCall(call, callback) {
-        //
-      },
-      unimplementedCall(call, callback) {
-        //
-      },
-      unimplementedStreamingOutputCall(call) {
+      unary(call, callback) {
         //
       },
     });

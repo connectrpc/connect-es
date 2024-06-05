@@ -22,13 +22,11 @@ import {
   createRouterTransport,
 } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
-import {
-  connectNodeAdapter,
-  createGrpcTransport,
-  createGrpcWebTransport,
-  createConnectTransport,
-} from "@connectrpc/connect-node";
 import { createWritableIterable } from "@connectrpc/connect/protocol";
+import { connectNodeAdapter } from "./connect-node-adapter.js";
+import { createGrpcTransport } from "./grpc-transport.js";
+import { createGrpcWebTransport } from "./grpc-web-transport.js";
+import { createConnectTransport } from "./connect-transport.js";
 
 /* eslint-disable @typescript-eslint/require-await */
 

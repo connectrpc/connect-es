@@ -39,7 +39,8 @@
   "devDependencies": {
     "@types/jasmine": "^5.0.0",
     "jasmine": "^5.1.0",
-    "@connectrpc/connect-conformance": "^1.4.0"
+    "@connectrpc/connect-conformance": "^1.4.0",
+    "@grpc/grpc-js": "^1.10.8"
   },
   "files": [
     "dist/**"

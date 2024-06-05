@@ -13,10 +13,8 @@
 // limitations under the License.
 
 import { Code, ConnectError } from "@connectrpc/connect";
-import {
-  createConnectTransport,
-  Http2SessionManager,
-} from "@connectrpc/connect-node";
+import { createConnectTransport } from "./connect-transport.js";
+import { Http2SessionManager } from "./http2-session-manager.js";
 
 describe("createConnectTransport()", function () {
   it("should take just httpVersion and baseUrl", function () {

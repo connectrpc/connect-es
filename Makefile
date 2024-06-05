@@ -10,7 +10,6 @@ TMP   = .tmp
 BIN   = .tmp/bin
 BUILD = .tmp/build
 GEN   = .tmp/gen
-CONFORMANCE_VERSION := 33a9ec3dab3b7717bffde12701a86a5dbea66f2b
 NODE21_VERSION ?= v21.1.0
 NODE20_VERSION ?= v20.9.0
 NODE18_VERSION ?= v18.16.0
@@ -102,12 +101,6 @@ $(BUILD)/connect-web: $(BUILD)/connect $(BUILD)/connect-conformance packages/con
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(GEN)/connect-node-test packages/connect-node-test/tsconfig.json $(shell find packages/connect-node-test/src -name '*.ts')
-	npm run -w packages/connect-node-test clean
-	npm run -w packages/connect-node-test build
-	@mkdir -p $(@D)
-	@touch $(@)
-
 $(BUILD)/connect-conformance: $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
 	npm run -w packages/connect-conformance clean
 	npm run -w packages/connect-conformance build
@@ -128,12 +121,6 @@ $(BUILD)/connect-migrate: packages/connect-migrate/package.json packages/connect
 $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(shell find packages/connect/src -name '*.proto') Makefile
 	rm -rf packages/connect/src/gen/*
 	npm run -w packages/connect generate
-	@mkdir -p $(@D)
-	@touch $(@)
-
-$(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
-	rm -rf packages/connect-node-test/src/gen/*
-	npm run -w packages/connect-node-test generate https://github.com/connectrpc/conformance.git#tag=$(CONFORMANCE_VERSION),subdir=proto
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -164,7 +151,7 @@ help: ## Describe useful make targets
 all: build test format lint bench ## build, test, format, lint, and bench (default)
 
 .PHONY: clean
-clean: conformanceserverstop ## Delete build artifacts and installed dependencies
+clean:  ## Delete build artifacts and installed dependencies
 	@# -X only removes untracked files, -d recurses into directories, -f actually removes files/dirs
 	git clean -Xdf
 
@@ -172,7 +159,7 @@ clean: conformanceserverstop ## Delete build artifacts and installed dependencie
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testnode testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
@@ -187,12 +174,14 @@ testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 
 
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node-test
-	$(MAKE) conformanceserverrun
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	$(MAKE) conformanceserverstop
+
+.PHONY: testconnectexpresspackage
+testconnectexpresspackage: $(BUILD)/connect-express
+	npm run -w packages/connect-express jasmine
 
 .PHONY: testconformance
 testconformance: testnodeconformance testwebconformance
@@ -290,31 +279,6 @@ release: all ## Release npm packages
 		--workspace packages/connect-next \
 		--workspace packages/protoc-gen-connect-es \
 		--workspace packages/connect-migrate \
-
-.PHONY: conformanceserverstop
-conformanceserverstop:
-	-docker container stop serverconnect servergrpc
-
-.PHONY: conformanceserverrun
-conformanceserverrun: conformanceserverstop
-	docker run --rm --name serverconnect -p 8080:8080 -p 8081:8081 -d \
-		connectrpc/conformance:$(CONFORMANCE_VERSION) \
-		/usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
-	docker run --rm --name servergrpc -p 8083:8083 -d \
-		connectrpc/conformance:$(CONFORMANCE_VERSION) \
-		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
-
-.PHONY: connectnodeserverrun
-connectnodeserverrun: $(BUILD)/connect-node-test
-	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs restart
-
-.PHONY: connectnodeserverstop
-connectnodeserverstop: $(BUILD)/connect-node-test
-	PATH="$(abspath $(BIN)):$(PATH)" node18 packages/connect-node-test/connect-node-h1-server.mjs stop
-
-.PHONY: updatelocalhostcert
-updatelocalhostcert:
-	openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' -days 300 -keyout packages/connect-node-test/localhost-key.pem -out packages/connect-node-test/localhost-cert.pem
 
 .PHONY: checkdiff
 checkdiff:
