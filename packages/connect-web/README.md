@@ -57,19 +57,9 @@ Connect plays nice with Vue, Svelte, Remix, Next.js, Angular and many others. Ta
 
 # Tests
 
-This package provides test coverage for @connectrpc/connect-web with the test
+This package contains test coverage for @connectrpc/connect-web with the test
 framework [Jasmine](https://jasmine.github.io/) and the [Karma](https://karma-runner.github.io/) 
 test runner.
-
-The test suite is run multiple times:
-
-1. In a headless browser (Chrome).
-2. In multiple old browsers on Browserstack.
-3. In Node.js (v18 for the fetch API).
-
-The tests run against:
-- connect-go (h1/h2) via Docker
-- @connectrpc/connect-node (h1)
 
 ### Running tests in a headless browser
 
@@ -93,21 +83,9 @@ v18, and you can run this suite of tests on it with `make testwebnode`.
 Note that client-streaming and bidi-streaming are not fully supported because
 of limitations in browser APIs.
 
-### Running tests in Browserstack
+In addition to Karma and Jasmine, this package also runs conformance tests via the Connect conformance runner 
+as well as a limited number of tests on older browsers via Browserstack.
 
-We are running a few select tests on old browsers. Thanks to Browserstack
-for the sponsorship!
+For instructions on running conformance tests, see the [conformance](https://github.com/connectrpc/connect-es/tree/main/packages/connect-web/conformance) directory.
 
-To run these tests locally, you need to sign up on [browserstack.com](https://www.browserstack.com/)
-and provide your username and access key:
-
-```bash
-BROWSERSTACK_USERNAME=<username> BROWSERSTACK_ACCESS_KEY=<key> make testwebbrowserstack
-```
-
-### Running tests in Node.js
-
-Running in Node.js requires the fetch API implementation added in v18.
-You can conveniently run the suite with `make testwebnode` from the project
-root. 
-
+To run the Browserstack tests, see the [browserstacktests](https://github.com/connectrpc/connect-es/tree/main/packages/connect-web/src/browserstacktests) directory.
