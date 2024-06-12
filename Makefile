@@ -236,11 +236,11 @@ testwebbrowser: $(BUILD)/connect-web
 
 .PHONY: testwebbrowserlocal
 testwebbrowserlocal: $(BUILD)/connect-web
-	npm run -w packages/connect-web karma-serve
+	npm run -w packages/connect-web karma:serve
 
 .PHONY: testwebbrowserstack
 testwebbrowserstack: $(BUILD)/connect-web
-	npm run -w packages/connect-web karma-browserstack
+	npm run -w packages/connect-web karma:browserstack
 
 .PHONY: testconnectmigrate
 testconnectmigrate: $(BUILD)/connect-migrate

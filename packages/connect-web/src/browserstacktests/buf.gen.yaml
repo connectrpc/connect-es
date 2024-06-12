@@ -1,0 +1,9 @@
+version: v1
+plugins:
+  - name: es
+    out: src/browserstacktests/gen
+    opt: target=ts
+  - name: connect-es
+    out: src/browserstacktests/gen
+    opt: target=ts
+
