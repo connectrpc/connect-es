@@ -71,7 +71,7 @@ $(BUILD)/connect: $(GEN)/connect node_modules packages/connect/package.json pack
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-node: $(BUILD)/connect packages/connect-node/tsconfig.json $(shell find packages/connect-node/src -name '*.ts')
+$(BUILD)/connect-node: $(BUILD)/connect $(BUILD)/connect-conformance packages/connect-node/tsconfig.json $(shell find packages/connect-node/src -name '*.ts')
 	npm run -w packages/connect-node clean
 	npm run -w packages/connect-node build
 	@mkdir -p $(@D)
@@ -159,7 +159,7 @@ clean:  ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testconnectexpresspackage testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
