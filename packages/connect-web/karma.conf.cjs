@@ -13,14 +13,26 @@
 // limitations under the License.
 
 module.exports = function (config) {
-  require("./karma.conf.cjs")(config);
   config.set({
-    // Override the configuration settings so that we can simply serve
-    // karma, instead of running against configured browsers.
-    // This is used by the npm script "karma-serve", and the make target
-    // "test-local-browser".
-    singleRun: false,
-    browsers: [],
-    customLaunchers: {},
+    frameworks: ["jasmine"],
+    files: ["src/*.spec.ts"],
+    exclude: [],
+    singleRun: true,
+    reporters: ["progress"],
+    browsers: ["ChromeCustom"],
+    preprocessors: { "src/*.spec.ts": "esbuild" },
+    esbuild: {
+      target: "esnext",
+      tsconfig: "./tsconfig.json",
+      // Needed because the package.json file for connect-web is marked as no side effects
+      ignoreAnnotations: true,
+    },
+    customLaunchers: {
+      ChromeCustom: {
+        base: "ChromeHeadless",
+        // We ignore the certificate errors as the client certificates are managed by the browser.
+        flags: ["--ignore-certificate-errors"],
+      },
+    },
   });
 };
