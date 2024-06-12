@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { createPromiseClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-web";
-import { ElizaService } from "../gen/connectrpc/eliza/v1/eliza_connect.js";
-import { IntroduceRequest } from "../gen/connectrpc/eliza/v1/eliza_pb.js";
+import { createConnectTransport } from "../connect-transport.js";
+import { ElizaService } from "./gen/connectrpc/eliza/v1/eliza_connect.js";
+import { IntroduceRequest } from "./gen/connectrpc/eliza/v1/eliza_pb.js";
 
 const timeoutMs = 15000;
 
