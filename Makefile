@@ -96,7 +96,7 @@ $(BUILD)/connect-next: $(BUILD)/connect $(BUILD)/connect-node packages/connect-n
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-web: $(BUILD)/connect packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
+$(BUILD)/connect-web: $(BUILD)/connect $(BUILD)/connect-conformance packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
 	@mkdir -p $(@D)
@@ -108,7 +108,7 @@ $(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUI
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-conformance: $(BUILD)/connect-node $(BUILD)/connect-web $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
+$(BUILD)/connect-conformance: $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
 	npm run -w packages/connect-conformance clean
 	npm run -w packages/connect-conformance build
 	@mkdir -p $(@D)
