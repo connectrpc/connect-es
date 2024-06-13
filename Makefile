@@ -159,7 +159,7 @@ clean:  ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testconnectexpresspackage testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testconnectwebpackage testconnectexpresspackage testconformance testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
@@ -171,6 +171,12 @@ testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+
+.PHONY: testconnectwebpackage
+testconnectwebpackage: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web
+	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node20 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node21 ../../node_modules/.bin/jasmine --config=jasmine.json
 
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node-test
@@ -212,20 +218,6 @@ testwebconformancelocal: $(BUILD)/connect-conformance
 .PHONY: testcloudflareconformance
 testcloudflareconformance: $(BUILD)/connect-conformance
 	npm run -w packages/connect-cloudflare conformance
-
-.PHONY: testwebnode
-testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web
-	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node20 ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node21 ../../node_modules/.bin/jasmine --config=jasmine.json
-
-.PHONY: testwebbrowser
-testwebbrowser: $(BUILD)/connect-web
-	npm run -w packages/connect-web karma
-
-.PHONY: testwebbrowserlocal
-testwebbrowserlocal: $(BUILD)/connect-web
-	npm run -w packages/connect-web karma:serve
 
 .PHONY: testwebbrowserstack
 testwebbrowserstack: $(BUILD)/connect-web

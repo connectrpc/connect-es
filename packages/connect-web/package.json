@@ -19,8 +19,6 @@
     "conformance:client:node": "connectconformance --mode client --conf ./conformance/conformance-web-node.yaml -v -- ./conformance/client.ts --browser node && connectconformance --mode client --conf ./conformance/conformance-web-node.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --browser node --useCallbackClient",
     "conformance:client:browser": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/client.ts && connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --useCallbackClient",
     "jasmine": "jasmine --config=jasmine.json",
-    "karma": "karma start karma.conf.cjs",
-    "karma:serve": "karma start karma.serve.conf.cjs",
     "karma:browserstack": "buf generate buf.build/connectrpc/eliza --template src/browserstacktests/buf.gen.yaml && karma start karma.browserstack.conf.cjs"
   },
   "type": "module",
