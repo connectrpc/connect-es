@@ -96,7 +96,7 @@ $(BUILD)/connect-next: $(BUILD)/connect $(BUILD)/connect-node packages/connect-n
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-web: $(BUILD)/connect $(BUILD)/connect-conformance packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
+$(BUILD)/connect-web: $(GEN)/connect-web $(BUILD)/connect $(BUILD)/connect-conformance packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
 	@mkdir -p $(@D)
@@ -140,6 +140,12 @@ $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-co
 $(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-conformance/buf.gen.yaml packages/connect-conformance/package.json Makefile
 	rm -rf packages/connect-conformance/src/gen/*
 	npm run -w packages/connect-conformance generate
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(GEN)/connect-web: node_modules/.bin/protoc-gen-es packages/connect-web/buf.gen.yaml Makefile
+	rm -rf packages/connect-web/src/browserstacktests/gen/*
+	npm run -w packages/connect-web generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -232,7 +238,6 @@ testcloudflareconformance: $(BUILD)/connect-conformance
 
 .PHONY: testwebbrowserstack
 testwebbrowserstack: $(BUILD)/connect-web
-	npm run -w packages/connect-web generate
 	npm run -w packages/connect-web karma:browserstack
 
 .PHONY: testconnectmigrate
