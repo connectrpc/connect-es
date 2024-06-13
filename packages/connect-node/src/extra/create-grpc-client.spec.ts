@@ -12,22 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TestService } from "../gen/connectrpc/conformance/v1/test_connect.js";
-import { createGrpcClient } from "./create-grpc-client.js";
+import { ConformanceService } from "@connectrpc/connect-conformance";
 import * as grpc from "@grpc/grpc-js";
+import { createGrpcClient } from "./create-grpc-client.js";
 
 describe("createGrpcClient()", function () {
   it("should create the expected methods", function () {
-    const grpcClient = createGrpcClient(TestService, {
+    const grpcClient = createGrpcClient(ConformanceService, {
       address: "localhost:5002",
       channelCredentials: grpc.ChannelCredentials.createInsecure(),
       clientOptions: {},
       binaryOptions: {},
     });
     expect(grpcClient).toBeDefined();
-    expect(typeof grpcClient.emptyCall).toBe("function");
-    expect(typeof grpcClient.streamingOutputCall).toBe("function");
-    expect(typeof grpcClient.streamingInputCall).toBe("function");
-    expect(typeof grpcClient.fullDuplexCall).toBe("function");
+    expect(typeof grpcClient.unary).toBe("function");
+    expect(typeof grpcClient.idempotentUnary).toBe("function");
+    expect(typeof grpcClient.serverStream).toBe("function");
+    expect(typeof grpcClient.clientStream).toBe("function");
+    expect(typeof grpcClient.bidiStream).toBe("function");
   });
 });
