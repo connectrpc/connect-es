@@ -1,5 +1,9 @@
 {
   "files": ["src/index.ts"],
   "include": ["src/**/*.spec.ts", "src/testdata/*.ts", "conformance/**/*.ts"],
-  "extends": "../../tsconfig.base.json"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "moduleResolution": "Node",
+    "module": "ES2015"
+  }
 }

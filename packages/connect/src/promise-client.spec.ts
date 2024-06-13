@@ -21,7 +21,7 @@ import {
 } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
-import type { HandlerContext } from "./implementation";
+import type { HandlerContext } from "./implementation.js";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import { createContextKey, createContextValues } from "./context-values.js";

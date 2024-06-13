@@ -29,8 +29,7 @@ import {
   universalRequestFromNodeRequest,
   universalResponseToNodeResponse,
 } from "@connectrpc/connect-node";
-import type { FastifyInstance } from "fastify/types/instance";
-import type { FastifyRequest } from "fastify/types/request";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 
 interface FastifyConnectPluginOptions extends ConnectRouterOptions {
   /**
