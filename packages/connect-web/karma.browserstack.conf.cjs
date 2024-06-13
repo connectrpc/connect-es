@@ -36,13 +36,15 @@ module.exports = function (config) {
       "**/*.ts": "esbuild",
     },
     reporters: ["progress", "BrowserStack"],
-    files: ["src/browserstackonly/*.ts", "src/gen/**/*.ts"],
+    files: ["src/browserstacktests/*.ts"],
     esbuild: {
       define: {},
       plugins: [],
       tsconfig: "./tsconfig.json",
       target: "es2015",
       singleBundle: true,
+      // Needed because the package.json file for connect-web is marked as no side effects
+      ignoreAnnotations: true,
     },
 
     // global config of your BrowserStack account

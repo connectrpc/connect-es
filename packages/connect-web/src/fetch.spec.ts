@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TestService } from "./gen/connectrpc/conformance/v1/test_connect.js";
 import {
-  SimpleRequest,
-  SimpleResponse,
-} from "./gen/connectrpc/conformance/v1/messages_pb.js";
-import {
-  createConnectTransport,
-  createGrpcWebTransport,
-} from "@connectrpc/connect-web";
+  ConformanceService,
+  UnaryRequest,
+  UnaryResponse,
+} from "@connectrpc/connect-conformance";
+import { createConnectTransport } from "./connect-transport.js";
+import { createGrpcWebTransport } from "./grpc-web-transport.js";
 
 describe("custom fetch", function () {
   let originFetch: typeof fetch;
@@ -29,14 +27,11 @@ describe("custom fetch", function () {
 
   describe("with Connect transport", () => {
     it("should only call Response#json with the JSON format", async function () {
-      const response = new Response(
-        new SimpleResponse({ username: "donald" }).toJsonString(),
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = new Response(new UnaryResponse().toJsonString(), {
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+      });
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
       const transport = createConnectTransport({
@@ -44,25 +39,22 @@ describe("custom fetch", function () {
         fetch: () => Promise.resolve(response),
       });
       await transport.unary(
-        TestService,
-        TestService.methods.unaryCall,
+        ConformanceService,
+        ConformanceService.methods.unary,
         undefined,
         undefined,
         undefined,
-        new SimpleRequest(),
+        new UnaryRequest(),
       );
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
     });
     it("should only call Response#arrayBuffer with the binary format on the happy path", async function () {
-      const response = new Response(
-        new SimpleResponse({ username: "donald" }).toBinary(),
-        {
-          headers: {
-            "Content-Type": "application/proto",
-          },
+      const response = new Response(new UnaryResponse().toBinary(), {
+        headers: {
+          "Content-Type": "application/proto",
         },
-      );
+      });
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
       const transport = createConnectTransport({
@@ -71,12 +63,12 @@ describe("custom fetch", function () {
         useBinaryFormat: true,
       });
       await transport.unary(
-        TestService,
-        TestService.methods.unaryCall,
+        ConformanceService,
+        ConformanceService.methods.unary,
         undefined,
         undefined,
         undefined,
-        new SimpleRequest(),
+        new UnaryRequest(),
       );
       expect(response.json).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
@@ -103,26 +95,23 @@ describe("custom fetch", function () {
       });
       await expectAsync(
         transport.unary(
-          TestService,
-          TestService.methods.unaryCall,
+          ConformanceService,
+          ConformanceService.methods.unary,
           undefined,
           undefined,
           undefined,
-          new SimpleRequest(),
+          new UnaryRequest(),
         ),
       ).toBeRejectedWithError(/\[permission_denied] foobar/);
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
     });
     it("should should defer resolving fetch until calling endpoint", async function () {
-      const response = new Response(
-        new SimpleResponse({ username: "donald" }).toJsonString(),
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = new Response(new UnaryResponse().toJsonString(), {
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+      });
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
       const transport = createConnectTransport({
@@ -131,12 +120,12 @@ describe("custom fetch", function () {
       // Patch globalThis.fetch to mimic a polyfill or patch
       globalThis.fetch = () => Promise.resolve(response);
       await transport.unary(
-        TestService,
-        TestService.methods.unaryCall,
+        ConformanceService,
+        ConformanceService.methods.unary,
         undefined,
         undefined,
         undefined,
-        new SimpleRequest(),
+        new UnaryRequest(),
       );
       expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
       expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
@@ -144,14 +133,11 @@ describe("custom fetch", function () {
   });
   describe("with gRPC-web transport", () => {
     it("should should defer resolving fetch until calling endpoint", async function () {
-      const response = new Response(
-        new SimpleResponse({ username: "donald" }).toJsonString(),
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = new Response(new UnaryResponse().toJsonString(), {
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+      });
       spyOn(response, "arrayBuffer").and.callThrough();
       spyOn(response, "json").and.callThrough();
       const transport = createGrpcWebTransport({
@@ -163,12 +149,12 @@ describe("custom fetch", function () {
         Promise.reject("test-error-raised-from-patched-fetch");
       await expectAsync(
         transport.unary(
-          TestService,
-          TestService.methods.unaryCall,
+          ConformanceService,
+          ConformanceService.methods.unary,
           undefined,
           undefined,
           undefined,
-          new SimpleRequest(),
+          new UnaryRequest(),
         ),
       ).toBeRejectedWithError(/test-error-raised-from-patched-fetch/);
     });

@@ -17,7 +17,10 @@
     "conformance:client:firefox": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-promise-client-firefox.txt -- ./conformance/client.ts --browser firefox --headless && connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --browser firefox --headless --useCallbackClient",
     "conformance:client:safari": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/client.ts --browser safari --headless && connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --browser safari --headless --useCallbackClient",
     "conformance:client:node": "connectconformance --mode client --conf ./conformance/conformance-web-node.yaml -v -- ./conformance/client.ts --browser node && connectconformance --mode client --conf ./conformance/conformance-web-node.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --browser node --useCallbackClient",
-    "conformance:client:browser": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/client.ts && connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --useCallbackClient"
+    "conformance:client:browser": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/client.ts && connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --useCallbackClient",
+    "jasmine": "jasmine --config=jasmine.json",
+    "generate": "buf generate buf.build/connectrpc/eliza",
+    "karma:browserstack": "karma start karma.browserstack.conf.cjs"
   },
   "type": "module",
   "sideEffects": false,
@@ -30,7 +33,15 @@
   },
   "devDependencies": {
     "webdriverio": "^8.36.1",
-    "@connectrpc/connect-conformance": "^1.4.0"
+    "@bufbuild/protoc-gen-es": "^1.10.0",
+    "@connectrpc/protoc-gen-connect-es": "^1.4.0",
+    "@connectrpc/connect-conformance": "^1.4.0",
+    "jasmine": "^5.1.0",
+    "karma": "^6.4.2",
+    "karma-browserstack-launcher": "^1.6.0",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-esbuild": "^2.3.0",
+    "karma-jasmine": "^5.1.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.10.0",

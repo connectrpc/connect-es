@@ -96,15 +96,9 @@ $(BUILD)/connect-next: $(BUILD)/connect $(BUILD)/connect-node packages/connect-n
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-web: $(BUILD)/connect packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
+$(BUILD)/connect-web: $(GEN)/connect-web $(BUILD)/connect $(BUILD)/connect-conformance packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
 	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
-	@mkdir -p $(@D)
-	@touch $(@)
-
-$(BUILD)/connect-web-test: $(BUILD)/connect-web $(GEN)/connect-web-test packages/connect-web-test/tsconfig.json $(shell find packages/connect-web-test/src -name '*.ts')
-	npm run -w packages/connect-web-test clean
-	npm run -w packages/connect-web-test build
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -114,7 +108,7 @@ $(BUILD)/connect-node-test: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUI
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-conformance: $(BUILD)/connect-node $(BUILD)/connect-web $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
+$(BUILD)/connect-conformance: $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
 	npm run -w packages/connect-conformance clean
 	npm run -w packages/connect-conformance build
 	@mkdir -p $(@D)
@@ -137,13 +131,6 @@ $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-test/buf.gen.yaml Makefile
-	rm -rf packages/connect-web-test/src/gen/*
-	npm run -w packages/connect-web-test generate https://github.com/connectrpc/conformance.git#tag=$(CONFORMANCE_VERSION),subdir=proto
-	npm run -w packages/connect-web-test generate buf.build/connectrpc/eliza:8bde2b90ec0a7f23df3de5824bed0b6ea2043305
-	@mkdir -p $(@D)
-	@touch $(@)
-
 $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-node-test/buf.gen.yaml Makefile
 	rm -rf packages/connect-node-test/src/gen/*
 	npm run -w packages/connect-node-test generate https://github.com/connectrpc/conformance.git#tag=$(CONFORMANCE_VERSION),subdir=proto
@@ -153,6 +140,12 @@ $(GEN)/connect-node-test: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-co
 $(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-conformance/buf.gen.yaml packages/connect-conformance/package.json Makefile
 	rm -rf packages/connect-conformance/src/gen/*
 	npm run -w packages/connect-conformance generate
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(GEN)/connect-web: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web/buf.gen.yaml Makefile
+	rm -rf packages/connect-web/src/browserstacktests/gen/*
+	npm run -w packages/connect-web generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -185,7 +178,7 @@ clean: conformanceserverstop ## Delete build artifacts and installed dependencie
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testnode testconformance testwebnode testwebbrowser testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testnode testconformance testconnectwebpackage testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
@@ -197,6 +190,12 @@ testconnectnodepackage: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-node && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
+
+.PHONY: testconnectwebpackage
+testconnectwebpackage: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web
+	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node20 ../../node_modules/.bin/jasmine --config=jasmine.json
+	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node21 ../../node_modules/.bin/jasmine --config=jasmine.json
 
 .PHONY: testnode
 testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node-test
@@ -237,35 +236,9 @@ testwebconformancelocal: $(BUILD)/connect-conformance
 testcloudflareconformance: $(BUILD)/connect-conformance
 	npm run -w packages/connect-cloudflare conformance
 
-.PHONY: testwebnode
-testwebnode: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-web-test
-	$(MAKE) conformanceserverrun
-	$(MAKE) connectnodeserverrun
-	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node18 ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node20 ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-web-test && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node21 ../../node_modules/.bin/jasmine --config=jasmine.json
-	$(MAKE) conformanceserverstop
-	$(MAKE) connectnodeserverstop
-
-.PHONY: testwebbrowser
-testwebbrowser: $(BUILD)/connect-web-test
-	$(MAKE) conformanceserverrun
-	$(MAKE) connectnodeserverrun
-	npm run -w packages/connect-web-test karma
-	$(MAKE) conformanceserverstop
-	$(MAKE) connectnodeserverstop
-
-.PHONY: testwebbrowserlocal
-testwebbrowserlocal: $(BUILD)/connect-web-test
-	$(MAKE) conformanceserverrun
-	$(MAKE) connectnodeserverrun
-	npm run -w packages/connect-web-test karma-serve
-	$(MAKE) conformanceserverstop
-	$(MAKE) connectnodeserverstop
-
 .PHONY: testwebbrowserstack
-testwebbrowserstack: $(BUILD)/connect-web-test
-	npm run -w packages/connect-web-test karma-browserstack
+testwebbrowserstack: $(BUILD)/connect-web
+	npm run -w packages/connect-web karma:browserstack
 
 .PHONY: testconnectmigrate
 testconnectmigrate: $(BUILD)/connect-migrate

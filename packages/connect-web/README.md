@@ -54,4 +54,3 @@ for a tutorial, or take a look at [our example](https://github.com/connectrpc/co
 
 Connect plays nice with Vue, Svelte, Remix, Next.js, Angular and many others. Take a look at
 [our examples](https://github.com/connectrpc/examples-es) for various frameworks.
-
