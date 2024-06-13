@@ -184,13 +184,6 @@ testconnectwebpackage: $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connec
 	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node20 ../../node_modules/.bin/jasmine --config=jasmine.json
 	cd packages/connect-web && PATH="$(abspath $(BIN)):$(PATH)" NODE_TLS_REJECT_UNAUTHORIZED=0 node21 ../../node_modules/.bin/jasmine --config=jasmine.json
 
-.PHONY: testnode
-testnode: $(BIN)/node16 $(BIN)/node18 $(BIN)/node20 $(BIN)/node21 $(BUILD)/connect-node-test
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node16 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node18 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node20 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-	cd packages/connect-node-test && PATH="$(abspath $(BIN)):$(PATH)" node21 --trace-warnings ../../node_modules/.bin/jasmine --config=jasmine.json
-
 .PHONY: testconnectexpresspackage
 testconnectexpresspackage: $(BUILD)/connect-express
 	npm run -w packages/connect-express jasmine
