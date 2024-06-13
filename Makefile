@@ -232,6 +232,7 @@ testcloudflareconformance: $(BUILD)/connect-conformance
 
 .PHONY: testwebbrowserstack
 testwebbrowserstack: $(BUILD)/connect-web
+	npm run -w packages/connect-web generate
 	npm run -w packages/connect-web karma:browserstack
 
 .PHONY: testconnectmigrate
