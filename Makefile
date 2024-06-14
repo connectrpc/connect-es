@@ -130,9 +130,9 @@ $(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web/buf.gen.yaml Makefile
-	rm -rf packages/connect-web/src/browserstacktests/gen/*
-	npm run -w packages/connect-web generate
+$(GEN)/connect-web: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web/browserstack/buf.gen.yaml Makefile
+	rm -rf packages/connect-web/browserstacktests/gen/*
+	npm run -w packages/connect-web generate:browserstack
 	@mkdir -p $(@D)
 	@touch $(@)
 
