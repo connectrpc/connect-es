@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, protoBase64 } from "@bufbuild/protobuf";
-import type { AnyMessage } from "@bufbuild/protobuf";
+import type { DescMessage } from "@bufbuild/protobuf";
+import { base64Encode } from "@bufbuild/protobuf/wire";
 import {
   headerContentType,
   headerProtocolVersion,
@@ -30,8 +30,7 @@ function encodeMessageForUrl(message: Uint8Array, useBase64: boolean): string {
   if (useBase64) {
     // TODO(jchadwick-buf): Three regex replaces seems excessive.
     // Can we make protoBase64.enc more flexible?
-    return protoBase64
-      .enc(message)
+    return base64Encode(message)
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
       .replace(/=+$/, "");
@@ -44,8 +43,8 @@ function encodeMessageForUrl(message: Uint8Array, useBase64: boolean): string {
  * @private Internal code, does not follow semantic versioning.
  */
 export function transformConnectPostToGetRequest<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
 >(
   request: UnaryRequest<I, O>,
   message: Uint8Array,

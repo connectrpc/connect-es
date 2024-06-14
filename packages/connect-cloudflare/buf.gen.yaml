@@ -1,0 +1,5 @@
+version: v1
+plugins:
+  - plugin: es
+    out: ./conformance/gen
+    opt: target=ts,import_extension=.js

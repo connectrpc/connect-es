@@ -13,8 +13,6 @@
 // limitations under the License.
 
 import * as http2 from "http2";
-import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
-import type { PartialMessage } from "@bufbuild/protobuf";
 import {
   createContextKey,
   createContextValues,
@@ -27,67 +25,15 @@ import { connectNodeAdapter } from "./connect-node-adapter.js";
 import { createGrpcTransport } from "./grpc-transport.js";
 import { createGrpcWebTransport } from "./grpc-web-transport.js";
 import { createConnectTransport } from "./connect-transport.js";
-
+import { ElizaService } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
+import type {
+  ConverseRequest,
+  ConverseRequestSchema,
+} from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
+import type { MessageInitShape } from "@bufbuild/protobuf";
 /* eslint-disable @typescript-eslint/require-await */
 
 describe("node readme", function () {
-  interface SayR extends Message<SayR> {
-    sentence: string;
-  }
-  const SayR = proto3.makeMessageType<SayR>("connectrpc.eliza.v1.SayRequest", [
-    { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  interface IntroduceRequest extends Message<IntroduceRequest> {
-    name: string;
-  }
-  const IntroduceRequest = proto3.makeMessageType<IntroduceRequest>(
-    "connectrpc.eliza.v1.IntroduceRequest",
-    [{ no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
-  );
-
-  interface ConverseRequest extends Message<ConverseRequest> {
-    sentence: string;
-  }
-
-  const ConverseRequest = proto3.makeMessageType<ConverseRequest>(
-    "connectrpc.eliza.v1.ConverseRequest",
-    [{ no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
-  );
-
-  interface ConverseResponse extends Message<ConverseResponse> {
-    sentence: string;
-  }
-
-  const ConverseResponse = proto3.makeMessageType<ConverseResponse>(
-    "connectrpc.eliza.v1.ConverseResponse",
-    [{ no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
-  );
-
-  const ElizaService = {
-    typeName: "connectrpc.eliza.v1.ElizaService",
-    methods: {
-      say: {
-        name: "Say",
-        I: SayR,
-        O: SayR,
-        kind: MethodKind.Unary,
-      },
-      introduce: {
-        name: "Introduce",
-        I: IntroduceRequest,
-        O: SayR,
-        kind: MethodKind.ServerStreaming,
-      },
-      converse: {
-        name: "Converse",
-        I: ConverseRequest,
-        O: ConverseResponse,
-        kind: MethodKind.BiDiStreaming,
-      },
-    },
-  } as const;
-
   const optionsHttp2 = {
     baseUrl: "https://demo.connectrpc.com",
     httpVersion: "2" as const,
@@ -147,7 +93,7 @@ describe("node readme", function () {
     let port = -1;
 
     function routes(router: ConnectRouter) {
-      router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
+      router.rpc(ElizaService.method.say, async (req) => ({
         sentence: `you said: ${req.sentence}`,
       }));
     }
@@ -186,13 +132,9 @@ describe("node readme", function () {
 
     const kUser = createContextKey<string | undefined>(undefined);
     function routes(router: ConnectRouter) {
-      router.rpc(
-        ElizaService,
-        ElizaService.methods.say,
-        async (req, { values }) => ({
-          sentence: `Hey ${values.get(kUser)}! You said: ${req.sentence}`,
-        }),
-      );
+      router.rpc(ElizaService.method.say, async (req, { values }) => ({
+        sentence: `Hey ${values.get(kUser)}! You said: ${req.sentence}`,
+      }));
     }
 
     function startServer() {
@@ -236,8 +178,7 @@ describe("node readme", function () {
 
     function routes(router: ConnectRouter) {
       router.rpc(
-        ElizaService,
-        ElizaService.methods.converse,
+        ElizaService.method.converse,
         async function* (req: AsyncIterable<ConverseRequest>) {
           yield { sentence: "ping" };
           for await (const next of req) {
@@ -266,7 +207,10 @@ describe("node readme", function () {
         httpVersion: "2",
       });
       const client = createPromiseClient(ElizaService, transport);
-      const req = createWritableIterable<PartialMessage<ConverseRequest>>();
+      const req =
+        createWritableIterable<
+          MessageInitShape<typeof ConverseRequestSchema>
+        >();
       try {
         const res = client.converse(req);
         for await (const next of res) {

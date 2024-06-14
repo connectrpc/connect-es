@@ -12,14 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-  AnyMessage,
-  Message,
-  MethodInfo,
-  PartialMessage,
-  ServiceType,
-} from "@bufbuild/protobuf";
-import { MethodIdempotency } from "@bufbuild/protobuf";
+import type { DescMessage, MessageInitShape } from "@bufbuild/protobuf";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { headerUnaryContentLength, headerUnaryEncoding } from "./headers.js";
 import { validateResponseWithCompression } from "./validate-response.js";
@@ -55,22 +48,20 @@ import { createMethodSerializationLookup } from "../protocol/serialization.js";
 import type { Transport } from "../transport.js";
 import type { ContextValues } from "../context-values.js";
 import { createContextValues } from "../context-values.js";
+import type { MethodInfo } from "../types.js";
+import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
 
 /**
  * Create a Transport for the Connect protocol.
  */
 export function createTransport(opt: CommonTransportOptions): Transport {
   return {
-    async unary<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
+    async unary<I extends DescMessage, O extends DescMessage>(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      message: PartialMessage<I>,
+      message: MessageInitShape<I>,
       contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
@@ -91,12 +82,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         timeoutMs,
         req: {
           stream: false,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(opt.baseUrl, service, method),
+          url: createMethodUrl(opt.baseUrl, method),
           init: {},
           header: requestHeaderWithCompression(
-            method.kind,
+            method.methodKind,
             opt.useBinaryFormat,
             timeoutMs,
             header,
@@ -122,7 +113,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           }
           const useGet =
             opt.useHttpGet === true &&
-            method.idempotency === MethodIdempotency.NoSideEffects;
+            method.idempotency ===
+              MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS;
           let body: AsyncIterable<Uint8Array> | undefined;
           if (useGet) {
             req = transformConnectPostToGetRequest(
@@ -142,7 +134,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           });
           const { compression, isUnaryError, unaryError } =
             validateResponseWithCompression(
-              method.kind,
+              method.methodKind,
               opt.acceptCompression,
               opt.useBinaryFormat,
               universalResponse.status,
@@ -172,7 +164,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           }
           return <UnaryResponse<I, O>>{
             stream: false,
-            service,
+            service: method.parent,
             method,
             header,
             message: serialization
@@ -184,16 +176,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       });
     },
 
-    async stream<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
+    async stream<I extends DescMessage, O extends DescMessage>(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>,
+      input: AsyncIterable<MessageInitShape<I>>,
       contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
@@ -217,16 +205,16 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         timeoutMs,
         req: {
           stream: true,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(opt.baseUrl, service, method),
+          url: createMethodUrl(opt.baseUrl, method),
           init: {
             method: "POST",
             redirect: "error",
             mode: "cors",
           },
           header: requestHeaderWithCompression(
-            method.kind,
+            method.methodKind,
             opt.useBinaryFormat,
             timeoutMs,
             header,
@@ -257,7 +245,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             ),
           });
           const { compression } = validateResponseWithCompression(
-            method.kind,
+            method.methodKind,
             opt.acceptCompression,
             opt.useBinaryFormat,
             uRes.status,

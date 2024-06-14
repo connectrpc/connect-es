@@ -13,16 +13,14 @@
 // limitations under the License.
 
 import type {
-  AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
+  DescMessage,
   JsonReadOptions,
   JsonWriteOptions,
-  MethodInfo,
-  PartialMessage,
-  ServiceType,
+  MessageInitShape,
+  MessageShape,
 } from "@bufbuild/protobuf";
-import { Message, MethodKind } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamResponse,
@@ -30,6 +28,7 @@ import type {
   UnaryRequest,
   UnaryResponse,
   ContextValues,
+  MethodInfo,
 } from "@connectrpc/connect";
 import { createContextValues, ConnectError, Code } from "@connectrpc/connect";
 import {
@@ -131,16 +130,12 @@ export function createGrpcWebTransport(
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? true;
   return {
-    async unary<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
+    async unary<I extends DescMessage, O extends DescMessage>(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: Headers,
-      message: PartialMessage<I>,
+      message: MessageInitShape<I>,
       contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
@@ -161,9 +156,9 @@ export function createGrpcWebTransport(
         timeoutMs,
         req: {
           stream: false,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(options.baseUrl, service, method),
+          url: createMethodUrl(options.baseUrl, method),
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",
@@ -194,7 +189,7 @@ export function createGrpcWebTransport(
             response.body,
           ).getReader();
           let trailer: Headers | undefined;
-          let message: O | undefined;
+          let message: MessageShape<O> | undefined;
           for (;;) {
             const r = await reader.read();
             if (r.done) {
@@ -240,7 +235,7 @@ export function createGrpcWebTransport(
           }
           return {
             stream: false,
-            service,
+            service: method.parent,
             method,
             header: response.headers,
             message,
@@ -250,16 +245,12 @@ export function createGrpcWebTransport(
       });
     },
 
-    async stream<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
+    async stream<I extends DescMessage, O extends DescMessage>(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>,
+      input: AsyncIterable<MessageInitShape<I>>,
       contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
@@ -323,9 +314,9 @@ export function createGrpcWebTransport(
       }
 
       async function createRequestBody(
-        input: AsyncIterable<I>,
+        input: AsyncIterable<MessageShape<I>>,
       ): Promise<Uint8Array> {
-        if (method.kind != MethodKind.ServerStreaming) {
+        if (method.methodKind != "server_streaming") {
           throw "The fetch API does not support streaming request bodies";
         }
         const r = await input[Symbol.asyncIterator]().next();
@@ -346,9 +337,9 @@ export function createGrpcWebTransport(
         timeoutMs,
         req: {
           stream: true,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(options.baseUrl, service, method),
+          url: createMethodUrl(options.baseUrl, method),
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",

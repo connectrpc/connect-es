@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
 import {
   headerContentType,
   headerStreamAcceptEncoding,
@@ -31,6 +30,7 @@ import {
   contentTypeUnaryProto,
 } from "./content-type.js";
 import type { Compression } from "../protocol/compression.js";
+import type { MethodKind } from "../types.js";
 
 /**
  * Creates headers for a Connect request.
@@ -50,7 +50,7 @@ export function requestHeader(
   }
   result.set(
     headerContentType,
-    methodKind == MethodKind.Unary
+    methodKind == "unary"
       ? useBinaryFormat
         ? contentTypeUnaryProto
         : contentTypeUnaryJson
@@ -93,14 +93,12 @@ export function requestHeaderWithCompression(
   );
   if (sendCompression != null) {
     const name =
-      methodKind == MethodKind.Unary
-        ? headerUnaryEncoding
-        : headerStreamEncoding;
+      methodKind == "unary" ? headerUnaryEncoding : headerStreamEncoding;
     result.set(name, sendCompression.name);
   }
   if (acceptCompression.length > 0) {
     const name =
-      methodKind == MethodKind.Unary
+      methodKind == "unary"
         ? headerUnaryAcceptEncoding
         : headerStreamAcceptEncoding;
     result.set(name, acceptCompression.map((c) => c.name).join(","));

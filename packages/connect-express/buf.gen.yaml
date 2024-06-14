@@ -1,0 +1,5 @@
+version: v1
+plugins:
+  - plugin: es
+    out: src/testdata/gen
+    opt: ts_nocheck=false,target=ts,import_extension=.js

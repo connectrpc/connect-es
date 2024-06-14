@@ -13,20 +13,28 @@
 // limitations under the License.
 
 import { createPromiseClient, ConnectError } from "@connectrpc/connect";
-import type { PromiseClient, Transport } from "@connectrpc/connect";
+import type {
+  CallOptions,
+  PromiseClient,
+  Transport,
+} from "@connectrpc/connect";
+import { ClientResponseResultSchema } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
+import type { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
-  ClientCompatRequest,
-  ClientResponseResult,
-} from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
-import {
-  UnaryRequest,
+  ConformanceService,
+  UnaryRequestSchema,
+  IdempotentUnaryRequestSchema,
+  ServerStreamRequestSchema,
+  ClientStreamRequestSchema,
+  BidiStreamRequestSchema,
+  UnimplementedRequestSchema,
+} from "./gen/connectrpc/conformance/v1/service_pb.js";
+import type {
   Header as ConformanceHeader,
-  ClientStreamRequest,
-  ServerStreamRequest,
   ConformancePayload,
   BidiStreamRequest,
-  UnimplementedRequest,
-  IdempotentUnaryRequest,
+  UnaryResponse,
+  IdempotentUnaryResponse,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   convertToProtoError,
@@ -35,9 +43,10 @@ import {
   wait,
   getCancelTiming,
 } from "./protocol.js";
-import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 import { createWritableIterable } from "@connectrpc/connect/protocol";
 import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
+import { create } from "@bufbuild/protobuf";
+import { anyUnpack } from "@bufbuild/protobuf/wkt";
 
 type ConformanceClient = PromiseClient<typeof ConformanceService>;
 
@@ -48,17 +57,17 @@ export function invokeWithPromiseClient(
   const client = createPromiseClient(ConformanceService, transport);
 
   switch (req.method) {
-    case ConformanceService.methods.unary.name:
+    case ConformanceService.method.unary.name:
       return unary(client, req);
-    case ConformanceService.methods.idempotentUnary.name:
+    case ConformanceService.method.idempotentUnary.name:
       return unary(client, req, true);
-    case ConformanceService.methods.serverStream.name:
+    case ConformanceService.method.serverStream.name:
       return serverStream(client, req);
-    case ConformanceService.methods.clientStream.name:
+    case ConformanceService.method.clientStream.name:
       return clientStream(client, req);
-    case ConformanceService.methods.bidiStream.name:
+    case ConformanceService.method.bidiStream.name:
       return bidiStream(client, req);
-    case ConformanceService.methods.unimplemented.name:
+    case ConformanceService.method.unimplemented.name:
       return unimplemented(client, req);
     default:
       throw new Error(`Unknown method: ${req.method}`);
@@ -75,8 +84,11 @@ async function unary(
   }
   req.cancel;
   const msg = req.requestMessages[0];
-  const uReq = idempotent ? new IdempotentUnaryRequest() : new UnaryRequest();
-  if (!msg.unpackTo(uReq)) {
+  const uReq = anyUnpack(
+    msg,
+    idempotent ? IdempotentUnaryRequestSchema : UnaryRequestSchema,
+  );
+  if (!uReq) {
     throw new Error("Could not unpack request message to unary request");
   }
   const reqHeader = new Headers();
@@ -86,7 +98,10 @@ async function unary(
   let resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
   try {
-    let call = client.unary;
+    let call: (
+      req: NonNullable<typeof uReq>,
+      options: CallOptions,
+    ) => Promise<UnaryResponse | IdempotentUnaryResponse> = client.unary;
     if (idempotent) {
       call = client.idempotentUnary;
     }
@@ -113,7 +128,7 @@ async function unary(
         : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
-  return new ClientResponseResult({
+  return create(ClientResponseResultSchema, {
     payloads: payloads,
     responseHeaders: resHeaders,
     responseTrailers: resTrailers,
@@ -129,8 +144,9 @@ async function serverStream(
     throw new Error("ServerStream method requires exactly one request message");
   }
   const msg = req.requestMessages[0];
-  const uReq = new ServerStreamRequest();
-  if (!msg.unpackTo(uReq)) {
+
+  const uReq = anyUnpack(msg, ServerStreamRequestSchema);
+  if (!uReq) {
     throw new Error(
       "Could not unpack request message to server stream request",
     );
@@ -178,7 +194,7 @@ async function serverStream(
         : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
-  return new ClientResponseResult({
+  return create(ClientResponseResultSchema, {
     responseHeaders: resHeaders,
     responseTrailers: resTrailers,
     payloads: payloads,
@@ -202,8 +218,8 @@ async function clientStream(
     const csRes = await client.clientStream(
       (async function* () {
         for (const msg of req.requestMessages) {
-          const csReq = new ClientStreamRequest();
-          if (!msg.unpackTo(csReq)) {
+          const csReq = anyUnpack(msg, ClientStreamRequestSchema);
+          if (!csReq) {
             throw new Error(
               "Could not unpack request message to client stream request",
             );
@@ -243,7 +259,7 @@ async function clientStream(
         : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
-  return new ClientResponseResult({
+  return create(ClientResponseResultSchema, {
     responseHeaders: resHeaders,
     responseTrailers: resTrailers,
     payloads: payloads,
@@ -275,8 +291,8 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
     });
     const resIt = sRes[Symbol.asyncIterator]();
     for (const msg of req.requestMessages) {
-      const bdReq = new BidiStreamRequest();
-      if (!msg.unpackTo(bdReq)) {
+      const bdReq = anyUnpack(msg, BidiStreamRequestSchema);
+      if (!bdReq) {
         throw new Error(
           "Could not unpack request message to client stream request",
         );
@@ -334,7 +350,7 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
         : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
-  return new ClientResponseResult({
+  return create(ClientResponseResultSchema, {
     responseHeaders: resHeaders,
     responseTrailers: resTrailers,
     payloads: payloads,
@@ -347,8 +363,8 @@ async function unimplemented(
   req: ClientCompatRequest,
 ) {
   const msg = req.requestMessages[0];
-  const unReq = new UnimplementedRequest();
-  if (!msg.unpackTo(unReq)) {
+  const unReq = anyUnpack(msg, UnimplementedRequestSchema);
+  if (!unReq) {
     throw new Error("Could not unpack request message to unary request");
   }
   const reqHeader = new Headers();
@@ -378,7 +394,7 @@ async function unimplemented(
         : resHeaders;
     resTrailers = convertToProtoHeaders(error.metadata);
   }
-  return new ClientResponseResult({
+  return create(ClientResponseResultSchema, {
     responseHeaders: resHeaders,
     responseTrailers: resTrailers,
     error: convertToProtoError(error),

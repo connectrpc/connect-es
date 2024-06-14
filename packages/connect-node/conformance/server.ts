@@ -24,18 +24,23 @@ import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
 import * as net from "node:net";
-import { createRegistry } from "@bufbuild/protobuf";
+import {
+  create,
+  createRegistry,
+  fromBinary,
+  toBinary,
+} from "@bufbuild/protobuf";
 import {
   routes,
   writeSizeDelimitedBuffer,
-  BidiStreamRequest,
-  ClientStreamRequest,
   HTTPVersion,
-  IdempotentUnaryRequest,
-  ServerCompatRequest,
-  ServerCompatResponse,
-  ServerStreamRequest,
-  UnaryRequest,
+  ServerCompatRequestSchema,
+  BidiStreamRequestSchema,
+  ClientStreamRequestSchema,
+  IdempotentUnaryRequestSchema,
+  ServerStreamRequestSchema,
+  UnaryRequestSchema,
+  ServerCompatResponseSchema,
 } from "@connectrpc/connect-conformance";
 
 main();
@@ -47,7 +52,8 @@ main();
  * server's port and other details to stdout.
  */
 function main() {
-  const req = ServerCompatRequest.fromBinary(
+  const req = fromBinary(
+    ServerCompatRequestSchema,
     readFileSync(process.stdin.fd).subarray(4),
   );
 
@@ -56,12 +62,12 @@ function main() {
     readMaxBytes: req.messageReceiveLimit,
     acceptCompression: [compressionGzip, compressionBrotli],
     jsonOptions: {
-      typeRegistry: createRegistry(
-        UnaryRequest,
-        ServerStreamRequest,
-        ClientStreamRequest,
-        BidiStreamRequest,
-        IdempotentUnaryRequest,
+      registry: createRegistry(
+        UnaryRequestSchema,
+        ServerStreamRequestSchema,
+        ClientStreamRequestSchema,
+        BidiStreamRequestSchema,
+        IdempotentUnaryRequestSchema,
       ),
     },
   });
@@ -111,7 +117,7 @@ function main() {
   });
   server.listen(undefined, "127.0.0.1", () => {
     const addrInfo = server.address() as net.AddressInfo;
-    const res = new ServerCompatResponse({
+    const res = create(ServerCompatResponseSchema, {
       pemCert:
         serverOptions.cert !== undefined
           ? Buffer.from(serverOptions.cert)
@@ -119,6 +125,8 @@ function main() {
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+    process.stdout.write(
+      writeSizeDelimitedBuffer(toBinary(ServerCompatResponseSchema, res)),
+    );
   });
 }

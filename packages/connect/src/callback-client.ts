@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { create } from "@bufbuild/protobuf";
 import type {
-  MethodInfo,
-  MethodInfoServerStreaming,
-  MethodInfoUnary,
-  PartialMessage,
-  ServiceType,
+  DescService,
+  DescMessage,
+  MessageInitShape,
+  MessageShape,
 } from "@bufbuild/protobuf";
-import { Message, MethodKind } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import type { Transport } from "./transport.js";
 import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
 import type { CallOptions } from "./call-options.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
+import type { MethodInfoServerStreaming, MethodInfoUnary } from "./types.js";
 
 // prettier-ignore
 /**
@@ -45,12 +45,13 @@ import { createAsyncIterable } from "./protocol/async-iterable.js";
  * a function returned by the effect is called when the effect is
  * torn down.
  */
-export type CallbackClient<T extends ServiceType> = {
-  [P in keyof T["methods"]]:
-    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, callback: (error: ConnectError | undefined, response: O) => void, options?: CallOptions) => CancelFn
-  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, messageCallback: (response: O) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
-  : never;
-};
+export type CallbackClient<Desc extends DescService> =
+  {
+    [P in keyof Desc["method"]]:
+      Desc["method"][P] extends MethodInfoUnary<infer I, infer O> ? (request: MessageInitShape<I>, callback: (error: ConnectError | undefined, response: MessageShape<O>) => void, options?: CallOptions) => CancelFn
+    : Desc["method"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: MessageInitShape<I>, messageCallback: (response: MessageShape<O>) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
+    : never;
+  }
 
 type CancelFn = () => void;
 
@@ -58,16 +59,16 @@ type CancelFn = () => void;
  * Create a CallbackClient for the given service, invoking RPCs through the
  * given transport.
  */
-export function createCallbackClient<T extends ServiceType>(
+export function createCallbackClient<T extends DescService>(
   service: T,
   transport: Transport,
 ) {
   return makeAnyClient(service, (method) => {
-    switch (method.kind) {
-      case MethodKind.Unary:
-        return createUnaryFn(transport, service, method);
-      case MethodKind.ServerStreaming:
-        return createServerStreamingFn(transport, service, method);
+    switch (method.methodKind) {
+      case "unary":
+        return createUnaryFn(transport, method);
+      case "server_streaming":
+        return createServerStreamingFn(transport, method);
       default:
         return null;
     }
@@ -77,23 +78,24 @@ export function createCallbackClient<T extends ServiceType>(
 /**
  * UnaryFn is the method signature for a unary method of a CallbackClient.
  */
-type UnaryFn<I extends Message<I>, O extends Message<O>> = (
-  request: PartialMessage<I>,
-  callback: (error: ConnectError | undefined, response: O) => void,
+type UnaryFn<I extends DescMessage, O extends DescMessage> = (
+  request: MessageInitShape<I>,
+  callback: (
+    error: ConnectError | undefined,
+    response: MessageShape<O> | undefined,
+  ) => void,
   options?: CallOptions,
 ) => CancelFn;
 
-function createUnaryFn<I extends Message<I>, O extends Message<O>>(
+function createUnaryFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
-  service: ServiceType,
-  method: MethodInfo<I, O>,
+  method: MethodInfoUnary<I, O>,
 ): UnaryFn<I, O> {
   return function (requestMessage, callback, options) {
     const abort = new AbortController();
     options = wrapSignal(abort, options);
     transport
       .unary(
-        service,
         method,
         abort.signal,
         options.timeoutMs,
@@ -113,7 +115,7 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
             // As documented, discard Canceled errors if canceled by the user.
             return;
           }
-          callback(err, new method.O());
+          callback(err, create(method.output));
         },
       );
     return () => abort.abort();
@@ -124,24 +126,22 @@ function createUnaryFn<I extends Message<I>, O extends Message<O>>(
  * ServerStreamingFn is the method signature for a server-streaming method of
  * a CallbackClient.
  */
-type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
-  request: PartialMessage<I>,
-  onResponse: (response: O) => void,
+type ServerStreamingFn<I extends DescMessage, O extends DescMessage> = (
+  request: MessageInitShape<I>,
+  onResponse: (response: MessageShape<O>) => void,
   onClose: (error: ConnectError | undefined) => void,
   options?: CallOptions,
 ) => CancelFn;
 
-function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
+function createServerStreamingFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
-  service: ServiceType,
-  method: MethodInfo<I, O>,
+  method: MethodInfoServerStreaming<I, O>,
 ): ServerStreamingFn<I, O> {
   return function (input, onResponse, onClose, options) {
     const abort = new AbortController();
     async function run() {
       options = wrapSignal(abort, options);
       const response = await transport.stream(
-        service,
         method,
         options.signal,
         options.timeoutMs,

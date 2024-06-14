@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Int32Value, StringValue, MethodKind } from "@bufbuild/protobuf";
+import { create } from "@bufbuild/protobuf";
 import { createContextKey } from "../context-values.js";
 import { createAsyncIterable } from "./async-iterable.js";
 import { transformInvokeImplementation } from "./invoke-implementation.js";
@@ -22,36 +22,35 @@ import {
 } from "../implementation.js";
 import type { MethodImplSpec } from "../implementation.js";
 import { readAll } from "./async-iterable-helper.spec.js";
+import { createServiceDesc } from "../descriptor-helper.spec.js";
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
+import type { StringValue } from "@bufbuild/protobuf/wkt";
 
-const TestService = {
+const TestService = createServiceDesc({
   typeName: "handwritten.TestService",
-  methods: {
+  method: {
     unary: {
-      name: "Unary",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
     },
     clientStreaming: {
-      name: "ClientStreaming",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ClientStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "client_streaming",
     },
     serverStreaming: {
-      name: "ServerStreaming",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ServerStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "server_streaming",
     },
     bidiStreaming: {
-      name: "BidiStreaming",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.BiDiStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "bidi_streaming",
     },
   },
-} as const;
+});
 
 describe("transformInvokeImplementation()", () => {
   const kFoo = createContextKey("foo");
@@ -67,20 +66,22 @@ describe("transformInvokeImplementation()", () => {
   it("should apply interceptors to unary calls", async () => {
     const context = createHandlerContext({
       ...handlerInit,
-      method: TestService.methods.unary,
+      method: TestService.method.unary,
     });
     context.values.set(kFoo, "bar");
     const output = transformInvokeImplementation(
       createMethodImplSpec(
-        TestService,
-        TestService.methods.unary,
+        TestService.method.unary,
         (_, { responseHeader, responseTrailer }) => {
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           return { value: "foo" };
         },
-      ) as unknown as MethodImplSpec<Int32Value, StringValue> & {
-        kind: MethodKind.Unary;
+      ) as unknown as MethodImplSpec<
+        typeof Int32ValueSchema,
+        typeof StringValueSchema
+      > & {
+        kind: "unary";
       },
       context,
       [
@@ -90,14 +91,14 @@ describe("transformInvokeImplementation()", () => {
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
           expect(req.url).toEqual("https://example.com/foo");
-          expect(req.method).toEqual(TestService.methods.unary);
+          expect(req.method).toEqual(TestService.method.unary);
           expect(context.values.get(kFoo)).toEqual("bar");
           req.header.set("Key", "bar");
           const res = await next(req);
           expect(res.stream).toEqual(false);
           expect(res.service).toEqual(TestService);
           expect(res.header.get("Key")).toEqual("bar");
-          expect(res.method).toEqual(TestService.methods.unary);
+          expect(res.method).toEqual(TestService.method.unary);
           res.header.set("Key", "baz");
           return { ...res, trailer: new Headers({ TKey: "tfoo" }) };
         },
@@ -106,29 +107,33 @@ describe("transformInvokeImplementation()", () => {
           return next(req);
         },
       ],
-    )(createAsyncIterable([new Int32Value({ value: 1 })]));
-    expect(await readAll(output)).toEqual([new StringValue({ value: "foo" })]);
+    )(createAsyncIterable([create(Int32ValueSchema, { value: 1 })]));
+    expect(await readAll(output)).toEqual([
+      create(StringValueSchema, { value: "foo" }),
+    ]);
     expect(context.responseHeader.get("Key")).toEqual("baz");
     expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
   });
   it("should apply interceptors to client streaming calls", async () => {
     const context = createHandlerContext({
       ...handlerInit,
-      method: TestService.methods.unary,
+      method: TestService.method.unary,
     });
     context.values.set(kFoo, "bar");
     const output = transformInvokeImplementation(
       createMethodImplSpec(
-        TestService,
-        TestService.methods.clientStreaming,
+        TestService.method.clientStreaming,
         // eslint-disable-next-line @typescript-eslint/require-await
         async (_, { responseHeader, responseTrailer }) => {
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           return { value: "foo" };
         },
-      ) as unknown as MethodImplSpec<Int32Value, StringValue> & {
-        kind: MethodKind.ClientStreaming;
+      ) as unknown as MethodImplSpec<
+        typeof Int32ValueSchema,
+        typeof StringValueSchema
+      > & {
+        kind: "client_streaming";
       },
       context,
       [
@@ -138,14 +143,14 @@ describe("transformInvokeImplementation()", () => {
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
           expect(req.url).toEqual("https://example.com/foo");
-          expect(req.method).toEqual(TestService.methods.clientStreaming);
+          expect(req.method).toEqual(TestService.method.clientStreaming);
           expect(context.values.get(kFoo)).toEqual("bar");
           req.header.set("Key", "bar");
           const res = await next(req);
           expect(res.stream).toEqual(false);
           expect(res.service).toEqual(TestService);
           expect(res.header.get("Key")).toEqual("bar");
-          expect(res.method).toEqual(TestService.methods.clientStreaming);
+          expect(res.method).toEqual(TestService.method.clientStreaming);
           res.header.set("Key", "baz");
           return { ...res, trailer: new Headers({ TKey: "tfoo" }) };
         },
@@ -154,29 +159,33 @@ describe("transformInvokeImplementation()", () => {
           return next(req);
         },
       ],
-    )(createAsyncIterable([new Int32Value({ value: 1 })]));
-    expect(await readAll(output)).toEqual([new StringValue({ value: "foo" })]);
+    )(createAsyncIterable([create(Int32ValueSchema, { value: 1 })]));
+    expect(await readAll(output)).toEqual([
+      create(StringValueSchema, { value: "foo" }),
+    ]);
     expect(context.responseHeader.get("Key")).toEqual("baz");
     expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
   });
   it("should apply interceptors to server streaming calls", async () => {
     const context = createHandlerContext({
       ...handlerInit,
-      method: TestService.methods.unary,
+      method: TestService.method.unary,
     });
     context.values.set(kFoo, "bar");
     const output = transformInvokeImplementation(
       createMethodImplSpec(
-        TestService,
-        TestService.methods.serverStreaming,
+        TestService.method.serverStreaming,
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (_, { responseHeader, responseTrailer }) {
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           yield { value: "foo" };
         },
-      ) as unknown as MethodImplSpec<Int32Value, StringValue> & {
-        kind: MethodKind.ServerStreaming;
+      ) as unknown as MethodImplSpec<
+        typeof Int32ValueSchema,
+        typeof StringValueSchema
+      > & {
+        kind: "server_streaming";
       },
       context,
       [
@@ -186,7 +195,7 @@ describe("transformInvokeImplementation()", () => {
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
           expect(req.url).toEqual("https://example.com/foo");
-          expect(req.method).toEqual(TestService.methods.serverStreaming);
+          expect(req.method).toEqual(TestService.method.serverStreaming);
           expect(context.values.get(kFoo)).toEqual("bar");
           req.header.set("Key", "bar");
           const res = await next(req);
@@ -197,7 +206,7 @@ describe("transformInvokeImplementation()", () => {
           expect(res.stream).toEqual(true);
           expect(res.service).toEqual(TestService);
           expect(res.header.get("Key")).toEqual("bar");
-          expect(res.method).toEqual(TestService.methods.serverStreaming);
+          expect(res.method).toEqual(TestService.method.serverStreaming);
           res.header.set("Key", "baz");
           return {
             ...res,
@@ -210,29 +219,33 @@ describe("transformInvokeImplementation()", () => {
           return next(req);
         },
       ],
-    )(createAsyncIterable([new Int32Value({ value: 1 })]));
-    expect(await readAll(output)).toEqual([new StringValue({ value: "foo" })]);
+    )(createAsyncIterable([create(Int32ValueSchema, { value: 1 })]));
+    expect(await readAll(output)).toEqual([
+      create(StringValueSchema, { value: "foo" }),
+    ]);
     expect(context.responseHeader.get("Key")).toEqual("baz");
     expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
   });
   it("should apply interceptors to bidi streaming calls", async () => {
     const context = createHandlerContext({
       ...handlerInit,
-      method: TestService.methods.unary,
+      method: TestService.method.unary,
     });
     context.values.set(kFoo, "bar");
     const output = transformInvokeImplementation(
       createMethodImplSpec(
-        TestService,
-        TestService.methods.bidiStreaming,
+        TestService.method.bidiStreaming,
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (_, { responseHeader, responseTrailer }) {
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           yield { value: "foo" };
         },
-      ) as unknown as MethodImplSpec<Int32Value, StringValue> & {
-        kind: MethodKind.BiDiStreaming;
+      ) as unknown as MethodImplSpec<
+        typeof Int32ValueSchema,
+        typeof StringValueSchema
+      > & {
+        kind: "bidi_streaming";
       },
       context,
       [
@@ -242,7 +255,7 @@ describe("transformInvokeImplementation()", () => {
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
           expect(req.url).toEqual("https://example.com/foo");
-          expect(req.method).toEqual(TestService.methods.bidiStreaming);
+          expect(req.method).toEqual(TestService.method.bidiStreaming);
           expect(context.values.get(kFoo)).toEqual("bar");
           req.header.set("Key", "bar");
           const res = await next(req);
@@ -253,7 +266,7 @@ describe("transformInvokeImplementation()", () => {
           expect(res.stream).toEqual(true);
           expect(res.service).toEqual(TestService);
           expect(res.header.get("Key")).toEqual("bar");
-          expect(res.method).toEqual(TestService.methods.bidiStreaming);
+          expect(res.method).toEqual(TestService.method.bidiStreaming);
           res.header.set("Key", "baz");
           return {
             ...res,
@@ -266,8 +279,10 @@ describe("transformInvokeImplementation()", () => {
           return next(req);
         },
       ],
-    )(createAsyncIterable([new Int32Value({ value: 1 })]));
-    expect(await readAll(output)).toEqual([new StringValue({ value: "foo" })]);
+    )(createAsyncIterable([create(Int32ValueSchema, { value: 1 })]));
+    expect(await readAll(output)).toEqual([
+      create(StringValueSchema, { value: "foo" }),
+    ]);
     expect(context.responseHeader.get("Key")).toEqual("baz");
     expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
   });

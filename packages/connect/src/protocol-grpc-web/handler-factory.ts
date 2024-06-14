@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Message } from "@bufbuild/protobuf";
+import type { DescMessage } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { MethodImplSpec } from "../implementation.js";
@@ -87,8 +87,8 @@ export function createHandlerFactory(
       protocolNames: [protocolName],
       allowedMethods: [methodPost],
       supportedContentType: contentTypeMatcher(contentTypeRegExp),
-      requestPath: createMethodUrl("/", spec.service, spec.method),
-      service: spec.service,
+      requestPath: createMethodUrl("/", spec.method),
+      service: spec.method.parent,
       method: spec.method,
     });
   }
@@ -97,7 +97,7 @@ export function createHandlerFactory(
   return fact;
 }
 
-function createHandler<I extends Message<I>, O extends Message<O>>(
+function createHandler<I extends DescMessage, O extends DescMessage>(
   opt: UniversalHandlerOptions,
   trailerSerialization: Serialization<Headers>,
   spec: MethodImplSpec<I, O>,
@@ -125,6 +125,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     );
     const context = createHandlerContext({
       ...spec,
+      service: spec.method.parent,
       requestMethod: req.method,
       protocolName,
       timeoutMs: timeout.timeoutMs,

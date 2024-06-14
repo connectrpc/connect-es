@@ -14,7 +14,7 @@
 
 import { createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { ElizaService } from "./gen/connectweb/connectrpc/eliza/v1/eliza_connect.js";
+import { ElizaService } from "./gen/connectweb/connectrpc/eliza/v1/eliza_pb.js";
 
 const client = createPromiseClient(
   ElizaService,

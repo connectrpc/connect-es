@@ -12,18 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { proto3, ScalarType } from "@bufbuild/protobuf";
+import { fromJson, toJson } from "@bufbuild/protobuf";
 import { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
 import { node16FetchHeadersPolyfill } from "./node16-polyfill-helper.spec.js";
+import { StructSchema } from "@bufbuild/protobuf/wkt";
 
 node16FetchHeadersPolyfill();
-
-// prettier-ignore
-const M = proto3.makeMessageType("handwritten.M", [
-  { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
-  { no: 2, name: "b", kind: "scalar", T: ScalarType.FIXED32 },
-  { no: 3, name: "c", kind: "scalar", T: ScalarType.BOOL }
-]);
 
 describe("encodeBinaryHeader()", function () {
   it("accepts unicode string", () => {
@@ -37,13 +31,15 @@ describe("encodeBinaryHeader()", function () {
     expect(encoded).toEqual("3q2+7w");
   });
   it("accepts message", () => {
-    const input = new M({
+    const input = fromJson(StructSchema, {
       a: "abc",
       b: 456,
       c: true,
     });
-    const encoded = encodeBinaryHeader(input);
-    expect(encoded).toEqual("CgNhYmMVyAEAABgB");
+    const encoded = encodeBinaryHeader(input, StructSchema);
+    expect(encoded).toEqual(
+      "CgoKAWESBRoDYWJjCg4KAWISCREAAAAAAIB8QAoHCgFjEgIgAQ",
+    );
   });
 });
 
@@ -59,23 +55,27 @@ describe("decodeBinaryHeader()", function () {
     expect(decoded).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
   });
   it("decodes message", () => {
-    const decoded = decodeBinaryHeader("CgNhYmMVyAEAABgB", M);
-    expect(decoded).toEqual(
-      new M({
-        a: "abc",
-        b: 456,
-        c: true,
-      }),
-    );
+    const decoded = toJson(
+      StructSchema,
+      decodeBinaryHeader(
+        "CgoKAWESBRoDYWJjCg4KAWISCREAAAAAAIB8QAoHCgFjEgIgAQ",
+        StructSchema,
+      ),
+    ) as Record<string, unknown>; // Otherwise TS can't compute the type in expect
+    expect(decoded).toEqual({
+      a: "abc",
+      b: 456,
+      c: true,
+    });
   });
   it("throws error on invalid base64 input", () => {
     const encoded = "not-base-64-😞";
     expect(() => decodeBinaryHeader(encoded)).toThrowError(
-      "[data_loss] invalid base64 string.",
+      "[data_loss] invalid base64 string",
     );
   });
   it("throws error on invalid message input", () => {
-    expect(() => decodeBinaryHeader("3q2+7w==", M)).toThrowError(
+    expect(() => decodeBinaryHeader("3q2+7w==", StructSchema)).toThrowError(
       "[data_loss] premature EOF",
     );
   });

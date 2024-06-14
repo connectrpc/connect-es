@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { protoBase64 } from "@bufbuild/protobuf";
+import { base64Decode, base64Encode } from "@bufbuild/protobuf/wire";
+import { create, toBinary, toJson } from "@bufbuild/protobuf";
 import type {
   JsonObject,
   JsonValue,
@@ -69,7 +70,7 @@ export function errorFromJson(
       try {
         error.details.push({
           type: detail.type,
-          value: protoBase64.dec(detail.value),
+          value: base64Decode(detail.value),
           debug: detail.debug,
         });
       } catch (e) {
@@ -129,14 +130,15 @@ export function errorToJson(
       debug?: JsonValue;
     };
     o.details = error.details
-      .map((value) => {
-        if ("getType" in value) {
+      .map((detail) => {
+        if ("desc" in detail) {
+          const msg = create(detail.desc, detail.value);
           const i: IncomingDetail = {
-            type: value.getType().typeName,
-            value: value.toBinary(),
+            type: detail.desc.typeName,
+            value: toBinary(detail.desc, msg),
           };
           try {
-            i.debug = value.toJson(jsonWriteOptions);
+            i.debug = toJson(detail.desc, msg, jsonWriteOptions);
           } catch (e) {
             // We deliberately ignore errors that may occur when serializing
             // a message to JSON (the message contains an Any).
@@ -145,11 +147,11 @@ export function errorToJson(
           }
           return i;
         }
-        return value;
+        return detail;
       })
       .map(({ value, ...rest }) => ({
         ...rest,
-        value: protoBase64.enc(value).replace(/=+$/, ""),
+        value: base64Encode(value).replace(/=+$/, ""),
       }));
   }
   return o;

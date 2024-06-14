@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, MethodKind } from "@bufbuild/protobuf";
+import type { DescMessage, MessageShape } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { HandlerContext, MethodImplSpec } from "../implementation.js";
@@ -34,20 +34,20 @@ import { applyInterceptors } from "../interceptor.js";
  * @private Internal code, does not follow semantic versioning.
  */
 export async function invokeUnaryImplementation<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 >(
-  spec: MethodImplSpec<I, O> & { kind: MethodKind.Unary },
+  spec: MethodImplSpec<I, O> & { kind: "unary" },
   context: HandlerContext,
-  input: I,
+  input: MessageShape<I>,
   interceptors: Interceptor[],
-): Promise<O> {
+): Promise<MessageShape<O>> {
   const anyFn = async (
     req: UnaryRequest<I, O>,
   ): Promise<UnaryResponse<I, O>> => {
     return {
       message: normalize(
-        spec.method.O,
+        spec.method.output,
         await spec.impl(req.message, {
           ...context,
           service: req.service,
@@ -72,7 +72,7 @@ export async function invokeUnaryImplementation<
     message: input,
     url: context.url,
     signal: context.signal,
-    service: spec.service,
+    service: spec.method.parent,
     method: spec.method,
     header: context.requestHeader,
     contextValues: context.values,
@@ -89,16 +89,16 @@ export async function invokeUnaryImplementation<
  * @private Internal code, does not follow semantic versioning.
  */
 export function transformInvokeImplementation<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 >(
   spec: MethodImplSpec<I, O>,
   context: HandlerContext,
   interceptors: Interceptor[],
-): AsyncIterableTransform<I, O> {
+): AsyncIterableTransform<MessageShape<I>, MessageShape<O>> {
   switch (spec.kind) {
-    case MethodKind.Unary:
-      return async function* unary(input: AsyncIterable<I>) {
+    case "unary":
+      return async function* unary(input: AsyncIterable<MessageShape<I>>) {
         const inputIt = input[Symbol.asyncIterator]();
         const input1 = await inputIt.next();
         if (input1.done === true) {
@@ -112,7 +112,7 @@ export function transformInvokeImplementation<
         ): Promise<UnaryResponse<I, O>> => {
           return {
             message: normalize(
-              spec.method.O,
+              spec.method.output,
               await spec.impl(req.message, {
                 ...context,
                 service: req.service,
@@ -137,7 +137,7 @@ export function transformInvokeImplementation<
           message: input1.value,
           url: context.url,
           signal: context.signal,
-          service: spec.service,
+          service: spec.method.parent,
           method: spec.method,
           header: context.requestHeader,
           contextValues: context.values,
@@ -154,8 +154,10 @@ export function transformInvokeImplementation<
           );
         }
       };
-    case MethodKind.ServerStreaming: {
-      return async function* serverStreaming(input: AsyncIterable<I>) {
+    case "server_streaming": {
+      return async function* serverStreaming(
+        input: AsyncIterable<MessageShape<I>>,
+      ) {
         const inputIt = input[Symbol.asyncIterator]();
         const input1 = await inputIt.next();
         if (input1.done === true) {
@@ -170,7 +172,7 @@ export function transformInvokeImplementation<
         ): Promise<StreamResponse<I, O>> => {
           return {
             message: normalizeIterable(
-              spec.method.O,
+              spec.method.output,
               spec.impl(req.message, {
                 ...context,
                 service: req.service,
@@ -195,7 +197,7 @@ export function transformInvokeImplementation<
           message: input1.value,
           url: context.url,
           signal: context.signal,
-          service: spec.service,
+          service: spec.method.parent,
           method: spec.method,
           header: context.requestHeader,
           contextValues: context.values,
@@ -213,14 +215,16 @@ export function transformInvokeImplementation<
         }
       };
     }
-    case MethodKind.ClientStreaming: {
-      return async function* clientStreaming(input: AsyncIterable<I>) {
+    case "client_streaming": {
+      return async function* clientStreaming(
+        input: AsyncIterable<MessageShape<I>>,
+      ) {
         const anyFn = async (
           req: StreamRequest<I, O>,
         ): Promise<UnaryResponse<I, O>> => {
           return {
             message: normalize(
-              spec.method.O,
+              spec.method.output,
               await spec.impl(req.message, {
                 ...context,
                 service: req.service,
@@ -245,7 +249,7 @@ export function transformInvokeImplementation<
           message: input,
           url: context.url,
           signal: context.signal,
-          service: spec.service,
+          service: spec.method.parent,
           method: spec.method,
           header: context.requestHeader,
           contextValues: context.values,
@@ -256,15 +260,17 @@ export function transformInvokeImplementation<
         yield message;
       };
     }
-    case MethodKind.BiDiStreaming:
-      return async function* biDiStreaming(input: AsyncIterable<I>) {
+    case "bidi_streaming":
+      return async function* biDiStreaming(
+        input: AsyncIterable<MessageShape<I>>,
+      ) {
         const anyFn = async (
           req: StreamRequest<I, O>,
           // eslint-disable-next-line @typescript-eslint/require-await
         ): Promise<StreamResponse<I, O>> => {
           return {
             message: normalizeIterable(
-              spec.method.O,
+              spec.method.output,
               spec.impl(req.message, {
                 ...context,
                 service: req.service,
@@ -289,7 +295,7 @@ export function transformInvokeImplementation<
           message: input,
           url: context.url,
           signal: context.signal,
-          service: spec.service,
+          service: spec.method.parent,
           method: spec.method,
           header: context.requestHeader,
           contextValues: context.values,

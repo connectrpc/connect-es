@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
 import { parseContentType } from "./content-type.js";
 import { headerStreamEncoding, headerUnaryEncoding } from "./headers.js";
 import type { Compression } from "../protocol/compression.js";
+import type { MethodKind } from "../types.js";
 
 /**
  * Validates response status and header for the Connect protocol.
@@ -47,14 +47,14 @@ export function validateResponse(
       headers,
     );
     // If parsedType is defined and it is not binary, then this is a unary JSON response
-    if (methodKind == MethodKind.Unary && parsedType && !parsedType.binary) {
+    if (methodKind == "unary" && parsedType && !parsedType.binary) {
       return { isUnaryError: true, unaryError: errorFromStatus };
     }
     throw errorFromStatus;
   }
   const allowedContentType = {
     binary: useBinaryFormat,
-    stream: methodKind !== MethodKind.Unary,
+    stream: methodKind !== "unary",
   } satisfies ReturnType<typeof parseContentType>;
   if (
     parsedType?.binary !== allowedContentType.binary ||
@@ -87,7 +87,7 @@ export function validateResponseWithCompression(
 } {
   let compression: Compression | undefined;
   const encoding = headers.get(
-    methodKind == MethodKind.Unary ? headerUnaryEncoding : headerStreamEncoding,
+    methodKind == "unary" ? headerUnaryEncoding : headerStreamEncoding,
   );
   if (encoding != null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);

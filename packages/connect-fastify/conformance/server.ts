@@ -19,17 +19,22 @@ import { compressionBrotli, compressionGzip } from "@connectrpc/connect-node";
 import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
-import { createRegistry } from "@bufbuild/protobuf";
+import {
+  create,
+  createRegistry,
+  fromBinary,
+  toBinary,
+} from "@bufbuild/protobuf";
 import {
   routes,
-  BidiStreamRequest,
-  ClientStreamRequest,
   HTTPVersion,
-  IdempotentUnaryRequest,
-  ServerCompatRequest,
-  ServerCompatResponse,
-  ServerStreamRequest,
-  UnaryRequest,
+  ServerCompatRequestSchema,
+  UnaryRequestSchema,
+  ServerStreamRequestSchema,
+  ClientStreamRequestSchema,
+  BidiStreamRequestSchema,
+  IdempotentUnaryRequestSchema,
+  ServerCompatResponseSchema,
 } from "@connectrpc/connect-conformance";
 import { fastify } from "fastify";
 import type {
@@ -50,7 +55,8 @@ main();
  * server's port and other details to stdout.
  */
 function main() {
-  const req = ServerCompatRequest.fromBinary(
+  const req = fromBinary(
+    ServerCompatRequestSchema,
     readFileSync(process.stdin.fd).subarray(4),
   );
 
@@ -59,12 +65,12 @@ function main() {
     readMaxBytes: req.messageReceiveLimit,
     acceptCompression: [compressionGzip, compressionBrotli],
     jsonOptions: {
-      typeRegistry: createRegistry(
-        UnaryRequest,
-        ServerStreamRequest,
-        ClientStreamRequest,
-        BidiStreamRequest,
-        IdempotentUnaryRequest,
+      registry: createRegistry(
+        UnaryRequestSchema,
+        ServerStreamRequestSchema,
+        ClientStreamRequestSchema,
+        BidiStreamRequestSchema,
+        IdempotentUnaryRequestSchema,
       ),
     },
   };
@@ -140,7 +146,7 @@ function main() {
   });
   server.listen({ host: "127.0.0.1", port: 0 }, () => {
     const addrInfo = server.addresses()[0];
-    const res = new ServerCompatResponse({
+    const res = create(ServerCompatResponseSchema, {
       pemCert:
         req.serverCreds !== undefined
           ? Buffer.from(req.serverCreds.cert)
@@ -148,7 +154,7 @@ function main() {
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    const data = res.toBinary();
+    const data = toBinary(ServerCompatResponseSchema, res);
     const size = Buffer.alloc(4);
     size.writeUInt32BE(data.byteLength);
     process.stdout.write(size);

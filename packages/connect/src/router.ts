@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
@@ -33,7 +32,7 @@ import type {
   UniversalHandlerOptions,
 } from "./protocol/universal-handler.js";
 import type { ProtocolHandlerFactory } from "./protocol/protocol-handler-factory.js";
-import type { MethodType } from "./method-type.js";
+import type { DescMethod, DescService } from "@bufbuild/protobuf";
 
 /**
  * ConnectRouter is your single registration point for RPCs.
@@ -56,7 +55,7 @@ export interface ConnectRouter {
   /**
    * Provides implementation for a set of RPCs on the service.
    */
-  service<T extends ServiceType>(
+  service<T extends DescService>(
     service: T,
     implementation: Partial<ServiceImpl<T>>,
     options?: Partial<UniversalHandlerOptions>,
@@ -64,22 +63,12 @@ export interface ConnectRouter {
   /**
    * Provides implementation for a single RPC given service and associated method.
    */
-  rpc<M extends MethodInfo>(
-    service: ServiceType,
+  rpc<M extends DescMethod>(
     method: M,
     impl: MethodImpl<M>,
     options?: Partial<UniversalHandlerOptions>,
   ): this;
-  /**
-   * Provides implementation for a single RPC given a method type.
-   *
-   * @private This is an experimental API. Please do not rely on it yet.
-   */
-  rpc<M extends MethodType>(
-    method: M,
-    impl: MethodImpl<M>,
-    options?: Partial<UniversalHandlerOptions>,
-  ): this;
+  // TODO: Re-add the method type API.
 }
 
 /**
@@ -149,34 +138,12 @@ export function createConnectRouter(
       );
       return this;
     },
-    rpc(
-      serviceOrMethod: ServiceType | MethodType,
-      methodOrImpl: MethodInfo | MethodImpl<MethodInfo>,
-      implementationOrOptions?:
-        | MethodImpl<MethodInfo>
-        | Partial<UniversalHandlerOptions>,
-      options?: Partial<UniversalHandlerOptions>,
-    ) {
-      let service: ServiceType;
-      let method: MethodInfo;
-      let impl: MethodImpl<MethodInfo>;
-      let opt: Partial<UniversalHandlerOptions> | undefined;
-      if ("typeName" in serviceOrMethod) {
-        service = serviceOrMethod;
-        method = methodOrImpl as MethodInfo;
-        impl = implementationOrOptions as MethodImpl<MethodInfo>;
-        opt = options;
-      } else {
-        service = { ...serviceOrMethod.service, methods: {} };
-        method = serviceOrMethod;
-        impl = methodOrImpl as MethodImpl<MethodInfo>;
-        opt = implementationOrOptions as Partial<UniversalHandlerOptions>;
-      }
+    rpc(method, impl, opt) {
       const { protocols } = whichProtocols(opt, base);
 
       handlers.push(
         createUniversalMethodHandler(
-          createMethodImplSpec(service, method, impl),
+          createMethodImplSpec(method, impl),
           protocols,
         ),
       );

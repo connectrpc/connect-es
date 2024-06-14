@@ -14,9 +14,12 @@
 
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { Message, proto3, protoBase64, ScalarType } from "@bufbuild/protobuf";
+import { fromJson, toBinary, toJson } from "@bufbuild/protobuf";
 import { errorFromJson, errorToJson } from "./error-json.js";
 import { codeToString } from "./code-string.js";
+import { StructSchema } from "@bufbuild/protobuf/wkt";
+import type { Struct } from "@bufbuild/protobuf/wkt";
+import { base64Encode } from "@bufbuild/protobuf/wire";
 
 describe("errorToJson()", () => {
   it("serializes code and message", () => {
@@ -36,33 +39,29 @@ describe("errorToJson()", () => {
     expect(json.message as unknown).toBeUndefined();
   });
   it("serializes details", () => {
-    type ErrorDetail = Message<ErrorDetail> & {
-      reason: string;
-      domain: string;
-    };
-    const ErrorDetail = proto3.makeMessageType<ErrorDetail>(
-      "handwritten.ErrorDetail",
-      [
-        { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
-      ],
-    );
     const err = new ConnectError("Not permitted", Code.PermissionDenied);
-    err.details.push(
-      new ErrorDetail({ reason: "soirée 🎉", domain: "example.com" }),
-    );
+    err.details.push({
+      desc: StructSchema,
+      value: fromJson(StructSchema, {
+        reason: "soirée 🎉",
+        domain: "example.com",
+      }),
+    });
     const got = errorToJson(err, undefined);
     const want = {
       code: "permission_denied",
       message: "Not permitted",
       details: [
         {
-          type: ErrorDetail.typeName,
-          value: protoBase64.enc(
-            new ErrorDetail({
-              reason: "soirée 🎉",
-              domain: "example.com",
-            }).toBinary(),
+          type: StructSchema.typeName,
+          value: base64Encode(
+            toBinary(
+              StructSchema,
+              fromJson(StructSchema, {
+                reason: "soirée 🎉",
+                domain: "example.com",
+              }),
+            ),
           ),
           debug: {
             reason: "soirée 🎉",
@@ -157,28 +156,20 @@ describe("errorFromJson()", () => {
     );
   });
   describe("with details", () => {
-    type ErrorDetail = Message<ErrorDetail> & {
-      reason: string;
-      domain: string;
-    };
-    const ErrorDetail = proto3.makeMessageType<ErrorDetail>(
-      "handwritten.ErrorDetail",
-      [
-        { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
-      ],
-    );
     const json = {
       code: "permission_denied",
       message: "Not permitted",
       details: [
         {
-          type: ErrorDetail.typeName,
-          value: protoBase64.enc(
-            new ErrorDetail({
-              reason: "soirée 🎉",
-              domain: "example.com",
-            }).toBinary(),
+          type: StructSchema.typeName,
+          value: base64Encode(
+            toBinary(
+              StructSchema,
+              fromJson(StructSchema, {
+                reason: "soirée 🎉",
+                domain: "example.com",
+              }),
+            ),
           ),
         },
       ],
@@ -197,10 +188,11 @@ describe("errorFromJson()", () => {
         undefined,
         new ConnectError("foo", Code.ResourceExhausted),
       );
-      const details = error.findDetails(ErrorDetail);
+      const details = error.findDetails(StructSchema);
       expect(details.length).toBe(1);
-      expect(details[0]?.reason).toBe("soirée 🎉");
-      expect(details[0]?.domain).toBe("example.com");
+      expect(
+        toJson(StructSchema, details[0] as Struct) as Record<string, unknown>,
+      ).toEqual({ reason: "soirée 🎉", domain: "example.com" });
     });
   });
 });

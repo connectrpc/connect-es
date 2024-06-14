@@ -3,7 +3,3 @@ plugins:
   - name: es
     out: browserstack/gen
     opt: target=ts
-  - name: connect-es
-    out: browserstack/gen
-    opt: target=ts
-

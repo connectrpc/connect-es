@@ -12,16 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createEcmaScriptPlugin } from "@bufbuild/protoplugin";
-import { generateTs } from "./typescript.js";
-import { generateJs } from "./javascript.js";
-import { generateDts } from "./declaration.js";
-import { version } from "../package.json";
+syntax = "proto3";
 
-export const protocGenConnectEs = createEcmaScriptPlugin({
-  name: "protoc-gen-connect-es",
-  version: `v${String(version)}`,
-  generateTs,
-  generateJs,
-  generateDts,
-});
+package invoke.v1;
+
+import "connectrpc/conformance/v1/client_compat.proto";
+
+service InvokeService {
+  rpc Invoke(InvokeRequest) returns (InvokeResponse);
+}
+
+message InvokeRequest {
+  connectrpc.conformance.v1.ClientCompatRequest request = 1;
+}
+
+message InvokeResponse {
+  connectrpc.conformance.v1.ClientCompatResponse response = 1;
+}

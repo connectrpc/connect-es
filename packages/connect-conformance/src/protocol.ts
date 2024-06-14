@@ -13,16 +13,22 @@
 // limitations under the License.
 
 import { ConnectError, Code } from "@connectrpc/connect";
-import { createRegistry, Any, Message } from "@bufbuild/protobuf";
+import { create, createRegistry } from "@bufbuild/protobuf";
 import {
+  ErrorSchema as ConformanceErrorDesc,
+  HeaderSchema as ConformanceHeaderDesc,
+  ConformancePayload_RequestInfoSchema,
+} from "./gen/connectrpc/conformance/v1/service_pb.js";
+import type {
   Error as ConformanceError,
   Header as ConformanceHeader,
-  ConformancePayload_RequestInfo,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
-import { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
+import type { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
+import { AnySchema, anyPack, anyUnpack } from "@bufbuild/protobuf/wkt";
+import type { Any } from "@bufbuild/protobuf/wkt";
 
-const detailsRegitry = createRegistry(ConformancePayload_RequestInfo);
+const detailsRegitry = createRegistry(ConformancePayload_RequestInfoSchema);
 
 export function getCancelTiming(req: ClientCompatRequest) {
   const def = {
@@ -54,11 +60,11 @@ export function connectErrorFromProto(err: ConformanceError) {
     err.code as unknown as Code,
     undefined,
     err.details.map((d) => {
-      const m = d.unpack(detailsRegitry);
+      const m = anyUnpack(d, detailsRegitry);
       if (m === undefined) {
         throw new Error(`Cannot unpack ${d.typeUrl}`);
       }
-      return m;
+      return { desc: ConformancePayload_RequestInfoSchema, value: m };
     }),
   );
 }
@@ -69,18 +75,18 @@ export function convertToProtoError(err: ConnectError | undefined) {
   }
   const details: Any[] = [];
   for (const detail of err.details) {
-    if (detail instanceof Message) {
-      details.push(Any.pack(detail));
+    if ("desc" in detail) {
+      details.push(anyPack(detail.desc, create(detail.desc, detail.value)));
     } else {
       details.push(
-        new Any({
+        create(AnySchema, {
           typeUrl: "type.googleapis.com/" + detail.type,
           value: detail.value,
         }),
       );
     }
   }
-  return new ConformanceError({
+  return create(ConformanceErrorDesc, {
     code: err.code as unknown as ConformanceCode,
     message: err.rawMessage,
     details,
@@ -91,7 +97,7 @@ export function convertToProtoHeaders(headers: Headers): ConformanceHeader[] {
   const result: ConformanceHeader[] = [];
   headers.forEach((value, key) => {
     result.push(
-      new ConformanceHeader({
+      create(ConformanceHeaderDesc, {
         name: key,
         value: [value],
       }),

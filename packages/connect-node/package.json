@@ -9,6 +9,7 @@
   },
   "scripts": {
     "clean": "rm -rf ./dist/*",
+    "generate": "buf generate buf.build/connectrpc/eliza",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --moduleResolution node10 --verbatimModuleSyntax false --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
@@ -33,7 +34,7 @@
     "undici": "^5.28.4"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.10.0",
+    "@bufbuild/protobuf": "^2.0.0-beta.1",
     "@connectrpc/connect": "1.4.0"
   },
   "devDependencies": {

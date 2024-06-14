@@ -13,12 +13,14 @@
 // limitations under the License.
 
 import { Code } from "./code.js";
+import { create, fromBinary } from "@bufbuild/protobuf";
 import type {
   Message,
-  AnyMessage,
-  IMessageTypeRegistry,
   JsonValue,
-  MessageType,
+  DescMessage,
+  MessageShape,
+  Registry,
+  MessageInitShape,
 } from "@bufbuild/protobuf";
 import { codeToString } from "./protocol-connect/code-string.js";
 
@@ -53,7 +55,7 @@ export class ConnectError extends Error {
    * When an error is constructed to be sent over the wire, outgoing error
    * details are stored in this property as well.
    */
-  details: (Message | IncomingDetail)[];
+  details: (OutgoingDetail | IncomingDetail)[];
 
   /**
    * The error message, but without a status code in front.
@@ -83,7 +85,7 @@ export class ConnectError extends Error {
     message: string,
     code: Code = Code.Unknown,
     metadata?: HeadersInit,
-    outgoingDetails?: Message[],
+    outgoingDetails?: OutgoingDetail[],
     cause?: unknown,
   ) {
     super(createMessage(message, code));
@@ -158,30 +160,30 @@ export class ConnectError extends Error {
    * messages. Any decoding errors are ignored, and the detail will simply be
    * omitted from the list.
    */
-  findDetails<T extends Message<T>>(type: MessageType<T>): T[];
-  findDetails(registry: IMessageTypeRegistry): AnyMessage[];
-  findDetails(
-    typeOrRegistry: MessageType | IMessageTypeRegistry,
-  ): AnyMessage[] {
+  findDetails<Desc extends DescMessage>(
+    desc: DescMessage,
+  ): MessageShape<Desc>[];
+  findDetails(registry: Registry): Message[];
+  findDetails(typeOrRegistry: DescMessage | Registry): Message[] {
     const registry =
-      "typeName" in typeOrRegistry
+      typeOrRegistry.kind === "message"
         ? {
-            findMessage: (typeName: string): MessageType | undefined =>
+            getMessage: (typeName: string): DescMessage | undefined =>
               typeName === typeOrRegistry.typeName ? typeOrRegistry : undefined,
           }
         : typeOrRegistry;
-    const details: AnyMessage[] = [];
+    const details: Message[] = [];
     for (const data of this.details) {
-      if ("getType" in data) {
-        if (registry.findMessage(data.getType().typeName)) {
-          details.push(data);
+      if ("desc" in data) {
+        if (registry.getMessage(data.desc.typeName)) {
+          details.push(create(data.desc, data.value));
         }
         continue;
       }
-      const type = registry.findMessage(data.type);
-      if (type) {
+      const desc = registry.getMessage(data.type);
+      if (desc) {
         try {
-          details.push(type.fromBinary(data.value));
+          details.push(fromBinary(desc, data.value));
         } catch (_) {
           // We silently give up if we are unable to parse the detail, because
           // that appears to be the least worst behavior.
@@ -201,6 +203,14 @@ export class ConnectError extends Error {
  * instead of a type URL.
  */
 type IncomingDetail = { type: string; value: Uint8Array; debug?: JsonValue };
+
+/**
+ * Message and Desc Pair.
+ */
+type OutgoingDetail = {
+  desc: DescMessage;
+  value: MessageInitShape<DescMessage>;
+};
 
 /**
  * Create an error message, prefixing the given code.

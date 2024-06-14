@@ -14,32 +14,33 @@
 
 import { createAsyncIterable } from "./async-iterable.js";
 import { normalize, normalizeIterable } from "./normalize.js";
-import { Duration, protoInt64, Timestamp } from "@bufbuild/protobuf";
+import { create, isMessage, protoInt64 } from "@bufbuild/protobuf";
 import { readAll } from "./async-iterable-helper.spec.js";
+import { TimestampSchema, DurationSchema } from "@bufbuild/protobuf/wkt";
 
 describe("normalize()", function () {
   it("should normalize from object literal", function () {
-    const normal = normalize(Timestamp, {
+    const normal = normalize(TimestampSchema, {
       nanos: 123,
     });
-    expect(normal).toBeInstanceOf(Timestamp);
+    expect(isMessage(normal, TimestampSchema)).toBeTrue();
     expect(normal.nanos).toBe(123);
     expect(normal.seconds).toBe(protoInt64.parse(0));
   });
   it("should normalize from different message type", function () {
     const normal = normalize(
-      Timestamp,
-      new Duration({
+      TimestampSchema,
+      create(DurationSchema, {
         nanos: 123,
       }),
     );
-    expect(normal).toBeInstanceOf(Timestamp);
+    expect(isMessage(normal, TimestampSchema)).toBeTrue();
     expect(normal.nanos).toBe(123);
     expect(normal.seconds).toBe(protoInt64.parse(0));
   });
   it("should not modify instance of the normal type", function () {
-    const original = new Timestamp();
-    const normal = normalize(Timestamp, original);
+    const original = create(TimestampSchema);
+    const normal = normalize(TimestampSchema, original);
     expect(normal).toBe(original);
   });
 });
@@ -48,33 +49,36 @@ describe("normalizeIterable()", function () {
   it("should normalize from object literal", async function () {
     const input = [{ nanos: 123 }, { nanos: 456 }];
     const normal = await readAll(
-      normalizeIterable(Timestamp, createAsyncIterable(input)),
+      normalizeIterable(TimestampSchema, createAsyncIterable(input)),
     );
     expect(normal.length).toBe(2);
-    expect(normal[0]).toBeInstanceOf(Timestamp);
+    expect(isMessage(normal[0], TimestampSchema)).toBeTrue();
     expect(normal[0].nanos).toBe(123);
     expect(normal[0].seconds).toBe(protoInt64.parse(0));
-    expect(normal[1]).toBeInstanceOf(Timestamp);
+    expect(isMessage(normal[1], TimestampSchema)).toBeTrue();
     expect(normal[1].nanos).toBe(456);
     expect(normal[1].seconds).toBe(protoInt64.parse(0));
   });
   it("should normalize from different message type", async function () {
-    const input = [new Duration({ nanos: 123 }), new Duration({ nanos: 456 })];
+    const input = [
+      create(DurationSchema, { nanos: 123 }),
+      create(DurationSchema, { nanos: 456 }),
+    ];
     const normal = await readAll(
-      normalizeIterable(Timestamp, createAsyncIterable(input)),
+      normalizeIterable(TimestampSchema, createAsyncIterable(input)),
     );
     expect(normal.length).toBe(2);
-    expect(normal[0]).toBeInstanceOf(Timestamp);
+    expect(isMessage(normal[0], TimestampSchema)).toBeTrue();
     expect(normal[0].nanos).toBe(123);
     expect(normal[0].seconds).toBe(protoInt64.parse(0));
-    expect(normal[1]).toBeInstanceOf(Timestamp);
+    expect(isMessage(normal[1], TimestampSchema)).toBeTrue();
     expect(normal[1].nanos).toBe(456);
     expect(normal[1].seconds).toBe(protoInt64.parse(0));
   });
   it("should not modify instance of the normal type", async function () {
-    const input = [new Timestamp(), new Timestamp()];
+    const input = [create(TimestampSchema), create(TimestampSchema)];
     const normal = await readAll(
-      normalizeIterable(Timestamp, createAsyncIterable(input)),
+      normalizeIterable(TimestampSchema, createAsyncIterable(input)),
     );
     expect(normal.length).toBe(2);
     expect(normal[0]).toBe(input[0]);

@@ -13,16 +13,16 @@
 // limitations under the License.
 
 import {
-  BoolValue,
   createRegistry,
-  Message,
-  proto3,
-  ScalarType,
-  Struct,
+  fromJson,
+  isMessage,
+  toJson,
 } from "@bufbuild/protobuf";
+import type { Message } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import { node16FetchHeadersPolyfill } from "./node16-polyfill-helper.spec.js";
+import { BoolValueSchema, StructSchema } from "@bufbuild/protobuf/wkt";
 
 node16FetchHeadersPolyfill();
 
@@ -74,17 +74,6 @@ describe("ConnectError", () => {
     });
   });
   describe("findDetails()", function () {
-    type ErrorDetail = Message<ErrorDetail> & {
-      reason: string;
-      domain: string;
-    };
-    const ErrorDetail = proto3.makeMessageType<ErrorDetail>(
-      "handwritten.ErrorDetail",
-      [
-        { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "domain", kind: "scalar", T: ScalarType.STRING },
-      ],
-    );
     describe("on error without details", () => {
       const err = new ConnectError("foo");
       it("with empty TypeRegistry produces no details", () => {
@@ -92,46 +81,53 @@ describe("ConnectError", () => {
         expect(details.length).toBe(0);
       });
       it("with non-empty TypeRegistry produces no details", () => {
-        const details = err.findDetails(createRegistry(ErrorDetail));
+        const details = err.findDetails(createRegistry(StructSchema));
         expect(details.length).toBe(0);
       });
       it("with MessageType produces no details", () => {
-        const details = err.findDetails(ErrorDetail);
+        const details = err.findDetails(StructSchema);
         expect(details.length).toBe(0);
       });
     });
     describe("on error with Any details", () => {
       const err = new ConnectError("foo");
-      err.details.push(
-        new ErrorDetail({
+      err.details.push({
+        desc: StructSchema,
+        value: fromJson(StructSchema, {
           reason: "soirée 🎉",
           domain: "example.com",
         }),
-      );
+      });
       it("with empty TypeRegistry produces no details", () => {
         const details = err.findDetails(createRegistry());
         expect(details.length).toBe(0);
       });
       it("with non-empty TypeRegistry produces detail", () => {
-        const details = err.findDetails(createRegistry(ErrorDetail));
+        const details = err.findDetails(createRegistry(StructSchema));
         expect(details.length).toBe(1);
       });
       it("with MessageType produces detail", () => {
-        const details = err.findDetails(ErrorDetail);
+        const details = err.findDetails(StructSchema);
         expect(details.length).toBe(1);
-        if (details[0] instanceof ErrorDetail) {
-          expect(details[0].domain).toBe("example.com");
-          expect(details[0].reason).toBe("soirée 🎉");
+        if (isMessage(details[0], StructSchema)) {
+          const detail = toJson(StructSchema, details[0]) as Record<
+            string,
+            unknown
+          >; // Otherwise TS can't compute the type in expect
+          expect(detail).toEqual({
+            domain: "example.com",
+            reason: "soirée 🎉",
+          });
         } else {
           fail();
         }
       });
       it("with multiple MessageTypes produces detail", () => {
         const details = err.findDetails(
-          createRegistry(Struct, ErrorDetail, BoolValue),
+          createRegistry(StructSchema, BoolValueSchema),
         );
         expect(details.length).toBe(1);
-        expect(details[0]).toBeInstanceOf(ErrorDetail);
+        expect(isMessage(details[0], StructSchema)).toBeTrue();
       });
     });
   });

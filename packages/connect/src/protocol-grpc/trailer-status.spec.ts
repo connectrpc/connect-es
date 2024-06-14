@@ -15,7 +15,7 @@
 import { findTrailerError, setTrailerStatus } from "./trailer-status.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { Int32Value } from "@bufbuild/protobuf";
+import { Int32ValueSchema } from "@bufbuild/protobuf/wkt";
 
 describe("setTrailerStatus()", function () {
   it("should set grpc-status when called without error", function () {
@@ -51,7 +51,7 @@ describe("setTrailerStatus()", function () {
     setTrailerStatus(
       t,
       new ConnectError("soirée 🎉", Code.ResourceExhausted, {}, [
-        new Int32Value({ value: 123 }),
+        { desc: Int32ValueSchema, value: { value: 123 } },
       ]),
     );
     let count = 0;

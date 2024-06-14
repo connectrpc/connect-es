@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ServiceType, MethodInfo } from "@bufbuild/protobuf";
+import type { DescService } from "@bufbuild/protobuf";
+import type { MethodInfo } from "./types.js";
 
 /**
  * AnyClient is an arbitrary service client with any method signature.
@@ -24,9 +25,7 @@ export type AnyClient = Record<string, AnyClientMethod>;
 
 type AnyClientMethod = (...args: any[]) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-type CreateAnyClientMethod = (
-  method: MethodInfo & { localName: string; service: ServiceType },
-) => AnyClientMethod | null;
+type CreateAnyClientMethod = (method: MethodInfo) => AnyClientMethod | null;
 
 /**
  * Create any client for the given service.
@@ -36,18 +35,14 @@ type CreateAnyClientMethod = (
  * as a method.
  */
 export function makeAnyClient(
-  service: ServiceType,
+  service: DescService,
   createMethod: CreateAnyClientMethod,
 ): AnyClient {
   const client: AnyClient = {};
-  for (const [localName, methodInfo] of Object.entries(service.methods)) {
-    const method = createMethod({
-      ...methodInfo,
-      localName,
-      service,
-    });
+  for (const desc of service.methods) {
+    const method = createMethod(desc);
     if (method != null) {
-      client[localName] = method;
+      client[desc.localName] = method;
     }
   }
   return client;

@@ -1,10 +1,10 @@
 name: ci
 on:
   push:
-    branches: [main]
+    branches: [main, v2]
     tags: ['v*']
   pull_request:
-    branches: [main]
+    branches: [main, v2]
   workflow_dispatch:
 permissions:
   contents: read

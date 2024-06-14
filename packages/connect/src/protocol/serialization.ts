@@ -12,18 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import {
+  fromBinary,
+  fromJsonString,
+  toBinary,
+  toJsonString,
+} from "@bufbuild/protobuf";
 import type {
+  MessageShape,
   BinaryReadOptions,
   BinaryWriteOptions,
+  DescMessage,
   JsonReadOptions,
   JsonWriteOptions,
-  Message,
-  MessageType,
-  MethodInfo,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { assertReadMaxBytes, assertWriteMaxBytes } from "./limit-io.js";
+import type { MethodInfo } from "../types.js";
 
 /**
  * Serialization provides methods to serialize or parse data with a certain
@@ -65,8 +71,8 @@ export function getJsonOptions(
  * @private Internal code, does not follow semantic versioning.
  */
 export function createMethodSerializationLookup<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 >(
   method: MethodInfo<I, O>,
   binaryOptions: Partial<BinaryReadOptions & BinaryWriteOptions> | undefined,
@@ -77,19 +83,19 @@ export function createMethodSerializationLookup<
   },
 ): MethodSerializationLookup<I, O> {
   const inputBinary = limitSerialization(
-    createBinarySerialization(method.I, binaryOptions),
+    createBinarySerialization(method.input, binaryOptions),
     limitOptions,
   );
   const inputJson = limitSerialization(
-    createJsonSerialization(method.I, jsonOptions),
+    createJsonSerialization(method.input, jsonOptions),
     limitOptions,
   );
   const outputBinary = limitSerialization(
-    createBinarySerialization(method.O, binaryOptions),
+    createBinarySerialization(method.output, binaryOptions),
     limitOptions,
   );
   const outputJson = limitSerialization(
-    createJsonSerialization(method.O, jsonOptions),
+    createJsonSerialization(method.output, jsonOptions),
     limitOptions,
   );
   return {
@@ -109,17 +115,17 @@ export function createMethodSerializationLookup<
  * @private Internal code, does not follow semantic versioning.
  */
 export interface MethodSerializationLookup<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 > {
   /**
    * Get the JSON or binary serialization for the request message type.
    */
-  getI(useBinaryFormat: boolean): Serialization<I>;
+  getI(useBinaryFormat: boolean): Serialization<MessageShape<I>>;
   /**
    * Get the JSON or binary serialization for the response message type.
    */
-  getO(useBinaryFormat: boolean): Serialization<O>;
+  getO(useBinaryFormat: boolean): Serialization<MessageShape<O>>;
 }
 
 /**
@@ -129,8 +135,8 @@ export interface MethodSerializationLookup<
  * @private Internal code, does not follow semantic versioning.
  */
 export function createClientMethodSerializers<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 >(
   method: MethodInfo<I, O>,
   useBinaryFormat: boolean,
@@ -138,11 +144,11 @@ export function createClientMethodSerializers<
   binaryOptions?: BinarySerializationOptions,
 ) {
   const input = useBinaryFormat
-    ? createBinarySerialization(method.I, binaryOptions)
-    : createJsonSerialization(method.I, jsonOptions);
+    ? createBinarySerialization(method.input, binaryOptions)
+    : createJsonSerialization(method.input, jsonOptions);
   const output = useBinaryFormat
-    ? createBinarySerialization(method.O, binaryOptions)
-    : createJsonSerialization(method.O, jsonOptions);
+    ? createBinarySerialization(method.output, binaryOptions)
+    : createJsonSerialization(method.output, jsonOptions);
   return { parse: output.parse, serialize: input.serialize };
 }
 
@@ -182,22 +188,22 @@ type BinarySerializationOptions = Partial<
  * Creates a Serialization object for serializing the given protobuf message
  * with the protobuf binary format.
  */
-export function createBinarySerialization<T extends Message<T>>(
-  messageType: MessageType<T>,
+export function createBinarySerialization<Desc extends DescMessage>(
+  desc: Desc,
   options: BinarySerializationOptions | undefined,
-): Serialization<T> {
+): Serialization<MessageShape<Desc>> {
   return {
-    parse(data: Uint8Array): T {
+    parse(data: Uint8Array): MessageShape<Desc> {
       try {
-        return messageType.fromBinary(data, options);
+        return fromBinary(desc, data, options);
       } catch (e) {
         const m = e instanceof Error ? e.message : String(e);
         throw new ConnectError(`parse binary: ${m}`, Code.Internal);
       }
     },
-    serialize(data: T): Uint8Array {
+    serialize(data: MessageShape<Desc>): Uint8Array {
       try {
-        return data.toBinary(options);
+        return toBinary(desc, data, options);
       } catch (e) {
         const m = e instanceof Error ? e.message : String(e);
         throw new ConnectError(`serialize binary: ${m}`, Code.Internal);
@@ -220,25 +226,25 @@ type JsonSerializationOptions = Partial<JsonReadOptions & JsonWriteOptions> & {
  *
  * By default, unknown fields are ignored.
  */
-export function createJsonSerialization<T extends Message<T>>(
-  messageType: MessageType<T>,
+export function createJsonSerialization<Desc extends DescMessage>(
+  desc: Desc,
   options: JsonSerializationOptions | undefined,
-): Serialization<T> {
+): Serialization<MessageShape<Desc>> {
   const textEncoder = options?.textEncoder ?? new TextEncoder();
   const textDecoder = options?.textDecoder ?? new TextDecoder();
   const o = getJsonOptions(options);
   return {
-    parse(data: Uint8Array): T {
+    parse(data: Uint8Array): MessageShape<Desc> {
       try {
         const json = textDecoder.decode(data);
-        return messageType.fromJsonString(json, o);
+        return fromJsonString(desc, json, o);
       } catch (e) {
         throw ConnectError.from(e, Code.InvalidArgument);
       }
     },
-    serialize(data: T): Uint8Array {
+    serialize(data: MessageShape<Desc>): Uint8Array {
       try {
-        const json = data.toJsonString(o);
+        const json = toJsonString(desc, data, o);
         return textEncoder.encode(json);
       } catch (e) {
         throw ConnectError.from(e, Code.Internal);

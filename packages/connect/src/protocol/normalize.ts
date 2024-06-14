@@ -12,43 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { PartialMessage, MessageType } from "@bufbuild/protobuf";
-import { Message } from "@bufbuild/protobuf";
+import type {
+  DescMessage,
+  MessageInitShape,
+  MessageShape,
+} from "@bufbuild/protobuf";
+import { create } from "@bufbuild/protobuf";
 
 /**
  *  Takes a partial protobuf messages of the
  *  specified message type as input, and returns full instances.
  */
-export function normalize<T extends Message<T>>(
-  type: MessageType<T>,
-  message: T | PartialMessage<T>,
+export function normalize<Desc extends DescMessage>(
+  desc: Desc,
+  message: MessageInitShape<Desc>,
 ) {
-  return message instanceof type
-    ? message
-    : new type(message as PartialMessage<T>);
+  return create(desc, message);
 }
 
 /**
  * Takes an AsyncIterable of partial protobuf messages of the
  * specified message type as input, and yields full instances.
  */
-export function normalizeIterable<T extends Message<T>>(
-  messageType: MessageType<T>,
-  input: AsyncIterable<T | PartialMessage<T>>,
-): AsyncIterable<T> {
-  function transform(result: IteratorResult<T | PartialMessage<T>>) {
+export function normalizeIterable<Desc extends DescMessage>(
+  desc: Desc,
+  input: AsyncIterable<MessageInitShape<Desc>>,
+): AsyncIterable<MessageShape<Desc>> {
+  function transform(result: IteratorResult<MessageInitShape<Desc>>) {
     if (result.done === true) {
       return result;
     }
     return {
       done: result.done,
-      value: normalize(messageType, result.value),
+      value: normalize(desc, result.value),
     };
   }
   return {
     [Symbol.asyncIterator]() {
       const it = input[Symbol.asyncIterator]();
-      const res: AsyncIterator<T> = {
+      const res: AsyncIterator<MessageShape<Desc>> = {
         next: () => it.next().then(transform),
       };
       if (it.throw !== undefined) {

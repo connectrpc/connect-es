@@ -14,7 +14,7 @@
 
 import type { ConnectRouter } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb.js";
 import type {
   SayRequest,
   IntroduceRequest,

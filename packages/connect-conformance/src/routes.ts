@@ -13,13 +13,19 @@
 // limitations under the License.
 
 import type { ConnectRouter, HandlerContext } from "@connectrpc/connect";
-import { Any } from "@bufbuild/protobuf";
-import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
+import { create } from "@bufbuild/protobuf";
 import {
-  ConformancePayload,
-  ConformancePayload_RequestInfo,
+  BidiStreamRequestSchema,
+  ClientStreamRequestSchema,
+  ConformancePayloadSchema,
+  ConformancePayload_RequestInfoSchema,
+  ConformanceService,
+  IdempotentUnaryRequestSchema,
+  ServerStreamRequestSchema,
+  UnaryRequestSchema,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import type {
+  ConformancePayload_RequestInfo,
   UnaryResponseDefinition,
   StreamResponseDefinition,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
@@ -29,13 +35,15 @@ import {
   convertToProtoHeaders,
   wait,
 } from "./protocol.js";
+import { anyPack } from "@bufbuild/protobuf/wkt";
+import type { Any } from "@bufbuild/protobuf/wkt";
 
 function createRequestInfo(
   ctx: HandlerContext,
   reqs: Any[],
 ): ConformancePayload_RequestInfo {
   const timeoutMs = ctx.timeoutMs();
-  return new ConformancePayload_RequestInfo({
+  return create(ConformancePayload_RequestInfoSchema, {
     requestHeaders: convertToProtoHeaders(ctx.requestHeader),
     requests: reqs,
     timeoutMs: timeoutMs !== undefined ? BigInt(timeoutMs) : undefined,
@@ -51,14 +59,16 @@ async function handleUnaryResponse(
   appendProtoHeaders(ctx.responseTrailer, def?.responseTrailers ?? []);
   const reqInfo = createRequestInfo(ctx, reqs);
   if (def?.response.case === "error") {
-    def.response.value.details.push(Any.pack(reqInfo));
+    def.response.value.details.push(
+      anyPack(ConformancePayload_RequestInfoSchema, reqInfo),
+    );
     throw connectErrorFromProto(def.response.value);
   }
   if (def?.responseDelayMs !== undefined) {
     await wait(def.responseDelayMs);
   }
   return {
-    payload: new ConformancePayload({
+    payload: create(ConformancePayloadSchema, {
       requestInfo: createRequestInfo(ctx, reqs),
       data: def?.response.value,
     }),
@@ -68,10 +78,18 @@ async function handleUnaryResponse(
 export default ({ service }: ConnectRouter) => {
   service(ConformanceService, {
     unary(req, ctx) {
-      return handleUnaryResponse(req.responseDefinition, [Any.pack(req)], ctx);
+      return handleUnaryResponse(
+        req.responseDefinition,
+        [anyPack(UnaryRequestSchema, req)],
+        ctx,
+      );
     },
     idempotentUnary(req, ctx) {
-      return handleUnaryResponse(req.responseDefinition, [Any.pack(req)], ctx);
+      return handleUnaryResponse(
+        req.responseDefinition,
+        [anyPack(IdempotentUnaryRequestSchema, req)],
+        ctx,
+      );
     },
     async clientStream(reqIt, ctx) {
       let def: UnaryResponseDefinition | undefined;
@@ -80,7 +98,7 @@ export default ({ service }: ConnectRouter) => {
         if (def === undefined) {
           def = req.responseDefinition;
         }
-        reqs.push(Any.pack(req));
+        reqs.push(anyPack(ClientStreamRequestSchema, req));
       }
       return handleUnaryResponse(def, reqs, ctx);
     },
@@ -88,13 +106,13 @@ export default ({ service }: ConnectRouter) => {
       const def = req.responseDefinition;
       appendProtoHeaders(ctx.responseHeader, def?.responseHeaders ?? []);
       appendProtoHeaders(ctx.responseTrailer, def?.responseTrailers ?? []);
-      const anyReq = Any.pack(req);
+      const anyReq = anyPack(ServerStreamRequestSchema, req);
       let reqInfo: ConformancePayload_RequestInfo | undefined =
         createRequestInfo(ctx, [anyReq]);
       for (const res of def?.responseData ?? []) {
         await wait(def!.responseDelayMs);
         yield {
-          payload: new ConformancePayload({
+          payload: create(ConformancePayloadSchema, {
             requestInfo: reqInfo,
             data: res,
           }),
@@ -104,7 +122,12 @@ export default ({ service }: ConnectRouter) => {
       }
       if (def?.error !== undefined) {
         if (def.responseData.length === 0) {
-          def.error.details.push(Any.pack(createRequestInfo(ctx, [anyReq])));
+          def.error.details.push(
+            anyPack(
+              ConformancePayload_RequestInfoSchema,
+              createRequestInfo(ctx, [anyReq]),
+            ),
+          );
         }
         throw connectErrorFromProto(def.error);
       }
@@ -121,7 +144,7 @@ export default ({ service }: ConnectRouter) => {
           appendProtoHeaders(ctx.responseTrailer, def?.responseTrailers ?? []);
           fullDuplex = req.fullDuplex;
         }
-        reqs.push(Any.pack(req));
+        reqs.push(anyPack(BidiStreamRequestSchema, req));
         if (!fullDuplex) {
           continue;
         }
@@ -131,8 +154,10 @@ export default ({ service }: ConnectRouter) => {
         }
         await wait(def.responseDelayMs);
         yield {
-          payload: new ConformancePayload({
-            requestInfo: createRequestInfo(ctx, [Any.pack(req)]),
+          payload: create(ConformancePayloadSchema, {
+            requestInfo: createRequestInfo(ctx, [
+              anyPack(BidiStreamRequestSchema, req),
+            ]),
             data: def.responseData[resNum],
           }),
         };
@@ -146,7 +171,7 @@ export default ({ service }: ConnectRouter) => {
       for (; resNum < (def?.responseData.length ?? 0); resNum++) {
         await wait(def?.responseDelayMs ?? 0);
         yield {
-          payload: new ConformancePayload({
+          payload: create(ConformancePayloadSchema, {
             requestInfo: resNum === 0 ? reqInfo : undefined,
             data: def?.responseData[resNum],
           }),
@@ -154,7 +179,9 @@ export default ({ service }: ConnectRouter) => {
       }
       if (def?.error !== undefined) {
         if (def.responseData.length === 0) {
-          def.error.details.push(Any.pack(reqInfo));
+          def.error.details.push(
+            anyPack(ConformancePayload_RequestInfoSchema, reqInfo),
+          );
         }
         throw connectErrorFromProto(def.error);
       }

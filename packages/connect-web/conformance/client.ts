@@ -21,13 +21,14 @@ import { parseArgs } from "node:util";
 import {
   invokeWithCallbackClient,
   invokeWithPromiseClient,
-  ClientCompatRequest,
-  ClientCompatResponse,
-  ClientErrorResult,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
+  ClientCompatRequestSchema,
+  ClientCompatResponseSchema,
+  ClientErrorResultSchema,
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
+import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 
 const { values: flags } = parseArgs({
   args: process.argv.slice(2),
@@ -61,8 +62,8 @@ async function main() {
 
   // Otherwise, run the conformance tests using Node as the environment
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
-    const req = ClientCompatRequest.fromBinary(next);
-    const res = new ClientCompatResponse({
+    const req = fromBinary(ClientCompatRequestSchema, next);
+    const res = create(ClientCompatResponseSchema, {
       testName: req.testName,
     });
     try {
@@ -71,10 +72,14 @@ async function main() {
     } catch (e) {
       res.result = {
         case: "error",
-        value: new ClientErrorResult({ message: (e as Error).message }),
+        value: create(ClientErrorResultSchema, {
+          message: (e as Error).message,
+        }),
       };
     }
-    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+    process.stdout.write(
+      writeSizeDelimitedBuffer(toBinary(ClientCompatResponseSchema, res)),
+    );
   }
 }
 

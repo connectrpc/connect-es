@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ServiceType } from "@bufbuild/protobuf";
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import {
   negotiateProtocol,
   validateUniversalHandlerOptions,
@@ -25,6 +23,8 @@ import type {
 import type { Compression } from "./compression.js";
 import { contentTypeMatcher } from "./content-type-matcher.js";
 import { Headers } from "undici";
+import { createServiceDesc } from "../descriptor-helper.spec.js";
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
 describe("validateUniversalHandlerOptions()", function () {
   it("should set defaults", function () {
@@ -55,7 +55,7 @@ describe("validateUniversalHandlerOptions()", function () {
       writeMaxBytes: 666,
       jsonOptions: {
         ignoreUnknownFields: true,
-        emitDefaultValues: true,
+        alwaysEmitImplicit: true,
       },
       binaryOptions: {
         readUnknownFields: true,
@@ -72,23 +72,21 @@ describe("validateUniversalHandlerOptions()", function () {
 });
 
 describe("negotiateProtocol()", function () {
-  const testService: ServiceType = {
+  const testService = createServiceDesc({
     typeName: "TestService",
-    methods: {
+    method: {
       foo: {
-        name: "Foo",
-        I: Int32Value,
-        O: StringValue,
-        kind: MethodKind.Unary,
+        input: Int32ValueSchema,
+        output: StringValueSchema,
+        methodKind: "unary",
       },
       bar: {
-        name: "Bar",
-        I: Int32Value,
-        O: StringValue,
-        kind: MethodKind.Unary,
+        input: Int32ValueSchema,
+        output: StringValueSchema,
+        methodKind: "unary",
       },
     },
-  } as const;
+  });
 
   function stubHandler(o: Partial<UniversalHandler>): UniversalHandler {
     return Object.assign(
@@ -101,8 +99,8 @@ describe("negotiateProtocol()", function () {
       {
         protocolNames: ["protocol-x"],
         service: testService,
-        method: testService.methods.foo,
-        requestPath: `/${testService.typeName}/${testService.methods.foo.name}`,
+        method: testService.method.foo,
+        requestPath: `/${testService.typeName}/${testService.method.foo.name}`,
         allowedMethods: ["POST"],
         supportedContentType: contentTypeMatcher(/application\/x/),
         ...o,
@@ -117,8 +115,8 @@ describe("negotiateProtocol()", function () {
   });
 
   it("should require all handlers to be for the same RPC", function () {
-    const foo = stubHandler({ method: testService.methods.foo });
-    const bar = stubHandler({ method: testService.methods.bar });
+    const foo = stubHandler({ method: testService.method.foo });
+    const bar = stubHandler({ method: testService.method.bar });
     expect(() => negotiateProtocol([foo, bar])).toThrowError(
       "[internal] cannot negotiate protocol for different RPCs",
     );
@@ -201,8 +199,8 @@ describe("negotiateProtocol()", function () {
       const h = negotiateProtocol([
         stubHandler({
           method: {
-            ...testService.methods.foo,
-            kind: MethodKind.BiDiStreaming,
+            ...testService.method.foo,
+            methodKind: "bidi_streaming",
           },
         }),
       ]);

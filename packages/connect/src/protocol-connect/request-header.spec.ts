@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
 import type { Compression } from "../protocol/index.js";
 import {
   requestHeader,
@@ -33,13 +32,7 @@ function listHeaderKeys(header: Headers): string[] {
 
 describe("requestHeader", () => {
   it("should create request headers", () => {
-    const headers = requestHeader(
-      MethodKind.Unary,
-      true,
-      undefined,
-      undefined,
-      true,
-    );
+    const headers = requestHeader("unary", true, undefined, undefined, true);
     expect(listHeaderKeys(headers)).toEqual([
       "connect-protocol-version",
       "content-type",
@@ -51,7 +44,7 @@ describe("requestHeader", () => {
   });
 
   it("should create request headers with timeout", () => {
-    const headers = requestHeader(MethodKind.Unary, true, 10, undefined, true);
+    const headers = requestHeader("unary", true, 10, undefined, true);
     expect(listHeaderKeys(headers)).toEqual([
       "connect-protocol-version",
       "connect-timeout-ms",
@@ -62,13 +55,7 @@ describe("requestHeader", () => {
   });
 
   it("should exclude user-agent", () => {
-    const headers = requestHeader(
-      MethodKind.Unary,
-      true,
-      undefined,
-      undefined,
-      false,
-    );
+    const headers = requestHeader("unary", true, undefined, undefined, false);
     expect(listHeaderKeys(headers)).toEqual([
       "connect-protocol-version",
       "content-type",
@@ -86,7 +73,7 @@ describe("requestHeaderWithCompression", () => {
 
   it("should create request headers with compression for unary request", () => {
     const headers = requestHeaderWithCompression(
-      MethodKind.Unary,
+      "unary",
       true,
       undefined,
       undefined,
@@ -107,7 +94,7 @@ describe("requestHeaderWithCompression", () => {
 
   it("should create request headers with compression for stream request", () => {
     const headers = requestHeaderWithCompression(
-      MethodKind.ClientStreaming,
+      "client_streaming",
       true,
       undefined,
       undefined,

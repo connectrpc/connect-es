@@ -59,12 +59,6 @@ $(BIN)/node16: Makefile
 	@rm -r $(TMP)/$(NODE16_VERSION).tar.xz
 	@touch $(@)
 
-$(BUILD)/protoc-gen-connect-es: node_modules tsconfig.base.json packages/protoc-gen-connect-es/tsconfig.json $(shell find packages/protoc-gen-connect-es/src -name '*.ts')
-	npm run -w packages/protoc-gen-connect-es clean
-	npm run -w packages/protoc-gen-connect-es build
-	@mkdir -p $(@D)
-	@touch $(@)
-
 $(BUILD)/connect: $(GEN)/connect node_modules packages/connect/package.json packages/connect/scripts/* tsconfig.base.json packages/connect/tsconfig.json $(shell find packages/connect/src -name '*.ts') packages/connect/*.js
 	npm run -w packages/connect clean
 	npm run -w packages/connect build
@@ -124,25 +118,43 @@ $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-conformance/buf.gen.yaml packages/connect-conformance/package.json Makefile
+$(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es packages/connect-conformance/buf.gen.yaml packages/connect-conformance/package.json Makefile
 	rm -rf packages/connect-conformance/src/gen/*
 	npm run -w packages/connect-conformance generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web/browserstack/buf.gen.yaml Makefile
+$(GEN)/connect-cloudflare: node_modules/.bin/protoc-gen-es packages/connect-cloudflare/buf.gen.yaml packages/connect-cloudflare/package.json Makefile
+	rm -rf packages/connect-cloudflare/src/conformance/gen/*
+	npm run -w packages/connect-cloudflare generate
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(GEN)/connect-web: node_modules/.bin/protoc-gen-es packages/connect-web/browserstack/buf.gen.yaml Makefile
 	rm -rf packages/connect-web/browserstack/gen/*
 	npm run -w packages/connect-web generate:browserstack
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-bench/buf.gen.yaml Makefile
+$(GEN)/connect-node: node_modules/.bin/protoc-gen-es packages/connect-node/buf.gen.yaml Makefile
+	rm -rf packages/connect-node/gen/*
+	npm run -w packages/connect-node generate
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(GEN)/connect-express: node_modules/.bin/protoc-gen-es packages/connect-express/buf.gen.yaml Makefile
+	rm -rf packages/connect-express/gen/*
+	npm run -w packages/connect-express generate
+	@mkdir -p $(@D)
+	@touch $(@)
+
+$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es packages/connect-web-bench/buf.gen.yaml Makefile
 	rm -rf packages/connect-web-bench/src/gen/*
 	npm run -w packages/connect-web-bench generate buf.build/connectrpc/eliza:8bde2b90ec0a7f23df3de5824bed0b6ea2043305
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/example: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/example/buf.gen.yaml $(shell find packages/example -name '*.proto')
+$(GEN)/example: node_modules/.bin/protoc-gen-es packages/example/buf.gen.yaml $(shell find packages/example -name '*.proto')
 	rm -rf packages/example/src/gen/*
 	npx -w packages/example buf generate
 	@mkdir -p $(@D)
@@ -165,7 +177,7 @@ clean:  ## Delete build artifacts and installed dependencies
 	git clean -Xdf
 
 .PHONY: build
-build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
+build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
 test: testconnectpackage testconnectnodepackage testconnectwebpackage testconnectexpresspackage testconnectmigrate ## Run all tests, except browserstack
@@ -276,13 +288,13 @@ setversion: ## Set a new version in for the project, i.e. make setversion SET_VE
 release: all ## Release npm packages
 	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
 	npm publish \
+		--tag $(shell node scripts/get-workspace-publish-tag.js || kill $$PPID;)
 		--workspace packages/connect \
 		--workspace packages/connect-web \
 		--workspace packages/connect-node \
 		--workspace packages/connect-fastify \
 		--workspace packages/connect-express \
 		--workspace packages/connect-next \
-		--workspace packages/protoc-gen-connect-es \
 		--workspace packages/connect-migrate \
 
 .PHONY: checkdiff

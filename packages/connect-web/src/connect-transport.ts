@@ -13,17 +13,16 @@
 // limitations under the License.
 
 import type {
-  AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
+  DescMessage,
   JsonReadOptions,
   JsonValue,
   JsonWriteOptions,
-  MethodInfo,
-  PartialMessage,
-  ServiceType,
+  MessageInitShape,
+  MessageShape,
 } from "@bufbuild/protobuf";
-import { Message, MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
+import { fromJson } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamResponse,
@@ -31,6 +30,7 @@ import type {
   UnaryRequest,
   UnaryResponse,
   ContextValues,
+  MethodInfo,
 } from "@connectrpc/connect";
 import {
   Code,
@@ -58,6 +58,7 @@ import {
   validateResponse,
 } from "@connectrpc/connect/protocol-connect";
 import { assertFetchApi } from "./assert-fetch-api.js";
+import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
 
 /**
  * Options used to configure the Connect transport.
@@ -139,16 +140,12 @@ export function createConnectTransport(
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
-    async unary<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
+    async unary<I extends DescMessage, O extends DescMessage>(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      message: PartialMessage<I>,
+      message: MessageInitShape<I>,
       contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
@@ -169,9 +166,9 @@ export function createConnectTransport(
         timeoutMs,
         req: {
           stream: false,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(options.baseUrl, service, method),
+          url: createMethodUrl(options.baseUrl, method),
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",
@@ -179,7 +176,7 @@ export function createConnectTransport(
             mode: "cors",
           },
           header: requestHeader(
-            method.kind,
+            method.methodKind,
             useBinaryFormat,
             timeoutMs,
             header,
@@ -191,7 +188,8 @@ export function createConnectTransport(
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const useGet =
             options.useHttpGet === true &&
-            method.idempotency === MethodIdempotency.NoSideEffects;
+            method.idempotency ===
+              MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS;
           let body: BodyInit | null = null;
           if (useGet) {
             req = transformConnectPostToGetRequest(
@@ -210,7 +208,7 @@ export function createConnectTransport(
             body,
           });
           const { isUnaryError, unaryError } = validateResponse(
-            method.kind,
+            method.methodKind,
             useBinaryFormat,
             response.status,
             response.headers,
@@ -228,12 +226,13 @@ export function createConnectTransport(
 
           return {
             stream: false,
-            service,
+            service: method.parent,
             method,
             header: demuxedHeader,
             message: useBinaryFormat
               ? parse(new Uint8Array(await response.arrayBuffer()))
-              : method.O.fromJson(
+              : fromJson(
+                  method.output,
                   (await response.json()) as JsonValue,
                   getJsonOptions(options.jsonOptions),
                 ),
@@ -243,16 +242,12 @@ export function createConnectTransport(
       });
     },
 
-    async stream<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
+    async stream<I extends DescMessage, O extends DescMessage>(
       method: MethodInfo<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>,
+      input: AsyncIterable<MessageInitShape<I>>,
       contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
@@ -304,9 +299,9 @@ export function createConnectTransport(
       }
 
       async function createRequestBody(
-        input: AsyncIterable<I>,
+        input: AsyncIterable<MessageShape<I>>,
       ): Promise<Uint8Array> {
-        if (method.kind != MethodKind.ServerStreaming) {
+        if (method.methodKind != "server_streaming") {
           throw "The fetch API does not support streaming request bodies";
         }
         const r = await input[Symbol.asyncIterator]().next();
@@ -328,9 +323,9 @@ export function createConnectTransport(
         signal,
         req: {
           stream: true,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(options.baseUrl, service, method),
+          url: createMethodUrl(options.baseUrl, method),
           init: {
             method: "POST",
             credentials: options.credentials ?? "same-origin",
@@ -338,7 +333,7 @@ export function createConnectTransport(
             mode: "cors",
           },
           header: requestHeader(
-            method.kind,
+            method.methodKind,
             useBinaryFormat,
             timeoutMs,
             header,
@@ -356,7 +351,7 @@ export function createConnectTransport(
             body: await createRequestBody(req.message),
           });
           validateResponse(
-            method.kind,
+            method.methodKind,
             useBinaryFormat,
             fRes.status,
             fRes.headers,
