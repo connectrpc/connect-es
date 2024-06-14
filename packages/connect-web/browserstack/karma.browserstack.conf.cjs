@@ -36,7 +36,7 @@ module.exports = function (config) {
       "**/*.ts": "esbuild",
     },
     reporters: ["progress", "BrowserStack"],
-    files: ["src/browserstacktests/*.ts"],
+    files: ["./*.ts"],
     esbuild: {
       define: {},
       plugins: [],
