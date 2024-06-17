@@ -210,10 +210,18 @@ testconnectfastifyconformance: $(BUILD)/connect-fastify
 	npm run -w packages/connect-fastify conformance
 
 .PHONY: testwebconformance
-testwebconformance: $(BUILD)/connect-web
+testwebconformance: testwebchromeconformance testwebfirefoxconformance testwebsafariconformance
+
+.PHONY: testwebchromeconformance
+testwebchromeconformance: $(BUILD)/connect-web
 	npm run -w packages/connect-web conformance:client:chrome
+
+.PHONY: testwebfirefoxconformance
+testwebfirefoxconformance: $(BUILD)/connect-web
 	npm run -w packages/connect-web conformance:client:firefox
-	npm run -w packages/connect-web conformance:client:node
+
+.PHONY: testwebsafariconformance
+testwebsafariconformance: $(BUILD)/connect-web
 	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
 ifeq ($(NODE_OS),darwin)
 	npm run -w packages/connect-web conformance:client:safari
