@@ -11,7 +11,7 @@
     }
   },
   "bin": {
-    "connectconformance": "bin/connectconformance"
+    "connectconformance": "bin/connectconformance.js"
   },
   "scripts": {
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
