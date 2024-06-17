@@ -11,7 +11,13 @@ permissions:
 jobs:
   node:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        node-version: [16, 18, 20, 21]
     steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
       - name: checkout
         uses: actions/checkout@v4
       - name: cache
@@ -23,8 +29,52 @@ jobs:
           key: ${{ runner.os }}-connect-node-conformance-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-node-conformance-
-      - name: testnodeconformance
-        run: make testnodeconformance
+      - name: testconnectnodeconformance
+        run: make testconnectnodeconformance
+  fastify:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        node-version: [16, 18, 20, 21]
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.tmp
+            .tmp
+          key: ${{ runner.os }}-connect-fastify-conformance-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-connect-fastify-conformance-
+      - name: testconnectfastifyconformance
+        run: make testconnectfastifyconformance
+  express:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        node-version: [16, 18, 20, 21]
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.tmp
+            .tmp
+          key: ${{ runner.os }}-connect-express-conformance-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-connect-express-conformance-
+      - name: testconnectexpressconformance
+        run: make testconnectexpressconformance
   web:
     runs-on: ubuntu-22.04
     steps:

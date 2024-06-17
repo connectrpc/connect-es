@@ -192,14 +192,20 @@ testconnectexpresspackage: $(BUILD)/connect-express
 	npm run -w packages/connect-express jasmine
 
 .PHONY: testconformance
-testconformance: testnodeconformance testwebconformance
+testconformance: testconnectnodeconformance testconnectfastifyconformance testconnectexpressconformance testwebconformance
 
-.PHONY: testnodeconformance
-testnodeconformance: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express
+.PHONY: testconnectnodeconformance
+testconnectnodeconformance: $(BUILD)/connect-node
 	# Vanilla Node Server and Client
 	npm run -w packages/connect-node conformance
+
+.PHONY: testconnectexpressconformance
+testconnectexpressconformance: $(BUILD)/connect-express
 	# Express Server
 	npm run -w packages/connect-express conformance
+
+.PHONY: testconnectfastifyconformance
+testconnectfastifyconformance: $(BUILD)/connect-fastify
 	# Fastify Server
 	npm run -w packages/connect-fastify conformance
 
