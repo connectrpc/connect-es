@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        node-version: [16, 18, 20, 21]
+        node-version: [18, 20, 21]
     steps:
       - uses: actions/setup-node@v4
         with:
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        node-version: [16, 18, 20, 21]
+        node-version: [18, 20, 21]
     steps:
       - uses: actions/setup-node@v4
         with:
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        node-version: [16, 18, 20, 21]
+        node-version: [18, 20, 21]
     steps:
       - uses: actions/setup-node@v4
         with:

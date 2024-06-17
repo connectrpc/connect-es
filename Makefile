@@ -192,7 +192,7 @@ testconnectexpresspackage: $(BUILD)/connect-express
 	npm run -w packages/connect-express jasmine
 
 .PHONY: testconformance
-testconformance: node_modules testconnectnodeconformance testconnectfastifyconformance testconnectexpressconformance testwebconformance
+testconformance: testconnectnodeconformance testconnectfastifyconformance testconnectexpressconformance testwebconformance
 
 .PHONY: testconnectnodeconformance
 testconnectnodeconformance: $(BUILD)/connect-node
