@@ -121,7 +121,7 @@ describe("createHandlerFactory()", function () {
       expect(all.length).toBe(1);
       expect(all[0].value).toBe("123");
     });
-    it("should propogate errors back to the handler", async function () {
+    it("should propagate errors back to the handler", async function () {
       let resolve: (e: unknown) => void;
       const catchError = new Promise<unknown>((r) => (resolve = r));
       let abortResolve: () => void;
