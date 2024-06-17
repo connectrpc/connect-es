@@ -24,4 +24,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-connect-web-ci-
       - name: make
-        run: make && make checkdiff
+        run: make ci && make checkdiff

@@ -9,7 +9,23 @@ on:
 permissions:
   contents: read
 jobs:
-  ci:
+  node:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.tmp
+            .tmp
+          key: ${{ runner.os }}-connect-node-conformance-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-connect-node-conformance-
+      - name: testnodeconformance
+        run: make testnodeconformance
+  web:
     runs-on: ubuntu-22.04
     steps:
       - name: checkout
@@ -23,5 +39,5 @@ jobs:
           key: ${{ runner.os }}-connect-web-conformance-${{ hashFiles('Makefile') }}
           restore-keys: |
             ${{ runner.os }}-connect-web-conformance-
-      - name: testconformance
-        run: make testconformance
+      - name: testwebconformance
+        run: make testwebconformance

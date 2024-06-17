@@ -154,7 +154,10 @@ help: ## Describe useful make targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
 
 .PHONY: all
-all: build test format lint bench ## build, test, format, lint, and bench (default)
+all: build test testconformance format lint bench ## build, test, testconformance, format, lint, and bench (default)
+
+.PHONY: ci
+ci: build test format lint bench ## build, test, format, lint, and bench (default)
 
 .PHONY: clean
 clean:  ## Delete build artifacts and installed dependencies
@@ -201,7 +204,7 @@ testnodeconformance: $(BUILD)/connect-conformance $(BUILD)/connect-node $(BUILD)
 	npm run -w packages/connect-fastify conformance
 
 .PHONY: testwebconformance
-testwebconformance: $(BUILD)/connect-conformance
+testwebconformance: $(BUILD)/connect-web
 	npm run -w packages/connect-web conformance:client:chrome
 	npm run -w packages/connect-web conformance:client:firefox
 	npm run -w packages/connect-web conformance:client:node
