@@ -195,7 +195,7 @@ testconnectexpresspackage: $(BUILD)/connect-express
 testconformance: testnodeconformance testwebconformance
 
 .PHONY: testnodeconformance
-testnodeconformance: $(BUILD)/connect-conformance $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express
+testnodeconformance: $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express
 	# Vanilla Node Server and Client
 	npm run -w packages/connect-node conformance
 	# Express Server
