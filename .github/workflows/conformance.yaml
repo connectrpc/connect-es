@@ -1,0 +1,27 @@
+name: conformance
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ci:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.tmp
+            .tmp
+          key: ${{ runner.os }}-connect-web-conformance-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-connect-web-conformance-
+      - name: testconformance
+        run: make testconformance

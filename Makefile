@@ -165,7 +165,7 @@ clean:  ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testconnectwebpackage testconnectexpresspackage testconformance testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testconnectwebpackage testconnectexpresspackage testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
