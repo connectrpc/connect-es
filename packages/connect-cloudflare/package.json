@@ -1,6 +1,7 @@
 {
   "name": "@connectrpc/connect-cloudflare",
   "private": true,
+  "type": "module",
   "scripts": {
     "conformance": "tsc --noEmit && npm run conformance:server && npm run conformance:client",
     "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v ./conformance/server.ts",

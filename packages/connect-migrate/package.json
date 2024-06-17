@@ -14,7 +14,7 @@
   },
   "scripts": {
     "clean": "rm -rf ./dist/cjs/*",
-    "build": "tsc --project tsconfig.json --module commonjs --outDir ./dist/cjs",
+    "build": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs",
     "test": "jasmine --config=jasmine.json",
     "build+test": "npm run build && npm run test"
   },

@@ -31,8 +31,8 @@ import {
   ServerStreamRequest,
   UnaryRequest,
 } from "@connectrpc/connect-conformance";
-import {
-  fastify,
+import { fastify } from "fastify";
+import type {
   FastifyHttpOptions,
   FastifyHttpsOptions,
   FastifyHttp2Options,
