@@ -1,0 +1,59 @@
+name: Web Conformance
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chrome:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.tmp
+            .tmp
+          key: ${{ runner.os }}-connect-web-chrome-conformance-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-connect-web-chrome-conformance-
+      - name: testwebchromeconformance
+        run: make testwebchromeconformance
+  firefox:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.tmp
+            .tmp
+          key: ${{ runner.os }}-connect-web-firefox-conformance-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-connect-web-firefox-conformance-
+      - name: testwebfirefoxconformance
+        run: make testwebfirefoxconformance
+  safari:
+    runs-on: macos-11
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.tmp
+            .tmp
+          key: ${{ runner.os }}-connect-web-safari-conformance-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-connect-web-safari-conformance-
+      - name: testwebsafariconformance
+        run: make testwebsafariconformance

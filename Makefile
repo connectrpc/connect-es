@@ -222,10 +222,7 @@ testwebfirefoxconformance: $(BUILD)/connect-web
 
 .PHONY: testwebsafariconformance
 testwebsafariconformance: $(BUILD)/connect-web
-	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
-ifeq ($(NODE_OS),darwin)
 	npm run -w packages/connect-web conformance:client:safari
-endif
 
 .PHONY: testwebconformancelocal
 testwebconformancelocal: $(BUILD)/connect-conformance
