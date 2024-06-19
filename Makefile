@@ -101,7 +101,7 @@ $(BUILD)/connect-web: $(GEN)/connect-web $(BUILD)/connect $(BUILD)/connect-confo
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-conformance: $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
+$(BUILD)/connect-conformance: $(BUILD)/connect $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
 	npm run -w packages/connect-conformance clean
 	npm run -w packages/connect-conformance build
 	@mkdir -p $(@D)
