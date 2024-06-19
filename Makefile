@@ -101,7 +101,7 @@ $(BUILD)/connect-web: $(GEN)/connect-web $(BUILD)/connect $(BUILD)/connect-confo
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-conformance: $(BUILD)/connect $(GEN)/connect-conformance packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
+$(BUILD)/connect-conformance: $(GEN)/connect-conformance $(BUILD)/connect packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
 	npm run -w packages/connect-conformance clean
 	npm run -w packages/connect-conformance build
 	@mkdir -p $(@D)
@@ -154,7 +154,10 @@ help: ## Describe useful make targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
 
 .PHONY: all
-all: build test format lint bench ## build, test, format, lint, and bench (default)
+all: build test testconformance format lint bench ## build, test, testconformance, format, lint, and bench (default)
+
+.PHONY: ci
+ci: build test format lint bench ## build, test, format, lint, and bench (default)
 
 .PHONY: clean
 clean:  ## Delete build artifacts and installed dependencies
@@ -165,7 +168,7 @@ clean:  ## Delete build artifacts and installed dependencies
 build: $(BUILD)/connect $(BUILD)/connect-web $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express $(BUILD)/connect-next $(BUILD)/protoc-gen-connect-es $(BUILD)/example $(BUILD)/connect-migrate ## Build
 
 .PHONY: test
-test: testconnectpackage testconnectnodepackage testconnectwebpackage testconnectexpresspackage testconformance testconnectmigrate ## Run all tests, except browserstack
+test: testconnectpackage testconnectnodepackage testconnectwebpackage testconnectexpresspackage testconnectmigrate ## Run all tests, except browserstack
 
 .PHONY: testconnectpackage
 testconnectpackage: $(BUILD)/connect
@@ -189,26 +192,37 @@ testconnectexpresspackage: $(BUILD)/connect-express
 	npm run -w packages/connect-express jasmine
 
 .PHONY: testconformance
-testconformance: testnodeconformance testwebconformance
+testconformance: testconnectnodeconformance testconnectfastifyconformance testconnectexpressconformance testwebconformance
 
-.PHONY: testnodeconformance
-testnodeconformance: $(BUILD)/connect-conformance $(BUILD)/connect-node $(BUILD)/connect-fastify $(BUILD)/connect-express
+.PHONY: testconnectnodeconformance
+testconnectnodeconformance: $(BUILD)/connect-node
 	# Vanilla Node Server and Client
 	npm run -w packages/connect-node conformance
+
+.PHONY: testconnectexpressconformance
+testconnectexpressconformance: $(BUILD)/connect-express
 	# Express Server
 	npm run -w packages/connect-express conformance
+
+.PHONY: testconnectfastifyconformance
+testconnectfastifyconformance: $(BUILD)/connect-fastify
 	# Fastify Server
 	npm run -w packages/connect-fastify conformance
 
 .PHONY: testwebconformance
-testwebconformance: $(BUILD)/connect-conformance
+testwebconformance: testwebchromeconformance testwebfirefoxconformance testwebsafariconformance
+
+.PHONY: testwebchromeconformance
+testwebchromeconformance: $(BUILD)/connect-web
 	npm run -w packages/connect-web conformance:client:chrome
+
+.PHONY: testwebfirefoxconformance
+testwebfirefoxconformance: $(BUILD)/connect-web
 	npm run -w packages/connect-web conformance:client:firefox
-	npm run -w packages/connect-web conformance:client:node
-	@# Requires one to enable the 'Allow Remote Automation' option in Safari's Develop menu.
-ifeq ($(NODE_OS),darwin)
+
+.PHONY: testwebsafariconformance
+testwebsafariconformance: $(BUILD)/connect-web
 	npm run -w packages/connect-web conformance:client:safari
-endif
 
 .PHONY: testwebconformancelocal
 testwebconformancelocal: $(BUILD)/connect-conformance
