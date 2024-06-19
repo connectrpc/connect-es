@@ -1,3 +1,5 @@
+/src
 /dist/*/**/*.spec.js
 /dist/*/**/*.spec.d.ts
-/browserstacktests/*
+/browserstack
+/conformance
