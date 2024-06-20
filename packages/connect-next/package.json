@@ -31,8 +31,5 @@
     "next": "^13.2.4",
     "@connectrpc/connect": "1.4.0",
     "@connectrpc/connect-node": "1.4.0"
-  },
-  "files": [
-    "dist/**"
-  ]
+  }
 }

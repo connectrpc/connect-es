@@ -1,4 +1,5 @@
 /src
+/*.json
 /dist/*/**/*.spec.js
 /dist/*/**/*.spec.d.ts
 /browserstack
