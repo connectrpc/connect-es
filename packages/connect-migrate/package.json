@@ -29,9 +29,5 @@
   "devDependencies": {
     "@types/jscodeshift": "0.11.11",
     "@types/semver": "^7.5.8"
-  },
-  "files": [
-    "dist",
-    "!dist/**/*.spec.ts"
-  ]
+  }
 }

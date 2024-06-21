@@ -35,8 +35,5 @@
     "fastify": "^4.22.1",
     "@connectrpc/connect": "1.4.0",
     "@connectrpc/connect-node": "1.4.0"
-  },
-  "files": [
-    "dist/**"
-  ]
+  }
 }
