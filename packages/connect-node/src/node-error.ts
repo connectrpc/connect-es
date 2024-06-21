@@ -122,6 +122,7 @@ export function connectErrorFromH2ResetCode(
   rstCode: number,
 ): ConnectError | undefined {
   switch (rstCode as H2Code) {
+    case H2Code.NO_ERROR:
     case H2Code.PROTOCOL_ERROR:
     case H2Code.INTERNAL_ERROR:
     case H2Code.FLOW_CONTROL_ERROR:
@@ -179,6 +180,7 @@ export function connectErrorFromH2ResetCode(
 }
 
 export enum H2Code {
+  NO_ERROR = 0x0,
   PROTOCOL_ERROR = 0x1,
   INTERNAL_ERROR = 0x2,
   FLOW_CONTROL_ERROR = 0x3,

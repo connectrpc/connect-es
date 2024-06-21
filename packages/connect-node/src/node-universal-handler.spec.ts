@@ -72,12 +72,10 @@ describe("universalRequestFromNodeRequest()", function () {
       expect(serverRequest?.signal).toBeInstanceOf(AbortSignal);
       expect(serverRequest?.signal.aborted).toBeTrue();
       expect(serverRequest?.signal.reason).toBeInstanceOf(Error);
-      if (serverRequest?.signal.reason instanceof Error) {
-        expect(serverRequest.signal.reason.name).toBe("AbortError");
-        expect(serverRequest.signal.reason.message).toBe(
-          "This operation was aborted",
-        );
-      }
+      expect(serverRequest?.signal.reason).toBeInstanceOf(ConnectError);
+      expect(ConnectError.from(serverRequest?.signal.reason).message).toBe(
+        "[internal] http/2 stream closed with error code NO_ERROR (0x0)",
+      );
     });
     it("should silently end request body stream for NO_ERROR", async function () {
       await request(http2.constants.NGHTTP2_NO_ERROR);

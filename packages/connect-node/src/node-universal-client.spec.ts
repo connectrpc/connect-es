@@ -30,7 +30,7 @@ describe("node http/2 client closing with RST_STREAM with code CANCEL", function
     }),
   );
   it("should send RST_STREAM frame to the server", async function () {
-    return new Promise<void>((resolve) => {
+    await new Promise<void>((resolve) => {
       http2.connect(server.getUrl(), (session: http2.ClientHttp2Session) => {
         const stream = session.request(
           {
@@ -87,7 +87,7 @@ describe("universal node http client", function () {
   });
 
   describe("against a server that closes immediately", function () {
-    describe("over http/2", function () {
+    describe("over http/2 with code CANCEL", function () {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
         http2.createServer((request, response) => {
@@ -108,6 +108,32 @@ describe("universal node http client", function () {
           expect(e).toBeInstanceOf(ConnectError);
           expect(ConnectError.from(e).message).toBe(
             "[canceled] http/2 stream closed with error code CANCEL (0x8)",
+          );
+        }
+        expect(serverReceivedRequest).toBeTrue();
+      });
+    });
+    describe("over http/2 with code NO_ERROR", function () {
+      let serverReceivedRequest = false;
+      const server = useNodeServer(() =>
+        http2.createServer((request, response) => {
+          serverReceivedRequest = true;
+          response.stream.close(http2.constants.NGHTTP2_NO_ERROR);
+        }),
+      );
+      it("should reject the response promise with Code.Internal", async function () {
+        const client = server.getClient();
+        try {
+          await client({
+            url: server.getUrl(),
+            method: "POST",
+            header: new Headers(),
+          });
+          fail("expected error");
+        } catch (e) {
+          expect(e).toBeInstanceOf(ConnectError);
+          expect(ConnectError.from(e).message).toBe(
+            "[internal] http/2 stream closed with error code NO_ERROR (0x0)",
           );
         }
         expect(serverReceivedRequest).toBeTrue();
