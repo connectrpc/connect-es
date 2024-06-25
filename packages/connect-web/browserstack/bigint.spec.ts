@@ -23,7 +23,8 @@ describe("bigint", () => {
           Int64ValueSchema,
           toBinary(
             Int64ValueSchema,
-            create(Int64ValueSchema, { value: 3409819015n }),
+            //@ts-ignore TODO: fix the typescript error.
+            create(Int64ValueSchema, { value: "3409819015" }),
           ),
         ).value,
       ),
