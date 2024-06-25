@@ -3,6 +3,7 @@
 # Connect for ECMAScript
 
 [![License](https://img.shields.io/github/license/connectrpc/connect-es?color=blue)](./LICENSE) [![Build](https://github.com/connectrpc/connect-es/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/connectrpc/connect-es/actions/workflows/ci.yaml) [![NPM Version](https://img.shields.io/npm/v/@connectrpc/connect/latest?color=green&label=%40connectrpc%2Fconnect)](https://www.npmjs.com/package/@connectrpc/connect) [![NPM Version](https://img.shields.io/npm/v/@connectrpc/protoc-gen-connect-es/latest?color=green&label=%40connectrpc%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fconnectrpc%2Fconnect-es.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fconnectrpc%2Fconnect-es?ref=badge_shield)
 
 Connect is a family of libraries for building type-safe APIs with different languages and platforms.
 [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings them to TypeScript,
@@ -123,3 +124,7 @@ All packages are stable and have reached a major version release.
 ## Legal
 
 Offered under the [Apache 2 license](/LICENSE).
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fconnectrpc%2Fconnect-es.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fconnectrpc%2Fconnect-es?ref=badge_large)
