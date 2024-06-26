@@ -269,7 +269,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       });
       body = errorToJsonBytes(error, opt.jsonOptions);
     } finally {
-      context.abort();
+      context.cleanup();
     }
     if (compression.response && body.byteLength >= opt.compressMinBytes) {
       body = await compression.response.compress(body);
