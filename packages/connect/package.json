@@ -59,10 +59,10 @@
     }
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^2.0.0-beta.1"
+    "@bufbuild/protobuf": "^2.0.0-beta.2"
   },
   "devDependencies": {
-    "@bufbuild/protoc-gen-es": "^2.0.0-beta.1",
+    "@bufbuild/protoc-gen-es": "^2.0.0-beta.2",
     "@types/jasmine": "^5.0.0",
     "jasmine": "^5.1.0",
     "undici": "^5.28.4"
