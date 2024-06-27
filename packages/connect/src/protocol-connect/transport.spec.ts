@@ -38,8 +38,10 @@ import { createMethodImplSpec } from "../implementation.js";
 import { createUniversalHandlerClient } from "../protocol/index.js";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import {
+  ApiSchema,
   Int32ValueSchema,
   MethodOptions_IdempotencyLevel,
+  MethodSchema,
   StringValueSchema,
 } from "@bufbuild/protobuf/wkt";
 import type { StringValue } from "@bufbuild/protobuf/wkt";
@@ -300,13 +302,13 @@ describe("Connect transport", function () {
     });
   });
 
-  xdescribe("against server with new JSON field in response", function () {
+  describe("against server with new JSON field in response", function () {
     const OldService = createServiceDesc({
       typeName: "Service",
       method: {
         unary: {
           input: StringValueSchema,
-          output: StringValueSchema,
+          output: ApiSchema,
           methodKind: "unary",
         },
       },
@@ -316,7 +318,7 @@ describe("Connect transport", function () {
       method: {
         unary: {
           input: StringValueSchema,
-          output: StringValueSchema,
+          output: MethodSchema,
           methodKind: "unary",
         },
       },
@@ -324,8 +326,9 @@ describe("Connect transport", function () {
 
     const h = createHandlerFactory({})(
       createMethodImplSpec(NewService.method.unary, () => {
-        return create(StringValueSchema, {
-          value: "A",
+        return create(MethodSchema, {
+          name: "A",
+          responseStreaming: true,
         });
       }),
     );
@@ -365,7 +368,7 @@ describe("Connect transport", function () {
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown',
+          '[invalid_argument] cannot decode message google.protobuf.Api from JSON: key "responseStreaming" is unknown',
         );
       }
     });
