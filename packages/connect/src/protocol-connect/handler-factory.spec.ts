@@ -38,8 +38,10 @@ import { readAll } from "../protocol/async-iterable-helper.spec.js";
 import { contentTypeStreamProto } from "./content-type.js";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import {
+  ApiSchema,
   Int32ValueSchema,
   MethodOptions_IdempotencyLevel,
+  MethodSchema,
   StringValueSchema,
 } from "@bufbuild/protobuf/wkt";
 import type { MethodInfo } from "../types.js";
@@ -579,12 +581,12 @@ describe("createHandlerFactory()", function () {
     });
   });
 
-  xdescribe("receiving a new JSON field in a request", function () {
+  describe("receiving a new JSON field in a request", function () {
     const OldService = createServiceDesc({
       typeName: "Service",
       method: {
         unary: {
-          input: StringValueSchema,
+          input: ApiSchema,
           output: StringValueSchema,
           methodKind: "unary",
         },
@@ -594,7 +596,7 @@ describe("createHandlerFactory()", function () {
       typeName: "Service",
       method: {
         unary: {
-          input: StringValueSchema,
+          input: MethodSchema,
           output: StringValueSchema,
           methodKind: "unary",
         },
@@ -634,7 +636,8 @@ describe("createHandlerFactory()", function () {
         undefined,
         undefined,
         create(NewService.method.unary.input, {
-          value: "A",
+          name: "A",
+          responseStreaming: true,
         }),
       );
       expect(isMessage(res.message, StringValueSchema)).toBeTrue();
@@ -652,14 +655,15 @@ describe("createHandlerFactory()", function () {
           undefined,
           undefined,
           create(NewService.method.unary.input, {
-            value: "A",
+            name: "A",
+            responseStreaming: true,
           }),
         );
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] cannot decode message StringValue from JSON: key "extra" is unknown',
+          '[invalid_argument] cannot decode message google.protobuf.Api from JSON: key "responseStreaming" is unknown',
         );
       }
     });

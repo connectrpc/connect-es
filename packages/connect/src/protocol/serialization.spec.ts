@@ -20,7 +20,7 @@ import {
   limitSerialization,
 } from "./serialization.js";
 import { ConnectError } from "../connect-error.js";
-import { StringValueSchema } from "@bufbuild/protobuf/wkt";
+import { StringValueSchema, UInt32ValueSchema } from "@bufbuild/protobuf/wkt";
 import { clone, create, equals, toBinary } from "@bufbuild/protobuf";
 
 describe("createBinarySerialization()", function () {
@@ -55,9 +55,9 @@ describe("createBinarySerialization()", function () {
   });
 
   describe("serializing invalid data", function () {
-    xit("should raise connect error", function () {
-      const f = clone(StringValueSchema, goldenMessage);
-      f.value = new Error() as unknown as string;
+    it("should raise connect error", function () {
+      const ser = createBinarySerialization(UInt32ValueSchema, undefined);
+      const f = create(UInt32ValueSchema, { value: -1 });
       try {
         ser.serialize(f);
         fail("expected error");
@@ -65,7 +65,7 @@ describe("createBinarySerialization()", function () {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
         expect(c.message).toBe(
-          "[internal] cannot encode field google.protobuf.StringValue.value to JSON: expected string, got object",
+          "[internal] serialize binary: invalid uint32: -1",
         );
       }
     });
