@@ -229,7 +229,7 @@ testwebconformancelocal: $(BUILD)/connect-conformance
 	npm run -w packages/connect-web conformance:client:browser -- --browser $(CONFORMANCE_BROWSER)
 
 .PHONY: testcloudflareconformance
-testcloudflareconformance: $(BUILD)/connect-conformance
+testcloudflareconformance: $(BUILD)/connect-conformance $(BUILD)/connect-node
 	npm run -w packages/connect-cloudflare conformance
 
 .PHONY: testwebbrowserstack
