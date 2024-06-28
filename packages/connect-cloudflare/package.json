@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0",
-    "@connectrpc/connect": "1.4.0"
+    "@connectrpc/connect": "1.4.0",
+    "@connectrpc/connect-node": "1.4.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240603.0",
