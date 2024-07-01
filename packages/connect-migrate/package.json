@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "fast-glob": "3.3.2",
-    "jscodeshift": "0.15.2",
+    "jscodeshift": "0.16.1",
     "semver": "^7.6.2"
   },
   "devDependencies": {
