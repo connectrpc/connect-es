@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-web",
-  "version": "1.4.0",
+  "version": "2.0.0-alpha.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -34,7 +34,7 @@
   "devDependencies": {
     "webdriverio": "^8.36.1",
     "@bufbuild/protoc-gen-es": "^2.0.0-beta.2",
-    "@connectrpc/connect-conformance": "^1.4.0",
+    "@connectrpc/connect-conformance": "^2.0.0-alpha.1",
     "jasmine": "^5.1.0",
     "karma": "^6.4.2",
     "karma-browserstack-launcher": "^1.6.0",
@@ -44,6 +44,6 @@
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.0.0-beta.2",
-    "@connectrpc/connect": "1.4.0"
+    "@connectrpc/connect": "2.0.0-alpha.1"
   }
 }
