@@ -31,9 +31,7 @@ export function createLinkedAbortController(
 ): AbortController {
   const controller = new AbortController();
 
-  const sa = signals
-    .filter((s) => s !== undefined)
-    .concat(controller.signal) as AbortSignal[];
+  const sa = signals.filter((s) => s !== undefined).concat(controller.signal);
 
   for (const signal of sa) {
     if (signal.aborted) {
