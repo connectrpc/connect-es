@@ -1,20 +1,19 @@
 {
   "name": "@connectrpc/connect-migrate",
   "version": "2.0.0-alpha.1",
-  "description": "This tool updates your Connect project to use the new @connectrpc packages.",
+  "description": "This tool updates your Connect project to use the latest @connectrpc packages.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/connectrpc/connect-es.git",
     "directory": "packages/connect-migrate"
   },
-  "sideEffects": true,
   "bin": {
     "connect-migrate": "bin/connect-migrate"
   },
   "scripts": {
-    "clean": "rm -rf ./dist/cjs/*",
-    "build": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs",
+    "clean": "rm -rf ./dist/*",
+    "build": "tsc --project tsconfig.json --outDir ./dist",
     "test": "jasmine --config=jasmine.json",
     "build+test": "npm run build && npm run test"
   },
