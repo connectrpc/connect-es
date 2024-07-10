@@ -21,8 +21,10 @@ import {
   DependencyReplacement,
   replaceDependencies,
 } from "../lib/replace-dependencies";
-import { updateSourceFile } from "../lib/update-source-file";
-import { migrateSourceFiles } from "../lib/migrate-source-files";
+import {
+  migrateSourceFiles,
+  updateSourceFile,
+} from "../lib/migrate-source-files";
 import { migratePackages } from "../lib/migrate-packages";
 import { migrateLockFiles } from "../lib/migrate-lock-files";
 

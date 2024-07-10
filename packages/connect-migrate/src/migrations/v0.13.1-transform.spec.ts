@@ -12,64 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import jscodeshift from "jscodeshift";
 import transform from "./v0.13.1-transform";
-
-function t(
-  source: string,
-  parser: "tsx" | "babel" | "ts" | "babylon" | "flow" = "tsx",
-) {
-  const shift = jscodeshift.withParser(parser);
-  return transform(
-    { path: "test-file", source },
-    {
-      jscodeshift: shift,
-      j: shift,
-      stats: () => {},
-      report: () => {},
-    },
-    {},
-  );
-}
+import { updateSourceFileInMemory } from "../lib/migrate-source-files";
 
 describe("modify-imports", () => {
   it("should modify import", () => {
     const got = `import a from "@bufbuild/connect";`;
     const want = `import a from "@connectrpc/connect";`;
-    expect(t(got)?.trim()).toBe(want.trim());
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
   it("should modify type imports", () => {
     const got = `import type {a} from "@bufbuild/connect";`;
     const want = `import type {a} from "@connectrpc/connect";`;
-    expect(t(got)?.trim()).toBe(want.trim());
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
   it("should modify import with single quotes", () => {
     const got = `import a from '@bufbuild/connect';`;
     const want = `import a from '@connectrpc/connect';`;
-    expect(t(got)?.trim()).toBe(want.trim());
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
   it("should modify subpath import", () => {
     const got = `import a from "@bufbuild/connect/protocol";`;
     const want = `import a from "@connectrpc/connect/protocol";`;
-    expect(t(got)?.trim()).toBe(want.trim());
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
   it("should not modify irrelevant import", () => {
     const got = `import a from "@foobar/connect";`;
-    expect(t(got)).toBe(got);
+    const want = got;
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
   it("should modify require", () => {
     const got = `const a = require("@bufbuild/connect");`;
     const want = `const a = require("@connectrpc/connect");`;
-    expect(t(got)?.trim()).toBe(want.trim());
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
   it("should not modify irrelevant require", () => {
     const got = `const a = require("@foobar/connect");`;
-    expect(t(got)).toBe(got);
+    const want = got;
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
   it("should modify require with single quotes", () => {
     const got = `const a = require('@bufbuild/connect');`;
     const want = `const a = require('@connectrpc/connect');`;
-    expect(t(got)?.trim()).toBe(want.trim());
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
   it("should parse generics using the ts parser", () => {
     const got = `
@@ -90,6 +83,7 @@ describe("modify-imports", () => {
         trailer,
       };
     }`;
-    expect(t(got, "ts")?.trim()).toBe(want.trim());
+    const result = updateSourceFileInMemory(transform, got, "foo.ts");
+    expect(result.source).toBe(want);
   });
 });
