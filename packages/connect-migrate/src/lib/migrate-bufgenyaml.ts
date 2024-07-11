@@ -94,7 +94,7 @@ export function migrateBufGenYaml(
             if (!isMap(item)) {
               continue;
             }
-            const plugin = item.get("plugin");
+            const plugin = item.get("plugin") ?? item.get("name");
             if (typeof plugin !== "string") {
               continue;
             }
@@ -148,7 +148,7 @@ export function migrateBufGenYaml(
             if (!isMap(item)) {
               continue;
             }
-            const plugin = item.get("plugin");
+            const plugin = item.get("plugin") ?? item.get("name");
             if (typeof plugin !== "string") {
               continue;
             }
