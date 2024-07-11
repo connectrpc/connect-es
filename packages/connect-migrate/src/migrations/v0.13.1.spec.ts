@@ -33,6 +33,7 @@ describe("migration to v0.13.1", function () {
         lockFiles: ["package-lock.json"],
         sourceFiles: [],
         packageFiles: [],
+        bufGenYamlFiles: [],
       },
       args: {
         ok: true,
