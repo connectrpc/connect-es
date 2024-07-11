@@ -16,6 +16,7 @@ import { sync } from "fast-glob";
 import { basename } from "node:path";
 import { Logger, PrintFn } from "./logger";
 import { PackageJson, readPackageJsonFile } from "./package-json";
+import { BufGenYaml, readBufGenYamlFile } from "./bufgenyaml";
 
 const packageFilename = "package.json";
 export const lockFilenameNpm = "package-lock.json";
@@ -28,6 +29,7 @@ export interface Scanned {
   packageFiles: { path: string; pkg: PackageJson }[];
   lockFiles: string[];
   sourceFiles: string[];
+  bufGenYamlFiles: { path: string; yaml: BufGenYaml }[];
 }
 
 export interface ScanError {
@@ -59,6 +61,9 @@ export function scan(
       "**/*.cjs",
       "**/*.mjs",
       "**/*.tsx",
+      // buf.gen.yaml files
+      "**/buf.gen.yaml",
+      "**/buf.*.gen.yaml",
     ],
     {
       ignore: ["**/node_modules/**", ...ignorePatterns],
@@ -67,17 +72,29 @@ export function scan(
   );
   const lockFiles = all.filter((path) => lockFilename.includes(basename(path)));
   const packagePaths = all.filter((path) => basename(path) === packageFilename);
+  const bufGenYamlPaths = all.filter(
+    (path) =>
+      basename(path).startsWith("buf.") && basename(path).endsWith(".gen.yaml"),
+  );
   const sourceFiles = all.filter(
-    (path) => !lockFiles.includes(path) && !packagePaths.includes(path),
+    (path) =>
+      !lockFiles.includes(path) &&
+      !packagePaths.includes(path) &&
+      !bufGenYamlPaths.includes(path),
   );
   const packageFiles = packagePaths.map((path) => ({
     path,
     pkg: readPackageJsonFile(path),
   }));
+  const bufGenYamlFiles = bufGenYamlPaths.map((path) => ({
+    path,
+    yaml: readBufGenYamlFile(path),
+  }));
   print(`✓\n`);
   logger?.log(`sourceFiles: ${JSON.stringify(sourceFiles)}`);
   logger?.log(`packageFiles: ${JSON.stringify(packageFiles)}`);
   logger?.log(`lockFiles: ${JSON.stringify(lockFiles)}`);
+  logger?.log(`bufGenYamlPaths: ${JSON.stringify(bufGenYamlPaths)}`);
   print(
     `${packageFiles.length.toString().padStart(5)} package.json ${
       packageFiles.length == 1 ? "file" : "files"
@@ -93,7 +110,16 @@ export function scan(
       sourceFiles.length == 1 ? "file" : "files"
     }\n`,
   );
-  if (packageFiles.length === 0 && sourceFiles.length === 0) {
+  print(
+    `${bufGenYamlFiles.length.toString().padStart(5)} buf.gen.yaml ${
+      bufGenYamlFiles.length == 1 ? "file" : "files"
+    }\n`,
+  );
+  if (
+    packageFiles.length === 0 &&
+    sourceFiles.length === 0 &&
+    bufGenYamlFiles.length === 0
+  ) {
     return {
       ok: false,
       errorMessage: `No files to process. Make sure to run the command in a JavaScript or TypeScript project.\n`,
@@ -104,5 +130,6 @@ export function scan(
     lockFiles,
     packageFiles,
     sourceFiles,
+    bufGenYamlFiles,
   };
 }
