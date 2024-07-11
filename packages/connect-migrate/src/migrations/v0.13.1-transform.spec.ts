@@ -15,7 +15,7 @@
 import transform from "./v0.13.1-transform";
 import { updateSourceFileInMemory } from "../lib/migrate-source-files";
 
-describe("modify-imports", () => {
+describe("v0.13.1 transform", () => {
   it("should modify import", () => {
     const input = `import a from "@bufbuild/connect";`;
     const output = `import a from "@connectrpc/connect";`;
