@@ -317,8 +317,20 @@ function h2Request(
         }
         sentinel.reject(e);
       });
-
+      let receivedData = false;
+      stream.on("response", () => {
+        receivedData = true;
+      })
       stream.on("close", function h2StreamClose() {
+        // Node APIs don't differentiate between a `RST_STREAM` with `NO_ERROR` and 
+        // a regular close.
+        //
+        // To check if this is an error we see if any data was received, if received
+        // this is not an error.
+        if (stream.rstCode === http2.constants.NGHTTP2_NO_ERROR && !receivedData) {
+          sentinel.reject(new ConnectError(`http/2 stream closed with error code NO_ERROR (0x0)`, Code.Internal));
+          return;
+        }
         const err = connectErrorFromH2ResetCode(stream.rstCode);
         if (err) {
           sentinel.reject(err);
