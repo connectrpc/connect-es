@@ -50,6 +50,11 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
   routes?: (router: ConnectRouter) => void;
 
   /**
+   * If already got a ConnectRouter, pass this field to easily create routes
+   */
+  router?: ConnectRouter;
+
+  /**
    * If set, once `fastify.close` is called, waits for the requests to be finished for the specified duration
    * before aborting them.
    */
@@ -76,7 +81,7 @@ export function fastifyConnectPlugin(
   opts: FastifyConnectPluginOptions,
   done: (err?: Error) => void,
 ) {
-  if (opts.routes === undefined) {
+  if (opts.routes === undefined && opts.router === undefined) {
     done();
     return;
   }
@@ -93,7 +98,7 @@ export function fastifyConnectPlugin(
       done();
     });
   }
-  const router = createConnectRouter(opts);
+  const router = opts.router ?? createConnectRouter(opts);
   opts.routes(router);
 
   const uHandlers = router.handlers;
