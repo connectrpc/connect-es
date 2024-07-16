@@ -53,7 +53,11 @@ import type { DescMethod, DescService } from "@bufbuild/protobuf";
 export interface ConnectRouter {
   readonly handlers: UniversalHandler[];
   /**
-   * Provides implementation for a set of RPCs on the service.
+   * Register a service implementation, and object with methods for the
+   * individual RPCs.
+   *
+   * You don't have to implement all RPCs of a service. If you omit a method,
+   * the router adds a method that responds with an error code `unimplemented`.
    */
   service<T extends DescService>(
     service: T,
@@ -61,7 +65,7 @@ export interface ConnectRouter {
     options?: Partial<UniversalHandlerOptions>,
   ): this;
   /**
-   * Provides implementation for a single RPC given service and associated method.
+   * Register a single RPC implementation.
    */
   rpc<M extends DescMethod>(
     method: M,
