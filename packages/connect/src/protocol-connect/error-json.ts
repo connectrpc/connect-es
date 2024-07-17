@@ -151,7 +151,7 @@ export function errorToJson(
       })
       .map(({ value, ...rest }) => ({
         ...rest,
-        value: base64Encode(value).replace(/=+$/, ""),
+        value: base64Encode(value, "std_raw"),
       }));
   }
   return o;

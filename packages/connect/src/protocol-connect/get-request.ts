@@ -28,12 +28,7 @@ const contentTypePrefix = "application/";
 
 function encodeMessageForUrl(message: Uint8Array, useBase64: boolean): string {
   if (useBase64) {
-    // TODO(jchadwick-buf): Three regex replaces seems excessive.
-    // Can we make protoBase64.enc more flexible?
-    return base64Encode(message)
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
+    return base64Encode(message, "url");
   } else {
     return encodeURIComponent(new TextDecoder().decode(message));
   }
