@@ -51,7 +51,7 @@ export function encodeBinaryHeader(
         ? value
         : new Uint8Array(value as ArrayBufferLike);
   }
-  return base64Encode(bytes).replace(/=+$/, "");
+  return base64Encode(bytes, "std_raw");
 }
 
 /**

@@ -62,6 +62,7 @@ describe("errorToJson()", () => {
                 domain: "example.com",
               }),
             ),
+            "std_raw",
           ),
           debug: {
             reason: "soirée 🎉",
@@ -170,6 +171,7 @@ describe("errorFromJson()", () => {
                 domain: "example.com",
               }),
             ),
+            "std_raw",
           ),
         },
       ],
