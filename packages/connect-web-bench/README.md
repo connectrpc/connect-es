@@ -1,6 +1,6 @@
 # Code size comparison
 
-This is a simple code size comparison between Connect-Web and [gRPC-web](https://github.com/grpc/grpc-web).
+This is a simple code size comparison between Connect-ES and [gRPC-web](https://github.com/grpc/grpc-web).
 
 We are generating code for the module [buf.build/bufbuild/registry](https://buf.build/bufbuild/registry)
 once with gRPC-web, once with Connect-ES. Then we bundle a client calling an RPC
