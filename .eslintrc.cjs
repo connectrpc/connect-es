@@ -75,11 +75,6 @@ module.exports = {
             "@typescript-eslint/no-base-to-string": "error",
             "import/no-cycle": "error",
             "import/no-duplicates": "error",
-            // TS 4.5 adds type modifiers on import names, but we want to support lower versions
-            "import/consistent-type-specifier-style": [
-              "error",
-              "prefer-top-level",
-            ],
           },
         };
       }),
