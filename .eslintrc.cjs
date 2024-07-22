@@ -74,7 +74,7 @@ module.exports = {
             "@typescript-eslint/no-invalid-void-type": "error",
             "@typescript-eslint/no-base-to-string": "error",
             "import/no-cycle": "error",
-            "import/no-duplicates": "error"
+            "import/no-duplicates": "error",
           },
         };
       }),
