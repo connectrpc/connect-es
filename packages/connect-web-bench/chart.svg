@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="680px" height="330px" viewBox="0 0 680 340" class="chart">
+    <style>
+      <![CDATA[
+      text {
+        font: 14px Verdana, Helvetica, Arial, sans-serif;
+      }
+      ]]>
+    </style>
+    <g transform="translate(110,310)">
+      <line y1="0" x2="560" stroke="black" />
+      <text x="0" y="18" text-anchor="start">1 file</text>
+<text x="140" y="18" text-anchor="start">4 files</text>
+<text x="280" y="18" text-anchor="start">8 files</text>
+<text x="420" y="18" text-anchor="start">16 files</text>
+    </g><g transform="translate(110, 20)" >
+      <line x1="0" x2="0" y1="0" y2="290" stroke="black" />
+      <g transform="rotate(-90), translate(-150,-85)">
+        <text text-anchor="middle">Bundle size - minified and compressed</text>
+      </g>
+    <text x="-10" y="4" text-anchor="end">100 KiB</text>
+<line x1="0" x2="560" y1="0" y2="0" stroke="#ebebeb" />
+<text x="-10" y="33" text-anchor="end">90 KiB</text>
+<line x1="0" x2="560" y1="29" y2="29" stroke="#ebebeb" />
+<text x="-10" y="62" text-anchor="end">80 KiB</text>
+<line x1="0" x2="560" y1="58" y2="58" stroke="#ebebeb" />
+<text x="-10" y="91" text-anchor="end">70 KiB</text>
+<line x1="0" x2="560" y1="87" y2="87" stroke="#ebebeb" />
+<text x="-10" y="120" text-anchor="end">60 KiB</text>
+<line x1="0" x2="560" y1="116" y2="116" stroke="#ebebeb" />
+<text x="-10" y="149" text-anchor="end">50 KiB</text>
+<line x1="0" x2="560" y1="145" y2="145" stroke="#ebebeb" />
+<text x="-10" y="178" text-anchor="end">40 KiB</text>
+<line x1="0" x2="560" y1="174" y2="174" stroke="#ebebeb" />
+<text x="-10" y="207" text-anchor="end">30 KiB</text>
+<line x1="0" x2="560" y1="203" y2="203" stroke="#ebebeb" />
+<text x="-10" y="236" text-anchor="end">20 KiB</text>
+<line x1="0" x2="560" y1="232" y2="232" stroke="#ebebeb" />
+<text x="-10" y="265" text-anchor="end">10 KiB</text>
+<line x1="0" x2="560" y1="261" y2="261" stroke="#ebebeb" />
+<text x="-10" y="294" text-anchor="end">0 KiB</text>
+</g>
+<g transform="translate(110, 20)">
+  <polyline fill="none" stroke="#ffa600" stroke-width="2" points="0,188.73505859375 140,186.53740234375 280,183.90927734374998 420,179.5791015625">
+    <title>Connect-ES</title>
+  </polyline>
+<circle cx="0" cy="188.73505859375" r="4" fill="#ffa600"><title>Connect-ES 34.92 KiB for 1 RPCs</title></circle>
+<circle cx="140" cy="186.53740234375" r="4" fill="#ffa600"><title>Connect-ES 35.68 KiB for 4 RPCs</title></circle>
+<circle cx="280" cy="183.90927734374998" r="4" fill="#ffa600"><title>Connect-ES 36.58 KiB for 8 RPCs</title></circle>
+<circle cx="420" cy="179.5791015625" r="4" fill="#ffa600"><title>Connect-ES 38.08 KiB for 16 RPCs</title></circle>
+</g>
+<g transform="translate(110, 20)">
+  <polyline fill="none" stroke="#ff6361" stroke-width="2" points="0,141.884765625 140,135.16435546875 280,128.24003906250002 420,116.54374999999999">
+    <title>gRPC-Web</title>
+  </polyline>
+<circle cx="0" cy="141.884765625" r="4" fill="#ff6361"><title>gRPC-Web 51.07 KiB for 1 RPCs</title></circle>
+<circle cx="140" cy="135.16435546875" r="4" fill="#ff6361"><title>gRPC-Web 53.39 KiB for 4 RPCs</title></circle>
+<circle cx="280" cy="128.24003906250002" r="4" fill="#ff6361"><title>gRPC-Web 55.78 KiB for 8 RPCs</title></circle>
+<circle cx="420" cy="116.54374999999999" r="4" fill="#ff6361"><title>gRPC-Web 59.81 KiB for 16 RPCs</title></circle>
+</g>
+<g transform="translate(125, 30)">
+<g transform="translate(0, 0)">
+      <rect width="15" height="6" fill="#ffa600"/>
+      <text x="20" y="6">Connect-ES</text>
+    </g>
+<g transform="translate(0, 22)">
+      <rect width="15" height="6" fill="#ff6361"/>
+      <text x="20" y="6">gRPC-Web</text>
+    </g>
+</g>
+</svg>
