@@ -1,14 +1,21 @@
-version: v1
+# Learn more: https://buf.build/docs/configuration/v2/buf-gen-yaml
+version: v2
 plugins:
-  - plugin: es
+  - local: protoc-gen-es
     out: src/gen/connectweb
     opt: ts_nocheck=false,target=ts
-  - plugin: connect-es
+    include_imports: true
+  - local: protoc-gen-connect-es
     out: src/gen/connectweb
     opt: ts_nocheck=false,target=ts
-  - plugin: buf.build/protocolbuffers/js:v3.21.2
+  - remote: buf.build/protocolbuffers/js:v3.21.4
     out: src/gen/grpcweb
     opt: import_style=commonjs
-  - plugin: buf.build/grpc/web:v1.5.0
+    include_imports: true
+  - remote: buf.build/grpc/web:v1.5.0
     out: src/gen/grpcweb
     opt: import_style=commonjs+dts,mode=grpcweb
+  - local: ["tsx", "./src/protoc-gen-entrypoints.ts"]
+    strategy: all
+    opt: target=ts
+    out: src/gen

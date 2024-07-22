@@ -136,9 +136,8 @@ $(GEN)/connect-web: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-bench/buf.gen.yaml Makefile
-	rm -rf packages/connect-web-bench/src/gen/*
-	npm run -w packages/connect-web-bench generate buf.build/connectrpc/eliza:8bde2b90ec0a7f23df3de5824bed0b6ea2043305
+$(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es $(BUILD)/protoc-gen-connect-es packages/connect-web-bench/buf.gen.yaml
+	npm run -w packages/connect-web-bench generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -258,7 +257,7 @@ format: node_modules ## Format all files, adding license headers
 
 .PHONY: bench
 bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark code size
-	npm run -w packages/connect-web-bench report
+	npm run -w packages/connect-web-bench bundle-size
 
 .PHONY: setversion
 setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
