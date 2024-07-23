@@ -34,7 +34,7 @@
     "undici": "^5.28.4"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^2.0.0-beta.2",
+    "@bufbuild/protobuf": "^2.0.0-beta.3",
     "@connectrpc/connect": "2.0.0-alpha.1"
   },
   "devDependencies": {
