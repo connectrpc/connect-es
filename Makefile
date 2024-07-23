@@ -125,7 +125,6 @@ $(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es packages/connect-con
 	@touch $(@)
 
 $(GEN)/connect-cloudflare: node_modules/.bin/protoc-gen-es packages/connect-cloudflare/buf.gen.yaml packages/connect-cloudflare/package.json Makefile
-	rm -rf packages/connect-cloudflare/src/conformance/gen/*
 	npm run -w packages/connect-cloudflare generate
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -238,7 +237,7 @@ testwebconformancelocal: $(BUILD)/connect-conformance
 	npm run -w packages/connect-web conformance:client:browser -- --browser $(CONFORMANCE_BROWSER)
 
 .PHONY: testcloudflareconformance
-testcloudflareconformance: $(BUILD)/connect-conformance $(BUILD)/connect-node
+testcloudflareconformance: $(GEN)/connect-cloudflare $(BUILD)/connect-conformance $(BUILD)/connect-node
 	npm run -w packages/connect-cloudflare conformance
 
 .PHONY: testwebbrowserstack
