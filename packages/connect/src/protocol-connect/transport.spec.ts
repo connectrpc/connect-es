@@ -395,20 +395,25 @@ describe("Connect transport", function () {
             "set-cookie": "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
             "Set-Cookie": "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
           }),
-          body: createAsyncIterable([new StringValue({ value: "abc" }).toBinary()]),
+          body: createAsyncIterable([
+            new StringValue({ value: "abc" }).toBinary(),
+          ]),
           trailer: new Headers(),
         };
       };
       it("should produce the correct array of values in the response", async function () {
-        const t = createTransport({ ...defaultTransportOptions, httpClient: setMultiValueHeaders });
+        const t = createTransport({
+          ...defaultTransportOptions,
+          httpClient: setMultiValueHeaders,
+        });
         const res = await t.unary(
           TestService,
           TestService.methods.unary,
           undefined,
           undefined,
           undefined,
-          {}
-        )
+          {},
+        );
         expect(res.header.getSetCookie()).toEqual([
           "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
           "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
