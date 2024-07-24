@@ -77,7 +77,7 @@ $(BUILD)/connect-fastify: $(BUILD)/connect $(BUILD)/connect-node packages/connec
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(BUILD)/connect-express: $(BUILD)/connect $(BUILD)/connect-node packages/connect-express/tsconfig.json $(shell find packages/connect-express/src -name '*.ts')
+$(BUILD)/connect-express: $(GEN)/connect-express $(BUILD)/connect $(BUILD)/connect-node packages/connect-express/tsconfig.json $(shell find packages/connect-express/src -name '*.ts')
 	npm run -w packages/connect-express clean
 	npm run -w packages/connect-express build
 	@mkdir -p $(@D)
@@ -125,14 +125,12 @@ $(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es packages/connect-con
 	@touch $(@)
 
 $(GEN)/connect-cloudflare: node_modules/.bin/protoc-gen-es packages/connect-cloudflare/buf.gen.yaml packages/connect-cloudflare/package.json Makefile
-	rm -rf packages/connect-cloudflare/src/conformance/gen/*
 	npm run -w packages/connect-cloudflare generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/connect-web: node_modules/.bin/protoc-gen-es packages/connect-web/browserstack/buf.gen.yaml Makefile
-	rm -rf packages/connect-web/browserstack/gen/*
-	npm run -w packages/connect-web generate:browserstack
+	npm run -w packages/connect-web generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
@@ -142,8 +140,7 @@ $(GEN)/connect-node: node_modules/.bin/protoc-gen-es packages/connect-node/buf.g
 	@mkdir -p $(@D)
 	@touch $(@)
 
-$(GEN)/connect-express: node_modules/.bin/protoc-gen-es packages/connect-express/buf.gen.yaml Makefile
-	rm -rf packages/connect-express/gen/*
+$(GEN)/connect-express: node_modules/.bin/protoc-gen-es packages/connect-express/buf.gen.yaml packages/connect-express/package.json Makefile
 	npm run -w packages/connect-express generate
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -240,7 +237,7 @@ testwebconformancelocal: $(BUILD)/connect-conformance
 	npm run -w packages/connect-web conformance:client:browser -- --browser $(CONFORMANCE_BROWSER)
 
 .PHONY: testcloudflareconformance
-testcloudflareconformance: $(BUILD)/connect-conformance $(BUILD)/connect-node
+testcloudflareconformance: $(GEN)/connect-cloudflare $(BUILD)/connect-conformance $(BUILD)/connect-node
 	npm run -w packages/connect-cloudflare conformance
 
 .PHONY: testwebbrowserstack

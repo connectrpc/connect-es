@@ -34,7 +34,7 @@ import {
 } from "../lib/migrate-bufgenyaml";
 import { writeBufGenYamlFile } from "../lib/bufgenyaml";
 
-export const targetVersionProtobufEs = "2.0.0-beta.2";
+export const targetVersionProtobufEs = "2.0.0-beta.3";
 export const targetVersionConnectEs = "2.0.0-alpha.1";
 export const targetVersionConnectQuery = "2.0.0-alpha.1";
 export const targetVersionConnectPlaywright = "0.4.0";

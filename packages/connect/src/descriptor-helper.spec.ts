@@ -14,7 +14,7 @@
 
 import { create } from "@bufbuild/protobuf";
 import type { DescFile, DescMethod, DescService } from "@bufbuild/protobuf";
-import type { GenDescService } from "@bufbuild/protobuf/codegenv1";
+import type { GenService } from "@bufbuild/protobuf/codegenv1";
 import {
   Edition,
   FileDescriptorProtoSchema,
@@ -37,7 +37,7 @@ interface ServiceType {
  */
 export function createServiceDesc<T extends ServiceType>(
   service: T,
-): GenDescService<T["method"]> {
+): GenService<T["method"]> {
   const file = {
     kind: "file",
     dependencies: [],
@@ -80,5 +80,5 @@ export function createServiceDesc<T extends ServiceType>(
     proto: create(ServiceDescriptorProtoSchema),
   });
   file.services.push(serviceDesc);
-  return file.services[0] as GenDescService<T["method"]>;
+  return file.services[0] as GenService<T["method"]>;
 }
