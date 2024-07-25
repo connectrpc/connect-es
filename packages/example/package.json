@@ -6,6 +6,7 @@
     "lint": "tsc --noEmit",
     "start": "tsx src/server.ts",
     "client": "tsx src/client.ts",
+    "pregenerate": "rm -rf src/gen/*",
     "generate": "buf generate"
   },
   "engines": {
