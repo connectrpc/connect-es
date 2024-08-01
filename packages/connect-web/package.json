@@ -33,7 +33,7 @@
     }
   },
   "devDependencies": {
-    "webdriverio": "^8.39.0",
+    "webdriverio": "^8.39.1",
     "@bufbuild/protoc-gen-es": "^1.10.0",
     "@connectrpc/protoc-gen-connect-es": "^1.4.0",
     "@connectrpc/connect-conformance": "^1.4.0",
