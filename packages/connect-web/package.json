@@ -37,7 +37,7 @@
     "@bufbuild/protoc-gen-es": "^1.10.0",
     "@connectrpc/protoc-gen-connect-es": "^1.4.0",
     "@connectrpc/connect-conformance": "^1.4.0",
-    "jasmine": "^5.1.0",
+    "jasmine": "^5.2.0",
     "karma": "^6.4.2",
     "karma-browserstack-launcher": "^1.6.0",
     "karma-chrome-launcher": "^3.2.0",
