@@ -35,6 +35,6 @@
     "eslint-plugin-n": "^17.9.0",
     "eslint-plugin-import": "^2.29.1",
     "prettier": "^3.3.2",
-    "typescript": "5.5.2"
+    "typescript": "5.5.4"
   }
 }
