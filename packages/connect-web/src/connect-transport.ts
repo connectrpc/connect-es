@@ -209,17 +209,28 @@ export function createConnectTransport(
             signal: req.signal,
             body,
           });
-          const { isUnaryError, unaryError } = validateResponse(
-            method.kind,
-            useBinaryFormat,
-            response.status,
-            response.headers,
-          );
-          if (isUnaryError) {
+
+          let validatedResponse: ReturnType<typeof validateResponse>;
+          try {
+            validatedResponse = validateResponse(
+              method.kind,
+              useBinaryFormat,
+              response.status,
+              response.headers,
+            );
+          } catch (error) {
+            // Consume the response body here to allow the network inspector to show the
+            // response body in the case of an error. We might consider to include the body
+            // in the error class in the future.
+            await response.text();
+            throw error;
+          }
+
+          if (validatedResponse.isUnaryError) {
             throw errorFromJson(
               (await response.json()) as JsonValue,
               appendHeaders(...trailerDemux(response.headers)),
-              unaryError,
+              validatedResponse.unaryError,
             );
           }
           const [demuxedHeader, demuxedTrailer] = trailerDemux(
