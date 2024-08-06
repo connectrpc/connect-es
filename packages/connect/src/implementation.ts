@@ -150,6 +150,7 @@ interface HandlerContextInit {
 }
 
 interface HandlerContextController extends HandlerContext {
+  cleanup(): void;
   abort(reason?: unknown): void;
 }
 
@@ -183,6 +184,7 @@ export function createHandlerContext(
     requestHeader: new Headers(init.requestHeader),
     responseHeader: new Headers(init.responseHeader),
     responseTrailer: new Headers(init.responseTrailer),
+    cleanup: deadline.cleanup,
     abort(reason?: unknown) {
       deadline.cleanup();
       abortController.abort(reason);
