@@ -1,6 +1,5 @@
 /.tmp
 /packages/*/dist
-/packages/connect-web-test/local.log
-/packages/connect-node-test/.connect-node-h1-server.*
+/packages/connect-web/conformance/logs/*
 node_modules
 .wrangler

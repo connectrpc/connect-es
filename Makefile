@@ -16,7 +16,6 @@ NODE18_VERSION ?= v18.16.0
 NODE16_VERSION ?= v16.20.0
 NODE_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
-CONFORMANCE_BROWSER ?= chrome
 
 node_modules: package-lock.json
 	npm ci
@@ -205,23 +204,27 @@ testconnectfastifyconformance: $(BUILD)/connect-fastify
 	npm run -w packages/connect-fastify conformance
 
 .PHONY: testwebconformance
-testwebconformance: testwebchromeconformance testwebfirefoxconformance testwebsafariconformance
+testwebconformance: testwebchromeconformance testwebfirefoxconformance testwebsafariconformance testwebnodeconformance
 
 .PHONY: testwebchromeconformance
 testwebchromeconformance: $(BUILD)/connect-web
-	npm run -w packages/connect-web conformance:client:chrome
+	npm run -w packages/connect-web conformance:client:chrome:promise
+	npm run -w packages/connect-web conformance:client:chrome:callback
 
 .PHONY: testwebfirefoxconformance
 testwebfirefoxconformance: $(BUILD)/connect-web
-	npm run -w packages/connect-web conformance:client:firefox
+	npm run -w packages/connect-web conformance:client:firefox:promise
+	npm run -w packages/connect-web conformance:client:firefox:callback
 
 .PHONY: testwebsafariconformance
 testwebsafariconformance: $(BUILD)/connect-web
-	npm run -w packages/connect-web conformance:client:safari
+	npm run -w packages/connect-web conformance:client:safari:promise
+	npm run -w packages/connect-web conformance:client:safari:callback
 
-.PHONY: testwebconformancelocal
-testwebconformancelocal: $(BUILD)/connect-conformance
-	npm run -w packages/connect-web conformance:client:browser -- --browser $(CONFORMANCE_BROWSER)
+.PHONY: testwebnodeconformance
+testwebnodeconformance: $(BUILD)/connect-web
+	npm run -w packages/connect-web conformance:client:node:promise
+	npm run -w packages/connect-web conformance:client:node:callback
 
 .PHONY: testcloudflareconformance
 testcloudflareconformance: $(BUILD)/connect-conformance $(BUILD)/connect-node
