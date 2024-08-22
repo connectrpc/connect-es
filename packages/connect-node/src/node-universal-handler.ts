@@ -66,13 +66,14 @@ export type NodeServerResponse = (
 };
 
 /**
- * Converts a UniversalServerRequest to a Node.js server request.
+ * Converts a Node.js server request (and response) to a UniversalServerRequest.
  * This function helps to implement adapters to server frameworks running
  * on Node.js. Please be careful using this function in your own code, as we
  * may have to make changes to it in the future.
  */
 export function universalRequestFromNodeRequest(
   nodeRequest: NodeServerRequest,
+  nodeResponse: NodeServerResponse,
   parsedJsonBody: JsonValue | undefined,
   contextValues: ContextValues | undefined,
 ): UniversalServerRequest {
@@ -108,17 +109,15 @@ export function universalRequestFromNodeRequest(
   } else {
     // HTTP/1.1 does not have error codes, but Node.js has ECONNRESET
     const onH1Error = (e: Error) => {
-      nodeRequest.off("error", onH1Error);
-      nodeRequest.off("close", onH1Close);
       abortController.abort(connectErrorFromNodeReason(e));
     };
     const onH1Close = () => {
-      nodeRequest.off("error", onH1Error);
-      nodeRequest.off("close", onH1Close);
-      abortController.abort();
+      if (!nodeResponse.writableEnded) {
+        abortController.abort(new ConnectError("aborted", Code.Aborted));
+      }
     };
     nodeRequest.once("error", onH1Error);
-    nodeRequest.once("close", onH1Close);
+    nodeResponse.once("close", onH1Close);
   }
   return {
     httpVersion: nodeRequest.httpVersion,

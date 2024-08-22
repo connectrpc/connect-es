@@ -32,9 +32,10 @@ describe("universalRequestFromNodeRequest()", function () {
     let serverRequest: UniversalServerRequest | undefined;
     const server = useNodeServer(() => {
       serverRequest = undefined;
-      return http2.createServer(function (request) {
+      return http2.createServer(function (request, response) {
         serverRequest = universalRequestFromNodeRequest(
           request,
+          response,
           undefined,
           undefined,
         );
@@ -176,9 +177,10 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
           requestTimeout: 0,
         },
-        function (request) {
+        function (request, response) {
           serverRequest = universalRequestFromNodeRequest(
             request,
+            response,
             undefined,
             undefined,
           );
@@ -212,12 +214,9 @@ describe("universalRequestFromNodeRequest()", function () {
       while (serverRequest?.signal.reason === undefined) {
         await new Promise((r) => setTimeout(r, 1));
       }
-      expect(serverRequest.signal.reason).toBeInstanceOf(Error);
-      if (serverRequest.signal.reason instanceof Error) {
-        expect(serverRequest.signal.reason).toBeInstanceOf(ConnectError);
-        const ce = ConnectError.from(serverRequest.signal.reason);
-        expect(ce.message).toBe("[aborted] aborted");
-      }
+      expect(serverRequest.signal.reason).toBeInstanceOf(ConnectError);
+      const ce = ConnectError.from(serverRequest.signal.reason);
+      expect(ce.message).toBe("[aborted] aborted");
     });
     it("should error request body stream with ECONNRESET", async function () {
       await request();
@@ -269,6 +268,7 @@ describe("universalRequestFromNodeRequest()", function () {
         function (request, response) {
           serverRequest = universalRequestFromNodeRequest(
             request,
+            response,
             undefined,
             undefined,
           );
@@ -299,17 +299,11 @@ describe("universalRequestFromNodeRequest()", function () {
         });
       });
     }
-    it("should abort request signal with AbortError", async function () {
+    it("should not abort request signal", async function () {
       await request();
       expect(serverRequest?.signal).toBeInstanceOf(AbortSignal);
-      expect(serverRequest?.signal.aborted).toBeTrue();
-      expect(serverRequest?.signal.reason).toBeInstanceOf(Error);
-      if (serverRequest?.signal.reason instanceof Error) {
-        expect(serverRequest.signal.reason.name).toBe("AbortError");
-        expect(serverRequest.signal.reason.message).toBe(
-          "This operation was aborted",
-        );
-      }
+      expect(serverRequest?.signal.aborted).toBeFalse();
+      expect(serverRequest?.signal.reason).toBeUndefined();
     });
     it("should silently end request body stream", async function () {
       await request();
