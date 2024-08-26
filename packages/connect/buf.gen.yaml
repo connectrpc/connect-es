@@ -6,3 +6,5 @@ plugins:
   - local: protoc-gen-es
     out: src/protocol-grpc/gen
     opt: target=ts
+inputs:
+  directory: src/protocol-grpc/proto
