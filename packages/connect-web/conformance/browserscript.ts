@@ -36,6 +36,9 @@ async function runTestCase(
   useCallbackClient: boolean,
 ): Promise<number[]> {
   const req = ClientCompatRequest.fromBinary(new Uint8Array(data));
+  const p = document.createElement("p");
+  p.innerText = req.testName;
+  document.body.append(p);
   const res = new ClientCompatResponse({
     testName: req.testName,
   });
