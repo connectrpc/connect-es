@@ -15,7 +15,7 @@
     "attw": "attw --pack",
     "conformance:client:chrome:promise": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/client.ts --browser chrome",
     "conformance:client:chrome:callback": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --browser chrome --useCallbackClient",
-    "conformance:client:firefox:promise": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-promise-client-firefox.txt -- ./conformance/client.ts --browser firefox",
+    "conformance:client:firefox:promise": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/client.ts --browser firefox",
     "conformance:client:firefox:callback": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --browser firefox --useCallbackClient",
     "conformance:client:safari:promise": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v -- ./conformance/client.ts --browser safari",
     "conformance:client:safari:callback": "connectconformance --mode client --conf ./conformance/conformance-web.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --browser safari --useCallbackClient",

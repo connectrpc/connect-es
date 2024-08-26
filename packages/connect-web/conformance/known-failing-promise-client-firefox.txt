@@ -1,4 +1,0 @@
-# In firefox with the promise client, the failure is: 
-#     actual error {code: 2 (unknown), message: "AbortError: The operation was aborted. "} does not match expected code 1 (canceled)
-**/server-stream/cancel-after-zero-responses
-**/server-stream/cancel-after-responses
