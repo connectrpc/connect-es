@@ -3,7 +3,6 @@
   "private": true,
   "scripts": {
     "bundle-size": "tsx src/report.ts",
-    "pregenerate": "rm -rf src/gen/*",
     "generate": "buf generate buf.build/bufbuild/registry:f2077dee5ad44f7d9b660b32bf0958ee",
     "postgenerate": "license-header ."
   },

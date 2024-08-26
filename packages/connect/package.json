@@ -10,7 +10,6 @@
   },
   "scripts": {
     "clean": "rm -rf ./dist/*",
-    "pregenerate": "rm -rf src/protocol-grpc/gen/*",
     "generate": "buf generate src/protocol-grpc/proto",
     "build": "npm run build:cjs && npm run build:esm && node scripts/update-user-agent.mjs",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
