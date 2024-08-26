@@ -17,6 +17,7 @@
 import { remote } from "webdriverio";
 import * as esbuild from "esbuild";
 import { parseArgs } from "node:util";
+import * as http from "node:http";
 import {
   invokeWithCallbackClient,
   invokeWithPromiseClient,
@@ -28,17 +29,7 @@ import {
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
 
-const { values: flags } = parseArgs({
-  args: process.argv.slice(2),
-  options: {
-    browser: { type: "string", default: "chrome" },
-    headless: { type: "boolean" },
-    openBrowser: { type: "boolean" },
-    useCallbackClient: { type: "boolean" },
-  },
-});
-
-void main();
+void main(process.argv.slice(2));
 
 /**
  * This program implements a client under test for the connect conformance test
@@ -46,21 +37,48 @@ void main();
  * it makes a call, and reports the result with a ClientCompatResponse message
  * to stdout.
  */
-async function main() {
-  let invoke;
-  if (flags.useCallbackClient === true) {
-    invoke = invokeWithCallbackClient;
-  } else {
-    invoke = invokeWithPromiseClient;
+async function main(args: string[]) {
+  const { values: flags } = parseArgs({
+    args,
+    options: {
+      browser: { type: "string", default: "chrome" },
+      headless: { type: "boolean" },
+      openBrowser: { type: "boolean" },
+      useCallbackClient: { type: "boolean" },
+    },
+  });
+  switch (flags.browser) {
+    case "chrome":
+    case undefined:
+      await runBrowser(
+        "chrome",
+        flags.useCallbackClient ?? false,
+        flags.openBrowser ?? false,
+      );
+      break;
+    case "firefox":
+    case "safari":
+      await runBrowser(
+        flags.browser,
+        flags.useCallbackClient ?? false,
+        flags.openBrowser ?? false,
+      );
+      break;
+    case "node":
+      await runNode(flags.useCallbackClient ?? false);
+      break;
+    default:
+      throw new Error(`Unsupported browser: ${flags.browser}`);
   }
+}
 
-  if (flags.browser !== "node") {
-    // If this is not Node, then run using the specified browser
-    await runBrowser();
-    return;
-  }
-
-  // Otherwise, run the conformance tests using Node as the environment
+/**
+ * Run tests in Node.js.
+ */
+async function runNode(useCallbackClient: boolean) {
+  const invoke = useCallbackClient
+    ? invokeWithCallbackClient
+    : invokeWithPromiseClient;
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const req = ClientCompatRequest.fromBinary(next);
     const res = new ClientCompatResponse({
@@ -81,20 +99,14 @@ async function main() {
   }
 }
 
-async function runBrowser() {
-  let browserName: string;
-  switch (flags.browser) {
-    case "chrome":
-    case undefined:
-      browserName = "chrome";
-      break;
-    case "firefox":
-    case "safari":
-      browserName = flags.browser;
-      break;
-    default:
-      throw new Error(`Unsupported browser: ${flags.browser}`);
-  }
+/**
+ * Delegate tests to a browser.
+ */
+async function runBrowser(
+  browserName: "chrome" | "firefox" | "safari",
+  useCallbackClient: boolean,
+  openBrowser: boolean,
+) {
   const browser = await remote({
     capabilities: {
       browserName,
@@ -102,45 +114,55 @@ async function runBrowser() {
       "goog:chromeOptions": {
         args: [
           "--disable-gpu",
-          flags.openBrowser === true
-            ? "--auto-open-devtools-for-tabs"
-            : "--headless",
+          openBrowser ? "--auto-open-devtools-for-tabs" : "--headless",
         ],
       },
       "moz:firefoxOptions": {
-        args: [flags.openBrowser === true ? "--devtools" : "-headless"],
+        args: [openBrowser ? "--devtools" : "-headless"],
       },
       // Safari does not support headless mode
     },
-    // Directory to store all testrunner log files (including reporter logs and wdio logs).
+    // Directory to store all test runner log files (including reporter logs and wdio logs).
     // If not set, all logs are streamed to stdout, which conflicts with the conformance runner I/O.
     outputDir: new URL("logs", import.meta.url).pathname,
   });
-  await browser.executeScript(await buildBrowserScript(), []);
+
+  // In Firefox, `AbortSignal.abort().reason instanceof Error` evaluates to false when the script
+  // does not originate from a web page. We use a HTTP server to serve the script to avoid the issue.
+  const browserscript = await buildBrowserScript();
+  const browserserver = await startBrowserServer(browserscript);
+  await browser.url(browserserver.url);
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const invokeResult = await browser.executeAsync(
       (data, useCallbackClient, done: (res: number[]) => void) => {
         void window.runTestCase(data, useCallbackClient).then(done);
       },
       Array.from(next),
-      flags.useCallbackClient === true,
+      useCallbackClient,
     );
     process.stdout.write(
       writeSizeDelimitedBuffer(new Uint8Array(invokeResult)),
     );
   }
-  if (flags.openBrowser == true) {
-    await browser.executeScript(
-      `const p = document.createElement("p");
+  await browser.executeScript(
+    `const p = document.createElement("p");
        p.innerText = "Tests done. You can inspect requests in the network explorer."
        document.body.append(p);`,
-      [],
-    );
+    [],
+  );
+  await browserserver.close();
+  if (openBrowser) {
+    // Exit the client so that the test runner does not report a time-out from the client.
+    // At the time of testing, this still leaves browser windows open.
+    process.exit(0);
   } else {
     await browser.deleteSession();
   }
 }
 
+/**
+ * Bundle the script to run in the browser.
+ */
 async function buildBrowserScript() {
   const buildResult = await esbuild.build({
     entryPoints: [new URL("browserscript.ts", import.meta.url).pathname],
@@ -151,4 +173,46 @@ async function buildBrowserScript() {
     throw new Error("Expected exactly one output file");
   }
   return buildResult.outputFiles[0].text;
+}
+
+/**
+ * Start an HTTP server to serve a script.
+ */
+async function startBrowserServer(script: string) {
+  const server = http.createServer((req, res) => {
+    if (req.url === "/") {
+      res.writeHead(200, { "content-type": "text/html" });
+      res.write(
+        `<!DOCTYPE html><html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <title>@connectrpc/connect-web conformance</title>
+          <link rel="icon" href="data:,">
+          <script>${script}</script>
+        </head>
+        <body>
+          <p>Waiting for tests.</p>
+        </body></html>`,
+        "utf8",
+      );
+      res.end();
+      return;
+    }
+    res.writeHead(404);
+    res.end();
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  const address = server.address();
+  if (address == null || typeof address == "string") {
+    throw new Error("cannot get server port");
+  }
+  return {
+    url: new URL(`http://localhost:${address.port}`).toString(),
+    close() {
+      server.closeAllConnections();
+      return new Promise<void>((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      });
+    },
+  };
 }
