@@ -6,26 +6,27 @@ It uses the [conformance runner](https://github.com/connectrpc/conformance/relea
 
 ## Running conformance tests
 
-## Using a headless browser
-
-Run `make testwebconformance` to run all conformance tests in the following headless browsers / environments:
+Tests run in the following environments:
 
 * Chrome
 * Firefox
-* Node 
-* Safari (only if running in OSX. Safari requires users to enable the `Allow Remote Automation` option in Safari's Develop menu)
+* Safari (only if running in OSX. Safari requires users to enable the "Allow Remote Automation" option in Safari's Develop menu)
+* Node.js
 
-The individual tests can also be run via npm:
+For every environment, two client flavors are available:
+* Promise (using `createPromiseClient`)
+* Callback (using `createCallbackClient`)
 
-`npm run conformance:client:chrome`
-`npm run conformance:client:firefox`
-`npm run conformance:client:safari`
-`npm run conformance:client:node`
+For every combination, an npm script is available:
+
+`npm run conformance:client:<chrome|firefox|safari|node>:<promise|callback>`
+
+Before you run npm scripts, make sure to build dependencies with `make .tmp/build/connect-web`.
 
 ## Using a local browser
 
-Run `make testwebconformancelocal` to run the tests in a local browser. This will open a Chrome browser and run the tests. If you want to run the tests in a different browser, set the `CONFORMANCE_BROWSER` environment variable.
+To launch a browser window with access to the browser's network inspector, append the `--openBrowser` flag to the npm script:
 
-Also available as an npm script:
-
-`npm run conformance:client:browser`
+```
+npm run conformance:client:chrome:promise -- --openBrowser
+```

@@ -15,7 +15,6 @@
 // limitations under the License.
 
 import { remote } from "webdriverio";
-import type { RemoteOptions } from "webdriverio";
 import * as esbuild from "esbuild";
 import { parseArgs } from "node:util";
 import {
@@ -34,11 +33,13 @@ const { values: flags } = parseArgs({
   options: {
     browser: { type: "string", default: "chrome" },
     headless: { type: "boolean" },
+    openBrowser: { type: "boolean" },
     useCallbackClient: { type: "boolean" },
   },
 });
 
 void main();
+
 /**
  * This program implements a client under test for the connect conformance test
  * runner. It reads ClientCompatRequest messages from stdin. For each request,
@@ -68,10 +69,12 @@ async function main() {
     try {
       const invokeResult = await invoke(createTransport(req), req);
       res.result = { case: "response", value: invokeResult };
-    } catch (e) {
+    } catch (err) {
       res.result = {
         case: "error",
-        value: new ClientErrorResult({ message: (e as Error).message }),
+        value: new ClientErrorResult({
+          message: `Failed to run test case: ${String(err)}`,
+        }),
       };
     }
     process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
@@ -79,78 +82,68 @@ async function main() {
 }
 
 async function runBrowser() {
-  let capabilities: RemoteOptions["capabilities"] = {
-    acceptInsecureCerts: true,
-  };
+  let browserName: string;
   switch (flags.browser) {
     case "chrome":
     case undefined:
-      capabilities = {
-        ...capabilities,
-        browserName: "chrome",
-        "goog:chromeOptions": {
-          args: [
-            "--disable-gpu",
-            flags.headless === true
-              ? "--headless"
-              : "--auto-open-devtools-for-tabs",
-          ],
-        },
-      };
+      browserName = "chrome";
       break;
     case "firefox":
-      capabilities = {
-        ...capabilities,
-        browserName: "firefox",
-        "moz:firefoxOptions": {
-          args: [flags.headless === true ? "-headless" : "--devtools"],
-        },
-      };
-      break;
     case "safari":
-      capabilities = {
-        ...capabilities,
-        browserName: "safari",
-        // Safari does not support headless mode
-      };
+      browserName = flags.browser;
       break;
     default:
       throw new Error(`Unsupported browser: ${flags.browser}`);
   }
   const browser = await remote({
-    // webdriverio prints all the logs to stdout, this will interfere with the conformance test output
-    // so we set the log level to silent
-    //
-    // TODO: look for a way to redirect the logs to a file/stderr
-    logLevel: "silent",
-    capabilities,
+    capabilities: {
+      browserName,
+      acceptInsecureCerts: true,
+      "goog:chromeOptions": {
+        args: [
+          "--disable-gpu",
+          flags.openBrowser === true
+            ? "--auto-open-devtools-for-tabs"
+            : "--headless",
+        ],
+      },
+      "moz:firefoxOptions": {
+        args: [flags.openBrowser === true ? "--devtools" : "-headless"],
+      },
+      // Safari does not support headless mode
+    },
+    // Directory to store all testrunner log files (including reporter logs and wdio logs).
+    // If not set, all logs are streamed to stdout, which conflicts with the conformance runner I/O.
+    outputDir: new URL("logs", import.meta.url).pathname,
   });
   await browser.executeScript(await buildBrowserScript(), []);
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const invokeResult = await browser.executeAsync(
-      (reqBytes, useCallbackClient, done: (res: number[]) => void) => {
-        void window.runTestCase(reqBytes, useCallbackClient).then(done);
+      (data, useCallbackClient, done: (res: number[]) => void) => {
+        void window.runTestCase(data, useCallbackClient).then(done);
       },
       Array.from(next),
-      flags.useCallbackClient,
+      flags.useCallbackClient === true,
     );
     process.stdout.write(
       writeSizeDelimitedBuffer(new Uint8Array(invokeResult)),
     );
   }
-  if (flags.headless === true) {
-    await browser.deleteSession();
-  } else {
+  if (flags.openBrowser == true) {
     await browser.executeScript(
-      `document.write("Tests done. You can inspect requests in the network explorer.")`,
+      `const p = document.createElement("p");
+       p.innerText = "Tests done. You can inspect requests in the network explorer."
+       document.body.append(p);`,
       [],
     );
+  } else {
+    await browser.deleteSession();
   }
 }
 
 async function buildBrowserScript() {
   const buildResult = await esbuild.build({
-    entryPoints: ["./conformance/browserscript.ts"],
+    entryPoints: [new URL("browserscript.ts", import.meta.url).pathname],
     bundle: true,
     write: false,
   });
