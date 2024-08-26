@@ -4,8 +4,8 @@ version: v2
 clean: true
 plugins:
   - local: protoc-gen-es
-    opt: ts_nocheck=false,target=ts
     out: src/gen
+    opt: ts_nocheck=false,target=ts
   - local: protoc-gen-connect-es
-    opt: ts_nocheck=false,target=ts
     out: src/gen
+    opt: ts_nocheck=false,target=ts
