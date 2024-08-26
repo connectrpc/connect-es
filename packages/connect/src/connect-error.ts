@@ -161,7 +161,7 @@ export class ConnectError extends Error {
    * omitted from the list.
    */
   findDetails<Desc extends DescMessage>(
-    desc: DescMessage,
+    desc: Desc,
   ): MessageShape<Desc>[];
   findDetails(registry: Registry): Message[];
   findDetails(typeOrRegistry: DescMessage | Registry): Message[] {
