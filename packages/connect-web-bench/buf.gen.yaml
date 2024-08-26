@@ -21,3 +21,5 @@ plugins:
     strategy: all
     opt: target=ts
     out: src/gen
+inputs:
+  - module: buf.build/bufbuild/registry:f2077dee5ad44f7d9b660b32bf0958ee

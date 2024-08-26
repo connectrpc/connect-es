@@ -9,3 +9,5 @@ plugins:
   - local: protoc-gen-connect-es
     out: browserstack/gen
     opt: target=ts
+inputs:
+  - module: buf.build/connectrpc/eliza

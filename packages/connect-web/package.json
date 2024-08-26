@@ -22,7 +22,7 @@
     "conformance:client:node:promise": "connectconformance --mode client --conf ./conformance/conformance-web-node.yaml -v -- ./conformance/client.ts --browser node",
     "conformance:client:node:callback": "connectconformance --mode client --conf ./conformance/conformance-web-node.yaml -v --known-failing @./conformance/known-failing-callback-client.txt -- ./conformance/client.ts --browser node --useCallbackClient",
     "jasmine": "jasmine --config=jasmine.json",
-    "generate": "buf generate buf.build/connectrpc/eliza --template browserstack/buf.gen.yaml",
+    "generate": "buf generate --template browserstack/buf.gen.yaml",
     "karma:browserstack": "karma start browserstack/karma.browserstack.conf.cjs"
   },
   "type": "module",

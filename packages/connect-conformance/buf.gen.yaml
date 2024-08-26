@@ -9,3 +9,6 @@ plugins:
   - local: protoc-gen-connect-es
     out: src/gen
     opt: ts_nocheck=false,target=ts
+inputs:
+  - module: buf.build/connectrpc/conformance:v1.0.2
+
