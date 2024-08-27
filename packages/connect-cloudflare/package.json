@@ -3,14 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "pregenerate": "rm -rf conformance/gen/*",
-    "generate": "buf generate --include-imports .",
+    "generate": "buf generate",
     "conformance": "tsc --noEmit && npm run conformance:server && npm run conformance:client",
     "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v ./conformance/server.ts",
     "conformance:client": "npx wrangler deploy -c ./conformance/wrangler-client.toml && connectconformance --mode client --conf ./conformance/conformance-cloudflare-client.yaml -v --known-failing @./conformance/known-failing-client.txt --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY  -- ./conformance/client.ts"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^2.0.0-beta.3",
+    "@bufbuild/protobuf": "^2.0.0",
     "@connectrpc/connect": "2.0.0-alpha.1",
     "@connectrpc/connect-node": "2.0.0-alpha.1"
   },
@@ -19,6 +18,6 @@
     "wrangler": "^3.68.0",
     "tsx": "^4.16.5",
     "@connectrpc/connect-conformance": "^2.0.0-alpha.1",
-    "@bufbuild/protoc-gen-es": "^2.0.0-beta.3"
+    "@bufbuild/protoc-gen-es": "^2.0.0"
   }
 }
