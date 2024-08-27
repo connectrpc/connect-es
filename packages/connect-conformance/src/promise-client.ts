@@ -82,7 +82,6 @@ async function unary(
   if (req.requestMessages.length !== 1) {
     throw new Error("Unary method requires exactly one request message");
   }
-  req.cancel;
   const msg = req.requestMessages[0];
   const uReq = anyUnpack(
     msg,

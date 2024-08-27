@@ -15,9 +15,9 @@
     "@connectrpc/connect-node": "2.0.0-alpha.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20240620.0",
-    "wrangler": "^3.62.0",
-    "tsx": "^4.16.0",
+    "@cloudflare/workers-types": "^4.20240725.0",
+    "wrangler": "^3.68.0",
+    "tsx": "^4.16.5",
     "@connectrpc/connect-conformance": "^2.0.0-alpha.1",
     "@bufbuild/protoc-gen-es": "^2.0.0-beta.3"
   }

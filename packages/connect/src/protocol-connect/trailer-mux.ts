@@ -28,9 +28,9 @@ export function trailerDemux(
     t = new Headers();
   header.forEach((value, key) => {
     if (key.toLowerCase().startsWith("trailer-")) {
-      t.set(key.substring(8), value);
+      t.append(key.substring(8), value);
     } else {
-      h.set(key, value);
+      h.append(key, value);
     }
   });
   return [h, t];
@@ -47,7 +47,7 @@ export function trailerDemux(
 export function trailerMux(header: Headers, trailer: Headers): Headers {
   const h = new Headers(header);
   trailer.forEach((value, key) => {
-    h.set(`trailer-${key}`, value);
+    h.append(`trailer-${key}`, value);
   });
   return h;
 }

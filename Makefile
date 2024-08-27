@@ -16,7 +16,6 @@ NODE18_VERSION ?= v18.16.0
 NODE16_VERSION ?= v16.20.0
 NODE_OS = $(subst Linux,linux,$(subst Darwin,darwin,$(shell uname -s)))
 NODE_ARCH = $(subst x86_64,x64,$(subst aarch64,arm64,$(shell uname -m)))
-CONFORMANCE_BROWSER ?= chrome
 
 node_modules: package-lock.json
 	npm ci
@@ -113,13 +112,11 @@ $(BUILD)/connect-migrate: packages/connect-migrate/package.json packages/connect
 	@touch $(@)
 
 $(GEN)/connect: node_modules/.bin/protoc-gen-es packages/connect/buf.gen.yaml $(shell find packages/connect/src -name '*.proto') Makefile
-	rm -rf packages/connect/src/gen/*
 	npm run -w packages/connect generate
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(GEN)/connect-conformance: node_modules/.bin/protoc-gen-es packages/connect-conformance/buf.gen.yaml packages/connect-conformance/package.json Makefile
-	rm -rf packages/connect-conformance/src/gen/*
 	npm run -w packages/connect-conformance generate
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -135,7 +132,6 @@ $(GEN)/connect-web: node_modules/.bin/protoc-gen-es packages/connect-web/browser
 	@touch $(@)
 
 $(GEN)/connect-node: node_modules/.bin/protoc-gen-es packages/connect-node/buf.gen.yaml Makefile
-	rm -rf packages/connect-node/gen/*
 	npm run -w packages/connect-node generate
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -151,7 +147,6 @@ $(GEN)/connect-web-bench: node_modules/.bin/protoc-gen-es packages/connect-web-b
 	@touch $(@)
 
 $(GEN)/example: node_modules/.bin/protoc-gen-es packages/example/buf.gen.yaml $(shell find packages/example -name '*.proto')
-	rm -rf packages/example/src/gen/*
 	npx -w packages/example buf generate
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -218,23 +213,27 @@ testconnectfastifyconformance: $(BUILD)/connect-fastify
 	npm run -w packages/connect-fastify conformance
 
 .PHONY: testwebconformance
-testwebconformance: testwebchromeconformance testwebfirefoxconformance testwebsafariconformance
+testwebconformance: testwebchromeconformance testwebfirefoxconformance testwebsafariconformance testwebnodeconformance
 
 .PHONY: testwebchromeconformance
 testwebchromeconformance: $(BUILD)/connect-web
-	npm run -w packages/connect-web conformance:client:chrome
+	npm run -w packages/connect-web conformance:client:chrome:promise
+	npm run -w packages/connect-web conformance:client:chrome:callback
 
 .PHONY: testwebfirefoxconformance
 testwebfirefoxconformance: $(BUILD)/connect-web
-	npm run -w packages/connect-web conformance:client:firefox
+	npm run -w packages/connect-web conformance:client:firefox:promise
+	npm run -w packages/connect-web conformance:client:firefox:callback
 
 .PHONY: testwebsafariconformance
 testwebsafariconformance: $(BUILD)/connect-web
-	npm run -w packages/connect-web conformance:client:safari
+	npm run -w packages/connect-web conformance:client:safari:promise
+	npm run -w packages/connect-web conformance:client:safari:callback
 
-.PHONY: testwebconformancelocal
-testwebconformancelocal: $(BUILD)/connect-conformance
-	npm run -w packages/connect-web conformance:client:browser -- --browser $(CONFORMANCE_BROWSER)
+.PHONY: testwebnodeconformance
+testwebnodeconformance: $(BUILD)/connect-web
+	npm run -w packages/connect-web conformance:client:node:promise
+	npm run -w packages/connect-web conformance:client:node:callback
 
 .PHONY: testcloudflareconformance
 testcloudflareconformance: $(GEN)/connect-cloudflare $(BUILD)/connect-conformance $(BUILD)/connect-node

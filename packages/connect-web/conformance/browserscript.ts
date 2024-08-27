@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError } from "@connectrpc/connect";
 import {
   invokeWithCallbackClient,
   invokeWithPromiseClient,
@@ -32,30 +31,29 @@ declare global {
   }
 }
 
-// The main entry point into the browser code running in Puppeteer/headless Chrome.
-// This function is invoked by the page.evaluate call in grpcwebclient.
+// This function is invoked by the browser.executeAsync call in client.ts
 async function runTestCase(
   data: number[],
   useCallbackClient: boolean,
 ): Promise<number[]> {
   const req = fromBinary(ClientCompatRequestSchema, new Uint8Array(data));
+  const p = document.createElement("p");
+  p.innerText = req.testName;
+  document.body.append(p);
   const res = create(ClientCompatResponseSchema, {
     testName: req.testName,
   });
   try {
-    let invoke;
-    if (useCallbackClient) {
-      invoke = invokeWithCallbackClient;
-    } else {
-      invoke = invokeWithPromiseClient;
-    }
-    const result = await invoke(createTransport(req), req);
+    const transport = createTransport(req);
+    const result = useCallbackClient
+      ? await invokeWithCallbackClient(transport, req)
+      : await invokeWithPromiseClient(transport, req);
     res.result = { case: "response", value: result };
   } catch (err) {
     res.result = {
       case: "error",
       value: create(ClientErrorResultSchema, {
-        message: ConnectError.from(err).message,
+        message: `Failed to run test case: ${String(err)}`,
       }),
     };
   }

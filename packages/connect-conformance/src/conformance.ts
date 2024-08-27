@@ -20,7 +20,7 @@ import {
   chmodSync,
   mkdirSync,
 } from "node:fs";
-import { join as joinPath } from "node:path";
+import { join as joinPath, basename } from "node:path";
 import { unzipSync, gunzipSync } from "fflate";
 import * as tar from "tar-stream";
 import { pipeline } from "node:stream/promises";
@@ -34,15 +34,18 @@ const [, version] = /conformance:(v\d+\.\d+\.\d+)/.exec(scripts.generate) ?? [
   "?",
 ];
 
-const name = "connectconformance";
 const downloadUrl = `https://github.com/connectrpc/conformance/releases/download/${version}`;
 
 export async function run() {
+  const { archive, bin } = getArtifactNameForEnv();
   const tempDir = getTempDir();
-  const artifactName = getArtifactNameForEnv();
-  const assetPath = joinPath(tempDir, artifactName);
-  await download(`${downloadUrl}/${artifactName}`, assetPath);
-  execFileSync(await extractBin(assetPath), process.argv.slice(2), {
+  const binPath = joinPath(tempDir, bin);
+  if (!existsSync(binPath)) {
+    const archivePath = joinPath(tempDir, archive);
+    await download(`${downloadUrl}/${archive}`, archivePath);
+    await extractBin(archivePath, binPath);
+  }
+  execFileSync(binPath, process.argv.slice(2), {
     stdio: "inherit",
   });
 }
@@ -58,31 +61,28 @@ async function download(url: string, path: string) {
   writeFileSync(path, new Uint8Array(await res.arrayBuffer()));
 }
 
-async function extractBin(path: string) {
-  if (path.endsWith(".zip")) {
-    const unzipped = unzipSync(readFileSync(path), {
+async function extractBin(archivePath: string, binPath: string) {
+  const binName = basename(binPath);
+  if (archivePath.endsWith(".zip")) {
+    const unzipped = unzipSync(readFileSync(archivePath), {
       filter(file) {
-        return file.name === "connectconformance.exe";
+        return file.name === binName;
       },
     });
-    const binBytes = unzipped["connectconformance.exe"] as
-      | Uint8Array
-      | undefined;
+    const binBytes = unzipped[binName] as Uint8Array | undefined;
     if (binBytes === undefined) {
-      throw new Error("Failed to extract connectconformance.exe");
+      throw new Error(`Failed to extract ${binName}`);
     }
-    const bin = joinPath(getTempDir(), "connectconformance.exe");
-    writeFileSync(bin, binBytes);
-    return bin;
+    writeFileSync(binPath, binBytes);
   }
-  const bin = joinPath(getTempDir(), "connectconformance");
   const extract = tar.extract();
   extract.on("entry", (header, stream, next) => {
-    if (header.name === "connectconformance") {
+    if (header.name === binName) {
       const chunks: Buffer[] = [];
       stream.on("data", (chunk: Buffer) => chunks.push(chunk));
       stream.on("end", () => {
-        writeFileSync(bin, Buffer.concat(chunks));
+        writeFileSync(binPath, Buffer.concat(chunks));
+        chmodSync(binPath, 0o755);
         next();
       });
     } else {
@@ -93,14 +93,12 @@ async function extractBin(path: string) {
   await pipeline(
     new Readable({
       read() {
-        this.push(gunzipSync(readFileSync(path)));
+        this.push(gunzipSync(readFileSync(archivePath)));
         this.push(null);
       },
     }),
     extract,
   );
-  chmodSync(bin, 755);
-  return bin;
 }
 
 function getTempDir() {
@@ -111,9 +109,10 @@ function getTempDir() {
   return tempDir;
 }
 
-function getArtifactNameForEnv() {
+function getArtifactNameForEnv(): { archive: string; bin: string } {
   let build = "";
   let ext = ".tar.gz";
+  let bin = "connectconformance";
   switch (os.platform()) {
     case "darwin":
       switch (os.arch()) {
@@ -141,6 +140,7 @@ function getArtifactNameForEnv() {
       break;
     case "win32":
       ext = ".zip";
+      bin = "connectconformance.exe";
       switch (os.arch()) {
         case "arm64":
           build = "Windows-arm64";
@@ -155,5 +155,8 @@ function getArtifactNameForEnv() {
     default:
       throw new Error(`Unsupported platform: ${os.platform()}`);
   }
-  return `${name}-${version}-${build}${ext}`;
+  return {
+    archive: `connectconformance-${version}-${build}${ext}`,
+    bin,
+  };
 }
