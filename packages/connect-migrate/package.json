@@ -13,7 +13,7 @@
     "connect-migrate": "bin/connect-migrate"
   },
   "scripts": {
-    "clean": "rm -rf ./dist/cjs/*",
+    "prebuild": "rm -rf ./dist/*",
     "build": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs",
     "test": "jasmine --config=jasmine.json",
     "build+test": "npm run build && npm run test"

@@ -14,6 +14,13 @@
     "./packages/connect-conformance",
     "./packages/connect-cloudflare"
   ],
+  "scripts": {
+    "clean": "git clean -Xdf",
+    "setversion": "node scripts/set-workspace-version.js",
+    "postsetversion": "npm run all",
+    "all": "make",
+    "release": "npm run all && node scripts/release.js"
+  },
   "type": "module",
   "engineStrict": true,
   "engines": {

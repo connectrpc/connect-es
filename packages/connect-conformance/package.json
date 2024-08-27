@@ -15,7 +15,8 @@
   },
   "scripts": {
     "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
-    "clean": "rm -rf ./dist/*",
+    "postgenerate": "license-header src/gen",
+    "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
     "postbuild": "connectconformance --version",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/src/package.json '{\"type\":\"commonjs\"}'",

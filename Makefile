@@ -59,49 +59,41 @@ $(BIN)/node16: Makefile
 	@touch $(@)
 
 $(BUILD)/protoc-gen-connect-es: node_modules tsconfig.base.json packages/protoc-gen-connect-es/tsconfig.json $(shell find packages/protoc-gen-connect-es/src -name '*.ts')
-	npm run -w packages/protoc-gen-connect-es clean
 	npm run -w packages/protoc-gen-connect-es build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect: $(GEN)/connect node_modules packages/connect/package.json packages/connect/scripts/* tsconfig.base.json packages/connect/tsconfig.json $(shell find packages/connect/src -name '*.ts') packages/connect/*.js
-	npm run -w packages/connect clean
 	npm run -w packages/connect build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-node: $(BUILD)/connect $(BUILD)/connect-conformance packages/connect-node/tsconfig.json $(shell find packages/connect-node/src -name '*.ts')
-	npm run -w packages/connect-node clean
 	npm run -w packages/connect-node build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-fastify: $(BUILD)/connect $(BUILD)/connect-node packages/connect-fastify/tsconfig.json $(shell find packages/connect-fastify/src -name '*.ts')
-	npm run -w packages/connect-fastify clean
 	npm run -w packages/connect-fastify build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-express: $(BUILD)/connect $(BUILD)/connect-node packages/connect-express/tsconfig.json $(shell find packages/connect-express/src -name '*.ts')
-	npm run -w packages/connect-express clean
 	npm run -w packages/connect-express build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-next: $(BUILD)/connect $(BUILD)/connect-node packages/connect-next/tsconfig.json $(shell find packages/connect-next/src -name '*.ts')
-	npm run -w packages/connect-next clean
 	npm run -w packages/connect-next build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-web: $(GEN)/connect-web $(BUILD)/connect $(BUILD)/connect-conformance packages/connect-web/tsconfig.json $(shell find packages/connect-web/src -name '*.ts')
-	npm run -w packages/connect-web clean
 	npm run -w packages/connect-web build
 	@mkdir -p $(@D)
 	@touch $(@)
 
 $(BUILD)/connect-conformance: $(GEN)/connect-conformance $(BUILD)/connect packages/connect-conformance/tsconfig.json $(shell find packages/connect-conformance/src -name '*.ts')
-	npm run -w packages/connect-conformance clean
 	npm run -w packages/connect-conformance build
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -112,7 +104,6 @@ $(BUILD)/example: $(GEN)/example $(BUILD)/connect-web packages/example/tsconfig.
 	@touch $(@)
 
 $(BUILD)/connect-migrate: packages/connect-migrate/package.json packages/connect-migrate/tsconfig.json $(shell find packages/connect-migrate/src -name '*.ts')
-	npm run -w packages/connect-migrate clean
 	npm run -w packages/connect-migrate build
 	@mkdir -p $(@D)
 	@touch $(@)
@@ -257,34 +248,3 @@ format: node_modules ## Format all files, adding license headers
 .PHONY: bench
 bench: node_modules $(GEN)/connect-web-bench $(BUILD)/connect-web ## Benchmark code size
 	npm run -w packages/connect-web-bench bundle-size
-
-.PHONY: setversion
-setversion: ## Set a new version in for the project, i.e. make setversion SET_VERSION=1.2.3
-	node scripts/set-workspace-version.js $(SET_VERSION)
-	npm ci
-	$(MAKE) all
-
-# Recommended procedure:
-# 1. Set a new version with the target `setversion`
-# 2. Commit and push all changes
-# 3. Login with `npm login`
-# 4. Run this target, publishing to npmjs.com
-# 5. Tag the release
-.PHONY: release
-release: all ## Release npm packages
-	@[ -z "$(shell git status --short)" ] || (echo "Uncommitted changes found." && exit 1);
-	npm publish \
-		--workspace packages/connect \
-		--workspace packages/connect-web \
-		--workspace packages/connect-node \
-		--workspace packages/connect-fastify \
-		--workspace packages/connect-express \
-		--workspace packages/connect-next \
-		--workspace packages/protoc-gen-connect-es \
-		--workspace packages/connect-migrate \
-
-.PHONY: checkdiff
-checkdiff:
-	@# Used in CI to verify that `make` does not produce a diff
-	test -z "$$(git status --porcelain | tee /dev/stderr)"
-
