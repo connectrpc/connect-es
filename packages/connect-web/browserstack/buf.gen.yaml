@@ -1,9 +1,13 @@
-version: v1
+# Learn more: https://buf.build/docs/configuration/v2/buf-gen-yaml
+version: v2
+# Deletes the directories specified in the `out` field for all plugins before running code generation.
+clean: true
 plugins:
-  - name: es
+  - local: protoc-gen-es
     out: browserstack/gen
     opt: target=ts
-  - name: connect-es
+  - local: protoc-gen-connect-es
     out: browserstack/gen
     opt: target=ts
-
+inputs:
+  - module: buf.build/connectrpc/eliza

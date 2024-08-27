@@ -1,8 +1,11 @@
-version: v1
+# Learn more: https://buf.build/docs/configuration/v2/buf-gen-yaml
+version: v2
+# Deletes the directories specified in the `out` field for all plugins before running code generation.
+clean: true
 plugins:
-  - plugin: es
+  - local: protoc-gen-es
     out: src/gen
     opt: ts_nocheck=false,target=ts
-  - plugin: connect-es
+  - local: protoc-gen-connect-es
     out: src/gen
     opt: ts_nocheck=false,target=ts
