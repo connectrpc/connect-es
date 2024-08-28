@@ -18,7 +18,6 @@ import { fromJson, toBinary, toJson } from "@bufbuild/protobuf";
 import { errorFromJson, errorToJson } from "./error-json.js";
 import { codeToString } from "./code-string.js";
 import { StructSchema } from "@bufbuild/protobuf/wkt";
-import type { Struct } from "@bufbuild/protobuf/wkt";
 import { base64Encode } from "@bufbuild/protobuf/wire";
 
 describe("errorToJson()", () => {
@@ -193,7 +192,7 @@ describe("errorFromJson()", () => {
       const details = error.findDetails(StructSchema);
       expect(details.length).toBe(1);
       expect(
-        toJson(StructSchema, details[0] as Struct) as Record<string, unknown>,
+        toJson(StructSchema, details[0]) as Record<string, unknown>,
       ).toEqual({ reason: "soirée 🎉", domain: "example.com" });
     });
   });
