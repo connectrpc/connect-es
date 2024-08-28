@@ -24,4 +24,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-connect-es-ci-
       - name: make
-        run: make ci && make checkdiff
+        run: make ci
+      - name: Check changed files
+        run: node scripts/gh-diffcheck.js

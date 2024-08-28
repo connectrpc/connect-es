@@ -384,6 +384,9 @@ describe("Connect transport", function () {
       }
     });
   });
+  // Special handling of set-cookie is available since Node.js v20.0.0,
+  // v18.14.1, v16.19.1, but not in headers-polyfill 3.1.2.
+  // Also see https://github.com/nodejs/undici/releases/tag/v5.19.0
   if ("getSetCookie" in new Headers()) {
     describe("when there is support for set-cookie", function () {
       // eslint-disable-next-line @typescript-eslint/require-await
