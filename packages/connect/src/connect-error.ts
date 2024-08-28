@@ -160,9 +160,7 @@ export class ConnectError extends Error {
    * messages. Any decoding errors are ignored, and the detail will simply be
    * omitted from the list.
    */
-  findDetails<Desc extends DescMessage>(
-    desc: Desc,
-  ): MessageShape<Desc>[];
+  findDetails<Desc extends DescMessage>(desc: Desc): MessageShape<Desc>[];
   findDetails(registry: Registry): Message[];
   findDetails(typeOrRegistry: DescMessage | Registry): Message[] {
     const registry =
