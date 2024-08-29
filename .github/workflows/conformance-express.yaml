@@ -32,8 +32,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/express-conformance/${{ github.sha }}
-          restore-keys: connect-es/express-conformance
+          key: ${{ runner.os }}/express-conformance/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/express-conformance
       - name: NPM Install
         run: npm ci
       - name: Run

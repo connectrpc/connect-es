@@ -32,8 +32,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/fastify-conformance/${{ github.sha }}
-          restore-keys: connect-es/fastify-conformance
+          key: ${{ runner.os }}/fastify-conformance/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/fastify-conformance
       - name: NPM Install
         run: npm ci
       - name: Run

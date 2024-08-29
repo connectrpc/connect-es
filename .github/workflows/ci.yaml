@@ -26,8 +26,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/format/${{ github.sha }}
-          restore-keys: connect-es/format
+          key: ${{ runner.os }}/format/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/format
       - name: NPM Install
         run: npm ci
       - name: Format
@@ -44,8 +44,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/license-header/${{ github.sha }}
-          restore-keys: connect-es/license-header
+          key: ${{ runner.os }}/license-header/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/license-header
       - name: NPM Install
         run: npm ci
       - name: Update license headers
@@ -62,8 +62,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/lint/${{ github.sha }}
-          restore-keys: connect-es/lint
+          key: ${{ runner.os }}/lint/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/lint
       - name: NPM Install
         run: npm ci
       - name: lint
@@ -78,8 +78,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/attw/${{ github.sha }}
-          restore-keys: connect-es/attw
+          key: ${{ runner.os }}/attw/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/attw
       - name: NPM Install
         run: npm ci
       - name: Are the types wrong
@@ -94,8 +94,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/bundle-size/${{ github.sha }}
-          restore-keys: connect-es/bundle-size
+          key: ${{ runner.os }}/bundle-size/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/bundle-size
       - name: NPM Install
         run: npm ci
       - name: Bundle size
@@ -112,8 +112,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/build/${{ github.sha }}
-          restore-keys: connect-es/build
+          key: ${{ runner.os }}/build/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/build
       - name: NPM Install
         run: npm ci
       - name: build
@@ -136,8 +136,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/test/${{ github.sha }}
-          restore-keys: connect-es/test
+          key: ${{ runner.os }}/test/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/test
       - name: NPM Install
         run: npm ci
       - name: Run
@@ -157,8 +157,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/test/${{ github.sha }}
-          restore-keys: connect-es/test
+          key: ${{ runner.os }}/test/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/test
       - name: NPM Install
         run: npm ci
       - name: "Run, excluding @connectrpc/connect-web"

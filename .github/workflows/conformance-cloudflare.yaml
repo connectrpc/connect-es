@@ -27,8 +27,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/cloudflare-conformance/${{ github.sha }}
-          restore-keys: connect-es/cloudflare-conformance
+          key: ${{ runner.os }}/cloudflare-conformance/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/cloudflare-conformance
       - name: NPM Install
         run: npm ci
       - name: conformance:server

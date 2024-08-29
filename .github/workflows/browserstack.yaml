@@ -28,8 +28,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/browserstack/${{ github.sha }}
-          restore-keys: connect-es/browserstack
+          key: ${{ runner.os }}/browserstack/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/browserstack
       - name: NPM Install
         run: npm ci
       - name: Browserstack

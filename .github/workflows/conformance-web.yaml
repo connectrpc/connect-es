@@ -37,8 +37,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/web-conformance/${{ github.sha }}
-          restore-keys: connect-es/web-conformance
+          key: ${{ runner.os }}/web-conformance/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/web-conformance
       - name: NPM Install
         run: npm ci
       - name: Run
@@ -60,8 +60,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: connect-es/web-conformance/${{ github.sha }}
-          restore-keys: connect-es/web-conformance
+          key: ${{ runner.os }}/web-conformance/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/web-conformance
       - name: NPM Install
         run: npm ci
       - name: Run
