@@ -1,4 +1,4 @@
-name: "@connectrpc/connect-cloudflare Conformance"
+name: "Cloudflare Conformance"
 
 on:
   schedule:
@@ -18,7 +18,7 @@ env:
 
 jobs:
   test:
-    name: "Test @connectrpc/connect-cloudflare conformance"
+    name: "Test @connectrpc/connect-cloudflare"
     if: github.event_name != 'pull_request' || startsWith(github.event.pull_request.title, 'Release ')
     runs-on: conformance
     steps:

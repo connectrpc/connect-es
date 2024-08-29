@@ -1,4 +1,4 @@
-name: "@connectrpc/connect-fastify Conformance"
+name: "Fastify Conformance"
 
 on:
   push:

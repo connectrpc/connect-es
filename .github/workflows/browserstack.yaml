@@ -1,4 +1,4 @@
-name: "@connectrpc/connect-web on Browserstack"
+name: "Browserstack"
 
 on:
   push:

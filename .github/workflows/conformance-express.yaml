@@ -1,4 +1,4 @@
-name: "@connectrpc/connect-express Conformance"
+name: "Express Conformance"
 
 on:
   push:
