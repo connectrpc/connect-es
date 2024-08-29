@@ -24,6 +24,7 @@ jobs:
         node-version: [21.1.0, 20.9.0, 18.16.0]
         side: [client, server]
     name: "Node.js ${{ matrix.node-version }} ${{ matrix.side }}"
+    timeout-minutes: 10
     steps:
       - uses: actions/setup-node@v4
         with:

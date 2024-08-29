@@ -28,6 +28,7 @@ jobs:
             os: macos-12
     runs-on: ${{ matrix.os }}
     name: "${{ matrix.browser }} ${{ matrix.client }}"
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,6 +51,7 @@ jobs:
         node-version: [21.1.0, 20.9.0, 18.16.0]
         client: [promise, callback]
     name: "Node.js ${{ matrix.node-version }} ${{ matrix.client }}"
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
