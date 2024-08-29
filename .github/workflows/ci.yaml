@@ -67,7 +67,7 @@ jobs:
       - name: NPM Install
         run: npm ci
       - name: lint
-        run: npx turbo run lint3
+        run: npx turbo run lint
   attw:
     runs-on: ubuntu-22.04
     steps:

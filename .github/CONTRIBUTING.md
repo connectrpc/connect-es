@@ -25,7 +25,6 @@ git remote add upstream https://github.com/connectrpc/connect-es.git
 git fetch upstream
 ```
 
-
 Install dependencies (you'll need Node.js in the version specified in `.nvmrc`,
 and `npm` in the version specified in `package.json`):
 
