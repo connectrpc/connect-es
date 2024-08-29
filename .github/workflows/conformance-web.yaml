@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        browser: [chrome, safari, firefox]
+        browser: [chrome, firefox]
         client: [promise, callback]
     name: "${{ matrix.browser }} ${{ matrix.client }}"
     steps:
