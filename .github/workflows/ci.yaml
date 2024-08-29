@@ -127,7 +127,7 @@ jobs:
         # we cannot run tests for @connectrpc/connect-web.
         # v16 is tested in a separate job below.
         node-version: [21.1.0, 20.9.0, 18.16.0]
-    name: "Node.js ${{ matrix.node-version }}"
+    name: "test on Node.js ${{ matrix.node-version }}"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
