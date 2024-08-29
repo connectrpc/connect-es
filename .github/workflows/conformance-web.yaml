@@ -17,11 +17,16 @@ env:
 
 jobs:
   browser:
-    runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         browser: [chrome, safari, firefox]
         client: [promise, callback]
+        include:
+          - os: ubuntu-22.04
+          - browser: safari
+            os: macos-12
+    runs-on: ${{ matrix.os }}
     name: "${{ matrix.browser }} ${{ matrix.client }}"
     steps:
       - uses: actions/checkout@v4
