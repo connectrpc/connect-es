@@ -12,5 +12,5 @@ packages, such as `connect-node`, `connect-web`, etc.
 
 To update the version of the conformance runner and protos, change the version in the following places:
 
-* The `generate` command of this package's `package.json` file.
-* The `version` constant inside `node/conformance.ts`.
+- The `generate` command of this package's `package.json` file.
+- The `version` constant inside `node/conformance.ts`.

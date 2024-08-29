@@ -1,25 +1,30 @@
 {
+  "name": "connect-es",
   "private": true,
   "workspaces": [
-    "./packages/connect",
-    "./packages/protoc-gen-connect-es",
-    "./packages/connect-web",
-    "./packages/connect-node",
-    "./packages/connect-fastify",
-    "./packages/connect-next",
-    "./packages/connect-express",
-    "./packages/connect-web-bench",
-    "./packages/example",
-    "./packages/connect-migrate",
-    "./packages/connect-conformance",
-    "./packages/connect-cloudflare"
+    "packages/connect",
+    "packages/protoc-gen-connect-es",
+    "packages/connect-web",
+    "packages/connect-node",
+    "packages/connect-fastify",
+    "packages/connect-next",
+    "packages/connect-express",
+    "packages/connect-web-bench",
+    "packages/example",
+    "packages/connect-migrate",
+    "packages/connect-conformance",
+    "packages/connect-cloudflare"
   ],
   "scripts": {
+    "all": "turbo run build format test conformance bundle-size lint attw license-header",
     "clean": "git clean -Xdf",
     "setversion": "node scripts/set-workspace-version.js",
     "postsetversion": "npm run all",
-    "all": "make",
-    "release": "npm run all && node scripts/release.js"
+    "release": "node scripts/release.js",
+    "prerelease": "npm run all",
+    "format": "prettier --write --ignore-unknown '.' '!packages' '!.turbo' '!node_modules'",
+    "license-header": "license-header --ignore 'packages/**'",
+    "lint": "eslint --max-warnings 0 . --ignore-pattern 'packages/**'"
   },
   "type": "module",
   "engineStrict": true,
@@ -27,6 +32,7 @@
     "node": ">=16",
     "npm": ">=8"
   },
+  "packageManager": "npm@10.1.0",
   "licenseHeader": {
     "licenseType": "apache",
     "yearRange": "2021-2024",
@@ -35,13 +41,14 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.15.3",
     "@bufbuild/license-header": "^0.0.4",
+    "@typescript-eslint/eslint-plugin": "^7.14.0",
     "@typescript-eslint/parser": "^7.14.0",
     "eslint": "^8.56.0",
-    "@typescript-eslint/eslint-plugin": "^7.14.0",
     "eslint-import-resolver-typescript": "^3.6.1",
-    "eslint-plugin-n": "^17.10.1",
     "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-n": "^17.10.1",
     "prettier": "^3.3.3",
+    "turbo": "^2.1.0",
     "typescript": "5.5.4"
   }
 }

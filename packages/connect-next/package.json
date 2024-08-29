@@ -12,6 +12,9 @@
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
+    "format": "prettier --write --ignore-unknown '.' '!dist'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 .",
     "attw": "attw --pack"
   },
   "type": "module",
@@ -29,6 +32,10 @@
   "peerDependencies": {
     "@bufbuild/protobuf": "^1.10.0",
     "next": "^13.2.4 || ^14.2.5",
+    "@connectrpc/connect": "1.4.0",
+    "@connectrpc/connect-node": "1.4.0"
+  },
+  "devDependencies": {
     "@connectrpc/connect": "1.4.0",
     "@connectrpc/connect-node": "1.4.0"
   }

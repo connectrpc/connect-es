@@ -33,7 +33,7 @@ import {
   UnaryRequest,
 } from "@connectrpc/connect-conformance";
 import express from "express";
-import { expressConnectMiddleware } from "@connectrpc/connect-express";
+import { expressConnectMiddleware } from "../src/index.js";
 
 main();
 

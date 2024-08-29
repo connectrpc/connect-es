@@ -1,5 +1,6 @@
-/.tmp
+.turbo
+.wrangler
+node_modules
 /packages/*/dist
 /packages/connect-web/conformance/logs/*
-node_modules
-.wrangler
+packages/connect-web/local.log

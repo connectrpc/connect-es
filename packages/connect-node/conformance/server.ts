@@ -19,7 +19,7 @@ import {
   compressionBrotli,
   compressionGzip,
   connectNodeAdapter,
-} from "@connectrpc/connect-node";
+} from "../src/index.js";
 import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";

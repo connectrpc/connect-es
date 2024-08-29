@@ -66,7 +66,6 @@ const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```
 
-
 ### connectNodeAdapter()
 
 Run your Connect RPCs on the Node.js `http`, `https`, or `http2` modules.
@@ -75,7 +74,7 @@ Run your Connect RPCs on the Node.js `http`, `https`, or `http2` modules.
 // connect.ts
 import { ConnectRouter } from "@connectrpc/connect";
 
-export default function(router: ConnectRouter) {
+export default function (router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
   router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
     sentence: `you said: ${req.sentence}`,
@@ -93,7 +92,6 @@ http2.createServer(
 + connectNodeAdapter({ routes }) // responds with 404 for other requests
 ).listen(8080);
 ```
-
 
 With that server running, you can make requests with any gRPC, gRPC-Web, or Connect client.
 
@@ -130,13 +128,12 @@ const transport = createGrpcTransport({
 
 const client = createPromiseClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
-console.log(sentence) // you said: I feel happy.
+console.log(sentence); // you said: I feel happy.
 ```
 
 A client for the web browser actually looks identical to this example - it would
 simply use `createConnectTransport` from [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web)
 instead.
-
 
 ## Getting started
 

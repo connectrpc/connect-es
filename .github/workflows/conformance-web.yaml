@@ -1,0 +1,61 @@
+name: "@connectrpc/connect-web Conformance"
+
+on:
+  push:
+    branches: [main, "v*"]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, "v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # https://consoledonottrack.com/
+  DO_NOT_TRACK: 1
+
+jobs:
+  browser:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        browser: [chrome, safari, firefox]
+        client: [promise, callback]
+    name: "${{ matrix.browser }} ${{ matrix.client }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/web-conformance/${{ github.sha }}
+          restore-keys: connect-es/web-conformance
+      - name: NPM Install
+        run: npm ci
+      - name: Run
+        run: npx turbo run conformance:client:${{matrix.browser}}:${{matrix.client}}
+  node:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        # Node.js v16 does not provide all necessary fetch types by default
+        node-version: [21.1.1, 20.9.0, 18.16.0]
+        client: [promise, callback]
+    name: "Node.js ${{ matrix.node-version }} ${{ matrix.client }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/web-conformance/${{ github.sha }}
+          restore-keys: connect-es/web-conformance
+      - name: NPM Install
+        run: npm ci
+      - name: Run
+        run: npx turbo run conformance:client:node:${{matrix.client}}

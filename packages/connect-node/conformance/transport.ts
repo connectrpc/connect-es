@@ -31,7 +31,7 @@ import {
   compressionGzip,
   compressionBrotli,
   createGrpcWebTransport,
-} from "@connectrpc/connect-node";
+} from "../src/index.js";
 import type { Compression } from "@connectrpc/connect/protocol";
 import * as http2 from "node:http2";
 

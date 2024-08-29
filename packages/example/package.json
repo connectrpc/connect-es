@@ -3,10 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "tsc --noEmit",
+    "build": "tsc --noEmit",
     "start": "tsx src/server.ts",
     "client": "tsx src/client.ts",
-    "generate": "buf generate"
+    "generate": "buf generate",
+    "format": "prettier --write --ignore-unknown '.' '!src/gen'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 ."
   },
   "engines": {
     "node": ">=16"

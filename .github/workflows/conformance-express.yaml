@@ -1,0 +1,38 @@
+name: "@connectrpc/connect-express Conformance"
+
+on:
+  push:
+    branches: [main, "v*"]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, "v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # https://consoledonottrack.com/
+  DO_NOT_TRACK: 1
+
+jobs:
+  node:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        node-version: [21.1.1, 20.9.0, 18.16.0]
+    name: "Node.js ${{ matrix.node-version }}"
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/express-conformance/${{ github.sha }}
+          restore-keys: connect-es/express-conformance
+      - name: NPM Install
+        run: npm ci
+      - name: Run
+        run: npx turbo run conformance --filter '@connectrpc/connect-express'

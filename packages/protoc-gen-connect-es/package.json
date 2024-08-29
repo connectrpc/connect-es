@@ -16,7 +16,10 @@
   },
   "scripts": {
     "prebuild": "rm -rf ./dist/*",
-    "build": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs"
+    "build": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs",
+    "format": "prettier --write --ignore-unknown '.' '!dist'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 ."
   },
   "preferUnplugged": true,
   "dependencies": {

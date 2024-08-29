@@ -1,7 +1,7 @@
 # @connectrpc/protoc-gen-connect-es
 
 The code generator for Connect, a simple library to work with servers and clients
-in ECMAScript with the type-safety of TypeScript.  It generates code that is compatible with
+in ECMAScript with the type-safety of TypeScript. It generates code that is compatible with
 browsers and Node.js.
 
 Learn more about Connect at [github.com/connectrpc/connect-es](https://github.com/connectrpc/connect-es).
@@ -32,7 +32,6 @@ install [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/con
 We use peer dependencies to ensure that code generator and runtime library are
 compatible with each other. Note that npm installs them automatically, but yarn
 and pnpm do not.
-
 
 ## Generating code
 
@@ -68,7 +67,6 @@ not just local protobuf files. For example, `npx buf generate buf.build/connectr
 generates code for the module [connectrpc/eliza](https://buf.build/connectrpc/eliza) on the Buf Schema
 Registry.
 
-
 ### With protoc
 
 ```bash
@@ -91,7 +89,6 @@ change the variable a bit:
 PATH=$(dirname $(yarn bin protoc-gen-es)):$(dirname $(yarn bin protoc-gen-connect-es)):$PATH
 ```
 
-
 ## Plugin options
 
 ### `target`
@@ -100,6 +97,7 @@ This option controls whether the plugin generates JavaScript, TypeScript,
 or TypeScript declaration files.
 
 Possible values:
+
 - `target=js` - generates a `_connect.js` file for every `.proto` input file.
 - `target=ts` - generates a `_connect.ts` file for every `.proto` input file.
 - `target=dts` - generates a `_connect.d.ts` file for every `.proto` input file.
@@ -134,6 +132,7 @@ CommonJS is difficult to avoid, this option can be used to generate CommonJS
 `require()` calls.
 
 Possible values:
+
 - `js_import_style=module` generate ECMAScript `import` / `export` statements -
   the default behavior.
 - `js_import_style=legacy_commonjs` generate CommonJS `require()` calls.
@@ -153,10 +152,10 @@ By default, [protoc-gen-connect-es](https://www.npmjs.com/package/@connectrpc/pr
 (and all other plugins based on [@bufbuild/protoplugin](https://www.npmjs.com/package/@bufbuild/protoplugin))
 generate an annotation at the top of each file: `// @ts-nocheck`.
 
-We generate the annotation to support a wide range of compiler configurations 
-and future changes to the language. But there can be situations where the 
-annotation shadows an underlying problem, for example an unresolvable import. 
-To remove the annotation and to enable type checks, set the plugin option 
+We generate the annotation to support a wide range of compiler configurations
+and future changes to the language. But there can be situations where the
+annotation shadows an underlying problem, for example an unresolvable import.
+To remove the annotation and to enable type checks, set the plugin option
 `ts_nocheck=false`.
 
 ## Example generated code
@@ -191,6 +190,7 @@ message SayResponse {
 ```
 
 `eliza_connect.ts`
+
 ```ts
 /**
  * ElizaService provides a way to talk to Eliza, a port of the DOCTOR script
@@ -216,6 +216,6 @@ export const ElizaService = {
       O: SayResponse,
       kind: MethodKind.Unary,
     },
-  }
+  },
 } as const;
 ```

@@ -8,25 +8,24 @@ It uses the [conformance runner](https://github.com/connectrpc/conformance/relea
 
 Tests run in the following environments:
 
-* Chrome
-* Firefox
-* Safari (only if running in OSX. Safari requires users to enable the "Allow Remote Automation" option in Safari's Develop menu)
-* Node.js
+- Chrome
+- Firefox
+- Safari (only if running in OSX. Safari requires users to enable the "Allow Remote Automation" option in Safari's Develop menu)
+- Node.js
 
 For every environment, two client flavors are available:
-* Promise (using `createPromiseClient`)
-* Callback (using `createCallbackClient`)
 
-For every combination, an npm script is available:
+- Promise (using `createPromiseClient`)
+- Callback (using `createCallbackClient`)
 
-`npm run conformance:client:<chrome|firefox|safari|node>:<promise|callback>`
+For every combination, a task is available:
 
-Before you run npm scripts, make sure to build dependencies with `make .tmp/build/connect-web`.
+`npx turbo run conformance:client:<chrome|firefox|safari|node>:<promise|callback>`
 
 ## Using a local browser
 
 To launch a browser window with access to the browser's network inspector, append the `--openBrowser` flag to the npm script:
 
 ```
-npm run conformance:client:chrome:promise -- --openBrowser
+npx turbo run conformance:client:chrome:promise -- --openBrowser
 ```

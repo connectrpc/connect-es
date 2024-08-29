@@ -15,7 +15,7 @@ Adds your Connect RPCs to an Express server.
 // connect.ts
 import { ConnectRouter } from "@connectrpc/connect";
 
-export default function(router: ConnectRouter) {
+export default function (router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
   router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
     sentence: `you said: ${req.sentence}`,
@@ -64,7 +64,7 @@ const transport = createGrpcWebTransport({
 
 const client = createPromiseClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
-console.log(sentence) // you said: I feel happy.
+console.log(sentence); // you said: I feel happy.
 ```
 
 A client for the web browser actually looks identical to this example - it would
@@ -73,7 +73,6 @@ instead.
 
 Note that support for gRPC is limited, since many gRPC clients require HTTP/2,
 and Express does not support the Node.js `http2` module.
-
 
 ## Getting started
 

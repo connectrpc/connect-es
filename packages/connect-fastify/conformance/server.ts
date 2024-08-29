@@ -39,7 +39,7 @@ import type {
   FastifyHttp2SecureOptions,
   FastifyInstance,
 } from "fastify";
-import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
+import { fastifyConnectPlugin } from "../src/index.js";
 
 main();
 

@@ -1,29 +1,120 @@
 name: ci
+
 on:
   push:
-    branches: [main]
-    tags: ['v*']
+    branches: [main, "v*"]
+    tags: ["v*"]
   pull_request:
-    branches: [main]
+    branches: [main, "v*"]
   workflow_dispatch:
+
 permissions:
   contents: read
+
+env:
+  # https://consoledonottrack.com/
+  DO_NOT_TRACK: 1
+
 jobs:
-  ci:
+  format:
     runs-on: ubuntu-22.04
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: cache
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          path: |
-            ~/.tmp
-            .tmp
-          key: ${{ runner.os }}-connect-es-ci-${{ hashFiles('Makefile') }}
-          restore-keys: |
-            ${{ runner.os }}-connect-es-ci-
-      - name: make
-        run: make ci
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/format/${{ github.sha }}
+          restore-keys: connect-es/format
+      - name: NPM Install
+        run: npm ci
+      - name: Format
+        run: npx turbo run format
       - name: Check changed files
         run: node scripts/gh-diffcheck.js
+  license-header:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/license-header/${{ github.sha }}
+          restore-keys: connect-es/license-header
+      - name: NPM Install
+        run: npm ci
+      - name: Update license headers
+        run: npx turbo run license-header
+      - name: Check changed files
+        run: node scripts/gh-diffcheck.js
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/lint/${{ github.sha }}
+          restore-keys: connect-es/lint
+      - name: NPM Install
+        run: npm ci
+      - name: lint
+        run: npx turbo run lint3
+  attw:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/attw/${{ github.sha }}
+          restore-keys: connect-es/attw
+      - name: NPM Install
+        run: npm ci
+      - name: Are the types wrong
+        run: npx turbo run attw
+  bundle-size:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/bundle-size/${{ github.sha }}
+          restore-keys: connect-es/bundle-size
+      - name: NPM Install
+        run: npm ci
+      - name: Bundle size
+        run: npx turbo run bundle-size
+      - name: Check changed files
+        run: node scripts/gh-diffcheck.js
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/build/${{ github.sha }}
+          restore-keys: connect-es/build
+      - name: NPM Install
+        run: npm ci
+      - name: build
+        run: npx turbo run build

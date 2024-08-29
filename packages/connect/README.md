@@ -4,7 +4,6 @@ Connect is a family of libraries for building type-safe APIs with different lang
 [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings them to TypeScript,
 the web browser, and to Node.js.
 
-
 With Connect, you define your schema first:
 
 ```
@@ -16,7 +15,7 @@ service ElizaService {
 And with the magic of code generation, this schema produces servers and clients:
 
 ```ts
-const answer = await eliza.say({sentence: "I feel happy."});
+const answer = await eliza.say({ sentence: "I feel happy." });
 console.log(answer);
 // {sentence: 'When you feel happy, what do you do?'}
 ```
@@ -40,7 +39,6 @@ gRPC and gRPC-web, and Connect's [own protocol](https://connectrpc.com/docs/prot
 optimized for the web. This gives you unparalleled interoperability with
 full-stack type-safety.
 
-
 ## Get started on the web
 
 Follow our [10 minute tutorial](https://connectrpc.com/docs/web/getting-started) where
@@ -52,7 +50,6 @@ and we have an expansion pack for [TanStack Query](https://github.com/connectrpc
 We support all modern web browsers that implement the widely available
 [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).
-
 
 ## Get started on Node.js
 

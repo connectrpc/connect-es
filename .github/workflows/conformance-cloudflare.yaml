@@ -1,0 +1,50 @@
+name: "@connectrpc/connect-cloudflare Conformance"
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # https://consoledonottrack.com/
+  DO_NOT_TRACK: 1
+
+jobs:
+  test:
+    name: "Test @connectrpc/connect-cloudflare conformance"
+    if: github.event_name != 'pull_request' || startsWith(github.event.pull_request.title, 'Release ')
+    runs-on: conformance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/cloudflare-conformance/${{ github.sha }}
+          restore-keys: connect-es/cloudflare-conformance
+      - name: NPM Install
+        run: npm ci
+      - name: conformance:server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_WORKERS_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_SERVER_HOST}}
+          CLOUDFLARE_WORKERS_CLIENT_HOST: ${{ vars.CLOUDFLARE_WORKERS_CLIENT_HOST}}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST}}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_KEY }}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_CERT }}
+        run: npx turbo run conformance:server --filter '@connectrpc/connect-cloudflare'
+      - name: conformance:client
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_WORKERS_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_SERVER_HOST}}
+          CLOUDFLARE_WORKERS_CLIENT_HOST: ${{ vars.CLOUDFLARE_WORKERS_CLIENT_HOST}}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST}}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_KEY }}
+          CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_CERT }}
+        run: npx turbo run conformance:client --filter '@connectrpc/connect-cloudflare'
