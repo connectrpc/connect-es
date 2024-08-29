@@ -107,9 +107,12 @@ function main() {
   }
 
   process.on("SIGTERM", () => {
+    if ("closeAllConnections" in server) {
+      server.closeAllConnections();
+    }
     server.close();
   });
-  server.listen(undefined, "127.0.0.1", () => {
+  server.listen(0, "127.0.0.1", () => {
     const addrInfo = server.address() as net.AddressInfo;
     const res = new ServerCompatResponse({
       pemCert:
