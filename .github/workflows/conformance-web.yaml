@@ -42,7 +42,7 @@ jobs:
       - name: NPM Install
         run: npm ci
       - name: Run
-        run: npx turbo run conformance:client:${{matrix.browser}}:${{matrix.client}}
+        run: npx turbo run conformance:client:${{matrix.browser}}:${{matrix.client}} --output-logs new-only --log-order stream
   node:
     runs-on: ubuntu-22.04
     strategy:
@@ -65,4 +65,4 @@ jobs:
       - name: NPM Install
         run: npm ci
       - name: Run
-        run: npx turbo run conformance:client:node:${{matrix.client}}
+        run: npx turbo run conformance:client:node:${{matrix.client}} --output-logs new-only --log-order stream

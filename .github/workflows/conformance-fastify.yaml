@@ -37,4 +37,4 @@ jobs:
       - name: NPM Install
         run: npm ci
       - name: Run
-        run: npx turbo run conformance --filter '@connectrpc/connect-fastify'
+        run: npx turbo run conformance --filter '@connectrpc/connect-fastify' --output-logs new-only --log-order stream

@@ -37,4 +37,4 @@ jobs:
       - name: NPM Install
         run: npm ci
       - name: Run
-        run: npx turbo run conformance --filter '@connectrpc/connect-express'
+        run: npx turbo run conformance --filter '@connectrpc/connect-express' --output-logs new-only --log-order stream
