@@ -118,3 +118,48 @@ jobs:
         run: npm ci
       - name: build
         run: npx turbo run build
+  test:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Node.js v16 does not provide all necessary fetch types by default, so
+        # we cannot run tests for @connectrpc/connect-web.
+        # v16 is tested in a separate job below.
+        node-version: [21.1.0, 20.9.0, 18.16.0]
+    name: "Node.js ${{ matrix.node-version }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/test/${{ github.sha }}
+          restore-keys: connect-es/test
+      - name: NPM Install
+        run: npm ci
+      - name: Run
+        run: npx turbo run test
+  test16:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [16.20.0]
+    name: "Node.js ${{ matrix.node-version }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: connect-es/test/${{ github.sha }}
+          restore-keys: connect-es/test
+      - name: NPM Install
+        run: npm ci
+      - name: "Run, excluding @connectrpc/connect-web"
+        run: npx turbo run test --filter '!@connectrpc/connect-web'
