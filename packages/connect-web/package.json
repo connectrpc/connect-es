@@ -13,7 +13,7 @@
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
     "conformance:safari": "npm run conformance:safari:promise && npm run conformance:client:safari:callback",
-    "conformance:promise": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser safari",
+    "conformance:safari:promise": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser safari",
     "conformance:safari:callback": "connectconformance --mode client --conf conformance/conformance-web.yaml --known-failing @conformance/known-failing-callback-client.txt -- tsx conformance/client.ts --browser safari --useCallbackClient",
     "conformance:chrome:promise": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser chrome",
     "conformance:chrome:callback": "connectconformance --mode client --conf conformance/conformance-web.yaml --known-failing @conformance/known-failing-callback-client.txt -- tsx conformance/client.ts --browser chrome --useCallbackClient",
