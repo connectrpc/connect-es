@@ -29,8 +29,7 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/cloudflare-conformance/${{ github.sha }}
           restore-keys: ${{ runner.os }}/cloudflare-conformance
-      - name: NPM Install
-        run: npm ci
+      - run: npm ci
       - name: conformance:server
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

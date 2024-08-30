@@ -34,7 +34,5 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/express-conformance/${{ github.sha }}
           restore-keys: ${{ runner.os }}/express-conformance
-      - name: NPM Install
-        run: npm ci
-      - name: Run
-        run: npx turbo run conformance --filter '@connectrpc/connect-express' --output-logs new-only --log-order stream
+      - run: npm ci
+      - run: npx turbo run conformance --filter '@connectrpc/connect-express' --output-logs new-only --log-order stream

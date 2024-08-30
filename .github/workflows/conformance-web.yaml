@@ -39,10 +39,8 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/web-conformance/${{ github.sha }}
           restore-keys: ${{ runner.os }}/web-conformance
-      - name: NPM Install
-        run: npm ci
-      - name: Run
-        run: npx turbo run conformance:client:${{matrix.browser}}:${{matrix.client}} --output-logs new-only --log-order stream
+      - run: npm ci
+      - run: npx turbo run conformance:client:${{matrix.browser}}:${{matrix.client}} --output-logs new-only --log-order stream
   node:
     runs-on: ubuntu-22.04
     strategy:
@@ -62,7 +60,5 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/web-conformance/${{ github.sha }}
           restore-keys: ${{ runner.os }}/web-conformance
-      - name: NPM Install
-        run: npm ci
-      - name: Run
-        run: npx turbo run conformance:client:node:${{matrix.client}} --output-logs new-only --log-order stream
+      - run: npm ci
+      - run: npx turbo run conformance:client:node:${{matrix.client}} --output-logs new-only --log-order stream

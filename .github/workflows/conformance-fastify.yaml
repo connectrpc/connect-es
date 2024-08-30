@@ -34,7 +34,5 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/fastify-conformance/${{ github.sha }}
           restore-keys: ${{ runner.os }}/fastify-conformance
-      - name: NPM Install
-        run: npm ci
-      - name: Run
-        run: npx turbo run conformance --filter '@connectrpc/connect-fastify' --output-logs new-only --log-order stream
+      - run: npm ci
+      - run: npx turbo run conformance --filter '@connectrpc/connect-fastify' --output-logs new-only --log-order stream

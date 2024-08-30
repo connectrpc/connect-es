@@ -28,10 +28,8 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/format/${{ github.sha }}
           restore-keys: ${{ runner.os }}/format
-      - name: NPM Install
-        run: npm ci
-      - name: Format
-        run: npx turbo run format
+      - run: npm ci
+      - run: npx turbo run format
       - name: Check changed files
         run: node scripts/gh-diffcheck.js
   license-header:
@@ -46,10 +44,8 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/license-header/${{ github.sha }}
           restore-keys: ${{ runner.os }}/license-header
-      - name: NPM Install
-        run: npm ci
-      - name: Update license headers
-        run: npx turbo run license-header
+      - run: npm ci
+      - run: npx turbo run license-header
       - name: Check changed files
         run: node scripts/gh-diffcheck.js
   lint:
@@ -64,10 +60,8 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/lint/${{ github.sha }}
           restore-keys: ${{ runner.os }}/lint
-      - name: NPM Install
-        run: npm ci
-      - name: lint
-        run: npx turbo run lint
+      - run: npm ci
+      - run: npx turbo run lint
   attw:
     runs-on: ubuntu-22.04
     steps:
@@ -80,10 +74,8 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/attw/${{ github.sha }}
           restore-keys: ${{ runner.os }}/attw
-      - name: NPM Install
-        run: npm ci
-      - name: Are the types wrong
-        run: npx turbo run attw
+      - run: npm ci
+      - run: npx turbo run attw
   bundle-size:
     runs-on: ubuntu-22.04
     steps:
@@ -96,10 +88,8 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/bundle-size/${{ github.sha }}
           restore-keys: ${{ runner.os }}/bundle-size
-      - name: NPM Install
-        run: npm ci
-      - name: Bundle size
-        run: npx turbo run bundle-size
+      - run: npm ci
+      - run: npx turbo run bundle-size
       - name: Check changed files
         run: node scripts/gh-diffcheck.js
   build:
@@ -114,10 +104,8 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/build/${{ github.sha }}
           restore-keys: ${{ runner.os }}/build
-      - name: NPM Install
-        run: npm ci
-      - name: build
-        run: npx turbo run build
+      - run: npm ci
+      - run: npx turbo run build
   test:
     runs-on: ubuntu-22.04
     strategy:
@@ -138,10 +126,8 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/test/${{ github.sha }}
           restore-keys: ${{ runner.os }}/test
-      - name: NPM Install
-        run: npm ci
-      - name: Run
-        run: npx turbo run test
+      - run: npm ci
+      - run: npx turbo run test
   test16:
     runs-on: ubuntu-22.04
     strategy:
@@ -159,7 +145,5 @@ jobs:
           path: .turbo
           key: ${{ runner.os }}/test/${{ github.sha }}
           restore-keys: ${{ runner.os }}/test
-      - name: NPM Install
-        run: npm ci
-      - name: "Run, excluding @connectrpc/connect-web"
-        run: npx turbo run test --filter '!@connectrpc/connect-web'
+      - run: npm ci
+      - run: npx turbo run test --filter '!@connectrpc/connect-web'
