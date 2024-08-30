@@ -47,9 +47,16 @@ main();
  * server's port and other details to stdout.
  */
 function main() {
+  console.error("connect-node/conformance/server.ts main()");
+  const stdinAll = readFileSync(process.stdin.fd);
+  const stdinMsgLen = stdinAll.readUint32BE();
+  if (stdinAll.byteLength != stdinMsgLen + 4) {
+    throw new Error("unexpected input on stdin");
+  }
   const req = ServerCompatRequest.fromBinary(
-    readFileSync(process.stdin.fd).subarray(4),
+    stdinAll.subarray(4),
   );
+  console.error("connect-node/conformance/server.ts compat req", req);
 
   const adapter = connectNodeAdapter({
     routes,
@@ -107,12 +114,14 @@ function main() {
   }
 
   process.on("SIGTERM", () => {
+    console.error("connect-node/conformance/server.ts SIGTERM");
     if ("closeAllConnections" in server) {
       server.closeAllConnections();
     }
     server.close();
   });
   server.listen(0, "127.0.0.1", () => {
+    console.error("connect-node/conformance/server.ts listening");
     const addrInfo = server.address() as net.AddressInfo;
     const res = new ServerCompatResponse({
       pemCert:
@@ -122,6 +131,7 @@ function main() {
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+    process.stdout.end(writeSizeDelimitedBuffer(res.toBinary()));
+    console.error("connect-node/conformance/server.ts wrote compat resp");
   });
 }
