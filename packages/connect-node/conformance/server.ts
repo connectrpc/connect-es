@@ -47,7 +47,7 @@ main();
  * server's port and other details to stdout.
  */
 function main() {
-  console.error("connect-node/conformance/server.ts main()");
+  console.error("connect-node/conformance/server.ts main()", process.pid);
   const stdinAll = readFileSync(process.stdin.fd);
   const stdinMsgLen = stdinAll.readUint32BE();
   if (stdinAll.byteLength != stdinMsgLen + 4) {
@@ -56,7 +56,7 @@ function main() {
   const req = ServerCompatRequest.fromBinary(
     stdinAll.subarray(4),
   );
-  console.error("connect-node/conformance/server.ts compat req", req);
+  console.error("connect-node/conformance/server.ts compat req", req, process.pid);
 
   const adapter = connectNodeAdapter({
     routes,
@@ -113,15 +113,24 @@ function main() {
       throw new Error("Unknown HTTP version");
   }
 
+  process.on("beforeExit", () => {
+    console.error("connect-node/conformance/server.ts beforeExit", process.pid);
+  });
+
+  process.on("beforeExit", () => {
+    console.error("connect-node/conformance/server.ts beforeExit", process.pid);
+  });
+
   process.on("SIGTERM", () => {
-    console.error("connect-node/conformance/server.ts SIGTERM");
+    console.error("connect-node/conformance/server.ts SIGTERM", process.pid);
     if ("closeAllConnections" in server) {
       server.closeAllConnections();
     }
     server.close();
   });
+
   server.listen(0, "127.0.0.1", () => {
-    console.error("connect-node/conformance/server.ts listening");
+    console.error("connect-node/conformance/server.ts listening", process.pid);
     const addrInfo = server.address() as net.AddressInfo;
     const res = new ServerCompatResponse({
       pemCert:
@@ -132,6 +141,6 @@ function main() {
       port: addrInfo.port,
     });
     process.stdout.end(writeSizeDelimitedBuffer(res.toBinary()));
-    console.error("connect-node/conformance/server.ts wrote compat resp");
+    console.error("connect-node/conformance/server.ts wrote compat resp", process.pid);
   });
 }
