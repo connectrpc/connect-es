@@ -136,7 +136,7 @@ function main() {
 
   process.on("SIGTERM", () => {
     // Gracefully shutting down a http2 server is complicated.
-    // We trust the conformance test runner to only send the SIGNAL if it's done,
+    // We trust the conformance test runner to only send the signal if it's done,
     // so we simply shut down hard.
     process.exit();
   });
