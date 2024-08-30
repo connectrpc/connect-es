@@ -23,6 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
       - uses: actions/cache@v4
         with:
           path: .turbo
@@ -39,6 +40,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
       - uses: actions/cache@v4
         with:
           path: .turbo
@@ -55,6 +57,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
       - uses: actions/cache@v4
         with:
           path: .turbo
@@ -69,6 +72,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
       - uses: actions/cache@v4
         with:
           path: .turbo
@@ -83,6 +87,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
       - uses: actions/cache@v4
         with:
           path: .turbo
@@ -99,6 +104,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
       - uses: actions/cache@v4
         with:
           path: .turbo
@@ -121,6 +127,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
       - uses: actions/cache@v4
         with:
           path: .turbo
@@ -140,6 +147,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
+          cache: 'npm'
       - uses: actions/cache@v4
         with:
           path: .turbo
