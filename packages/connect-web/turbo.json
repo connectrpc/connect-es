@@ -21,7 +21,7 @@
         "conformance:node:callback"
       ]
     },
-    "conformance:client:safari": {
+    "conformance:safari": {
       "cache": false,
       "dependsOn": ["^build"]
     },
@@ -29,7 +29,7 @@
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "conformance:client:safari:callback": {
+    "conformance:safari:callback": {
       "cache": false,
       "dependsOn": ["^build"]
     },

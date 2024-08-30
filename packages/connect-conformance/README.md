@@ -6,7 +6,7 @@ this repository.
 For documentation on the conformance tests, see the repository [here](https://github.com/connectrpc/conformance?tab=readme-ov-file#documentation).
 
 Note that this package does not run any conformance tests itself, but instead exports functionality to be used by other
-packages, such as `connect-node`, `connect-web`, etc.
+packages, such as `@connectprc/connect-node`, `@connectprc/connect-web`, etc.
 
 ## Updating the conformance version
 
