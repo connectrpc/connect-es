@@ -12,20 +12,20 @@
     },
     "conformance": {
       "dependsOn": [
-        "conformance:client:safari",
-        "conformance:client:chrome:promise",
-        "conformance:client:chrome:callback",
-        "conformance:client:firefox:promise",
-        "conformance:client:firefox:callback",
-        "conformance:client:node:promise",
-        "conformance:client:node:callback"
+        "conformance:safari",
+        "conformance:chrome:promise",
+        "conformance:chrome:callback",
+        "conformance:firefox:promise",
+        "conformance:firefox:callback",
+        "conformance:node:promise",
+        "conformance:node:callback"
       ]
     },
     "conformance:client:safari": {
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "conformance:client:safari:promise": {
+    "conformance:safari:promise": {
       "cache": false,
       "dependsOn": ["^build"]
     },
@@ -33,27 +33,27 @@
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "conformance:client:chrome:promise": {
+    "conformance:chrome:promise": {
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "conformance:client:chrome:callback": {
+    "conformance:chrome:callback": {
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "conformance:client:firefox:promise": {
+    "conformance:firefox:promise": {
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "conformance:client:firefox:callback": {
+    "conformance:firefox:callback": {
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "conformance:client:node:promise": {
+    "conformance:node:promise": {
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "conformance:client:node:callback": {
+    "conformance:node:callback": {
       "cache": false,
       "dependsOn": ["^build"]
     }

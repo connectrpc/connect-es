@@ -20,12 +20,12 @@ For every environment, two client flavors are available:
 
 For every combination, a task is available:
 
-`npx turbo run conformance:client:<chrome|firefox|safari|node>:<promise|callback>`
+`npx turbo run conformance:<chrome|firefox|safari|node>:<promise|callback>`
 
 ## Using a local browser
 
 To launch a browser window with access to the browser's network inspector, append the `--openBrowser` flag to the npm script:
 
 ```
-npx turbo run conformance:client:chrome:promise -- --openBrowser
+npx turbo run conformance:chrome:promise -- --openBrowser
 ```

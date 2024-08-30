@@ -40,7 +40,7 @@ jobs:
           key: ${{ runner.os }}/web-conformance/${{ github.sha }}
           restore-keys: ${{ runner.os }}/web-conformance
       - run: npm ci
-      - run: npx turbo run conformance:client:${{matrix.browser}}:${{matrix.client}} --output-logs new-only --log-order stream
+      - run: npx turbo run conformance:${{matrix.browser}}:${{matrix.client}} --filter '@connectrpc/connect-web' --output-logs new-only --log-order stream
   node:
     runs-on: ubuntu-22.04
     strategy:
@@ -61,4 +61,4 @@ jobs:
           key: ${{ runner.os }}/web-conformance/${{ github.sha }}
           restore-keys: ${{ runner.os }}/web-conformance
       - run: npm ci
-      - run: npx turbo run conformance:client:node:${{matrix.client}} --output-logs new-only --log-order stream
+      - run: npx turbo run conformance:node:${{matrix.client}} --filter '@connectrpc/connect-web' --output-logs new-only --log-order stream
