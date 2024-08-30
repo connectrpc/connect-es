@@ -40,6 +40,16 @@ import {
 
 main();
 
+
+process.on("beforeExit", () => {
+  console.error("connect-node/conformance/server.ts beforeExit", process.pid);
+});
+
+process.on("exit", () => {
+  console.error("connect-node/conformance/server.ts exit", process.pid);
+});
+
+
 /**
  * This program implements a server under test for the connect conformance test
  * runner. It reads ServerCompatRequest messages from stdin, starts the server
@@ -56,7 +66,6 @@ function main() {
   const req = ServerCompatRequest.fromBinary(
     stdinAll.subarray(4),
   );
-  console.error("connect-node/conformance/server.ts compat req", req, process.pid);
 
   const adapter = connectNodeAdapter({
     routes,
@@ -112,14 +121,6 @@ function main() {
     default:
       throw new Error("Unknown HTTP version");
   }
-
-  process.on("beforeExit", () => {
-    console.error("connect-node/conformance/server.ts beforeExit", process.pid);
-  });
-
-  process.on("beforeExit", () => {
-    console.error("connect-node/conformance/server.ts beforeExit", process.pid);
-  });
 
   process.on("SIGTERM", () => {
     console.error("connect-node/conformance/server.ts SIGTERM", process.pid);
