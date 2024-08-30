@@ -40,13 +40,8 @@ import {
 
 main();
 
-
-process.on("beforeExit", () => {
-  console.error("connect-node/conformance/server.ts beforeExit", process.pid);
-});
-
 process.on("exit", () => {
-  console.error("connect-node/conformance/server.ts exit", process.pid);
+  console.error(process.pid, "connect-node/conformance/server.ts exit");
 });
 
 
@@ -57,14 +52,9 @@ process.on("exit", () => {
  * server's port and other details to stdout.
  */
 function main() {
-  console.error("connect-node/conformance/server.ts main()", process.pid);
-  const stdinAll = readFileSync(process.stdin.fd);
-  const stdinMsgLen = stdinAll.readUint32BE();
-  if (stdinAll.byteLength != stdinMsgLen + 4) {
-    throw new Error("unexpected input on stdin");
-  }
+  console.error(process.pid, "connect-node/conformance/server.ts main()");
   const req = ServerCompatRequest.fromBinary(
-    stdinAll.subarray(4),
+    readFileSync(process.stdin.fd).subarray(4),
   );
 
   const adapter = connectNodeAdapter({
@@ -105,6 +95,7 @@ function main() {
       };
     }
   }
+  const h2Sessions = new Set<http2.ServerHttp2Session>();
   switch (req.httpVersion) {
     case HTTPVersion.HTTP_VERSION_1:
       server = req.useTls
@@ -115,6 +106,7 @@ function main() {
       server = req.useTls
         ? http2.createSecureServer(serverOptions, adapter)
         : http2.createServer(adapter);
+      server.on("session", s => h2Sessions.add(s));
       break;
     case HTTPVersion.HTTP_VERSION_3:
       throw new Error("HTTP/3 is not supported");
@@ -123,15 +115,23 @@ function main() {
   }
 
   process.on("SIGTERM", () => {
-    console.error("connect-node/conformance/server.ts SIGTERM", process.pid);
-    if ("closeAllConnections" in server) {
-      server.closeAllConnections();
-    }
-    server.close();
+    process.exit();
+    // if ("closeAllConnections" in server) {
+    //   console.error(process.pid, "connect-node/conformance/server.ts SIGTERM", "h1");
+    //   server.closeAllConnections();
+    //   server.close();
+    // } else {
+    //   console.error(process.pid, "connect-node/conformance/server.ts SIGTERM", "h2");
+    //   for (const s of h2Sessions) {
+    //     if (!s.closed) {
+    //       s.close();
+    //     }
+    //   }
+    //   server.close();
+    // }
   });
 
   server.listen(0, "127.0.0.1", () => {
-    console.error("connect-node/conformance/server.ts listening", process.pid);
     const addrInfo = server.address() as net.AddressInfo;
     const res = new ServerCompatResponse({
       pemCert:
@@ -141,7 +141,6 @@ function main() {
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    process.stdout.end(writeSizeDelimitedBuffer(res.toBinary()));
-    console.error("connect-node/conformance/server.ts wrote compat resp", process.pid);
+    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
   });
 }
