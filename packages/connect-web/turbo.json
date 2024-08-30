@@ -11,10 +11,7 @@
       "dependsOn": ["generate", "^build"]
     },
     "conformance": {
-      "dependsOn": [
-        "conformance:node:promise",
-        "conformance:node:callback"
-      ]
+      "dependsOn": ["conformance:node:promise", "conformance:node:callback"]
     },
     "conformance:safari": {
       "cache": false,

@@ -16,7 +16,7 @@
     "packages/connect-cloudflare"
   ],
   "scripts": {
-    "all": "turbo run build format test conformance bundle-size lint attw license-header",
+    "all": "turbo run --ui tui build format test conformance bundle-size lint attw license-header",
     "clean": "git clean -Xdf",
     "setversion": "node scripts/set-workspace-version.js",
     "postsetversion": "npm run all",

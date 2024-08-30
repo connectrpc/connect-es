@@ -32,10 +32,10 @@ and `npm` in the version specified in `package.json`):
 npm ci
 ```
 
-Make sure that the tests and the linters pass:
+Make sure that the tests, linters, and other checks pass:
 
 ```bash
-npx turbo run test lint
+npm run all
 ```
 
 We're using `turborepo` to run tasks. If you haven't used it yet, take a look at
