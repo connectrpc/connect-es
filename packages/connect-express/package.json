@@ -13,7 +13,7 @@
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
     "test": "jasmine --config=jasmine.json",
-    "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-express.yaml -v ./conformance/server.ts",
+    "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-express.yaml -v -- tsx ./conformance/server.ts",
     "format": "prettier --write --ignore-unknown '.' '!dist'",
     "license-header": "license-header",
     "lint": "eslint --max-warnings 0 .",
