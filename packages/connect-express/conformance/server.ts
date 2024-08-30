@@ -31,6 +31,7 @@ import {
   ServerCompatResponse,
   ServerStreamRequest,
   UnaryRequest,
+  writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
 import express from "express";
 import { expressConnectMiddleware } from "../src/index.js";
@@ -104,8 +105,12 @@ function main() {
   }
 
   process.on("SIGTERM", () => {
-    server.close();
+    // Gracefully shutting down a http2 server is complicated.
+    // We trust the conformance test runner to only send the SIGNAL if it's done,
+    // so we simply shut down hard.
+    process.exit();
   });
+
   server.listen(undefined, "127.0.0.1", () => {
     const addrInfo = server.address() as net.AddressInfo;
     const res = new ServerCompatResponse({
@@ -116,10 +121,6 @@ function main() {
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    const data = res.toBinary();
-    const size = Buffer.alloc(4);
-    size.writeUInt32BE(data.byteLength);
-    process.stdout.write(size);
-    process.stdout.write(data);
+    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
   });
 }

@@ -40,11 +40,6 @@ import {
 
 main();
 
-process.on("exit", () => {
-  console.error(process.pid, "connect-node/conformance/server.ts exit");
-});
-
-
 /**
  * This program implements a server under test for the connect conformance test
  * runner. It reads ServerCompatRequest messages from stdin, starts the server
@@ -52,7 +47,6 @@ process.on("exit", () => {
  * server's port and other details to stdout.
  */
 function main() {
-  console.error(process.pid, "connect-node/conformance/server.ts main()");
   const req = ServerCompatRequest.fromBinary(
     readFileSync(process.stdin.fd).subarray(4),
   );
@@ -95,7 +89,6 @@ function main() {
       };
     }
   }
-  const h2Sessions = new Set<http2.ServerHttp2Session>();
   switch (req.httpVersion) {
     case HTTPVersion.HTTP_VERSION_1:
       server = req.useTls
@@ -106,7 +99,6 @@ function main() {
       server = req.useTls
         ? http2.createSecureServer(serverOptions, adapter)
         : http2.createServer(adapter);
-      server.on("session", s => h2Sessions.add(s));
       break;
     case HTTPVersion.HTTP_VERSION_3:
       throw new Error("HTTP/3 is not supported");
@@ -115,20 +107,10 @@ function main() {
   }
 
   process.on("SIGTERM", () => {
+    // Gracefully shutting down a http2 server is complicated.
+    // We trust the conformance test runner to only send the SIGNAL if it's done,
+    // so we simply shut down hard.
     process.exit();
-    // if ("closeAllConnections" in server) {
-    //   console.error(process.pid, "connect-node/conformance/server.ts SIGTERM", "h1");
-    //   server.closeAllConnections();
-    //   server.close();
-    // } else {
-    //   console.error(process.pid, "connect-node/conformance/server.ts SIGTERM", "h2");
-    //   for (const s of h2Sessions) {
-    //     if (!s.closed) {
-    //       s.close();
-    //     }
-    //   }
-    //   server.close();
-    // }
   });
 
   server.listen(0, "127.0.0.1", () => {
