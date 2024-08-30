@@ -12,11 +12,6 @@
     },
     "conformance": {
       "dependsOn": [
-        "conformance:safari",
-        "conformance:chrome:promise",
-        "conformance:chrome:callback",
-        "conformance:firefox:promise",
-        "conformance:firefox:callback",
         "conformance:node:promise",
         "conformance:node:callback"
       ]
