@@ -21,7 +21,7 @@
   "preferUnplugged": true,
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0",
-    "@bufbuild/protoplugin": "^1.10.0"
+    "@bufbuild/protoplugin": "^2.0.0"
   },
   "peerDependencies": {
     "@connectrpc/connect": "1.4.0",
