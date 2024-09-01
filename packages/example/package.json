@@ -15,7 +15,7 @@
     "@bufbuild/protobuf": "^1.10.0",
     "@connectrpc/connect-node": "^1.4.0",
     "@connectrpc/connect-web": "^1.4.0",
-    "tsx": "^4.16.5"
+    "tsx": "^4.19.0"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.36.0",
