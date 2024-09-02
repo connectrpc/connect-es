@@ -16,8 +16,26 @@ env:
   DO_NOT_TRACK: 1
 
 jobs:
-  format:
+  tasks:
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        task:
+          - format
+          - license-header
+          - lint
+          - attw
+          - bundle-size
+          - build
+        include:
+          - task: format
+            diff-check: true
+          - task: license-header
+            diff-check: true
+          - task: bundle-size
+            diff-check: true
+    name: ${{ matrix.task }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,91 +45,13 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: .turbo
-          key: ${{ runner.os }}/format/${{ github.sha }}
-          restore-keys: ${{ runner.os }}/format
+          key: ${{ runner.os }}/${{ matrix.task }}/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/${{ matrix.task }}
       - run: npm ci
-      - run: npx turbo run format
+      - run: npx turbo run ${{ matrix.task }}
       - name: Check changed files
+        if: ${{ matrix.diff-check }}
         run: node scripts/gh-diffcheck.js
-  license-header:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: "npm"
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}/license-header/${{ github.sha }}
-          restore-keys: ${{ runner.os }}/license-header
-      - run: npm ci
-      - run: npx turbo run license-header
-      - name: Check changed files
-        run: node scripts/gh-diffcheck.js
-  lint:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: "npm"
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}/lint/${{ github.sha }}
-          restore-keys: ${{ runner.os }}/lint
-      - run: npm ci
-      - run: npx turbo run lint
-  attw:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: "npm"
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}/attw/${{ github.sha }}
-          restore-keys: ${{ runner.os }}/attw
-      - run: npm ci
-      - run: npx turbo run attw
-  bundle-size:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: "npm"
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}/bundle-size/${{ github.sha }}
-          restore-keys: ${{ runner.os }}/bundle-size
-      - run: npm ci
-      - run: npx turbo run bundle-size
-      - name: Check changed files
-        run: node scripts/gh-diffcheck.js
-  build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: "npm"
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}/build/${{ github.sha }}
-          restore-keys: ${{ runner.os }}/build
-      - run: npm ci
-      - run: npx turbo run build
   test:
     runs-on: ubuntu-22.04
     strategy:
