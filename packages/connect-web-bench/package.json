@@ -7,7 +7,7 @@
     "postgenerate": "license-header src/gen"
   },
   "dependencies": {
-    "@bufbuild/buf": "^1.36.0",
+    "@bufbuild/buf": "^1.39.0",
     "@bufbuild/protobuf": "^1.10.0",
     "@bufbuild/protoc-gen-es": "^1.10.0",
     "@connectrpc/connect-web": "1.4.0",
