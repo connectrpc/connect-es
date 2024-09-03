@@ -207,7 +207,16 @@ export async function universalResponseToNodeResponse(
 async function* asyncIterableFromNodeServerRequest(
   request: NodeServerRequest,
 ): AsyncIterable<Uint8Array> {
-  for await (const chunk of request) {
+  const it = request.iterator({
+    // Node.js v16 closes request and response when this option isn't disabled.
+    // When one of our handlers receives invalid data (such as an unexpected
+    // compression flag in a streaming request), we're unable to write the error
+    // response.
+    // Later major versions have a more sensible behavior - we can revert this
+    // workaround once we stop supporting v16.
+    destroyOnReturn: false,
+  });
+  for await (const chunk of it) {
     yield chunk;
   }
 }
