@@ -76,35 +76,30 @@ function wrapZLibErrors<T>(
   readMaxBytes: number,
 ): Promise<T> {
   return promise.catch((e) => {
-    const { code } = getNodeErrorProps(e);
+    const props = getNodeErrorProps(e);
+    let code = Code.Internal;
+    let message = "decompression failed";
     // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
-    switch (code) {
+    switch (props.code) {
       case "ERR_BUFFER_TOO_LARGE":
-        e = new ConnectError(
-          `message is larger than configured readMaxBytes ${readMaxBytes} after decompression`,
-          Code.ResourceExhausted,
-        );
+        code = Code.ResourceExhausted;
+        message = `message is larger than configured readMaxBytes ${readMaxBytes} after decompression`;
         break;
       case "Z_DATA_ERROR":
       case "ERR_PADDING_2":
-        e = new ConnectError(
-          "decompression failed",
-          Code.InvalidArgument,
-          undefined,
-          undefined,
-          e,
-        );
+        code = Code.InvalidArgument;
         break;
       default:
-        e = new ConnectError(
-          "decompression failed",
-          Code.Internal,
-          undefined,
-          undefined,
-          e,
-        );
+        if (
+          props.code !== undefined &&
+          props.code.startsWith("ERR__ERROR_FORMAT_")
+        ) {
+          code = Code.InvalidArgument;
+        }
         break;
     }
-    return Promise.reject(e);
+    return Promise.reject(
+      new ConnectError(message, code, undefined, undefined, e),
+    );
   });
 }
