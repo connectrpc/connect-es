@@ -14,7 +14,7 @@
 
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
-import { headerGrpcStatus } from "./headers.js";
+import { headerGrpcStatus, headerStatusDetailsBin } from "./headers.js";
 import { findTrailerError } from "./trailer-status.js";
 
 /**
@@ -31,7 +31,7 @@ export function validateTrailer(trailer: Headers, header: Headers): void {
     });
     throw err;
   }
-  if (!trailer.has(headerGrpcStatus)) {
+  if (!trailer.has(headerGrpcStatus) && !trailer.has(headerStatusDetailsBin)) {
     throw new ConnectError("protocol error: missing status", Code.Internal);
   }
 }
