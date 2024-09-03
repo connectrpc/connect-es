@@ -31,7 +31,12 @@ export function validateTrailer(trailer: Headers, header: Headers): void {
     });
     throw err;
   }
-  if (!trailer.has(headerGrpcStatus) && !trailer.has(headerStatusDetailsBin)) {
+  if (
+    !header.has(headerGrpcStatus) &&
+    !header.has(headerStatusDetailsBin) &&
+    !trailer.has(headerGrpcStatus) &&
+    !trailer.has(headerStatusDetailsBin)
+  ) {
     throw new ConnectError("protocol error: missing status", Code.Internal);
   }
 }
