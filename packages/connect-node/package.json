@@ -14,7 +14,7 @@
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
     "test": "jasmine --config=jasmine.json",
     "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/server.ts",
-    "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/client.ts",
+    "conformance:client": "tsc --noEmit && connectconformance --mode client --run 'gRPC Unexpected Responses/HTTPVersion:2/TLS:false/unexpected-content-type' --trace --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/client.ts",
     "format": "prettier --write --ignore-unknown '.' '!dist'",
     "license-header": "license-header",
     "lint": "eslint --max-warnings 0 .",

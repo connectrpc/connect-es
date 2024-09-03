@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Code } from "../code.js";
+import { ConnectError } from "../connect-error.js";
+import { headerGrpcStatus } from "./headers.js";
 import { findTrailerError } from "./trailer-status.js";
 
 /**
@@ -27,5 +30,8 @@ export function validateTrailer(trailer: Headers, header: Headers): void {
       err.metadata.append(key, value);
     });
     throw err;
+  }
+  if (!trailer.has(headerGrpcStatus)) {
+    throw new ConnectError("protocol error: missing status", Code.Internal);
   }
 }

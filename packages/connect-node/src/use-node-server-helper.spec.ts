@@ -99,7 +99,7 @@ export function useNodeServer(
           client = createNodeHttpClient({
             httpVersion: "2",
             sessionProvider: (authority) => {
-              if (authority !== this.getUrl()) {
+              if (new URL(this.getUrl()).host != new URL(authority).host) {
                 throw new Error(
                   "client from useNodeServer() can only be used for requests against the server URL",
                 );

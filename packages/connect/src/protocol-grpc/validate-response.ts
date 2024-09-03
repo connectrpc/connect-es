@@ -16,8 +16,13 @@ import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
 import { findTrailerError } from "./trailer-status.js";
 import { Code } from "../code.js";
-import { headerEncoding, headerGrpcStatus } from "./headers.js";
+import {
+  headerContentType,
+  headerEncoding,
+  headerGrpcStatus,
+} from "./headers.js";
 import type { Compression } from "../protocol/compression.js";
+import { parseContentType } from "./content-type.js";
 
 /**
  * Validates response status and header for the gRPC protocol.
@@ -39,6 +44,14 @@ export function validateResponse(
       `HTTP ${status}`,
       codeFromHttpStatus(status),
       headers,
+    );
+  }
+  const mimeType = headers.get(headerContentType);
+  const parsedType = parseContentType(mimeType);
+  if (parsedType == undefined) {
+    throw new ConnectError(
+      `unsupported content type ${mimeType}`,
+      Code.Unknown,
     );
   }
   return {

@@ -17,7 +17,11 @@ import { Code } from "../code.js";
 import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
 import { parseContentType } from "./content-type.js";
-import { headerStreamEncoding, headerUnaryEncoding } from "./headers.js";
+import {
+  headerContentType,
+  headerStreamEncoding,
+  headerUnaryEncoding,
+} from "./headers.js";
 import type { Compression } from "../protocol/compression.js";
 
 /**
@@ -38,7 +42,7 @@ export function validateResponse(
 ):
   | { isUnaryError: false; unaryError?: undefined }
   | { isUnaryError: true; unaryError: ConnectError } {
-  const mimeType = headers.get("Content-Type");
+  const mimeType = headers.get(headerContentType);
   const parsedType = parseContentType(mimeType);
   if (status !== 200) {
     const errorFromStatus = new ConnectError(
