@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [21.1.0, 20.9.0, 18.16.0]
+        node-version: [21.1.0, 20.9.0, 18.16.0, 16.20.0]
     name: "Node.js ${{ matrix.node-version }}"
     timeout-minutes: 10
     steps:
