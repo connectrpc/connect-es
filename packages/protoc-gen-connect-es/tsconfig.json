@@ -2,6 +2,11 @@
   "files": ["src/protoc-gen-connect-es-plugin.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "resolveJsonModule": true
+    // We import the plugin's version number from package.json
+    "resolveJsonModule": true,
+    // This package is CommonJS
+    "verbatimModuleSyntax": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node10"
   }
 }

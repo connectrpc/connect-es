@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { PackageJson } from "./package-json";
+import type { PackageJson } from "./package-json";
 import {
   intersects as semverIntersects,
   satisfies as semverSatisfies,
@@ -32,7 +32,7 @@ export function replaceDependencies(
 ): PackageJson | null {
   const modifiedPackageNames = new Set<string>();
   const replacedPackageNames = new Map<string, string>();
-  const copy = structuredClone(pkg) as PackageJson;
+  const copy = clonePackageJson(pkg);
   // replace dependencies
   for (const replacement of replacements) {
     for (const p of [
@@ -91,4 +91,8 @@ export function replaceDependencies(
     }
   }
   return modifiedPackageNames.size > 0 ? copy : null;
+}
+
+function clonePackageJson(pkg: PackageJson): PackageJson {
+  return JSON.parse(JSON.stringify(pkg)) as PackageJson;
 }

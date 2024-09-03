@@ -44,11 +44,10 @@ Once we have that out of the way, let's start the Connect server:
 npm start
 ```
 
-That's it!  You should now be able to open a web browser to https://localhost:8443 and see the
+That's it! You should now be able to open a web browser to https://localhost:8443 and see the
 example running locally.
 
 ![Screenshot](README.png)
-
 
 ## Using Node.js as a client
 
@@ -86,7 +85,6 @@ We can also use any gRPC client like `buf curl`:
 npx buf curl --protocol grpc --schema . -d '{"name": "John"}' \
    https://localhost:8443/connectrpc.eliza.v1.ElizaService/Introduce
 ```
-
 
 ## Generate code
 

@@ -4,7 +4,10 @@
   "scripts": {
     "bundle-size": "tsx src/report.ts",
     "generate": "buf generate",
-    "postgenerate": "license-header src/gen"
+    "postgenerate": "license-header src/gen",
+    "format": "prettier --write --ignore-unknown '.' '!src/gen'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 ."
   },
   "dependencies": {
     "@bufbuild/buf": "^1.39.0",

@@ -3,9 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "conformance": "tsc --noEmit && npm run conformance:server && npm run conformance:client",
-    "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v ./conformance/server.ts",
-    "conformance:client": "npx wrangler deploy -c ./conformance/wrangler-client.toml && connectconformance --mode client --conf ./conformance/conformance-cloudflare-client.yaml -v --known-failing @./conformance/known-failing-client.txt --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY  -- ./conformance/client.ts"
+    "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v tsx ./conformance/server.ts",
+    "conformance:client": "npx wrangler deploy -c ./conformance/wrangler-client.toml && connectconformance --mode client --conf ./conformance/conformance-cloudflare-client.yaml -v --known-failing @./conformance/known-failing-client.txt --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY  -- tsx ./conformance/client.ts",
+    "format": "prettier --write --ignore-unknown '.'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 ."
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.0",

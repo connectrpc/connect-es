@@ -16,7 +16,7 @@ import { createRegistry } from "@bufbuild/protobuf";
 import {
   createConnectTransport,
   createGrpcWebTransport,
-} from "@connectrpc/connect-web";
+} from "../src/index.js";
 import {
   BidiStreamRequest,
   ClientCompatRequest,

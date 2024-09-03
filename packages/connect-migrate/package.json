@@ -8,7 +8,6 @@
     "url": "https://github.com/connectrpc/connect-es.git",
     "directory": "packages/connect-migrate"
   },
-  "sideEffects": true,
   "bin": {
     "connect-migrate": "bin/connect-migrate"
   },
@@ -16,7 +15,9 @@
     "prebuild": "rm -rf ./dist/*",
     "build": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs",
     "test": "jasmine --config=jasmine.json",
-    "build+test": "npm run build && npm run test"
+    "format": "prettier --write --ignore-unknown '.' '!dist'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 ."
   },
   "engines": {
     "node": ">=16.0.0"

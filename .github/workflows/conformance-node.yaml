@@ -1,0 +1,40 @@
+name: "Node.js Conformance"
+
+on:
+  push:
+    branches: [main, "v*"]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, "v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # https://consoledonottrack.com/
+  DO_NOT_TRACK: 1
+
+jobs:
+  node:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [21.1.0, 20.9.0, 18.16.0]
+        side: [client, server]
+    name: "Node.js ${{ matrix.node-version }} ${{ matrix.side }}"
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}/node-conformance/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/node-conformance
+      - run: npm ci
+      - run: npx turbo run conformance:${{matrix.side}} --filter '@connectrpc/connect-node' --output-logs new-only --log-order stream

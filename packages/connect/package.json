@@ -15,7 +15,10 @@
     "build": "npm run build:cjs && npm run build:esm && node scripts/update-user-agent.mjs",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
-    "jasmine": "jasmine --config=jasmine.json",
+    "test": "jasmine --config=jasmine.json",
+    "format": "prettier --write --ignore-unknown '.' '!dist' '!src/protocol-grpc/gen'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 .",
     "attw": "attw --pack"
   },
   "type": "module",
