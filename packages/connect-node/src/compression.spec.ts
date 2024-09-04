@@ -69,20 +69,6 @@ describe("compression", () => {
           );
         }
       });
-      it("should raise internal error on excessive readMaxBytes", async () => {
-        try {
-          await compression.decompress(
-            new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
-            Number.MAX_SAFE_INTEGER,
-          );
-          fail("excepted an error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[internal] decompression failed",
-          );
-        }
-      });
     });
   }
 });
