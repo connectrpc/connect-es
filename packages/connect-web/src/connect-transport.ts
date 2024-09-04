@@ -299,10 +299,10 @@ export function createConnectTransport(
           }
           yield parse(data);
         }
+        if (signal.aborted) {
+          throw new ConnectError(`${signal.reason}`, Code.Canceled);
+        }
         if (!endStreamReceived) {
-          if (signal.aborted) {
-            throw new ConnectError(`${signal.reason}`, Code.Canceled);
-          }
           throw "missing EndStreamResponse";
         }
       }

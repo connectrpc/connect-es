@@ -275,6 +275,7 @@ export function createGrpcWebTransport(
         trailerTarget: Headers,
         header: Headers,
         headerError: ConnectError | undefined,
+        signal: AbortSignal,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         if (foundStatus) {
@@ -313,6 +314,9 @@ export function createGrpcWebTransport(
           }
           yield parse(data);
           continue;
+        }
+        if (signal.aborted) {
+          throw new ConnectError(`${signal.reason}`, Code.Canceled);
         }
         if (!trailerReceived) {
           if (headerError) {
@@ -388,6 +392,7 @@ export function createGrpcWebTransport(
               trailer,
               fRes.headers,
               headerError,
+              req.signal,
             ),
           };
           return res;
