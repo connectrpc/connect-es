@@ -100,9 +100,7 @@ async function unary(
     });
     const { afterCloseSendMs } = getCancelTiming(req);
     if (afterCloseSendMs >= 0) {
-      wait(afterCloseSendMs)
-        .then(() => controller.abort())
-        .catch(() => {});
+      setTimeout(() => controller.abort(), afterCloseSendMs);
     }
     call(
       uReq,
@@ -231,9 +229,7 @@ async function serverStream(
       },
     );
     if (cancelTiming.afterCloseSendMs >= 0) {
-      wait(cancelTiming.afterCloseSendMs)
-        .then(() => controller.abort())
-        .catch(() => {});
+      setTimeout(() => controller.abort(), cancelTiming.afterCloseSendMs);
     }
   });
 }
