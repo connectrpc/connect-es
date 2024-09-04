@@ -175,6 +175,10 @@ async function serverStream(
   await wait(req.requestDelayMs);
   return new Promise<ClientResponseResult>((resolve) => {
     const controller = new AbortController();
+    let abortCount = -1;
+    controller.signal.addEventListener("abort", () => {
+      abortCount = count;
+    });
     client.serverStream(
       uReq,
       (uResp) => {
@@ -187,7 +191,11 @@ async function serverStream(
       (err) => {
         // Callback clients swallow client triggered cancellations don't report
         // that as an error.
-        if (err === undefined && controller.signal.aborted) {
+        if (
+          err === undefined &&
+          controller.signal.aborted &&
+          abortCount == count
+        ) {
           error = new ConnectError("operation aborted", Code.Canceled);
         }
         if (err !== undefined) {
