@@ -40,7 +40,7 @@ export async function run() {
   const { archive, bin } = getArtifactNameForEnv();
   const tempDir = getTempDir();
   const binPath = joinPath(tempDir, bin);
-  if (!existsSync(binPath)) {
+  if (!existsAndMatchesVersion(binPath)) {
     const archivePath = joinPath(tempDir, archive);
     await download(`${downloadUrl}/${archive}`, archivePath);
     await extractBin(archivePath, binPath);
@@ -48,6 +48,13 @@ export async function run() {
   execFileSync(binPath, process.argv.slice(2), {
     stdio: "inherit",
   });
+}
+
+function existsAndMatchesVersion(bin: string) {
+  return (
+    existsSync(bin) &&
+    execFileSync(bin, ["--version"]).toString().endsWith(version)
+  );
 }
 
 async function download(url: string, path: string) {

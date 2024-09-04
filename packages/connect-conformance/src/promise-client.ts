@@ -89,9 +89,17 @@ async function unary(
     if (idempotent) {
       call = client.idempotentUnary;
     }
+    const controller = new AbortController();
     await wait(req.requestDelayMs);
+    const { afterCloseSendMs } = getCancelTiming(req);
+    if (afterCloseSendMs >= 0) {
+      wait(afterCloseSendMs)
+        .then(() => controller.abort())
+        .catch(() => {});
+    }
     const uRes = await call(uReq, {
       headers: reqHeader,
+      signal: controller.signal,
       onHeader(headers) {
         resHeaders = convertToProtoHeaders(headers);
       },
@@ -154,7 +162,8 @@ async function serverStream(
         resTrailers = convertToProtoHeaders(trailers);
       },
     });
-    if (cancelTiming.afterNumResponses == 0) {
+    if (cancelTiming.afterCloseSendMs >= 0) {
+      await wait(cancelTiming.afterCloseSendMs);
       controller.abort();
     }
     let count = 0;
@@ -290,11 +299,11 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
         if (next.done === true) {
           continue;
         }
+        payloads.push(next.value.payload!);
         recvCount++;
         if (cancelTiming.afterNumResponses === recvCount) {
           controller.abort();
         }
-        payloads.push(next.value.payload!);
       }
     }
     if (cancelTiming.beforeCloseSend !== undefined) {
@@ -315,11 +324,11 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
       if (next.done === true) {
         break;
       }
+      payloads.push(next.value.payload!);
       recvCount++;
       if (cancelTiming.afterNumResponses === recvCount) {
         controller.abort();
       }
-      payloads.push(next.value.payload!);
     }
   } catch (e) {
     error = ConnectError.from(e);

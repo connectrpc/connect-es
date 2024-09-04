@@ -84,6 +84,13 @@ async function unary(
 
   await wait(req.requestDelayMs);
   return new Promise<ClientResponseResult>((resolve) => {
+    const controller = new AbortController();
+    const { afterCloseSendMs } = getCancelTiming(req);
+    if (afterCloseSendMs >= 0) {
+      wait(afterCloseSendMs)
+        .then(() => controller.abort())
+        .catch(() => {});
+    }
     call(
       uReq,
       (err, uRes) => {
@@ -112,6 +119,7 @@ async function unary(
       },
       {
         headers: reqHeader,
+        signal: controller.signal,
         onHeader(headers) {
           resHeaders = convertToProtoHeaders(headers);
         },
@@ -151,9 +159,6 @@ async function serverStream(
     const cancelFn = client.serverStream(
       uReq,
       (uResp) => {
-        if (cancelTiming.afterNumResponses === 0) {
-          cancelFn();
-        }
         payloads.push(uResp.payload!);
         count++;
         if (count === cancelTiming.afterNumResponses) {
@@ -192,6 +197,11 @@ async function serverStream(
         },
       },
     );
+    if (cancelTiming.afterCloseSendMs >= 0) {
+      wait(cancelTiming.afterCloseSendMs)
+        .then(() => cancelFn())
+        .catch(() => {});
+    }
   });
 }
 
