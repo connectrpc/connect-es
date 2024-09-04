@@ -304,9 +304,7 @@ export function createConnectTransport(
         // As a work around we check at the end and throw.
         //
         // Ref: https://github.com/nodejs/undici/issues/1940
-        if (signal.aborted) {
-          throw new ConnectError(`${signal.reason}`, Code.Canceled);
-        }
+        signal.throwIfAborted();
         if (!endStreamReceived) {
           throw "missing EndStreamResponse";
         }
