@@ -60,7 +60,7 @@ jobs:
         # Node.js v16 does not provide all necessary fetch types by default, so
         # we cannot run tests for @connectrpc/connect-web.
         # v16 is tested in a separate job below.
-        node-version: [21.1.0, 20.9.0, 18.16.0]
+        node-version: [22.7.0, 20.17.0, 18.20.4]
     name: "test on Node.js ${{ matrix.node-version }}"
     steps:
       - uses: actions/checkout@v4
@@ -80,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [16.20.0]
+        node-version: [16.20.2]
     name: "test on Node.js ${{ matrix.node-version }}"
     steps:
       - uses: actions/checkout@v4
