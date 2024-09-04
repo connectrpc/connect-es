@@ -15,10 +15,10 @@ usually do. We repeat this for an increasing number of RPCs.
 
 | code generator | RPCs | bundle size |  minified | compressed |
 | -------------- | ---: | ----------: | --------: | ---------: |
-| Connect-ES     |    1 |   152,643 b |  66,478 b |   16,380 b |
-| Connect-ES     |    4 |   168,085 b |  72,418 b |   16,852 b |
-| Connect-ES     |    8 |   193,398 b |  82,142 b |   17,475 b |
-| Connect-ES     |   16 |   227,037 b |  96,408 b |   18,237 b |
+| Connect-ES     |    1 |   152,787 b |  66,535 b |   16,405 b |
+| Connect-ES     |    4 |   168,229 b |  72,475 b |   16,861 b |
+| Connect-ES     |    8 |   193,542 b |  82,200 b |   17,497 b |
+| Connect-ES     |   16 |   227,181 b |  96,463 b |   18,226 b |
 | gRPC-Web       |    1 |   876,563 b | 548,495 b |   52,300 b |
 | gRPC-Web       |    4 |   928,964 b | 580,477 b |   54,673 b |
 | gRPC-Web       |    8 | 1,004,833 b | 628,223 b |   57,118 b |

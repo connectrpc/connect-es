@@ -266,6 +266,7 @@ export function createConnectTransport(
         body: ReadableStream<Uint8Array>,
         trailerTarget: Headers,
         header: Headers,
+        signal: AbortSignal,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         let endStreamReceived = false;
@@ -299,6 +300,9 @@ export function createConnectTransport(
           yield parse(data);
         }
         if (!endStreamReceived) {
+          if (signal.aborted) {
+            throw new ConnectError(`${signal.reason}`, Code.Canceled);
+          }
           throw "missing EndStreamResponse";
         }
       }
@@ -369,7 +373,12 @@ export function createConnectTransport(
             ...req,
             header: fRes.headers,
             trailer,
-            message: parseResponseBody(fRes.body, trailer, fRes.headers),
+            message: parseResponseBody(
+              fRes.body,
+              trailer,
+              fRes.headers,
+              req.signal,
+            ),
           };
           return res;
         },
