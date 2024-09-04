@@ -315,6 +315,11 @@ export function createGrpcWebTransport(
           yield parse(data);
           continue;
         }
+        // Node wil not throw an AbortError on `read` if the
+        // signal is aborted before `getReader` is called.
+        // As a work around we check at the end and throw.
+        //
+        // Ref: https://github.com/nodejs/undici/issues/1940
         if (signal.aborted) {
           throw new ConnectError(`${signal.reason}`, Code.Canceled);
         }
