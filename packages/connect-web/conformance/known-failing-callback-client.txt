@@ -1,3 +1,0 @@
-# The callback client does not pass a cancelled error to the end-of-stream callback for cancellations. This is intentional behavior as it is the user's
-# responsibility to handle this on the client side.
-**/server-stream/cancel-after-responses

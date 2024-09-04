@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createCallbackClient, ConnectError } from "@connectrpc/connect";
+import { createCallbackClient, ConnectError, Code } from "@connectrpc/connect";
 import type { CallbackClient, Transport } from "@connectrpc/connect";
 import {
   ClientCompatRequest,
@@ -85,6 +85,19 @@ async function unary(
   await wait(req.requestDelayMs);
   return new Promise<ClientResponseResult>((resolve) => {
     const controller = new AbortController();
+    // Handles client cancellation.
+    controller.signal.addEventListener("abort", () => {
+      resolve(
+        new ClientResponseResult({
+          payloads: payloads,
+          responseHeaders: resHeaders,
+          responseTrailers: resTrailers,
+          error: convertToProtoError(
+            error ?? new ConnectError("operation aborted", Code.Canceled),
+          ),
+        }),
+      );
+    });
     const { afterCloseSendMs } = getCancelTiming(req);
     if (afterCloseSendMs >= 0) {
       wait(afterCloseSendMs)
@@ -94,6 +107,11 @@ async function unary(
     call(
       uReq,
       (err, uRes) => {
+        // Callback clients swallow client triggered cancellations and never
+        // call the callback. This will trigger the global error handler and fail the process.
+        if (controller.signal.aborted) {
+          throw new Error("Aborted requests should not trigger the callback");
+        }
         if (err !== undefined) {
           error = ConnectError.from(err);
           // We can't distinguish between headers and trailers here, so we just
@@ -156,16 +174,22 @@ async function serverStream(
 
   await wait(req.requestDelayMs);
   return new Promise<ClientResponseResult>((resolve) => {
-    const cancelFn = client.serverStream(
+    const controller = new AbortController();
+    client.serverStream(
       uReq,
       (uResp) => {
         payloads.push(uResp.payload!);
         count++;
         if (count === cancelTiming.afterNumResponses) {
-          cancelFn();
+          controller.abort();
         }
       },
       (err) => {
+        // Callback clients swallow client triggered cancellations don't report
+        // that as an error.
+        if (err === undefined && controller.signal.aborted) {
+          error = new ConnectError("operation aborted", Code.Canceled);
+        }
         if (err !== undefined) {
           error = ConnectError.from(err);
           // We can't distinguish between headers and trailers here, so we just
@@ -189,6 +213,7 @@ async function serverStream(
       },
       {
         headers: reqHeader,
+        signal: controller.signal,
         onHeader(headers) {
           resHeaders = convertToProtoHeaders(headers);
         },
@@ -199,7 +224,7 @@ async function serverStream(
     );
     if (cancelTiming.afterCloseSendMs >= 0) {
       wait(cancelTiming.afterCloseSendMs)
-        .then(() => cancelFn())
+        .then(() => controller.abort())
         .catch(() => {});
     }
   });
