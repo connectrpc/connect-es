@@ -71,7 +71,7 @@ async function unary(
         compatRequest,
         idempotent ? IdempotentUnaryRequest : UnaryRequest,
       ),
-      (err, uRes) => {
+      (err, response) => {
         // Callback clients swallow client triggered cancellations and never
         // call the callback. This will trigger the global error handler and
         // fail the process.
@@ -89,7 +89,7 @@ async function unary(
           }
           result.responseTrailers = convertToProtoHeaders(err.metadata);
         } else {
-          result.payloads.push(uRes.payload!);
+          result.payloads.push(response.payload!);
         }
         resolve(result);
       },
