@@ -27,6 +27,14 @@
     });
   }
 
+  AbortSignal.prototype.throwIfAborted = function () {
+    if (this.aborted) {
+      const err = new Error("operation aborted");
+      err.name = "AbortError";
+      throw err;
+    }
+  };
+
   AbortSignal.prototype.addEventListener = function (type, callback) {
     if (type !== "abort") {
       return;
