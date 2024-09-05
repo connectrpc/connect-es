@@ -84,30 +84,14 @@ async function unary(
 
   await wait(req.requestDelayMs);
   return new Promise<ClientResponseResult>((resolve) => {
-    const controller = new AbortController();
-    // Handles client cancellation.
-    controller.signal.addEventListener("abort", () => {
-      resolve(
-        new ClientResponseResult({
-          payloads: payloads,
-          responseHeaders: resHeaders,
-          responseTrailers: resTrailers,
-          error: convertToProtoError(
-            error ?? new ConnectError("operation aborted", Code.Canceled),
-          ),
-        }),
-      );
-    });
-    const { afterCloseSendMs } = getCancelTiming(req);
-    if (afterCloseSendMs >= 0) {
-      setTimeout(() => controller.abort(), afterCloseSendMs);
-    }
-    call(
+    let clientCancelled = false;
+    const clientCancelFn = call(
       uReq,
       (err, uRes) => {
         // Callback clients swallow client triggered cancellations and never
-        // call the callback. This will trigger the global error handler and fail the process.
-        if (controller.signal.aborted) {
+        // call the callback. This will trigger the global error handler and
+        // fail the process.
+        if (clientCancelled) {
           throw new Error("Aborted requests should not trigger the callback");
         }
         if (err !== undefined) {
@@ -135,7 +119,6 @@ async function unary(
       },
       {
         headers: reqHeader,
-        signal: controller.signal,
         onHeader(headers) {
           resHeaders = convertToProtoHeaders(headers);
         },
@@ -144,6 +127,25 @@ async function unary(
         },
       },
     );
+    const { afterCloseSendMs } = getCancelTiming(req);
+    if (afterCloseSendMs >= 0) {
+      setTimeout(() => {
+        clientCancelled = true;
+        clientCancelFn();
+        resolve(
+          // Callback clients swallow client triggered cancellations and never
+          // call the callback.
+          new ClientResponseResult({
+            payloads: payloads,
+            responseHeaders: resHeaders,
+            responseTrailers: resTrailers,
+            error: convertToProtoError(
+              error ?? new ConnectError("client cancelled", Code.Canceled),
+            ),
+          }),
+        );
+      }, afterCloseSendMs);
+    }
   });
 }
 
@@ -168,33 +170,29 @@ async function serverStream(
   let resTrailers: ConformanceHeader[] = [];
   const payloads: ConformancePayload[] = [];
   const cancelTiming = getCancelTiming(req);
-  let count = 0;
 
   await wait(req.requestDelayMs);
   return new Promise<ClientResponseResult>((resolve) => {
-    const controller = new AbortController();
-    let abortCount = -1;
-    controller.signal.addEventListener("abort", () => {
-      abortCount = count;
-    });
-    client.serverStream(
+    let clientCancelled = false;
+    const clientCancelFn = client.serverStream(
       uReq,
       (uResp) => {
         payloads.push(uResp.payload!);
-        count++;
-        if (count === cancelTiming.afterNumResponses) {
-          controller.abort();
+        if (payloads.length === cancelTiming.afterNumResponses) {
+          clientCancelled = true;
+          clientCancelFn();
         }
       },
       (err) => {
-        // Callback clients swallow client triggered cancellations don't report
-        // that as an error.
-        if (
-          err === undefined &&
-          controller.signal.aborted &&
-          abortCount == count
-        ) {
-          error = new ConnectError("operation aborted", Code.Canceled);
+        // Callback clients call the closeCallback without an error for client
+        // triggered cancellation.
+        if (clientCancelled) {
+          if (err !== undefined) {
+            throw new Error(
+              "Aborted requests should not trigger the closeCallback with an error",
+            );
+          }
+          error = new ConnectError("client cancelled", Code.Canceled);
         }
         if (err !== undefined) {
           error = ConnectError.from(err);
@@ -219,7 +217,6 @@ async function serverStream(
       },
       {
         headers: reqHeader,
-        signal: controller.signal,
         onHeader(headers) {
           resHeaders = convertToProtoHeaders(headers);
         },
@@ -229,7 +226,10 @@ async function serverStream(
       },
     );
     if (cancelTiming.afterCloseSendMs >= 0) {
-      setTimeout(() => controller.abort(), cancelTiming.afterCloseSendMs);
+      setTimeout(() => {
+        clientCancelled = true;
+        clientCancelFn();
+      }, cancelTiming.afterCloseSendMs);
     }
   });
 }
