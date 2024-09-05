@@ -304,7 +304,11 @@ export function createConnectTransport(
         // As a work around we check at the end and throw.
         //
         // Ref: https://github.com/nodejs/undici/issues/1940
-        signal.throwIfAborted();
+        if ("throwIfAborted" in signal) {
+          // We assume that implementations without `throwIfAborted` (old
+          // browsers) do honor aborted signals on `read`.
+          signal.throwIfAborted();
+        }
         if (!endStreamReceived) {
           throw "missing EndStreamResponse";
         }
