@@ -14,7 +14,7 @@
     "connectconformance": "bin/connectconformance.cjs"
   },
   "scripts": {
-    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.2",
+    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.3",
     "postgenerate": "license-header src/gen",
     "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
