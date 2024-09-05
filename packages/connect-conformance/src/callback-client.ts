@@ -132,9 +132,10 @@ async function unary(
       setTimeout(() => {
         clientCancelled = true;
         clientCancelFn();
+        // Callback clients swallow client triggered cancellations and never
+        // call the callback. We report a fake error to the test runner to let
+        // it know that the call was cancelled.
         resolve(
-          // Callback clients swallow client triggered cancellations and never
-          // call the callback.
           new ClientResponseResult({
             payloads: payloads,
             responseHeaders: resHeaders,
@@ -185,7 +186,8 @@ async function serverStream(
       },
       (err) => {
         // Callback clients call the closeCallback without an error for client
-        // triggered cancellation.
+        // triggered cancellation. We report a fake error to the test runner to let
+        // it know that the call was cancelled.
         if (clientCancelled) {
           if (err !== undefined) {
             throw new Error(
