@@ -107,7 +107,10 @@ export enum Codec {
   JSON = 2,
 
   /**
-   * @generated from enum value: CODEC_TEXT = 3;
+   * not used; will be ignored
+   *
+   * @generated from enum value: CODEC_TEXT = 3 [deprecated = true];
+   * @deprecated
    */
   TEXT = 3,
 }

@@ -131,7 +131,8 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
   method?: string;
 
   /**
-   * The stream type of `method` (i.e. Unary, Client-Streaming, Server-Streaming, Full Duplex Bidi, or Half Duplex Bidi).
+   * The stream type of `method` (i.e. unary, client stream, server stream, full-duplex bidi
+   * stream, or half-duplex bidi stream).
    * When writing test cases, this is a required field.
    *
    * @generated from field: connectrpc.conformance.v1.StreamType stream_type = 13;
@@ -161,9 +162,9 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
    * The actual request messages that will sent to the server.
    * The type URL for all entries should be equal to the request type of the
    * method.
-   * There must be exactly one for unary and server-stream methods but
-   * can be zero or more for client- and bidi-stream methods.
-   * For client- and bidi-stream methods, all entries will have the
+   * There must be exactly one for unary and server stream methods but
+   * can be zero or more for client and bidi stream methods.
+   * For client and bidi stream methods, all entries will have the
    * same type URL.
    *
    * @generated from field: repeated google.protobuf.Any request_messages = 16;
@@ -180,7 +181,7 @@ export class ClientCompatRequest extends Message<ClientCompatRequest> {
 
   /**
    * Wait this many milliseconds before sending a request message.
-   * For client- or bidi-streaming requests, this delay should be
+   * For client or bidi stream methods, this delay should be
    * applied before each request sent.
    *
    * @generated from field: uint32 request_delay_ms = 18;
@@ -274,8 +275,9 @@ export class ClientCompatRequest_Cancel extends Message<ClientCompatRequest_Canc
     /**
      * When present, the client should cancel *instead of*
      * closing the send side of the stream, after all requests
-     * have been sent. This applies only to client and bidi
-     * stream RPCs.
+     * have been sent.
+     *
+     * This applies only to client and bidi stream RPCs.
      *
      * @generated from field: google.protobuf.Empty before_close_send = 1;
      */
@@ -287,6 +289,20 @@ export class ClientCompatRequest_Cancel extends Message<ClientCompatRequest_Canc
      * milliseconds after closing the send side of the stream
      * and then cancel.
      *
+     * This applies to all types of RPCs.
+     *
+     * For unary and server stream RPCs, where the API usually
+     * does not allow explicitly closing the send side, the
+     * cancellation should be done immediately after invoking
+     * the RPC (which should implicitly send the one-and-only
+     * request and then close the send-side).
+     *
+     * For APIs where unary RPCs block until the response
+     * is received, there is no point after the request is
+     * sent but before a response is received to cancel. So
+     * the client must arrange for the RPC to be canceled
+     * asynchronously before invoking the blocking unary call.
+     *
      * @generated from field: uint32 after_close_send_ms = 2;
      */
     value: number;
@@ -295,6 +311,8 @@ export class ClientCompatRequest_Cancel extends Message<ClientCompatRequest_Canc
     /**
      * When present, the client should cancel right after
      * reading this number of response messages from the stream.
+     * When present, this will be greater than zero.
+     *
      * This applies only to server and bidi stream RPCs.
      *
      * @generated from field: uint32 after_num_responses = 3;
@@ -420,8 +438,8 @@ export class ClientResponseResult extends Message<ClientResponseResult> {
   /**
    * Servers should echo back payloads that they received as part of the request.
    * This field should contain all the payloads the server echoed back. Note that
-   * There will be zero-to-one for unary and client-stream methods and
-   * zero-to-many for server- and bidi-stream methods.
+   * There will be zero-to-one for unary and client stream methods and
+   * zero-to-many for server and bidi stream methods.
    *
    * @generated from field: repeated connectrpc.conformance.v1.ConformancePayload payloads = 2;
    */
