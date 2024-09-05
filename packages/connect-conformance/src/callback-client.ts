@@ -20,18 +20,17 @@ import {
 } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
   UnaryRequest,
-  Header as ConformanceHeader,
   ServerStreamRequest,
-  ConformancePayload,
   UnimplementedRequest,
   IdempotentUnaryRequest,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   convertToProtoError,
   convertToProtoHeaders,
-  appendProtoHeaders,
   wait,
   getCancelTiming,
+  getRequestHeaders,
+  getSingleRequestMessage,
 } from "./protocol.js";
 import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 
@@ -59,34 +58,19 @@ export function invokeWithCallbackClient(
 
 async function unary(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  compatRequest: ClientCompatRequest,
   idempotent: boolean = false,
 ) {
-  if (req.requestMessages.length !== 1) {
-    throw new Error("Unary method requires exactly one request message");
-  }
-  const msg = req.requestMessages[0];
-  const uReq = idempotent ? new IdempotentUnaryRequest() : new UnaryRequest();
-  if (!msg.unpackTo(uReq)) {
-    throw new Error("Could not unpack request message to unary request");
-  }
-  const reqHeader = new Headers();
-  appendProtoHeaders(reqHeader, req.requestHeaders);
-  let error: ConnectError | undefined = undefined;
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
-  const payloads: ConformancePayload[] = [];
-
-  let call = client.unary;
-  if (idempotent) {
-    call = client.idempotentUnary;
-  }
-
-  await wait(req.requestDelayMs);
+  await wait(compatRequest.requestDelayMs);
+  const result = new ClientResponseResult();
   return new Promise<ClientResponseResult>((resolve) => {
+    const call = idempotent ? client.idempotentUnary : client.unary;
     let clientCancelled = false;
     const clientCancelFn = call(
-      uReq,
+      getSingleRequestMessage(
+        compatRequest,
+        idempotent ? IdempotentUnaryRequest : UnaryRequest,
+      ),
       (err, uRes) => {
         // Callback clients swallow client triggered cancellations and never
         // call the callback. This will trigger the global error handler and
@@ -95,39 +79,31 @@ async function unary(
           throw new Error("Aborted requests should not trigger the callback");
         }
         if (err !== undefined) {
-          error = ConnectError.from(err);
+          result.error = convertToProtoError(err);
           // We can't distinguish between headers and trailers here, so we just
           // add the metadata to both.
           //
           // But if the headers are already set, we don't need to overwrite them.
-          resHeaders =
-            resHeaders.length === 0
-              ? convertToProtoHeaders(error.metadata)
-              : resHeaders;
-          resTrailers = convertToProtoHeaders(error.metadata);
+          if (result.responseHeaders.length === 0) {
+            result.responseHeaders = convertToProtoHeaders(err.metadata);
+          }
+          result.responseTrailers = convertToProtoHeaders(err.metadata);
         } else {
-          payloads.push(uRes.payload!);
+          result.payloads.push(uRes.payload!);
         }
-        resolve(
-          new ClientResponseResult({
-            payloads: payloads,
-            responseHeaders: resHeaders,
-            responseTrailers: resTrailers,
-            error: convertToProtoError(error),
-          }),
-        );
+        resolve(result);
       },
       {
-        headers: reqHeader,
+        headers: getRequestHeaders(compatRequest),
         onHeader(headers) {
-          resHeaders = convertToProtoHeaders(headers);
+          result.responseHeaders = convertToProtoHeaders(headers);
         },
         onTrailer(trailers) {
-          resTrailers = convertToProtoHeaders(trailers);
+          result.responseTrailers = convertToProtoHeaders(trailers);
         },
       },
     );
-    const { afterCloseSendMs } = getCancelTiming(req);
+    const { afterCloseSendMs } = getCancelTiming(compatRequest);
     if (afterCloseSendMs >= 0) {
       setTimeout(() => {
         clientCancelled = true;
@@ -135,16 +111,10 @@ async function unary(
         // Callback clients swallow client triggered cancellations and never
         // call the callback. We report a fake error to the test runner to let
         // it know that the call was cancelled.
-        resolve(
-          new ClientResponseResult({
-            payloads: payloads,
-            responseHeaders: resHeaders,
-            responseTrailers: resTrailers,
-            error: convertToProtoError(
-              error ?? new ConnectError("client cancelled", Code.Canceled),
-            ),
-          }),
+        result.error = convertToProtoError(
+          new ConnectError("client cancelled", Code.Canceled),
         );
+        resolve(result);
       }, afterCloseSendMs);
     }
   });
@@ -152,34 +122,18 @@ async function unary(
 
 async function serverStream(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  compatRequest: ClientCompatRequest,
 ) {
-  if (req.requestMessages.length !== 1) {
-    throw new Error("ServerStream method requires exactly one request message");
-  }
-  const msg = req.requestMessages[0];
-  const uReq = new ServerStreamRequest();
-  if (!msg.unpackTo(uReq)) {
-    throw new Error(
-      "Could not unpack request message to server stream request",
-    );
-  }
-  const reqHeader = new Headers();
-  appendProtoHeaders(reqHeader, req.requestHeaders);
-  let error: ConnectError | undefined = undefined;
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
-  const payloads: ConformancePayload[] = [];
-  const cancelTiming = getCancelTiming(req);
-
-  await wait(req.requestDelayMs);
+  const cancelTiming = getCancelTiming(compatRequest);
+  await wait(compatRequest.requestDelayMs);
+  const result = new ClientResponseResult();
   return new Promise<ClientResponseResult>((resolve) => {
     let clientCancelled = false;
     const clientCancelFn = client.serverStream(
-      uReq,
-      (uResp) => {
-        payloads.push(uResp.payload!);
-        if (payloads.length === cancelTiming.afterNumResponses) {
+      getSingleRequestMessage(compatRequest, ServerStreamRequest),
+      (response) => {
+        result.payloads.push(response.payload!);
+        if (result.payloads.length === cancelTiming.afterNumResponses) {
           clientCancelled = true;
           clientCancelFn();
         }
@@ -194,36 +148,30 @@ async function serverStream(
               "Aborted requests should not trigger the closeCallback with an error",
             );
           }
-          error = new ConnectError("client cancelled", Code.Canceled);
+          result.error = convertToProtoError(
+            new ConnectError("client cancelled", Code.Canceled),
+          );
         }
         if (err !== undefined) {
-          error = ConnectError.from(err);
+          result.error = convertToProtoError(err);
           // We can't distinguish between headers and trailers here, so we just
           // add the metadata to both.
           //
           // But if the headers are already set, we don't need to overwrite them.
-          resHeaders =
-            resHeaders.length === 0
-              ? convertToProtoHeaders(error.metadata)
-              : resHeaders;
-          resTrailers = convertToProtoHeaders(error.metadata);
+          if (result.responseHeaders.length === 0) {
+            result.responseHeaders = convertToProtoHeaders(err.metadata);
+          }
+          result.responseTrailers = convertToProtoHeaders(err.metadata);
         }
-        resolve(
-          new ClientResponseResult({
-            responseHeaders: resHeaders,
-            responseTrailers: resTrailers,
-            payloads: payloads,
-            error: convertToProtoError(error),
-          }),
-        );
+        resolve(result);
       },
       {
-        headers: reqHeader,
+        headers: getRequestHeaders(compatRequest),
         onHeader(headers) {
-          resHeaders = convertToProtoHeaders(headers);
+          result.responseHeaders = convertToProtoHeaders(headers);
         },
         onTrailer(trailers) {
-          resTrailers = convertToProtoHeaders(trailers);
+          result.responseTrailers = convertToProtoHeaders(trailers);
         },
       },
     );
@@ -238,51 +186,34 @@ async function serverStream(
 
 async function unimplemented(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  compatRequest: ClientCompatRequest,
 ) {
-  const msg = req.requestMessages[0];
-  const unReq = new UnimplementedRequest();
-  if (!msg.unpackTo(unReq)) {
-    throw new Error("Could not unpack request message to unary request");
-  }
-  const reqHeader = new Headers();
-  appendProtoHeaders(reqHeader, req.requestHeaders);
-  let error: ConnectError | undefined = undefined;
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
-
+  const result = new ClientResponseResult();
   return new Promise<ClientResponseResult>((resolve) => {
     client.unimplemented(
-      unReq,
+      getSingleRequestMessage(compatRequest, UnimplementedRequest),
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       (err, _) => {
         if (err !== undefined) {
-          error = ConnectError.from(err);
+          result.error = convertToProtoError(err);
           // We can't distinguish between headers and trailers here, so we just
           // add the metadata to both.
           //
           // But if the headers are already set, we don't need to overwrite them.
-          resHeaders =
-            resHeaders.length === 0
-              ? convertToProtoHeaders(error.metadata)
-              : resHeaders;
-          resTrailers = convertToProtoHeaders(error.metadata);
+          if (result.responseHeaders.length === 0) {
+            result.responseHeaders = convertToProtoHeaders(err.metadata);
+          }
+          result.responseTrailers = convertToProtoHeaders(err.metadata);
         }
-        resolve(
-          new ClientResponseResult({
-            responseHeaders: resHeaders,
-            responseTrailers: resTrailers,
-            error: convertToProtoError(error),
-          }),
-        );
+        resolve(result);
       },
       {
-        headers: reqHeader,
+        headers: getRequestHeaders(compatRequest),
         onHeader(headers) {
-          resHeaders = convertToProtoHeaders(headers);
+          result.responseHeaders = convertToProtoHeaders(headers);
         },
         onTrailer(trailers) {
-          resTrailers = convertToProtoHeaders(trailers);
+          result.responseTrailers = convertToProtoHeaders(trailers);
         },
       },
     );
