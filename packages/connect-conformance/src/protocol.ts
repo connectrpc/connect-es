@@ -12,37 +12,118 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError, Code } from "@connectrpc/connect";
-import { createRegistry, Any, Message } from "@bufbuild/protobuf";
+import { Code, ConnectError } from "@connectrpc/connect";
 import {
+  Any,
+  createRegistry,
+  Message,
+  type MessageType,
+} from "@bufbuild/protobuf";
+import {
+  ConformancePayload_RequestInfo,
   Error as ConformanceError,
   Header as ConformanceHeader,
-  ConformancePayload_RequestInfo,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
-import { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
+import {
+  ClientCompatRequest,
+  ClientResponseResult,
+} from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 
-const detailsRegitry = createRegistry(ConformancePayload_RequestInfo);
+const detailsRegistry = createRegistry(ConformancePayload_RequestInfo);
 
-export function getCancelTiming(req: ClientCompatRequest) {
+export function getCancelTiming(compatRequest: ClientCompatRequest) {
   const def = {
     beforeCloseSend: undefined,
     afterCloseSendMs: -1,
     afterNumResponses: -1,
   };
-  switch (req.cancel?.cancelTiming.case) {
+  switch (compatRequest.cancel?.cancelTiming.case) {
     case "beforeCloseSend":
       return { ...def, beforeCloseSend: {} };
     case "afterCloseSendMs":
       return {
         ...def,
-        afterCloseSendMs: req.cancel.cancelTiming.value,
+        afterCloseSendMs: compatRequest.cancel.cancelTiming.value,
       };
     case "afterNumResponses":
-      return { ...def, afterNumResponses: req.cancel.cancelTiming.value };
+      return {
+        ...def,
+        afterNumResponses: compatRequest.cancel.cancelTiming.value,
+      };
     case undefined:
       return def;
   }
+}
+
+/**
+ * Get the headers for a conformance client request.
+ */
+export function getRequestHeaders(
+  compatRequest: ClientCompatRequest,
+): HeadersInit {
+  const headers = new Headers();
+  appendProtoHeaders(headers, compatRequest.requestHeaders);
+  return headers;
+}
+
+/**
+ * Get a single request message for a conformance client call.
+ */
+export function getSingleRequestMessage<T extends Message<T>>(
+  compatRequest: ClientCompatRequest,
+  type: MessageType<T>,
+): T {
+  if (compatRequest.requestMessages.length !== 1) {
+    throw new Error(
+      `Expected exactly one request_message in ClientCompatRequest, found ${compatRequest.requestMessages.length}`,
+    );
+  }
+  const any = compatRequest.requestMessages[0];
+  const target = new type();
+  if (!any.unpackTo(target)) {
+    throw new Error(
+      `Could not unpack request_message from ClientCompatRequest into ${type.typeName}`,
+    );
+  }
+  return target;
+}
+
+/**
+ * Get a request messages for a conformance client call.
+ */
+export function* getRequestMessages<T extends Message<T>>(
+  compatRequest: ClientCompatRequest,
+  type: MessageType<T>,
+): Iterable<T> {
+  for (const any of compatRequest.requestMessages) {
+    const target = new type();
+    if (!any.unpackTo(target)) {
+      throw new Error(
+        `Could not unpack request_message from ClientCompatRequest into ${type.typeName}`,
+      );
+    }
+    yield target;
+  }
+}
+
+/**
+ * Record an error from a failed conformance client call in the result message.
+ */
+export function setClientErrorResult(
+  result: ClientResponseResult,
+  error: unknown,
+): void {
+  const connectError = ConnectError.from(error);
+  result.error = convertToProtoError(connectError);
+  // We can't distinguish between headers and trailers here, so we just
+  // add the metadata to both.
+  //
+  // But if the headers are already set, we don't need to overwrite them.
+  if (result.responseHeaders.length === 0) {
+    result.responseHeaders = convertToProtoHeaders(connectError.metadata);
+  }
+  result.responseTrailers = convertToProtoHeaders(connectError.metadata);
 }
 
 export function connectErrorFromProto(err: ConformanceError) {
@@ -54,7 +135,7 @@ export function connectErrorFromProto(err: ConformanceError) {
     err.code as unknown as Code,
     undefined,
     err.details.map((d) => {
-      const m = d.unpack(detailsRegitry);
+      const m = d.unpack(detailsRegistry);
       if (m === undefined) {
         throw new Error(`Cannot unpack ${d.typeUrl}`);
       }
