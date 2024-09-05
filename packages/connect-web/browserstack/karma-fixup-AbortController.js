@@ -15,7 +15,17 @@
 // a simplistic polyfill for AbortController and AbortSignal
 
 (function () {
-  if (globalThis.AbortController && globalThis.AbortSignal) {
+  if (!globalThis.AbortController || !globalThis.AbortSignal) {
+    // `throwIfAborted` was added much later.
+    if (!globalThis.AbortSignal.prototype.throwIfAborted) {
+      globalThis.AbortSignal.prototype.throwIfAborted = function () {
+        if (this.aborted) {
+          const err = new Error("operation aborted");
+          err.name = "AbortError";
+          throw err;
+        }
+      };
+    }
     return;
   }
 
