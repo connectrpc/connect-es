@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { PromiseClient, Transport } from "@connectrpc/connect";
-import { ConnectError, createPromiseClient } from "@connectrpc/connect";
+import { createPromiseClient } from "@connectrpc/connect";
 import {
   ClientCompatRequest,
   ClientResponseResult,
@@ -27,12 +27,12 @@ import {
   UnimplementedRequest,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
-  convertToProtoError,
   convertToProtoHeaders,
   getCancelTiming,
   getRequestHeaders,
   getRequestMessages,
   getSingleRequestMessage,
+  setClientErrorResult,
   wait,
 } from "./protocol.js";
 import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
@@ -95,16 +95,7 @@ async function unary(
     });
     result.payloads.push(response.payload!);
   } catch (e) {
-    const err = ConnectError.from(e);
-    result.error = convertToProtoError(err);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    if (result.responseHeaders.length === 0) {
-      result.responseHeaders = convertToProtoHeaders(err.metadata);
-    }
-    result.responseTrailers = convertToProtoHeaders(err.metadata);
+    setClientErrorResult(result, e);
   }
   return result;
 }
@@ -140,16 +131,7 @@ async function serverStream(
       }
     }
   } catch (e) {
-    const err = ConnectError.from(e);
-    result.error = convertToProtoError(err);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    if (result.responseHeaders.length === 0) {
-      result.responseHeaders = convertToProtoHeaders(err.metadata);
-    }
-    result.responseTrailers = convertToProtoHeaders(err.metadata);
+    setClientErrorResult(result, e);
   }
   return result;
 }
@@ -192,16 +174,7 @@ async function clientStream(
     );
     result.payloads.push(response.payload!);
   } catch (e) {
-    const err = ConnectError.from(e);
-    result.error = convertToProtoError(err);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    if (result.responseHeaders.length === 0) {
-      result.responseHeaders = convertToProtoHeaders(err.metadata);
-    }
-    result.responseTrailers = convertToProtoHeaders(err.metadata);
+    setClientErrorResult(result, e);
   }
   return result;
 }
@@ -267,16 +240,7 @@ async function bidiStream(
       }
     }
   } catch (e) {
-    const err = ConnectError.from(e);
-    result.error = convertToProtoError(err);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    if (result.responseHeaders.length === 0) {
-      result.responseHeaders = convertToProtoHeaders(err.metadata);
-    }
-    result.responseTrailers = convertToProtoHeaders(err.metadata);
+    setClientErrorResult(result, e);
   }
   return result;
 }
@@ -298,16 +262,7 @@ async function unimplemented(
       },
     });
   } catch (e) {
-    const err = ConnectError.from(e);
-    result.error = convertToProtoError(err);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    if (result.responseHeaders.length === 0) {
-      result.responseHeaders = convertToProtoHeaders(err.metadata);
-    }
-    result.responseTrailers = convertToProtoHeaders(err.metadata);
+    setClientErrorResult(result, e);
   }
   return result;
 }

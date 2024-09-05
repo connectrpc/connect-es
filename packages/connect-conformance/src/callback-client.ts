@@ -31,6 +31,7 @@ import {
   getCancelTiming,
   getRequestHeaders,
   getSingleRequestMessage,
+  setClientErrorResult,
 } from "./protocol.js";
 import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 
@@ -79,15 +80,7 @@ async function unary(
           throw new Error("Aborted requests should not trigger the callback");
         }
         if (err !== undefined) {
-          result.error = convertToProtoError(err);
-          // We can't distinguish between headers and trailers here, so we just
-          // add the metadata to both.
-          //
-          // But if the headers are already set, we don't need to overwrite them.
-          if (result.responseHeaders.length === 0) {
-            result.responseHeaders = convertToProtoHeaders(err.metadata);
-          }
-          result.responseTrailers = convertToProtoHeaders(err.metadata);
+          setClientErrorResult(result, err);
         } else {
           result.payloads.push(response.payload!);
         }
@@ -153,15 +146,7 @@ async function serverStream(
           );
         }
         if (err !== undefined) {
-          result.error = convertToProtoError(err);
-          // We can't distinguish between headers and trailers here, so we just
-          // add the metadata to both.
-          //
-          // But if the headers are already set, we don't need to overwrite them.
-          if (result.responseHeaders.length === 0) {
-            result.responseHeaders = convertToProtoHeaders(err.metadata);
-          }
-          result.responseTrailers = convertToProtoHeaders(err.metadata);
+          setClientErrorResult(result, err);
         }
         resolve(result);
       },
@@ -195,15 +180,7 @@ async function unimplemented(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       (err, _) => {
         if (err !== undefined) {
-          result.error = convertToProtoError(err);
-          // We can't distinguish between headers and trailers here, so we just
-          // add the metadata to both.
-          //
-          // But if the headers are already set, we don't need to overwrite them.
-          if (result.responseHeaders.length === 0) {
-            result.responseHeaders = convertToProtoHeaders(err.metadata);
-          }
-          result.responseTrailers = convertToProtoHeaders(err.metadata);
+          setClientErrorResult(result, err);
         }
         resolve(result);
       },

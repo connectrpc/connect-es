@@ -12,20 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError, Code } from "@connectrpc/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import {
-  createRegistry,
   Any,
+  createRegistry,
   Message,
   type MessageType,
 } from "@bufbuild/protobuf";
 import {
+  ConformancePayload_RequestInfo,
   Error as ConformanceError,
   Header as ConformanceHeader,
-  ConformancePayload_RequestInfo,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
-import { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
+import {
+  ClientCompatRequest,
+  ClientResponseResult,
+} from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 
 const detailsRegistry = createRegistry(ConformancePayload_RequestInfo);
 
@@ -102,6 +105,25 @@ export function* getRequestMessages<T extends Message<T>>(
     }
     yield target;
   }
+}
+
+/**
+ * Record an error from a failed conformance client call in the result message.
+ */
+export function setClientErrorResult(
+  result: ClientResponseResult,
+  error: unknown,
+): void {
+  const connectError = ConnectError.from(error);
+  result.error = convertToProtoError(connectError);
+  // We can't distinguish between headers and trailers here, so we just
+  // add the metadata to both.
+  //
+  // But if the headers are already set, we don't need to overwrite them.
+  if (result.responseHeaders.length === 0) {
+    result.responseHeaders = convertToProtoHeaders(connectError.metadata);
+  }
+  result.responseTrailers = convertToProtoHeaders(connectError.metadata);
 }
 
 export function connectErrorFromProto(err: ConformanceError) {
