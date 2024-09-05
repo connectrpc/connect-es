@@ -62,11 +62,11 @@ export type NodeHttpClientOptions =
       httpVersion: "2";
 
       /**
-       * A function that must return a session manager for the given authority.
+       * A function that must return a session manager for the given URL.
        * The session manager may be taken from a pool.
        * By default, a new Http2SessionManager is created for every request.
        */
-      sessionProvider?: (authority: string) => NodeHttp2ClientSessionManager;
+      sessionProvider?: (url: string) => NodeHttp2ClientSessionManager;
     };
 
 /**
@@ -80,8 +80,7 @@ export function createNodeHttpClient(options: NodeHttpClientOptions) {
     return createNodeHttp1Client(options.nodeOptions);
   }
   const sessionProvider =
-    options.sessionProvider ??
-    ((authority: string) => new Http2SessionManager(authority));
+    options.sessionProvider ?? ((url: string) => new Http2SessionManager(url));
   return createNodeHttp2Client(sessionProvider);
 }
 
@@ -169,7 +168,7 @@ function createNodeHttp1Client(
  * an UniversalClientResponse.
  */
 function createNodeHttp2Client(
-  sessionProvider: (authority: string) => NodeHttp2ClientSessionManager,
+  sessionProvider: (url: string) => NodeHttp2ClientSessionManager,
 ): UniversalClientFn {
   return function request(
     req: UniversalClientRequest,
