@@ -53,45 +53,66 @@ export function nodeHeaderToWebHeader(
 
 /**
  * Convert a fetch API Headers object to a Node.js headers object.
+ *
+ * Optionally accepts default Node.js headers. If provided, fetch API headers
+ * are appended to the defaults. The original defaults headers are not modified.
  */
 export function webHeaderToNodeHeaders(
   headersInit: HeadersInit,
+  defaultNodeHeaders?: http.OutgoingHttpHeaders,
 ): http.OutgoingHttpHeaders;
 export function webHeaderToNodeHeaders(
   headersInit: HeadersInit | undefined,
 ): http.OutgoingHttpHeaders | undefined;
 export function webHeaderToNodeHeaders(
   headersInit: HeadersInit | undefined,
+  defaultNodeHeaders?: http.OutgoingHttpHeaders,
 ): http.OutgoingHttpHeaders | undefined {
-  if (headersInit === undefined) {
+  if (headersInit === undefined && defaultNodeHeaders === undefined) {
     return undefined;
   }
   const o = Object.create(null) as http.OutgoingHttpHeaders;
-  const append = (key: string, value: string): void => {
-    key = key.toLowerCase();
-    const existing = o[key];
-    if (typeof existing == "string") {
-      o[key] = [existing, value];
-    } else if (Array.isArray(existing)) {
-      existing.push(value);
+  if (defaultNodeHeaders !== undefined) {
+    for (const [key, value] of Object.entries(defaultNodeHeaders)) {
+      if (Array.isArray(value)) {
+        o[key] = value.concat();
+      } else if (value !== undefined) {
+        o[key] = value;
+      }
+    }
+  }
+  if (headersInit !== undefined) {
+    if (Array.isArray(headersInit)) {
+      for (const [key, value] of headersInit) {
+        appendWebHeader(o, key, value);
+      }
+    } else if ("forEach" in headersInit) {
+      if (typeof headersInit.forEach == "function") {
+        headersInit.forEach((value, key) => {
+          appendWebHeader(o, key, value);
+        });
+      }
     } else {
-      o[key] = value;
-    }
-  };
-  if (Array.isArray(headersInit)) {
-    for (const [key, value] of headersInit) {
-      append(key, value);
-    }
-  } else if ("forEach" in headersInit) {
-    if (typeof headersInit.forEach == "function") {
-      headersInit.forEach((value, key) => {
-        append(key, value);
-      });
-    }
-  } else {
-    for (const [key, value] of Object.entries<string>(headersInit)) {
-      append(key, value);
+      for (const [key, value] of Object.entries<string>(headersInit)) {
+        appendWebHeader(o, key, value);
+      }
     }
   }
   return o;
+}
+
+function appendWebHeader(
+  o: http.OutgoingHttpHeaders,
+  key: string,
+  value: string,
+) {
+  key = key.toLowerCase();
+  const existing = o[key];
+  if (Array.isArray(existing)) {
+    existing.push(value);
+  } else if (existing === undefined) {
+    o[key] = value;
+  } else {
+    o[key] = [existing.toString(), value];
+  }
 }
