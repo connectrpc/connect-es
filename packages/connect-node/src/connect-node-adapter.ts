@@ -21,7 +21,7 @@ import type {
 import type { UniversalHandler } from "@connectrpc/connect/protocol";
 import { uResponseNotFound } from "@connectrpc/connect/protocol";
 import {
-  universalRequestFromNodeRequest,
+  universalRequestFromNodeResponse,
   universalResponseToNodeResponse,
 } from "./node-universal-handler.js";
 import type {
@@ -94,8 +94,8 @@ export function connectNodeAdapter(
       (options.fallback ?? fallback)(req, res);
       return;
     }
-    const uReq = universalRequestFromNodeRequest(
-      req,
+    const uReq = universalRequestFromNodeResponse(
+      res,
       undefined,
       options.contextValues?.(req),
     );

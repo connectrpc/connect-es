@@ -15,7 +15,10 @@
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "http2";
 import * as http from "http";
-import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
+import {
+  universalRequestFromNodeRequest,
+  universalRequestFromNodeResponse,
+} from "./node-universal-handler.js";
 import { ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";
 import {
@@ -27,7 +30,7 @@ import type { UniversalServerRequest } from "@connectrpc/connect/protocol";
 // Polyfill the Headers API for Node versions < 18
 import "./node-headers-polyfill.js";
 
-describe("universalRequestFromNodeRequest()", function () {
+describe("universalRequestFromNodeResponse()", function () {
   describe("with HTTP/2 stream closed with an RST code", function () {
     let serverRequest: UniversalServerRequest | undefined;
     const server = useNodeServer(() => {
@@ -328,9 +331,9 @@ describe("universalRequestFromNodeRequest()", function () {
       | http.ServerResponse<http.IncomingMessage>
       | undefined;
     const server = useNodeServer(() =>
-      http.createServer(function (request, response) {
-        serverRequest = universalRequestFromNodeRequest(
-          request,
+      http.createServer(function (_, response) {
+        serverRequest = universalRequestFromNodeResponse(
+          response,
           undefined,
           undefined,
         );
