@@ -115,6 +115,7 @@ export function fastifyConnectPlugin(
           const uRes = await uHandler(
             universalRequestFromNodeRequest(
               req.raw,
+              reply.raw,
               req.body as JsonValue | undefined,
               opts.contextValues?.(req),
             ),

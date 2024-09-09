@@ -95,6 +95,7 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
       const uRes = await uHandler(
         universalRequestFromNodeRequest(
           req,
+          res,
           req.body as JsonValue | undefined,
           options.contextValues?.(req),
         ),

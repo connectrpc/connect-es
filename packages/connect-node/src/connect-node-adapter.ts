@@ -96,6 +96,7 @@ export function connectNodeAdapter(
     }
     const uReq = universalRequestFromNodeRequest(
       req,
+      res,
       undefined,
       options.contextValues?.(req),
     );
