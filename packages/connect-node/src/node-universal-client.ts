@@ -130,13 +130,12 @@ function createNodeHttp1Client(
       sentinel.catch((e) => {
         reject(e);
       });
-
       h1Request(
         sentinel,
         req.url,
         {
           ...httpOptions,
-          headers: webHeaderToNodeHeaders(req.header),
+          headers: webHeaderToNodeHeaders(req.header, httpOptions?.headers),
           method: req.method,
         },
         (request) => {
