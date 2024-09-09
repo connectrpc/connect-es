@@ -15,10 +15,7 @@
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "http2";
 import * as http from "http";
-import {
-  universalRequestFromNodeRequest,
-  universalRequestFromNodeResponse,
-} from "./node-universal-handler.js";
+import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
 import { ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";
 import {
@@ -35,9 +32,10 @@ describe("universalRequestFromNodeResponse()", function () {
     let serverRequest: UniversalServerRequest | undefined;
     const server = useNodeServer(() => {
       serverRequest = undefined;
-      return http2.createServer(function (request) {
+      return http2.createServer(function (request, response) {
         serverRequest = universalRequestFromNodeRequest(
           request,
+          response,
           undefined,
           undefined,
         );
@@ -179,9 +177,10 @@ describe("universalRequestFromNodeResponse()", function () {
           connectionsCheckingInterval: 1,
           requestTimeout: 0,
         },
-        function (request) {
+        function (request, response) {
           serverRequest = universalRequestFromNodeRequest(
             request,
+            response,
             undefined,
             undefined,
           );
@@ -272,6 +271,7 @@ describe("universalRequestFromNodeResponse()", function () {
         function (request, response) {
           serverRequest = universalRequestFromNodeRequest(
             request,
+            response,
             undefined,
             undefined,
           );
@@ -331,8 +331,9 @@ describe("universalRequestFromNodeResponse()", function () {
       | http.ServerResponse<http.IncomingMessage>
       | undefined;
     const server = useNodeServer(() =>
-      http.createServer(function (_, response) {
-        serverRequest = universalRequestFromNodeResponse(
+      http.createServer(function (request, response) {
+        serverRequest = universalRequestFromNodeRequest(
+          request,
           response,
           undefined,
           undefined,

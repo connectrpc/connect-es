@@ -66,41 +66,107 @@ export type NodeServerResponse = (
 };
 
 /**
- * Converts a Node.js server response to a UniversalServerRequest.
- * This function helps to implement adapters to server frameworks running
- * on Node.js. Please be careful using this function in your own code, as we
- * may have to make changes to it in the future.
- */
-export function universalRequestFromNodeResponse(
-  nodeResponse: NodeServerResponse,
-  parsedJsonBody: JsonValue | undefined,
-  contextValues: ContextValues | undefined,
-): UniversalServerRequest {
-  return universalRequestFromNodeRequestOrResponse(
-    nodeResponse,
-    parsedJsonBody,
-    contextValues,
-  );
-}
-
-/**
  * Converts a Node.js server request to a UniversalServerRequest.
  * This function helps to implement adapters to server frameworks running
  * on Node.js. Please be careful using this function in your own code, as we
  * may have to make changes to it in the future.
- *
- * @deprecated Please use `universalRequestFromNodeResponse`
+ */
+export function universalRequestFromNodeRequest(
+  nodeRequest: NodeServerRequest,
+  nodeResponse: NodeServerResponse,
+  parsedJsonBody: JsonValue | undefined,
+  contextValues: ContextValues | undefined,
+): UniversalServerRequest;
+/**
+ * @deprecated
  */
 export function universalRequestFromNodeRequest(
   nodeRequest: NodeServerRequest,
   parsedJsonBody: JsonValue | undefined,
   contextValues: ContextValues | undefined,
+): UniversalServerRequest;
+export function universalRequestFromNodeRequest(
+  nodeRequest: NodeServerRequest,
+  ...rest:
+    | [
+        nodeResponse: NodeServerResponse,
+        parsedJsonBody: JsonValue | undefined,
+        contextValues: ContextValues | undefined,
+      ]
+    | [
+        parsedJsonBody: JsonValue | undefined,
+        contextValues: ContextValues | undefined,
+      ]
 ): UniversalServerRequest {
-  return universalRequestFromNodeRequestOrResponse(
-    nodeRequest,
-    parsedJsonBody,
-    contextValues,
-  );
+  const nodeResponse: NodeServerResponse | undefined =
+    rest.length === 3 ? rest[0] : undefined;
+  const parsedJsonBody: JsonValue | undefined =
+    rest.length === 3 ? rest[1] : rest[0];
+  const contextValues: ContextValues | undefined =
+    rest.length === 3 ? rest[2] : rest[1];
+  const encrypted =
+    "encrypted" in nodeRequest.socket && nodeRequest.socket.encrypted;
+  const protocol = encrypted ? "https" : "http";
+  const authority =
+    "authority" in nodeRequest
+      ? nodeRequest.authority
+      : nodeRequest.headers.host;
+  const pathname = nodeRequest.url ?? "";
+  if (authority === undefined) {
+    throw new ConnectError(
+      "unable to determine request authority from Node.js server request",
+      Code.Internal,
+    );
+  }
+  const body =
+    parsedJsonBody !== undefined
+      ? parsedJsonBody
+      : asyncIterableFromNodeServerRequest(nodeRequest);
+  const abortController = new AbortController();
+  if ("stream" in nodeRequest) {
+    // HTTP/2 has error codes we want to honor
+    nodeRequest.once("close", () => {
+      const err = connectErrorFromH2ResetCode(nodeRequest.stream.rstCode);
+      if (err !== undefined) {
+        abortController.abort(err);
+      } else {
+        abortController.abort();
+      }
+    });
+  } else {
+    // HTTP/1.1 does not have error codes, but Node.js has ECONNRESET
+    const nodeResponsOrRequest = nodeResponse ?? nodeRequest;
+    const onH1Error = (e: Error) => {
+      nodeRequest.off("error", onH1Error);
+      nodeResponsOrRequest.off("close", onH1Close);
+      abortController.abort(connectErrorFromNodeReason(e));
+    };
+    const onH1Close = () => {
+      nodeRequest.off("error", onH1Error);
+      nodeResponsOrRequest.off("close", onH1Close);
+      // When subscribed to the response, this can get called before "error"
+      abortController.abort(
+        nodeRequest.errored
+          ? connectErrorFromNodeReason(nodeRequest.errored)
+          : undefined,
+      );
+    };
+    nodeRequest.once("error", onH1Error);
+    // Node emits close on the request as soon as all data is read.
+    // We instead subscribe to the response (if available)
+    //
+    // Ref: https://github.com/nodejs/node/issues/40775
+    nodeResponsOrRequest.once("close", onH1Close);
+  }
+  return {
+    httpVersion: nodeRequest.httpVersion,
+    method: nodeRequest.method ?? "",
+    url: new URL(pathname, `${protocol}://${authority}`).toString(),
+    header: nodeHeaderToWebHeader(nodeRequest.headers),
+    body,
+    signal: abortController.signal,
+    contextValues: contextValues,
+  };
 }
 
 /**
@@ -174,80 +240,6 @@ export async function universalResponseToNodeResponse(
   } finally {
     it?.return?.().catch(() => {});
   }
-}
-
-function universalRequestFromNodeRequestOrResponse(
-  nodeRequestOrResponse: NodeServerResponse | NodeServerRequest,
-  parsedJsonBody: JsonValue | undefined,
-  contextValues: ContextValues | undefined,
-): UniversalServerRequest {
-  let nodeRequest: NodeServerRequest;
-  let nodeResponse: NodeServerResponse | undefined;
-  if ("req" in nodeRequestOrResponse) {
-    nodeRequest = nodeRequestOrResponse.req;
-    nodeResponse = nodeRequestOrResponse;
-  } else {
-    nodeRequest = nodeRequestOrResponse;
-  }
-  const encrypted =
-    "encrypted" in nodeRequest.socket && nodeRequest.socket.encrypted;
-  const protocol = encrypted ? "https" : "http";
-  const authority =
-    "authority" in nodeRequest
-      ? nodeRequest.authority
-      : nodeRequest.headers.host;
-  const pathname = nodeRequest.url ?? "";
-  if (authority === undefined) {
-    throw new ConnectError(
-      "unable to determine request authority from Node.js server request",
-      Code.Internal,
-    );
-  }
-  const body =
-    parsedJsonBody !== undefined
-      ? parsedJsonBody
-      : asyncIterableFromNodeServerRequest(nodeRequest);
-  const abortController = new AbortController();
-  if ("stream" in nodeRequest) {
-    // HTTP/2 has error codes we want to honor
-    nodeRequest.once("close", () => {
-      const err = connectErrorFromH2ResetCode(nodeRequest.stream.rstCode);
-      if (err !== undefined) {
-        abortController.abort(err);
-      } else {
-        abortController.abort();
-      }
-    });
-  } else {
-    // HTTP/1.1 does not have error codes, but Node.js has ECONNRESET
-    let closeHandler: http.IncomingMessage | http.ServerResponse;
-    if (nodeResponse === undefined) {
-      closeHandler = nodeRequest;
-    } else {
-      closeHandler = nodeResponse as http.ServerResponse;
-    }
-    const onH1Error = (e: Error) => {
-      nodeRequest.off("error", onH1Error);
-      closeHandler.off("close", onH1Close);
-      abortController.abort(connectErrorFromNodeReason(e));
-    };
-    const onH1Close = () => {
-      nodeRequest.off("error", onH1Error);
-      closeHandler.off("close", onH1Close);
-      abortController.abort();
-    };
-    nodeRequest.once("error", onH1Error);
-    closeHandler.once("close", onH1Close);
-  }
-  return {
-    httpVersion: nodeRequest.httpVersion,
-    method: nodeRequest.method ?? "",
-    url: new URL(pathname, `${protocol}://${authority}`).toString(),
-    header: nodeHeaderToWebHeader(nodeRequest.headers),
-    body,
-    signal: abortController.signal,
-    contextValues: contextValues,
-  };
 }
 
 async function* asyncIterableFromNodeServerRequest(
