@@ -18,6 +18,7 @@ import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
 import { connectNodeAdapter } from "./connect-node-adapter.js";
 import { createPromiseClient } from "@connectrpc/connect";
+import type { Transport } from "@connectrpc/connect";
 import { createTransport as createGrpcTransport } from "@connectrpc/connect/protocol-grpc";
 import { createTransport as createGrpcWebTransport } from "@connectrpc/connect/protocol-grpc-web";
 import { validateNodeTransportOptions } from "./node-transport-options.js";
@@ -63,33 +64,38 @@ describe("Calls should fail with code internal on RST_STREAM no_error before tra
         .catch(fail);
     }),
   );
-  for (const test of [
-    {
-      name: "gRPC Transport",
-      createTransport: createGrpcTransport,
-    },
-    {
-      name: "gRPC-Web Transport",
-      createTransport: createGrpcWebTransport,
-    },
-  ]) {
-    it(`for ${test.name}`, async function () {
-      const transport = test.createTransport({
+  async function testRstStream(transport: Transport) {
+    const client = createPromiseClient(TestService, transport);
+    const it = client.server({ value: 1 })[Symbol.asyncIterator]();
+    const first = await it.next();
+    expect(first.done).toBeFalse();
+    expect(first.value).toEqual(new StringValue({ value: "foo" }));
+    await expectAsync(it.next()).toBeRejected();
+  }
+  it("for gRPC Transport", async function () {
+    await testRstStream(
+      createGrpcTransport({
         ...validateNodeTransportOptions({
           httpVersion: "2",
           baseUrl: server.getUrl(),
         }),
         baseUrl: server.getUrl(),
         httpClient: server.getClient(),
-      });
-      const client = createPromiseClient(TestService, transport);
-      const it = client.server({ value: 1 })[Symbol.asyncIterator]();
-      const first = await it.next();
-      expect(first.done).toBeFalse();
-      expect(first.value).toEqual(new StringValue({ value: "foo" }));
-      await expectAsync(it.next()).toBeRejected();
-    });
-  }
+      }),
+    );
+  });
+  it("for gRPC Transport", async function () {
+    await testRstStream(
+      createGrpcWebTransport({
+        ...validateNodeTransportOptions({
+          httpVersion: "2",
+          baseUrl: server.getUrl(),
+        }),
+        baseUrl: server.getUrl(),
+        httpClient: server.getClient(),
+      }),
+    );
+  });
 });
 
 function createCompleter<T>() {

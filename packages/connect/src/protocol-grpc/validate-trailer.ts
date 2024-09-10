@@ -14,7 +14,7 @@
 
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
-import { headerGrpcStatus, headerStatusDetailsBin } from "./headers.js";
+import { headerGrpcStatus } from "./headers.js";
 import { findTrailerError } from "./trailer-status.js";
 
 /**
@@ -31,12 +31,7 @@ export function validateTrailer(trailer: Headers, header: Headers): void {
     });
     throw err;
   }
-  if (
-    !header.has(headerGrpcStatus) &&
-    !header.has(headerStatusDetailsBin) &&
-    !trailer.has(headerGrpcStatus) &&
-    !trailer.has(headerStatusDetailsBin)
-  ) {
+  if (!header.has(headerGrpcStatus) && !trailer.has(headerGrpcStatus)) {
     throw new ConnectError("protocol error: missing status", Code.Internal);
   }
 }
