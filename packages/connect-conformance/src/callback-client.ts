@@ -23,6 +23,7 @@ import {
   ServerStreamRequest,
   UnimplementedRequest,
   IdempotentUnaryRequest,
+  ConformancePayload,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   convertToProtoError,
@@ -36,6 +37,8 @@ import {
 import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 
 type ConformanceClient = CallbackClient<typeof ConformanceService>;
+
+const emptyPayload = new ConformancePayload();
 
 export function invokeWithCallbackClient(
   transport: Transport,
@@ -82,7 +85,7 @@ async function unary(
         if (err !== undefined) {
           setClientErrorResult(result, err);
         } else {
-          result.payloads.push(response.payload!);
+          result.payloads.push(response.payload ?? emptyPayload);
         }
         resolve(result);
       },
@@ -125,7 +128,7 @@ async function serverStream(
     const clientCancelFn = client.serverStream(
       getSingleRequestMessage(compatRequest, ServerStreamRequest),
       (response) => {
-        result.payloads.push(response.payload!);
+        result.payloads.push(response.payload ?? emptyPayload);
         if (result.payloads.length === cancelTiming.afterNumResponses) {
           clientCancelled = true;
           clientCancelFn();
