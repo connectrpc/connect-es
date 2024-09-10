@@ -21,6 +21,7 @@ import {
 import {
   BidiStreamRequest,
   ClientStreamRequest,
+  ConformancePayload,
   IdempotentUnaryRequest,
   ServerStreamRequest,
   UnaryRequest,
@@ -40,6 +41,8 @@ import { createWritableIterable } from "@connectrpc/connect/protocol";
 import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
 
 type ConformanceClient = PromiseClient<typeof ConformanceService>;
+
+const emptyPayload = new ConformancePayload();
 
 export function invokeWithPromiseClient(
   transport: Transport,
@@ -93,7 +96,7 @@ async function unary(
         result.responseTrailers = convertToProtoHeaders(trailers);
       },
     });
-    result.payloads.push(response.payload!);
+    result.payloads.push(response.payload ?? emptyPayload);
   } catch (e) {
     setClientErrorResult(result, e);
   }
@@ -125,7 +128,7 @@ async function serverStream(
       controller.abort();
     }
     for await (const msg of res) {
-      result.payloads.push(msg.payload!);
+      result.payloads.push(msg.payload ?? emptyPayload);
       if (result.payloads.length === cancelTiming.afterNumResponses) {
         controller.abort();
       }
@@ -172,7 +175,7 @@ async function clientStream(
         },
       },
     );
-    result.payloads.push(response.payload!);
+    result.payloads.push(response.payload ?? emptyPayload);
   } catch (e) {
     setClientErrorResult(result, e);
   }
@@ -210,7 +213,7 @@ async function bidiStream(
         if (next.done === true) {
           continue;
         }
-        result.payloads.push(next.value.payload!);
+        result.payloads.push(next.value.payload ?? emptyPayload);
         if (result.payloads.length === cancelTiming.afterNumResponses) {
           controller.abort();
         }
@@ -234,7 +237,7 @@ async function bidiStream(
       if (next.done === true) {
         break;
       }
-      result.payloads.push(next.value.payload!);
+      result.payloads.push(next.value.payload ?? emptyPayload);
       if (result.payloads.length === cancelTiming.afterNumResponses) {
         controller.abort();
       }

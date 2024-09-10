@@ -61,8 +61,7 @@ export function errorFromJson(
         typeof detail != "object" ||
         Array.isArray(detail) ||
         typeof detail.type != "string" ||
-        typeof detail.value != "string" ||
-        ("debug" in detail && typeof detail.debug != "object")
+        typeof detail.value != "string"
       ) {
         throw fallback;
       }
