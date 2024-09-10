@@ -27,14 +27,15 @@ import type { UniversalServerRequest } from "@connectrpc/connect/protocol";
 // Polyfill the Headers API for Node versions < 18
 import "./node-headers-polyfill.js";
 
-describe("universalRequestFromNodeRequest()", function () {
+describe("universalRequestFromNodeResponse()", function () {
   describe("with HTTP/2 stream closed with an RST code", function () {
     let serverRequest: UniversalServerRequest | undefined;
     const server = useNodeServer(() => {
       serverRequest = undefined;
-      return http2.createServer(function (request) {
+      return http2.createServer(function (request, response) {
         serverRequest = universalRequestFromNodeRequest(
           request,
+          response,
           undefined,
           undefined,
         );
@@ -176,9 +177,10 @@ describe("universalRequestFromNodeRequest()", function () {
           connectionsCheckingInterval: 1,
           requestTimeout: 0,
         },
-        function (request) {
+        function (request, response) {
           serverRequest = universalRequestFromNodeRequest(
             request,
+            response,
             undefined,
             undefined,
           );
@@ -269,6 +271,7 @@ describe("universalRequestFromNodeRequest()", function () {
         function (request, response) {
           serverRequest = universalRequestFromNodeRequest(
             request,
+            response,
             undefined,
             undefined,
           );
@@ -320,6 +323,51 @@ describe("universalRequestFromNodeRequest()", function () {
         const r = await it.next();
         expect(r.done).toBeTrue();
       }
+    });
+  });
+  describe("with HTTP/1.1", function () {
+    let serverRequest: UniversalServerRequest | undefined;
+    let serverNodeResponse:
+      | http.ServerResponse<http.IncomingMessage>
+      | undefined;
+    const server = useNodeServer(() =>
+      http.createServer(function (request, response) {
+        serverRequest = universalRequestFromNodeRequest(
+          request,
+          response,
+          undefined,
+          undefined,
+        );
+        response.on("error", fail);
+        serverNodeResponse = response;
+        void readAllBytes(
+          serverRequest.body as AsyncIterable<Uint8Array>,
+          Number.MAX_SAFE_INTEGER,
+        ).then(() => {
+          response.writeHead(200);
+          response.flushHeaders();
+        });
+      }),
+    );
+    it("signal should not be aborted on start", async function () {
+      await new Promise<void>((resolve) => {
+        const request = http.request(server.getUrl(), {
+          method: "POST",
+          // close TCP connection after we're done so that the server shuts down cleanly
+          agent: new http.Agent({ keepAlive: false }),
+        });
+        request.on("error", fail);
+        request.flushHeaders();
+        request.end();
+        request.on("response", (response) => {
+          expect(serverRequest).toBeDefined();
+          expect(serverRequest?.signal.aborted).toBeFalse();
+          serverNodeResponse?.end();
+          void readAllBytes(response, Number.MAX_SAFE_INTEGER).then(() =>
+            resolve(),
+          );
+        });
+      });
     });
   });
 });

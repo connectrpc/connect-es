@@ -87,6 +87,7 @@ export function expressConnectMiddleware(
     }
     const uReq = universalRequestFromNodeRequest(
       req,
+      res,
       getPreparsedBody(req),
       options.contextValues?.(req),
     );

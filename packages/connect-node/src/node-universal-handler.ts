@@ -66,16 +66,44 @@ export type NodeServerResponse = (
 };
 
 /**
- * Converts a UniversalServerRequest to a Node.js server request.
+ * Converts a Node.js server request to a UniversalServerRequest.
  * This function helps to implement adapters to server frameworks running
  * on Node.js. Please be careful using this function in your own code, as we
  * may have to make changes to it in the future.
  */
 export function universalRequestFromNodeRequest(
   nodeRequest: NodeServerRequest,
+  nodeResponse: NodeServerResponse,
   parsedJsonBody: JsonValue | undefined,
   contextValues: ContextValues | undefined,
+): UniversalServerRequest;
+/**
+ * @deprecated
+ */
+export function universalRequestFromNodeRequest(
+  nodeRequest: NodeServerRequest,
+  parsedJsonBody: JsonValue | undefined,
+  contextValues: ContextValues | undefined,
+): UniversalServerRequest;
+export function universalRequestFromNodeRequest(
+  nodeRequest: NodeServerRequest,
+  ...rest:
+    | [
+        nodeResponse: NodeServerResponse,
+        parsedJsonBody: JsonValue | undefined,
+        contextValues: ContextValues | undefined,
+      ]
+    | [
+        parsedJsonBody: JsonValue | undefined,
+        contextValues: ContextValues | undefined,
+      ]
 ): UniversalServerRequest {
+  const nodeResponse: NodeServerResponse | undefined =
+    rest.length === 3 ? rest[0] : undefined;
+  const parsedJsonBody: JsonValue | undefined =
+    rest.length === 3 ? rest[1] : rest[0];
+  const contextValues: ContextValues | undefined =
+    rest.length === 3 ? rest[2] : rest[1];
   const encrypted =
     "encrypted" in nodeRequest.socket && nodeRequest.socket.encrypted;
   const protocol = encrypted ? "https" : "http";
@@ -107,18 +135,28 @@ export function universalRequestFromNodeRequest(
     });
   } else {
     // HTTP/1.1 does not have error codes, but Node.js has ECONNRESET
+    const nodeResponsOrRequest = nodeResponse ?? nodeRequest;
     const onH1Error = (e: Error) => {
       nodeRequest.off("error", onH1Error);
-      nodeRequest.off("close", onH1Close);
+      nodeResponsOrRequest.off("close", onH1Close);
       abortController.abort(connectErrorFromNodeReason(e));
     };
     const onH1Close = () => {
       nodeRequest.off("error", onH1Error);
-      nodeRequest.off("close", onH1Close);
-      abortController.abort();
+      nodeResponsOrRequest.off("close", onH1Close);
+      // When subscribed to the response, this can get called before "error"
+      abortController.abort(
+        nodeRequest.errored
+          ? connectErrorFromNodeReason(nodeRequest.errored)
+          : undefined,
+      );
     };
     nodeRequest.once("error", onH1Error);
-    nodeRequest.once("close", onH1Close);
+    // Node emits close on the request as soon as all data is read.
+    // We instead subscribe to the response (if available)
+    //
+    // Ref: https://github.com/nodejs/node/issues/40775
+    nodeResponsOrRequest.once("close", onH1Close);
   }
   return {
     httpVersion: nodeRequest.httpVersion,

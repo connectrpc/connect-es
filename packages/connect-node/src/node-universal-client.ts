@@ -130,13 +130,12 @@ function createNodeHttp1Client(
       sentinel.catch((e) => {
         reject(e);
       });
-
       h1Request(
         sentinel,
         req.url,
         {
           ...httpOptions,
-          headers: webHeaderToNodeHeaders(req.header),
+          headers: webHeaderToNodeHeaders(req.header, httpOptions?.headers),
           method: req.method,
         },
         (request) => {
@@ -280,7 +279,7 @@ function h2Request(
   options: Omit<http2.ClientSessionRequestOptions, "signal">,
   onStream: (stream: http2.ClientHttp2Stream) => void,
 ): void {
-  const requestUrl = new URL(url, sm.authority);
+  const requestUrl = new URL(url);
   if (requestUrl.origin !== sm.authority) {
     const message = `cannot make a request to ${requestUrl.origin}: the http2 session is connected to ${sm.authority}`;
     sentinel.reject(new ConnectError(message, Code.Internal));
