@@ -13,7 +13,7 @@
   },
   "scripts": {
     "prebuild": "rm -rf ./dist/*",
-    "build": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs",
+    "build": "tsc --project tsconfig.json --outDir ./dist/cjs",
     "test": "jasmine --config=jasmine.json",
     "format": "prettier --write --ignore-unknown '.' '!dist'",
     "license-header": "license-header",
