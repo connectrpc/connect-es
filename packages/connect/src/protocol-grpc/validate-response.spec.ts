@@ -38,17 +38,28 @@ describe("gRPC validateResponse()", function () {
   }
 
   it("should honor grpc-status field", function () {
-    const e = v(200, { "grpc-status": "8" });
+    const e = v(200, {
+      "grpc-status": "8",
+      "content-type": "application/grpc+proto",
+    });
     expect(e?.message).toBe("[resource_exhausted]");
   });
 
   it("should honor grpc-message field", function () {
-    const e = v(200, { "grpc-status": "8", "grpc-message": "out of space" });
+    const e = v(200, {
+      "grpc-status": "8",
+      "grpc-message": "out of space",
+      "content-type": "application/grpc+proto",
+    });
     expect(e?.message).toBe("[resource_exhausted] out of space");
   });
 
   it("should include headers as error metadata with grpc-status", function () {
-    const e = v(200, { "grpc-status": "8", Foo: "Bar" });
+    const e = v(200, {
+      "grpc-status": "8",
+      Foo: "Bar",
+      "content-type": "application/grpc+proto",
+    });
     expect(e?.metadata.get("Foo")).toBe("Bar");
   });
 
@@ -80,7 +91,10 @@ describe("gRPC validateResponse()", function () {
   it("should return foundStatus for grpc-status OK", function () {
     const { foundStatus } = validateResponse(
       200,
-      new Headers({ "grpc-status": "0" }),
+      new Headers({
+        "grpc-status": "0",
+        "content-type": "application/grpc+proto",
+      }),
     );
     expect(foundStatus).toBeTrue();
   });

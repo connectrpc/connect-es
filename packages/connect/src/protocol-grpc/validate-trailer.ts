@@ -12,11 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Code } from "../code.js";
+import { ConnectError } from "../connect-error.js";
+import { headerGrpcStatus } from "./headers.js";
 import { findTrailerError } from "./trailer-status.js";
 
 /**
  * Validates a trailer for the gRPC and the gRPC-web protocol.
- * Throws a ConnectError if the trailer contains an error status.
+ *
+ * If the trailer contains an error status, a ConnectError is
+ * thrown. It will include trailer and header in the error's
+ * "metadata" property.
+ *
+ * Throws a ConnectError with code "internal" if neither the trailer
+ * nor the header contain the Grpc-Status field.
  *
  * @private Internal code, does not follow semantic versioning.
  */
@@ -27,5 +36,8 @@ export function validateTrailer(trailer: Headers, header: Headers): void {
       err.metadata.append(key, value);
     });
     throw err;
+  }
+  if (!header.has(headerGrpcStatus) && !trailer.has(headerGrpcStatus)) {
+    throw new ConnectError("protocol error: missing status", Code.Internal);
   }
 }
