@@ -7,7 +7,6 @@ TypeScript.
 `@connectrpc/connect-web` provides the following adapters for web browsers, and any other platform that has
 the fetch API on board:
 
-
 ### createConnectTransport()
 
 Lets your clients running in the web browser talk to a server with the Connect protocol:
@@ -29,7 +28,7 @@ console.log(sentence) // you said: I feel happy.
 
 ### createGrpcWebTransport()
 
-Lets your clients running in the web browser  talk to a server with the gRPC-web protocol:
+Lets your clients running in the web browser talk to a server with the gRPC-web protocol:
 
 ```diff
 import { createPromiseClient } from "@connectrpc/connect";
@@ -45,7 +44,6 @@ const client = createPromiseClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```
-
 
 ## Getting started
 

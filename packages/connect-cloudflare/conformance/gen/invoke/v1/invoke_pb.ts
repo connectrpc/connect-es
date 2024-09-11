@@ -16,17 +16,32 @@
 // @generated from file invoke/v1/invoke.proto (package invoke.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv1";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
-import type { ClientCompatRequest, ClientCompatResponse } from "../../connectrpc/conformance/v1/client_compat_pb.js";
+import type {
+  GenFile,
+  GenMessage,
+  GenService,
+} from "@bufbuild/protobuf/codegenv1";
+import {
+  fileDesc,
+  messageDesc,
+  serviceDesc,
+} from "@bufbuild/protobuf/codegenv1";
+import type {
+  ClientCompatRequest,
+  ClientCompatResponse,
+} from "../../connectrpc/conformance/v1/client_compat_pb.js";
 import { file_connectrpc_conformance_v1_client_compat } from "../../connectrpc/conformance/v1/client_compat_pb.js";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file invoke/v1/invoke.proto.
  */
-export const file_invoke_v1_invoke: GenFile = /*@__PURE__*/
-  fileDesc("ChZpbnZva2UvdjEvaW52b2tlLnByb3RvEglpbnZva2UudjEiUAoNSW52b2tlUmVxdWVzdBI/CgdyZXF1ZXN0GAEgASgLMi4uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5DbGllbnRDb21wYXRSZXF1ZXN0IlMKDkludm9rZVJlc3BvbnNlEkEKCHJlc3BvbnNlGAEgASgLMi8uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5DbGllbnRDb21wYXRSZXNwb25zZTJOCg1JbnZva2VTZXJ2aWNlEj0KBkludm9rZRIYLmludm9rZS52MS5JbnZva2VSZXF1ZXN0GhkuaW52b2tlLnYxLkludm9rZVJlc3BvbnNlYgZwcm90bzM", [file_connectrpc_conformance_v1_client_compat]);
+export const file_invoke_v1_invoke: GenFile =
+  /*@__PURE__*/
+  fileDesc(
+    "ChZpbnZva2UvdjEvaW52b2tlLnByb3RvEglpbnZva2UudjEiUAoNSW52b2tlUmVxdWVzdBI/CgdyZXF1ZXN0GAEgASgLMi4uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5DbGllbnRDb21wYXRSZXF1ZXN0IlMKDkludm9rZVJlc3BvbnNlEkEKCHJlc3BvbnNlGAEgASgLMi8uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5DbGllbnRDb21wYXRSZXNwb25zZTJOCg1JbnZva2VTZXJ2aWNlEj0KBkludm9rZRIYLmludm9rZS52MS5JbnZva2VSZXF1ZXN0GhkuaW52b2tlLnYxLkludm9rZVJlc3BvbnNlYgZwcm90bzM",
+    [file_connectrpc_conformance_v1_client_compat],
+  );
 
 /**
  * @generated from message invoke.v1.InvokeRequest
@@ -42,7 +57,8 @@ export type InvokeRequest = Message<"invoke.v1.InvokeRequest"> & {
  * Describes the message invoke.v1.InvokeRequest.
  * Use `create(InvokeRequestSchema)` to create a new message.
  */
-export const InvokeRequestSchema: GenMessage<InvokeRequest> = /*@__PURE__*/
+export const InvokeRequestSchema: GenMessage<InvokeRequest> =
+  /*@__PURE__*/
   messageDesc(file_invoke_v1_invoke, 0);
 
 /**
@@ -59,7 +75,8 @@ export type InvokeResponse = Message<"invoke.v1.InvokeResponse"> & {
  * Describes the message invoke.v1.InvokeResponse.
  * Use `create(InvokeResponseSchema)` to create a new message.
  */
-export const InvokeResponseSchema: GenMessage<InvokeResponse> = /*@__PURE__*/
+export const InvokeResponseSchema: GenMessage<InvokeResponse> =
+  /*@__PURE__*/
   messageDesc(file_invoke_v1_invoke, 1);
 
 /**
@@ -73,7 +90,5 @@ export const InvokeService: GenService<{
     methodKind: "unary";
     input: typeof InvokeRequestSchema;
     output: typeof InvokeResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_invoke_v1_invoke, 0);
-
+  };
+}> = /*@__PURE__*/ serviceDesc(file_invoke_v1_invoke, 0);

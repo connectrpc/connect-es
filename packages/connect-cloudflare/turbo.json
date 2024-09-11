@@ -1,0 +1,16 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "conformance:client": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "env": ["CLOUDFLARE_*"]
+    },
+    "conformance:server": {
+      "cache": false,
+      "dependsOn": ["^build"],
+      "env": ["CLOUDFLARE_*"]
+    }
+  }
+}

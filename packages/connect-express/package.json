@@ -8,14 +8,16 @@
     "directory": "packages/connect-express"
   },
   "scripts": {
-    "clean": "rm -rf ./dist/*",
-    "generate": "buf generate",
+    "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
-    "attw": "attw --pack",
-    "jasmine": "jasmine --config=jasmine.json",
-    "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-express.yaml -v ./conformance/server.ts"
+    "test": "jasmine --config=jasmine.json",
+    "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-express.yaml -v -- tsx ./conformance/server.ts",
+    "format": "prettier --write --ignore-unknown '.' '!dist'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 .",
+    "attw": "attw --pack"
   },
   "type": "module",
   "sideEffects": false,
@@ -31,9 +33,11 @@
   },
   "devDependencies": {
     "@connectrpc/connect-conformance": "^2.0.0-alpha.1",
+    "@connectrpc/connect": "2.0.0-alpha.1",
+    "@connectrpc/connect-node": "2.0.0-alpha.1",
     "@types/express": "^4.17.18",
     "express": "^4.19.2",
-    "tsx": "^4.16.5"
+    "tsx": "^4.19.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.0.0",

@@ -1,27 +1,97 @@
 name: ci
+
 on:
   push:
-    branches: [main, v2]
-    tags: ['v*']
+    branches: [main, "v*"]
+    tags: ["v*"]
   pull_request:
-    branches: [main, v2]
+    branches: [main, "v*"]
   workflow_dispatch:
+
 permissions:
   contents: read
+
+env:
+  # https://consoledonottrack.com/
+  DO_NOT_TRACK: 1
+
 jobs:
-  ci:
+  tasks:
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        task:
+          - format
+          - license-header
+          - lint
+          - attw
+          - bundle-size
+          - build
+        include:
+          - task: format
+            diff-check: true
+          - task: license-header
+            diff-check: true
+          - task: bundle-size
+            diff-check: true
+    name: ${{ matrix.task }}
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: cache
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          path: |
-            ~/.tmp
-            .tmp
-          key: ${{ runner.os }}-connect-es-ci-${{ hashFiles('Makefile') }}
-          restore-keys: |
-            ${{ runner.os }}-connect-es-ci-
-      - name: make
-        run: make ci && make checkdiff
+          node-version-file: .nvmrc
+          cache: "npm"
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}/${{ matrix.task }}/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/${{ matrix.task }}
+      - run: npm ci
+      - run: npx turbo run ${{ matrix.task }}
+      - name: Check changed files
+        if: ${{ matrix.diff-check }}
+        run: node scripts/gh-diffcheck.js
+  test:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Node.js v16 does not provide all necessary fetch types by default, so
+        # we cannot run tests for @connectrpc/connect-web.
+        # v16 is tested in a separate job below.
+        node-version: [22.7.0, 20.17.0, 18.20.4]
+    name: "test on Node.js ${{ matrix.node-version }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}/test/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/test
+      - run: npm ci
+      - run: npx turbo run test
+  test16:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [16.20.2]
+    name: "test on Node.js ${{ matrix.node-version }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}/test/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/test
+      - run: npm ci
+      - run: npx turbo run test --filter '!@connectrpc/connect-web'

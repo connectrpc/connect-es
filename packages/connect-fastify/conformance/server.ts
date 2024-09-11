@@ -1,5 +1,3 @@
-#!/usr/bin/env -S npx tsx
-
 // Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +33,7 @@ import {
   BidiStreamRequestSchema,
   IdempotentUnaryRequestSchema,
   ServerCompatResponseSchema,
+  writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
 import { fastify } from "fastify";
 import type {
@@ -44,7 +43,7 @@ import type {
   FastifyHttp2SecureOptions,
   FastifyInstance,
 } from "fastify";
-import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
+import { fastifyConnectPlugin } from "../src/index.js";
 
 main();
 
@@ -142,8 +141,12 @@ function main() {
   }
 
   process.on("SIGTERM", () => {
-    void server.close();
+    // Gracefully shutting down a http2 server is complicated.
+    // We trust the conformance test runner to only send the signal if it's done,
+    // so we simply shut down hard.
+    process.exit();
   });
+
   server.listen({ host: "127.0.0.1", port: 0 }, () => {
     const addrInfo = server.addresses()[0];
     const res = create(ServerCompatResponseSchema, {
@@ -154,10 +157,8 @@ function main() {
       host: addrInfo.address,
       port: addrInfo.port,
     });
-    const data = toBinary(ServerCompatResponseSchema, res);
-    const size = Buffer.alloc(4);
-    size.writeUInt32BE(data.byteLength);
-    process.stdout.write(size);
-    process.stdout.write(data);
+    process.stdout.write(
+      writeSizeDelimitedBuffer(toBinary(ServerCompatResponseSchema, res)),
+    );
   });
 }

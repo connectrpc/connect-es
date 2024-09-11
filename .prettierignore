@@ -1,9 +1,0 @@
-node_modules
-/packages/connect/src/protocol-grpc/gen/*.ts
-/packages/connect-web/browserstack/gen/**/*.ts
-/packages/connect-cloudflare/conformance/gen/**/*.ts
-/packages/connect-express/src/testdata/gen/**/*.ts
-/packages/connect-node/src/testdata/gen/**/*.ts
-/packages/*/dist
-/packages/*/src/gen
-/.tmp

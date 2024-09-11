@@ -9,12 +9,16 @@
     "directory": "packages/connect"
   },
   "scripts": {
-    "clean": "rm -rf ./dist/*",
     "generate": "buf generate",
+    "postgenerate": "license-header src/protocol-grpc/gen",
+    "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm && node scripts/update-user-agent.mjs",
     "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs --declaration --declarationDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --outDir ./dist/esm --declaration --declarationDir ./dist/esm",
-    "jasmine": "jasmine --config=jasmine.json",
+    "test": "jasmine --config=jasmine.json",
+    "format": "prettier --write --ignore-unknown '.' '!dist' '!src/protocol-grpc/gen'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 .",
     "attw": "attw --pack"
   },
   "type": "module",
@@ -62,7 +66,7 @@
     "@bufbuild/protobuf": "^2.0.0"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.36.0",
+    "@bufbuild/buf": "^1.39.0",
     "@bufbuild/protoc-gen-es": "^2.0.0",
     "@types/jasmine": "^5.0.0",
     "jasmine": "^5.2.0",

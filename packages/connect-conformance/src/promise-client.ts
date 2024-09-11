@@ -12,12 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createPromiseClient, ConnectError } from "@connectrpc/connect";
-import type {
-  CallOptions,
-  PromiseClient,
-  Transport,
-} from "@connectrpc/connect";
+import { createPromiseClient } from "@connectrpc/connect";
+import type { PromiseClient, Transport } from "@connectrpc/connect";
 import { ClientResponseResultSchema } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import type { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
@@ -26,205 +22,141 @@ import {
   IdempotentUnaryRequestSchema,
   ServerStreamRequestSchema,
   ClientStreamRequestSchema,
+  ConformancePayloadSchema,
   BidiStreamRequestSchema,
   UnimplementedRequestSchema,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
-import type {
-  Header as ConformanceHeader,
-  ConformancePayload,
-  BidiStreamRequest,
-  UnaryResponse,
-  IdempotentUnaryResponse,
-} from "./gen/connectrpc/conformance/v1/service_pb.js";
+import type { BidiStreamRequest } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
-  convertToProtoError,
   convertToProtoHeaders,
-  appendProtoHeaders,
-  wait,
   getCancelTiming,
+  getRequestHeaders,
+  getRequestMessages,
+  getSingleRequestMessage,
+  setClientErrorResult,
+  wait,
 } from "./protocol.js";
 import { createWritableIterable } from "@connectrpc/connect/protocol";
 import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
 import { create } from "@bufbuild/protobuf";
-import { anyUnpack } from "@bufbuild/protobuf/wkt";
 
 type ConformanceClient = PromiseClient<typeof ConformanceService>;
 
+const emptyPayload = create(ConformancePayloadSchema);
+
 export function invokeWithPromiseClient(
   transport: Transport,
-  req: ClientCompatRequest,
+  compatRequest: ClientCompatRequest,
 ) {
   const client = createPromiseClient(ConformanceService, transport);
-
-  switch (req.method) {
+  switch (compatRequest.method) {
     case ConformanceService.method.unary.name:
-      return unary(client, req);
+      return unary(client, compatRequest);
     case ConformanceService.method.idempotentUnary.name:
-      return unary(client, req, true);
+      return unary(client, compatRequest, true);
     case ConformanceService.method.serverStream.name:
-      return serverStream(client, req);
+      return serverStream(client, compatRequest);
     case ConformanceService.method.clientStream.name:
-      return clientStream(client, req);
+      return clientStream(client, compatRequest);
     case ConformanceService.method.bidiStream.name:
-      return bidiStream(client, req);
+      return bidiStream(client, compatRequest);
     case ConformanceService.method.unimplemented.name:
-      return unimplemented(client, req);
+      return unimplemented(client, compatRequest);
     default:
-      throw new Error(`Unknown method: ${req.method}`);
+      throw new Error(`Unknown method: ${compatRequest.method}`);
   }
 }
 
 async function unary(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  compatRequest: ClientCompatRequest,
   idempotent: boolean = false,
 ) {
-  if (req.requestMessages.length !== 1) {
-    throw new Error("Unary method requires exactly one request message");
-  }
-  const msg = req.requestMessages[0];
-  const uReq = anyUnpack(
-    msg,
-    idempotent ? IdempotentUnaryRequestSchema : UnaryRequestSchema,
-  );
-  if (!uReq) {
-    throw new Error("Could not unpack request message to unary request");
-  }
-  const reqHeader = new Headers();
-  appendProtoHeaders(reqHeader, req.requestHeaders);
-  let error: ConnectError | undefined = undefined;
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
-  const payloads: ConformancePayload[] = [];
+  await wait(compatRequest.requestDelayMs);
+  const result = create(ClientResponseResultSchema);
   try {
-    let call: (
-      req: NonNullable<typeof uReq>,
-      options: CallOptions,
-    ) => Promise<UnaryResponse | IdempotentUnaryResponse> = client.unary;
-    if (idempotent) {
-      call = client.idempotentUnary;
+    const controller = new AbortController();
+    const { afterCloseSendMs } = getCancelTiming(compatRequest);
+    if (afterCloseSendMs >= 0) {
+      void wait(afterCloseSendMs).then(() => controller.abort());
     }
-    await wait(req.requestDelayMs);
-    const uRes = await call(uReq, {
-      headers: reqHeader,
+    const request = getSingleRequestMessage(
+      compatRequest,
+      idempotent ? IdempotentUnaryRequestSchema : UnaryRequestSchema,
+    );
+    const call = idempotent ? client.idempotentUnary : client.unary;
+    const response = await call(request, {
+      headers: getRequestHeaders(compatRequest),
+      signal: controller.signal,
       onHeader(headers) {
-        resHeaders = convertToProtoHeaders(headers);
+        result.responseHeaders = convertToProtoHeaders(headers);
       },
       onTrailer(trailers) {
-        resTrailers = convertToProtoHeaders(trailers);
+        result.responseTrailers = convertToProtoHeaders(trailers);
       },
     });
-    payloads.push(uRes.payload!);
+    result.payloads.push(response.payload ?? emptyPayload);
   } catch (e) {
-    error = ConnectError.from(e);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    resHeaders =
-      resHeaders.length === 0
-        ? convertToProtoHeaders(error.metadata)
-        : resHeaders;
-    resTrailers = convertToProtoHeaders(error.metadata);
+    setClientErrorResult(result, e);
   }
-  return create(ClientResponseResultSchema, {
-    payloads: payloads,
-    responseHeaders: resHeaders,
-    responseTrailers: resTrailers,
-    error: convertToProtoError(error),
-  });
+  return result;
 }
 
 async function serverStream(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  compatRequest: ClientCompatRequest,
 ) {
-  if (req.requestMessages.length !== 1) {
-    throw new Error("ServerStream method requires exactly one request message");
-  }
-  const msg = req.requestMessages[0];
-
-  const uReq = anyUnpack(msg, ServerStreamRequestSchema);
-  if (!uReq) {
-    throw new Error(
-      "Could not unpack request message to server stream request",
-    );
-  }
-  const reqHeader = new Headers();
-  appendProtoHeaders(reqHeader, req.requestHeaders);
-  let error: ConnectError | undefined = undefined;
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
-  const payloads: ConformancePayload[] = [];
-  const cancelTiming = getCancelTiming(req);
+  const cancelTiming = getCancelTiming(compatRequest);
   const controller = new AbortController();
+  await wait(compatRequest.requestDelayMs);
+  const result = create(ClientResponseResultSchema);
+  const request = getSingleRequestMessage(
+    compatRequest,
+    ServerStreamRequestSchema,
+  );
   try {
-    await wait(req.requestDelayMs);
-    const res = client.serverStream(uReq, {
-      headers: reqHeader,
+    const res = client.serverStream(request, {
+      headers: getRequestHeaders(compatRequest),
       signal: controller.signal,
       onHeader(headers) {
-        resHeaders = convertToProtoHeaders(headers);
+        result.responseHeaders = convertToProtoHeaders(headers);
       },
       onTrailer(trailers) {
-        resTrailers = convertToProtoHeaders(trailers);
+        result.responseTrailers = convertToProtoHeaders(trailers);
       },
     });
-    if (cancelTiming.afterNumResponses == 0) {
+    if (cancelTiming.afterCloseSendMs >= 0) {
+      await wait(cancelTiming.afterCloseSendMs);
       controller.abort();
     }
-    let count = 0;
     for await (const msg of res) {
-      payloads.push(msg.payload!);
-      count++;
-      if (count === cancelTiming.afterNumResponses) {
+      result.payloads.push(msg.payload ?? emptyPayload);
+      if (result.payloads.length === cancelTiming.afterNumResponses) {
         controller.abort();
       }
     }
   } catch (e) {
-    error = ConnectError.from(e);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    resHeaders =
-      resHeaders.length === 0
-        ? convertToProtoHeaders(error.metadata)
-        : resHeaders;
-    resTrailers = convertToProtoHeaders(error.metadata);
+    setClientErrorResult(result, e);
   }
-  return create(ClientResponseResultSchema, {
-    responseHeaders: resHeaders,
-    responseTrailers: resTrailers,
-    payloads: payloads,
-    error: convertToProtoError(error),
-  });
+  return result;
 }
 
 async function clientStream(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  compatRequest: ClientCompatRequest,
 ) {
-  const reqHeaders = new Headers();
-  appendProtoHeaders(reqHeaders, req.requestHeaders);
-  let error: ConnectError | undefined = undefined;
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
-  const payloads: ConformancePayload[] = [];
-  const cancelTiming = getCancelTiming(req);
+  const cancelTiming = getCancelTiming(compatRequest);
   const controller = new AbortController();
+  const result = create(ClientResponseResultSchema);
   try {
-    const csRes = await client.clientStream(
+    const response = await client.clientStream(
       (async function* () {
-        for (const msg of req.requestMessages) {
-          const csReq = anyUnpack(msg, ClientStreamRequestSchema);
-          if (!csReq) {
-            throw new Error(
-              "Could not unpack request message to client stream request",
-            );
-          }
-          await wait(req.requestDelayMs);
-          yield csReq;
+        for (const msg of getRequestMessages(
+          compatRequest,
+          ClientStreamRequestSchema,
+        )) {
+          await wait(compatRequest.requestDelayMs);
+          yield msg;
         }
         if (cancelTiming.beforeCloseSend !== undefined) {
           controller.abort();
@@ -236,87 +168,66 @@ async function clientStream(
       })(),
       {
         signal: controller.signal,
-        headers: reqHeaders,
+        headers: getRequestHeaders(compatRequest),
         onHeader(headers) {
-          resHeaders = convertToProtoHeaders(headers);
+          result.responseHeaders = convertToProtoHeaders(headers);
         },
         onTrailer(trailers) {
-          resTrailers = convertToProtoHeaders(trailers);
+          result.responseTrailers = convertToProtoHeaders(trailers);
         },
       },
     );
-    payloads.push(csRes.payload!);
+    result.payloads.push(response.payload ?? emptyPayload);
   } catch (e) {
-    error = ConnectError.from(e);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    resHeaders =
-      resHeaders.length === 0
-        ? convertToProtoHeaders(error.metadata)
-        : resHeaders;
-    resTrailers = convertToProtoHeaders(error.metadata);
+    setClientErrorResult(result, e);
   }
-  return create(ClientResponseResultSchema, {
-    responseHeaders: resHeaders,
-    responseTrailers: resTrailers,
-    payloads: payloads,
-    error: convertToProtoError(error),
-  });
+  return result;
 }
 
-async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
-  const reqHeaders = new Headers();
-  appendProtoHeaders(reqHeaders, req.requestHeaders);
-  let error: ConnectError | undefined = undefined;
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
-  const payloads: ConformancePayload[] = [];
-  const cancelTiming = getCancelTiming(req);
+async function bidiStream(
+  client: ConformanceClient,
+  compatRequest: ClientCompatRequest,
+) {
+  const cancelTiming = getCancelTiming(compatRequest);
   const controller = new AbortController();
-  let recvCount = 0;
+  const result = create(ClientResponseResultSchema);
   try {
-    const reqIt = createWritableIterable<BidiStreamRequest>();
-    const sRes = client.bidiStream(reqIt, {
+    const request = createWritableIterable<BidiStreamRequest>();
+    const responses = client.bidiStream(request, {
       signal: controller.signal,
-      headers: reqHeaders,
+      headers: getRequestHeaders(compatRequest),
       onHeader(headers) {
-        resHeaders = convertToProtoHeaders(headers);
+        result.responseHeaders = convertToProtoHeaders(headers);
       },
       onTrailer(trailers) {
-        resTrailers = convertToProtoHeaders(trailers);
+        result.responseTrailers = convertToProtoHeaders(trailers);
       },
     });
-    const resIt = sRes[Symbol.asyncIterator]();
-    for (const msg of req.requestMessages) {
-      const bdReq = anyUnpack(msg, BidiStreamRequestSchema);
-      if (!bdReq) {
-        throw new Error(
-          "Could not unpack request message to client stream request",
-        );
-      }
-      await wait(req.requestDelayMs);
-      await reqIt.write(bdReq);
-      if (req.streamType === StreamType.FULL_DUPLEX_BIDI_STREAM) {
+    const responseIterator = responses[Symbol.asyncIterator]();
+    for (const msg of getRequestMessages(
+      compatRequest,
+      BidiStreamRequestSchema,
+    )) {
+      await wait(compatRequest.requestDelayMs);
+      await request.write(msg);
+      if (compatRequest.streamType === StreamType.FULL_DUPLEX_BIDI_STREAM) {
         if (cancelTiming.afterNumResponses === 0) {
           controller.abort();
         }
-        const next = await resIt.next();
+        const next = await responseIterator.next();
         if (next.done === true) {
           continue;
         }
-        recvCount++;
-        if (cancelTiming.afterNumResponses === recvCount) {
+        result.payloads.push(next.value.payload ?? emptyPayload);
+        if (result.payloads.length === cancelTiming.afterNumResponses) {
           controller.abort();
         }
-        payloads.push(next.value.payload!);
       }
     }
     if (cancelTiming.beforeCloseSend !== undefined) {
       controller.abort();
     }
-    reqIt.close();
+    request.close();
     if (cancelTiming.afterCloseSendMs >= 0) {
       setTimeout(() => {
         controller.abort();
@@ -327,75 +238,42 @@ async function bidiStream(client: ConformanceClient, req: ClientCompatRequest) {
     }
     // Drain the response iterator
     for (;;) {
-      const next = await resIt.next();
+      const next = await responseIterator.next();
       if (next.done === true) {
         break;
       }
-      recvCount++;
-      if (cancelTiming.afterNumResponses === recvCount) {
+      result.payloads.push(next.value.payload ?? emptyPayload);
+      if (result.payloads.length === cancelTiming.afterNumResponses) {
         controller.abort();
       }
-      payloads.push(next.value.payload!);
     }
   } catch (e) {
-    error = ConnectError.from(e);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    resHeaders =
-      resHeaders.length === 0
-        ? convertToProtoHeaders(error.metadata)
-        : resHeaders;
-    resTrailers = convertToProtoHeaders(error.metadata);
+    setClientErrorResult(result, e);
   }
-  return create(ClientResponseResultSchema, {
-    responseHeaders: resHeaders,
-    responseTrailers: resTrailers,
-    payloads: payloads,
-    error: convertToProtoError(error),
-  });
+  return result;
 }
 
 async function unimplemented(
   client: ConformanceClient,
-  req: ClientCompatRequest,
+  compatRequest: ClientCompatRequest,
 ) {
-  const msg = req.requestMessages[0];
-  const unReq = anyUnpack(msg, UnimplementedRequestSchema);
-  if (!unReq) {
-    throw new Error("Could not unpack request message to unary request");
-  }
-  const reqHeader = new Headers();
-  appendProtoHeaders(reqHeader, req.requestHeaders);
-  let error: ConnectError | undefined = undefined;
-  let resHeaders: ConformanceHeader[] = [];
-  let resTrailers: ConformanceHeader[] = [];
+  const request = getSingleRequestMessage(
+    compatRequest,
+    UnimplementedRequestSchema,
+  );
+  const result = create(ClientResponseResultSchema);
   try {
-    await client.unimplemented(unReq, {
-      headers: reqHeader,
+    await client.unimplemented(request, {
+      headers: getRequestHeaders(compatRequest),
       onHeader(headers) {
-        resHeaders = convertToProtoHeaders(headers);
+        result.responseHeaders = convertToProtoHeaders(headers);
       },
       onTrailer(trailers) {
-        resTrailers = convertToProtoHeaders(trailers);
+        result.responseTrailers = convertToProtoHeaders(trailers);
       },
     });
   } catch (e) {
-    error = ConnectError.from(e);
-    // We can't distinguish between headers and trailers here, so we just
-    // add the metadata to both.
-    //
-    // But if the headers are already set, we don't need to overwrite them.
-    resHeaders =
-      resHeaders.length === 0
-        ? convertToProtoHeaders(error.metadata)
-        : resHeaders;
-    resTrailers = convertToProtoHeaders(error.metadata);
+    setClientErrorResult(result, e);
   }
-  return create(ClientResponseResultSchema, {
-    responseHeaders: resHeaders,
-    responseTrailers: resTrailers,
-    error: convertToProtoError(error),
-  });
+  return result;
 }

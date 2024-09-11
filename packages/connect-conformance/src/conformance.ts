@@ -29,20 +29,18 @@ import { execFileSync } from "node:child_process";
 import { fetch } from "undici";
 import { scripts } from "../package.json";
 
-// Extract conformance runner version from the `generate` script
-const [, version] = /conformance:(v\d+\.\d+\.\d+)/.exec(scripts.generate) ?? [
-  "?",
-];
-
-const downloadUrl = `https://github.com/connectrpc/conformance/releases/download/${version}`;
-
 export async function run() {
-  const { archive, bin } = getArtifactNameForEnv();
-  const tempDir = getTempDir();
+  // Extract conformance runner version from the `generate` script
+  const [, version] = /conformance:(v\d+\.\d+\.\d+)/.exec(scripts.generate) ?? [
+    "?",
+  ];
+  const { archive, bin } = getArtifactNameForEnv(version);
+  const tempDir = getTempDir(version);
   const binPath = joinPath(tempDir, bin);
   if (!existsSync(binPath)) {
+    const downloadUrl = `https://github.com/connectrpc/conformance/releases/download/${version}/${archive}`;
     const archivePath = joinPath(tempDir, archive);
-    await download(`${downloadUrl}/${archive}`, archivePath);
+    await download(downloadUrl, archivePath);
     await extractBin(archivePath, binPath);
   }
   execFileSync(binPath, process.argv.slice(2), {
@@ -101,15 +99,21 @@ async function extractBin(archivePath: string, binPath: string) {
   );
 }
 
-function getTempDir() {
-  const tempDir = joinPath(process.env["TEMP"] ?? os.tmpdir(), "conformance");
+function getTempDir(version: string) {
+  const tempDir = joinPath(
+    process.env["TEMP"] ?? os.tmpdir(),
+    `conformance-${version}`,
+  );
   if (!existsSync(tempDir)) {
     mkdirSync(tempDir, { recursive: true });
   }
   return tempDir;
 }
 
-function getArtifactNameForEnv(): { archive: string; bin: string } {
+function getArtifactNameForEnv(version: string): {
+  archive: string;
+  bin: string;
+} {
   let build = "";
   let ext = ".tar.gz";
   let bin = "connectconformance";

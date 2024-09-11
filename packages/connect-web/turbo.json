@@ -1,0 +1,53 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "generate": {
+      "outputs": ["browserstack/gen/**"]
+    },
+    "test-browserstack": {
+      "cache": false,
+      "env": ["BROWSERSTACK_USERNAME", "BROWSERSTACK_ACCESS_KEY"],
+      "dependsOn": ["generate", "^build"]
+    },
+    "conformance": {
+      "dependsOn": ["conformance:node:promise", "conformance:node:callback"]
+    },
+    "conformance:safari": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "conformance:safari:promise": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "conformance:safari:callback": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "conformance:chrome:promise": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "conformance:chrome:callback": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "conformance:firefox:promise": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "conformance:firefox:callback": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "conformance:node:promise": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "conformance:node:callback": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "@connectrpc/connect-migrate",
   "version": "2.0.0-alpha.1",
-  "description": "This tool updates your Connect project to use the latest @connectrpc packages.",
+  "description": "This tool updates your Connect project to use the new @connectrpc packages.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -12,19 +12,21 @@
     "connect-migrate": "bin/connect-migrate"
   },
   "scripts": {
-    "clean": "rm -rf ./dist/cjs/*",
-    "build": "tsc --project tsconfig.json --outDir ./dist/cjs",
+    "prebuild": "rm -rf ./dist/*",
+    "build": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs",
     "test": "jasmine --config=jasmine.json",
-    "build+test": "npm run build && npm run test"
+    "format": "prettier --write --ignore-unknown '.' '!dist'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 ."
   },
   "engines": {
     "node": ">=16.0.0"
   },
   "dependencies": {
     "fast-glob": "3.3.2",
-    "jscodeshift": "0.16.1",
+    "jscodeshift": "17.0.0",
     "semver": "^7.6.3",
-    "yaml": "^2.4.5"
+    "yaml": "^2.5.1"
   },
   "devDependencies": {
     "@types/jscodeshift": "0.11.11",

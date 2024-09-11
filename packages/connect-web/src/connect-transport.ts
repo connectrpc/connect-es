@@ -261,6 +261,7 @@ export function createConnectTransport(
         body: ReadableStream<Uint8Array>,
         trailerTarget: Headers,
         header: Headers,
+        signal: AbortSignal,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         let endStreamReceived = false;
@@ -292,6 +293,16 @@ export function createConnectTransport(
             continue;
           }
           yield parse(data);
+        }
+        // Node wil not throw an AbortError on `read` if the
+        // signal is aborted before `getReader` is called.
+        // As a work around we check at the end and throw.
+        //
+        // Ref: https://github.com/nodejs/undici/issues/1940
+        if ("throwIfAborted" in signal) {
+          // We assume that implementations without `throwIfAborted` (old
+          // browsers) do honor aborted signals on `read`.
+          signal.throwIfAborted();
         }
         if (!endStreamReceived) {
           throw "missing EndStreamResponse";
@@ -364,7 +375,12 @@ export function createConnectTransport(
             ...req,
             header: fRes.headers,
             trailer,
-            message: parseResponseBody(fRes.body, trailer, fRes.headers),
+            message: parseResponseBody(
+              fRes.body,
+              trailer,
+              fRes.headers,
+              req.signal,
+            ),
           };
           return res;
         },

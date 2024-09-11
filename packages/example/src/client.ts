@@ -15,7 +15,7 @@
 import { createPromiseClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_pb.js";
-import { stdin, stdout, env } from "process";
+import { stdin, stdout, env } from "node:process";
 import * as readline from "node:readline/promises";
 
 const rl = readline.createInterface(stdin, stdout);

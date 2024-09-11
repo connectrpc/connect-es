@@ -1,5 +1,3 @@
-#!/usr/bin/env -S npx tsx
-
 // Copyright 2021-2024 The Connect Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +17,7 @@ import {
   compressionBrotli,
   compressionGzip,
   connectNodeAdapter,
-} from "@connectrpc/connect-node";
+} from "../src/index.js";
 import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
@@ -113,9 +111,13 @@ function main() {
   }
 
   process.on("SIGTERM", () => {
-    server.close();
+    // Gracefully shutting down a http2 server is complicated.
+    // We trust the conformance test runner to only send the signal if it's done,
+    // so we simply shut down hard.
+    process.exit();
   });
-  server.listen(undefined, "127.0.0.1", () => {
+
+  server.listen(0, "127.0.0.1", () => {
     const addrInfo = server.address() as net.AddressInfo;
     const res = create(ServerCompatResponseSchema, {
       pemCert:

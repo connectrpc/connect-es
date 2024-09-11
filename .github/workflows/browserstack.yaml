@@ -1,31 +1,39 @@
-name: browserstack
+name: "Browserstack"
+
 on:
   push:
-    branches: [main, v2]
-    tags: ['v*']
+    branches: [main, "v*"]
+    tags: ["v*"]
   pull_request:
-    branches: [main, v2]
+    branches: [main, "v*"]
   workflow_dispatch:
+
 permissions:
   contents: read
+
+env:
+  # https://consoledonottrack.com/
+  DO_NOT_TRACK: 1
+
 jobs:
   browserstack:
+    name: "Test @connectrpc/connect-web"
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: cache
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          path: |
-            ~/.tmp
-            .tmp
-          key: ${{ runner.os }}-connect-web-browserstack-${{ hashFiles('Makefile') }}
-          restore-keys: |
-            ${{ runner.os }}-connect-web-browserstack-
-      - name: browserstack
+          node-version-file: .nvmrc
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}/browserstack/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/browserstack
+      - name: NPM Install
+        run: npm ci
+      - name: Browserstack
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
-        run: make testwebbrowserstack
-
+        run: npx turbo run test-browserstack --output-logs new-only --log-order stream

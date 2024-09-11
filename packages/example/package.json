@@ -3,10 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "tsc --noEmit",
+    "build": "tsc --noEmit",
     "start": "tsx src/server.ts",
     "client": "tsx src/client.ts",
-    "generate": "buf generate"
+    "generate": "buf generate",
+    "format": "prettier --write --ignore-unknown '.' '!src/gen'",
+    "license-header": "license-header",
+    "lint": "eslint --max-warnings 0 ."
   },
   "engines": {
     "node": ">=16"
@@ -18,7 +21,7 @@
     "tsx": "^4.16.5"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.36.0",
+    "@bufbuild/buf": "^1.39.0",
     "@bufbuild/protoc-gen-es": "^2.0.0",
     "@types/express": "^4.17.18",
     "esbuild": "^0.19.8",

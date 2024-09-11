@@ -156,13 +156,13 @@ export class Http2SessionManager {
   private verifying: Promise<void> | undefined;
 
   public constructor(
-    authority: URL | string,
+    url: URL | string,
     pingOptions?: Http2SessionOptions,
     http2SessionOptions?:
       | http2.ClientSessionOptions
       | http2.SecureClientSessionOptions,
   ) {
-    this.authority = new URL(authority).origin;
+    this.authority = new URL(url).origin;
     this.http2SessionOptions = http2SessionOptions;
     this.options = {
       pingIntervalMs: pingOptions?.pingIntervalMs ?? Number.POSITIVE_INFINITY,
