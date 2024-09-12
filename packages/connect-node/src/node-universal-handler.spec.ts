@@ -54,7 +54,7 @@ describe("universalRequestFromNodeResponse()", function () {
               // error here.
             });
             stream.close(rstCode, () => {
-              // We are seeing a race condition in Node v16.20.0, where closing
+              // We are seeing a race condition in Node.js, where closing
               // the session right after closing a stream with an RST code
               // _sometimes_ sends an INTERNAL_ERROR code.
               // Simply delaying the session close until the next tick like
