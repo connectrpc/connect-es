@@ -17,17 +17,6 @@ import {
   TransformStream as NodeTransformStream,
   WritableStream as NodeWritableStream,
 } from "stream/web";
-import { Headers as UndiciHeaders } from "undici";
-
-/**
- * Make the Headers implementation of the fetch API available in the global
- * scope.
- */
-export function node16FetchHeadersPolyfill() {
-  if (typeof globalThis.Headers !== "function") {
-    globalThis.Headers = UndiciHeaders as unknown as typeof Headers;
-  }
-}
 
 /**
  * Make the WHATWG stream implementation of Node.js v16 available in the global

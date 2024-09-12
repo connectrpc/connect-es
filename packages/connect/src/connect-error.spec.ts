@@ -21,10 +21,7 @@ import {
 import type { Message } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
-import { node16FetchHeadersPolyfill } from "./node16-polyfill-helper.spec.js";
 import { BoolValueSchema, StructSchema } from "@bufbuild/protobuf/wkt";
-
-node16FetchHeadersPolyfill();
 
 class ConnectError2 extends Error {
   readonly code: Code;
