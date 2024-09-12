@@ -21,6 +21,7 @@
     "attw": "attw --pack"
   },
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
