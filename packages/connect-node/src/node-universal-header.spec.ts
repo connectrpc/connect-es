@@ -82,51 +82,39 @@ describe("webHeaderToNodeHeaders()", function () {
     expect(h["custom"]).toEqual(["a", "b"]);
     expect(h["foo"]).toBe("bar");
   });
-  if ("getSetCookie" in new Headers()) {
-    // Special handling of set-cookie is available since Node.js v20.0.0,
-    // v18.14.1, v16.19.1, but not in headers-polyfill 3.1.2.
-    // Also see https://github.com/nodejs/undici/releases/tag/v5.19.0
-    describe("special handling of set-cookie", function () {
-      // Special handling of set-cookie is available since Node.js v22.0.0, v20.0.0, and v18.14.1.
-      // v18.14.1, v16.19.1, but not in headers-polyfill 3.1.2.
-      it("should accept object literal", () => {
-        const h = webHeaderToNodeHeaders({
-          "set-cookie": "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-          "Set-Cookie": "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-        });
-        expect(h["set-cookie"]).toEqual([
-          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-        ]);
+  describe("special handling of set-cookie", function () {
+    // Special handling of set-cookie is available since Node.js v22.0.0, v20.0.0, and v18.14.1.
+    it("should accept object literal", () => {
+      const h = webHeaderToNodeHeaders({
+        "set-cookie": "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        "Set-Cookie": "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
       });
-      it("should accept Headers object", () => {
-        const input = new Headers();
-        input.append(
-          "set-cookie",
-          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-        );
-        input.append(
-          "Set-Cookie",
-          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-        );
-        const h = webHeaderToNodeHeaders(input);
-        expect(h["set-cookie"]).toEqual([
-          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-        ]);
-      });
-      it("should accept array of name-value pairs", () => {
-        const h = webHeaderToNodeHeaders([
-          ["set-cookie", "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT"],
-          ["Set-Cookie", "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT"],
-        ]);
-        expect(h["set-cookie"]).toEqual([
-          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-        ]);
-      });
+      expect(h["set-cookie"]).toEqual([
+        "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+      ]);
     });
-  }
+    it("should accept Headers object", () => {
+      const input = new Headers();
+      input.append("set-cookie", "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT");
+      input.append("Set-Cookie", "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT");
+      const h = webHeaderToNodeHeaders(input);
+      expect(h["set-cookie"]).toEqual([
+        "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+      ]);
+    });
+    it("should accept array of name-value pairs", () => {
+      const h = webHeaderToNodeHeaders([
+        ["set-cookie", "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT"],
+        ["Set-Cookie", "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT"],
+      ]);
+      expect(h["set-cookie"]).toEqual([
+        "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+      ]);
+    });
+  });
   it("should accept default node headers", function () {
     const nodeDefaults: http.OutgoingHttpHeaders = {
       a: "a",
