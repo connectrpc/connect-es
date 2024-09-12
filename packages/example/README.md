@@ -100,10 +100,7 @@ Of course, you can use `protoc` as well if desired:
 protoc -I . eliza.proto \
   --plugin=protoc-gen-es=../../node_modules/.bin/protoc-gen-es \
   --es_out src/gen \
-  --es_opt target=ts \
-  --plugin=protoc-gen-connect-es=../../node_modules/.bin/protoc-gen-connect-es \
-  --connect-es_out src/gen \
-  --connect-es_opt target=ts
+  --es_opt target=ts
 ```
 
 ## More examples
