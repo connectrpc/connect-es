@@ -86,7 +86,9 @@ describe("webHeaderToNodeHeaders()", function () {
     // Special handling of set-cookie is available since Node.js v20.0.0,
     // v18.14.1, v16.19.1, but not in headers-polyfill 3.1.2.
     // Also see https://github.com/nodejs/undici/releases/tag/v5.19.0
-    describe("with support for set-cookie", function () {
+    describe("special handling of set-cookie", function () {
+      // Special handling of set-cookie is available since Node.js v22.0.0, v20.0.0, and v18.14.1.
+      // v18.14.1, v16.19.1, but not in headers-polyfill 3.1.2.
       it("should accept object literal", () => {
         const h = webHeaderToNodeHeaders({
           "set-cookie": "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",

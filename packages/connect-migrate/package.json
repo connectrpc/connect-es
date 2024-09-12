@@ -20,7 +20,7 @@
     "lint": "eslint --max-warnings 0 ."
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.14.1"
   },
   "dependencies": {
     "fast-glob": "3.3.2",

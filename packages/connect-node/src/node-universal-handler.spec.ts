@@ -24,9 +24,6 @@ import {
 } from "@connectrpc/connect/protocol";
 import type { UniversalServerRequest } from "@connectrpc/connect/protocol";
 
-// Polyfill the Headers API for Node versions < 18
-import "./node-headers-polyfill.js";
-
 describe("universalRequestFromNodeResponse()", function () {
   describe("with HTTP/2 stream closed with an RST code", function () {
     let serverRequest: UniversalServerRequest | undefined;

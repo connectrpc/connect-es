@@ -19,9 +19,6 @@ import { createAsyncIterable } from "@connectrpc/connect/protocol";
 import { createNodeHttpClient } from "./node-universal-client.js";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 
-// Polyfill the Headers API for Node versions < 18
-import "./node-headers-polyfill.js";
-
 describe("node http/2 client closing with RST_STREAM with code CANCEL", function () {
   let serverReceivedRstCode: number | undefined;
   const server = useNodeServer(() =>

@@ -29,18 +29,15 @@
     }
   },
   "engines": {
-    "node": ">=16.0.0"
-  },
-  "dependencies": {
-    "undici": "^5.28.4"
+    "node": ">=18.14.1"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.0.0",
     "@connectrpc/connect": "2.0.0-alpha.1"
   },
   "devDependencies": {
+    "@connectrpc/connect-conformance": "^2.0.0-alpha.1",
     "@types/jasmine": "^5.0.0",
-    "jasmine": "^5.2.0",
-    "@connectrpc/connect-conformance": "^2.0.0-alpha.1"
+    "jasmine": "^5.2.0"
   }
 }
