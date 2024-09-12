@@ -12,7 +12,7 @@
     "lint": "eslint --max-warnings 0 ."
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18.14.1"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.0.0",

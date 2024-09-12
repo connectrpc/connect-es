@@ -27,7 +27,7 @@
     }
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.14.1"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.0.0",

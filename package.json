@@ -27,10 +27,6 @@
   },
   "type": "module",
   "engineStrict": true,
-  "engines": {
-    "node": ">=16",
-    "npm": ">=8"
-  },
   "packageManager": "npm@10.1.0",
   "licenseHeader": {
     "licenseType": "apache",

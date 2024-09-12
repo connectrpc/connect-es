@@ -14,10 +14,7 @@
 
 import { fromJson, toJson } from "@bufbuild/protobuf";
 import { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
-import { node16FetchHeadersPolyfill } from "./node16-polyfill-helper.spec.js";
 import { StructSchema } from "@bufbuild/protobuf/wkt";
-
-node16FetchHeadersPolyfill();
 
 describe("encodeBinaryHeader()", function () {
   it("accepts unicode string", () => {
