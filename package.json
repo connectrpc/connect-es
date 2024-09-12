@@ -3,7 +3,6 @@
   "private": true,
   "workspaces": [
     "packages/connect",
-    "packages/protoc-gen-connect-es",
     "packages/connect-web",
     "packages/connect-node",
     "packages/connect-fastify",
