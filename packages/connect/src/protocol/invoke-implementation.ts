@@ -16,10 +16,13 @@ import type { DescMessage, MessageShape } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { HandlerContext, MethodImplSpec } from "../implementation.js";
+import { createAsyncIterable } from "./async-iterable.js";
 import type { AsyncIterableTransform } from "./async-iterable.js";
 import { normalize, normalizeIterable } from "./normalize.js";
 import type {
   Interceptor,
+  RequestCommon,
+  ResponseCommon,
   StreamRequest,
   StreamResponse,
   UnaryRequest,
@@ -48,36 +51,20 @@ export async function invokeUnaryImplementation<
     return {
       message: normalize(
         spec.method.output,
-        await spec.impl(req.message, {
-          ...context,
-          service: req.service,
-          method: req.method,
-          requestHeader: req.header,
-          values: req.contextValues,
-          signal: req.signal,
-        }),
+        await spec.impl(req.message, mergeRequest(context, req)),
       ),
       stream: false,
-      service: req.service,
-      method: req.method,
-      header: context.responseHeader,
-      trailer: context.responseTrailer,
+      ...responseCommon(context, spec),
     };
   };
   const next = applyInterceptors(anyFn, interceptors);
-  const { message } = await next({
-    init: {
-      method: context.requestMethod,
-    },
-    message: input,
-    url: context.url,
-    signal: context.signal,
-    service: spec.method.parent,
-    method: spec.method,
-    header: context.requestHeader,
-    contextValues: context.values,
+  const { message, header, trailer } = await next({
     stream: false,
+    message: input,
+    ...requestCommon(context, spec),
   });
+  copyHeaders(header, context.responseHeader);
+  copyHeaders(trailer, context.responseTrailer);
   return message;
 }
 
@@ -99,213 +86,165 @@ export function transformInvokeImplementation<
   switch (spec.kind) {
     case "unary":
       return async function* unary(input: AsyncIterable<MessageShape<I>>) {
-        const inputIt = input[Symbol.asyncIterator]();
-        const input1 = await inputIt.next();
-        if (input1.done === true) {
-          throw new ConnectError(
-            "protocol error: missing input message for unary method",
-            Code.Unimplemented,
-          );
-        }
-        const anyFn = async (
-          req: UnaryRequest<I, O>,
-        ): Promise<UnaryResponse<I, O>> => {
-          return {
-            message: normalize(
-              spec.method.output,
-              await spec.impl(req.message, {
-                ...context,
-                service: req.service,
-                method: req.method,
-                requestHeader: req.header,
-                values: req.contextValues,
-                signal: req.signal,
-              }),
-            ),
-            stream: false,
-            service: req.service,
-            method: req.method,
-            header: context.responseHeader,
-            trailer: context.responseTrailer,
-          };
-        };
-        const next = applyInterceptors(anyFn, interceptors);
-        const { message, header, trailer } = await next({
-          init: {
-            method: context.requestMethod,
-          },
-          message: input1.value,
-          url: context.url,
-          signal: context.signal,
-          service: spec.method.parent,
-          method: spec.method,
-          header: context.requestHeader,
-          contextValues: context.values,
-          stream: false,
-        });
-        copyHeaders(header, context.responseHeader);
-        copyHeaders(trailer, context.responseTrailer);
-        yield message;
-        const input2 = await inputIt.next();
-        if (input2.done !== true) {
-          throw new ConnectError(
-            "protocol error: received extra input message for unary method",
-            Code.Unimplemented,
-          );
-        }
+        yield await invokeUnaryImplementation(
+          spec,
+          context,
+          await ensureSingle(input, "unary"),
+          interceptors,
+        );
       };
     case "server_streaming": {
-      return async function* serverStreaming(
-        input: AsyncIterable<MessageShape<I>>,
-      ) {
-        const inputIt = input[Symbol.asyncIterator]();
-        const input1 = await inputIt.next();
-        if (input1.done === true) {
-          throw new ConnectError(
-            "protocol error: missing input message for server-streaming method",
-            Code.Unimplemented,
-          );
-        }
-        const anyFn = async (
-          req: UnaryRequest<I, O>,
-          // eslint-disable-next-line @typescript-eslint/require-await
-        ): Promise<StreamResponse<I, O>> => {
-          return {
-            message: normalizeIterable(
+      return function serverStreaming(input: AsyncIterable<MessageShape<I>>) {
+        return invokeStreamImplementation(
+          spec,
+          context,
+          input,
+          interceptors,
+          async (req: StreamRequest<I, O>): Promise<StreamResponse<I, O>> => {
+            const output = normalizeIterable(
               spec.method.output,
-              spec.impl(req.message, {
-                ...context,
-                service: req.service,
-                method: req.method,
-                requestHeader: req.header,
-                values: req.contextValues,
-                signal: req.signal,
-              }),
-            ),
-            stream: true,
-            service: req.service,
-            method: req.method,
-            header: context.responseHeader,
-            trailer: context.responseTrailer,
-          };
-        };
-        const next = applyInterceptors(anyFn, interceptors);
-        const { message, header, trailer } = await next({
-          init: {
-            method: context.requestMethod,
+              spec.impl(
+                await ensureSingle(input, "server-streaming"),
+                mergeRequest(context, req),
+              ),
+            );
+            return {
+              stream: true,
+              message: output,
+              ...responseCommon(context, spec),
+            };
           },
-          message: input1.value,
-          url: context.url,
-          signal: context.signal,
-          service: spec.method.parent,
-          method: spec.method,
-          header: context.requestHeader,
-          contextValues: context.values,
-          stream: false,
-        });
-        copyHeaders(header, context.responseHeader);
-        copyHeaders(trailer, context.responseTrailer);
-        yield* message;
-        const input2 = await inputIt.next();
-        if (input2.done !== true) {
-          throw new ConnectError(
-            "protocol error: received extra input message for server-streaming method",
-            Code.Unimplemented,
-          );
-        }
+        );
       };
     }
     case "client_streaming": {
-      return async function* clientStreaming(
-        input: AsyncIterable<MessageShape<I>>,
-      ) {
-        const anyFn = async (
-          req: StreamRequest<I, O>,
-        ): Promise<UnaryResponse<I, O>> => {
-          return {
-            message: normalize(
-              spec.method.output,
-              await spec.impl(req.message, {
-                ...context,
-                service: req.service,
-                method: req.method,
-                requestHeader: req.header,
-                values: req.contextValues,
-                signal: req.signal,
-              }),
-            ),
-            stream: false,
-            service: req.service,
-            method: req.method,
-            header: context.responseHeader,
-            trailer: context.responseTrailer,
-          };
-        };
-        const next = applyInterceptors(anyFn, interceptors);
-        const { message, header, trailer } = await next({
-          init: {
-            method: context.requestMethod,
+      return function clientStreaming(input: AsyncIterable<MessageShape<I>>) {
+        return invokeStreamImplementation(
+          spec,
+          context,
+          input,
+          interceptors,
+          async (req: StreamRequest<I, O>): Promise<StreamResponse<I, O>> => {
+            return {
+              message: createAsyncIterable([
+                normalize(
+                  spec.method.output,
+                  await spec.impl(req.message, mergeRequest(context, req)),
+                ),
+              ]),
+              stream: true,
+              ...responseCommon(context, spec),
+            };
           },
-          message: input,
-          url: context.url,
-          signal: context.signal,
-          service: spec.method.parent,
-          method: spec.method,
-          header: context.requestHeader,
-          contextValues: context.values,
-          stream: true,
-        });
-        copyHeaders(header, context.responseHeader);
-        copyHeaders(trailer, context.responseTrailer);
-        yield message;
+        );
       };
     }
     case "bidi_streaming":
-      return async function* biDiStreaming(
-        input: AsyncIterable<MessageShape<I>>,
-      ) {
-        const anyFn = async (
-          req: StreamRequest<I, O>,
-          // eslint-disable-next-line @typescript-eslint/require-await
-        ): Promise<StreamResponse<I, O>> => {
-          return {
-            message: normalizeIterable(
-              spec.method.output,
-              spec.impl(req.message, {
-                ...context,
-                service: req.service,
-                method: req.method,
-                requestHeader: req.header,
-                values: req.contextValues,
-                signal: req.signal,
-              }),
-            ),
-            stream: true,
-            service: req.service,
-            method: req.method,
-            header: context.responseHeader,
-            trailer: context.responseTrailer,
-          };
-        };
-        const next = applyInterceptors(anyFn, interceptors);
-        const { message, header, trailer } = await next({
-          init: {
-            method: context.requestMethod,
+      return function biDiStreaming(input: AsyncIterable<MessageShape<I>>) {
+        return invokeStreamImplementation(
+          spec,
+          context,
+          input,
+          interceptors,
+          (req: StreamRequest<I, O>): Promise<StreamResponse<I, O>> => {
+            return Promise.resolve({
+              message: normalizeIterable(
+                spec.method.output,
+                spec.impl(req.message, mergeRequest(context, req)),
+              ),
+              stream: true,
+              ...responseCommon(context, spec),
+            });
           },
-          message: input,
-          url: context.url,
-          signal: context.signal,
-          service: spec.method.parent,
-          method: spec.method,
-          header: context.requestHeader,
-          contextValues: context.values,
-          stream: true,
-        });
-        copyHeaders(header, context.responseHeader);
-        copyHeaders(trailer, context.responseTrailer);
-        yield* message;
+        );
       };
   }
+}
+
+async function* invokeStreamImplementation<
+  I extends DescMessage,
+  O extends DescMessage,
+>(
+  spec: MethodImplSpec<I, O>,
+  context: HandlerContext,
+  input: AsyncIterable<MessageShape<I>>,
+  interceptors: Interceptor[],
+  anyFn: (req: StreamRequest<I, O>) => Promise<StreamResponse<I, O>>,
+): AsyncIterable<MessageShape<O>> {
+  const next = applyInterceptors(anyFn, interceptors);
+  const { message, header, trailer } = await next({
+    stream: true,
+    message: input,
+    ...requestCommon(context, spec),
+  });
+  copyHeaders(header, context.responseHeader);
+  yield* message;
+  copyHeaders(trailer, context.responseTrailer);
+}
+
+async function ensureSingle<T>(
+  iterable: AsyncIterable<T>,
+  method: string,
+): Promise<T> {
+  const it = iterable[Symbol.asyncIterator]();
+  const first = await it.next();
+  if (first.done === true) {
+    throw new ConnectError(
+      `protocol error: missing input message for ${method} method`,
+      Code.Unimplemented,
+    );
+  }
+  const second = await it.next();
+  if (second.done !== true) {
+    throw new ConnectError(
+      `protocol error: received extra input message for ${method} method`,
+      Code.Unimplemented,
+    );
+  }
+  return first.value;
+}
+
+function requestCommon<I extends DescMessage, O extends DescMessage>(
+  context: HandlerContext,
+  spec: MethodImplSpec<I, O>,
+): RequestCommon<I, O> {
+  return {
+    url: context.url,
+    signal: context.signal,
+    header: context.requestHeader,
+    method: spec.method,
+    service: spec.method.parent,
+    contextValues: context.values,
+    init: {
+      method: context.requestMethod,
+    },
+  };
+}
+
+function responseCommon<I extends DescMessage, O extends DescMessage>(
+  context: HandlerContext,
+  spec: MethodImplSpec<I, O>,
+): ResponseCommon<I, O> {
+  return {
+    method: spec.method,
+    service: spec.method.parent,
+    header: context.responseHeader,
+    trailer: context.responseTrailer,
+  };
+}
+
+function mergeRequest<I extends DescMessage, O extends DescMessage>(
+  context: HandlerContext,
+  req: RequestCommon<I, O>,
+): HandlerContext {
+  return {
+    ...context,
+    method: req.method,
+    service: req.service,
+    requestHeader: req.header,
+    signal: req.signal,
+    values: req.contextValues,
+  };
 }
 
 function copyHeaders(from: Headers, to: Headers) {
