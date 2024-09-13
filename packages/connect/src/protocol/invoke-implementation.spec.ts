@@ -147,7 +147,7 @@ describe("transformInvokeImplementation()", () => {
           expect(context.values.get(kFoo)).toEqual("bar");
           req.header.set("Key", "bar");
           const res = await next(req);
-          expect(res.stream).toEqual(false);
+          expect(res.stream).toEqual(true);
           expect(res.service).toEqual(TestService);
           expect(res.header.get("Key")).toEqual("bar");
           expect(res.method).toEqual(TestService.method.clientStreaming);
@@ -190,7 +190,7 @@ describe("transformInvokeImplementation()", () => {
       context,
       [
         (next) => async (req) => {
-          expect(req.stream).toEqual(false);
+          expect(req.stream).toEqual(true);
           expect(req.init.method).toEqual("POST");
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
