@@ -88,7 +88,7 @@ be more than happy to chat!
 - [@connectrpc/connect-express](https://www.npmjs.com/package/@connectrpc/connect-express):
   Adds your services to an [Express](https://expressjs.com/) server.
 
-The libraries and the generated code are compatible with ES2017 and TypeScript 4.1.
+The libraries and the generated code are compatible with ES2017 and TypeScript 4.9.5.
 
 ## Ecosystem
 

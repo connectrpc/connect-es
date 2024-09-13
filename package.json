@@ -12,7 +12,8 @@
     "packages/example",
     "packages/connect-migrate",
     "packages/connect-conformance",
-    "packages/connect-cloudflare"
+    "packages/connect-cloudflare",
+    "packages/typescript-compat/*"
   ],
   "scripts": {
     "all": "turbo run --ui tui build format test conformance bundle-size lint attw license-header",
