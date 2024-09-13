@@ -140,6 +140,9 @@ export interface StreamResponse<
   readonly message: AsyncIterable<MessageShape<O>>;
 }
 
+/**
+ * @private
+ */
 export interface RequestCommon<I extends DescMessage, O extends DescMessage> {
   /**
    * Metadata related to the service that is being called.
@@ -178,6 +181,9 @@ export interface RequestCommon<I extends DescMessage, O extends DescMessage> {
   readonly contextValues: ContextValues;
 }
 
+/**
+ * @private
+ */
 export interface ResponseCommon<I extends DescMessage, O extends DescMessage> {
   /**
    * Metadata related to the service that is being called.
