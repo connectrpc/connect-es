@@ -2,5 +2,6 @@
 .wrangler
 node_modules
 /packages/*/dist
+/packages/typescript-compat/*/dist
 /packages/connect-web/conformance/logs/*
 packages/connect-web/local.log
