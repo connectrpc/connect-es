@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
+import { create, fromBinary, protoInt64, toBinary } from "@bufbuild/protobuf";
 import { Int64ValueSchema } from "@bufbuild/protobuf/wkt";
 
 describe("bigint", () => {
@@ -23,8 +23,7 @@ describe("bigint", () => {
           Int64ValueSchema,
           toBinary(
             Int64ValueSchema,
-            //@ts-expect-error TODO: fix the typescript error.
-            create(Int64ValueSchema, { value: "3409819015" }),
+            create(Int64ValueSchema, { value: protoInt64.parse("3409819015") }),
           ),
         ).value,
       ),
