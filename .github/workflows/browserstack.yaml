@@ -32,13 +32,8 @@ jobs:
           restore-keys: ${{ runner.os }}/browserstack
       - name: NPM Install
         run: npm ci
-      # - name: Browserstack
-      #   env:
-      #     BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
-      #     BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
-      #   run: npx turbo run test-browserstack --output-logs new-only --log-order stream
-      - name: Browserstack Webdriver
+      - name: Browserstack
         env:
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
-        run: npx turbo run test-browserstack-wdio
+        run: npx turbo run test-browserstack

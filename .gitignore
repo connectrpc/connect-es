@@ -3,4 +3,5 @@
 node_modules
 /packages/*/dist
 /packages/connect-web/conformance/logs/*
+/packages/connect-web/logs/bstack*
 packages/connect-web/local.log

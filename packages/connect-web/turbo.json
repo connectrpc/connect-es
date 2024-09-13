@@ -10,11 +10,6 @@
       "env": ["BROWSERSTACK_USERNAME", "BROWSERSTACK_ACCESS_KEY"],
       "dependsOn": ["generate", "^build"]
     },
-    "test-browserstack-wdio": {
-      "cache": false,
-      "env": ["BROWSERSTACK_USERNAME", "BROWSERSTACK_ACCESS_KEY"],
-      "dependsOn": ["generate", "^build"]
-    },
     "conformance": {
       "dependsOn": ["conformance:node:promise", "conformance:node:callback"]
     },
