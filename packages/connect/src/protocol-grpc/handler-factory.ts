@@ -187,7 +187,7 @@ function createHandler<I extends DescMessage, O extends DescMessage>(
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
       transformJoinEnvelopes(),
       transformCatchFinally<Uint8Array>((e): void => {
-        context.abort();
+        context.abort(e);
         if (e instanceof ConnectError) {
           setTrailerStatus(context.responseTrailer, e);
         } else if (e !== undefined) {

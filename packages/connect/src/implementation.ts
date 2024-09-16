@@ -177,7 +177,9 @@ export function createHandlerContext(
     responseTrailer: new Headers(init.responseTrailer),
     abort(reason?: unknown) {
       deadline.cleanup();
-      abortController.abort(reason);
+      if (reason !== undefined) {
+        abortController.abort(reason);
+      }
     },
     values: init.contextValues ?? createContextValues(),
   };
