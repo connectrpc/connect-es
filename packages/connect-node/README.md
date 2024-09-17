@@ -11,7 +11,7 @@ TypeScript.
 Lets your clients running on Node.js talk to a server with the Connect protocol:
 
 ```diff
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 + import { createConnectTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
@@ -21,7 +21,7 @@ import { ElizaService } from "./gen/eliza_connect.js";
 +   httpVersion: "1.1"
 + });
 
-const client = createPromiseClient(ElizaService, transport);
+const client = createClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```
@@ -31,7 +31,7 @@ console.log(sentence) // you said: I feel happy.
 Lets your clients running on Node.js talk to a server with the gRPC protocol:
 
 ```diff
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 + import { createGrpcTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
@@ -41,7 +41,7 @@ import { ElizaService } from "./gen/eliza_connect.js";
 +   httpVersion: "2"
 + });
 
-const client = createPromiseClient(ElizaService, transport);
+const client = createClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```
@@ -51,7 +51,7 @@ console.log(sentence) // you said: I feel happy.
 Lets your clients running on Node.js talk to a server with the gRPC-web protocol:
 
 ```diff
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 + import { createGrpcWebTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
@@ -61,7 +61,7 @@ import { ElizaService } from "./gen/eliza_connect.js";
 +   httpVersion: "1.1"
 + });
 
-const client = createPromiseClient(ElizaService, transport);
+const client = createClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```
@@ -117,7 +117,7 @@ curl \
 Node.js with the gRPC protocol:
 
 ```ts
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import { createGrpcTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
@@ -126,7 +126,7 @@ const transport = createGrpcTransport({
   httpVersion: "2",
 });
 
-const client = createPromiseClient(ElizaService, transport);
+const client = createClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence); // you said: I feel happy.
 ```
