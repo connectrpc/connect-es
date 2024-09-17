@@ -70,8 +70,8 @@ export interface HandlerContext {
   readonly service: DescService;
 
   /**
-   * An AbortSignal that is aborted when the connection with the client is closed
-   * or when the deadline is reached.
+   * An AbortSignal that triggers when the deadline is reached, or when an
+   * error occurs that aborts processing of the request.
    *
    * The signal can be used to automatically cancel downstream calls.
    */
@@ -177,7 +177,9 @@ export function createHandlerContext(
     responseTrailer: new Headers(init.responseTrailer),
     abort(reason?: unknown) {
       deadline.cleanup();
-      abortController.abort(reason);
+      if (reason !== undefined) {
+        abortController.abort(reason);
+      }
     },
     values: init.contextValues ?? createContextValues(),
   };
