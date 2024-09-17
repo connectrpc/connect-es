@@ -46,6 +46,11 @@ export type Client<T extends ServiceType> = {
 };
 
 /**
+ * @deprecated use Client
+ */
+export type PromiseClient<T extends ServiceType> = Client<T>;
+
+/**
  * Create a Client for the given service, invoking RPCs through the
  * given transport.
  */
