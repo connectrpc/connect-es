@@ -12,12 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createCallbackClient, ConnectError, Code } from "@connectrpc/connect";
-import type { CallbackClient, Transport } from "@connectrpc/connect";
-import { ClientResponseResultSchema } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
-import type {
-  ClientCompatRequest,
-  ClientResponseResult,
+import { create } from "@bufbuild/protobuf";
+import {
+  createCallbackClient,
+  ConnectError,
+  Code,
+  type CallOptions,
+  type CallbackClient,
+  type Transport,
+} from "@connectrpc/connect";
+import {
+  ClientResponseResultSchema,
+  type ClientCompatRequest,
+  type ClientResponseResult,
 } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
   UnaryRequestSchema,
@@ -26,6 +33,8 @@ import {
   IdempotentUnaryRequestSchema,
   ConformanceService,
   ConformancePayloadSchema,
+  type UnaryResponse,
+  type IdempotentUnaryResponse,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   convertToProtoError,
@@ -36,7 +45,6 @@ import {
   getSingleRequestMessage,
   setClientErrorResult,
 } from "./protocol.js";
-import { create } from "@bufbuild/protobuf";
 
 type ConformanceClient = CallbackClient<typeof ConformanceService>;
 
@@ -70,37 +78,44 @@ async function unary(
   await wait(compatRequest.requestDelayMs);
   const result = create(ClientResponseResultSchema);
   return new Promise<ClientResponseResult>((resolve) => {
-    const call = idempotent ? client.idempotentUnary : client.unary;
+    const callOptions: CallOptions = {
+      headers: getRequestHeaders(compatRequest),
+      onHeader(headers) {
+        result.responseHeaders = convertToProtoHeaders(headers);
+      },
+      onTrailer(trailers) {
+        result.responseTrailers = convertToProtoHeaders(trailers);
+      },
+    };
     let clientCancelled = false;
-    const clientCancelFn = call(
-      getSingleRequestMessage(
-        compatRequest,
-        idempotent ? IdempotentUnaryRequestSchema : UnaryRequestSchema,
-      ),
-      (err, response) => {
-        // Callback clients swallow client triggered cancellations and never
-        // call the callback. This will trigger the global error handler and
-        // fail the process.
-        if (clientCancelled) {
-          throw new Error("Aborted requests should not trigger the callback");
-        }
-        if (err !== undefined) {
-          setClientErrorResult(result, err);
-        } else {
-          result.payloads.push(response.payload ?? emptyPayload);
-        }
-        resolve(result);
-      },
-      {
-        headers: getRequestHeaders(compatRequest),
-        onHeader(headers) {
-          result.responseHeaders = convertToProtoHeaders(headers);
-        },
-        onTrailer(trailers) {
-          result.responseTrailers = convertToProtoHeaders(trailers);
-        },
-      },
-    );
+    const callback = (
+      error: ConnectError | undefined,
+      response: UnaryResponse | IdempotentUnaryResponse,
+    ): void => {
+      // Callback clients swallow client triggered cancellations and never
+      // call the callback. This will trigger the global error handler and
+      // fail the process.
+      if (clientCancelled) {
+        throw new Error("Aborted requests should not trigger the callback");
+      }
+      if (error !== undefined) {
+        setClientErrorResult(result, error);
+      } else {
+        result.payloads.push(response.payload ?? emptyPayload);
+      }
+      resolve(result);
+    };
+    const clientCancelFn = idempotent
+      ? client.idempotentUnary(
+          getSingleRequestMessage(compatRequest, IdempotentUnaryRequestSchema),
+          callback,
+          callOptions,
+        )
+      : client.unary(
+          getSingleRequestMessage(compatRequest, UnaryRequestSchema),
+          callback,
+          callOptions,
+        );
     const { afterCloseSendMs } = getCancelTiming(compatRequest);
     if (afterCloseSendMs >= 0) {
       setTimeout(() => {

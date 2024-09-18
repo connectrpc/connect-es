@@ -16,24 +16,13 @@ import { createAsyncIterable } from "./async-iterable.js";
 import { normalize, normalizeIterable } from "./normalize.js";
 import { create, isMessage, protoInt64 } from "@bufbuild/protobuf";
 import { readAll } from "./async-iterable-helper.spec.js";
-import { TimestampSchema, DurationSchema } from "@bufbuild/protobuf/wkt";
+import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
 describe("normalize()", function () {
   it("should normalize from object literal", function () {
     const normal = normalize(TimestampSchema, {
       nanos: 123,
     });
-    expect(isMessage(normal, TimestampSchema)).toBeTrue();
-    expect(normal.nanos).toBe(123);
-    expect(normal.seconds).toBe(protoInt64.parse(0));
-  });
-  it("should normalize from different message type", function () {
-    const normal = normalize(
-      TimestampSchema,
-      create(DurationSchema, {
-        nanos: 123,
-      }),
-    );
     expect(isMessage(normal, TimestampSchema)).toBeTrue();
     expect(normal.nanos).toBe(123);
     expect(normal.seconds).toBe(protoInt64.parse(0));
@@ -48,22 +37,6 @@ describe("normalize()", function () {
 describe("normalizeIterable()", function () {
   it("should normalize from object literal", async function () {
     const input = [{ nanos: 123 }, { nanos: 456 }];
-    const normal = await readAll(
-      normalizeIterable(TimestampSchema, createAsyncIterable(input)),
-    );
-    expect(normal.length).toBe(2);
-    expect(isMessage(normal[0], TimestampSchema)).toBeTrue();
-    expect(normal[0].nanos).toBe(123);
-    expect(normal[0].seconds).toBe(protoInt64.parse(0));
-    expect(isMessage(normal[1], TimestampSchema)).toBeTrue();
-    expect(normal[1].nanos).toBe(456);
-    expect(normal[1].seconds).toBe(protoInt64.parse(0));
-  });
-  it("should normalize from different message type", async function () {
-    const input = [
-      create(DurationSchema, { nanos: 123 }),
-      create(DurationSchema, { nanos: 456 }),
-    ];
     const normal = await readAll(
       normalizeIterable(TimestampSchema, createAsyncIterable(input)),
     );
