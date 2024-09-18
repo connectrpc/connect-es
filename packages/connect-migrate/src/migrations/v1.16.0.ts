@@ -18,7 +18,6 @@ import type { MigrateError, MigrateSuccess, Migration } from "../migration";
 import { updateSourceFile } from "../lib/update-source-file";
 import { migrateSourceFiles } from "../lib/migrate-source-files";
 import * as semver from "semver";
-import { dirname } from "node:path";
 
 /**
  * Migrates code to use new symbols `createClient` and `Client` instead
@@ -34,24 +33,8 @@ export const v1_16_0: Migration = {
     logger,
     updateSourceFileFn = updateSourceFile,
   }): MigrateError | MigrateSuccess {
-    // We want to limit to only matched packages.
-    const matchingPackages = getMatchingPackages(scanned.packageFiles);
-    const matchingSources = [];
-    for (const source of scanned.sourceFiles) {
-      // If source is within the package directory.
-      if (
-        matchingPackages.some(({ path }) => source.startsWith(dirname(path)))
-      ) {
-        matchingSources.push(source);
-      }
-    }
-    if (matchingSources.length === 0) {
-      return {
-        ok: true,
-      };
-    }
     const { sourceFileErrors } = migrateSourceFiles(
-      { ...scanned, sourceFiles: matchingSources },
+      scanned,
       replaceCalls,
       print,
       logger,
