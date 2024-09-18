@@ -19,6 +19,7 @@ import { parseCommandLineArgs } from "./arguments";
 import { scan } from "./lib/scan";
 import { Logger } from "./lib/logger";
 import { v0_13_1 } from "./migrations/v0.13.1";
+import { v1_16_0 } from "./migrations/v1.16.0";
 
 const usage = `USAGE: connect-migrate [flags]
 Updates references to connect-es packages in your project to use @connectrpc.
@@ -47,17 +48,19 @@ async function main() {
     if (args.help) {
       exitOk(usage);
     }
-    const scanned = scan(args.ignorePatterns, process.cwd(), print, logger);
-    if (!scanned.ok) {
-      return exitErr(scanned.errorMessage, false);
-    }
-    if (v0_13_1.applicable(scanned)) {
-      const result = v0_13_1.migrate({ scanned, args, print, logger });
-      if (!result.ok) {
-        return exitErr(result.errorMessage, result.dumpLogfile ?? false);
+    for (const migration of [v0_13_1, v1_16_0]) {
+      const scanned = scan(args.ignorePatterns, process.cwd(), print, logger);
+      if (!scanned.ok) {
+        return exitErr(scanned.errorMessage, false);
       }
-    } else {
-      exitOk("It looks like you are already up to date 🎉");
+      if (migration.applicable(scanned)) {
+        const result = migration.migrate({ scanned, args, print, logger });
+        if (!result.ok) {
+          return exitErr(result.errorMessage, result.dumpLogfile ?? false);
+        }
+      } else {
+        exitOk("It looks like you are already up to date 🎉");
+      }
     }
   } catch (e) {
     logger.error(`caught error: ${String(e)}`);

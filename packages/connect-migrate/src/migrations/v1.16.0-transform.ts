@@ -17,6 +17,8 @@ import j from "jscodeshift";
 const importPath = "@connectrpc/connect";
 const fromFunction = "createPromiseClient";
 const toFunction = "createClient";
+const fromType = "PromiseClient";
+const toType = "Client";
 
 /**
  * This transform handles changing all usages of `createPromiseClient` to `createClient`.
@@ -28,7 +30,10 @@ const transform: j.Transform = (file, { j }, options) => {
     .find(j.ImportDeclaration, {
       source: { value: importPath },
       specifiers: [
-        { type: "ImportSpecifier", imported: { name: fromFunction } },
+        {
+          type: "ImportSpecifier",
+          imported: { name: (name) => [fromFunction, fromType].includes(name) },
+        },
       ],
     })
     .forEach((path) => {
@@ -38,10 +43,14 @@ const transform: j.Transform = (file, { j }, options) => {
         //
         // We should just rename createPromiseClient here and user code will continue to use local.
         if (s.local?.loc !== s.imported.loc) {
-          s.imported.name = toFunction;
+          s.imported.name = s.imported.name === fromType ? toType : toFunction;
           return;
         }
-        replace(root);
+        replace(
+          root,
+          s.imported.name,
+          s.imported.name === fromType ? toType : toFunction,
+        );
       });
     });
   // import * as connect from "@connectrpc/connect";
@@ -63,7 +72,8 @@ const transform: j.Transform = (file, { j }, options) => {
         if (qualifier === undefined) {
           return;
         }
-        replace(root, qualifier);
+        replace(root, fromType, toType, qualifier);
+        replace(root, fromFunction, toFunction, qualifier);
       });
     });
   // require("@connectrpc/connect")
@@ -83,7 +93,8 @@ const transform: j.Transform = (file, { j }, options) => {
   root.find(j.VariableDeclarator, { init: requireCall }).forEach((path) => {
     // const connect = require("@connectrpc/connect");
     if (path.value.id.type === "Identifier") {
-      replace(root, path.value.id.name);
+      replace(root, fromType, toType, path.value.id.name);
+      replace(root, fromFunction, toFunction, path.value.id.name);
       return;
     }
     // const { createPromiseClient[:local] } = require("@connectrpc/connect");
@@ -97,7 +108,7 @@ const transform: j.Transform = (file, { j }, options) => {
       if (property !== undefined) {
         if (property.value.loc?.start === property.key.loc?.start) {
           // const { createPromiseClient } = require("@connectrpc/connect");
-          replace(root);
+          replace(root, fromFunction, toFunction);
         } else {
           // const { createPromiseClient: local } = require("@connectrpc/connect");
           property.key.name = toFunction;
@@ -109,36 +120,43 @@ const transform: j.Transform = (file, { j }, options) => {
   // connect = require("@connectrpc/connect");
   root.find(j.AssignmentExpression, { right: requireCall }).forEach((path) => {
     if (path.value.left.type === "Identifier") {
-      replace(root, path.value.left.name);
+      replace(root, fromType, toType, path.value.left.name);
+      replace(root, fromFunction, toFunction, path.value.left.name);
       return;
     }
   });
   return root.toSource(options);
 };
 
-function replace(root: j.Collection<unknown>, qualifier?: string) {
+function replace(
+  root: j.Collection<unknown>,
+  from: string,
+  to: string,
+  qualifier?: string,
+) {
   if (qualifier === undefined) {
     root
-      .find(j.Identifier, { name: fromFunction })
-      .forEach((path) => (path.value.name = toFunction));
+      .find(j.Identifier, { name: from })
+      .forEach((path) => (path.value.name = to));
+    return;
   }
   // connect.createPromiseClient
   root
     .find(j.MemberExpression, {
       object: { type: "Identifier", name: qualifier },
-      property: { type: "Identifier", name: fromFunction },
+      property: { type: "Identifier", name: from },
     })
     .forEach((path) => {
-      (path.value.property as j.Identifier).name = toFunction;
+      (path.value.property as j.Identifier).name = to;
     });
   // typeof connect.createPromiseClient
   root
     .find(j.TSQualifiedName, {
       left: { type: "Identifier", name: qualifier },
-      right: { type: "Identifier", name: fromFunction },
+      right: { type: "Identifier", name: from },
     })
     .forEach((path) => {
-      (path.value.right as j.Identifier).name = toFunction;
+      (path.value.right as j.Identifier).name = to;
     });
 }
 
