@@ -27,12 +27,11 @@ export type DependencyReplacement = {
  * Replace all dependencies matching "from" with "to".
  */
 export function replaceDependencies(
-  pkg: Readonly<PackageJson>,
+  pkg: PackageJson,
   replacements: DependencyReplacement[],
 ): PackageJson | null {
   const modifiedPackageNames = new Set<string>();
   const replacedPackageNames = new Map<string, string>();
-  const copy = clonePackageJson(pkg);
   // replace dependencies
   for (const replacement of replacements) {
     for (const p of [
@@ -40,7 +39,7 @@ export function replaceDependencies(
       "devDependencies",
       "peerDependencies",
     ] as const) {
-      const deps = copy[p] ?? {};
+      const deps = pkg[p] ?? {};
       for (const [packageName, versionRange] of Object.entries(deps)) {
         if (packageName !== replacement.from.name) {
           continue;
@@ -72,14 +71,14 @@ export function replaceDependencies(
   }
   // replace bundled dependencies, but only for package names we replaced
   for (const p of ["bundleDependencies", "bundledDependencies"] as const) {
-    const bundled = copy[p];
+    const bundled = pkg[p];
     if (!Array.isArray(bundled)) {
       continue;
     }
-    copy[p] = bundled.map((n) => replacedPackageNames.get(n) ?? n);
+    pkg[p] = bundled.map((n) => replacedPackageNames.get(n) ?? n);
   }
   // replace peer dependency meta, but only for package names we replaced
-  const meta = copy.peerDependenciesMeta;
+  const meta = pkg.peerDependenciesMeta;
   if (meta !== undefined) {
     for (const [n, value] of Object.entries(meta)) {
       const newName = replacedPackageNames.get(n);
@@ -90,9 +89,5 @@ export function replaceDependencies(
       meta[newName] = value;
     }
   }
-  return modifiedPackageNames.size > 0 ? copy : null;
-}
-
-function clonePackageJson(pkg: PackageJson): PackageJson {
-  return JSON.parse(JSON.stringify(pkg)) as PackageJson;
+  return modifiedPackageNames.size > 0 ? pkg : null;
 }

@@ -19,6 +19,8 @@ import { parseCommandLineArgs } from "./arguments";
 import { scan } from "./lib/scan";
 import { Logger } from "./lib/logger";
 import { v0_13_1 } from "./migrations/v0.13.1";
+import { v1_16_0 } from "./migrations/v1.16.0";
+import type { Migration } from "./migration";
 
 const usage = `USAGE: connect-migrate [flags]
 Updates references to connect-es packages in your project to use @connectrpc.
@@ -32,7 +34,7 @@ Flags:
 `;
 
 const logger = new Logger();
-
+const migrations = [v0_13_1, v1_16_0];
 void main();
 
 async function main() {
@@ -51,12 +53,17 @@ async function main() {
     if (!scanned.ok) {
       return exitErr(scanned.errorMessage, false);
     }
-    if (v0_13_1.applicable(scanned)) {
-      const result = v0_13_1.migrate({ scanned, args, print, logger });
-      if (!result.ok) {
-        return exitErr(result.errorMessage, result.dumpLogfile ?? false);
+    const applied: Migration[] = [];
+    for (const migration of migrations) {
+      if (migration.applicable(scanned)) {
+        const result = migration.migrate({ scanned, args, print, logger });
+        if (!result.ok) {
+          return exitErr(result.errorMessage, result.dumpLogfile ?? false);
+        }
+        applied.push(migration);
       }
-    } else {
+    }
+    if (applied.length == 0) {
       exitOk("It looks like you are already up to date 🎉");
     }
   } catch (e) {

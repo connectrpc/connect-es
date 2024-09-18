@@ -1,0 +1,112 @@
+// Copyright 2021-2024 The Connect Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { v1_16_0 } from "./v1.16.0";
+import type { PackageJson } from "../lib/package-json";
+import type { MigrateOptions } from "../migration";
+
+describe("migration", function () {
+  const packageJsonWritten: { path: string; pkg: PackageJson }[] = [];
+  const lockFilesUpdated: string[] = [];
+  let opt: MigrateOptions;
+  beforeEach(function () {
+    packageJsonWritten.splice(0);
+    lockFilesUpdated.splice(0);
+    opt = {
+      scanned: {
+        ok: true,
+        lockFiles: ["package-lock.json"],
+        sourceFiles: [],
+        packageFiles: [],
+      },
+      args: {
+        ok: true,
+        help: false,
+        version: false,
+        ignorePatterns: [],
+        noInstall: false,
+        forceUpdate: false,
+      },
+      print: () => {
+        //
+      },
+      updateSourceFileFn: () => ({
+        ok: true,
+        modified: false,
+      }),
+      writePackageJsonFileFn: (path: string, pkg: PackageJson) =>
+        packageJsonWritten.push({ path, pkg }),
+      runInstallFn: (lockfilePath) => {
+        lockFilesUpdated.push(lockfilePath);
+        return true;
+      },
+    };
+  });
+  describe("should be applicable", function () {
+    it("for 1.16.0", () => {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect": "^1.16.0",
+            },
+          },
+        },
+      ];
+      expect(v1_16_0.applicable(opt.scanned)).toBeTrue();
+    });
+    it("after 1.16.0", () => {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect": "^1.17.0",
+            },
+          },
+        },
+      ];
+      expect(v1_16_0.applicable(opt.scanned)).toBeTrue();
+    });
+  });
+  describe("should not be applicable", function () {
+    it("before 1.16.0", () => {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect": "^1.15.0",
+            },
+          },
+        },
+      ];
+      expect(v1_16_0.applicable(opt.scanned)).toBeFalse();
+    });
+    it("from 2.0.0", () => {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect": "^2.0.0",
+            },
+          },
+        },
+      ];
+      expect(v1_16_0.applicable(opt.scanned)).toBeFalse();
+    });
+  });
+});
