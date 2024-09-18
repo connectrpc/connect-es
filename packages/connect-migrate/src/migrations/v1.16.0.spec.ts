@@ -12,11 +12,101 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { validRange } from "semver";
-import { transformOnly } from "./v1.16.0";
+import { v1_16_0 } from "./v1.16.0";
+import type { PackageJson } from "../lib/package-json";
+import type { MigrateOptions } from "../migration";
 
-describe("transformOnly", function () {
-  it("should have valid range", () => {
-    expect(validRange(transformOnly.from.range)).not.toBeNull();
+describe("migration", function () {
+  const packageJsonWritten: { path: string; pkg: PackageJson }[] = [];
+  const lockFilesUpdated: string[] = [];
+  let opt: MigrateOptions;
+  beforeEach(function () {
+    packageJsonWritten.splice(0);
+    lockFilesUpdated.splice(0);
+    opt = {
+      scanned: {
+        ok: true,
+        lockFiles: ["package-lock.json"],
+        sourceFiles: [],
+        packageFiles: [],
+      },
+      args: {
+        ok: true,
+        help: false,
+        version: false,
+        ignorePatterns: [],
+        noInstall: false,
+        forceUpdate: false,
+      },
+      print: () => {
+        //
+      },
+      updateSourceFileFn: () => ({
+        ok: true,
+        modified: false,
+      }),
+      writePackageJsonFileFn: (path: string, pkg: PackageJson) =>
+        packageJsonWritten.push({ path, pkg }),
+      runInstallFn: (lockfilePath) => {
+        lockFilesUpdated.push(lockfilePath);
+        return true;
+      },
+    };
+  });
+  describe("should be applicable", function () {
+    it("for 1.16.0", () => {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect": "^1.16.0",
+            },
+          },
+        },
+      ];
+      expect(v1_16_0.applicable(opt.scanned)).toBeTrue();
+    });
+    it("after 1.16.0", () => {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect": "^1.17.0",
+            },
+          },
+        },
+      ];
+      expect(v1_16_0.applicable(opt.scanned)).toBeTrue();
+    });
+  });
+  describe("should not be applicable", function () {
+    it("before 1.16.0", () => {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect": "^1.15.0",
+            },
+          },
+        },
+      ];
+      expect(v1_16_0.applicable(opt.scanned)).toBeFalse();
+    });
+    it("from 2.0.0", () => {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect": "^2.0.0",
+            },
+          },
+        },
+      ];
+      expect(v1_16_0.applicable(opt.scanned)).toBeFalse();
+    });
   });
 });

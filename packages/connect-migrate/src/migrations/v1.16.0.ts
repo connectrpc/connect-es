@@ -12,23 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Scanned } from "../lib/scan";
+import type { Scanned } from "../lib/scan";
 import replaceCalls from "./v1.16.0-transform";
-import { MigrateError, MigrateSuccess, Migration } from "../migration";
-import {
-  DependencyReplacement,
-  replaceDependencies,
-} from "../lib/replace-dependencies";
+import type { MigrateError, MigrateSuccess, Migration } from "../migration";
 import { updateSourceFile } from "../lib/update-source-file";
 import { migrateSourceFiles } from "../lib/migrate-source-files";
-
-/**
- * We want to limit the transformation to v1.
- */
-export const transformOnly = {
-  from: { name: "@connectrpc/connect", range: "^1.16.0" },
-  to: { version: "^1.16.0" },
-} satisfies DependencyReplacement;
+import * as semver from "semver";
+import { dirname } from "node:path";
 
 /**
  * Migrates code to use new symbols `createClient` and `Client` instead
@@ -36,9 +26,7 @@ export const transformOnly = {
  */
 export const v1_16_0: Migration = {
   applicable(scanned: Scanned) {
-    return scanned.packageFiles.some(
-      ({ pkg }) => replaceDependencies(pkg, [transformOnly]) != null,
-    );
+    return getMatchingPackages(scanned.packageFiles).length > 0;
   },
   migrate({
     scanned,
@@ -46,8 +34,24 @@ export const v1_16_0: Migration = {
     logger,
     updateSourceFileFn = updateSourceFile,
   }): MigrateError | MigrateSuccess {
+    // We want to limit to only matched packages.
+    const matchingPackages = getMatchingPackages(scanned.packageFiles);
+    const matchingSources = [];
+    for (const source of scanned.sourceFiles) {
+      // If source is within the package directory.
+      if (
+        matchingPackages.some(({ path }) => source.startsWith(dirname(path)))
+      ) {
+        matchingSources.push(source);
+      }
+    }
+    if (matchingSources.length === 0) {
+      return {
+        ok: true,
+      };
+    }
     const { sourceFileErrors } = migrateSourceFiles(
-      scanned,
+      { ...scanned, sourceFiles: matchingSources },
       replaceCalls,
       print,
       logger,
@@ -70,3 +74,31 @@ export const v1_16_0: Migration = {
     };
   },
 };
+
+function getMatchingPackages(packageFiles: Scanned["packageFiles"]) {
+  const matched: Scanned["packageFiles"] = [];
+  for (const packageFile of packageFiles) {
+    if (
+      [
+        packageFile.pkg.dependencies,
+        packageFile.pkg.devDependencies,
+        packageFile.pkg.peerDependencies,
+      ]
+        .filter((e) => e !== undefined)
+        .flatMap((deps) => Object.entries(deps))
+        .some(([packageName, versionRange]) => {
+          if (packageName !== "@connectrpc/connect") {
+            return false;
+          }
+          const minVersion = semver.minVersion(versionRange);
+          if (minVersion === null) {
+            return false;
+          }
+          return semver.satisfies(minVersion, "^1.16.0");
+        })
+    ) {
+      matched.push(packageFile);
+    }
+  }
+  return matched;
+}

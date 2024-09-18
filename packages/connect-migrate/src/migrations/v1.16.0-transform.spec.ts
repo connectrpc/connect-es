@@ -34,6 +34,58 @@ function t(
 
 describe("rename symbols using", () => {
   describe("'import' with", () => {
+    describe("for type", () => {
+      describe("local identifier", () => {
+        it("plain", () => {
+          const got = `
+            import { PromiseClient as client } from "@connectrpc/connect";
+            type PromiseClient = client;
+            `;
+          const want = `
+            import { Client as client } from "@connectrpc/connect";
+            type PromiseClient = client;
+            `;
+          expect(t(got)?.trim()).toBe(want.trim());
+        });
+        it("type qualified", () => {
+          const got = `
+            import { type PromiseClient as client } from "@connectrpc/connect";
+            type PromiseClient = client;
+            `;
+          const want = `
+            import { type Client as client } from "@connectrpc/connect";
+            type PromiseClient = client;
+            `;
+          expect(t(got)?.trim()).toBe(want.trim());
+        });
+        it("type only", () => {
+          const got = `
+            import type { PromiseClient as client } from "@connectrpc/connect";
+            type PromiseClient = client;
+            `;
+          const want = `
+            import type { Client as client } from "@connectrpc/connect";
+            type PromiseClient = client;
+            `;
+          expect(t(got)?.trim()).toBe(want.trim());
+        });
+      });
+      describe("identifier", () => {
+        it("plain", () => {
+          const got = `
+            import { PromiseClient } from "@connectrpc/connect";
+            type a = PromiseClient;
+            type R = Readonly<PromiseClient>;
+            `;
+          const want = `
+            import { Client } from "@connectrpc/connect";
+            type a = Client;
+            type R = Readonly<Client>;
+            `;
+          expect(t(got)?.trim()).toBe(want.trim());
+        });
+      });
+    });
     it("local identifier", () => {
       const got = `
         import { createPromiseClient as create } from "@connectrpc/connect";
