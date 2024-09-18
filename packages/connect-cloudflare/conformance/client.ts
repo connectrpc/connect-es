@@ -24,7 +24,7 @@ import {
   createGrpcTransport,
   createGrpcWebTransport,
 } from "@connectrpc/connect-node";
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { InvokeService } from "./invoke-service.js";
 import { parseArgs } from "node:util";
@@ -64,7 +64,7 @@ async function main() {
     default:
       throw new Error(`Unknown protocol: ${flags.protocol}`);
   }
-  const client = createPromiseClient(InvokeService, transport);
+  const client = createClient(InvokeService, transport);
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const req = ClientCompatRequest.fromBinary(next);
     req.host = process.env["CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST"]!;

@@ -18,7 +18,7 @@ import type { PartialMessage } from "@bufbuild/protobuf";
 import {
   createContextKey,
   createContextValues,
-  createPromiseClient,
+  createClient,
   createRouterTransport,
 } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
@@ -103,7 +103,7 @@ describe("node readme", function () {
       baseUrl: "https://demo.connectrpc.com",
       httpVersion: "1.1",
     });
-    const client = createPromiseClient(ElizaService, transport);
+    const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
     expect(sentence).toBeDefined();
   });
@@ -111,7 +111,7 @@ describe("node readme", function () {
   it("createGrpcTransport()", async function () {
     // A transport for clients using the gRPC protocol with Node.js `http2` module
     const transport = createGrpcTransport(optionsHttp2);
-    const client = createPromiseClient(ElizaService, transport);
+    const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
     expect(sentence).toBeDefined();
   });
@@ -119,7 +119,7 @@ describe("node readme", function () {
   it("createGrpcWebTransport()", async function () {
     // A transport for clients using the gRPC-web protocol with Node.js `http` module
     const transport = createGrpcWebTransport(optionsHttp1);
-    const client = createPromiseClient(ElizaService, transport);
+    const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
     expect(sentence).toBeDefined();
   });
@@ -138,7 +138,7 @@ describe("node readme", function () {
         transport: optionsHttp1,
       },
     );
-    const client = createPromiseClient(ElizaService, transport);
+    const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
     expect(sentence).toBeDefined();
   });
@@ -170,7 +170,7 @@ describe("node readme", function () {
         baseUrl: `http://localhost:${port}`,
         httpVersion: "2",
       });
-      const client = createPromiseClient(ElizaService, transport);
+      const client = createClient(ElizaService, transport);
       const res = await client.say({ sentence: "I feel happy." });
       // console.log(res.sentence) // you said: I feel happy.
       expect(res.sentence).toBe("you said: I feel happy.");
@@ -217,7 +217,7 @@ describe("node readme", function () {
         baseUrl: `http://localhost:${port}`,
         httpVersion: "2",
       });
-      const client = createPromiseClient(ElizaService, transport);
+      const client = createClient(ElizaService, transport);
       const res = await client.say(
         { sentence: "I feel happy." },
         { headers: { "x-user": "alice" } },
@@ -265,7 +265,7 @@ describe("node readme", function () {
         baseUrl: `http://localhost:${port}`,
         httpVersion: "2",
       });
-      const client = createPromiseClient(ElizaService, transport);
+      const client = createClient(ElizaService, transport);
       const req = createWritableIterable<PartialMessage<ConverseRequest>>();
       try {
         const res = client.converse(req);

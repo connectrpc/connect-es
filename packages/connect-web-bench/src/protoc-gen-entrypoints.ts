@@ -51,7 +51,7 @@ runNodeJs(
 function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
   f.print("/* eslint-disable no-console */");
   f.print();
-  const createPromiseClient = f.import("createPromiseClient", "@connectrpc/connect");
+  const createClient = f.import("createClient", "@connectrpc/connect");
   const createConnectTransport = f.import("createConnectTransport", "@connectrpc/connect-web");
   let lastService: DescService | undefined = undefined;
   f.print(f.jsDoc(`Calls ${methods.length} RPCs with Connect-Web`));
@@ -67,7 +67,7 @@ function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
         service.name,
         "./connectweb/" + service.file.name + "_connect.js",
       );
-      f.print("  const ", clientName, " = ", createPromiseClient, "(", serviceSchema, ", transport);");
+      f.print("  const ", clientName, " = ", createClient, "(", serviceSchema, ", transport);");
       lastService = method.parent;
     }
     f.print("  console.log(await ", clientName, ".", codegenInfo.localName(method), "({}));");

@@ -17,7 +17,7 @@ import { Int32Value, StringValue, MethodKind } from "@bufbuild/protobuf";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
 import { connectNodeAdapter } from "./connect-node-adapter.js";
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { createTransport as createGrpcTransport } from "@connectrpc/connect/protocol-grpc";
 import { createTransport as createGrpcWebTransport } from "@connectrpc/connect/protocol-grpc-web";
@@ -65,7 +65,7 @@ describe("Calls should fail with code internal on RST_STREAM no_error before tra
     }),
   );
   async function testRstStream(transport: Transport) {
-    const client = createPromiseClient(TestService, transport);
+    const client = createClient(TestService, transport);
     const it = client.server({ value: 1 })[Symbol.asyncIterator]();
     const first = await it.next();
     expect(first.done).toBeFalse();

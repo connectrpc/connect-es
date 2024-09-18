@@ -32,11 +32,11 @@ import type { StreamResponse } from "./interceptor.js";
 
 // prettier-ignore
 /**
- * PromiseClient is a simple client that supports unary and server-streaming
+ * Client is a simple client that supports unary and server-streaming
  * methods. Methods will produce a promise for the response message,
  * or an asynchronous iterable of response messages.
  */
-export type PromiseClient<T extends ServiceType> = {
+export type Client<T extends ServiceType> = {
   [P in keyof T["methods"]]:
     T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
   : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>
@@ -46,10 +46,15 @@ export type PromiseClient<T extends ServiceType> = {
 };
 
 /**
- * Create a PromiseClient for the given service, invoking RPCs through the
+ * @deprecated use Client
+ */
+export type PromiseClient<T extends ServiceType> = Client<T>;
+
+/**
+ * Create a Client for the given service, invoking RPCs through the
  * given transport.
  */
-export function createPromiseClient<T extends ServiceType>(
+export function createClient<T extends ServiceType>(
   service: T,
   transport: Transport,
 ) {
@@ -66,7 +71,17 @@ export function createPromiseClient<T extends ServiceType>(
       default:
         return null;
     }
-  }) as PromiseClient<T>;
+  }) as Client<T>;
+}
+
+/**
+ * @deprecated use createClient.
+ */
+export function createPromiseClient<T extends ServiceType>(
+  service: T,
+  transport: Transport,
+) {
+  return createClient(service, transport);
 }
 
 /**

@@ -21,8 +21,8 @@ export {
 } from "./http-headers.js";
 export { createCallbackClient } from "./callback-client.js";
 export type { CallbackClient } from "./callback-client.js";
-export { createPromiseClient } from "./promise-client.js";
-export type { PromiseClient } from "./promise-client.js";
+export { createClient, createPromiseClient } from "./promise-client.js";
+export type { Client, PromiseClient } from "./promise-client.js";
 export type { CallOptions } from "./call-options.js";
 export type { Transport } from "./transport.js";
 export type {

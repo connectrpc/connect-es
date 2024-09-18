@@ -19,7 +19,7 @@ import {
   proto3,
   StringValue,
 } from "@bufbuild/protobuf";
-import { createPromiseClient } from "./promise-client.js";
+import { createClient } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
 import { ConnectError } from "./connect-error.js";
@@ -80,7 +80,7 @@ describe("createRoutesTransport", function () {
       },
     });
   });
-  const client = createPromiseClient(testService, transport);
+  const client = createClient(testService, transport);
   it("should work for unary", async function () {
     const res = await client.unary({ value: 13 });
     expect(res.value).toBe("13");
@@ -114,7 +114,7 @@ describe("createRoutesTransport", function () {
     const transport = createRouterTransport(() => {
       // intentionally not registering any transports
     });
-    const client = createPromiseClient(testService, transport);
+    const client = createClient(testService, transport);
     try {
       await client.unary({});
       fail("expected error");
@@ -173,7 +173,7 @@ describe("createRoutesTransport", function () {
         });
       });
       it("returns mocked answer", async () => {
-        const client = createPromiseClient(ElizaService, mockTransport);
+        const client = createClient(ElizaService, mockTransport);
         const { sentence } = await client.say({ sentence: "how do you feel?" });
         expect(sentence).toEqual("I feel happy.");
       });
@@ -189,7 +189,7 @@ describe("createRoutesTransport", function () {
         });
       });
       it("expects a request", async () => {
-        const client = createPromiseClient(ElizaService, mockTransport);
+        const client = createClient(ElizaService, mockTransport);
         const { sentence } = await client.say({ sentence: "how do you feel?" });
         expect(sentence).toEqual("I feel happy.");
       });
@@ -214,7 +214,7 @@ describe("createRoutesTransport", function () {
         });
       });
       it("tests a simple client call", async () => {
-        const client = createPromiseClient(ElizaService, mockTransport);
+        const client = createClient(ElizaService, mockTransport);
         await client.say({ sentence: "1" });
         await client.say({ sentence: "2" });
         await client.say({ sentence: "3" });

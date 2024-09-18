@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { PromiseClient, Transport } from "@connectrpc/connect";
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import {
   ClientCompatRequest,
   ClientResponseResult,
@@ -48,7 +48,7 @@ export function invokeWithPromiseClient(
   transport: Transport,
   compatRequest: ClientCompatRequest,
 ) {
-  const client = createPromiseClient(ConformanceService, transport);
+  const client = createClient(ConformanceService, transport);
 
   switch (compatRequest.method) {
     case ConformanceService.methods.unary.name:
