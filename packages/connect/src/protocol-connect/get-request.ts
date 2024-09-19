@@ -76,10 +76,7 @@ export function transformConnectPostToGetRequest<
   ].forEach((h) => header.delete(h));
   return {
     ...request,
-    init: {
-      ...request.init,
-      method: "GET",
-    },
+    requestMethod: "GET",
     url,
     header,
   };

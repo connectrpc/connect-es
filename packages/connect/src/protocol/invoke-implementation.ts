@@ -209,15 +209,13 @@ function requestCommon<I extends DescMessage, O extends DescMessage>(
   spec: MethodImplSpec<I, O>,
 ): RequestCommon<I, O> {
   return {
+    requestMethod: context.requestMethod,
     url: context.url,
     signal: context.signal,
     header: context.requestHeader,
     method: spec.method,
     service: spec.method.parent,
     contextValues: context.values,
-    init: {
-      method: context.requestMethod,
-    },
   };
 }
 

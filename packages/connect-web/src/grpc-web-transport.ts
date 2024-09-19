@@ -84,13 +84,6 @@ export interface GrpcWebTransportOptions {
   interceptors?: Interceptor[];
 
   /**
-   * Controls what the fetch client will do with credentials, such as
-   * Cookies. The default value is "same-origin". For reference, see
-   * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
-   */
-  credentials?: RequestCredentials;
-
-  /**
    * Options for the JSON format.
    * By default, unknown fields are ignored.
    */
@@ -103,6 +96,11 @@ export interface GrpcWebTransportOptions {
 
   /**
    * Optional override of the fetch implementation used by the transport.
+   *
+   * The following fetch options are used by default:
+   * - credentials: "same-origin"
+   * - redirect: "error"
+   * - mode: "cors"
    */
   fetch?: typeof globalThis.fetch;
 
@@ -113,6 +111,12 @@ export interface GrpcWebTransportOptions {
    */
   defaultTimeoutMs?: number;
 }
+
+const fetchOptions: RequestInit = {
+  credentials: "same-origin",
+  redirect: "error",
+  mode: "cors",
+};
 
 /**
  * Create a Transport for the gRPC-web protocol. The protocol encodes
@@ -158,13 +162,8 @@ export function createGrpcWebTransport(
           stream: false,
           service: method.parent,
           method,
+          requestMethod: "POST",
           url: createMethodUrl(options.baseUrl, method),
-          init: {
-            method: "POST",
-            credentials: options.credentials ?? "same-origin",
-            redirect: "error",
-            mode: "cors",
-          },
           header: requestHeader(useBinaryFormat, timeoutMs, header, false),
           contextValues: contextValues ?? createContextValues(),
           message,
@@ -172,7 +171,8 @@ export function createGrpcWebTransport(
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const fetch = options.fetch ?? globalThis.fetch;
           const response = await fetch(req.url, {
-            ...req.init,
+            ...fetchOptions,
+            method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
             body: encodeEnvelope(0, serialize(req.message)),
@@ -350,13 +350,8 @@ export function createGrpcWebTransport(
           stream: true,
           service: method.parent,
           method,
+          requestMethod: "POST",
           url: createMethodUrl(options.baseUrl, method),
-          init: {
-            method: "POST",
-            credentials: options.credentials ?? "same-origin",
-            redirect: "error",
-            mode: "cors",
-          },
           header: requestHeader(useBinaryFormat, timeoutMs, header, false),
           contextValues: contextValues ?? createContextValues(),
           message: input,
@@ -364,7 +359,8 @@ export function createGrpcWebTransport(
         next: async (req) => {
           const fetch = options.fetch ?? globalThis.fetch;
           const fRes = await fetch(req.url, {
-            ...req.init,
+            ...fetchOptions,
+            method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
             body: await createRequestBody(req.message),
