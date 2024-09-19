@@ -42,14 +42,14 @@ export const config = {
       },
     },
     {
-      browserName: "Safari iOS 13, iPhone 11",
+      browserName: "Safari",
       "bstack:options": {
         osVersion: "13",
         deviceName: "iPhone 11",
       },
     },
     {
-      browserName: "Safari 14.1, Big Sur",
+      browserName: "Safari",
       "bstack:options": {
         os: "OS X",
         osVersion: "Big Sur",
@@ -57,7 +57,7 @@ export const config = {
       },
     },
     {
-      browserName: "Safari 13.1, Catalina",
+      browserName: "Safari",
       "bstack:options": {
         os: "OS X",
         osVersion: "Catalina",
@@ -65,7 +65,7 @@ export const config = {
       },
     },
     {
-      browserName: "Safari 12.1, Mojave",
+      browserName: "Safari",
       "bstack:options": {
         os: "OS X",
         osVersion: "Mojave",
@@ -73,7 +73,7 @@ export const config = {
       },
     },
     {
-      browserName: "Safari 11.1, High Sierra",
+      browserName: "Safari",
       "bstack:options": {
         os: "OS X",
         osVersion: "High Sierra",
@@ -81,7 +81,7 @@ export const config = {
       },
     },
     {
-      browserName: "Chrome 66.0, Win 10",
+      browserName: "Chrome",
       "bstack:options": {
         os: "Windows",
         osVersion: "10",
@@ -89,7 +89,7 @@ export const config = {
       },
     },
     {
-      browserName: "Firefox 67.0, Win 10",
+      browserName: "Firefox",
       "bstack:options": {
         os: "Windows",
         osVersion: "10",
