@@ -12,10 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createPromiseClient } from "@connectrpc/connect";
-import type { PromiseClient, Transport } from "@connectrpc/connect";
-import { ClientResponseResultSchema } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
-import type { ClientCompatRequest } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
+import { create } from "@bufbuild/protobuf";
+import {
+  type CallOptions,
+  type PromiseClient,
+  type Transport,
+  createPromiseClient,
+} from "@connectrpc/connect";
+import { createWritableIterable } from "@connectrpc/connect/protocol";
+import {
+  type ClientCompatRequest,
+  ClientResponseResultSchema,
+} from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
   ConformanceService,
   UnaryRequestSchema,
@@ -25,8 +33,8 @@ import {
   ConformancePayloadSchema,
   BidiStreamRequestSchema,
   UnimplementedRequestSchema,
+  type BidiStreamRequest,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
-import type { BidiStreamRequest } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   convertToProtoHeaders,
   getCancelTiming,
@@ -36,9 +44,7 @@ import {
   setClientErrorResult,
   wait,
 } from "./protocol.js";
-import { createWritableIterable } from "@connectrpc/connect/protocol";
 import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
-import { create } from "@bufbuild/protobuf";
 
 type ConformanceClient = PromiseClient<typeof ConformanceService>;
 
@@ -80,12 +86,7 @@ async function unary(
     if (afterCloseSendMs >= 0) {
       void wait(afterCloseSendMs).then(() => controller.abort());
     }
-    const request = getSingleRequestMessage(
-      compatRequest,
-      idempotent ? IdempotentUnaryRequestSchema : UnaryRequestSchema,
-    );
-    const call = idempotent ? client.idempotentUnary : client.unary;
-    const response = await call(request, {
+    const callOptions: CallOptions = {
       headers: getRequestHeaders(compatRequest),
       signal: controller.signal,
       onHeader(headers) {
@@ -94,7 +95,16 @@ async function unary(
       onTrailer(trailers) {
         result.responseTrailers = convertToProtoHeaders(trailers);
       },
-    });
+    };
+    const response = idempotent
+      ? await client.idempotentUnary(
+          getSingleRequestMessage(compatRequest, IdempotentUnaryRequestSchema),
+          callOptions,
+        )
+      : await client.unary(
+          getSingleRequestMessage(compatRequest, UnaryRequestSchema),
+          callOptions,
+        );
     result.payloads.push(response.payload ?? emptyPayload);
   } catch (e) {
     setClientErrorResult(result, e);
