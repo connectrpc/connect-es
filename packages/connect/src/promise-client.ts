@@ -48,11 +48,6 @@ export type Client<Desc extends DescService> = {
 };
 
 /**
- * @deprecated use Client
- */
-export type PromiseClient<T extends DescService> = Client<T>;
-
-/**
  * Create a Client for the given service, invoking RPCs through the
  * given transport.
  */
@@ -74,16 +69,6 @@ export function createClient<T extends DescService>(
         return null;
     }
   }) as Client<T>;
-}
-
-/**
- * @deprecated use createClient.
- */
-export function createPromiseClient<T extends DescService>(
-  service: T,
-  transport: Transport,
-) {
-  return createClient(service, transport);
 }
 
 /**
