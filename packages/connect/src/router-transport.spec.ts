@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createPromiseClient } from "./promise-client.js";
+import { createClient } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
 import { ConnectError } from "./connect-error.js";
@@ -70,7 +70,7 @@ describe("createRoutesTransport", function () {
       },
     });
   });
-  const client = createPromiseClient(testService, transport);
+  const client = createClient(testService, transport);
   it("should work for unary", async function () {
     const res = await client.unary({ value: 13 });
     expect(res.value).toBe("13");
@@ -104,7 +104,7 @@ describe("createRoutesTransport", function () {
     const transport = createRouterTransport(() => {
       // intentionally not registering any transports
     });
-    const client = createPromiseClient(testService, transport);
+    const client = createClient(testService, transport);
     try {
       await client.unary({});
       fail("expected error");

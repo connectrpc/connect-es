@@ -15,7 +15,7 @@ Tests run in the following environments:
 
 For every environment, two client flavors are available:
 
-- Promise (using `createPromiseClient`)
+- Promise (using `createClient`)
 - Callback (using `createCallbackClient`)
 
 For every combination, a task is available:

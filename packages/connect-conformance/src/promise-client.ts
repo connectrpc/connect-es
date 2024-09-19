@@ -13,12 +13,8 @@
 // limitations under the License.
 
 import { create } from "@bufbuild/protobuf";
-import {
-  type CallOptions,
-  type PromiseClient,
-  type Transport,
-  createPromiseClient,
-} from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
+import type { CallOptions, Client, Transport } from "@connectrpc/connect";
 import { createWritableIterable } from "@connectrpc/connect/protocol";
 import {
   type ClientCompatRequest,
@@ -46,7 +42,7 @@ import {
 } from "./protocol.js";
 import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
 
-type ConformanceClient = PromiseClient<typeof ConformanceService>;
+type ConformanceClient = Client<typeof ConformanceService>;
 
 const emptyPayload = create(ConformancePayloadSchema);
 
@@ -54,7 +50,7 @@ export function invokeWithPromiseClient(
   transport: Transport,
   compatRequest: ClientCompatRequest,
 ) {
-  const client = createPromiseClient(ConformanceService, transport);
+  const client = createClient(ConformanceService, transport);
   switch (compatRequest.method) {
     case ConformanceService.method.unary.name:
       return unary(client, compatRequest);

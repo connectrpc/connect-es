@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as http from "http";
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-node";
 import express from "express";
@@ -50,7 +50,7 @@ describe("express readme", function () {
         baseUrl: `http://localhost:${port}`,
         httpVersion: "1.1",
       });
-      const client = createPromiseClient(ElizaService, transport);
+      const client = createClient(ElizaService, transport);
       const res = await client.say({ sentence: "I feel happy." });
       // console.log(res.sentence) // you said: I feel happy.
       expect(res.sentence).toBe("you said: I feel happy.");

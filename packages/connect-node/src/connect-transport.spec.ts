@@ -98,7 +98,7 @@ describe("using a session manager to explicitly close all connections", function
       baseUrl: "https://demo.connectrpc.com",
       sessionManager,
     });
-    // const client = createPromiseClient(..., transport);
+    // const client = createClient(..., transport);
 
     // make calls with the client
 

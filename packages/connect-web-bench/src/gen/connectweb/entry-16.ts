@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import { CommitService } from "./buf/registry/module/v1/commit_service_pb";
 import { DownloadService } from "./buf/registry/module/v1/download_service_pb";
 import { GraphService } from "./buf/registry/module/v1/graph_service_pb";
@@ -30,26 +30,26 @@ export async function call() {
   const transport = createConnectTransport({
     baseUrl: "https://buf.build/",
   });
-  const commitClient = createPromiseClient(CommitService, transport);
+  const commitClient = createClient(CommitService, transport);
   console.log(await commitClient.getCommits({}));
   console.log(await commitClient.listCommits({}));
-  const downloadClient = createPromiseClient(DownloadService, transport);
+  const downloadClient = createClient(DownloadService, transport);
   console.log(await downloadClient.download({}));
-  const graphClient = createPromiseClient(GraphService, transport);
+  const graphClient = createClient(GraphService, transport);
   console.log(await graphClient.getGraph({}));
-  const labelClient = createPromiseClient(LabelService, transport);
+  const labelClient = createClient(LabelService, transport);
   console.log(await labelClient.getLabels({}));
   console.log(await labelClient.listLabels({}));
   console.log(await labelClient.listLabelHistory({}));
   console.log(await labelClient.createOrUpdateLabels({}));
   console.log(await labelClient.archiveLabels({}));
   console.log(await labelClient.unarchiveLabels({}));
-  const moduleClient = createPromiseClient(ModuleService, transport);
+  const moduleClient = createClient(ModuleService, transport);
   console.log(await moduleClient.getModules({}));
   console.log(await moduleClient.listModules({}));
   console.log(await moduleClient.createModules({}));
   console.log(await moduleClient.updateModules({}));
   console.log(await moduleClient.deleteModules({}));
-  const resourceClient = createPromiseClient(ResourceService, transport);
+  const resourceClient = createClient(ResourceService, transport);
   console.log(await resourceClient.getResources({}));
 }

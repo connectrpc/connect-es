@@ -42,7 +42,7 @@ type DependencyRemoval = {
  * Migrate matching dependencies, removing, upgrading, or renaming them.
  */
 export function migrateDependencies(
-  pkg: Readonly<PackageJson>,
+  pkg: PackageJson,
   migrations: DependencyMigration[],
 ): PackageJson | null {
   if (migrations.some((migration) => !validateDependencyMigration(migration))) {
@@ -51,14 +51,13 @@ export function migrateDependencies(
   const modifiedDepNames = new Set<string>();
   const removedDepNames = new Set<string>();
   const replacedDepNames = new Map<string, string>();
-  const copy = structuredClone(pkg) as PackageJson;
   for (const migration of migrations) {
     for (const p of [
       "dependencies",
       "devDependencies",
       "peerDependencies",
     ] as const) {
-      const deps = copy[p] ?? {};
+      const deps = pkg[p] ?? {};
       if ("remove" in migration) {
         // DependencyRemoval
         migration.remove.name;
@@ -109,16 +108,16 @@ export function migrateDependencies(
   }
   // for bundled dependencies, replace names we replaced, and remove names we removed
   for (const p of ["bundleDependencies", "bundledDependencies"] as const) {
-    const bundled = copy[p];
+    const bundled = pkg[p];
     if (!Array.isArray(bundled)) {
       continue;
     }
-    copy[p] = bundled
+    pkg[p] = bundled
       .map((n) => replacedDepNames.get(n) ?? n)
       .filter((n) => !removedDepNames.has(n));
   }
   // for peer dependency meta, replace names we replaced, and remove names we removed
-  const meta = copy.peerDependenciesMeta;
+  const meta = pkg.peerDependenciesMeta;
   if (meta !== undefined) {
     for (const [n, value] of Object.entries(meta)) {
       if (removedDepNames.has(n)) {
@@ -133,7 +132,7 @@ export function migrateDependencies(
       meta[newName] = value;
     }
   }
-  return modifiedDepNames.size > 0 ? copy : null;
+  return modifiedDepNames.size > 0 ? pkg : null;
 }
 
 /**

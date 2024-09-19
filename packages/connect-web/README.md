@@ -12,7 +12,7 @@ the fetch API on board:
 Lets your clients running in the web browser talk to a server with the Connect protocol:
 
 ```diff
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 + import { createConnectTransport } from "@connectrpc/connect-web";
 import { ElizaService } from "./gen/eliza_connect.js";
 
@@ -21,7 +21,7 @@ import { ElizaService } from "./gen/eliza_connect.js";
 +   baseUrl: "https://demo.connectrpc.com",
 + });
 
-const client = createPromiseClient(ElizaService, transport);
+const client = createClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```
@@ -31,7 +31,7 @@ console.log(sentence) // you said: I feel happy.
 Lets your clients running in the web browser talk to a server with the gRPC-web protocol:
 
 ```diff
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 + import { createGrpcWebTransport } from "@connectrpc/connect-web";
 import { ElizaService } from "./gen/eliza_connect.js";
 
@@ -40,7 +40,7 @@ import { ElizaService } from "./gen/eliza_connect.js";
 +   baseUrl: "https://demo.connectrpc.com",
 + });
 
-const client = createPromiseClient(ElizaService, transport);
+const client = createClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```

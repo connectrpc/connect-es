@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "../src/connect-transport.js";
 import {
   ElizaService,
@@ -29,7 +29,7 @@ describe("eliza", () => {
   it(
     "say()",
     async () => {
-      const client = createPromiseClient(ElizaService, transport);
+      const client = createClient(ElizaService, transport);
       const res = await client.say({ sentence: "I feel happy." });
       expect(typeof res.sentence).toBe("string");
     },
@@ -38,7 +38,7 @@ describe("eliza", () => {
   it(
     "introduce()",
     async () => {
-      const client = createPromiseClient(ElizaService, transport);
+      const client = createClient(ElizaService, transport);
       const request = create(IntroduceRequestSchema, {
         name: "Browser",
       });

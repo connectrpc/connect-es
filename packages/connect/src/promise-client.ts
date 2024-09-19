@@ -34,11 +34,11 @@ import type {
 
 // prettier-ignore
 /**
- * PromiseClient is a simple client that supports unary and server-streaming
+ * Client is a simple client that supports unary and server-streaming
  * methods. Methods will produce a promise for the response message,
  * or an asynchronous iterable of response messages.
  */
-export type PromiseClient<Desc extends DescService> = {
+export type Client<Desc extends DescService> = {
   [P in keyof Desc["method"]]:
     Desc["method"][P] extends MethodInfoUnary<infer I, infer O> ? (request: MessageInitShape<I>, options?: CallOptions) => Promise<MessageShape<O>>
   : Desc["method"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: MessageInitShape<I>, options?: CallOptions) => AsyncIterable<MessageShape<O>>
@@ -48,10 +48,15 @@ export type PromiseClient<Desc extends DescService> = {
 };
 
 /**
- * Create a PromiseClient for the given service, invoking RPCs through the
+ * @deprecated use Client
+ */
+export type PromiseClient<T extends DescService> = Client<T>;
+
+/**
+ * Create a Client for the given service, invoking RPCs through the
  * given transport.
  */
-export function createPromiseClient<T extends DescService>(
+export function createClient<T extends DescService>(
   service: T,
   transport: Transport,
 ) {
@@ -68,7 +73,17 @@ export function createPromiseClient<T extends DescService>(
       default:
         return null;
     }
-  }) as PromiseClient<T>;
+  }) as Client<T>;
+}
+
+/**
+ * @deprecated use createClient.
+ */
+export function createPromiseClient<T extends DescService>(
+  service: T,
+  transport: Transport,
+) {
+  return createClient(service, transport);
 }
 
 /**

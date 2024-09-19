@@ -67,7 +67,7 @@ curl \
 Node.js with the gRPC protocol (using a transport from [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node)):
 
 ```ts
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import { createGrpcTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_connect.js";
 
@@ -76,7 +76,7 @@ const transport = createGrpcTransport({
   httpVersion: "2",
 });
 
-const client = createPromiseClient(ElizaService, transport);
+const client = createClient(ElizaService, transport);
 const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence); // you said: I feel happy.
 ```

@@ -134,7 +134,9 @@ const dependencyMigrations: DependencyMigration[] = [
 export const v0_13_1: Migration = {
   applicable(scanned: Scanned) {
     return scanned.packageFiles.some(
-      ({ pkg }) => migrateDependencies(pkg, dependencyMigrations) !== null,
+      ({ pkg }) =>
+        migrateDependencies(structuredClone(pkg), dependencyMigrations) !==
+        null,
     );
   },
   migrate({
@@ -151,7 +153,9 @@ export const v0_13_1: Migration = {
       const oldPluginUsed = scanned.packageFiles
         .filter(
           ({ pkg }) =>
-            migrateDependencies(pkg, [oldPluginReplacement]) !== null,
+            migrateDependencies(structuredClone(pkg), [
+              oldPluginReplacement,
+            ]) !== null,
         )
         .map(({ path }) => path);
       if (oldPluginUsed.length > 0) {
@@ -165,7 +169,9 @@ export const v0_13_1: Migration = {
       const removedWebExportsUsed = scanned.packageFiles
         .filter(
           ({ pkg }) =>
-            migrateDependencies(pkg, [removedWebExportReplacement]) !== null,
+            migrateDependencies(structuredClone(pkg), [
+              removedWebExportReplacement,
+            ]) !== null,
         )
         .map(({ path }) => path);
       if (removedWebExportsUsed.length > 0) {

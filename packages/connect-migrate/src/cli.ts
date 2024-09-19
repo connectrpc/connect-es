@@ -20,7 +20,8 @@ import { scan } from "./lib/scan";
 import { Logger } from "./lib/logger";
 import { v0_13_1 } from "./migrations/v0.13.1";
 import { v2_0_0 } from "./migrations/v2.0.0";
-import { Migration } from "./migration";
+import { v1_16_0 } from "./migrations/v1.16.0";
+import type { Migration } from "./migration";
 
 const usage = `USAGE: connect-migrate [flags]
 Updates references to connect-es packages in your project to use @connectrpc.
@@ -34,7 +35,7 @@ Flags:
 `;
 
 const logger = new Logger();
-const migrations = [v0_13_1, v2_0_0];
+const migrations = [v0_13_1, v1_16_0, v2_0_0];
 void main();
 
 async function main() {

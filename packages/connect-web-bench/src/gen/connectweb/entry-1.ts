@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { createPromiseClient } from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import { CommitService } from "./buf/registry/module/v1/commit_service_pb";
 
 /* eslint-disable no-console */
@@ -25,6 +25,6 @@ export async function call() {
   const transport = createConnectTransport({
     baseUrl: "https://buf.build/",
   });
-  const commitClient = createPromiseClient(CommitService, transport);
+  const commitClient = createClient(CommitService, transport);
   console.log(await commitClient.getCommits({}));
 }
