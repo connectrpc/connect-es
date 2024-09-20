@@ -34,10 +34,10 @@ import {
 } from "../lib/migrate-bufgenyaml";
 import { writeBufGenYamlFile } from "../lib/bufgenyaml";
 
-export const targetVersionProtobufEs = "2.0.0-beta.3";
-export const targetVersionConnectEs = "2.0.0-alpha.1";
-export const targetVersionConnectQuery = "2.0.0-alpha.1";
-export const targetVersionConnectPlaywright = "0.4.0";
+export const targetVersionProtobufEs = "2.1.0";
+export const targetVersionConnectEs = "2.0.0-alpha.1"; // TODO
+export const targetVersionConnectQuery = "2.0.0"; // TODO
+export const targetVersionConnectPlaywright = "0.4.0"; // TODO
 
 const dependencyMigrations: DependencyMigration[] = [
   // https://github.com/bufbuild/protobuf-es
@@ -83,15 +83,16 @@ const dependencyMigrations: DependencyMigration[] = [
     remove: { name: "@connectrpc/protoc-gen-connect-es", range: "^1.0.0" },
   },
 
-  // https://github.com/connectrpc/connect-query-es
-  {
-    from: { name: "@connectrpc/connect-query", range: "^1.0.0" },
-    to: { version: targetVersionConnectQuery },
-  },
-  {
-    from: { name: "@connectrpc/protoc-gen-connect-query", range: "^1.0.0" },
-    to: { version: targetVersionConnectQuery },
-  },
+  // TODO
+  // // https://github.com/connectrpc/connect-query-es
+  // {
+  //   from: { name: "@connectrpc/connect-query", range: "^1.0.0" },
+  //   to: { version: targetVersionConnectQuery },
+  // },
+  // {
+  //   from: { name: "@connectrpc/protoc-gen-connect-query", range: "^1.0.0" },
+  //   to: { version: targetVersionConnectQuery },
+  // },
 
   // https://github.com/connectrpc/connect-playwright-es
   {
@@ -111,21 +112,14 @@ const bufGenYamlMigrations: BufGenYamlMigration[] = [
     updatePlugin: {
       remote: "buf.build/bufbuild/es",
       from: "^1.0.0",
-      to: "2.0.0",
-    },
-  },
-  {
-    updatePlugin: {
-      remote: "buf.build/connectrpc/es",
-      from: "^1.0.0",
-      to: "2.0.0",
+      to: targetVersionProtobufEs,
     },
   },
   {
     updatePlugin: {
       remote: "buf.build/connectrpc/query-es",
       from: "^1.0.0",
-      to: "2.0.0",
+      to: "1.4.2", // TODO
     },
   },
 ];
@@ -140,7 +134,9 @@ export const v2_0_0: Migration = {
         ({ yaml }) => migrateBufGenYaml(yaml, bufGenYamlMigrations) !== null,
       ) ||
       scanned.packageFiles.some(
-        ({ pkg }) => migrateDependencies(pkg, dependencyMigrations) !== null,
+        ({ pkg }) =>
+          migrateDependencies(structuredClone(pkg), dependencyMigrations) !==
+          null,
       )
     );
   },
