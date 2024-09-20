@@ -87,7 +87,7 @@ describe("transformInvokeImplementation()", () => {
       [
         (next) => async (req) => {
           expect(req.stream).toEqual(false);
-          expect(req.init.method).toEqual("POST");
+          expect(req.requestMethod).toEqual("POST");
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
           expect(req.url).toEqual("https://example.com/foo");
@@ -139,7 +139,7 @@ describe("transformInvokeImplementation()", () => {
       [
         (next) => async (req) => {
           expect(req.stream).toEqual(true);
-          expect(req.init.method).toEqual("POST");
+          expect(req.requestMethod).toEqual("POST");
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
           expect(req.url).toEqual("https://example.com/foo");
@@ -191,7 +191,7 @@ describe("transformInvokeImplementation()", () => {
       [
         (next) => async (req) => {
           expect(req.stream).toEqual(true);
-          expect(req.init.method).toEqual("POST");
+          expect(req.requestMethod).toEqual("POST");
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
           expect(req.url).toEqual("https://example.com/foo");
@@ -251,7 +251,7 @@ describe("transformInvokeImplementation()", () => {
       [
         (next) => async (req) => {
           expect(req.stream).toEqual(true);
-          expect(req.init.method).toEqual("POST");
+          expect(req.requestMethod).toEqual("POST");
           expect(req.service).toEqual(TestService);
           expect(req.header.get("Key")).toEqual("Value");
           expect(req.url).toEqual("https://example.com/foo");

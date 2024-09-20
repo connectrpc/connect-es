@@ -83,8 +83,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           stream: false,
           service: method.parent,
           method,
+          requestMethod: "POST",
           url: createMethodUrl(opt.baseUrl, method),
-          init: {},
           header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
@@ -99,7 +99,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const uRes = await opt.httpClient({
             url: req.url,
-            method: "POST",
+            method: req.requestMethod,
             header: req.header,
             signal: req.signal,
             body: pipe(
@@ -216,12 +216,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           stream: true,
           service: method.parent,
           method,
+          requestMethod: "POST",
           url: createMethodUrl(opt.baseUrl, method),
-          init: {
-            method: "POST",
-            redirect: "error",
-            mode: "cors",
-          },
           header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
@@ -236,7 +232,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         next: async (req: StreamRequest<I, O>) => {
           const uRes = await opt.httpClient({
             url: req.url,
-            method: "POST",
+            method: req.requestMethod,
             header: req.header,
             signal: req.signal,
             body: pipe(

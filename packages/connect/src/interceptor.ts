@@ -150,6 +150,12 @@ export interface RequestCommon<I extends DescMessage, O extends DescMessage> {
   readonly service: DescService;
 
   /**
+   * HTTP method of the request. Server-side interceptors may use this value
+   * to identify Connect GET requests.
+   */
+  readonly requestMethod: string;
+
+  /**
    * Metadata related to the service method that is being called.
    */
   readonly method: MethodInfo<I, O>;
@@ -159,11 +165,6 @@ export interface RequestCommon<I extends DescMessage, O extends DescMessage> {
    * URL received by the server.
    */
   readonly url: string;
-
-  /**
-   * Optional parameters to the fetch API.
-   */
-  readonly init: Exclude<RequestInit, "body" | "headers" | "signal">;
 
   /**
    * The AbortSignal for the current call.

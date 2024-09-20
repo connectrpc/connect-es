@@ -82,8 +82,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           stream: false,
           service: method.parent,
           method,
+          requestMethod: "POST",
           url: createMethodUrl(opt.baseUrl, method),
-          init: {},
           header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
@@ -200,8 +200,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           stream: true,
           service: method.parent,
           method,
+          requestMethod: "POST",
           url: createMethodUrl(opt.baseUrl, method),
-          init: {},
           header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,

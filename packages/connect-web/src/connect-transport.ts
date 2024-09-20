@@ -87,13 +87,6 @@ export interface ConnectTransportOptions {
   useBinaryFormat?: boolean;
 
   /**
-   * Controls what the fetch client will do with credentials, such as
-   * Cookies. The default value is "same-origin". For reference, see
-   * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
-   */
-  credentials?: RequestCredentials;
-
-  /**
    * Interceptors that should be applied to all calls running through
    * this transport. See the Interceptor type for details.
    */
@@ -112,6 +105,8 @@ export interface ConnectTransportOptions {
 
   /**
    * Optional override of the fetch implementation used by the transport.
+   *
+   * This option can be used to set fetch options such as "credentials".
    */
   fetch?: typeof globalThis.fetch;
 
@@ -128,6 +123,10 @@ export interface ConnectTransportOptions {
    */
   defaultTimeoutMs?: number;
 }
+
+const fetchOptions: RequestInit = {
+  redirect: "error",
+};
 
 /**
  * Create a Transport for the Connect protocol, which makes unary and
@@ -168,13 +167,8 @@ export function createConnectTransport(
           stream: false,
           service: method.parent,
           method,
+          requestMethod: "POST",
           url: createMethodUrl(options.baseUrl, method),
-          init: {
-            method: "POST",
-            credentials: options.credentials ?? "same-origin",
-            redirect: "error",
-            mode: "cors",
-          },
           header: requestHeader(
             method.methodKind,
             useBinaryFormat,
@@ -202,7 +196,8 @@ export function createConnectTransport(
           }
           const fetch = options.fetch ?? globalThis.fetch;
           const response = await fetch(req.url, {
-            ...req.init,
+            ...fetchOptions,
+            method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
             body,
@@ -336,13 +331,8 @@ export function createConnectTransport(
           stream: true,
           service: method.parent,
           method,
+          requestMethod: "POST",
           url: createMethodUrl(options.baseUrl, method),
-          init: {
-            method: "POST",
-            credentials: options.credentials ?? "same-origin",
-            redirect: "error",
-            mode: "cors",
-          },
           header: requestHeader(
             method.methodKind,
             useBinaryFormat,
@@ -356,7 +346,8 @@ export function createConnectTransport(
         next: async (req) => {
           const fetch = options.fetch ?? globalThis.fetch;
           const fRes = await fetch(req.url, {
-            ...req.init,
+            ...fetchOptions,
+            method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
             body: await createRequestBody(req.message),
