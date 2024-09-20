@@ -106,10 +106,7 @@ export interface ConnectTransportOptions {
   /**
    * Optional override of the fetch implementation used by the transport.
    *
-   * The following fetch options are used by default:
-   * - credentials: "same-origin"
-   * - redirect: "error"
-   * - mode: "cors"
+   * This option can be used to set fetch options such as "credentials".
    */
   fetch?: typeof globalThis.fetch;
 
@@ -128,9 +125,7 @@ export interface ConnectTransportOptions {
 }
 
 const fetchOptions: RequestInit = {
-  credentials: "same-origin",
   redirect: "error",
-  mode: "cors",
 };
 
 /**
