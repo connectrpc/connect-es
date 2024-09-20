@@ -79,7 +79,8 @@ function getMatchingPackages(packageFiles: Scanned["packageFiles"]) {
           if (minVersion === null) {
             return false;
           }
-          return semver.satisfies(minVersion, "^1.16.0");
+          // v2 migration will run next so we update all v1 versions.
+          return semver.satisfies(minVersion, "^1.0.0");
         })
     ) {
       matched.push(packageFile);
