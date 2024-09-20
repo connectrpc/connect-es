@@ -166,7 +166,7 @@ describe("migration to v0.13.1", function () {
       expect(packageJsonWritten.length).toBe(1);
       expect(packageJsonWritten[0].pkg).toEqual({
         dependencies: {
-          "@connectrpc/connect": "^1.1.2",
+          "@connectrpc/connect": "^1.6.0",
         },
       });
       expect(lockFilesUpdated.length).toBe(1);

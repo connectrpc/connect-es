@@ -28,8 +28,8 @@ import {
 import { migratePackages } from "../lib/migrate-packages";
 import { migrateLockFiles } from "../lib/migrate-lock-files";
 
-export const targetVersionConnectEs = "1.1.2";
-export const targetVersionConnectQuery = "0.5.1";
+export const targetVersionConnectEs = "1.6.0";
+export const targetVersionConnectQuery = "1.4.2";
 
 /**
  * The latest available version of protoc-gen-connect-web is v0.11.0.

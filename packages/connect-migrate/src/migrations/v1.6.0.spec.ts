@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { v1_16_0 } from "./v1.16.0";
+import { v1_6_0 } from "./v1.6.0";
 import type { PackageJson } from "../lib/package-json";
 import type { MigrateOptions } from "../migration";
 
@@ -55,20 +55,20 @@ describe("migration", function () {
     };
   });
   describe("should be applicable", function () {
-    it("for 1.16.0", () => {
+    it("for 1.6.0", () => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
           pkg: {
             dependencies: {
-              "@connectrpc/connect": "^1.16.0",
+              "@connectrpc/connect": "^1.6.0",
             },
           },
         },
       ];
-      expect(v1_16_0.applicable(opt.scanned)).toBeTrue();
+      expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
     });
-    it("after 1.16.0", () => {
+    it("after 1.6.0", () => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -79,20 +79,20 @@ describe("migration", function () {
           },
         },
       ];
-      expect(v1_16_0.applicable(opt.scanned)).toBeTrue();
+      expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
     });
-    it("before 1.16.0", () => {
+    it("before 1.6.0", () => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
           pkg: {
             dependencies: {
-              "@connectrpc/connect": "^1.15.0",
+              "@connectrpc/connect": "^1.5.0",
             },
           },
         },
       ];
-      expect(v1_16_0.applicable(opt.scanned)).toBeTrue();
+      expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
     });
   });
   describe("should not be applicable", function () {
@@ -107,7 +107,7 @@ describe("migration", function () {
           },
         },
       ];
-      expect(v1_16_0.applicable(opt.scanned)).toBeFalse();
+      expect(v1_6_0.applicable(opt.scanned)).toBeFalse();
     });
   });
 });
