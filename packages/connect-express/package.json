@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-express",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-beta.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -32,16 +32,16 @@
     "node": ">=18.14.1"
   },
   "devDependencies": {
-    "@connectrpc/connect-conformance": "^2.0.0-alpha.1",
-    "@connectrpc/connect": "2.0.0-alpha.1",
-    "@connectrpc/connect-node": "2.0.0-alpha.1",
+    "@connectrpc/connect-conformance": "^2.0.0-beta.1",
+    "@connectrpc/connect": "2.0.0-beta.1",
+    "@connectrpc/connect-node": "2.0.0-beta.1",
     "@types/express": "^4.17.18",
     "express": "^4.19.2",
     "tsx": "^4.19.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.1.0",
-    "@connectrpc/connect": "2.0.0-alpha.1",
-    "@connectrpc/connect-node": "2.0.0-alpha.1"
+    "@connectrpc/connect": "2.0.0-beta.1",
+    "@connectrpc/connect-node": "2.0.0-beta.1"
   }
 }
