@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Scanned } from "../lib/scan";
-import replaceCalls from "./v1.16.0-transform";
+import replaceCalls from "./v1.6.0-transform";
 import type { MigrateError, MigrateSuccess, Migration } from "../migration";
 import { updateSourceFile } from "../lib/update-source-file";
 import { migrateSourceFiles } from "../lib/migrate-source-files";
@@ -23,7 +23,7 @@ import * as semver from "semver";
  * Migrates code to use new symbols `createClient` and `Client` instead
  * of `createPromiseClient` and `PromiseClient`.
  */
-export const v1_16_0: Migration = {
+export const v1_6_0: Migration = {
   applicable(scanned: Scanned) {
     return getMatchingPackages(scanned.packageFiles).length > 0;
   },
@@ -77,7 +77,7 @@ function getMatchingPackages(packageFiles: Scanned["packageFiles"]) {
           if (minVersion === null) {
             return false;
           }
-          return semver.satisfies(minVersion, "^1.16.0");
+          return semver.satisfies(minVersion, "^1.6.0");
         })
     ) {
       matched.push(packageFile);
