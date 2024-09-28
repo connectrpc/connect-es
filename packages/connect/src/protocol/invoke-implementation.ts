@@ -151,6 +151,14 @@ export function transformInvokeImplementation<
           throw new ConnectError(
             "protocol error: received extra input message for unary method",
             Code.Unimplemented,
+            {
+              methodName: spec.method.name,
+              serviceTypeName: spec.service.typeName,
+              inputTypeName: spec.method.I.typeName,
+              outputTypeName: spec.method.O.typeName,
+              url: context.url,
+              requestMethod: context.requestMethod,
+            }
           );
         }
       };
@@ -162,6 +170,14 @@ export function transformInvokeImplementation<
           throw new ConnectError(
             "protocol error: missing input message for server-streaming method",
             Code.Unimplemented,
+            {
+              methodName: spec.method.name,
+              serviceTypeName: spec.service.typeName,
+              inputTypeName: spec.method.I.typeName,
+              outputTypeName: spec.method.O.typeName,
+              url: context.url,
+              requestMethod: context.requestMethod,
+            }
           );
         }
         const anyFn = async (
@@ -209,6 +225,14 @@ export function transformInvokeImplementation<
           throw new ConnectError(
             "protocol error: received extra input message for server-streaming method",
             Code.Unimplemented,
+            {
+              methodName: spec.method.name,
+              serviceTypeName: spec.service.typeName,
+              inputTypeName: spec.method.I.typeName,
+              outputTypeName: spec.method.O.typeName,
+              url: context.url,
+              requestMethod: context.requestMethod,
+            }
           );
         }
       };
