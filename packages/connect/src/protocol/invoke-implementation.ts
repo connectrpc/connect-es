@@ -149,7 +149,7 @@ export function transformInvokeImplementation<
         const input2 = await inputIt.next();
         if (input2.done !== true) {
           throw new ConnectError(
-            "protocol error: received extra input message for unary method",
+            `protocol error: received extra input message ${spec.method.I.typeName} for unary method ${spec.method.name}`,
             Code.Unimplemented,
             {
               methodName: spec.method.name,
@@ -168,7 +168,7 @@ export function transformInvokeImplementation<
         const input1 = await inputIt.next();
         if (input1.done === true) {
           throw new ConnectError(
-            "protocol error: missing input message for server-streaming method",
+            `protocol error: missing input message ${spec.method.I.typeName} for server-streaming method ${spec.method.name}`,
             Code.Unimplemented,
             {
               methodName: spec.method.name,
@@ -223,7 +223,7 @@ export function transformInvokeImplementation<
         const input2 = await inputIt.next();
         if (input2.done !== true) {
           throw new ConnectError(
-            "protocol error: received extra input message for server-streaming method",
+            `protocol error: received extra input message ${spec.method.I.typeName} for server-streaming method ${spec.method.name}`,
             Code.Unimplemented,
             {
               methodName: spec.method.name,
