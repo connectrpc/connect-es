@@ -15,7 +15,7 @@
 import type { DescMessage, MessageInitShape } from "@bufbuild/protobuf";
 import type { StreamResponse, UnaryResponse } from "./interceptor.js";
 import type { ContextValues } from "./context-values.js";
-import type { MethodInfo } from "./types.js";
+import type { DescMethodStreaming, DescMethodUnary } from "./types.js";
 
 /**
  * Transport represents the underlying transport for a client.
@@ -28,7 +28,7 @@ export interface Transport {
    * responds with a single output message.
    */
   unary<I extends DescMessage, O extends DescMessage>(
-    method: MethodInfo<I, O>,
+    method: DescMethodUnary<I, O>,
     signal: AbortSignal | undefined,
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
@@ -41,7 +41,7 @@ export interface Transport {
    * and responds with zero or more output messages.
    */
   stream<I extends DescMessage, O extends DescMessage>(
-    method: MethodInfo<I, O>,
+    method: DescMethodStreaming<I, O>,
     signal: AbortSignal | undefined,
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,

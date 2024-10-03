@@ -14,49 +14,45 @@
 
 import type { DescMessage, DescMethod } from "@bufbuild/protobuf";
 
-// TODO: Maybe move this to protobuf and export from root?
-
-export type MethodKind = MethodInfo["methodKind"];
-
-export type MethodInfo<
+// TODO: Delete these once exported from `@bufbuild/protobuf`
+export type DescMethodStreaming<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
 > =
-  | MethodInfoUnary<I, O>
-  | MethodInfoServerStreaming<I, O>
-  | MethodInfoClientStreaming<I, O>
-  | MethodInfoBiDiStreaming<I, O>;
+  | DescMethodClientStreaming<I, O>
+  | DescMethodServerStreaming<I, O>
+  | DescMethodBiDiStreaming<I, O>;
 
-export type MethodInfoUnary<
-  I extends DescMessage,
-  O extends DescMessage,
+export type DescMethodUnary<
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
 > = DescMethod & {
   methodKind: "unary";
   input: I;
   output: O;
 };
 
-export type MethodInfoServerStreaming<
-  I extends DescMessage,
-  O extends DescMessage,
+export type DescMethodServerStreaming<
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
 > = DescMethod & {
   methodKind: "server_streaming";
   input: I;
   output: O;
 };
 
-export type MethodInfoClientStreaming<
-  I extends DescMessage,
-  O extends DescMessage,
+export type DescMethodClientStreaming<
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
 > = DescMethod & {
   methodKind: "client_streaming";
   input: I;
   output: O;
 };
 
-export type MethodInfoBiDiStreaming<
-  I extends DescMessage,
-  O extends DescMessage,
+export type DescMethodBiDiStreaming<
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
 > = DescMethod & {
   methodKind: "bidi_streaming";
   input: I;

@@ -28,7 +28,8 @@ import type {
   UnaryRequest,
   UnaryResponse,
   ContextValues,
-  MethodInfo,
+  DescMethodUnary,
+  DescMethodStreaming,
 } from "@connectrpc/connect";
 import { createContextValues, ConnectError, Code } from "@connectrpc/connect";
 import {
@@ -130,7 +131,7 @@ export function createGrpcWebTransport(
   const useBinaryFormat = options.useBinaryFormat ?? true;
   return {
     async unary<I extends DescMessage, O extends DescMessage>(
-      method: MethodInfo<I, O>,
+      method: DescMethodUnary<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: Headers,
@@ -241,7 +242,7 @@ export function createGrpcWebTransport(
     },
 
     async stream<I extends DescMessage, O extends DescMessage>(
-      method: MethodInfo<I, O>,
+      method: DescMethodStreaming<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,

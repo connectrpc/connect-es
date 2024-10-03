@@ -26,10 +26,11 @@ import { Code } from "./code.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import type { StreamResponse } from "./interceptor.js";
 import type {
-  MethodInfoBiDiStreaming,
-  MethodInfoClientStreaming,
-  MethodInfoServerStreaming,
-  MethodInfoUnary,
+  DescMethodBiDiStreaming,
+  DescMethodClientStreaming,
+  DescMethodServerStreaming,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "./types.js";
 
 // prettier-ignore
@@ -40,10 +41,10 @@ import type {
  */
 export type Client<Desc extends DescService> = {
   [P in keyof Desc["method"]]:
-    Desc["method"][P] extends MethodInfoUnary<infer I, infer O> ? (request: MessageInitShape<I>, options?: CallOptions) => Promise<MessageShape<O>>
-  : Desc["method"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: MessageInitShape<I>, options?: CallOptions) => AsyncIterable<MessageShape<O>>
-  : Desc["method"][P] extends MethodInfoClientStreaming<infer I, infer O> ? (request: AsyncIterable<MessageInitShape<I>>, options?: CallOptions) => Promise<MessageShape<O>>
-  : Desc["method"][P] extends MethodInfoBiDiStreaming<infer I, infer O> ? (request: AsyncIterable<MessageInitShape<I>>, options?: CallOptions) => AsyncIterable<MessageShape<O>>
+  Desc["method"][P] extends DescMethodUnary<infer I, infer O> ? (request: MessageInitShape<I>, options?: CallOptions) => Promise<MessageShape<O>>
+  : Desc["method"][P] extends DescMethodServerStreaming<infer I, infer O> ? (request: MessageInitShape<I>, options?: CallOptions) => AsyncIterable<MessageShape<O>>
+  : Desc["method"][P] extends DescMethodClientStreaming<infer I, infer O> ? (request: AsyncIterable<MessageInitShape<I>>, options?: CallOptions) => Promise<MessageShape<O>>
+  : Desc["method"][P] extends DescMethodBiDiStreaming<infer I, infer O> ? (request: AsyncIterable<MessageInitShape<I>>, options?: CallOptions) => AsyncIterable<MessageShape<O>>
   : never;
 };
 
@@ -55,20 +56,23 @@ export function createClient<T extends DescService>(
   service: T,
   transport: Transport,
 ) {
-  return makeAnyClient(service, (method) => {
-    switch (method.methodKind) {
-      case "unary":
-        return createUnaryFn(transport, method);
-      case "server_streaming":
-        return createServerStreamingFn(transport, method);
-      case "client_streaming":
-        return createClientStreamingFn(transport, method);
-      case "bidi_streaming":
-        return createBiDiStreamingFn(transport, method);
-      default:
-        return null;
-    }
-  }) as Client<T>;
+  return makeAnyClient(
+    service,
+    (method: DescMethodUnary | DescMethodStreaming) => {
+      switch (method.methodKind) {
+        case "unary":
+          return createUnaryFn(transport, method);
+        case "server_streaming":
+          return createServerStreamingFn(transport, method);
+        case "client_streaming":
+          return createClientStreamingFn(transport, method);
+        case "bidi_streaming":
+          return createBiDiStreamingFn(transport, method);
+        default:
+          return null;
+      }
+    },
+  ) as Client<T>;
 }
 
 /**
@@ -81,7 +85,7 @@ type UnaryFn<I extends DescMessage, O extends DescMessage> = (
 
 export function createUnaryFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
-  method: MethodInfoUnary<I, O>,
+  method: DescMethodUnary<I, O>,
 ): UnaryFn<I, O> {
   return async function (input, options) {
     const response = await transport.unary(
@@ -112,7 +116,7 @@ export function createServerStreamingFn<
   O extends DescMessage,
 >(
   transport: Transport,
-  method: MethodInfoServerStreaming<I, O>,
+  method: DescMethodServerStreaming<I, O>,
 ): ServerStreamingFn<I, O> {
   return function (input, options): AsyncIterable<MessageShape<O>> {
     return handleStreamResponse(
@@ -143,7 +147,7 @@ export function createClientStreamingFn<
   O extends DescMessage,
 >(
   transport: Transport,
-  method: MethodInfoClientStreaming<I, O>,
+  method: DescMethodClientStreaming<I, O>,
 ): ClientStreamingFn<I, O> {
   return async function (
     request: AsyncIterable<MessageInitShape<I>>,
@@ -195,7 +199,7 @@ export function createBiDiStreamingFn<
   O extends DescMessage,
 >(
   transport: Transport,
-  method: MethodInfoBiDiStreaming<I, O>,
+  method: DescMethodBiDiStreaming<I, O>,
 ): BiDiStreamingFn<I, O> {
   return function (
     request: AsyncIterable<MessageInitShape<I>>,

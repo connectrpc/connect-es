@@ -14,12 +14,11 @@
 
 import type {
   DescMessage,
-  DescMethod,
   DescService,
   MessageShape,
 } from "@bufbuild/protobuf";
 import type { ContextValues } from "./context-values.js";
-import type { MethodInfo } from "./types.js";
+import type { DescMethodStreaming, DescMethodUnary } from "./types.js";
 
 /**
  * An interceptor can add logic to clients or servers, similar to the decorators
@@ -67,7 +66,7 @@ type AnyFn = (
 export interface UnaryRequest<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
-> extends RequestCommon<I, O> {
+> extends RequestCommon {
   /**
    * The `stream` property discriminates between UnaryRequest and
    * StreamingRequest.
@@ -78,6 +77,11 @@ export interface UnaryRequest<
    * The input message that will be transmitted.
    */
   readonly message: MessageShape<I>;
+
+  /**
+   * Metadata related to the service method that is being called.
+   */
+  readonly method: DescMethodUnary<I, O>;
 }
 
 /**
@@ -87,7 +91,7 @@ export interface UnaryRequest<
 export interface UnaryResponse<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
-> extends ResponseCommon<I, O> {
+> extends ResponseCommon {
   /**
    * The `stream` property discriminates between UnaryResponse and
    * StreamingConn.
@@ -98,6 +102,11 @@ export interface UnaryResponse<
    * The received output message.
    */
   readonly message: MessageShape<O>;
+
+  /**
+   * Metadata related to the service method that is being called.
+   */
+  readonly method: DescMethodUnary<I, O>;
 }
 
 /**
@@ -107,7 +116,7 @@ export interface UnaryResponse<
 export interface StreamRequest<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
-> extends RequestCommon<I, O> {
+> extends RequestCommon {
   /**
    * The `stream` property discriminates between UnaryRequest and
    * StreamingRequest.
@@ -118,6 +127,11 @@ export interface StreamRequest<
    * The input messages that will be transmitted.
    */
   readonly message: AsyncIterable<MessageShape<I>>;
+
+  /**
+   * Metadata related to the service method that is being called.
+   */
+  readonly method: DescMethodStreaming<I, O>;
 }
 
 /**
@@ -127,7 +141,7 @@ export interface StreamRequest<
 export interface StreamResponse<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
-> extends ResponseCommon<I, O> {
+> extends ResponseCommon {
   /**
    * The `stream` property discriminates between UnaryResponse and
    * StreamingConn.
@@ -138,12 +152,17 @@ export interface StreamResponse<
    * The output messages.
    */
   readonly message: AsyncIterable<MessageShape<O>>;
+
+  /**
+   * Metadata related to the service method that is being called.
+   */
+  readonly method: DescMethodStreaming<I, O>;
 }
 
 /**
  * @private
  */
-export interface RequestCommon<I extends DescMessage, O extends DescMessage> {
+export interface RequestCommon {
   /**
    * Metadata related to the service that is being called.
    */
@@ -154,11 +173,6 @@ export interface RequestCommon<I extends DescMessage, O extends DescMessage> {
    * to identify Connect GET requests.
    */
   readonly requestMethod: string;
-
-  /**
-   * Metadata related to the service method that is being called.
-   */
-  readonly method: MethodInfo<I, O>;
 
   /**
    * The URL the request is going to hit for the clients or the
@@ -185,16 +199,11 @@ export interface RequestCommon<I extends DescMessage, O extends DescMessage> {
 /**
  * @private
  */
-export interface ResponseCommon<I extends DescMessage, O extends DescMessage> {
+export interface ResponseCommon {
   /**
    * Metadata related to the service that is being called.
    */
   readonly service: DescService;
-
-  /**
-   * Metadata related to the service method that is being called.
-   */
-  readonly method: DescMethod & { readonly input: I; readonly output: O };
 
   /**
    * Headers received from the response.

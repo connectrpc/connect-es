@@ -48,7 +48,7 @@ import { createMethodSerializationLookup } from "../protocol/serialization.js";
 import type { Transport } from "../transport.js";
 import type { ContextValues } from "../context-values.js";
 import { createContextValues } from "../context-values.js";
-import type { MethodInfo } from "../types.js";
+import type { DescMethodUnary, DescMethodStreaming } from "../types.js";
 import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
 
 /**
@@ -57,7 +57,7 @@ import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
 export function createTransport(opt: CommonTransportOptions): Transport {
   return {
     async unary<I extends DescMessage, O extends DescMessage>(
-      method: MethodInfo<I, O>,
+      method: DescMethodUnary<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
@@ -177,7 +177,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
     },
 
     async stream<I extends DescMessage, O extends DescMessage>(
-      method: MethodInfo<I, O>,
+      method: DescMethodStreaming<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,

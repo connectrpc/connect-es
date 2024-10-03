@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MethodInfo } from "../types.js";
-import { create, toBinary } from "@bufbuild/protobuf";
+import { create, toBinary, type DescMethod } from "@bufbuild/protobuf";
 import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
 import type { UniversalHandlerOptions } from "../protocol/index.js";
@@ -49,7 +48,7 @@ describe("createHandlerFactory()", function () {
     },
   });
 
-  function setupTestHandler<M extends MethodInfo>(
+  function setupTestHandler<M extends DescMethod>(
     method: M,
     opt: Partial<UniversalHandlerOptions>,
     impl: MethodImpl<M>,

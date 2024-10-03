@@ -29,6 +29,7 @@ import type {
   UnaryResponse,
 } from "../interceptor.js";
 import { applyInterceptors } from "../interceptor.js";
+import type { DescMethodStreaming } from "../types.js";
 
 /**
  * Invoke a user-provided implementation of a unary RPC. Returns a normalized
@@ -54,6 +55,7 @@ export async function invokeUnaryImplementation<
         await spec.impl(req.message, mergeRequest(context, req)),
       ),
       stream: false,
+      method: spec.method,
       ...responseCommon(context, spec),
     };
   };
@@ -61,6 +63,7 @@ export async function invokeUnaryImplementation<
   const { message, header, trailer } = await next({
     stream: false,
     message: input,
+    method: spec.method,
     ...requestCommon(context, spec),
   });
   copyHeaders(header, context.responseHeader);
@@ -111,6 +114,7 @@ export function transformInvokeImplementation<
             return {
               stream: true,
               message: output,
+              method: spec.method as DescMethodStreaming<I, O>,
               ...responseCommon(context, spec),
             };
           },
@@ -133,6 +137,7 @@ export function transformInvokeImplementation<
                 ),
               ]),
               stream: true,
+              method: spec.method as DescMethodStreaming<I, O>,
               ...responseCommon(context, spec),
             };
           },
@@ -153,6 +158,7 @@ export function transformInvokeImplementation<
                 spec.impl(req.message, mergeRequest(context, req)),
               ),
               stream: true,
+              method: spec.method as DescMethodStreaming<I, O>,
               ...responseCommon(context, spec),
             });
           },
@@ -175,6 +181,7 @@ async function* invokeStreamImplementation<
   const { message, header, trailer } = await next({
     stream: true,
     message: input,
+    method: spec.method as DescMethodStreaming<I, O>,
     ...requestCommon(context, spec),
   });
   copyHeaders(header, context.responseHeader);
@@ -204,40 +211,37 @@ async function ensureSingle<T>(
   return first.value;
 }
 
-function requestCommon<I extends DescMessage, O extends DescMessage>(
+function requestCommon(
   context: HandlerContext,
-  spec: MethodImplSpec<I, O>,
-): RequestCommon<I, O> {
+  spec: MethodImplSpec,
+): RequestCommon {
   return {
     requestMethod: context.requestMethod,
     url: context.url,
     signal: context.signal,
     header: context.requestHeader,
-    method: spec.method,
     service: spec.method.parent,
     contextValues: context.values,
   };
 }
 
-function responseCommon<I extends DescMessage, O extends DescMessage>(
+function responseCommon(
   context: HandlerContext,
-  spec: MethodImplSpec<I, O>,
-): ResponseCommon<I, O> {
+  spec: MethodImplSpec,
+): ResponseCommon {
   return {
-    method: spec.method,
     service: spec.method.parent,
     header: context.responseHeader,
     trailer: context.responseTrailer,
   };
 }
 
-function mergeRequest<I extends DescMessage, O extends DescMessage>(
+function mergeRequest(
   context: HandlerContext,
-  req: RequestCommon<I, O>,
+  req: RequestCommon,
 ): HandlerContext {
   return {
     ...context,
-    method: req.method,
     service: req.service,
     requestHeader: req.header,
     signal: req.signal,

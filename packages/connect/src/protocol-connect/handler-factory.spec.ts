@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { create, isMessage, toBinary } from "@bufbuild/protobuf";
+import {
+  create,
+  isMessage,
+  toBinary,
+  type DescMethod,
+} from "@bufbuild/protobuf";
 import { createHandlerFactory } from "./handler-factory.js";
 import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
@@ -44,7 +49,6 @@ import {
   MethodSchema,
   StringValueSchema,
 } from "@bufbuild/protobuf/wkt";
-import type { MethodInfo } from "../types.js";
 
 describe("createHandlerFactory()", function () {
   const testService = createServiceDesc({
@@ -69,7 +73,7 @@ describe("createHandlerFactory()", function () {
     },
   });
 
-  function setupTestHandler<M extends MethodInfo>(
+  function setupTestHandler<M extends DescMethod>(
     method: M,
     opt: Partial<UniversalHandlerOptions>,
     impl: MethodImpl<M>,
