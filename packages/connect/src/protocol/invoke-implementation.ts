@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DescMessage, MessageShape } from "@bufbuild/protobuf";
+import type { DescMessage, DescMethod, MessageShape } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { HandlerContext, MethodImplSpec } from "../implementation.js";
@@ -54,6 +54,7 @@ export async function invokeUnaryImplementation<
         await spec.impl(req.message, mergeRequest(context, req)),
       ),
       stream: false,
+      method: spec.method,
       ...responseCommon(context, spec),
     };
   };
@@ -61,6 +62,7 @@ export async function invokeUnaryImplementation<
   const { message, header, trailer } = await next({
     stream: false,
     message: input,
+    method: spec.method,
     ...requestCommon(context, spec),
   });
   copyHeaders(header, context.responseHeader);
@@ -111,6 +113,7 @@ export function transformInvokeImplementation<
             return {
               stream: true,
               message: output,
+              method: spec.method,
               ...responseCommon(context, spec),
             };
           },
@@ -133,6 +136,7 @@ export function transformInvokeImplementation<
                 ),
               ]),
               stream: true,
+              method: spec.method,
               ...responseCommon(context, spec),
             };
           },
@@ -153,6 +157,7 @@ export function transformInvokeImplementation<
                 spec.impl(req.message, mergeRequest(context, req)),
               ),
               stream: true,
+              method: spec.method,
               ...responseCommon(context, spec),
             });
           },
@@ -165,7 +170,9 @@ async function* invokeStreamImplementation<
   I extends DescMessage,
   O extends DescMessage,
 >(
-  spec: MethodImplSpec<I, O>,
+  spec: MethodImplSpec<I, O> & {
+    kind: Exclude<DescMethod["methodKind"], "unary">;
+  },
   context: HandlerContext,
   input: AsyncIterable<MessageShape<I>>,
   interceptors: Interceptor[],
@@ -175,6 +182,7 @@ async function* invokeStreamImplementation<
   const { message, header, trailer } = await next({
     stream: true,
     message: input,
+    method: spec.method,
     ...requestCommon(context, spec),
   });
   copyHeaders(header, context.responseHeader);
@@ -204,40 +212,37 @@ async function ensureSingle<T>(
   return first.value;
 }
 
-function requestCommon<I extends DescMessage, O extends DescMessage>(
+function requestCommon(
   context: HandlerContext,
-  spec: MethodImplSpec<I, O>,
-): RequestCommon<I, O> {
+  spec: MethodImplSpec,
+): RequestCommon {
   return {
     requestMethod: context.requestMethod,
     url: context.url,
     signal: context.signal,
     header: context.requestHeader,
-    method: spec.method,
     service: spec.method.parent,
     contextValues: context.values,
   };
 }
 
-function responseCommon<I extends DescMessage, O extends DescMessage>(
+function responseCommon(
   context: HandlerContext,
-  spec: MethodImplSpec<I, O>,
-): ResponseCommon<I, O> {
+  spec: MethodImplSpec,
+): ResponseCommon {
   return {
-    method: spec.method,
     service: spec.method.parent,
     header: context.responseHeader,
     trailer: context.responseTrailer,
   };
 }
 
-function mergeRequest<I extends DescMessage, O extends DescMessage>(
+function mergeRequest(
   context: HandlerContext,
-  req: RequestCommon<I, O>,
+  req: RequestCommon,
 ): HandlerContext {
   return {
     ...context,
-    method: req.method,
     service: req.service,
     requestHeader: req.header,
     signal: req.signal,

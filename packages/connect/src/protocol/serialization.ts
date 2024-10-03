@@ -29,7 +29,7 @@ import type {
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { assertReadMaxBytes, assertWriteMaxBytes } from "./limit-io.js";
-import type { MethodInfo } from "../types.js";
+import type { DescMethodStreaming, DescMethodUnary } from "../types.js";
 
 /**
  * Serialization provides methods to serialize or parse data with a certain
@@ -74,7 +74,7 @@ export function createMethodSerializationLookup<
   I extends DescMessage,
   O extends DescMessage,
 >(
-  method: MethodInfo<I, O>,
+  method: DescMethodUnary<I, O> | DescMethodStreaming<I, O>,
   binaryOptions: Partial<BinaryReadOptions & BinaryWriteOptions> | undefined,
   jsonOptions: Partial<JsonReadOptions & JsonWriteOptions> | undefined,
   limitOptions: {
@@ -138,7 +138,7 @@ export function createClientMethodSerializers<
   I extends DescMessage,
   O extends DescMessage,
 >(
-  method: MethodInfo<I, O>,
+  method: DescMethodUnary<I, O> | DescMethodStreaming<I, O>,
   useBinaryFormat: boolean,
   jsonOptions?: JsonSerializationOptions,
   binaryOptions?: BinarySerializationOptions,

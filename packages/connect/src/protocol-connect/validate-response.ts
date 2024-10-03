@@ -22,7 +22,7 @@ import {
   headerUnaryEncoding,
 } from "./headers.js";
 import type { Compression } from "../protocol/compression.js";
-import type { MethodKind } from "../types.js";
+import type { DescMethod } from "@bufbuild/protobuf";
 
 /**
  * Validates response status and header for the Connect protocol.
@@ -35,7 +35,7 @@ import type { MethodKind } from "../types.js";
  * @private Internal code, does not follow semantic versioning.
  */
 export function validateResponse(
-  methodKind: MethodKind,
+  methodKind: DescMethod["methodKind"],
   useBinaryFormat: boolean,
   status: number,
   headers: Headers,
@@ -81,7 +81,7 @@ export function validateResponse(
  * @private
  */
 export function validateResponseWithCompression(
-  methodKind: MethodKind,
+  methodKind: DescMethod["methodKind"],
   acceptCompression: Compression[],
   useBinaryFormat: boolean,
   status: number,

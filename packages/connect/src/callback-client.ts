@@ -25,7 +25,11 @@ import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
 import type { CallOptions } from "./call-options.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
-import type { MethodInfoServerStreaming, MethodInfoUnary } from "./types.js";
+import type {
+  DescMethodServerStreaming,
+  DescMethodStreaming,
+  DescMethodUnary,
+} from "./types.js";
 
 // prettier-ignore
 /**
@@ -48,8 +52,8 @@ import type { MethodInfoServerStreaming, MethodInfoUnary } from "./types.js";
 export type CallbackClient<Desc extends DescService> =
   {
     [P in keyof Desc["method"]]:
-      Desc["method"][P] extends MethodInfoUnary<infer I, infer O> ? (request: MessageInitShape<I>, callback: (error: ConnectError | undefined, response: MessageShape<O>) => void, options?: CallOptions) => CancelFn
-    : Desc["method"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: MessageInitShape<I>, messageCallback: (response: MessageShape<O>) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
+    Desc["method"][P] extends DescMethodUnary<infer I, infer O> ? (request: MessageInitShape<I>, callback: (error: ConnectError | undefined, response: MessageShape<O>) => void, options?: CallOptions) => CancelFn
+    : Desc["method"][P] extends DescMethodServerStreaming<infer I, infer O> ? (request: MessageInitShape<I>, messageCallback: (response: MessageShape<O>) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
     : never;
   }
 
@@ -63,16 +67,19 @@ export function createCallbackClient<T extends DescService>(
   service: T,
   transport: Transport,
 ) {
-  return makeAnyClient(service, (method) => {
-    switch (method.methodKind) {
-      case "unary":
-        return createUnaryFn(transport, method);
-      case "server_streaming":
-        return createServerStreamingFn(transport, method);
-      default:
-        return null;
-    }
-  }) as CallbackClient<T>;
+  return makeAnyClient(
+    service,
+    (method: DescMethodUnary | DescMethodStreaming) => {
+      switch (method.methodKind) {
+        case "unary":
+          return createUnaryFn(transport, method);
+        case "server_streaming":
+          return createServerStreamingFn(transport, method);
+        default:
+          return null;
+      }
+    },
+  ) as CallbackClient<T>;
 }
 
 /**
@@ -89,7 +96,7 @@ type UnaryFn<I extends DescMessage, O extends DescMessage> = (
 
 function createUnaryFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
-  method: MethodInfoUnary<I, O>,
+  method: DescMethodUnary<I, O>,
 ): UnaryFn<I, O> {
   return function (requestMessage, callback, options) {
     const abort = new AbortController();
@@ -135,7 +142,7 @@ type ServerStreamingFn<I extends DescMessage, O extends DescMessage> = (
 
 function createServerStreamingFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
-  method: MethodInfoServerStreaming<I, O>,
+  method: DescMethodServerStreaming<I, O>,
 ): ServerStreamingFn<I, O> {
   return function (input, onResponse, onClose, options) {
     const abort = new AbortController();

@@ -30,7 +30,8 @@ import type {
   UnaryRequest,
   UnaryResponse,
   ContextValues,
-  MethodInfo,
+  DescMethodUnary,
+  DescMethodStreaming,
 } from "@connectrpc/connect";
 import {
   Code,
@@ -140,7 +141,7 @@ export function createConnectTransport(
   const useBinaryFormat = options.useBinaryFormat ?? false;
   return {
     async unary<I extends DescMessage, O extends DescMessage>(
-      method: MethodInfo<I, O>,
+      method: DescMethodUnary<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
@@ -238,7 +239,7 @@ export function createConnectTransport(
     },
 
     async stream<I extends DescMessage, O extends DescMessage>(
-      method: MethodInfo<I, O>,
+      method: DescMethodStreaming<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,

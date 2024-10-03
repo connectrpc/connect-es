@@ -30,7 +30,7 @@ import {
   contentTypeUnaryProto,
 } from "./content-type.js";
 import type { Compression } from "../protocol/compression.js";
-import type { MethodKind } from "../types.js";
+import type { DescMethod } from "@bufbuild/protobuf";
 
 /**
  * Creates headers for a Connect request.
@@ -38,7 +38,7 @@ import type { MethodKind } from "../types.js";
  * @private Internal code, does not follow semantic versioning.
  */
 export function requestHeader(
-  methodKind: MethodKind,
+  methodKind: DescMethod["methodKind"],
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
@@ -76,7 +76,7 @@ export function requestHeader(
  * @private Internal code, does not follow semantic versioning.
  */
 export function requestHeaderWithCompression(
-  methodKind: MethodKind,
+  methodKind: DescMethod["methodKind"],
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,

@@ -28,11 +28,11 @@ import {
 import { createContextValues } from "./context-values.js";
 import type { ContextValues } from "./context-values.js";
 import type {
-  MethodInfoBiDiStreaming,
-  MethodInfoClientStreaming,
-  MethodInfo,
-  MethodInfoServerStreaming,
-  MethodInfoUnary,
+  DescMethodBiDiStreaming,
+  DescMethodClientStreaming,
+  DescMethodServerStreaming,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "./types.js";
 
 // prettier-ignore
@@ -47,11 +47,11 @@ export type ServiceImpl<Desc extends DescService> = {
 /**
  * MethodImpl is the signature of the implementation of an RPC.
  */
-export type MethodImpl<M extends MethodInfo> =
-  M extends MethodInfoUnary<infer I, infer O> ? UnaryImpl<I, O>
-  : M extends MethodInfoServerStreaming<infer I, infer O> ? ServerStreamingImpl<I, O>
-  : M extends MethodInfoClientStreaming<infer I, infer O> ? ClientStreamingImpl<I, O>
-  : M extends MethodInfoBiDiStreaming<infer I, infer O> ? BiDiStreamingImpl<I, O>
+export type MethodImpl<M extends DescMethod> =
+  M extends DescMethodUnary<infer I, infer O> ? UnaryImpl<I, O>
+  : M extends DescMethodServerStreaming<infer I, infer O> ? ServerStreamingImpl<I, O>
+  : M extends DescMethodClientStreaming<infer I, infer O> ? ClientStreamingImpl<I, O>
+  : M extends DescMethodBiDiStreaming<infer I, infer O> ? BiDiStreamingImpl<I, O>
   : never;
 
 /**
@@ -232,15 +232,11 @@ export type BiDiStreamingImpl<I extends DescMessage, O extends DescMessage> = (
  * metadata in a discriminated union type.
  */
 export type MethodImplSpec<I extends DescMessage = DescMessage, O extends DescMessage = DescMessage> =
-  {
-    method: MethodInfo<I, O>;
-  }
-  & (
-    | { kind: "unary"; impl: UnaryImpl<I, O> }
-    | { kind: "server_streaming"; impl: ServerStreamingImpl<I, O> }
-    | { kind: "client_streaming"; impl: ClientStreamingImpl<I, O> }
-    | { kind: "bidi_streaming"; impl: BiDiStreamingImpl<I, O> }
-  );
+  | { kind: "unary";            impl: UnaryImpl<I, O>;            method: DescMethodUnary<I, O> }
+  | { kind: "server_streaming"; impl: ServerStreamingImpl<I, O>;  method: DescMethodServerStreaming<I, O> }
+  | { kind: "client_streaming"; impl: ClientStreamingImpl<I, O>;  method: DescMethodClientStreaming<I, O> }
+  | { kind: "bidi_streaming";   impl: BiDiStreamingImpl<I, O>;    method: DescMethodBiDiStreaming<I, O> }
+;
 
 /**
  * Wraps a user-provided service implementation and provides metadata.
@@ -256,7 +252,7 @@ export type ServiceImplSpec = {
  * Create an MethodImplSpec - a user-provided implementation for a method,
  * wrapped in a discriminated union type along with service and method metadata.
  */
-export function createMethodImplSpec<M extends MethodInfo>(
+export function createMethodImplSpec<M extends DescMethod>(
   method: M,
   impl: MethodImpl<M>,
 ): MethodImplSpec {
@@ -277,7 +273,8 @@ export function createServiceImplSpec<Desc extends DescService>(
 ): ServiceImplSpec {
   const s: ServiceImplSpec = { service, methods: {} };
   for (const method of service.methods) {
-    let fn: MethodImpl<MethodInfo> | undefined = impl[method.localName];
+    let fn: MethodImpl<DescMethodUnary | DescMethodStreaming> | undefined =
+      impl[method.localName];
     if (typeof fn == "function") {
       fn = fn.bind(impl);
     } else {
@@ -287,7 +284,7 @@ export function createServiceImplSpec<Desc extends DescService>(
       };
     }
     s.methods[method.localName] = createMethodImplSpec(
-      method as MethodInfo,
+      method as DescMethodUnary | DescMethodStreaming,
       fn,
     );
   }

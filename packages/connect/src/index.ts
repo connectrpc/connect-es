@@ -56,5 +56,4 @@ export {
 } from "./implementation.js";
 export type { ServiceImplSpec, MethodImplSpec } from "./implementation.js";
 export { createRouterTransport } from "./router-transport.js";
-
-export type { MethodInfo } from "./types.js";
+export type { DescMethodUnary, DescMethodStreaming } from "./types.js"; // TODO: Remove once exported from @bufbuild/protobuf
