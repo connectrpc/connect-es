@@ -26,7 +26,7 @@ export type DescMethodStreaming<
 export type DescMethodUnary<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
-> = DescMethod & {
+> = Omit<DescMethod, "methodKind" | "input" | "output"> & {
   methodKind: "unary";
   input: I;
   output: O;
@@ -35,7 +35,7 @@ export type DescMethodUnary<
 export type DescMethodServerStreaming<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
-> = DescMethod & {
+> = Omit<DescMethod, "methodKind" | "input" | "output"> & {
   methodKind: "server_streaming";
   input: I;
   output: O;
@@ -44,7 +44,7 @@ export type DescMethodServerStreaming<
 export type DescMethodClientStreaming<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
-> = DescMethod & {
+> = Omit<DescMethod, "methodKind" | "input" | "output"> & {
   methodKind: "client_streaming";
   input: I;
   output: O;
@@ -53,7 +53,7 @@ export type DescMethodClientStreaming<
 export type DescMethodBiDiStreaming<
   I extends DescMessage = DescMessage,
   O extends DescMessage = DescMessage,
-> = DescMethod & {
+> = Omit<DescMethod, "methodKind" | "input" | "output"> & {
   methodKind: "bidi_streaming";
   input: I;
   output: O;

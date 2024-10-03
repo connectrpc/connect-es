@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DescMessage, MessageShape } from "@bufbuild/protobuf";
+import type { DescMessage, DescMethod, MessageShape } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { HandlerContext, MethodImplSpec } from "../implementation.js";
@@ -29,7 +29,6 @@ import type {
   UnaryResponse,
 } from "../interceptor.js";
 import { applyInterceptors } from "../interceptor.js";
-import type { DescMethodStreaming } from "../types.js";
 
 /**
  * Invoke a user-provided implementation of a unary RPC. Returns a normalized
@@ -114,7 +113,7 @@ export function transformInvokeImplementation<
             return {
               stream: true,
               message: output,
-              method: spec.method as DescMethodStreaming<I, O>,
+              method: spec.method,
               ...responseCommon(context, spec),
             };
           },
@@ -137,7 +136,7 @@ export function transformInvokeImplementation<
                 ),
               ]),
               stream: true,
-              method: spec.method as DescMethodStreaming<I, O>,
+              method: spec.method,
               ...responseCommon(context, spec),
             };
           },
@@ -158,7 +157,7 @@ export function transformInvokeImplementation<
                 spec.impl(req.message, mergeRequest(context, req)),
               ),
               stream: true,
-              method: spec.method as DescMethodStreaming<I, O>,
+              method: spec.method,
               ...responseCommon(context, spec),
             });
           },
@@ -171,7 +170,9 @@ async function* invokeStreamImplementation<
   I extends DescMessage,
   O extends DescMessage,
 >(
-  spec: MethodImplSpec<I, O>,
+  spec: MethodImplSpec<I, O> & {
+    kind: Exclude<DescMethod["methodKind"], "unary">;
+  },
   context: HandlerContext,
   input: AsyncIterable<MessageShape<I>>,
   interceptors: Interceptor[],
@@ -181,7 +182,7 @@ async function* invokeStreamImplementation<
   const { message, header, trailer } = await next({
     stream: true,
     message: input,
-    method: spec.method as DescMethodStreaming<I, O>,
+    method: spec.method,
     ...requestCommon(context, spec),
   });
   copyHeaders(header, context.responseHeader);
