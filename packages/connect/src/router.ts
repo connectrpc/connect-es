@@ -72,7 +72,6 @@ export interface ConnectRouter {
     impl: MethodImpl<M>,
     options?: Partial<UniversalHandlerOptions>,
   ): this;
-  // TODO: Re-add the method type API.
 }
 
 /**
