@@ -72,7 +72,6 @@ export interface ConnectRouter {
     impl: MethodImpl<M>,
     options?: Partial<UniversalHandlerOptions>,
   ): this;
-  // TODO: Re-add the method type API.
 }
 
 /**
@@ -165,13 +164,13 @@ function whichProtocols(
   }
   const opt: ConnectRouterOptions = base
     ? {
-        ...validateUniversalHandlerOptions(base.options),
-        ...options,
-      }
+      ...validateUniversalHandlerOptions(base.options),
+      ...options,
+    }
     : {
-        ...options,
-        ...validateUniversalHandlerOptions(options ?? {}),
-      };
+      ...options,
+      ...validateUniversalHandlerOptions(options ?? {}),
+    };
 
   const protocols: ProtocolHandlerFactory[] = [];
   if (options?.grpc !== false) {
