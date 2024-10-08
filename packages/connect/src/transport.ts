@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DescMessage, MessageInitShape } from "@bufbuild/protobuf";
+import type {
+  DescMessage,
+  MessageInitShape,
+  DescMethodStreaming,
+  DescMethodUnary,
+} from "@bufbuild/protobuf";
 import type { StreamResponse, UnaryResponse } from "./interceptor.js";
 import type { ContextValues } from "./context-values.js";
-import type { DescMethodStreaming, DescMethodUnary } from "./types.js";
 
 /**
  * Transport represents the underlying transport for a client.

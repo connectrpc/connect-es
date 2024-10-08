@@ -16,9 +16,10 @@ import type {
   DescMessage,
   DescService,
   MessageShape,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import type { ContextValues } from "./context-values.js";
-import type { DescMethodStreaming, DescMethodUnary } from "./types.js";
 
 /**
  * An interceptor can add logic to clients or servers, similar to the decorators

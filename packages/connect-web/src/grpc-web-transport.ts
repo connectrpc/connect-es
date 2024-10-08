@@ -20,6 +20,8 @@ import type {
   JsonWriteOptions,
   MessageInitShape,
   MessageShape,
+  DescMethodUnary,
+  DescMethodStreaming,
 } from "@bufbuild/protobuf";
 import type {
   Interceptor,
@@ -28,8 +30,6 @@ import type {
   UnaryRequest,
   UnaryResponse,
   ContextValues,
-  DescMethodUnary,
-  DescMethodStreaming,
 } from "@connectrpc/connect";
 import { createContextValues, ConnectError, Code } from "@connectrpc/connect";
 import {

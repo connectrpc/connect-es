@@ -21,6 +21,8 @@ import type {
   JsonWriteOptions,
   MessageInitShape,
   MessageShape,
+  DescMethodUnary,
+  DescMethodStreaming,
 } from "@bufbuild/protobuf";
 import { fromJson } from "@bufbuild/protobuf";
 import type {
@@ -30,8 +32,6 @@ import type {
   UnaryRequest,
   UnaryResponse,
   ContextValues,
-  DescMethodUnary,
-  DescMethodStreaming,
 } from "@connectrpc/connect";
 import {
   Code,
