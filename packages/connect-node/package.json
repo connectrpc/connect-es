@@ -33,7 +33,7 @@
     "node": ">=18.14.1"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "file:../../bufbuild-protobuf-2.1.0.tgz",
+    "@bufbuild/protobuf": "^2.2.0",
     "@connectrpc/connect": "2.0.0-beta.1"
   },
   "devDependencies": {

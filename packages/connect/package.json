@@ -64,7 +64,7 @@
     }
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "file:../../bufbuild-protobuf-2.1.0.tgz"
+    "@bufbuild/protobuf": "^2.2.0"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.39.0",
