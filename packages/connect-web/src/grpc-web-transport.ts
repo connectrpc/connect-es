@@ -382,10 +382,10 @@ export function createGrpcWebTransport(
             fRes.status,
             fRes.headers,
           );
+          if (headerError != undefined) {
+            throw headerError;
+          }
           if (!fRes.body) {
-            if (headerError != undefined) {
-              throw headerError;
-            }
             throw "missing response body";
           }
           const trailer = new Headers();
