@@ -274,7 +274,6 @@ export function createGrpcWebTransport(
         foundStatus: boolean,
         trailerTarget: Headers,
         header: Headers,
-        headerError: ConnectError | undefined,
         signal: AbortSignal,
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
@@ -313,7 +312,6 @@ export function createGrpcWebTransport(
             throw "extra message";
           }
           yield parse(data);
-          continue;
         }
         // Node wil not throw an AbortError on `read` if the
         // signal is aborted before `getReader` is called.
@@ -326,9 +324,6 @@ export function createGrpcWebTransport(
           signal.throwIfAborted();
         }
         if (!trailerReceived) {
-          if (headerError) {
-            throw headerError;
-          }
           throw "missing trailer";
         }
       }
@@ -398,7 +393,6 @@ export function createGrpcWebTransport(
               foundStatus,
               trailer,
               fRes.headers,
-              headerError,
               req.signal,
             ),
           };
