@@ -25,11 +25,12 @@ import type {
   DescMessage,
   JsonReadOptions,
   JsonWriteOptions,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { assertReadMaxBytes, assertWriteMaxBytes } from "./limit-io.js";
-import type { DescMethodStreaming, DescMethodUnary } from "../types.js";
 
 /**
  * Serialization provides methods to serialize or parse data with a certain

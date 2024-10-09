@@ -17,6 +17,11 @@ import type {
   DescService,
   MessageInitShape,
   MessageShape,
+  DescMethodBiDiStreaming,
+  DescMethodClientStreaming,
+  DescMethodServerStreaming,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import type { Transport } from "./transport.js";
 import { makeAnyClient } from "./any-client.js";
@@ -25,13 +30,6 @@ import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import type { StreamResponse } from "./interceptor.js";
-import type {
-  DescMethodBiDiStreaming,
-  DescMethodClientStreaming,
-  DescMethodServerStreaming,
-  DescMethodStreaming,
-  DescMethodUnary,
-} from "./types.js";
 
 // prettier-ignore
 /**

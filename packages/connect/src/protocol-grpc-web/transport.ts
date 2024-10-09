@@ -16,6 +16,8 @@ import type {
   DescMessage,
   MessageInitShape,
   MessageShape,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import { validateTrailer } from "../protocol-grpc/validate-trailer.js";
 import { requestHeaderWithCompression } from "./request-header.js";
@@ -48,7 +50,6 @@ import type { Transport } from "../transport.js";
 import { createContextValues } from "../context-values.js";
 import type { ContextValues } from "../context-values.js";
 import { headerGrpcStatus } from "./headers.js";
-import type { DescMethodStreaming, DescMethodUnary } from "../types.js";
 
 /**
  * Create a Transport for the gRPC-web protocol.

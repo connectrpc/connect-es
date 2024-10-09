@@ -18,6 +18,11 @@ import type {
   DescService,
   DescMethod,
   MessageShape,
+  DescMethodBiDiStreaming,
+  DescMethodClientStreaming,
+  DescMethodServerStreaming,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
@@ -27,13 +32,6 @@ import {
 } from "./protocol/signals.js";
 import { createContextValues } from "./context-values.js";
 import type { ContextValues } from "./context-values.js";
-import type {
-  DescMethodBiDiStreaming,
-  DescMethodClientStreaming,
-  DescMethodServerStreaming,
-  DescMethodStreaming,
-  DescMethodUnary,
-} from "./types.js";
 
 // prettier-ignore
 /**

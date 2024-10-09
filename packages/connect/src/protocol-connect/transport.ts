@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DescMessage, MessageInitShape } from "@bufbuild/protobuf";
+import type {
+  DescMessage,
+  MessageInitShape,
+  DescMethodUnary,
+  DescMethodStreaming,
+} from "@bufbuild/protobuf";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { headerUnaryContentLength, headerUnaryEncoding } from "./headers.js";
 import { validateResponseWithCompression } from "./validate-response.js";
@@ -48,7 +53,6 @@ import { createMethodSerializationLookup } from "../protocol/serialization.js";
 import type { Transport } from "../transport.js";
 import type { ContextValues } from "../context-values.js";
 import { createContextValues } from "../context-values.js";
-import type { DescMethodUnary, DescMethodStreaming } from "../types.js";
 import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
 
 /**

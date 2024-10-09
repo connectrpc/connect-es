@@ -18,6 +18,9 @@ import type {
   DescMessage,
   MessageInitShape,
   MessageShape,
+  DescMethodServerStreaming,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import type { Transport } from "./transport.js";
@@ -25,11 +28,6 @@ import { Code } from "./code.js";
 import { makeAnyClient } from "./any-client.js";
 import type { CallOptions } from "./call-options.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
-import type {
-  DescMethodServerStreaming,
-  DescMethodStreaming,
-  DescMethodUnary,
-} from "./types.js";
 
 // prettier-ignore
 /**
