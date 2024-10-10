@@ -83,16 +83,15 @@ const dependencyMigrations: DependencyMigration[] = [
     remove: { name: "@connectrpc/protoc-gen-connect-es", range: "^1.0.0" },
   },
 
-  // TODO
-  // // https://github.com/connectrpc/connect-query-es
-  // {
-  //   from: { name: "@connectrpc/connect-query", range: "^1.0.0" },
-  //   to: { version: targetVersionConnectQuery },
-  // },
-  // {
-  //   from: { name: "@connectrpc/protoc-gen-connect-query", range: "^1.0.0" },
-  //   to: { version: targetVersionConnectQuery },
-  // },
+  // https://github.com/connectrpc/connect-query-es
+  {
+    from: { name: "@connectrpc/connect-query", range: "^1.0.0" },
+    to: { version: targetVersionConnectQuery },
+  },
+  {
+    from: { name: "@connectrpc/protoc-gen-connect-query", range: "^1.0.0" },
+    to: { version: targetVersionConnectQuery },
+  },
 
   // https://github.com/connectrpc/connect-playwright-es
   {
@@ -119,7 +118,7 @@ const bufGenYamlMigrations: BufGenYamlMigration[] = [
     updatePlugin: {
       remote: "buf.build/connectrpc/query-es",
       from: "^1.0.0",
-      to: "1.4.2", // TODO
+      to: targetVersionConnectQuery,
     },
   },
 ];
