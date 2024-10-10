@@ -118,7 +118,7 @@ plugins:
       expect(bufGenYamlWritten.length).toBe(1);
       expect(bufGenYamlWritten[0]?.yaml).toEqual(`version: v2
 plugins:
-  - remote: buf.build/bufbuild/es:v2.1.0
+  - remote: buf.build/bufbuild/es:v2.2.0
     out: src/gen
 `);
     });
