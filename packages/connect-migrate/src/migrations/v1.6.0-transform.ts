@@ -32,13 +32,15 @@ const transform: j.Transform = (file, { j }, options) => {
       specifiers: [
         {
           type: "ImportSpecifier",
-          imported: { name: (name) => [fromFunction, fromType].includes(name) },
         },
       ],
     })
     .forEach((path) => {
       path.value.specifiers?.forEach((s) => {
         s = s as j.ImportSpecifier;
+        if (![fromFunction, fromType].includes(s.imported.name)) {
+          return;
+        }
         // import { createPromiseClient as <local> } from "@connectrpc/connect";
         //
         // We should just rename createPromiseClient here and user code will continue to use local.

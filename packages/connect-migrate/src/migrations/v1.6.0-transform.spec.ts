@@ -148,6 +148,19 @@ describe("rename symbols using", () => {
         `;
       expect(t(got)?.trim()).toBe(want.trim());
     });
+
+    it("handles other imports", () => {
+      const input = `
+        import { Code, ConnectError, createPromiseClient } from "@connectrpc/connect";
+        const promiseClient = createPromiseClient(ResourceService, transport);
+      `;
+      const want = `
+        import { Code, ConnectError, createClient } from "@connectrpc/connect";
+        const promiseClient = createClient(ResourceService, transport);
+      `;
+
+      expect(t(input)?.trim()).toBe(want.trim());
+    });
   });
   describe("'require' with", () => {
     it("const", () => {
@@ -184,6 +197,17 @@ describe("rename symbols using", () => {
     `;
       expect(t(got)?.trim()).toBe(want.trim());
     });
+
+    it("handles other imports", () => {
+      const got = `
+    const { Code, createPromiseClient } = require("@connectrpc/connect");
+    `;
+      const want = `
+    const { Code, createClient } = require("@connectrpc/connect");
+    `;
+      expect(t(got)?.trim()).toBe(want.trim());
+    });
+
     it("let", () => {
       const got = `
       let connect;
