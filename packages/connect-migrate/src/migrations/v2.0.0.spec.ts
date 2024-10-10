@@ -193,63 +193,62 @@ plugins:
 `);
     });
   });
-  // TODO
-  //   describe("for connect-query-es v1", () => {
-  //     beforeEach(function () {
-  //       opt.scanned.packageFiles = [
-  //         {
-  //           path: "package.json",
-  //           pkg: {
-  //             dependencies: {
-  //               "@connectrpc/connect-query": "^1.4.2",
-  //               "@connectrpc/protoc-gen-connect-query": "^1.4.2",
-  //             },
-  //           },
-  //         },
-  //       ];
-  //       opt.scanned.bufGenYamlFiles = [
-  //         {
-  //           path: "buf.gen.yaml",
-  //           yaml: parseBufGenYaml(
-  //             `version: v2
-  // plugins:
-  //   - remote: buf.build/connectrpc/query-es:v1.4.1
-  //     out: src/gen
-  // `,
-  //           ),
-  //         },
-  //       ];
-  //     });
-  //     it("should be applicable", () => {
-  //       expect(v2_0_0.applicable(opt.scanned)).toBeTrue();
-  //     });
-  //     it("should migrate packages", () => {
-  //       const result = v2_0_0.migrate(opt);
-  //       expect(result).toEqual({
-  //         ok: true,
-  //       });
-  //       expect(packageJsonWritten.length).toBe(1);
-  //       expect(packageJsonWritten[0].pkg).toEqual({
-  //         dependencies: {
-  //           "@connectrpc/connect-query": `^${targetVersionConnectQuery}`,
-  //           "@connectrpc/protoc-gen-connect-query": `^${targetVersionConnectQuery}`,
-  //         },
-  //       });
-  //       expect(lockFilesUpdated.length).toBe(1);
-  //     });
-  //     it("should migrate buf.gen.yaml", () => {
-  //       const result = v2_0_0.migrate(opt);
-  //       expect(result).toEqual({
-  //         ok: true,
-  //       });
-  //       expect(bufGenYamlWritten.length).toBe(1);
-  //       expect(bufGenYamlWritten[0]?.yaml).toEqual(`version: v2
-  // plugins:
-  //   - remote: buf.build/connectrpc/query-es:v1.4.2
-  //     out: src/gen
-  // `);
-  //     });
-  //   });
+  describe("for connect-query-es v1", () => {
+    beforeEach(function () {
+      opt.scanned.packageFiles = [
+        {
+          path: "package.json",
+          pkg: {
+            dependencies: {
+              "@connectrpc/connect-query": "^1.4.2",
+              "@connectrpc/protoc-gen-connect-query": "^1.4.2",
+            },
+          },
+        },
+      ];
+      opt.scanned.bufGenYamlFiles = [
+        {
+          path: "buf.gen.yaml",
+          yaml: parseBufGenYaml(
+            `version: v2
+plugins:
+  - remote: buf.build/connectrpc/query-es:v1.4.1
+    out: src/gen
+`,
+          ),
+        },
+      ];
+    });
+    it("should be applicable", () => {
+      expect(v2_0_0.applicable(opt.scanned)).toBeTrue();
+    });
+    it("should migrate packages", () => {
+      const result = v2_0_0.migrate(opt);
+      expect(result).toEqual({
+        ok: true,
+      });
+      expect(packageJsonWritten.length).toBe(1);
+      expect(packageJsonWritten[0].pkg).toEqual({
+        dependencies: {
+          "@connectrpc/connect-query": `^${targetVersionConnectQuery}`,
+          "@connectrpc/protoc-gen-connect-query": `^${targetVersionConnectQuery}`,
+        },
+      });
+      expect(lockFilesUpdated.length).toBe(1);
+    });
+    it("should migrate buf.gen.yaml", () => {
+      const result = v2_0_0.migrate(opt);
+      expect(result).toEqual({
+        ok: true,
+      });
+      expect(bufGenYamlWritten.length).toBe(1);
+      expect(bufGenYamlWritten[0]?.yaml).toEqual(`version: v2
+plugins:
+  - remote: buf.build/connectrpc/query-es:v2.0.0-beta.1
+    out: src/gen
+`);
+    });
+  });
   describe("for connect-playwright-es v1", () => {
     beforeEach(function () {
       opt.scanned.packageFiles = [
@@ -322,7 +321,7 @@ plugins:
     out: src/gen
   - remote: buf.build/bufbuild/es:v2.0.0
     out: src/gen
-  - remote: buf.build/connectrpc/query-es:v1.4.2
+  - remote: buf.build/connectrpc/query-es:v${targetVersionConnectQuery}
     out: src/gen
 `,
             "buf.gen.yaml",
@@ -342,7 +341,7 @@ plugins:
     out: src/gen
   - plugin: buf.build/bufbuild/es:v2.0.0
     out: src/gen
-  - plugin: buf.build/connectrpc/query-es:v1.4.2
+  - plugin: buf.build/connectrpc/query-es:v${targetVersionConnectQuery}
     out: src/gen
 `,
           ),
