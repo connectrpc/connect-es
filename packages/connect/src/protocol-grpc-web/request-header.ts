@@ -46,9 +46,16 @@ export function requestHeader(
   // Note that we do not strictly comply with gRPC user agents.
   // We use "connect-es/1.2.3" where gRPC would use "grpc-es/1.2.3".
   // See https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
-  result.set(headerXUserAgent, "CONNECT_ES_USER_AGENT");
+  let userAgent = "CONNECT_ES_USER_AGENT";
+  userAgent = result.has(headerUserAgent)
+    ? result.get(headerUserAgent)!
+    : result.has(headerXUserAgent)
+      ? result.get(headerXUserAgent)!
+      : userAgent;
+
+  result.set(headerXUserAgent, userAgent);
   if (setUserAgent) {
-    result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
+    result.set(headerUserAgent, userAgent);
   }
   if (timeoutMs !== undefined) {
     result.set(headerTimeout, `${timeoutMs}m`);
