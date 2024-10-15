@@ -13,6 +13,7 @@
 // limitations under the License.
 
 /* eslint-disable @typescript-eslint/no-invalid-void-type */
+/* eslint-disable @typescript-eslint/unbound-method */
 import { create } from "@bufbuild/protobuf";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";

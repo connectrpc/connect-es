@@ -396,7 +396,7 @@ plugins:
             `
 version: v2
 plugins:
-  - remote: remote: buf.build/bufbuild/connect-es:v0.13.0
+  - remote: buf.build/bufbuild/connect-es:v0.13.0
     out: src/gen
 `,
             "buf.gen.yaml",
