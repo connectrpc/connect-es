@@ -37,7 +37,7 @@ export function validateTrailer(trailer: Headers, header: Headers): void {
     });
     throw err;
   }
-  if (!header.has(headerGrpcStatus) && !trailer.has(headerGrpcStatus)) {
+  if (trailer !== undefined && !header.has(headerGrpcStatus) && !trailer.has(headerGrpcStatus)) {
     throw new ConnectError("protocol error: missing status", Code.Internal);
   }
 }
