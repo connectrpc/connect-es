@@ -21,8 +21,10 @@ import type {
   JsonReadOptions,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import type { NodeTransportOptions } from "./node-transport-options.js";
-import { validateNodeTransportOptions } from "./node-transport-options.js";
+import {
+  type NodeTransportOptions,
+  validateNodeTransportOptions,
+} from "./node-transport-options.js";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -124,7 +126,7 @@ export type GrpcWebTransportOptions = NodeTransportOptions & {
 
 /**
  * Create a Transport for the gRPC-web protocol using the Node.js `http`,
- * `http2`, or `http2` module.
+ * `https`, or `http2` module.
  */
 export function createGrpcWebTransport(
   options: GrpcWebTransportOptions,

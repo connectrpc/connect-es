@@ -38,7 +38,6 @@ import { ElizaService } from "./gen/eliza_connect.js";
 + // A transport for clients using the gRPC protocol with Node.js `http2` module
 + const transport = createGrpcTransport({
 +   baseUrl: "https://demo.connectrpc.com",
-+   httpVersion: "2"
 + });
 
 const client = createClient(ElizaService, transport);
@@ -123,7 +122,6 @@ import { ElizaService } from "./gen/eliza_connect.js";
 
 const transport = createGrpcTransport({
   baseUrl: "http://localhost:8080",
-  httpVersion: "2",
 });
 
 const client = createClient(ElizaService, transport);
