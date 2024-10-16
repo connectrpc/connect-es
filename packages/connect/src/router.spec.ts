@@ -53,4 +53,22 @@ describe("createConnectRouter", function () {
     expect(router.handlers[0].method).toEqual(methodDefinition);
     expect(router.handlers[0].service).toEqual(testService);
   });
+
+  it("supports chaining after destructuring", function () {
+    const router = createConnectRouter({});
+
+    const { rpc } = router;
+    rpc(testService.method.unary, (request) => {
+      return { value: `${request.value}-RESPONSE` };
+      // eslint-disable-next-line @typescript-eslint/require-await
+    }).rpc(testService.method.server, async function* (request) {
+      yield { value: `${request.value}-RESPONSE` };
+    });
+
+    expect(router.handlers).toHaveSize(2);
+    expect(router.handlers[0].method).toEqual(testService.method.unary);
+    expect(router.handlers[0].service).toEqual(testService);
+    expect(router.handlers[1].method).toEqual(testService.method.server);
+    expect(router.handlers[1].service).toEqual(testService);
+  });
 });

@@ -59,19 +59,19 @@ export interface ConnectRouter {
    * You don't have to implement all RPCs of a service. If you omit a method,
    * the router adds a method that responds with an error code `unimplemented`.
    */
-  service<T extends DescService>(
+  service: <T extends DescService>(
     service: T,
     implementation: Partial<ServiceImpl<T>>,
     options?: Partial<UniversalHandlerOptions>,
-  ): this;
+  ) => this;
   /**
    * Register a single RPC implementation.
    */
-  rpc<M extends DescMethod>(
+  rpc: <M extends DescMethod>(
     method: M,
     impl: MethodImpl<M>,
     options?: Partial<UniversalHandlerOptions>,
-  ): this;
+  ) => this;
 }
 
 /**
@@ -129,9 +129,9 @@ export function createConnectRouter(
   const base = whichProtocols(routerOptions);
   const handlers: UniversalHandler[] = [];
 
-  return {
+  const router: ConnectRouter = {
     handlers,
-    service(service, implementation, options) {
+    service: (service, implementation, options) => {
       const { protocols } = whichProtocols(options, base);
       handlers.push(
         ...createUniversalServiceHandlers(
@@ -139,9 +139,9 @@ export function createConnectRouter(
           protocols,
         ),
       );
-      return this;
+      return router;
     },
-    rpc(method, impl, opt) {
+    rpc: (method, impl, opt) => {
       const { protocols } = whichProtocols(opt, base);
 
       handlers.push(
@@ -150,9 +150,10 @@ export function createConnectRouter(
           protocols,
         ),
       );
-      return this;
+      return router;
     },
   };
+  return router;
 }
 
 function whichProtocols(
