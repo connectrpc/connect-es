@@ -68,16 +68,11 @@ describe("createHandlerContext()", function () {
       expect(ctx.signal.aborted).toBeTrue();
       expect(ctx.signal.reason).toBe("shutdown-signal");
     });
-    it("should trigger on abort with reason", function () {
+    it("should trigger on abort", function () {
       const ctx = createHandlerContext({ ...standardOptions });
       ctx.abort("test-reason");
       expect(ctx.signal.aborted).toBeTrue();
       expect(ctx.signal.reason).toBe("test-reason");
-    });
-    it("should not trigger on abort without reason", function () {
-      const ctx = createHandlerContext({ ...standardOptions });
-      ctx.abort();
-      expect(ctx.signal.aborted).toBeFalse();
     });
   });
 

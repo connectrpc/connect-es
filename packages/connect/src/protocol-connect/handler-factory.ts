@@ -258,7 +258,6 @@ function createUnaryHandler<I extends DescMessage, O extends DescMessage>(
       );
       body = serialization.getO(type.binary).serialize(output);
     } catch (e) {
-      context.abort(e);
       let error: ConnectError | undefined;
       if (e instanceof ConnectError) {
         error = e;
@@ -463,7 +462,7 @@ function createStreamHandler<I extends DescMessage, O extends DescMessage>(
       },
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
-        context.abort(e);
+        context.abort();
         const end: EndStreamResponse = {
           metadata: context.responseTrailer,
         };
