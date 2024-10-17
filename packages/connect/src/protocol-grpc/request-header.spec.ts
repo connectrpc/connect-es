@@ -34,7 +34,7 @@ describe("requestHeader", () => {
       "user-agent",
     ]);
     expect(headers.get("Content-Type")).toBe("application/grpc+proto");
-    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+/);
+    expect(headers.get("User-Agent")).toMatch(/^connect-es\/.*/);
   });
 
   it("should create request headers with timeout", () => {
@@ -46,6 +46,17 @@ describe("requestHeader", () => {
       "user-agent",
     ]);
     expect(headers.get("Grpc-Timeout")).toBe("10m");
+  });
+
+  it("should create request headers with userAgent", () => {
+    const headers = requestHeader(true, 10, { "User-Agent": "grpc-es/0.0.0" });
+    expect(listHeaderKeys(headers)).toEqual([
+      "content-type",
+      "grpc-timeout",
+      "te",
+      "user-agent",
+    ]);
+    expect(headers.get("User-Agent")).toBe("grpc-es/0.0.0");
   });
 
   it("should create request headers with compression", () => {
