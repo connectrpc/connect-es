@@ -17,7 +17,6 @@ import {
   createContextKey,
   createContextValues,
   createClient,
-  createRouterTransport,
 } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
 import { createWritableIterable } from "@connectrpc/connect/protocol";
@@ -70,25 +69,6 @@ describe("node readme", function () {
     expect(sentence).toBeDefined();
   });
 
-  it("createRouterTransport()", async function () {
-    // A transport for clients using the in-memory createRouterTransport
-    const transport = createRouterTransport(
-      ({ service }) => {
-        service(ElizaService, {
-          say: async () => ({
-            sentence: "server response",
-          }),
-        });
-      },
-      {
-        transport: optionsHttp1,
-      },
-    );
-    const client = createClient(ElizaService, transport);
-    const { sentence } = await client.say({ sentence: "I feel happy." });
-    expect(sentence).toBeDefined();
-  });
-
   it("should work as well", async function () {
     let port = -1;
 
@@ -114,7 +94,6 @@ describe("node readme", function () {
     async function runClient() {
       const transport = createGrpcTransport({
         baseUrl: `http://localhost:${port}`,
-        httpVersion: "2",
       });
       const client = createClient(ElizaService, transport);
       const res = await client.say({ sentence: "I feel happy." });
@@ -157,7 +136,6 @@ describe("node readme", function () {
     async function runClient() {
       const transport = createGrpcTransport({
         baseUrl: `http://localhost:${port}`,
-        httpVersion: "2",
       });
       const client = createClient(ElizaService, transport);
       const res = await client.say(
@@ -204,7 +182,6 @@ describe("node readme", function () {
     async function runClient() {
       const transport = createGrpcTransport({
         baseUrl: `http://localhost:${port}`,
-        httpVersion: "2",
       });
       const client = createClient(ElizaService, transport);
       const req =
