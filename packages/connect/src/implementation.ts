@@ -68,8 +68,9 @@ export interface HandlerContext {
   readonly service: DescService;
 
   /**
-   * An AbortSignal that is aborted when the connection with the client is closed
-   * or when the deadline is reached.
+   * An AbortSignal that triggers when the deadline is reached, or when an error
+   * occurs that aborts processing of the request, but also when the RPC is
+   * completed without error.
    *
    * The signal can be used to automatically cancel downstream calls.
    */
