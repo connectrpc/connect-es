@@ -199,7 +199,7 @@ function createHandler<I extends DescMessage, O extends DescMessage>(
       },
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
-        context.abort();
+        context.abort(e);
         if (e instanceof ConnectError) {
           setTrailerStatus(context.responseTrailer, e);
         } else if (e !== undefined) {

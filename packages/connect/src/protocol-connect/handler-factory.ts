@@ -462,7 +462,7 @@ function createStreamHandler<I extends DescMessage, O extends DescMessage>(
       },
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
-        context.abort();
+        context.abort(e);
         const end: EndStreamResponse = {
           metadata: context.responseTrailer,
         };
