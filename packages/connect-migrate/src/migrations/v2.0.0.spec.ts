@@ -244,7 +244,7 @@ plugins:
       expect(bufGenYamlWritten.length).toBe(1);
       expect(bufGenYamlWritten[0]?.yaml).toEqual(`version: v2
 plugins:
-  - remote: buf.build/connectrpc/query-es:v2.0.0-beta.1
+  - remote: buf.build/connectrpc/query-es:v2.0.0-rc.1
     out: src/gen
 `);
     });
