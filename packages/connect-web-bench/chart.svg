@@ -42,13 +42,13 @@
 <text x="-10" y="294" text-anchor="end">0 KiB</text>
 </g>
 <g transform="translate(110, 20)">
-  <polyline fill="none" stroke="#ffa600" stroke-width="2" points="0,188.83984375 140,186.61953125 280,184.0083984375 420,179.66123046874998">
+  <polyline fill="none" stroke="#ffa600" stroke-width="2" points="0,188.8625 140,186.72714843749998 280,183.85263671875 420,179.6017578125">
     <title>Connect-ES</title>
   </polyline>
-<circle cx="0" cy="188.83984375" r="4" fill="#ffa600"><title>Connect-ES 34.88 KiB for 1 RPCs</title></circle>
-<circle cx="140" cy="186.61953125" r="4" fill="#ffa600"><title>Connect-ES 35.65 KiB for 4 RPCs</title></circle>
-<circle cx="280" cy="184.0083984375" r="4" fill="#ffa600"><title>Connect-ES 36.55 KiB for 8 RPCs</title></circle>
-<circle cx="420" cy="179.66123046874998" r="4" fill="#ffa600"><title>Connect-ES 38.05 KiB for 16 RPCs</title></circle>
+<circle cx="0" cy="188.8625" r="4" fill="#ffa600"><title>Connect-ES 34.88 KiB for 1 RPCs</title></circle>
+<circle cx="140" cy="186.72714843749998" r="4" fill="#ffa600"><title>Connect-ES 35.61 KiB for 4 RPCs</title></circle>
+<circle cx="280" cy="183.85263671875" r="4" fill="#ffa600"><title>Connect-ES 36.6 KiB for 8 RPCs</title></circle>
+<circle cx="420" cy="179.6017578125" r="4" fill="#ffa600"><title>Connect-ES 38.07 KiB for 16 RPCs</title></circle>
 </g>
 <g transform="translate(110, 20)">
   <polyline fill="none" stroke="#ff6361" stroke-width="2" points="0,141.884765625 140,135.16435546875 280,128.24003906250002 420,116.54374999999999">
