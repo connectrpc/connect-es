@@ -20,7 +20,6 @@ import type {
   DescMethodBiDiStreaming,
   DescMethodClientStreaming,
   DescMethodServerStreaming,
-  DescMethodStreaming,
   DescMethodUnary,
 } from "@bufbuild/protobuf";
 import type { Transport } from "./transport.js";
@@ -56,7 +55,7 @@ export function createClient<T extends DescService>(
 ) {
   return makeAnyClient(
     service,
-    (method: DescMethodUnary | DescMethodStreaming) => {
+    (method) => {
       switch (method.methodKind) {
         case "unary":
           return createUnaryFn(transport, method);
