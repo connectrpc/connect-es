@@ -53,23 +53,20 @@ export function createClient<T extends DescService>(
   service: T,
   transport: Transport,
 ) {
-  return makeAnyClient(
-    service,
-    (method) => {
-      switch (method.methodKind) {
-        case "unary":
-          return createUnaryFn(transport, method);
-        case "server_streaming":
-          return createServerStreamingFn(transport, method);
-        case "client_streaming":
-          return createClientStreamingFn(transport, method);
-        case "bidi_streaming":
-          return createBiDiStreamingFn(transport, method);
-        default:
-          return null;
-      }
-    },
-  ) as Client<T>;
+  return makeAnyClient(service, (method) => {
+    switch (method.methodKind) {
+      case "unary":
+        return createUnaryFn(transport, method);
+      case "server_streaming":
+        return createServerStreamingFn(transport, method);
+      case "client_streaming":
+        return createClientStreamingFn(transport, method);
+      case "bidi_streaming":
+        return createBiDiStreamingFn(transport, method);
+      default:
+        return null;
+    }
+  }) as Client<T>;
 }
 
 /**
