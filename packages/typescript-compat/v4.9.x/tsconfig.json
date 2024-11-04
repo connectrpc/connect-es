@@ -1,0 +1,24 @@
+{
+  "include": [
+    "../../connect-conformance/src/index.ts",
+    "../../example/src/**/*.ts"
+  ],
+  // These are the default compiler options for TypeScript v4.9.x, created
+  // with `tsc --init` (except where noted in comments below)
+  "compilerOptions": {
+    // By default, target is es5. For iterables, we need target 2015 or higher,
+    // or downLevelIteration.
+    "target": "es2015",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    // To guard against regression and ensure we are remaining backwards
+    // compatible, set the skipLibCheck flag to false explicitly.
+    "skipLibCheck": false,
+    // Certain errors are only triggered by actually emitting declaration files,
+    // see https://github.com/bufbuild/protobuf-es/pull/398
+    "declaration": true,
+    "declarationMap": true
+  }
+}

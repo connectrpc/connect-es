@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { StringValue } from "@bufbuild/protobuf";
 import type { Serialization } from "./serialization.js";
 import {
   createBinarySerialization,
@@ -21,11 +20,16 @@ import {
   limitSerialization,
 } from "./serialization.js";
 import { ConnectError } from "../connect-error.js";
+import { StringValueSchema, UInt32ValueSchema } from "@bufbuild/protobuf/wkt";
+import { clone, create, equals, toBinary } from "@bufbuild/protobuf";
 
 describe("createBinarySerialization()", function () {
-  const goldenMessage = new StringValue({ value: "abc" });
-  const goldenBytes = new StringValue({ value: "abc" }).toBinary();
-  const ser = createBinarySerialization(StringValue, undefined);
+  const goldenMessage = create(StringValueSchema, { value: "abc" });
+  const goldenBytes = toBinary(
+    StringValueSchema,
+    create(StringValueSchema, { value: "abc" }),
+  );
+  const ser = createBinarySerialization(StringValueSchema, undefined);
 
   it("should serialize", function () {
     const bytes = ser.serialize(goldenMessage);
@@ -34,7 +38,7 @@ describe("createBinarySerialization()", function () {
 
   it("should parse", function () {
     const message = ser.parse(goldenBytes);
-    expect(goldenMessage.equals(message)).toBeTrue();
+    expect(equals(StringValueSchema, goldenMessage, message)).toBeTrue();
   });
 
   describe("parsing invalid data", function () {
@@ -52,26 +56,26 @@ describe("createBinarySerialization()", function () {
 
   describe("serializing invalid data", function () {
     it("should raise connect error", function () {
-      const f = goldenMessage.clone();
-      f.toBinary = () => {
-        throw "x";
-      };
+      const ser = createBinarySerialization(UInt32ValueSchema, undefined);
+      const f = create(UInt32ValueSchema, { value: -1 });
       try {
         ser.serialize(f);
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
-        expect(c.message).toBe("[internal] serialize binary: x");
+        expect(c.message).toBe(
+          "[internal] serialize binary: invalid uint32: -1",
+        );
       }
     });
   });
 });
 
 describe("createJsonSerialization()", function () {
-  const goldenMessage = new StringValue({ value: "abc" });
+  const goldenMessage = create(StringValueSchema, { value: "abc" });
   const goldenBytes = new TextEncoder().encode(`"abc"`);
-  const ser = createJsonSerialization(StringValue, undefined);
+  const ser = createJsonSerialization(StringValueSchema, undefined);
 
   it("should serialize", function () {
     const bytes = ser.serialize(goldenMessage);
@@ -80,7 +84,7 @@ describe("createJsonSerialization()", function () {
 
   it("should parse", function () {
     const message = ser.parse(goldenBytes);
-    expect(goldenMessage.equals(message)).toBeTrue();
+    expect(equals(StringValueSchema, goldenMessage, message)).toBeTrue();
   });
 
   describe("parsing invalid data", function () {
@@ -92,7 +96,7 @@ describe("createJsonSerialization()", function () {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
         expect(c.message).toMatch(
-          /^\[invalid_argument] cannot decode google.protobuf.StringValue from JSON: Unexpected token/,
+          /^\[invalid_argument] cannot decode message google.protobuf.StringValue from JSON: Unexpected token/,
         );
       }
     });
@@ -100,17 +104,17 @@ describe("createJsonSerialization()", function () {
 
   describe("serializing invalid data", function () {
     it("should raise connect error", function () {
-      const f = goldenMessage.clone();
-      f.toJsonString = () => {
-        throw "x";
-      };
+      const f = clone(StringValueSchema, goldenMessage);
+      f.value = new Error() as unknown as string;
       try {
         ser.serialize(f);
         fail("expected error");
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
-        expect(c.message).toBe("[internal] x");
+        expect(c.message).toBe(
+          "[internal] cannot encode field google.protobuf.StringValue.value to JSON: expected string, got object",
+        );
       }
     });
   });
@@ -155,7 +159,7 @@ describe("limitSerialization()", function () {
 
 describe("getJsonOptions()", function () {
   it("sets ignoreUnknownFields to true if not already set on options object", function () {
-    const opts = getJsonOptions({ emitDefaultValues: true });
+    const opts = getJsonOptions({ alwaysEmitImplicit: true });
     expect(opts.ignoreUnknownFields).toBeTrue();
   });
   it("sets ignoreUnknownFields to true if undefined is passed", function () {

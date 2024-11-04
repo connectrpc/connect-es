@@ -85,7 +85,7 @@ export const config = {
       "bstack:options": {
         os: "Windows",
         osVersion: "10",
-        browserVersion: "60.0",
+        browserVersion: "66.0",
       },
     },
     {

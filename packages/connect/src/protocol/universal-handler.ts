@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
 import type {
   BinaryReadOptions,
   BinaryWriteOptions,
+  DescMethod,
+  DescService,
   JsonReadOptions,
   JsonWriteOptions,
-  MethodInfo,
-  ServiceType,
 } from "@bufbuild/protobuf";
 import type { MethodImplSpec, ServiceImplSpec } from "../implementation.js";
 import {
@@ -138,12 +137,12 @@ export interface UniversalHandler extends UniversalHandlerFn {
   /**
    * Information about the related protobuf service.
    */
-  service: ServiceType;
+  service: DescService;
 
   /**
    * Information about the method of the protobuf service.
    */
-  method: MethodInfo;
+  method: DescMethod;
 
   /**
    * The request path of the procedure, without any prefixes.
@@ -267,7 +266,7 @@ export function negotiateProtocol(
   }
   async function protocolNegotiatingHandler(request: UniversalServerRequest) {
     if (
-      method.kind == MethodKind.BiDiStreaming &&
+      method.methodKind == "bidi_streaming" &&
       request.httpVersion.startsWith("1.")
     ) {
       return {

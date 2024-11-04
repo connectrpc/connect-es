@@ -15,11 +15,12 @@
 import {
   invokeWithCallbackClient,
   invokeWithPromiseClient,
-  ClientCompatRequest,
-  ClientCompatResponse,
-  ClientErrorResult,
+  ClientCompatResponseSchema,
+  ClientCompatRequestSchema,
+  ClientErrorResultSchema,
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
+import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 
 declare global {
   interface Window {
@@ -35,11 +36,11 @@ async function runTestCase(
   data: number[],
   useCallbackClient: boolean,
 ): Promise<number[]> {
-  const req = ClientCompatRequest.fromBinary(new Uint8Array(data));
+  const req = fromBinary(ClientCompatRequestSchema, new Uint8Array(data));
   const p = document.createElement("p");
   p.innerText = req.testName;
   document.body.append(p);
-  const res = new ClientCompatResponse({
+  const res = create(ClientCompatResponseSchema, {
     testName: req.testName,
   });
   try {
@@ -51,12 +52,12 @@ async function runTestCase(
   } catch (err) {
     res.result = {
       case: "error",
-      value: new ClientErrorResult({
+      value: create(ClientErrorResultSchema, {
         message: `Failed to run test case: ${String(err)}`,
       }),
     };
   }
-  return Array.from(res.toBinary());
+  return Array.from(toBinary(ClientCompatResponseSchema, res));
 }
 
 window.runTestCase = runTestCase;

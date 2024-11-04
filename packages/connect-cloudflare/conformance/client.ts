@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import {
-  ClientCompatRequest,
-  ClientCompatResponse,
-  ClientErrorResult,
+  ClientCompatRequestSchema,
+  ClientCompatResponseSchema,
+  ClientErrorResultSchema,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
@@ -26,8 +26,9 @@ import {
 } from "@connectrpc/connect-node";
 import { createClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
-import { InvokeService } from "./invoke-service.js";
+import { InvokeService } from "./gen/invoke/v1/invoke_pb.js";
 import { parseArgs } from "node:util";
+import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 
 const { values: flags } = parseArgs({
   args: process.argv.slice(2),
@@ -66,21 +67,24 @@ async function main() {
   }
   const client = createClient(InvokeService, transport);
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
-    const req = ClientCompatRequest.fromBinary(next);
+    const req = fromBinary(ClientCompatRequestSchema, next);
     req.host = process.env["CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST"]!;
-    let res = new ClientCompatResponse({
+    let res = create(ClientCompatResponseSchema, {
       testName: req.testName,
     });
     try {
-      res = await client.invoke(req);
+      const response = await client.invoke({ request: req });
+      res = response.response ?? res;
     } catch (e) {
       res.result = {
         case: "error",
-        value: new ClientErrorResult({
+        value: create(ClientErrorResultSchema, {
           message: (e as Error).message,
         }),
       };
     }
-    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+    process.stdout.write(
+      writeSizeDelimitedBuffer(toBinary(ClientCompatResponseSchema, res)),
+    );
   }
 }

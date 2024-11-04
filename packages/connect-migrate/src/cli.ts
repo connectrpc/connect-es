@@ -19,6 +19,7 @@ import { parseCommandLineArgs } from "./arguments";
 import { scan } from "./lib/scan";
 import { Logger } from "./lib/logger";
 import { v0_13_1 } from "./migrations/v0.13.1";
+import { v2_0_0 } from "./migrations/v2.0.0";
 import { v1_6_0 } from "./migrations/v1.6.0";
 import type { Migration } from "./migration";
 
@@ -34,7 +35,7 @@ Flags:
 `;
 
 const logger = new Logger();
-const migrations = [v0_13_1, v1_6_0];
+const migrations = [v0_13_1, v1_6_0, v2_0_0];
 void main();
 
 async function main() {

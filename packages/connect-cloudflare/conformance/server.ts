@@ -15,10 +15,11 @@
 import { readFileSync } from "node:fs";
 import * as tls from "node:tls";
 import {
-  ServerCompatRequest,
-  ServerCompatResponse,
+  ServerCompatRequestSchema,
+  ServerCompatResponseSchema,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
+import { fromBinary, create, toBinary } from "@bufbuild/protobuf";
 
 main();
 
@@ -29,7 +30,8 @@ main();
  * server's port and other details to stdout.
  */
 function main() {
-  const req = ServerCompatRequest.fromBinary(
+  const req = fromBinary(
+    ServerCompatRequestSchema,
     readFileSync(process.stdin.fd).subarray(4),
   );
   // Keep the process alive for the duration of the test because
@@ -41,12 +43,14 @@ function main() {
   process.once("SIGTERM", () => {
     clearInterval(timeout);
   });
-  const res = new ServerCompatResponse({
+  const res = create(ServerCompatResponseSchema, {
     host: process.env["CLOUDFLARE_WORKERS_SERVER_HOST"],
     port: 443,
     pemCert: req.useTls
       ? Buffer.from(tls.rootCertificates.join("\n"))
       : undefined,
   });
-  process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+  process.stdout.write(
+    writeSizeDelimitedBuffer(toBinary(ServerCompatResponseSchema, res)),
+  );
 }

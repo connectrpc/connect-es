@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
 import { validateResponse } from "./validate-response.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
@@ -21,7 +20,7 @@ describe("Connect validateResponse()", function () {
   describe("with unary", function () {
     it("should be successful for HTTP 200 with proper unary JSON content type", function () {
       const r = validateResponse(
-        MethodKind.Unary,
+        "unary",
         false,
         200,
         new Headers({ "Content-Type": "application/json" }),
@@ -31,7 +30,7 @@ describe("Connect validateResponse()", function () {
     });
     it("should return error for HTTP 204", function () {
       const r = validateResponse(
-        MethodKind.Unary,
+        "unary",
         false,
         204,
         new Headers({ "Content-Type": "application/json" }),
@@ -41,7 +40,7 @@ describe("Connect validateResponse()", function () {
     });
     it("should include headers as error metadata", function () {
       const r = validateResponse(
-        MethodKind.Unary,
+        "unary",
         false,
         204,
         new Headers({ "Content-Type": "application/json", Foo: "Bar" }),
@@ -50,7 +49,7 @@ describe("Connect validateResponse()", function () {
     });
     it("should be successful for HTTP 200 with proper unary proto content type", function () {
       const r = validateResponse(
-        MethodKind.Unary,
+        "unary",
         true,
         200,
         new Headers({ "Content-Type": "application/proto" }),
@@ -61,7 +60,7 @@ describe("Connect validateResponse()", function () {
     it("should throw error for HTTP error status with binary response body", function () {
       try {
         validateResponse(
-          MethodKind.Unary,
+          "unary",
           true,
           400,
           new Headers({
@@ -76,7 +75,7 @@ describe("Connect validateResponse()", function () {
     });
     it("should return an error for HTTP error status if content type is JSON", function () {
       const result = validateResponse(
-        MethodKind.Unary,
+        "unary",
         true,
         400,
         new Headers({
@@ -92,7 +91,7 @@ describe("Connect validateResponse()", function () {
     it("should include headers as error metadata", function () {
       try {
         validateResponse(
-          MethodKind.BiDiStreaming,
+          "bidi_streaming",
           true,
           400,
           new Headers({

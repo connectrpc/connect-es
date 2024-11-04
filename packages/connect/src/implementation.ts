@@ -13,15 +13,17 @@
 // limitations under the License.
 
 import type {
-  AnyMessage,
-  Message,
-  MessageType,
-  MethodIdempotency,
-  MethodInfo,
-  PartialMessage,
-  ServiceType,
+  MessageInitShape,
+  DescMessage,
+  DescService,
+  DescMethod,
+  MessageShape,
+  DescMethodBiDiStreaming,
+  DescMethodClientStreaming,
+  DescMethodServerStreaming,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
-import { MethodKind } from "@bufbuild/protobuf";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import {
@@ -35,32 +37,20 @@ import type { ContextValues } from "./context-values.js";
 /**
  * ServiceImpl is the interface of the implementation of a service.
  */
-export type ServiceImpl<T extends ServiceType> = {
-  [P in keyof T["methods"]]: MethodImpl<T["methods"][P]>;
+export type ServiceImpl<Desc extends DescService> = {
+  [P in keyof Desc["method"]]: MethodImpl<Desc["method"][P]>;
 };
 
 // prettier-ignore
 /**
  * MethodImpl is the signature of the implementation of an RPC.
  */
-export type MethodImpl<M extends MI> =
-    M extends MI<infer I, infer O, MethodKind.Unary>           ? UnaryImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.ServerStreaming> ? ServerStreamingImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.ClientStreaming> ? ClientStreamingImpl<I, O>
-  : M extends MI<infer I, infer O, MethodKind.BiDiStreaming>   ? BiDiStreamingImpl<I, O>
+export type MethodImpl<M extends DescMethod> =
+  M extends DescMethodUnary<infer I, infer O> ? UnaryImpl<I, O>
+  : M extends DescMethodServerStreaming<infer I, infer O> ? ServerStreamingImpl<I, O>
+  : M extends DescMethodClientStreaming<infer I, infer O> ? ClientStreamingImpl<I, O>
+  : M extends DescMethodBiDiStreaming<infer I, infer O> ? BiDiStreamingImpl<I, O>
   : never;
-
-interface MI<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
-  K extends MethodKind = MethodKind,
-> {
-  readonly kind: K;
-  readonly name: string;
-  readonly I: MessageType<I>;
-  readonly O: MessageType<O>;
-  readonly idempotency?: MethodIdempotency;
-}
 
 /**
  * Context for an RPC on the server. Every RPC implementation can accept a
@@ -70,16 +60,17 @@ export interface HandlerContext {
   /**
    * Metadata for the method being called.
    */
-  readonly method: MethodInfo;
+  readonly method: DescMethod;
 
   /**
    * Metadata for the service being called.
    */
-  readonly service: ServiceType;
+  readonly service: DescService;
 
   /**
-   * An AbortSignal that is aborted when the connection with the client is closed
-   * or when the deadline is reached.
+   * An AbortSignal that triggers when the deadline is reached, or when an error
+   * occurs that aborts processing of the request, but also when the RPC is
+   * completed without error.
    *
    * The signal can be used to automatically cancel downstream calls.
    */
@@ -135,8 +126,8 @@ export interface HandlerContext {
  * Options for creating a HandlerContext.
  */
 interface HandlerContextInit {
-  service: ServiceType;
-  method: MethodInfo;
+  service: DescService;
+  method: DescMethod;
   protocolName: string;
   requestMethod: string;
   url: string;
@@ -194,60 +185,61 @@ export function createHandlerContext(
 /**
  * UnaryImp is the signature of the implementation of a unary RPC.
  */
-export type UnaryImpl<I extends Message<I>, O extends Message<O>> = (
-  request: I,
+export type UnaryImpl<I extends DescMessage, O extends DescMessage> = (
+  request: MessageShape<I>,
   context: HandlerContext,
-) => Promise<O | PartialMessage<O>> | O | PartialMessage<O>;
+) => Promise<MessageInitShape<O>> | MessageInitShape<O>;
 
 /**
  * ClientStreamingImpl is the signature of the implementation of a
  * client-streaming RPC.
  */
-export type ClientStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  requests: AsyncIterable<I>,
+export type ClientStreamingImpl<
+  I extends DescMessage,
+  O extends DescMessage,
+> = (
+  requests: AsyncIterable<MessageShape<I>>,
   context: HandlerContext,
-) => Promise<O | PartialMessage<O>>;
+) => Promise<MessageInitShape<O>>;
 
 /**
  * ServerStreamingImpl is the signature of the implementation of a
  * server-streaming RPC.
  */
-export type ServerStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  request: I,
+export type ServerStreamingImpl<
+  I extends DescMessage,
+  O extends DescMessage,
+> = (
+  request: MessageShape<I>,
   context: HandlerContext,
-) => AsyncIterable<O | PartialMessage<O>>;
+) => AsyncIterable<MessageInitShape<O>>;
 
 /**
  * BiDiStreamingImpl is the signature of the implementation of a bi-di
  * streaming RPC.
  */
-export type BiDiStreamingImpl<I extends Message<I>, O extends Message<O>> = (
-  requests: AsyncIterable<I>,
+export type BiDiStreamingImpl<I extends DescMessage, O extends DescMessage> = (
+  requests: AsyncIterable<MessageShape<I>>,
   context: HandlerContext,
-) => AsyncIterable<O | PartialMessage<O>>;
+) => AsyncIterable<MessageInitShape<O>>;
 
 // prettier-ignore
 /**
  * Wraps a user-provided implementation along with service and method
  * metadata in a discriminated union type.
  */
-export type MethodImplSpec<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage> =
-  {
-    service: ServiceType;
-    method: MethodInfo<I, O>;
-  }
-  & (
-  | { kind: MethodKind.Unary; impl: UnaryImpl<I, O> }
-  | { kind: MethodKind.ServerStreaming; impl: ServerStreamingImpl<I, O> }
-  | { kind: MethodKind.ClientStreaming; impl: ClientStreamingImpl<I, O> }
-  | { kind: MethodKind.BiDiStreaming; impl: BiDiStreamingImpl<I, O> }
-  );
+export type MethodImplSpec<I extends DescMessage = DescMessage, O extends DescMessage = DescMessage> =
+  | { kind: "unary";            impl: UnaryImpl<I, O>;            method: DescMethodUnary<I, O> }
+  | { kind: "server_streaming"; impl: ServerStreamingImpl<I, O>;  method: DescMethodServerStreaming<I, O> }
+  | { kind: "client_streaming"; impl: ClientStreamingImpl<I, O>;  method: DescMethodClientStreaming<I, O> }
+  | { kind: "bidi_streaming";   impl: BiDiStreamingImpl<I, O>;    method: DescMethodBiDiStreaming<I, O> }
+;
 
 /**
  * Wraps a user-provided service implementation and provides metadata.
  */
 export type ServiceImplSpec = {
-  service: ServiceType;
+  service: DescService;
   methods: {
     [key: string]: MethodImplSpec;
   };
@@ -257,14 +249,12 @@ export type ServiceImplSpec = {
  * Create an MethodImplSpec - a user-provided implementation for a method,
  * wrapped in a discriminated union type along with service and method metadata.
  */
-export function createMethodImplSpec<M extends MethodInfo>(
-  service: ServiceType,
+export function createMethodImplSpec<M extends DescMethod>(
   method: M,
   impl: MethodImpl<M>,
 ): MethodImplSpec {
   return {
-    kind: method.kind,
-    service,
+    kind: method.methodKind,
     method,
     impl,
   } as MethodImplSpec;
@@ -274,22 +264,26 @@ export function createMethodImplSpec<M extends MethodInfo>(
  * Create an ServiceImplSpec - a user-provided service implementation wrapped
  * with metadata.
  */
-export function createServiceImplSpec<T extends ServiceType>(
-  service: T,
-  impl: Partial<ServiceImpl<T>>,
+export function createServiceImplSpec<Desc extends DescService>(
+  service: DescService,
+  impl: Partial<ServiceImpl<Desc>>,
 ): ServiceImplSpec {
   const s: ServiceImplSpec = { service, methods: {} };
-  for (const [localName, methodInfo] of Object.entries(service.methods)) {
-    let fn: MethodImpl<typeof methodInfo> | undefined = impl[localName];
+  for (const method of service.methods) {
+    let fn: MethodImpl<DescMethodUnary | DescMethodStreaming> | undefined =
+      impl[method.localName];
     if (typeof fn == "function") {
       fn = fn.bind(impl);
     } else {
-      const message = `${service.typeName}.${methodInfo.name} is not implemented`;
+      const message = `${service.typeName}.${method.name} is not implemented`;
       fn = function unimplemented() {
         throw new ConnectError(message, Code.Unimplemented);
       };
     }
-    s.methods[localName] = createMethodImplSpec(service, methodInfo, fn);
+    s.methods[method.localName] = createMethodImplSpec(
+      method as DescMethodUnary | DescMethodStreaming,
+      fn,
+    );
   }
   return s;
 }

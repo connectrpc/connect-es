@@ -14,14 +14,14 @@
 
 import type { ConnectRouter } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb.js";
 import type {
   SayRequest,
   IntroduceRequest,
   ConverseRequest,
 } from "./gen/eliza_pb.js";
 import * as esbuild from "esbuild";
-import http2 from "http2";
+import * as http2 from "http2";
 import { readFileSync } from "fs";
 import { stdout } from "process";
 

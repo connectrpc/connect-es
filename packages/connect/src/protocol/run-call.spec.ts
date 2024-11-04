@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
-import type { ServiceType } from "@bufbuild/protobuf";
+import { create } from "@bufbuild/protobuf";
 import { runStreamingCall, runUnaryCall } from "./run-call.js";
 import type {
   StreamRequest,
@@ -23,51 +22,58 @@ import type {
 } from "../interceptor.js";
 import { createAsyncIterable } from "./async-iterable.js";
 import { createContextValues } from "../context-values.js";
+import { createServiceDesc } from "../descriptor-helper.spec.js";
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
-const TestService = {
+const TestService = createServiceDesc({
   typeName: "TestService",
-  methods: {
+  method: {
     unary: {
-      name: "Unary",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
     },
     serverStreaming: {
-      name: "ServerStreaming",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ServerStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "server_streaming",
     },
   },
-} satisfies ServiceType;
+});
 
 describe("runUnaryCall()", function () {
   function makeReq() {
     return {
       stream: false as const,
       service: TestService,
-      method: TestService.methods.unary,
+      method: TestService.method.unary,
+      requestMethod: "POST",
       url: `https://example.com/TestService/Unary`,
-      init: {},
       header: new Headers(),
       message: { value: 123 },
       contextValues: createContextValues(),
     };
   }
 
-  function makeRes(req: UnaryRequest<Int32Value, StringValue>) {
-    return <UnaryResponse<Int32Value, StringValue>>{
+  function makeRes(
+    req: UnaryRequest<typeof Int32ValueSchema, typeof StringValueSchema>,
+  ) {
+    return <UnaryResponse<typeof Int32ValueSchema, typeof StringValueSchema>>{
       stream: false,
       service: TestService,
-      method: TestService.methods.unary,
+      method: TestService.method.unary,
       header: new Headers(),
-      message: new StringValue({ value: req.message.value.toString(10) }),
+      message: create(StringValueSchema, {
+        value: req.message.value.toString(10),
+      }),
       trailer: new Headers(),
     };
   }
   it("should return the response", async function () {
-    const res = await runUnaryCall<Int32Value, StringValue>({
+    const res = await runUnaryCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
       timeoutMs: undefined,
       signal: undefined,
       interceptors: [],
@@ -81,7 +87,7 @@ describe("runUnaryCall()", function () {
   });
   it("should trigger the signal when done", async function () {
     let signal: AbortSignal | undefined;
-    await runUnaryCall<Int32Value, StringValue>({
+    await runUnaryCall<typeof Int32ValueSchema, typeof StringValueSchema>({
       req: makeReq(),
       async next(req) {
         signal = req.signal;
@@ -93,7 +99,10 @@ describe("runUnaryCall()", function () {
   });
   it("should raise Code.Canceled on user abort", async function () {
     const userAbort = new AbortController();
-    const resPromise = runUnaryCall<Int32Value, StringValue>({
+    const resPromise = runUnaryCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
       signal: userAbort.signal,
       req: makeReq(),
       async next(req) {
@@ -109,7 +118,10 @@ describe("runUnaryCall()", function () {
     );
   });
   it("should raise Code.DeadlineExceeded on timeout", async function () {
-    const resPromise = runUnaryCall<Int32Value, StringValue>({
+    const resPromise = runUnaryCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
       timeoutMs: 1,
       req: makeReq(),
       async next(req) {
@@ -130,26 +142,28 @@ describe("runStreamingCall()", function () {
     return {
       stream: true as const,
       service: TestService,
-      method: TestService.methods.serverStreaming,
+      method: TestService.method.serverStreaming,
+      requestMethod: "POST",
       url: `https://example.com/TestService/ServerStreaming`,
-      init: {},
       header: new Headers(),
       message: createAsyncIterable([{ value: 1 }, { value: 2 }, { value: 3 }]),
       contextValues: createContextValues(),
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function makeRes(req: StreamRequest<Int32Value, StringValue>) {
-    return <StreamResponse<Int32Value, StringValue>>{
+  function makeRes(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    req: StreamRequest<typeof Int32ValueSchema, typeof StringValueSchema>,
+  ) {
+    return <StreamResponse<typeof Int32ValueSchema, typeof StringValueSchema>>{
       stream: true,
       service: TestService,
-      method: TestService.methods.serverStreaming,
+      method: TestService.method.serverStreaming,
       header: new Headers(),
       message: createAsyncIterable([
-        new StringValue({ value: "1" }),
-        new StringValue({ value: "2" }),
-        new StringValue({ value: "3" }),
+        create(StringValueSchema, { value: "1" }),
+        create(StringValueSchema, { value: "2" }),
+        create(StringValueSchema, { value: "3" }),
       ]),
       trailer: new Headers(),
     };
@@ -157,7 +171,10 @@ describe("runStreamingCall()", function () {
 
   it("should return the response", async function () {
     const req = makeReq();
-    const res = await runStreamingCall<Int32Value, StringValue>({
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
       timeoutMs: undefined,
       signal: undefined,
       interceptors: [],
@@ -182,7 +199,10 @@ describe("runStreamingCall()", function () {
   it("should trigger the signal when done", async function () {
     let signal: AbortSignal | undefined;
     const req = makeReq();
-    const res = await runStreamingCall<Int32Value, StringValue>({
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
       req: req,
       async next(req) {
         signal = req.signal;
@@ -200,7 +220,10 @@ describe("runStreamingCall()", function () {
   it("should raise Code.Canceled on user abort", async function () {
     const userAbort = new AbortController();
     const req = makeReq();
-    const resPromise = runStreamingCall<Int32Value, StringValue>({
+    const resPromise = runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
       signal: userAbort.signal,
       req: req,
       async next(req) {
@@ -219,7 +242,10 @@ describe("runStreamingCall()", function () {
   });
   it("should raise Code.DeadlineExceeded on timeout", async function () {
     const req = makeReq();
-    const resPromise = runStreamingCall<Int32Value, StringValue>({
+    const resPromise = runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
       timeoutMs: 1,
       req: req,
       async next(req) {
@@ -253,7 +279,7 @@ describe("runStreamingCall()", function () {
       },
     };
     await expectAsync(
-      runStreamingCall<Int32Value, StringValue>({
+      runStreamingCall<typeof Int32ValueSchema, typeof StringValueSchema>({
         req: req,
         next() {
           return Promise.reject(new Error("foo"));

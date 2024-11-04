@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Message } from "@bufbuild/protobuf";
+import type { DescMessage } from "@bufbuild/protobuf";
 import type { MethodImplSpec } from "../implementation.js";
 import { createHandlerContext } from "../implementation.js";
 import { ConnectError } from "../connect-error.js";
@@ -79,8 +79,8 @@ export function createHandlerFactory(
       protocolNames: [protocolName],
       allowedMethods: [methodPost],
       supportedContentType: contentTypeMatcher(contentTypeRegExp),
-      requestPath: createMethodUrl("/", spec.service, spec.method),
-      service: spec.service,
+      requestPath: createMethodUrl("/", spec.method),
+      service: spec.method.parent,
       method: spec.method,
     });
   }
@@ -89,7 +89,7 @@ export function createHandlerFactory(
   return fact;
 }
 
-function createHandler<I extends Message<I>, O extends Message<O>>(
+function createHandler<I extends DescMessage, O extends DescMessage>(
   opt: UniversalHandlerOptions,
   spec: MethodImplSpec<I, O>,
 ) {
@@ -116,6 +116,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
     );
     const context = createHandlerContext({
       ...spec,
+      service: spec.method.parent,
       requestMethod: req.method,
       protocolName,
       timeoutMs: timeout.timeoutMs,
@@ -186,7 +187,7 @@ function createHandler<I extends Message<I>, O extends Message<O>>(
       transformCompressEnvelope(compression.response, opt.compressMinBytes),
       transformJoinEnvelopes(),
       transformCatchFinally<Uint8Array>((e): void => {
-        context.abort();
+        context.abort(e);
         if (e instanceof ConnectError) {
           setTrailerStatus(context.responseTrailer, e);
         } else if (e !== undefined) {

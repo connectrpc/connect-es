@@ -15,8 +15,10 @@
 import type { Scanned } from "../lib/scan";
 import replaceCalls from "./v1.6.0-transform";
 import type { MigrateError, MigrateSuccess, Migration } from "../migration";
-import { updateSourceFile } from "../lib/update-source-file";
-import { migrateSourceFiles } from "../lib/migrate-source-files";
+import {
+  migrateSourceFiles,
+  updateSourceFile,
+} from "../lib/migrate-source-files";
 import * as semver from "semver";
 
 /**
@@ -77,7 +79,8 @@ function getMatchingPackages(packageFiles: Scanned["packageFiles"]) {
           if (minVersion === null) {
             return false;
           }
-          return semver.satisfies(minVersion, "^1.6.0");
+          // v2 migration will run next so we update all v1 versions.
+          return semver.satisfies(minVersion, "^1.0.0");
         })
     ) {
       matched.push(packageFile);

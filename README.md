@@ -1,8 +1,11 @@
+> [!IMPORTANT]  
+> You are looking at the release candidate for version 2. For the current stable version, see the branch [v1](https://github.com/connectrpc/connect-es/tree/v1).
+
 <img src=".github/connect-logo.png" width="15%" />
 
 # Connect for ECMAScript
 
-[![License](https://img.shields.io/github/license/connectrpc/connect-es?color=blue)](./LICENSE) [![Build](https://github.com/connectrpc/connect-es/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/connectrpc/connect-es/actions/workflows/ci.yaml) [![NPM Version](https://img.shields.io/npm/v/@connectrpc/connect/latest?color=green&label=%40connectrpc%2Fconnect)](https://www.npmjs.com/package/@connectrpc/connect) [![NPM Version](https://img.shields.io/npm/v/@connectrpc/protoc-gen-connect-es/latest?color=green&label=%40connectrpc%2Fprotoc-gen-connect-es)](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es)
+[![License](https://img.shields.io/github/license/connectrpc/connect-es?color=blue)](./LICENSE) [![Build](https://github.com/connectrpc/connect-es/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/connectrpc/connect-es/actions/workflows/ci.yaml) [![NPM Version](https://img.shields.io/npm/v/@connectrpc/connect/latest?color=green&label=%40connectrpc%2Fconnect)](https://www.npmjs.com/package/@connectrpc/connect)
 
 Connect is a family of libraries for building type-safe APIs with different languages and platforms.
 [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings them to TypeScript,
@@ -62,7 +65,7 @@ to spin up a service in Node.js, and call it from the web, and from a gRPC clien
 in your terminal.
 
 You can serve your Connect RPCs with vanilla Node.js, or use our [server plugins](https://connectrpc.com/docs/node/server-plugins)
-for **Fastify**, **Next.js**, and **Express**. We support Node.js v16 and later with
+for **Fastify**, **Next.js**, and **Express**. We support Node.js v18.14.1 and later with
 the builtin `http` and `http2` modules.
 
 ## Other platforms
@@ -77,8 +80,6 @@ be more than happy to chat!
 
 - [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect):
   RPC clients and servers for your schema ([source code](packages/connect)).
-- [@connectrpc/protoc-gen-connect-es](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es):
-  Code generator plugin for the services in your schema ([source code](packages/protoc-gen-connect-es)).
 - [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web):
   Adapters for web browsers, and any other platform that has the fetch API on board.
 - [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node):
@@ -90,7 +91,7 @@ be more than happy to chat!
 - [@connectrpc/connect-express](https://www.npmjs.com/package/@connectrpc/connect-express):
   Adds your services to an [Express](https://expressjs.com/) server.
 
-The libraries and the generated code are compatible with ES2017 and TypeScript 4.1.
+The libraries and the generated code are compatible with ES2017 and TypeScript 4.9.5.
 
 ## Ecosystem
 
@@ -109,10 +110,6 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 - [conformance](https://github.com/connectrpc/conformance):
   gRPC-Web and Connect interoperability tests
 - [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
-
-## Status: Stable
-
-All packages are stable and have reached a major version release.
 
 ## Legal
 

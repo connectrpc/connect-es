@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import type {
-  AnyMessage,
-  Message,
-  MethodInfo,
-  PartialMessage,
-  ServiceType,
+  DescMessage,
+  MessageInitShape,
+  MessageShape,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import { validateTrailer } from "../protocol-grpc/validate-trailer.js";
 import { requestHeaderWithCompression } from "./request-header.js";
@@ -56,16 +56,12 @@ import { headerGrpcStatus } from "./headers.js";
  */
 export function createTransport(opt: CommonTransportOptions): Transport {
   return {
-    async unary<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
-      method: MethodInfo<I, O>,
+    async unary<I extends DescMessage, O extends DescMessage>(
+      method: DescMethodUnary<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      message: PartialMessage<I>,
+      message: MessageInitShape<I>,
       contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
@@ -86,10 +82,10 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         timeoutMs,
         req: {
           stream: false,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(opt.baseUrl, service, method),
-          init: {},
+          requestMethod: "POST",
+          url: createMethodUrl(opt.baseUrl, method),
           header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
@@ -104,7 +100,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const uRes = await opt.httpClient({
             url: req.url,
-            method: "POST",
+            method: req.requestMethod,
             header: req.header,
             signal: req.signal,
             body: pipe(
@@ -131,13 +127,13 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             uRes.body,
             transformSplitEnvelope(opt.readMaxBytes),
             transformDecompressEnvelope(compression ?? null, opt.readMaxBytes),
-            transformParseEnvelope<O, Headers>(
+            transformParseEnvelope<MessageShape<O>, Headers>(
               serialization.getO(opt.useBinaryFormat),
               trailerFlag,
               createTrailerSerialization(),
             ),
             async (iterable) => {
-              let message: O | undefined;
+              let message: MessageShape<O> | undefined;
               let trailer: Headers | undefined;
               for await (const env of iterable) {
                 if (env.end) {
@@ -184,7 +180,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           }
           return <UnaryResponse<I, O>>{
             stream: false,
-            service,
+            service: method.parent,
             method,
             header: uRes.header,
             message,
@@ -193,16 +189,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         },
       });
     },
-    async stream<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
-      method: MethodInfo<I, O>,
+    async stream<I extends DescMessage, O extends DescMessage>(
+      method: DescMethodStreaming<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>,
+      input: AsyncIterable<MessageInitShape<I>>,
       contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const serialization = createMethodSerializationLookup(
@@ -223,14 +215,10 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         timeoutMs,
         req: {
           stream: true,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(opt.baseUrl, service, method),
-          init: {
-            method: "POST",
-            redirect: "error",
-            mode: "cors",
-          },
+          requestMethod: "POST",
+          url: createMethodUrl(opt.baseUrl, method),
           header: requestHeaderWithCompression(
             opt.useBinaryFormat,
             timeoutMs,
@@ -245,7 +233,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         next: async (req: StreamRequest<I, O>) => {
           const uRes = await opt.httpClient({
             url: req.url,
-            method: "POST",
+            method: req.requestMethod,
             header: req.header,
             signal: req.signal,
             body: pipe(

@@ -12,25 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Code, ConnectError } from "@connectrpc/connect";
+import { ConnectError, Code } from "@connectrpc/connect";
+import { create, createRegistry } from "@bufbuild/protobuf";
+import type { DescMessage, MessageShape } from "@bufbuild/protobuf";
 import {
-  Any,
-  createRegistry,
-  Message,
-  type MessageType,
-} from "@bufbuild/protobuf";
-import {
-  ConformancePayload_RequestInfo,
+  ErrorSchema as ConformanceErrorDesc,
+  HeaderSchema as ConformanceHeaderDesc,
+  ConformancePayload_RequestInfoSchema,
+} from "./gen/connectrpc/conformance/v1/service_pb.js";
+import type {
   Error as ConformanceError,
   Header as ConformanceHeader,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
-import {
+import { AnySchema, anyPack, anyUnpack } from "@bufbuild/protobuf/wkt";
+import type { Any } from "@bufbuild/protobuf/wkt";
+
+const detailsRegitry = createRegistry(ConformancePayload_RequestInfoSchema);
+import type {
   ClientCompatRequest,
   ClientResponseResult,
 } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
-
-const detailsRegistry = createRegistry(ConformancePayload_RequestInfo);
 
 export function getCancelTiming(compatRequest: ClientCompatRequest) {
   const def = {
@@ -70,20 +72,20 @@ export function getRequestHeaders(
 /**
  * Get a single request message for a conformance client call.
  */
-export function getSingleRequestMessage<T extends Message<T>>(
+export function getSingleRequestMessage<T extends DescMessage>(
   compatRequest: ClientCompatRequest,
-  type: MessageType<T>,
-): T {
+  desc: T,
+): MessageShape<T> {
   if (compatRequest.requestMessages.length !== 1) {
     throw new Error(
       `Expected exactly one request_message in ClientCompatRequest, found ${compatRequest.requestMessages.length}`,
     );
   }
   const any = compatRequest.requestMessages[0];
-  const target = new type();
-  if (!any.unpackTo(target)) {
+  const target = anyUnpack(any, desc);
+  if (!target) {
     throw new Error(
-      `Could not unpack request_message from ClientCompatRequest into ${type.typeName}`,
+      `Could not unpack request_message from ClientCompatRequest into ${desc.typeName}`,
     );
   }
   return target;
@@ -92,15 +94,15 @@ export function getSingleRequestMessage<T extends Message<T>>(
 /**
  * Get a request messages for a conformance client call.
  */
-export function* getRequestMessages<T extends Message<T>>(
+export function* getRequestMessages<T extends DescMessage>(
   compatRequest: ClientCompatRequest,
-  type: MessageType<T>,
-): Iterable<T> {
+  desc: T,
+): Iterable<MessageShape<T>> {
   for (const any of compatRequest.requestMessages) {
-    const target = new type();
-    if (!any.unpackTo(target)) {
+    const target = anyUnpack(any, desc);
+    if (!target) {
       throw new Error(
-        `Could not unpack request_message from ClientCompatRequest into ${type.typeName}`,
+        `Could not unpack request_message from ClientCompatRequest into ${desc.typeName}`,
       );
     }
     yield target;
@@ -135,11 +137,11 @@ export function connectErrorFromProto(err: ConformanceError) {
     err.code as unknown as Code,
     undefined,
     err.details.map((d) => {
-      const m = d.unpack(detailsRegistry);
+      const m = anyUnpack(d, detailsRegitry);
       if (m === undefined) {
         throw new Error(`Cannot unpack ${d.typeUrl}`);
       }
-      return m;
+      return { desc: ConformancePayload_RequestInfoSchema, value: m };
     }),
   );
 }
@@ -150,18 +152,18 @@ export function convertToProtoError(err: ConnectError | undefined) {
   }
   const details: Any[] = [];
   for (const detail of err.details) {
-    if (detail instanceof Message) {
-      details.push(Any.pack(detail));
+    if ("desc" in detail) {
+      details.push(anyPack(detail.desc, create(detail.desc, detail.value)));
     } else {
       details.push(
-        new Any({
+        create(AnySchema, {
           typeUrl: "type.googleapis.com/" + detail.type,
           value: detail.value,
         }),
       );
     }
   }
-  return new ConformanceError({
+  return create(ConformanceErrorDesc, {
     code: err.code as unknown as ConformanceCode,
     message: err.rawMessage,
     details,
@@ -172,7 +174,7 @@ export function convertToProtoHeaders(headers: Headers): ConformanceHeader[] {
   const result: ConformanceHeader[] = [];
   headers.forEach((value, key) => {
     result.push(
-      new ConformanceHeader({
+      create(ConformanceHeaderDesc, {
         name: key,
         value: [value],
       }),

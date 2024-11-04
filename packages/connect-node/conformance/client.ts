@@ -13,14 +13,15 @@
 // limitations under the License.
 
 import {
-  ClientCompatRequest,
-  ClientCompatResponse,
-  ClientErrorResult,
   invokeWithPromiseClient,
+  ClientCompatRequestSchema,
+  ClientCompatResponseSchema,
+  ClientErrorResultSchema,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
+import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 
 void main();
 
@@ -32,8 +33,8 @@ void main();
  */
 async function main() {
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
-    const req = ClientCompatRequest.fromBinary(next);
-    const res = new ClientCompatResponse({
+    const req = fromBinary(ClientCompatRequestSchema, next);
+    const res = create(ClientCompatResponseSchema, {
       testName: req.testName,
     });
     try {
@@ -45,9 +46,13 @@ async function main() {
     } catch (e) {
       res.result = {
         case: "error",
-        value: new ClientErrorResult({ message: (e as Error).message }),
+        value: create(ClientErrorResultSchema, {
+          message: (e as Error).message,
+        }),
       };
     }
-    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+    process.stdout.write(
+      writeSizeDelimitedBuffer(toBinary(ClientCompatResponseSchema, res)),
+    );
   }
 }

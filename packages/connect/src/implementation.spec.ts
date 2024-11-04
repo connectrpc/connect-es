@@ -12,25 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 import { createHandlerContext } from "./implementation.js";
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
+import { createServiceDesc } from "./descriptor-helper.spec.js";
 
-const TestService = {
+const TestService = createServiceDesc({
   typeName: "handwritten.TestService",
-  methods: {
+  method: {
     unary: {
-      name: "Unary",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
     },
   },
-} as const;
+});
 
 describe("createHandlerContext()", function () {
   const standardOptions = {
     service: TestService,
-    method: TestService.methods.unary,
+    method: TestService.method.unary,
     protocolName: "foo",
     requestMethod: "GET",
     url: "https://example.com/foo",
@@ -97,7 +97,7 @@ describe("createHandlerContext()", function () {
       ...standardOptions,
     });
     expect(ctx.service).toBe(TestService);
-    expect(ctx.method).toBe(TestService.methods.unary);
+    expect(ctx.method).toBe(TestService.method.unary);
     expect(ctx.protocolName).toBe("foo");
     expect(ctx.requestMethod).toBe("GET");
   });

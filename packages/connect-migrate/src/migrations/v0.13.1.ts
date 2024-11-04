@@ -18,11 +18,13 @@ import { MigrateError, MigrateSuccess, Migration } from "../migration";
 import { runInstall } from "../lib/run";
 import { writePackageJsonFile } from "../lib/package-json";
 import {
-  DependencyReplacement,
-  replaceDependencies,
-} from "../lib/replace-dependencies";
-import { updateSourceFile } from "../lib/update-source-file";
-import { migrateSourceFiles } from "../lib/migrate-source-files";
+  DependencyMigration,
+  migrateDependencies,
+} from "../lib/migrate-dependencies";
+import {
+  migrateSourceFiles,
+  updateSourceFile,
+} from "../lib/migrate-source-files";
 import { migratePackages } from "../lib/migrate-packages";
 import { migrateLockFiles } from "../lib/migrate-lock-files";
 
@@ -43,7 +45,7 @@ const oldPluginReplacement = {
     name: "@connectrpc/protoc-gen-connect-es",
     version: targetVersionConnectEs,
   },
-} satisfies DependencyReplacement;
+} satisfies DependencyMigration;
 
 /**
  * v0.9.0 dropped several exports from @bufbuild/connect-web that had
@@ -52,12 +54,12 @@ const oldPluginReplacement = {
  * Since this command cannot currently modify the imports accordingly,
  * it will abort the migration unless the --force flag is set.
  */
-const removedWebExportReplacement: DependencyReplacement = {
+const removedWebExportReplacement: DependencyMigration = {
   from: { name: "@bufbuild/connect-web", range: "<0.9.0" },
   to: { name: "@connectrpc/connect-web", version: targetVersionConnectEs },
 };
 
-export const dependencyReplacements: DependencyReplacement[] = [
+const dependencyMigrations: DependencyMigration[] = [
   oldPluginReplacement,
   removedWebExportReplacement,
   {
@@ -133,7 +135,7 @@ export const v0_13_1: Migration = {
   applicable(scanned: Scanned) {
     return scanned.packageFiles.some(
       ({ pkg }) =>
-        replaceDependencies(structuredClone(pkg), dependencyReplacements) !==
+        migrateDependencies(structuredClone(pkg), dependencyMigrations) !==
         null,
     );
   },
@@ -151,7 +153,7 @@ export const v0_13_1: Migration = {
       const oldPluginUsed = scanned.packageFiles
         .filter(
           ({ pkg }) =>
-            replaceDependencies(structuredClone(pkg), [
+            migrateDependencies(structuredClone(pkg), [
               oldPluginReplacement,
             ]) !== null,
         )
@@ -167,7 +169,7 @@ export const v0_13_1: Migration = {
       const removedWebExportsUsed = scanned.packageFiles
         .filter(
           ({ pkg }) =>
-            replaceDependencies(structuredClone(pkg), [
+            migrateDependencies(structuredClone(pkg), [
               removedWebExportReplacement,
             ]) !== null,
         )
@@ -192,7 +194,7 @@ export const v0_13_1: Migration = {
 
     const { updatedPackageFiles } = migratePackages(
       scanned,
-      dependencyReplacements,
+      dependencyMigrations,
       print,
       writePackageJsonFileFn,
     );

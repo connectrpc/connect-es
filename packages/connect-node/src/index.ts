@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Polyfill the Headers API for Node versions < 18
-import "./node-headers-polyfill.js";
-
 export { createGrpcWebTransport } from "./grpc-web-transport.js";
 export type { GrpcWebTransportOptions } from "./grpc-web-transport.js";
 export { createGrpcTransport } from "./grpc-transport.js";

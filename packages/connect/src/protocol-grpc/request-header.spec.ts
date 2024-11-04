@@ -48,6 +48,17 @@ describe("requestHeader", () => {
     expect(headers.get("Grpc-Timeout")).toBe("10m");
   });
 
+  it("should create request headers with user provided user-agent", () => {
+    const headers = requestHeader(true, 10, { "User-Agent": "grpc-es/0.0.0" });
+    expect(listHeaderKeys(headers)).toEqual([
+      "content-type",
+      "grpc-timeout",
+      "te",
+      "user-agent",
+    ]);
+    expect(headers.get("User-Agent")).toBe("grpc-es/0.0.0");
+  });
+
   it("should create request headers with compression", () => {
     const compressionMock: Compression = {
       name: "gzip",

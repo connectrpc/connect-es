@@ -13,10 +13,11 @@
 // limitations under the License.
 
 import type {
-  AnyMessage,
-  Message,
-  MethodInfo,
-  ServiceType,
+  DescMessage,
+  DescService,
+  MessageShape,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import type { ContextValues } from "./context-values.js";
 
@@ -64,9 +65,9 @@ type AnyFn = (
  * single input message.
  */
 export interface UnaryRequest<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
-> extends RequestCommon<I, O> {
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
+> extends RequestCommon {
   /**
    * The `stream` property discriminates between UnaryRequest and
    * StreamingRequest.
@@ -76,7 +77,12 @@ export interface UnaryRequest<
   /**
    * The input message that will be transmitted.
    */
-  readonly message: I;
+  readonly message: MessageShape<I>;
+
+  /**
+   * Metadata related to the service method that is being called.
+   */
+  readonly method: DescMethodUnary<I, O>;
 }
 
 /**
@@ -84,9 +90,9 @@ export interface UnaryRequest<
  * a single output message.
  */
 export interface UnaryResponse<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
-> extends ResponseCommon<I, O> {
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
+> extends ResponseCommon {
   /**
    * The `stream` property discriminates between UnaryResponse and
    * StreamingConn.
@@ -96,7 +102,12 @@ export interface UnaryResponse<
   /**
    * The received output message.
    */
-  readonly message: O;
+  readonly message: MessageShape<O>;
+
+  /**
+   * Metadata related to the service method that is being called.
+   */
+  readonly method: DescMethodUnary<I, O>;
 }
 
 /**
@@ -104,9 +115,9 @@ export interface UnaryResponse<
  * zero or more input messages, and zero or more output messages.
  */
 export interface StreamRequest<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
-> extends RequestCommon<I, O> {
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
+> extends RequestCommon {
   /**
    * The `stream` property discriminates between UnaryRequest and
    * StreamingRequest.
@@ -116,7 +127,12 @@ export interface StreamRequest<
   /**
    * The input messages that will be transmitted.
    */
-  readonly message: AsyncIterable<I>;
+  readonly message: AsyncIterable<MessageShape<I>>;
+
+  /**
+   * Metadata related to the service method that is being called.
+   */
+  readonly method: DescMethodStreaming<I, O>;
 }
 
 /**
@@ -124,9 +140,9 @@ export interface StreamRequest<
  * zero or more input messages, and zero or more output messages.
  */
 export interface StreamResponse<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
-> extends ResponseCommon<I, O> {
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
+> extends ResponseCommon {
   /**
    * The `stream` property discriminates between UnaryResponse and
    * StreamingConn.
@@ -136,30 +152,34 @@ export interface StreamResponse<
   /**
    * The output messages.
    */
-  readonly message: AsyncIterable<O>;
-}
-
-interface RequestCommon<I extends Message<I>, O extends Message<O>> {
-  /**
-   * Metadata related to the service that is being called.
-   */
-  readonly service: ServiceType;
+  readonly message: AsyncIterable<MessageShape<O>>;
 
   /**
    * Metadata related to the service method that is being called.
    */
-  readonly method: MethodInfo<I, O>;
+  readonly method: DescMethodStreaming<I, O>;
+}
+
+/**
+ * @private
+ */
+export interface RequestCommon {
+  /**
+   * Metadata related to the service that is being called.
+   */
+  readonly service: DescService;
+
+  /**
+   * HTTP method of the request. Server-side interceptors may use this value
+   * to identify Connect GET requests.
+   */
+  readonly requestMethod: string;
 
   /**
    * The URL the request is going to hit for the clients or the
    * URL received by the server.
    */
   readonly url: string;
-
-  /**
-   * Optional parameters to the fetch API.
-   */
-  readonly init: Exclude<RequestInit, "body" | "headers" | "signal">;
 
   /**
    * The AbortSignal for the current call.
@@ -177,16 +197,14 @@ interface RequestCommon<I extends Message<I>, O extends Message<O>> {
   readonly contextValues: ContextValues;
 }
 
-interface ResponseCommon<I extends Message<I>, O extends Message<O>> {
+/**
+ * @private
+ */
+export interface ResponseCommon {
   /**
    * Metadata related to the service that is being called.
    */
-  readonly service: ServiceType;
-
-  /**
-   * Metadata related to the service method that is being called.
-   */
-  readonly method: MethodInfo<I, O>;
+  readonly service: DescService;
 
   /**
    * Headers received from the response.

@@ -12,28 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { valid, validRange } from "semver";
 import {
   targetVersionConnectEs,
   targetVersionConnectQuery,
-  dependencyReplacements,
   v0_13_1,
 } from "./v0.13.1";
 import { PackageJson } from "../lib/package-json";
 import { MigrateOptions } from "../migration";
 
-describe("dependencyReplacements", function () {
-  dependencyReplacements.forEach((r, index) => {
-    describe(`dependencyReplacements.${index}`, function () {
-      it("should have valid range and version", () => {
-        expect(validRange(r.from.range)).not.toBeNull();
-        expect(valid(r.to.version)).not.toBeNull();
-      });
-    });
-  });
-});
-
-describe("migration", function () {
+describe("migration to v0.13.1", function () {
   const packageJsonWritten: { path: string; pkg: PackageJson }[] = [];
   const lockFilesUpdated: string[] = [];
   let opt: MigrateOptions;
@@ -46,6 +33,7 @@ describe("migration", function () {
         lockFiles: ["package-lock.json"],
         sourceFiles: [],
         packageFiles: [],
+        bufGenYamlFiles: [],
       },
       args: {
         ok: true,

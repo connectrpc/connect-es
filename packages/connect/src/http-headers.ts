@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { fromBinary, toBinary } from "@bufbuild/protobuf";
 import type {
-  Message,
   BinaryReadOptions,
-  MessageType,
+  DescMessage,
+  Message,
+  MessageShape,
 } from "@bufbuild/protobuf";
-import { protoBase64 } from "@bufbuild/protobuf";
+import { base64Encode, base64Decode } from "@bufbuild/protobuf/wire";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 
@@ -30,18 +32,26 @@ import { Code } from "./code.js";
  * with unpadded base64 and returns a string that can be used for
  * a header whose name ends with `-bin`.
  */
+export function encodeBinaryHeader(value: Message, desc: DescMessage): string;
 export function encodeBinaryHeader(
-  value: Uint8Array | ArrayBufferLike | Message | string,
+  value: Uint8Array | ArrayBufferLike | string,
+): string;
+export function encodeBinaryHeader(
+  value: Uint8Array | ArrayBufferLike | string | Message,
+  desc?: DescMessage,
 ): string {
   let bytes: Uint8Array;
-  if (typeof value == "object" && "getType" in value) {
-    bytes = value.toBinary();
+  if (desc !== undefined) {
+    bytes = toBinary(desc, value as Message);
   } else if (typeof value == "string") {
     bytes = new TextEncoder().encode(value);
   } else {
-    bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
+    bytes =
+      value instanceof Uint8Array
+        ? value
+        : new Uint8Array(value as ArrayBufferLike);
   }
-  return protoBase64.enc(bytes).replace(/=+$/, "");
+  return base64Encode(bytes, "std_raw");
 }
 
 /**
@@ -63,20 +73,20 @@ export function encodeBinaryHeader(
  * DataLoss.
  */
 export function decodeBinaryHeader(value: string): Uint8Array;
-export function decodeBinaryHeader<T extends Message<T>>(
+export function decodeBinaryHeader<Desc extends DescMessage>(
   value: string,
-  type: MessageType<T>,
+  type: Desc,
   options?: Partial<BinaryReadOptions>,
-): T;
-export function decodeBinaryHeader<T extends Message<T>>(
+): MessageShape<Desc>;
+export function decodeBinaryHeader<Desc extends DescMessage>(
   value: string,
-  type?: MessageType<T>,
+  desc?: Desc,
   options?: Partial<BinaryReadOptions>,
-): Uint8Array | T {
+): Uint8Array | MessageShape<Desc> {
   try {
-    const bytes = protoBase64.dec(value);
-    if (type) {
-      return type.fromBinary(bytes, options);
+    const bytes = base64Decode(value);
+    if (desc) {
+      return fromBinary(desc, bytes, options);
     }
     return bytes;
   } catch (e) {

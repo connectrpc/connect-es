@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
+import type { DescMethod } from "@bufbuild/protobuf";
 
 /**
  * Create a URL for the given RPC. This simply adds the qualified
@@ -31,10 +31,9 @@ import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
  */
 export function createMethodUrl(
   baseUrl: string | URL,
-  service: ServiceType | string,
-  method: MethodInfo | string,
+  method: DescMethod,
 ): string {
-  const s = typeof service == "string" ? service : service.typeName;
-  const m = typeof method == "string" ? method : method.name;
-  return baseUrl.toString().replace(/\/?$/, `/${s}/${m}`);
+  return baseUrl
+    .toString()
+    .replace(/\/?$/, `/${method.parent.typeName}/${method.name}`);
 }

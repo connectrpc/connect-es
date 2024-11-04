@@ -13,11 +13,10 @@
 // limitations under the License.
 
 import type {
-  AnyMessage,
-  Message,
-  MethodInfo,
-  PartialMessage,
-  ServiceType,
+  DescMessage,
+  MessageInitShape,
+  DescMethodStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import type { StreamResponse, UnaryResponse } from "./interceptor.js";
 import type { ContextValues } from "./context-values.js";
@@ -32,13 +31,12 @@ export interface Transport {
    * Call a unary RPC - a method that takes a single input message, and
    * responds with a single output message.
    */
-  unary<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
-    service: ServiceType,
-    method: MethodInfo<I, O>,
+  unary<I extends DescMessage, O extends DescMessage>(
+    method: DescMethodUnary<I, O>,
     signal: AbortSignal | undefined,
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
-    input: PartialMessage<I>,
+    input: MessageInitShape<I>,
     contextValues?: ContextValues,
   ): Promise<UnaryResponse<I, O>>;
 
@@ -46,13 +44,12 @@ export interface Transport {
    * Call a streaming RPC - a method that takes zero or more input messages,
    * and responds with zero or more output messages.
    */
-  stream<I extends Message<I> = AnyMessage, O extends Message<O> = AnyMessage>(
-    service: ServiceType,
-    method: MethodInfo<I, O>,
+  stream<I extends DescMessage, O extends DescMessage>(
+    method: DescMethodStreaming<I, O>,
     signal: AbortSignal | undefined,
     timeoutMs: number | undefined,
     header: HeadersInit | undefined,
-    input: AsyncIterable<PartialMessage<I>>,
+    input: AsyncIterable<MessageInitShape<I>>,
     contextValues?: ContextValues,
   ): Promise<StreamResponse<I, O>>;
 }

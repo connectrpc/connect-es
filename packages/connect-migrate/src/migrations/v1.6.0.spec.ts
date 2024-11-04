@@ -29,6 +29,7 @@ describe("migration", function () {
         lockFiles: ["package-lock.json"],
         sourceFiles: [],
         packageFiles: [],
+        bufGenYamlFiles: [],
       },
       args: {
         ok: true,
@@ -80,8 +81,6 @@ describe("migration", function () {
       ];
       expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
     });
-  });
-  describe("should not be applicable", function () {
     it("before 1.6.0", () => {
       opt.scanned.packageFiles = [
         {
@@ -93,8 +92,10 @@ describe("migration", function () {
           },
         },
       ];
-      expect(v1_6_0.applicable(opt.scanned)).toBeFalse();
+      expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
     });
+  });
+  describe("should not be applicable", function () {
     it("from 2.0.0", () => {
       opt.scanned.packageFiles = [
         {

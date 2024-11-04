@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CommitServicePromiseClient } from "./buf/registry/module/v1/commit_service_grpc_web_pb.js";
-import { GetCommitsRequest, ListCommitsRequest } from "./buf/registry/module/v1/commit_service_pb.js";
-import { DownloadServicePromiseClient } from "./buf/registry/module/v1/download_service_grpc_web_pb.js";
-import { DownloadRequest } from "./buf/registry/module/v1/download_service_pb.js";
-import { GraphServicePromiseClient } from "./buf/registry/module/v1/graph_service_grpc_web_pb.js";
-import { GetGraphRequest } from "./buf/registry/module/v1/graph_service_pb.js";
+import { CommitServicePromiseClient } from "./buf/registry/module/v1/commit_service_grpc_web_pb";
+import { GetCommitsRequest, ListCommitsRequest } from "./buf/registry/module/v1/commit_service_pb";
+import { DownloadServicePromiseClient } from "./buf/registry/module/v1/download_service_grpc_web_pb";
+import { DownloadRequest } from "./buf/registry/module/v1/download_service_pb";
+import { GraphServicePromiseClient } from "./buf/registry/module/v1/graph_service_grpc_web_pb";
+import { GetGraphRequest } from "./buf/registry/module/v1/graph_service_pb";
 
 /* eslint-disable no-console */
 

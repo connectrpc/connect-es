@@ -723,22 +723,19 @@ function ready(
       options.pingIntervalMs = options.pingIntervalMs * 2;
       receivedGoAwayEnhanceYourCalmTooManyPings = true;
     }
-    if (errorCode === http2.constants.NGHTTP2_NO_ERROR) {
-      const nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
-      // Node.js v16 closes a connection on its own when it receives a GOAWAY
+    if (errorCode === http2.constants.NGHTTP2_NO_ERROR && streamCount == 0) {
+      // Node.js v16 closes the connection on its own when it receives a GOAWAY
       // frame and there are no open streams (emitting a "close" event and
-      // destroying the session), but more recent versions do not.
+      // destroying the session), but later versions do not.
       // Calling close() ourselves is ineffective here - it appears that the
       // method is already being called, see https://github.com/nodejs/node/blob/198affc63973805ce5102d246f6b7822be57f5fc/lib/internal/http2/core.js#L681
-      if (streamCount == 0 && nodeMajor >= 18) {
-        conn.destroy(
-          new ConnectError(
-            "received GOAWAY without any open streams",
-            Code.Canceled,
-          ),
-          http2.constants.NGHTTP2_NO_ERROR,
-        );
-      }
+      conn.destroy(
+        new ConnectError(
+          "received GOAWAY without any open streams",
+          Code.Canceled,
+        ),
+        http2.constants.NGHTTP2_NO_ERROR,
+      );
     }
   }
 

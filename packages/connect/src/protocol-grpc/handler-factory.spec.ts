@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MethodInfo, ServiceType } from "@bufbuild/protobuf";
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
+import { create, toBinary, type DescMethod } from "@bufbuild/protobuf";
 import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
 import type { UniversalHandlerOptions } from "../protocol/index.js";
@@ -29,34 +28,32 @@ import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
 import { Code, ConnectError } from "../index.js";
 import { contentTypeProto } from "./content-type.js";
+import { createServiceDesc } from "../descriptor-helper.spec.js";
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
 describe("createHandlerFactory()", function () {
-  const testService = {
+  const testService = createServiceDesc({
     typeName: "TestService",
-    methods: {
+    method: {
       unary: {
-        name: "Unary",
-        I: Int32Value,
-        O: StringValue,
-        kind: MethodKind.Unary,
+        input: Int32ValueSchema,
+        output: StringValueSchema,
+        methodKind: "unary",
       },
       serverStreaming: {
-        name: "ServerStreaming",
-        I: Int32Value,
-        O: StringValue,
-        kind: MethodKind.ServerStreaming,
+        input: Int32ValueSchema,
+        output: StringValueSchema,
+        methodKind: "server_streaming",
       },
     },
-  } satisfies ServiceType;
+  });
 
-  function setupTestHandler<M extends MethodInfo>(
+  function setupTestHandler<M extends DescMethod>(
     method: M,
     opt: Partial<UniversalHandlerOptions>,
     impl: MethodImpl<M>,
   ) {
-    const h = createHandlerFactory(opt)(
-      createMethodImplSpec(testService, method, impl),
-    );
+    const h = createHandlerFactory(opt)(createMethodImplSpec(method, impl));
     const t = createTransport({
       httpClient: createUniversalHandlerClient([h]),
       baseUrl: "https://example.com",
@@ -69,7 +66,6 @@ describe("createHandlerFactory()", function () {
       sendCompression: null,
     });
     return {
-      service: testService,
       method: method,
       handler: h,
       transport: t,
@@ -78,8 +74,8 @@ describe("createHandlerFactory()", function () {
 
   describe("returned handler", function () {
     it("should surface headers for unary", async function () {
-      const { transport, service, method } = setupTestHandler(
-        testService.methods.unary,
+      const { transport, method } = setupTestHandler(
+        testService.method.unary,
         {},
         (req, ctx) => {
           ctx.responseHeader.set("implementation-called", "yes");
@@ -87,20 +83,19 @@ describe("createHandlerFactory()", function () {
         },
       );
       const r = await transport.unary(
-        service,
         method,
         undefined,
         undefined,
         undefined,
-        new Int32Value({ value: 123 }),
+        create(Int32ValueSchema, { value: 123 }),
       );
       expect(r.header.get("implementation-called")).toBe("yes");
       expect(r.message.value).toBe("123");
     });
 
     it("should surface headers for server-streaming", async function () {
-      const { transport, service, method } = setupTestHandler(
-        testService.methods.serverStreaming,
+      const { transport, method } = setupTestHandler(
+        testService.method.serverStreaming,
         {},
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, ctx) {
@@ -109,12 +104,11 @@ describe("createHandlerFactory()", function () {
         },
       );
       const r = await transport.stream(
-        service,
         method,
         undefined,
         undefined,
         undefined,
-        createAsyncIterable([new Int32Value({ value: 123 })]),
+        createAsyncIterable([create(Int32ValueSchema, { value: 123 })]),
       );
       expect(r.header.get("implementation-called")).toBe("yes");
       const all = await pipeTo(r.message, sinkAll());
@@ -127,7 +121,7 @@ describe("createHandlerFactory()", function () {
       let abortResolve: () => void;
       const abortCalled = new Promise<void>((r) => (abortResolve = r));
       const { handler } = setupTestHandler(
-        testService.methods.serverStreaming,
+        testService.method.serverStreaming,
         {},
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, { signal }) {
@@ -149,7 +143,10 @@ describe("createHandlerFactory()", function () {
           "content-type": contentTypeProto,
         }),
         body: createAsyncIterable([
-          encodeEnvelope(0, new Int32Value({ value: 1 }).toBinary()),
+          encodeEnvelope(
+            0,
+            toBinary(Int32ValueSchema, create(Int32ValueSchema, { value: 1 })),
+          ),
         ]),
         signal: new AbortController().signal,
       });
@@ -167,8 +164,8 @@ describe("createHandlerFactory()", function () {
     it("should trigger handler context signal", async function () {
       const timeoutMs = 1;
       let handlerContextSignal: AbortSignal | undefined;
-      const { handler, service, method } = setupTestHandler(
-        testService.methods.unary,
+      const { handler, method } = setupTestHandler(
+        testService.method.unary,
         {},
         async (req, ctx) => {
           handlerContextSignal = ctx.signal;
@@ -181,7 +178,7 @@ describe("createHandlerFactory()", function () {
       await handler({
         httpVersion: "2.0",
         method: "POST",
-        url: `https://example.com/${service.typeName}/${method.name}`,
+        url: `https://example.com/${method.parent.typeName}/${method.name}`,
         header: requestHeader(true, timeoutMs, undefined),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: new AbortController().signal,
@@ -198,24 +195,23 @@ describe("createHandlerFactory()", function () {
         const maxTimeoutMs = 1000;
         const timeoutMs = 2000;
         let implementationCalled = false;
-        const { transport, service, method } = setupTestHandler(
-          testService.methods.unary,
+        const { transport, method } = setupTestHandler(
+          testService.method.unary,
           {
             maxTimeoutMs,
           },
           async () => {
             implementationCalled = true;
-            return Promise.resolve(new StringValue());
+            return Promise.resolve(create(StringValueSchema));
           },
         );
         try {
           await transport.unary(
-            service,
             method,
             undefined,
             timeoutMs,
             undefined,
-            new Int32Value(),
+            create(Int32ValueSchema),
           );
           fail("expected error");
         } catch (e) {
@@ -234,8 +230,8 @@ describe("createHandlerFactory()", function () {
   describe("shutdown", function () {
     it("should raise the abort reason", async function () {
       const shutdown = new AbortController();
-      const { transport, service, method } = setupTestHandler(
-        testService.methods.unary,
+      const { transport, method } = setupTestHandler(
+        testService.method.unary,
         {
           shutdownSignal: shutdown.signal,
         },
@@ -243,17 +239,16 @@ describe("createHandlerFactory()", function () {
           shutdown.abort(new ConnectError("shutting down", Code.Unavailable));
           expect(ctx.signal.aborted).toBeTrue();
           ctx.signal.throwIfAborted();
-          return Promise.resolve(new StringValue());
+          return Promise.resolve(create(StringValueSchema));
         },
       );
       try {
         await transport.unary(
-          service,
           method,
           undefined,
           undefined,
           undefined,
-          new Int32Value(),
+          create(Int32ValueSchema),
         );
         fail("expected error");
       } catch (e) {
@@ -268,8 +263,8 @@ describe("createHandlerFactory()", function () {
   describe("request abort signal", function () {
     it("should trigger handler context signal", async function () {
       let handlerContextSignal: AbortSignal | undefined;
-      const { handler, service, method } = setupTestHandler(
-        testService.methods.unary,
+      const { handler, method } = setupTestHandler(
+        testService.method.unary,
         {},
         async (req, ctx) => {
           handlerContextSignal = ctx.signal;
@@ -283,7 +278,7 @@ describe("createHandlerFactory()", function () {
       const resPromise = handler({
         httpVersion: "2.0",
         method: "POST",
-        url: `https://example.com/${service.typeName}/${method.name}`,
+        url: `https://example.com/${method.parent.typeName}/${method.name}`,
         header: requestHeader(true, undefined, undefined),
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: ac.signal,

@@ -13,25 +13,24 @@
 // limitations under the License.
 
 import { makeAnyClient } from "./any-client.js";
-import { Empty, MethodKind, Struct } from "@bufbuild/protobuf";
+import { EmptySchema, StructSchema } from "@bufbuild/protobuf/wkt";
+import { createServiceDesc } from "./descriptor-helper.spec.js";
 
 describe("makeAnyClient()", () => {
-  const TestService = {
+  const TestService = createServiceDesc({
     typeName: "handwritten.TestService",
-    methods: {
+    method: {
       foo: {
-        name: "Foo",
-        I: Empty,
-        O: Struct,
-        kind: MethodKind.Unary,
+        methodKind: "unary",
+        input: EmptySchema,
+        output: StructSchema,
       },
     },
-  } as const;
-
+  });
   it("works as expected", () => {
     const client = makeAnyClient(TestService, (method) => {
       return function (): string {
-        return `This is method ${method.name} of service ${method.service.typeName}. It takes a ${method.I.typeName} as input and returns a ${method.O.typeName}.`;
+        return `This is method ${method.name} of service ${method.parent.typeName}. It takes a ${method.input.typeName} as input and returns a ${method.output.typeName}.`;
       };
     });
     const result = client.foo(); // eslint-disable-line

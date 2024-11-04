@@ -12,18 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createCallbackClient, ConnectError, Code } from "@connectrpc/connect";
-import type { CallbackClient, Transport } from "@connectrpc/connect";
+import { create } from "@bufbuild/protobuf";
 import {
-  ClientCompatRequest,
-  ClientResponseResult,
+  createCallbackClient,
+  ConnectError,
+  Code,
+  type CallOptions,
+  type CallbackClient,
+  type Transport,
+} from "@connectrpc/connect";
+import {
+  ClientResponseResultSchema,
+  type ClientCompatRequest,
+  type ClientResponseResult,
 } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
-  UnaryRequest,
-  ServerStreamRequest,
-  UnimplementedRequest,
-  IdempotentUnaryRequest,
-  ConformancePayload,
+  UnaryRequestSchema,
+  ServerStreamRequestSchema,
+  UnimplementedRequestSchema,
+  IdempotentUnaryRequestSchema,
+  ConformanceService,
+  ConformancePayloadSchema,
+  type UnaryResponse,
+  type IdempotentUnaryResponse,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   convertToProtoError,
@@ -34,11 +45,10 @@ import {
   getSingleRequestMessage,
   setClientErrorResult,
 } from "./protocol.js";
-import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
 
 type ConformanceClient = CallbackClient<typeof ConformanceService>;
 
-const emptyPayload = new ConformancePayload();
+const emptyPayload = create(ConformancePayloadSchema);
 
 export function invokeWithCallbackClient(
   transport: Transport,
@@ -47,13 +57,13 @@ export function invokeWithCallbackClient(
   const client = createCallbackClient(ConformanceService, transport);
 
   switch (req.method) {
-    case ConformanceService.methods.unary.name:
+    case ConformanceService.method.unary.name:
       return unary(client, req);
-    case ConformanceService.methods.idempotentUnary.name:
+    case ConformanceService.method.idempotentUnary.name:
       return unary(client, req, true);
-    case ConformanceService.methods.serverStream.name:
+    case ConformanceService.method.serverStream.name:
       return serverStream(client, req);
-    case ConformanceService.methods.unimplemented.name:
+    case ConformanceService.method.unimplemented.name:
       return unimplemented(client, req);
     default:
       throw new Error(`Unknown method: ${req.method}`);
@@ -66,39 +76,46 @@ async function unary(
   idempotent: boolean = false,
 ) {
   await wait(compatRequest.requestDelayMs);
-  const result = new ClientResponseResult();
+  const result = create(ClientResponseResultSchema);
   return new Promise<ClientResponseResult>((resolve) => {
-    const call = idempotent ? client.idempotentUnary : client.unary;
+    const callOptions: CallOptions = {
+      headers: getRequestHeaders(compatRequest),
+      onHeader(headers) {
+        result.responseHeaders = convertToProtoHeaders(headers);
+      },
+      onTrailer(trailers) {
+        result.responseTrailers = convertToProtoHeaders(trailers);
+      },
+    };
     let clientCancelled = false;
-    const clientCancelFn = call(
-      getSingleRequestMessage(
-        compatRequest,
-        idempotent ? IdempotentUnaryRequest : UnaryRequest,
-      ),
-      (err, response) => {
-        // Callback clients swallow client triggered cancellations and never
-        // call the callback. This will trigger the global error handler and
-        // fail the process.
-        if (clientCancelled) {
-          throw new Error("Aborted requests should not trigger the callback");
-        }
-        if (err !== undefined) {
-          setClientErrorResult(result, err);
-        } else {
-          result.payloads.push(response.payload ?? emptyPayload);
-        }
-        resolve(result);
-      },
-      {
-        headers: getRequestHeaders(compatRequest),
-        onHeader(headers) {
-          result.responseHeaders = convertToProtoHeaders(headers);
-        },
-        onTrailer(trailers) {
-          result.responseTrailers = convertToProtoHeaders(trailers);
-        },
-      },
-    );
+    const callback = (
+      error: ConnectError | undefined,
+      response: UnaryResponse | IdempotentUnaryResponse,
+    ): void => {
+      // Callback clients swallow client triggered cancellations and never
+      // call the callback. This will trigger the global error handler and
+      // fail the process.
+      if (clientCancelled) {
+        throw new Error("Aborted requests should not trigger the callback");
+      }
+      if (error !== undefined) {
+        setClientErrorResult(result, error);
+      } else {
+        result.payloads.push(response.payload ?? emptyPayload);
+      }
+      resolve(result);
+    };
+    const clientCancelFn = idempotent
+      ? client.idempotentUnary(
+          getSingleRequestMessage(compatRequest, IdempotentUnaryRequestSchema),
+          callback,
+          callOptions,
+        )
+      : client.unary(
+          getSingleRequestMessage(compatRequest, UnaryRequestSchema),
+          callback,
+          callOptions,
+        );
     const { afterCloseSendMs } = getCancelTiming(compatRequest);
     if (afterCloseSendMs >= 0) {
       setTimeout(() => {
@@ -122,11 +139,11 @@ async function serverStream(
 ) {
   const cancelTiming = getCancelTiming(compatRequest);
   await wait(compatRequest.requestDelayMs);
-  const result = new ClientResponseResult();
+  const result = create(ClientResponseResultSchema);
   return new Promise<ClientResponseResult>((resolve) => {
     let clientCancelled = false;
     const clientCancelFn = client.serverStream(
-      getSingleRequestMessage(compatRequest, ServerStreamRequest),
+      getSingleRequestMessage(compatRequest, ServerStreamRequestSchema),
       (response) => {
         result.payloads.push(response.payload ?? emptyPayload);
         if (result.payloads.length === cancelTiming.afterNumResponses) {
@@ -176,10 +193,10 @@ async function unimplemented(
   client: ConformanceClient,
   compatRequest: ClientCompatRequest,
 ) {
-  const result = new ClientResponseResult();
+  const result = create(ClientResponseResultSchema);
   return new Promise<ClientResponseResult>((resolve) => {
     client.unimplemented(
-      getSingleRequestMessage(compatRequest, UnimplementedRequest),
+      getSingleRequestMessage(compatRequest, UnimplementedRequestSchema),
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       (err, _) => {
         if (err !== undefined) {

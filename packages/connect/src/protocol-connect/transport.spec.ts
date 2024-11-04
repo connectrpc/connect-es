@@ -12,14 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Int32Value,
-  MethodIdempotency,
-  MethodKind,
-  proto3,
-  ScalarType,
-  StringValue,
-} from "@bufbuild/protobuf";
+import { create, isMessage, toBinary } from "@bufbuild/protobuf";
 import type {
   UniversalClientFn,
   UniversalClientRequest,
@@ -43,43 +36,47 @@ import { errorToJsonBytes } from "./error-json.js";
 import { createHandlerFactory } from "./handler-factory.js";
 import { createMethodImplSpec } from "../implementation.js";
 import { createUniversalHandlerClient } from "../protocol/index.js";
+import { createServiceDesc } from "../descriptor-helper.spec.js";
+import type { StringValue } from "@bufbuild/protobuf/wkt";
+import {
+  ApiSchema,
+  Int32ValueSchema,
+  MethodOptions_IdempotencyLevel,
+  MethodSchema,
+  StringValueSchema,
+} from "@bufbuild/protobuf/wkt";
 
-const TestService = {
+const TestService = createServiceDesc({
   typeName: "TestService",
-  methods: {
+  method: {
     unary: {
-      name: "Unary",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
     },
     unaryNoSideEffects: {
-      name: "UnaryNoSideEffects",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
-      idempotency: MethodIdempotency.NoSideEffects,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
+      idempotency: MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS,
     },
     server: {
-      name: "Server",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ServerStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "server_streaming",
     },
     client: {
-      name: "Client",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ClientStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "client_streaming",
     },
     biDi: {
-      name: "BiDi",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.BiDiStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "bidi_streaming",
     },
   },
-} as const;
+});
 
 describe("Connect transport", function () {
   const defaultTransportOptions = {
@@ -125,8 +122,7 @@ describe("Connect transport", function () {
         const t = getUnaryTransport({ contentType: contentTypeUnaryProto });
         try {
           await t.unary(
-            TestService,
-            TestService.methods.unary,
+            TestService.method.unary,
             undefined,
             undefined,
             undefined,
@@ -145,8 +141,7 @@ describe("Connect transport", function () {
         const t = getUnaryTransport({ contentType: contentTypeUnaryJson });
         try {
           await t.unary(
-            TestService,
-            TestService.methods.unary,
+            TestService.method.unary,
             undefined,
             undefined,
             undefined,
@@ -178,7 +173,13 @@ describe("Connect transport", function () {
               "Content-Type": contentTypeStreamProto,
             }),
             body: createAsyncIterable([
-              encodeEnvelope(0, new StringValue({ value: "abc" }).toBinary()),
+              encodeEnvelope(
+                0,
+                toBinary(
+                  StringValueSchema,
+                  create(StringValueSchema, { value: "abc" }),
+                ),
+              ),
               encodeEnvelope(
                 endStreamFlag,
                 createEndStreamSerialization({}).serialize({
@@ -194,8 +195,7 @@ describe("Connect transport", function () {
       });
       it("should cancel the HTTP request", async function () {
         const res = await t.stream(
-          TestService,
-          TestService.methods.server,
+          TestService.method.server,
           undefined,
           undefined,
           undefined,
@@ -223,7 +223,12 @@ describe("Connect transport", function () {
       header: new Headers({
         "Content-Type": contentTypeUnaryProto,
       }),
-      body: createAsyncIterable([new StringValue({ value: "abc" }).toBinary()]),
+      body: createAsyncIterable([
+        toBinary(
+          StringValueSchema,
+          create(StringValueSchema, { value: "abc" }),
+        ),
+      ]),
       trailer: new Headers(),
     };
     // eslint-disable-next-line @typescript-eslint/require-await
@@ -257,12 +262,11 @@ describe("Connect transport", function () {
           httpClient: expectPost,
         });
         await t.unary(
-          TestService,
-          TestService.methods.unaryNoSideEffects,
+          TestService.method.unaryNoSideEffects,
           undefined,
           undefined,
           undefined,
-          new Int32Value({ value: 123 }),
+          create(Int32ValueSchema, { value: 123 }),
         );
       });
     });
@@ -274,12 +278,11 @@ describe("Connect transport", function () {
           httpClient: expectGet,
         });
         await t.unary(
-          TestService,
-          TestService.methods.unaryNoSideEffects,
+          TestService.method.unaryNoSideEffects,
           undefined,
           undefined,
           undefined,
-          new Int32Value({ value: 123 }),
+          create(Int32ValueSchema, { value: 123 }),
         );
       });
       it("should issue POST for RPC with side effects", async function () {
@@ -289,57 +292,45 @@ describe("Connect transport", function () {
           httpClient: expectPost,
         });
         await t.unary(
-          TestService,
-          TestService.methods.unary,
+          TestService.method.unary,
           undefined,
           undefined,
           undefined,
-          new Int32Value({ value: 123 }),
+          create(Int32ValueSchema, { value: 123 }),
         );
       });
     });
   });
 
   describe("against server with new JSON field in response", function () {
-    const OldService = {
-      typeName: "OldService",
-      methods: {
+    const OldService = createServiceDesc({
+      typeName: "Service",
+      method: {
         unary: {
-          name: "Unary",
-          I: StringValue,
-          O: proto3.makeMessageType("TestMessage", [
-            { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
-          ]),
-          kind: MethodKind.Unary,
+          input: StringValueSchema,
+          output: ApiSchema,
+          methodKind: "unary",
         },
       },
-    } as const;
-    const NewService = {
-      typeName: "OldService",
-      methods: {
+    });
+    const NewService = createServiceDesc({
+      typeName: "Service",
+      method: {
         unary: {
-          name: "Unary",
-          I: StringValue,
-          O: proto3.makeMessageType("TestMessage", [
-            { no: 1, name: "a", kind: "scalar", T: ScalarType.STRING },
-            { no: 2, name: "b", kind: "scalar", T: ScalarType.STRING },
-          ]),
-          kind: MethodKind.Unary,
+          input: StringValueSchema,
+          output: MethodSchema,
+          methodKind: "unary",
         },
       },
-    } as const;
+    });
 
     const h = createHandlerFactory({})(
-      createMethodImplSpec(
-        NewService,
-        NewService.methods.unary,
-        (_req, ctx) => {
-          return new ctx.method.O({
-            a: "A",
-            b: "B",
-          });
-        },
-      ),
+      createMethodImplSpec(NewService.method.unary, () => {
+        return create(MethodSchema, {
+          name: "A",
+          responseStreaming: true,
+        });
+      }),
     );
     const httpClient = createUniversalHandlerClient([h]);
 
@@ -350,14 +341,13 @@ describe("Connect transport", function () {
         useBinaryFormat: false,
       });
       const res = await t.unary(
-        OldService,
-        OldService.methods.unary,
+        OldService.method.unary,
         undefined,
         undefined,
         undefined,
         {},
       );
-      expect(res.message).toBeInstanceOf(OldService.methods.unary.O);
+      expect(isMessage(res.message, OldService.method.unary.output)).toBeTrue();
     });
     it("should reject unknown field if explicitly asked for", async function () {
       const t = createTransport({
@@ -368,8 +358,7 @@ describe("Connect transport", function () {
       });
       try {
         await t.unary(
-          OldService,
-          OldService.methods.unary,
+          OldService.method.unary,
           undefined,
           undefined,
           undefined,
@@ -379,49 +368,43 @@ describe("Connect transport", function () {
       } catch (e) {
         expect(e).toBeInstanceOf(ConnectError);
         expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] cannot decode message TestMessage from JSON: key "b" is unknown',
+          '[invalid_argument] cannot decode message google.protobuf.Api from JSON: key "responseStreaming" is unknown',
         );
       }
     });
   });
-  // Special handling of set-cookie is available since Node.js v20.0.0,
-  // v18.14.1, v16.19.1, but not in headers-polyfill 3.1.2.
-  // Also see https://github.com/nodejs/undici/releases/tag/v5.19.0
-  if ("getSetCookie" in new Headers()) {
-    describe("when there is support for set-cookie", function () {
-      // eslint-disable-next-line @typescript-eslint/require-await
-      const setMultiValueHeaders: UniversalClientFn = async () => {
-        return {
-          status: 200,
-          header: new Headers({
-            "Content-Type": contentTypeUnaryProto,
-            "set-cookie": "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-            "Set-Cookie": "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-          }),
-          body: createAsyncIterable([
-            new StringValue({ value: "abc" }).toBinary(),
-          ]),
-          trailer: new Headers(),
-        };
+
+  describe("special handling of set-cookie", function () {
+    // Special handling of set-cookie is available since Node.js v22.0.0, v20.0.0, and v18.14.1.
+    // eslint-disable-next-line @typescript-eslint/require-await
+    const setMultiValueHeaders: UniversalClientFn = async () => {
+      return {
+        status: 200,
+        header: new Headers({
+          "Content-Type": contentTypeUnaryProto,
+          "set-cookie": "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+          "Set-Cookie": "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        }),
+        body: createAsyncIterable([]),
+        trailer: new Headers(),
       };
-      it("should produce the correct array of values in the response", async function () {
-        const t = createTransport({
-          ...defaultTransportOptions,
-          httpClient: setMultiValueHeaders,
-        });
-        const res = await t.unary(
-          TestService,
-          TestService.methods.unary,
-          undefined,
-          undefined,
-          undefined,
-          {},
-        );
-        expect(res.header.getSetCookie()).toEqual([
-          "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-          "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
-        ]);
+    };
+    it("should produce the correct array of values in the response", async function () {
+      const t = createTransport({
+        ...defaultTransportOptions,
+        httpClient: setMultiValueHeaders,
       });
+      const res = await t.unary(
+        TestService.method.unary,
+        undefined,
+        undefined,
+        undefined,
+        {},
+      );
+      expect(res.header.getSetCookie()).toEqual([
+        "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+        "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
+      ]);
     });
-  }
+  });
 });

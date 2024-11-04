@@ -19,13 +19,14 @@ import * as http from "node:http";
 import {
   invokeWithCallbackClient,
   invokeWithPromiseClient,
-  ClientCompatRequest,
-  ClientCompatResponse,
-  ClientErrorResult,
   readSizeDelimitedBuffers,
   writeSizeDelimitedBuffer,
+  ClientCompatRequestSchema,
+  ClientCompatResponseSchema,
+  ClientErrorResultSchema,
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
+import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 
 void main(process.argv.slice(2));
 
@@ -78,8 +79,8 @@ async function runNode(useCallbackClient: boolean) {
     ? invokeWithCallbackClient
     : invokeWithPromiseClient;
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
-    const req = ClientCompatRequest.fromBinary(next);
-    const res = new ClientCompatResponse({
+    const req = fromBinary(ClientCompatRequestSchema, next);
+    const res = create(ClientCompatResponseSchema, {
       testName: req.testName,
     });
     try {
@@ -88,12 +89,14 @@ async function runNode(useCallbackClient: boolean) {
     } catch (err) {
       res.result = {
         case: "error",
-        value: new ClientErrorResult({
+        value: create(ClientErrorResultSchema, {
           message: `Failed to run test case: ${String(err)}`,
         }),
       };
     }
-    process.stdout.write(writeSizeDelimitedBuffer(res.toBinary()));
+    process.stdout.write(
+      writeSizeDelimitedBuffer(toBinary(ClientCompatResponseSchema, res)),
+    );
   }
 }
 

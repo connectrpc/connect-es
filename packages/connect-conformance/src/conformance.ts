@@ -26,7 +26,6 @@ import * as tar from "tar-stream";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { execFileSync } from "node:child_process";
-import { fetch } from "undici";
 import { scripts } from "../package.json";
 
 export async function run() {
