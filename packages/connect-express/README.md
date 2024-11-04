@@ -71,8 +71,8 @@ A client for the web browser actually looks identical to this example - it would
 simply use `createConnectTransport` from [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web)
 instead.
 
-Note that support for gRPC is limited, since many gRPC clients require HTTP/2,
-and Express does not support the Node.js `http2` module.
+Note that Express does not support the Node.js `http2` module. You can serve the
+Connect protocol and gRPC-Web with Express, but not gRPC.
 
 ## Getting started
 
