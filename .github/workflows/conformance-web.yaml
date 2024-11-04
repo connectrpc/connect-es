@@ -25,7 +25,7 @@ jobs:
         include:
           - os: ubuntu-22.04
           - browser: safari
-            os: macos-12
+            os: macos-13
     runs-on: ${{ matrix.os }}
     name: "${{ matrix.browser }} ${{ matrix.client }}"
     timeout-minutes: 10
