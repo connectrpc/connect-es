@@ -40,7 +40,7 @@
     }
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.39.0",
+    "@bufbuild/buf": "^1.46.0",
     "@bufbuild/protoc-gen-es": "^2.1.0",
     "@connectrpc/connect-conformance": "^2.0.0-rc.2",
     "@wdio/browserstack-service": "^9.0.9",
