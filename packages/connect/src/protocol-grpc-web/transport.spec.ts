@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
+import { create, toBinary } from "@bufbuild/protobuf";
 import type { Transport } from "../transport.js";
 import { createTransport } from "./transport.js";
 import type {
@@ -23,36 +23,35 @@ import { createAsyncIterable, encodeEnvelope } from "../protocol/index.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { trailerFlag, trailerSerialize } from "./trailer.js";
+import { createServiceDesc } from "../descriptor-helper.spec.js";
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
+import type { StringValue } from "@bufbuild/protobuf/wkt";
 
-const TestService = {
+const TestService = createServiceDesc({
   typeName: "TestService",
-  methods: {
+  method: {
     unary: {
-      name: "Unary",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
     },
     server: {
-      name: "Server",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ServerStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "server_streaming",
     },
     client: {
-      name: "Client",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ClientStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "client_streaming",
     },
     biDi: {
-      name: "BiDi",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.BiDiStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "bidi_streaming",
     },
   },
-} as const;
+});
 
 describe("gRPC-web transport", function () {
   const defaultOptions = {
@@ -84,7 +83,13 @@ describe("gRPC-web transport", function () {
               "Content-Type": "application/grpc-web+proto",
             }),
             body: createAsyncIterable([
-              encodeEnvelope(0, new StringValue({ value: "abc" }).toBinary()),
+              encodeEnvelope(
+                0,
+                toBinary(
+                  StringValueSchema,
+                  create(StringValueSchema, { value: "abc" }),
+                ),
+              ),
               encodeEnvelope(
                 trailerFlag,
                 trailerSerialize(
@@ -104,8 +109,7 @@ describe("gRPC-web transport", function () {
     it("should cancel the HTTP request for unary", async function () {
       try {
         await transport.unary(
-          TestService,
-          TestService.methods.unary,
+          TestService.method.unary,
           undefined,
           undefined,
           undefined,
@@ -120,8 +124,7 @@ describe("gRPC-web transport", function () {
     });
     it("should cancel the HTTP request for server-streaming", async function () {
       const res = await transport.stream(
-        TestService,
-        TestService.methods.server,
+        TestService.method.server,
         undefined,
         undefined,
         undefined,

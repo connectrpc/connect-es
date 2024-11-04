@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CommitServicePromiseClient } from "./buf/registry/module/v1/commit_service_grpc_web_pb.js";
-import { GetCommitsRequest } from "./buf/registry/module/v1/commit_service_pb.js";
+import { CommitServicePromiseClient } from "./buf/registry/module/v1/commit_service_grpc_web_pb";
+import { GetCommitsRequest } from "./buf/registry/module/v1/commit_service_pb";
 
 /* eslint-disable no-console */
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /* eslint-disable @typescript-eslint/no-invalid-void-type */
-import { Int32Value, StringValue, MethodKind } from "@bufbuild/protobuf";
+import { create } from "@bufbuild/protobuf";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
 import { connectNodeAdapter } from "./connect-node-adapter.js";
@@ -22,18 +22,10 @@ import type { Transport } from "@connectrpc/connect";
 import { createTransport as createGrpcTransport } from "@connectrpc/connect/protocol-grpc";
 import { createTransport as createGrpcWebTransport } from "@connectrpc/connect/protocol-grpc-web";
 import { validateNodeTransportOptions } from "./node-transport-options.js";
-
-const TestService = {
-  typeName: "TestService",
-  methods: {
-    server: {
-      name: "Server",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ServerStreaming,
-    },
-  },
-} as const;
+import {
+  ElizaService,
+  IntroduceResponseSchema,
+} from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
 
 describe("Calls should fail with code internal on RST_STREAM no_error before trailers are received", function () {
   let firstMessage: ReturnType<typeof createCompleter<void>>;
@@ -44,8 +36,8 @@ describe("Calls should fail with code internal on RST_STREAM no_error before tra
   });
   const adaptor = connectNodeAdapter({
     routes({ rpc }) {
-      rpc(TestService, TestService.methods.server, async function* () {
-        yield { value: "foo" };
+      rpc(ElizaService.method.introduce, async function* () {
+        yield { sentence: "foo" };
         // Notify to send rst stream after a message.
         firstMessage.resolve();
         // Wait for rst stream to be sent before returning.
@@ -65,11 +57,13 @@ describe("Calls should fail with code internal on RST_STREAM no_error before tra
     }),
   );
   async function testRstStream(transport: Transport) {
-    const client = createClient(TestService, transport);
-    const it = client.server({ value: 1 })[Symbol.asyncIterator]();
+    const client = createClient(ElizaService, transport);
+    const it = client.introduce({ name: "1" })[Symbol.asyncIterator]();
     const first = await it.next();
     expect(first.done).toBeFalse();
-    expect(first.value).toEqual(new StringValue({ value: "foo" }));
+    expect(first.value).toEqual(
+      create(IntroduceResponseSchema, { sentence: "foo" }),
+    );
     await expectAsync(it.next()).toBeRejected();
   }
   it("for gRPC Transport", async function () {

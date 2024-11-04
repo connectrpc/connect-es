@@ -1,0 +1,11 @@
+version: v2
+modules:
+  - path: conformance/proto
+deps:
+  - buf.build/connectrpc/conformance
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE

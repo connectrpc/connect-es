@@ -13,16 +13,16 @@
 // limitations under the License.
 
 import type {
-  AnyMessage,
   BinaryReadOptions,
   BinaryWriteOptions,
+  DescMessage,
   JsonReadOptions,
   JsonWriteOptions,
-  MethodInfo,
-  PartialMessage,
-  ServiceType,
+  MessageInitShape,
+  MessageShape,
+  DescMethodUnary,
+  DescMethodStreaming,
 } from "@bufbuild/protobuf";
-import { Message, MethodKind } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamResponse,
@@ -85,13 +85,6 @@ export interface GrpcWebTransportOptions {
   interceptors?: Interceptor[];
 
   /**
-   * Controls what the fetch client will do with credentials, such as
-   * Cookies. The default value is "same-origin". For reference, see
-   * https://fetch.spec.whatwg.org/#concept-request-credentials-mode
-   */
-  credentials?: RequestCredentials;
-
-  /**
    * Options for the JSON format.
    * By default, unknown fields are ignored.
    */
@@ -104,6 +97,8 @@ export interface GrpcWebTransportOptions {
 
   /**
    * Optional override of the fetch implementation used by the transport.
+   *
+   * This option can be used to set fetch options such as "credentials".
    */
   fetch?: typeof globalThis.fetch;
 
@@ -114,6 +109,10 @@ export interface GrpcWebTransportOptions {
    */
   defaultTimeoutMs?: number;
 }
+
+const fetchOptions: RequestInit = {
+  redirect: "error",
+};
 
 /**
  * Create a Transport for the gRPC-web protocol. The protocol encodes
@@ -131,16 +130,12 @@ export function createGrpcWebTransport(
   assertFetchApi();
   const useBinaryFormat = options.useBinaryFormat ?? true;
   return {
-    async unary<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
-      method: MethodInfo<I, O>,
+    async unary<I extends DescMessage, O extends DescMessage>(
+      method: DescMethodUnary<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: Headers,
-      message: PartialMessage<I>,
+      message: MessageInitShape<I>,
       contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
@@ -161,15 +156,10 @@ export function createGrpcWebTransport(
         timeoutMs,
         req: {
           stream: false,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(options.baseUrl, service, method),
-          init: {
-            method: "POST",
-            credentials: options.credentials ?? "same-origin",
-            redirect: "error",
-            mode: "cors",
-          },
+          requestMethod: "POST",
+          url: createMethodUrl(options.baseUrl, method),
           header: requestHeader(useBinaryFormat, timeoutMs, header, false),
           contextValues: contextValues ?? createContextValues(),
           message,
@@ -177,7 +167,8 @@ export function createGrpcWebTransport(
         next: async (req: UnaryRequest<I, O>): Promise<UnaryResponse<I, O>> => {
           const fetch = options.fetch ?? globalThis.fetch;
           const response = await fetch(req.url, {
-            ...req.init,
+            ...fetchOptions,
+            method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
             body: encodeEnvelope(0, serialize(req.message)),
@@ -194,7 +185,7 @@ export function createGrpcWebTransport(
             response.body,
           ).getReader();
           let trailer: Headers | undefined;
-          let message: O | undefined;
+          let message: MessageShape<O> | undefined;
           for (;;) {
             const r = await reader.read();
             if (r.done) {
@@ -240,7 +231,7 @@ export function createGrpcWebTransport(
           }
           return {
             stream: false,
-            service,
+            service: method.parent,
             method,
             header: response.headers,
             message,
@@ -250,16 +241,12 @@ export function createGrpcWebTransport(
       });
     },
 
-    async stream<
-      I extends Message<I> = AnyMessage,
-      O extends Message<O> = AnyMessage,
-    >(
-      service: ServiceType,
-      method: MethodInfo<I, O>,
+    async stream<I extends DescMessage, O extends DescMessage>(
+      method: DescMethodStreaming<I, O>,
       signal: AbortSignal | undefined,
       timeoutMs: number | undefined,
       header: HeadersInit | undefined,
-      input: AsyncIterable<PartialMessage<I>>,
+      input: AsyncIterable<MessageInitShape<I>>,
       contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
       const { serialize, parse } = createClientMethodSerializers(
@@ -329,9 +316,9 @@ export function createGrpcWebTransport(
       }
 
       async function createRequestBody(
-        input: AsyncIterable<I>,
+        input: AsyncIterable<MessageShape<I>>,
       ): Promise<Uint8Array> {
-        if (method.kind != MethodKind.ServerStreaming) {
+        if (method.methodKind != "server_streaming") {
           throw "The fetch API does not support streaming request bodies";
         }
         const r = await input[Symbol.asyncIterator]().next();
@@ -352,15 +339,10 @@ export function createGrpcWebTransport(
         timeoutMs,
         req: {
           stream: true,
-          service,
+          service: method.parent,
           method,
-          url: createMethodUrl(options.baseUrl, service, method),
-          init: {
-            method: "POST",
-            credentials: options.credentials ?? "same-origin",
-            redirect: "error",
-            mode: "cors",
-          },
+          requestMethod: "POST",
+          url: createMethodUrl(options.baseUrl, method),
           header: requestHeader(useBinaryFormat, timeoutMs, header, false),
           contextValues: contextValues ?? createContextValues(),
           message: input,
@@ -368,7 +350,8 @@ export function createGrpcWebTransport(
         next: async (req) => {
           const fetch = options.fetch ?? globalThis.fetch;
           const fRes = await fetch(req.url, {
-            ...req.init,
+            ...fetchOptions,
+            method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
             body: await createRequestBody(req.message),

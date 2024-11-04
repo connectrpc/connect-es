@@ -3,7 +3,6 @@
   "private": true,
   "workspaces": [
     "packages/connect",
-    "packages/protoc-gen-connect-es",
     "packages/connect-web",
     "packages/connect-node",
     "packages/connect-fastify",
@@ -13,7 +12,8 @@
     "packages/example",
     "packages/connect-migrate",
     "packages/connect-conformance",
-    "packages/connect-cloudflare"
+    "packages/connect-cloudflare",
+    "packages/typescript-compat/*"
   ],
   "scripts": {
     "all": "turbo run --ui tui build format test conformance bundle-size lint attw license-header",
@@ -28,10 +28,6 @@
   },
   "type": "module",
   "engineStrict": true,
-  "engines": {
-    "node": ">=16",
-    "npm": ">=8"
-  },
   "packageManager": "npm@10.1.0",
   "licenseHeader": {
     "licenseType": "apache",

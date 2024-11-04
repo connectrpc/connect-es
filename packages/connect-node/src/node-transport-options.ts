@@ -27,38 +27,43 @@ import * as http from "http";
 import * as https from "https";
 
 /**
- * Options specific to Node.js client transports.
+ * Options specific to Node.js client transports that support HTTP/2 or HTTP 1.1.
  */
 export type NodeTransportOptions =
-  | {
-      httpVersion: "1.1";
-      /**
-       * Options passed to the request() call of the Node.js built-in
-       * http or https module.
-       */
-      nodeOptions?:
-        | Omit<http.RequestOptions, "signal">
-        | Omit<https.RequestOptions, "signal">;
-    }
-  | ({
-      httpVersion: "2";
+  | (NodeHttp1TransportOptions & { httpVersion: "1.1" })
+  | (NodeHttp2TransportOptions & { httpVersion: "2" });
 
-      /**
-       * A manager for the HTTP/2 connection of the transport.
-       *
-       * Providing this option makes nodeOptions as well as the HTTP/2 session
-       * options (pingIntervalMs et cetera) ineffective.
-       */
-      sessionManager?: NodeHttp2ClientSessionManager;
+/**
+ * Options specific to Node.js client transports over HTTP/2.
+ */
+export type NodeHttp2TransportOptions = {
+  /**
+   * A manager for the HTTP/2 connection of the transport.
+   *
+   * Providing this option makes nodeOptions as well as the HTTP/2 session
+   * options (pingIntervalMs et cetera) ineffective.
+   */
+  sessionManager?: NodeHttp2ClientSessionManager;
 
-      /**
-       * Options passed to the connect() call of the Node.js built-in
-       * http2 module.
-       */
-      nodeOptions?:
-        | http2.ClientSessionOptions
-        | http2.SecureClientSessionOptions;
-    } & Http2SessionOptions);
+  /**
+   * Options passed to the connect() call of the Node.js built-in
+   * http2 module.
+   */
+  nodeOptions?: http2.ClientSessionOptions | http2.SecureClientSessionOptions;
+} & Http2SessionOptions;
+
+/**
+ * Options specific to Node.js client transports over HTTP 1.1.
+ */
+type NodeHttp1TransportOptions = {
+  /**
+   * Options passed to the request() call of the Node.js built-in
+   * http or https module.
+   */
+  nodeOptions?:
+    | Omit<http.RequestOptions, "signal">
+    | Omit<https.RequestOptions, "signal">;
+};
 
 /**
  * Asserts that the options are within sane limits, and returns default values

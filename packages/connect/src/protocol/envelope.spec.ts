@@ -22,9 +22,6 @@ import {
 import type { Compression } from "./compression.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
-import { node16WhatwgStreamPolyfill } from "../node16-polyfill-helper.spec.js";
-
-node16WhatwgStreamPolyfill();
 
 /**
  * Create a WHATWG ReadableStream from a Uint8Array for usage in tests.

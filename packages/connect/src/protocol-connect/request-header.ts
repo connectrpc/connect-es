@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
 import {
   headerContentType,
   headerStreamAcceptEncoding,
@@ -31,6 +30,7 @@ import {
   contentTypeUnaryProto,
 } from "./content-type.js";
 import type { Compression } from "../protocol/compression.js";
+import type { DescMethod } from "@bufbuild/protobuf";
 
 /**
  * Creates headers for a Connect request.
@@ -38,7 +38,7 @@ import type { Compression } from "../protocol/compression.js";
  * @private Internal code, does not follow semantic versioning.
  */
 export function requestHeader(
-  methodKind: MethodKind,
+  methodKind: DescMethod["methodKind"],
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
@@ -50,7 +50,7 @@ export function requestHeader(
   }
   result.set(
     headerContentType,
-    methodKind == MethodKind.Unary
+    methodKind == "unary"
       ? useBinaryFormat
         ? contentTypeUnaryProto
         : contentTypeUnaryJson
@@ -59,9 +59,14 @@ export function requestHeader(
         : contentTypeStreamJson,
   );
   result.set(headerProtocolVersion, protocolVersion);
-  if (setUserAgent) {
+
+  if (!result.has(headerUserAgent) && setUserAgent) {
+    // Note that we do not strictly comply with gRPC user agents.
+    // We use "connect-es/1.2.3" where gRPC would use "grpc-es/1.2.3".
+    // See https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
     result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
   }
+
   return result;
 }
 
@@ -76,7 +81,7 @@ export function requestHeader(
  * @private Internal code, does not follow semantic versioning.
  */
 export function requestHeaderWithCompression(
-  methodKind: MethodKind,
+  methodKind: DescMethod["methodKind"],
   useBinaryFormat: boolean,
   timeoutMs: number | undefined,
   userProvidedHeaders: HeadersInit | undefined,
@@ -93,14 +98,12 @@ export function requestHeaderWithCompression(
   );
   if (sendCompression != null) {
     const name =
-      methodKind == MethodKind.Unary
-        ? headerUnaryEncoding
-        : headerStreamEncoding;
+      methodKind == "unary" ? headerUnaryEncoding : headerStreamEncoding;
     result.set(name, sendCompression.name);
   }
   if (acceptCompression.length > 0) {
     const name =
-      methodKind == MethodKind.Unary
+      methodKind == "unary"
         ? headerUnaryAcceptEncoding
         : headerStreamAcceptEncoding;
     result.set(name, acceptCompression.map((c) => c.name).join(","));

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { AnyMessage, Message, PartialMessage } from "@bufbuild/protobuf";
+import type { DescMessage, MessageInitShape } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamRequest,
@@ -37,17 +37,20 @@ import { normalize, normalizeIterable } from "./normalize.js";
  * interceptors.
  */
 type UnaryFn<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
 > = (req: UnaryRequest<I, O>) => Promise<UnaryResponse<I, O>>;
 
 /**
  * Runs a unary method with the given interceptors. Note that this function
  * is only used when implementing a Transport.
  */
-export function runUnaryCall<I extends Message<I>, O extends Message<O>>(opt: {
+export function runUnaryCall<
+  I extends DescMessage,
+  O extends DescMessage,
+>(opt: {
   req: Omit<UnaryRequest<I, O>, "signal" | "message"> & {
-    message: PartialMessage<I>;
+    message: MessageInitShape<I>;
   };
   next: UnaryFn<I, O>;
   timeoutMs?: number;
@@ -58,7 +61,7 @@ export function runUnaryCall<I extends Message<I>, O extends Message<O>>(opt: {
   const [signal, abort, done] = setupSignal(opt);
   const req = {
     ...opt.req,
-    message: normalize(opt.req.method.I, opt.req.message),
+    message: normalize(opt.req.method.input, opt.req.message),
     signal,
   };
   return next(req).then((res) => {
@@ -75,8 +78,8 @@ export function runUnaryCall<I extends Message<I>, O extends Message<O>>(opt: {
  * interceptors.
  */
 type StreamingFn<
-  I extends Message<I> = AnyMessage,
-  O extends Message<O> = AnyMessage,
+  I extends DescMessage = DescMessage,
+  O extends DescMessage = DescMessage,
 > = (req: StreamRequest<I, O>) => Promise<StreamResponse<I, O>>;
 
 /**
@@ -84,11 +87,11 @@ type StreamingFn<
  * function is only used when implementing a Transport.
  */
 export function runStreamingCall<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 >(opt: {
   req: Omit<StreamRequest<I, O>, "signal" | "message"> & {
-    message: AsyncIterable<PartialMessage<I>>;
+    message: AsyncIterable<MessageInitShape<I>>;
   };
   next: StreamingFn<I, O>;
   timeoutMs?: number;
@@ -99,7 +102,7 @@ export function runStreamingCall<
   const [signal, abort, done] = setupSignal(opt);
   const req = {
     ...opt.req,
-    message: normalizeIterable(opt.req.method.I, opt.req.message),
+    message: normalizeIterable(opt.req.method.input, opt.req.message),
     signal,
   };
   let doneCalled = false;

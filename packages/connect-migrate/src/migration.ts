@@ -15,9 +15,10 @@
 import { Scanned } from "./lib/scan";
 import { CommandLineArgs } from "./arguments";
 import { Logger, PrintFn } from "./lib/logger";
-import { updateSourceFile } from "./lib/update-source-file";
+import { updateSourceFile } from "./lib/migrate-source-files";
 import { writePackageJsonFile } from "./lib/package-json";
 import { runInstall } from "./lib/run";
+import { writeBufGenYamlFile } from "./lib/bufgenyaml";
 
 export interface Migration {
   applicable(scanned: Scanned): boolean;
@@ -31,6 +32,7 @@ export interface MigrateOptions {
   logger?: Logger;
   updateSourceFileFn?: typeof updateSourceFile;
   writePackageJsonFileFn?: typeof writePackageJsonFile;
+  writeBufGenYamlFileFn?: typeof writeBufGenYamlFile;
   runInstallFn?: typeof runInstall;
 }
 

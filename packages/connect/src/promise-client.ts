@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Message, MethodKind } from "@bufbuild/protobuf";
 import type {
-  PartialMessage,
-  ServiceType,
-  MethodInfo,
-  MethodInfoBiDiStreaming,
-  MethodInfoClientStreaming,
-  MethodInfoServerStreaming,
-  MethodInfoUnary,
+  DescMessage,
+  DescService,
+  MessageInitShape,
+  MessageShape,
+  DescMethodBiDiStreaming,
+  DescMethodClientStreaming,
+  DescMethodServerStreaming,
+  DescMethodUnary,
 } from "@bufbuild/protobuf";
 import type { Transport } from "./transport.js";
 import { makeAnyClient } from "./any-client.js";
@@ -36,38 +36,33 @@ import type { StreamResponse } from "./interceptor.js";
  * methods. Methods will produce a promise for the response message,
  * or an asynchronous iterable of response messages.
  */
-export type Client<T extends ServiceType> = {
-  [P in keyof T["methods"]]:
-    T["methods"][P] extends MethodInfoUnary<infer I, infer O>           ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
-  : T["methods"][P] extends MethodInfoServerStreaming<infer I, infer O> ? (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>
-  : T["methods"][P] extends MethodInfoClientStreaming<infer I, infer O> ? (request: AsyncIterable<PartialMessage<I>>, options?: CallOptions) => Promise<O>
-  : T["methods"][P] extends MethodInfoBiDiStreaming<infer I, infer O>   ? (request: AsyncIterable<PartialMessage<I>>, options?: CallOptions) => AsyncIterable<O>
+export type Client<Desc extends DescService> = {
+  [P in keyof Desc["method"]]:
+  Desc["method"][P] extends DescMethodUnary<infer I, infer O> ? (request: MessageInitShape<I>, options?: CallOptions) => Promise<MessageShape<O>>
+  : Desc["method"][P] extends DescMethodServerStreaming<infer I, infer O> ? (request: MessageInitShape<I>, options?: CallOptions) => AsyncIterable<MessageShape<O>>
+  : Desc["method"][P] extends DescMethodClientStreaming<infer I, infer O> ? (request: AsyncIterable<MessageInitShape<I>>, options?: CallOptions) => Promise<MessageShape<O>>
+  : Desc["method"][P] extends DescMethodBiDiStreaming<infer I, infer O> ? (request: AsyncIterable<MessageInitShape<I>>, options?: CallOptions) => AsyncIterable<MessageShape<O>>
   : never;
 };
-
-/**
- * @deprecated use Client
- */
-export type PromiseClient<T extends ServiceType> = Client<T>;
 
 /**
  * Create a Client for the given service, invoking RPCs through the
  * given transport.
  */
-export function createClient<T extends ServiceType>(
+export function createClient<T extends DescService>(
   service: T,
   transport: Transport,
 ) {
   return makeAnyClient(service, (method) => {
-    switch (method.kind) {
-      case MethodKind.Unary:
-        return createUnaryFn(transport, service, method);
-      case MethodKind.ServerStreaming:
-        return createServerStreamingFn(transport, service, method);
-      case MethodKind.ClientStreaming:
-        return createClientStreamingFn(transport, service, method);
-      case MethodKind.BiDiStreaming:
-        return createBiDiStreamingFn(transport, service, method);
+    switch (method.methodKind) {
+      case "unary":
+        return createUnaryFn(transport, method);
+      case "server_streaming":
+        return createServerStreamingFn(transport, method);
+      case "client_streaming":
+        return createClientStreamingFn(transport, method);
+      case "bidi_streaming":
+        return createBiDiStreamingFn(transport, method);
       default:
         return null;
     }
@@ -75,31 +70,19 @@ export function createClient<T extends ServiceType>(
 }
 
 /**
- * @deprecated use createClient.
- */
-export function createPromiseClient<T extends ServiceType>(
-  service: T,
-  transport: Transport,
-) {
-  return createClient(service, transport);
-}
-
-/**
  * UnaryFn is the method signature for a unary method of a PromiseClient.
  */
-type UnaryFn<I extends Message<I>, O extends Message<O>> = (
-  request: PartialMessage<I>,
+type UnaryFn<I extends DescMessage, O extends DescMessage> = (
+  request: MessageInitShape<I>,
   options?: CallOptions,
-) => Promise<O>;
+) => Promise<MessageShape<O>>;
 
-export function createUnaryFn<I extends Message<I>, O extends Message<O>>(
+export function createUnaryFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
-  service: ServiceType,
-  method: MethodInfo<I, O>,
+  method: DescMethodUnary<I, O>,
 ): UnaryFn<I, O> {
   return async function (input, options) {
     const response = await transport.unary(
-      service,
       method,
       options?.signal,
       options?.timeoutMs,
@@ -117,23 +100,21 @@ export function createUnaryFn<I extends Message<I>, O extends Message<O>>(
  * ServerStreamingFn is the method signature for a server-streaming method of
  * a PromiseClient.
  */
-type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
-  request: PartialMessage<I>,
+type ServerStreamingFn<I extends DescMessage, O extends DescMessage> = (
+  request: MessageInitShape<I>,
   options?: CallOptions,
-) => AsyncIterable<O>;
+) => AsyncIterable<MessageShape<O>>;
 
 export function createServerStreamingFn<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 >(
   transport: Transport,
-  service: ServiceType,
-  method: MethodInfo<I, O>,
+  method: DescMethodServerStreaming<I, O>,
 ): ServerStreamingFn<I, O> {
-  return function (input, options): AsyncIterable<O> {
+  return function (input, options): AsyncIterable<MessageShape<O>> {
     return handleStreamResponse(
-      transport.stream<I, O>(
-        service,
+      transport.stream(
         method,
         options?.signal,
         options?.timeoutMs,
@@ -150,25 +131,23 @@ export function createServerStreamingFn<
  * ClientStreamFn is the method signature for a client streaming method of a
  * PromiseClient.
  */
-type ClientStreamingFn<I extends Message<I>, O extends Message<O>> = (
-  request: AsyncIterable<PartialMessage<I>>,
+type ClientStreamingFn<I extends DescMessage, O extends DescMessage> = (
+  request: AsyncIterable<MessageInitShape<I>>,
   options?: CallOptions,
-) => Promise<O>;
+) => Promise<MessageShape<O>>;
 
 export function createClientStreamingFn<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 >(
   transport: Transport,
-  service: ServiceType,
-  method: MethodInfo<I, O>,
+  method: DescMethodClientStreaming<I, O>,
 ): ClientStreamingFn<I, O> {
   return async function (
-    request: AsyncIterable<PartialMessage<I>>,
+    request: AsyncIterable<MessageInitShape<I>>,
     options?: CallOptions,
-  ): Promise<O> {
-    const response = await transport.stream<I, O>(
-      service,
+  ): Promise<MessageShape<O>> {
+    const response = await transport.stream(
       method,
       options?.signal,
       options?.timeoutMs,
@@ -177,7 +156,7 @@ export function createClientStreamingFn<
       options?.contextValues,
     );
     options?.onHeader?.(response.header);
-    let singleMessage: O | undefined;
+    let singleMessage: MessageShape<O> | undefined;
     let count = 0;
     for await (const message of response.message) {
       singleMessage = message;
@@ -204,26 +183,24 @@ export function createClientStreamingFn<
  * BiDiStreamFn is the method signature for a bi-directional streaming method
  * of a PromiseClient.
  */
-type BiDiStreamingFn<I extends Message<I>, O extends Message<O>> = (
-  request: AsyncIterable<PartialMessage<I>>,
+type BiDiStreamingFn<I extends DescMessage, O extends DescMessage> = (
+  request: AsyncIterable<MessageInitShape<I>>,
   options?: CallOptions,
-) => AsyncIterable<O>;
+) => AsyncIterable<MessageShape<O>>;
 
 export function createBiDiStreamingFn<
-  I extends Message<I>,
-  O extends Message<O>,
+  I extends DescMessage,
+  O extends DescMessage,
 >(
   transport: Transport,
-  service: ServiceType,
-  method: MethodInfo<I, O>,
+  method: DescMethodBiDiStreaming<I, O>,
 ): BiDiStreamingFn<I, O> {
   return function (
-    request: AsyncIterable<PartialMessage<I>>,
+    request: AsyncIterable<MessageInitShape<I>>,
     options?: CallOptions,
-  ): AsyncIterable<O> {
+  ): AsyncIterable<MessageShape<O>> {
     return handleStreamResponse(
-      transport.stream<I, O>(
-        service,
+      transport.stream(
         method,
         options?.signal,
         options?.timeoutMs,
@@ -236,10 +213,10 @@ export function createBiDiStreamingFn<
   };
 }
 
-function handleStreamResponse<I extends Message<I>, O extends Message<O>>(
+function handleStreamResponse<I extends DescMessage, O extends DescMessage>(
   stream: Promise<StreamResponse<I, O>>,
   options?: CallOptions,
-): AsyncIterable<O> {
+): AsyncIterable<MessageShape<O>> {
   const it = (async function* () {
     const response = await stream;
     options?.onHeader?.(response.header);

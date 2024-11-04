@@ -12,55 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createRegistry } from "@bufbuild/protobuf";
+import { create, createRegistry } from "@bufbuild/protobuf";
 
 import {
   invokeWithPromiseClient,
-  BidiStreamRequest,
-  ClientCompatResponse,
-  ClientErrorResult,
-  ClientStreamRequest,
-  IdempotentUnaryRequest,
-  ConformancePayload_RequestInfo,
-  ServerStreamRequest,
-  UnaryRequest,
-  UnimplementedRequest,
+  UnaryRequestSchema,
+  ServerStreamRequestSchema,
+  ClientStreamRequestSchema,
+  BidiStreamRequestSchema,
+  UnimplementedRequestSchema,
+  IdempotentUnaryRequestSchema,
+  ConformancePayload_RequestInfoSchema,
+  ClientCompatResponseSchema,
+  ClientErrorResultSchema,
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
 import { createWorkerHandler } from "./handler.js";
-import { InvokeService } from "./invoke-service.js";
+import { InvokeService } from "./gen/invoke/v1/invoke_pb.js";
 
 export default createWorkerHandler({
   jsonOptions: {
-    typeRegistry: createRegistry(
-      UnaryRequest,
-      ServerStreamRequest,
-      ClientStreamRequest,
-      BidiStreamRequest,
-      UnimplementedRequest,
-      IdempotentUnaryRequest,
-      ConformancePayload_RequestInfo,
+    registry: createRegistry(
+      UnaryRequestSchema,
+      ServerStreamRequestSchema,
+      ClientStreamRequestSchema,
+      BidiStreamRequestSchema,
+      UnimplementedRequestSchema,
+      IdempotentUnaryRequestSchema,
+      ConformancePayload_RequestInfoSchema,
     ),
   },
   routes({ service }) {
     service(InvokeService, {
       async invoke(req) {
-        const res = new ClientCompatResponse({
-          testName: req.testName,
+        const res = create(ClientCompatResponseSchema, {
+          testName: req.request?.testName,
         });
         try {
           const invokeResult = await invokeWithPromiseClient(
-            createTransport(req),
-            req,
+            createTransport(req.request!),
+            req.request!,
           );
           res.result = { case: "response", value: invokeResult };
         } catch (e) {
           res.result = {
             case: "error",
-            value: new ClientErrorResult({ message: (e as Error).message }),
+            value: create(ClientErrorResultSchema, {
+              message: (e as Error).message,
+            }),
           };
         }
-        return res;
+        return { response: res };
       },
     });
   },

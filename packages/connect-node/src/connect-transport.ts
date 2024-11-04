@@ -21,8 +21,10 @@ import type {
 import type { Interceptor, Transport } from "@connectrpc/connect";
 import type { Compression } from "@connectrpc/connect/protocol";
 import { createTransport } from "@connectrpc/connect/protocol-connect";
-import type { NodeTransportOptions } from "./node-transport-options.js";
-import { validateNodeTransportOptions } from "./node-transport-options.js";
+import {
+  type NodeTransportOptions,
+  validateNodeTransportOptions,
+} from "./node-transport-options.js";
 
 /**
  * Options used to configure the Connect transport.
@@ -128,7 +130,7 @@ export type ConnectTransportOptions = NodeTransportOptions & {
 };
 
 /**
- * Create a Transport for the Connect protocol using the Node.js `http`, `http2`,
+ * Create a Transport for the Connect protocol using the Node.js `http`, `https`,
  * or `http2` module.
  */
 export function createConnectTransport(

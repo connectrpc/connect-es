@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-fastify",
-  "version": "1.6.1",
+  "version": "2.0.0-rc.2",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -28,17 +28,17 @@
     }
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.14.1"
   },
   "devDependencies": {
-    "@connectrpc/connect-conformance": "^1.6.1",
-    "@connectrpc/connect": "1.6.1",
-    "@connectrpc/connect-node": "1.6.1"
+    "@connectrpc/connect-conformance": "^2.0.0-rc.2",
+    "@connectrpc/connect": "2.0.0-rc.2",
+    "@connectrpc/connect-node": "2.0.0-rc.2"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.10.0",
+    "@bufbuild/protobuf": "^2.2.0",
     "fastify": "^4.22.1",
-    "@connectrpc/connect": "1.6.1",
-    "@connectrpc/connect-node": "1.6.1"
+    "@connectrpc/connect": "2.0.0-rc.2",
+    "@connectrpc/connect-node": "2.0.0-rc.2"
   }
 }

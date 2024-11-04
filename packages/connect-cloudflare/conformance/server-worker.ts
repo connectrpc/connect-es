@@ -15,11 +15,11 @@
 import { createRegistry } from "@bufbuild/protobuf";
 import {
   routes,
-  UnaryRequest,
-  ServerStreamRequest,
-  ClientStreamRequest,
-  BidiStreamRequest,
-  IdempotentUnaryRequest,
+  UnaryRequestSchema,
+  BidiStreamRequestSchema,
+  ClientStreamRequestSchema,
+  IdempotentUnaryRequestSchema,
+  ServerStreamRequestSchema,
 } from "@connectrpc/connect-conformance";
 import { createWorkerHandler } from "./handler.js";
 import { compressionDeflate, compressionGzip } from "./compression.js";
@@ -28,12 +28,12 @@ export default createWorkerHandler({
   routes,
   acceptCompression: [compressionGzip, compressionDeflate],
   jsonOptions: {
-    typeRegistry: createRegistry(
-      UnaryRequest,
-      ServerStreamRequest,
-      ClientStreamRequest,
-      BidiStreamRequest,
-      IdempotentUnaryRequest,
+    registry: createRegistry(
+      UnaryRequestSchema,
+      ServerStreamRequestSchema,
+      ClientStreamRequestSchema,
+      BidiStreamRequestSchema,
+      IdempotentUnaryRequestSchema,
     ),
   },
 });

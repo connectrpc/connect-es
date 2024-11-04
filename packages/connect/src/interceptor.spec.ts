@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
 import type { Interceptor, StreamResponse } from "./interceptor.js";
 import { createRouterTransport } from "./router-transport.js";
 import type { HandlerContext } from "./implementation.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
+import { createServiceDesc } from "./descriptor-helper.spec.js";
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
+import type { Int32Value } from "@bufbuild/protobuf/wkt";
+import { create } from "@bufbuild/protobuf";
 
 function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   return (next) => async (req) => {
@@ -74,23 +77,21 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
   }
 }
 
-const TestService = {
+const TestService = createServiceDesc({
   typeName: "handwritten.TestService",
-  methods: {
+  method: {
     unary: {
-      name: "Unary",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
     },
     serverStream: {
-      name: "ServerStream",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ServerStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "server_streaming",
     },
   },
-} as const;
+});
 
 describe("unary interceptors", () => {
   const wantLog = [
@@ -132,8 +133,7 @@ describe("unary interceptors", () => {
     );
 
     const response = await transport.unary(
-      TestService,
-      TestService.methods.unary,
+      TestService.method.unary,
       undefined,
       undefined,
       {
@@ -142,7 +142,9 @@ describe("unary interceptors", () => {
       { value: 9001 },
     );
 
-    expect(response.message).toEqual(new StringValue({ value: "9001" }));
+    expect(response.message).toEqual(
+      create(StringValueSchema, { value: "9001" }),
+    );
     expect(response.header.get("unary-response-header")).toEqual(
       "response-header",
     );
@@ -195,18 +197,17 @@ describe("stream interceptors", () => {
     );
 
     const response = await transport.stream(
-      TestService,
-      TestService.methods.serverStream,
+      TestService.method.serverStream,
       undefined,
       undefined,
       {
         "stream-request-header": "request-header",
       },
-      createAsyncIterable([new Int32Value({ value: 42 })]),
+      createAsyncIterable([create(Int32ValueSchema, { value: 42 })]),
     );
 
     for await (const message of response.message) {
-      expect(message).toEqual(new StringValue({ value: "42" }));
+      expect(message).toEqual(create(StringValueSchema, { value: "42" }));
     }
 
     expect(log).toEqual(wantLog);

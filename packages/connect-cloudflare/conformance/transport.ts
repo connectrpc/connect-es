@@ -14,17 +14,17 @@
 
 import { createRegistry } from "@bufbuild/protobuf";
 import {
-  BidiStreamRequest,
-  ClientCompatRequest,
-  ClientStreamRequest,
-  IdempotentUnaryRequest,
-  ServerStreamRequest,
-  UnaryRequest,
   Codec,
   HTTPVersion,
   Protocol,
   Compression as ConformanceCompression,
+  UnaryRequestSchema,
+  ServerStreamRequestSchema,
+  ClientStreamRequestSchema,
+  BidiStreamRequestSchema,
+  IdempotentUnaryRequestSchema,
 } from "@connectrpc/connect-conformance";
+import type { ClientCompatRequest } from "@connectrpc/connect-conformance";
 import { createTransport as createConnectTransport } from "@connectrpc/connect/protocol-connect";
 import { createTransport as createGrpcTransport } from "@connectrpc/connect/protocol-grpc";
 import { createTransport as createGrpcWebTransport } from "@connectrpc/connect/protocol-grpc-web";
@@ -35,7 +35,7 @@ import { compressionDeflate, compressionGzip } from "./compression.js";
 /**
  * Configure a transport for a client running as a Cloudflare Worker under test.
  *
- * The conformance test runner describes the call we should make in the
+ * The conformance test runner Schemaribes the call we should make in the
  * message connectrpc.conformance.v1.ClientCompatRequest. We create a transport
  * for the call, with the corresponding protocol, HTTP version, compression, and
  * other details. If a configuration is not supported, we raise an error.
@@ -101,12 +101,12 @@ export function createTransport(req: ClientCompatRequest) {
     defaultTimeoutMs: req.timeoutMs,
     compressMinBytes: -1, // To account for empty messages
     jsonOptions: {
-      typeRegistry: createRegistry(
-        UnaryRequest,
-        ServerStreamRequest,
-        ClientStreamRequest,
-        BidiStreamRequest,
-        IdempotentUnaryRequest,
+      registry: createRegistry(
+        UnaryRequestSchema,
+        ServerStreamRequestSchema,
+        ClientStreamRequestSchema,
+        BidiStreamRequestSchema,
+        IdempotentUnaryRequestSchema,
       ),
     },
   } satisfies Parameters<typeof createConnectTransport>[0];

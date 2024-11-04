@@ -13,53 +13,20 @@
 // limitations under the License.
 
 import * as http from "http";
-import { Message, MethodKind, proto3 } from "@bufbuild/protobuf";
 import { createClient } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-node";
 import express from "express";
 import { expressConnectMiddleware } from "./express-connect-middleware.js";
+import { ElizaService } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
 
 describe("express readme", function () {
-  interface SayR extends Message<SayR> {
-    sentence: string;
-  }
-  const SayR = proto3.makeMessageType<SayR>("connectrpc.eliza.v1.SayRequest", [
-    { no: 1, name: "sentence", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  interface IntroduceRequest extends Message<IntroduceRequest> {
-    name: string;
-  }
-  const IntroduceRequest = proto3.makeMessageType<IntroduceRequest>(
-    "connectrpc.eliza.v1.IntroduceRequest",
-    [{ no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ }],
-  );
-
-  const ElizaService = {
-    typeName: "connectrpc.eliza.v1.ElizaService",
-    methods: {
-      say: {
-        name: "Say",
-        I: SayR,
-        O: SayR,
-        kind: MethodKind.Unary,
-      },
-      introduce: {
-        name: "Introduce",
-        I: IntroduceRequest,
-        O: SayR,
-        kind: MethodKind.ServerStreaming,
-      },
-    },
-  } as const;
-
   it("should work", async function () {
     let port = -1;
 
     function routes(router: ConnectRouter) {
       // eslint-disable-next-line @typescript-eslint/require-await
-      router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
+      router.rpc(ElizaService.method.say, async (req) => ({
         sentence: `you said: ${req.sentence}`,
       }));
     }

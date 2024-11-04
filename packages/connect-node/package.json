@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-node",
-  "version": "1.6.1",
+  "version": "2.0.0-rc.2",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
     "attw": "attw --pack"
   },
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
@@ -29,18 +30,15 @@
     }
   },
   "engines": {
-    "node": ">=16.0.0"
-  },
-  "dependencies": {
-    "undici": "^5.28.4"
+    "node": ">=18.14.1"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.10.0",
-    "@connectrpc/connect": "1.6.1"
+    "@bufbuild/protobuf": "^2.2.0",
+    "@connectrpc/connect": "2.0.0-rc.2"
   },
   "devDependencies": {
+    "@connectrpc/connect-conformance": "^2.0.0-rc.2",
     "@types/jasmine": "^5.0.0",
-    "jasmine": "^5.2.0",
-    "@connectrpc/connect-conformance": "^1.6.1"
+    "jasmine": "^5.2.0"
   }
 }

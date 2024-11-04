@@ -14,10 +14,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { GeneratedFile, Schema } from "@bufbuild/protoplugin/ecmascript";
-import { createEcmaScriptPlugin, runNodeJs } from "@bufbuild/protoplugin";
-import type { DescMethod, DescService } from "@bufbuild/protobuf";
-import { codegenInfo } from "@bufbuild/protobuf";
+import {
+  createEcmaScriptPlugin,
+  runNodeJs,
+  type GeneratedFile,
+  type Schema,
+  safeIdentifier,
+} from "@bufbuild/protoplugin";
+import { DescMethod, DescService } from "@bufbuild/protobuf";
 import { sizes } from "./constants";
 
 runNodeJs(
@@ -65,12 +69,12 @@ function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
     if (lastService !== service) {
       const serviceSchema = f.import(
         service.name,
-        "./connectweb/" + service.file.name + "_connect.js",
+        "./connectweb/" + service.file.name + "_pb.js",
       );
       f.print("  const ", clientName, " = ", createClient, "(", serviceSchema, ", transport);");
       lastService = method.parent;
     }
-    f.print("  console.log(await ", clientName, ".", codegenInfo.localName(method), "({}));");
+    f.print("  console.log(await ", clientName, ".", method.localName, "({}));");
   }
   f.print("}");
 }
@@ -98,7 +102,7 @@ function generateGrpcWeb(f: GeneratedFile, methods: DescMethod[]) {
       method.input.name,
       "./grpcweb/" + service.file.name + "_pb.js",
     );
-    f.print("  console.log(await ", clientName, ".", codegenInfo.localName(method), "(new ", requestClass, "()));");
+    f.print("  console.log(await ", clientName, ".", method.localName, "(new ", requestClass, "()));");
   }
   f.print("}");
 }
@@ -110,5 +114,5 @@ function getClientName(service: DescService) {
     name = name.substring(0, name.length - "Service".length);
   }
   name += "Client";
-  return codegenInfo.safeIdentifier(name);
+  return safeIdentifier(name);
 }

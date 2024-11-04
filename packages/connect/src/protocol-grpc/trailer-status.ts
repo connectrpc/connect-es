@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Any } from "@bufbuild/protobuf";
-import { Status } from "./gen/status_pb.js";
+import { StatusSchema } from "./gen/status_pb.js";
 import { ConnectError } from "../connect-error.js";
 import { decodeBinaryHeader, encodeBinaryHeader } from "../http-headers.js";
 import { Code } from "../code.js";
+import { anyPack } from "@bufbuild/protobuf/wkt";
 import {
   headerGrpcMessage,
   headerGrpcStatus,
   headerStatusDetailsBin,
 } from "./headers.js";
+import { create } from "@bufbuild/protobuf";
 
 /**
  * The value of the Grpc-Status header or trailer in case of success.
@@ -48,19 +49,22 @@ export function setTrailerStatus(
     target.set(headerGrpcStatus, error.code.toString(10));
     target.set(headerGrpcMessage, encodeURIComponent(error.rawMessage));
     if (error.details.length > 0) {
-      const status = new Status({
+      const status = create(StatusSchema, {
         code: error.code,
         message: error.rawMessage,
-        details: error.details.map((value) =>
-          "getType" in value
-            ? Any.pack(value)
-            : new Any({
-                typeUrl: `type.googleapis.com/${value.type}`,
-                value: value.value,
-              }),
+        details: error.details.map((detail) =>
+          "desc" in detail
+            ? anyPack(detail.desc, create(detail.desc, detail.value))
+            : {
+                typeUrl: `type.googleapis.com/${detail.type}`,
+                value: detail.value,
+              },
         ),
       });
-      target.set(headerStatusDetailsBin, encodeBinaryHeader(status));
+      target.set(
+        headerStatusDetailsBin,
+        encodeBinaryHeader(status, StatusSchema),
+      );
     }
   } else {
     target.set(headerGrpcStatus, grpcStatusOk.toString());
@@ -87,7 +91,7 @@ export function findTrailerError(
   // Prefer the protobuf-encoded data to the grpc-status header.
   const statusBytes = headerOrTrailer.get(headerStatusDetailsBin);
   if (statusBytes != null) {
-    const status = decodeBinaryHeader(statusBytes, Status);
+    const status = decodeBinaryHeader(statusBytes, StatusSchema);
     if (status.code == 0) {
       return undefined;
     }

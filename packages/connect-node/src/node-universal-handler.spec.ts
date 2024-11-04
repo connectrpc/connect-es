@@ -24,9 +24,6 @@ import {
 } from "@connectrpc/connect/protocol";
 import type { UniversalServerRequest } from "@connectrpc/connect/protocol";
 
-// Polyfill the Headers API for Node versions < 18
-import "./node-headers-polyfill.js";
-
 describe("universalRequestFromNodeResponse()", function () {
   describe("with HTTP/2 stream closed with an RST code", function () {
     let serverRequest: UniversalServerRequest | undefined;
@@ -57,7 +54,7 @@ describe("universalRequestFromNodeResponse()", function () {
               // error here.
             });
             stream.close(rstCode, () => {
-              // We are seeing a race condition in Node v16.20.0, where closing
+              // We are seeing a race condition in Node.js, where closing
               // the session right after closing a stream with an RST code
               // _sometimes_ sends an INTERNAL_ERROR code.
               // Simply delaying the session close until the next tick like

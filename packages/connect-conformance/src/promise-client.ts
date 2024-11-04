@@ -12,20 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { PromiseClient, Transport } from "@connectrpc/connect";
+import { create } from "@bufbuild/protobuf";
 import { createClient } from "@connectrpc/connect";
+import type { CallOptions, Client, Transport } from "@connectrpc/connect";
+import { createWritableIterable } from "@connectrpc/connect/protocol";
 import {
-  ClientCompatRequest,
-  ClientResponseResult,
+  type ClientCompatRequest,
+  ClientResponseResultSchema,
 } from "./gen/connectrpc/conformance/v1/client_compat_pb.js";
 import {
-  BidiStreamRequest,
-  ClientStreamRequest,
-  ConformancePayload,
-  IdempotentUnaryRequest,
-  ServerStreamRequest,
-  UnaryRequest,
-  UnimplementedRequest,
+  ConformanceService,
+  UnaryRequestSchema,
+  IdempotentUnaryRequestSchema,
+  ServerStreamRequestSchema,
+  ClientStreamRequestSchema,
+  ConformancePayloadSchema,
+  BidiStreamRequestSchema,
+  UnimplementedRequestSchema,
+  type BidiStreamRequest,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
 import {
   convertToProtoHeaders,
@@ -36,32 +40,29 @@ import {
   setClientErrorResult,
   wait,
 } from "./protocol.js";
-import { ConformanceService } from "./gen/connectrpc/conformance/v1/service_connect.js";
-import { createWritableIterable } from "@connectrpc/connect/protocol";
 import { StreamType } from "./gen/connectrpc/conformance/v1/config_pb.js";
 
-type ConformanceClient = PromiseClient<typeof ConformanceService>;
+type ConformanceClient = Client<typeof ConformanceService>;
 
-const emptyPayload = new ConformancePayload();
+const emptyPayload = create(ConformancePayloadSchema);
 
 export function invokeWithPromiseClient(
   transport: Transport,
   compatRequest: ClientCompatRequest,
 ) {
   const client = createClient(ConformanceService, transport);
-
   switch (compatRequest.method) {
-    case ConformanceService.methods.unary.name:
+    case ConformanceService.method.unary.name:
       return unary(client, compatRequest);
-    case ConformanceService.methods.idempotentUnary.name:
+    case ConformanceService.method.idempotentUnary.name:
       return unary(client, compatRequest, true);
-    case ConformanceService.methods.serverStream.name:
+    case ConformanceService.method.serverStream.name:
       return serverStream(client, compatRequest);
-    case ConformanceService.methods.clientStream.name:
+    case ConformanceService.method.clientStream.name:
       return clientStream(client, compatRequest);
-    case ConformanceService.methods.bidiStream.name:
+    case ConformanceService.method.bidiStream.name:
       return bidiStream(client, compatRequest);
-    case ConformanceService.methods.unimplemented.name:
+    case ConformanceService.method.unimplemented.name:
       return unimplemented(client, compatRequest);
     default:
       throw new Error(`Unknown method: ${compatRequest.method}`);
@@ -74,19 +75,14 @@ async function unary(
   idempotent: boolean = false,
 ) {
   await wait(compatRequest.requestDelayMs);
-  const result = new ClientResponseResult();
+  const result = create(ClientResponseResultSchema);
   try {
     const controller = new AbortController();
     const { afterCloseSendMs } = getCancelTiming(compatRequest);
     if (afterCloseSendMs >= 0) {
       void wait(afterCloseSendMs).then(() => controller.abort());
     }
-    const request = getSingleRequestMessage(
-      compatRequest,
-      idempotent ? IdempotentUnaryRequest : UnaryRequest,
-    );
-    const call = idempotent ? client.idempotentUnary : client.unary;
-    const response = await call(request, {
+    const callOptions: CallOptions = {
       headers: getRequestHeaders(compatRequest),
       signal: controller.signal,
       onHeader(headers) {
@@ -95,7 +91,16 @@ async function unary(
       onTrailer(trailers) {
         result.responseTrailers = convertToProtoHeaders(trailers);
       },
-    });
+    };
+    const response = idempotent
+      ? await client.idempotentUnary(
+          getSingleRequestMessage(compatRequest, IdempotentUnaryRequestSchema),
+          callOptions,
+        )
+      : await client.unary(
+          getSingleRequestMessage(compatRequest, UnaryRequestSchema),
+          callOptions,
+        );
     result.payloads.push(response.payload ?? emptyPayload);
   } catch (e) {
     setClientErrorResult(result, e);
@@ -110,8 +115,11 @@ async function serverStream(
   const cancelTiming = getCancelTiming(compatRequest);
   const controller = new AbortController();
   await wait(compatRequest.requestDelayMs);
-  const result = new ClientResponseResult();
-  const request = getSingleRequestMessage(compatRequest, ServerStreamRequest);
+  const result = create(ClientResponseResultSchema);
+  const request = getSingleRequestMessage(
+    compatRequest,
+    ServerStreamRequestSchema,
+  );
   try {
     const res = client.serverStream(request, {
       headers: getRequestHeaders(compatRequest),
@@ -145,13 +153,13 @@ async function clientStream(
 ) {
   const cancelTiming = getCancelTiming(compatRequest);
   const controller = new AbortController();
-  const result = new ClientResponseResult();
+  const result = create(ClientResponseResultSchema);
   try {
     const response = await client.clientStream(
       (async function* () {
         for (const msg of getRequestMessages(
           compatRequest,
-          ClientStreamRequest,
+          ClientStreamRequestSchema,
         )) {
           await wait(compatRequest.requestDelayMs);
           yield msg;
@@ -188,7 +196,7 @@ async function bidiStream(
 ) {
   const cancelTiming = getCancelTiming(compatRequest);
   const controller = new AbortController();
-  const result = new ClientResponseResult();
+  const result = create(ClientResponseResultSchema);
   try {
     const request = createWritableIterable<BidiStreamRequest>();
     const responses = client.bidiStream(request, {
@@ -202,7 +210,10 @@ async function bidiStream(
       },
     });
     const responseIterator = responses[Symbol.asyncIterator]();
-    for (const msg of getRequestMessages(compatRequest, BidiStreamRequest)) {
+    for (const msg of getRequestMessages(
+      compatRequest,
+      BidiStreamRequestSchema,
+    )) {
       await wait(compatRequest.requestDelayMs);
       await request.write(msg);
       if (compatRequest.streamType === StreamType.FULL_DUPLEX_BIDI_STREAM) {
@@ -252,8 +263,11 @@ async function unimplemented(
   client: ConformanceClient,
   compatRequest: ClientCompatRequest,
 ) {
-  const request = getSingleRequestMessage(compatRequest, UnimplementedRequest);
-  const result = new ClientResponseResult();
+  const request = getSingleRequestMessage(
+    compatRequest,
+    UnimplementedRequestSchema,
+  );
+  const result = create(ClientResponseResultSchema);
   try {
     await client.unimplemented(request, {
       headers: getRequestHeaders(compatRequest),

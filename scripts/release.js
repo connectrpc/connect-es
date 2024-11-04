@@ -47,8 +47,7 @@ function npmPublish() {
     " --workspace packages/connect-fastify" +
     " --workspace packages/connect-express" +
     " --workspace packages/connect-next" +
-    " --workspace packages/connect-migrate" +
-    " --workspace packages/protoc-gen-connect-es";
+    " --workspace packages/connect-migrate";
   execSync(command, {
     stdio: "inherit",
   });

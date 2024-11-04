@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Int32Value, MethodKind, StringValue } from "@bufbuild/protobuf";
+import { create, isMessage } from "@bufbuild/protobuf";
 import {
   createBiDiStreamingFn,
   createClientStreamingFn,
@@ -25,44 +25,43 @@ import type { HandlerContext } from "./implementation.js";
 import { ConnectError } from "./connect-error.js";
 import { Code } from "./code.js";
 import { createContextKey, createContextValues } from "./context-values.js";
+import { createServiceDesc } from "./descriptor-helper.spec.js";
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
+import type { Int32Value, StringValue } from "@bufbuild/protobuf/wkt";
 
-const TestService = {
+const TestService = createServiceDesc({
   typeName: "handwritten.TestService",
-  methods: {
+  method: {
     unaryMethod: {
-      name: "Unary",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
     },
     clientStream: {
-      name: "ClientStream",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ClientStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "client_streaming",
     },
     serverStream: {
-      name: "ServerStream",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ServerStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "server_streaming",
     },
     bidiStream: {
-      name: "BidiStream",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.BiDiStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "bidi_streaming",
     },
   },
-} as const;
+});
 
 const kString = createContextKey("foo");
 
 describe("createUnaryFn()", function () {
   it("passes the context values to interceptors", async () => {
-    const input = new Int32Value({ value: 1 });
+    const input = create(Int32ValueSchema, { value: 1 });
 
-    const output = new StringValue({ value: "yield 1" });
+    const output = create(StringValueSchema, { value: "yield 1" });
     let interceptorCalled = false;
 
     const transport = createRouterTransport(
@@ -90,15 +89,11 @@ describe("createUnaryFn()", function () {
         },
       },
     );
-    const fn = createUnaryFn(
-      transport,
-      TestService,
-      TestService.methods.unaryMethod,
-    );
+    const fn = createUnaryFn(transport, TestService.method.unaryMethod);
     const res = await fn(input, {
       contextValues: createContextValues().set(kString, "bar"),
     });
-    expect(res).toBeInstanceOf(StringValue);
+    expect(isMessage(res, StringValueSchema));
     expect(res.value).toEqual(output.value);
     expect(interceptorCalled).toBe(true);
   });
@@ -106,9 +101,9 @@ describe("createUnaryFn()", function () {
 
 describe("createClientStreamingFn()", function () {
   it("works as expected on the happy path", async () => {
-    const input = new Int32Value({ value: 1 });
+    const input = create(Int32ValueSchema, { value: 1 });
 
-    const output = new StringValue({ value: "yield 1" });
+    const output = create(StringValueSchema, { value: "yield 1" });
 
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
@@ -122,8 +117,7 @@ describe("createClientStreamingFn()", function () {
     });
     const fn = createClientStreamingFn(
       transport,
-      TestService,
-      TestService.methods.clientStream,
+      TestService.method.clientStream,
     );
     const res = await fn(
       // eslint-disable-next-line @typescript-eslint/require-await
@@ -131,13 +125,13 @@ describe("createClientStreamingFn()", function () {
         yield input;
       })(),
     );
-    expect(res).toBeInstanceOf(StringValue);
+    expect(isMessage(res, StringValueSchema));
     expect(res.value).toEqual(output.value);
   });
   it("passes the context values to interceptors", async () => {
-    const input = new Int32Value({ value: 1 });
+    const input = create(Int32ValueSchema, { value: 1 });
 
-    const output = new StringValue({ value: "yield 1" });
+    const output = create(StringValueSchema, { value: "yield 1" });
     const kString = createContextKey("foo");
     let interceptorCalled = false;
 
@@ -168,8 +162,7 @@ describe("createClientStreamingFn()", function () {
     );
     const fn = createClientStreamingFn(
       transport,
-      TestService,
-      TestService.methods.clientStream,
+      TestService.method.clientStream,
     );
     const res = await fn(
       // eslint-disable-next-line @typescript-eslint/require-await
@@ -180,12 +173,12 @@ describe("createClientStreamingFn()", function () {
         contextValues: createContextValues().set(kString, "bar"),
       },
     );
-    expect(res).toBeInstanceOf(StringValue);
+    expect(isMessage(res, StringValueSchema));
     expect(res.value).toEqual(output.value);
     expect(interceptorCalled).toBe(true);
   });
   it("closes the request iterable when response is received", async () => {
-    const output = new StringValue({ value: "yield 1" });
+    const output = create(StringValueSchema, { value: "yield 1" });
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
         clientStream: async (input: AsyncIterable<Int32Value>) => {
@@ -202,8 +195,7 @@ describe("createClientStreamingFn()", function () {
     });
     const fn = createClientStreamingFn(
       transport,
-      TestService,
-      TestService.methods.clientStream,
+      TestService.method.clientStream,
     );
     let reqItrClosed = false;
     const res = await fn(
@@ -217,7 +209,7 @@ describe("createClientStreamingFn()", function () {
         }
       })(),
     );
-    expect(res).toBeInstanceOf(StringValue);
+    expect(isMessage(res, StringValueSchema));
     expect(res.value).toEqual(output.value);
     expect(reqItrClosed).toBe(true);
   });
@@ -238,8 +230,7 @@ describe("createClientStreamingFn()", function () {
     });
     const fn = createClientStreamingFn(
       transport,
-      TestService,
-      TestService.methods.clientStream,
+      TestService.method.clientStream,
     );
     let reqItrClosed = false;
     const res = fn(
@@ -263,9 +254,9 @@ describe("createClientStreamingFn()", function () {
 describe("createServerStreamingFn()", function () {
   it("works as expected on the happy path", async () => {
     const output = [
-      new StringValue({ value: "input1" }),
-      new StringValue({ value: "input2" }),
-      new StringValue({ value: "input3" }),
+      create(StringValueSchema, { value: "input1" }),
+      create(StringValueSchema, { value: "input2" }),
+      create(StringValueSchema, { value: "input3" }),
     ];
 
     const transport = createRouterTransport(({ service }) => {
@@ -278,11 +269,10 @@ describe("createServerStreamingFn()", function () {
 
     const fn = createServerStreamingFn(
       transport,
-      TestService,
-      TestService.methods.serverStream,
+      TestService.method.serverStream,
     );
     const receivedMessages: StringValue[] = [];
-    const input = new Int32Value({ value: 123 });
+    const input = create(Int32ValueSchema, { value: 123 });
     for await (const res of fn(input)) {
       receivedMessages.push(res);
     }
@@ -290,9 +280,9 @@ describe("createServerStreamingFn()", function () {
   });
   it("passes the context values to interceptors", async () => {
     const output = [
-      new StringValue({ value: "input1" }),
-      new StringValue({ value: "input2" }),
-      new StringValue({ value: "input3" }),
+      create(StringValueSchema, { value: "input1" }),
+      create(StringValueSchema, { value: "input2" }),
+      create(StringValueSchema, { value: "input3" }),
     ];
     let interceptorCalled = false;
     const transport = createRouterTransport(
@@ -320,11 +310,10 @@ describe("createServerStreamingFn()", function () {
 
     const fn = createServerStreamingFn(
       transport,
-      TestService,
-      TestService.methods.serverStream,
+      TestService.method.serverStream,
     );
     const receivedMessages: StringValue[] = [];
-    const input = new Int32Value({ value: 123 });
+    const input = create(Int32ValueSchema, { value: 123 });
     for await (const res of fn(input, {
       contextValues: createContextValues().set(kString, "bar"),
     })) {
@@ -340,8 +329,7 @@ describe("createServerStreamingFn()", function () {
           serverStream: () => createAsyncIterable([]),
         });
       }),
-      TestService,
-      TestService.methods.serverStream,
+      TestService.method.serverStream,
     );
     const it = fn({})[Symbol.asyncIterator]();
     expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
@@ -354,7 +342,7 @@ describe("createBiDiStreamingFn()", () => {
     const values = [123, 456, 789];
 
     const input = createAsyncIterable(
-      values.map((value) => new Int32Value({ value })),
+      values.map((value) => create(Int32ValueSchema, { value })),
     );
 
     let bidiIndex = 0;
@@ -364,20 +352,18 @@ describe("createBiDiStreamingFn()", () => {
           for await (const thing of input) {
             expect(thing.value).toBe(values[bidiIndex]);
             bidiIndex += 1;
-            yield new StringValue({ value: thing.value.toString() });
+            yield create(StringValueSchema, { value: thing.value.toString() });
           }
         },
       });
     });
-    const fn = createBiDiStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.bidiStream,
-    );
+    const fn = createBiDiStreamingFn(transport, TestService.method.bidiStream);
 
     let index = 0;
     for await (const res of fn(input)) {
-      expect(res).toEqual(new StringValue({ value: values[index].toString() }));
+      expect(res).toEqual(
+        create(StringValueSchema, { value: values[index].toString() }),
+      );
       index += 1;
     }
     expect(index).toBe(3);
@@ -387,7 +373,7 @@ describe("createBiDiStreamingFn()", () => {
     const values = [123, 456, 789];
 
     const input = createAsyncIterable(
-      values.map((value) => new Int32Value({ value })),
+      values.map((value) => create(Int32ValueSchema, { value })),
     );
     let interceptorCalled = false;
     let bidiIndex = 0;
@@ -398,7 +384,9 @@ describe("createBiDiStreamingFn()", () => {
             for await (const thing of input) {
               expect(thing.value).toBe(values[bidiIndex]);
               bidiIndex += 1;
-              yield new StringValue({ value: thing.value.toString() });
+              yield create(StringValueSchema, {
+                value: thing.value.toString(),
+              });
             }
           },
         });
@@ -417,17 +405,15 @@ describe("createBiDiStreamingFn()", () => {
         },
       },
     );
-    const fn = createBiDiStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.bidiStream,
-    );
+    const fn = createBiDiStreamingFn(transport, TestService.method.bidiStream);
 
     let index = 0;
     for await (const res of fn(input, {
       contextValues: createContextValues().set(kString, "bar"),
     })) {
-      expect(res).toEqual(new StringValue({ value: values[index].toString() }));
+      expect(res).toEqual(
+        create(StringValueSchema, { value: values[index].toString() }),
+      );
       index += 1;
     }
     expect(index).toBe(3);
@@ -438,7 +424,7 @@ describe("createBiDiStreamingFn()", () => {
     const values = [123, 456, 789];
 
     const input = createAsyncIterable(
-      values.map((value) => new Int32Value({ value })),
+      values.map((value) => create(Int32ValueSchema, { value })),
     );
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
@@ -450,15 +436,11 @@ describe("createBiDiStreamingFn()", () => {
         },
       });
     });
-    const fn = createBiDiStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.bidiStream,
-    );
+    const fn = createBiDiStreamingFn(transport, TestService.method.bidiStream);
 
     let count = 0;
     for await (const res of fn(input)) {
-      expect(res).toEqual(new StringValue({ value: "yield 123" }));
+      expect(res).toEqual(create(StringValueSchema, { value: "yield 123" }));
       count += 1;
     }
     expect(count).toBe(1);
@@ -471,7 +453,7 @@ describe("createBiDiStreamingFn()", () => {
     const values = [123, 456, 789];
 
     const input = createAsyncIterable(
-      values.map((value) => new Int32Value({ value })),
+      values.map((value) => create(Int32ValueSchema, { value })),
     );
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
@@ -483,16 +465,12 @@ describe("createBiDiStreamingFn()", () => {
         },
       });
     });
-    const fn = createBiDiStreamingFn(
-      transport,
-      TestService,
-      TestService.methods.bidiStream,
-    );
+    const fn = createBiDiStreamingFn(transport, TestService.method.bidiStream);
 
     let count = 0;
     try {
       for await (const res of fn(input)) {
-        expect(res).toEqual(new StringValue({ value: "yield 123" }));
+        expect(res).toEqual(create(StringValueSchema, { value: "yield 123" }));
         count += 1;
       }
     } catch (e) {
@@ -513,8 +491,7 @@ describe("createBiDiStreamingFn()", () => {
           bidiStream: () => createAsyncIterable([]),
         });
       }),
-      TestService,
-      TestService.methods.bidiStream,
+      TestService.method.bidiStream,
     );
     const it = fn(createAsyncIterable([]))[Symbol.asyncIterator]();
     expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method

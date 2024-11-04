@@ -12,63 +12,63 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  Int32Value,
-  MethodIdempotency,
-  MethodKind,
-  StringValue,
-} from "@bufbuild/protobuf";
 import { createConnectRouter } from "./router.js";
+import { createServiceDesc } from "./descriptor-helper.spec.js";
+import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
-const testService = {
+const testService = createServiceDesc({
   typeName: "TestService",
-  methods: {
+  method: {
     unary: {
-      name: "Unary",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.Unary,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "unary",
     },
     server: {
-      name: "Server",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ServerStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "server_streaming",
     },
     client: {
-      name: "Client",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.ClientStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "client_streaming",
     },
     biDi: {
-      name: "BiDi",
-      I: Int32Value,
-      O: StringValue,
-      kind: MethodKind.BiDiStreaming,
+      input: Int32ValueSchema,
+      output: StringValueSchema,
+      methodKind: "bidi_streaming",
     },
   },
-} as const;
+});
 
 describe("createConnectRouter", function () {
   it("supports self describing method type", function () {
-    const methodDefinition = {
-      name: "Unary",
-      kind: MethodKind.Unary,
-      I: Int32Value,
-      O: StringValue,
-      service: testService,
-      idempotency: MethodIdempotency.NoSideEffects,
-    } as const;
+    const methodDefinition = testService.method.unary;
     const router = createConnectRouter({}).rpc(methodDefinition, (request) => {
       return { value: `${request.value}-RESPONSE` };
     });
 
     expect(router.handlers).toHaveSize(1);
     expect(router.handlers[0].method).toEqual(methodDefinition);
-    expect(router.handlers[0].service).toEqual({
-      ...testService,
-      methods: {},
+    expect(router.handlers[0].service).toEqual(testService);
+  });
+
+  it("supports chaining after destructuring", function () {
+    const router = createConnectRouter({});
+
+    const { rpc } = router;
+    rpc(testService.method.unary, (request) => {
+      return { value: `${request.value}-RESPONSE` };
+      // eslint-disable-next-line @typescript-eslint/require-await
+    }).rpc(testService.method.server, async function* (request) {
+      yield { value: `${request.value}-RESPONSE` };
     });
+
+    expect(router.handlers).toHaveSize(2);
+    expect(router.handlers[0].method).toEqual(testService.method.unary);
+    expect(router.handlers[0].service).toEqual(testService);
+    expect(router.handlers[1].method).toEqual(testService.method.server);
+    expect(router.handlers[1].service).toEqual(testService);
   });
 });

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MethodKind } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { codeFromHttpStatus } from "./http-status.js";
 import { ConnectError } from "../connect-error.js";
@@ -23,6 +22,7 @@ import {
   headerUnaryEncoding,
 } from "./headers.js";
 import type { Compression } from "../protocol/compression.js";
+import type { DescMethod } from "@bufbuild/protobuf";
 
 /**
  * Validates response status and header for the Connect protocol.
@@ -35,7 +35,7 @@ import type { Compression } from "../protocol/compression.js";
  * @private Internal code, does not follow semantic versioning.
  */
 export function validateResponse(
-  methodKind: MethodKind,
+  methodKind: DescMethod["methodKind"],
   useBinaryFormat: boolean,
   status: number,
   headers: Headers,
@@ -51,14 +51,14 @@ export function validateResponse(
       headers,
     );
     // If parsedType is defined and it is not binary, then this is a unary JSON response
-    if (methodKind == MethodKind.Unary && parsedType && !parsedType.binary) {
+    if (methodKind == "unary" && parsedType && !parsedType.binary) {
       return { isUnaryError: true, unaryError: errorFromStatus };
     }
     throw errorFromStatus;
   }
   const allowedContentType = {
     binary: useBinaryFormat,
-    stream: methodKind !== MethodKind.Unary,
+    stream: methodKind !== "unary",
   } satisfies ReturnType<typeof parseContentType>;
   if (
     parsedType?.binary !== allowedContentType.binary ||
@@ -81,7 +81,7 @@ export function validateResponse(
  * @private
  */
 export function validateResponseWithCompression(
-  methodKind: MethodKind,
+  methodKind: DescMethod["methodKind"],
   acceptCompression: Compression[],
   useBinaryFormat: boolean,
   status: number,
@@ -91,7 +91,7 @@ export function validateResponseWithCompression(
 } {
   let compression: Compression | undefined;
   const encoding = headers.get(
-    methodKind == MethodKind.Unary ? headerUnaryEncoding : headerStreamEncoding,
+    methodKind == "unary" ? headerUnaryEncoding : headerStreamEncoding,
   );
   if (encoding != null && encoding.toLowerCase() !== "identity") {
     compression = acceptCompression.find((c) => c.name === encoding);

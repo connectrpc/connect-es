@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-next",
-  "version": "1.6.1",
+  "version": "2.0.0-rc.2",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -27,16 +27,16 @@
     }
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.14.1"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^1.10.0",
-    "next": "^13.2.4 || ^14.2.5",
-    "@connectrpc/connect": "1.6.1",
-    "@connectrpc/connect-node": "1.6.1"
+    "@bufbuild/protobuf": "^2.2.0",
+    "next": "^13.2.4 || ^14.2.5 || ^15.0.2",
+    "@connectrpc/connect": "2.0.0-rc.2",
+    "@connectrpc/connect-node": "2.0.0-rc.2"
   },
   "devDependencies": {
-    "@connectrpc/connect": "1.6.1",
-    "@connectrpc/connect-node": "1.6.1"
+    "@connectrpc/connect": "2.0.0-rc.2",
+    "@connectrpc/connect-node": "2.0.0-rc.2"
   }
 }

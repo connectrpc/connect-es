@@ -18,22 +18,22 @@ import {
   createGrpcWebTransport,
 } from "../src/index.js";
 import {
-  BidiStreamRequest,
-  ClientCompatRequest,
-  ClientStreamRequest,
+  BidiStreamRequestSchema,
+  ClientStreamRequestSchema,
   Codec,
   Compression as ConformanceCompression,
   HTTPVersion,
-  IdempotentUnaryRequest,
+  IdempotentUnaryRequestSchema,
   Protocol,
-  ServerStreamRequest,
-  UnaryRequest,
+  ServerStreamRequestSchema,
+  UnaryRequestSchema,
 } from "@connectrpc/connect-conformance";
+import type { ClientCompatRequest } from "@connectrpc/connect-conformance";
 
 /**
  * Configure a transport for a client from @connectrpc/connect-web under test.
  *
- * The conformance test runner describes the call we should make in the
+ * The conformance test runner Schemaribes the call we should make in the
  * message connectrpc.conformance.v1.ClientCompatRequest. We create a transport
  * for the call, with the corresponding protocol, HTTP version, compression, and
  * other details. If a configuration is not supported, we raise an error.
@@ -75,12 +75,12 @@ export function createTransport(req: ClientCompatRequest) {
     useBinaryFormat: req.codec === Codec.PROTO,
     defaultTimeoutMs: req.timeoutMs,
     jsonOptions: {
-      typeRegistry: createRegistry(
-        UnaryRequest,
-        ServerStreamRequest,
-        ClientStreamRequest,
-        BidiStreamRequest,
-        IdempotentUnaryRequest,
+      registry: createRegistry(
+        UnaryRequestSchema,
+        ServerStreamRequestSchema,
+        ClientStreamRequestSchema,
+        BidiStreamRequestSchema,
+        IdempotentUnaryRequestSchema,
       ),
     },
   } satisfies

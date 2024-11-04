@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { Scanned } from "./scan";
-import j from "jscodeshift";
 import { Logger, PrintFn } from "./logger";
-import { updateSourceFile } from "./update-source-file";
+import j, { Transform } from "jscodeshift";
+import { readFileSync, writeFileSync } from "node:fs";
 
 interface MigrateSourceFilesResult {
   sourceFileErrors: number;
@@ -56,4 +56,70 @@ export function migrateSourceFiles(
   return {
     sourceFileErrors,
   };
+}
+
+const codeshiftTs = j.withParser("ts");
+const codeshiftTsx = j.withParser("tsx");
+const codeshiftBabel = j.withParser("babel");
+
+interface UpdateSourceFileResult {
+  ok: boolean;
+  modified: boolean;
+}
+
+export function updateSourceFile(
+  transform: Transform,
+  path: string,
+  logger?: Logger,
+): UpdateSourceFileResult {
+  logger?.log(`transform ${path}`);
+  try {
+    const source = readFileSync(path, "utf8");
+    const result = updateSourceFileInMemory(transform, source, path);
+    if (!result.modified) {
+      logger?.log(`skipped`);
+      return { ok: true, modified: false };
+    }
+    writeFileSync(path, result.source, "utf-8");
+    logger?.log(`modified`);
+    return { ok: true, modified: true };
+  } catch (e) {
+    logger?.error(`caught error: ${String(e)}`);
+    if (e instanceof Error && e.stack !== undefined) {
+      logger?.error(e.stack);
+    }
+    return { ok: false, modified: false };
+  }
+}
+
+export function updateSourceFileInMemory(
+  transform: Transform,
+  source: string,
+  path: string,
+): { modified: boolean; source: string } {
+  let jscs: j.JSCodeshift;
+  if (path.endsWith(".tsx")) {
+    jscs = codeshiftTsx;
+  } else if (path.endsWith(".ts")) {
+    jscs = codeshiftTs;
+  } else {
+    jscs = codeshiftBabel;
+  }
+  const result = transform(
+    { path, source },
+    {
+      jscodeshift: jscs,
+      j: jscs,
+      stats: () => {},
+      report: () => {},
+    },
+    {},
+  );
+  if (typeof result != "string") {
+    return { modified: false, source };
+  }
+  if (result.trim() === source.trim()) {
+    return { modified: false, source };
+  }
+  return { modified: true, source: result };
 }

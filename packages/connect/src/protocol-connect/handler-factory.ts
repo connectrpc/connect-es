@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { JsonValue, MethodInfo } from "@bufbuild/protobuf";
-import {
-  Message,
-  MethodIdempotency,
-  MethodKind,
-  protoBase64,
+import type {
+  DescMessage,
+  DescMethod,
+  JsonValue,
+  MessageShape,
 } from "@bufbuild/protobuf";
+import { fromJson } from "@bufbuild/protobuf";
+import { base64Decode } from "@bufbuild/protobuf/wire";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import type { MethodImplSpec } from "../implementation.js";
@@ -100,6 +101,7 @@ import {
   transformInvokeImplementation,
 } from "../protocol/invoke-implementation.js";
 import type { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
+import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
 
 const protocolName = "connect";
 const methodPost = "POST";
@@ -124,7 +126,7 @@ export function createHandlerFactory(
       opt,
     );
     switch (spec.kind) {
-      case MethodKind.Unary:
+      case "unary":
         contentTypeRegExp = contentTypeUnaryRegExp;
         h = createUnaryHandler(opt, spec, serialization);
         break;
@@ -139,15 +141,17 @@ export function createHandlerFactory(
         break;
     }
     const allowedMethods = [methodPost];
-    if (spec.method.idempotency === MethodIdempotency.NoSideEffects) {
+    if (
+      spec.method.idempotency === MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS
+    ) {
       allowedMethods.push(methodGet);
     }
     return Object.assign(h, {
       protocolNames: [protocolName],
       supportedContentType: contentTypeMatcher(contentTypeRegExp),
       allowedMethods,
-      requestPath: createMethodUrl("/", spec.service, spec.method),
-      service: spec.service,
+      requestPath: createMethodUrl("/", spec.method),
+      service: spec.method.parent,
       method: spec.method,
     });
   }
@@ -156,16 +160,19 @@ export function createHandlerFactory(
   return fact;
 }
 
-function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
+function createUnaryHandler<I extends DescMessage, O extends DescMessage>(
   opt: UniversalHandlerOptions,
-  spec: MethodImplSpec<I, O> & { kind: MethodKind.Unary },
+  spec: MethodImplSpec<I, O> & { kind: "unary" },
   serialization: MethodSerializationLookup<I, O>,
 ) {
   return async function handle(
     req: UniversalServerRequest,
   ): Promise<UniversalServerResponse> {
     const isGet = req.method == methodGet;
-    if (isGet && spec.method.idempotency != MethodIdempotency.NoSideEffects) {
+    if (
+      isGet &&
+      spec.method.idempotency != MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS
+    ) {
       return uResponseMethodNotAllowed;
     }
     const queryParams = new URL(req.url).searchParams;
@@ -184,6 +191,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
     );
     const context = createHandlerContext({
       ...spec,
+      service: spec.method.parent,
       requestMethod: req.method,
       protocolName,
       timeoutMs: timeout.timeoutMs,
@@ -250,6 +258,7 @@ function createUnaryHandler<I extends Message<I>, O extends Message<O>>(
       );
       body = serialization.getO(type.binary).serialize(output);
     } catch (e) {
+      context.abort(e);
       let error: ConnectError | undefined;
       if (e instanceof ConnectError) {
         error = e;
@@ -320,7 +329,7 @@ async function readUnaryMessageFromQuery(
   const message = queryParams.get(paramMessage) ?? "";
   let decoded: Uint8Array;
   if (base64 === "1") {
-    decoded = protoBase64.dec(message);
+    decoded = base64Decode(message);
   } else {
     decoded = new TextEncoder().encode(message);
   }
@@ -330,12 +339,12 @@ async function readUnaryMessageFromQuery(
   return decoded;
 }
 
-function parseUnaryMessage<I extends Message<I>, O extends Message<O>>(
-  method: MethodInfo<I, O>,
+function parseUnaryMessage<I extends DescMessage, O extends DescMessage>(
+  method: DescMethod & { input: I },
   useBinaryFormat: boolean,
   serialization: MethodSerializationLookup<I, O>,
   input: Uint8Array | JsonValue,
-): I {
+): MessageShape<I> {
   if (input instanceof Uint8Array) {
     return serialization.getI(useBinaryFormat).parse(input);
   }
@@ -346,13 +355,13 @@ function parseUnaryMessage<I extends Message<I>, O extends Message<O>>(
     );
   }
   try {
-    return method.I.fromJson(input);
+    return fromJson(method.input, input);
   } catch (e) {
     throw ConnectError.from(e, Code.InvalidArgument);
   }
 }
 
-function createStreamHandler<I extends Message<I>, O extends Message<O>>(
+function createStreamHandler<I extends DescMessage, O extends DescMessage>(
   opt: UniversalHandlerOptions,
   spec: MethodImplSpec<I, O>,
   serialization: MethodSerializationLookup<I, O>,
@@ -375,6 +384,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
     );
     const context = createHandlerContext({
       ...spec,
+      service: spec.method.parent,
       requestMethod: req.method,
       protocolName,
       timeoutMs: timeout.timeoutMs,
@@ -453,7 +463,7 @@ function createStreamHandler<I extends Message<I>, O extends Message<O>>(
       },
       transformSerializeEnvelope(serialization.getO(type.binary)),
       transformCatchFinally<EnvelopedMessage>((e) => {
-        context.abort();
+        context.abort(e);
         const end: EndStreamResponse = {
           metadata: context.responseTrailer,
         };

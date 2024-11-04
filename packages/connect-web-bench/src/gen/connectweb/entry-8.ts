@@ -14,10 +14,10 @@
 
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient } from "@connectrpc/connect";
-import { CommitService } from "./buf/registry/module/v1/commit_service_connect.js";
-import { DownloadService } from "./buf/registry/module/v1/download_service_connect.js";
-import { GraphService } from "./buf/registry/module/v1/graph_service_connect.js";
-import { LabelService } from "./buf/registry/module/v1/label_service_connect.js";
+import { CommitService } from "./buf/registry/module/v1/commit_service_pb";
+import { DownloadService } from "./buf/registry/module/v1/download_service_pb";
+import { GraphService } from "./buf/registry/module/v1/graph_service_pb";
+import { LabelService } from "./buf/registry/module/v1/label_service_pb";
 
 /* eslint-disable no-console */
 

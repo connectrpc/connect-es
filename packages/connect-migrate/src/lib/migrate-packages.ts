@@ -16,9 +16,9 @@ import { Scanned } from "./scan";
 import { PrintFn } from "./logger";
 import { writePackageJsonFile } from "./package-json";
 import {
-  DependencyReplacement,
-  replaceDependencies,
-} from "./replace-dependencies";
+  DependencyMigration,
+  migrateDependencies,
+} from "./migrate-dependencies";
 
 interface MigratePackagesResult {
   updatedPackageFiles: string[];
@@ -26,7 +26,7 @@ interface MigratePackagesResult {
 
 export function migratePackages(
   scanned: Scanned,
-  replacements: DependencyReplacement[],
+  dependencyMigrations: DependencyMigration[],
   print: PrintFn,
   writePackageJsonFileFn: typeof writePackageJsonFile = writePackageJsonFile,
 ): MigratePackagesResult {
@@ -36,7 +36,7 @@ export function migratePackages(
   }
   print(`Updating packages... `);
   for (const { path, pkg } of scanned.packageFiles) {
-    const updated = replaceDependencies(pkg, replacements);
+    const updated = migrateDependencies(pkg, dependencyMigrations);
     if (updated !== null) {
       writePackageJsonFileFn(path, updated);
       updatedPackageFiles.push(path);

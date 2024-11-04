@@ -5,6 +5,6 @@ clean: true
 plugins:
   - local: protoc-gen-es
     out: src/protocol-grpc/gen
-    opt: target=ts
+    opt: target=ts,import_extension=.js
 inputs:
   - directory: src/protocol-grpc/proto
