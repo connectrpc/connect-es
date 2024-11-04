@@ -28,7 +28,7 @@
   },
   "type": "module",
   "engineStrict": true,
-  "packageManager": "npm@10.1.0",
+  "packageManager": "npm@10.9.0",
   "licenseHeader": {
     "licenseType": "apache",
     "yearRange": "2021-2024",
