@@ -6,7 +6,7 @@
   "dependencies": {
     "@connectrpc/connect-conformance": "*",
     "@connectrpc/example": "*",
-    "@types/node": "22.5.4",
+    "@types/node": "22.8.7",
     "typescript": "5.0.x"
   }
 }
