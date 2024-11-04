@@ -1,11 +1,11 @@
+> [!IMPORTANT]  
+> You are looking at the release candidate for version 2. For the current stable version, see the branch [v1](https://github.com/connectrpc/connect-es/tree/v1).
+
 <img src=".github/connect-logo.png" width="15%" />
 
 # Connect for ECMAScript
 
 [![License](https://img.shields.io/github/license/connectrpc/connect-es?color=blue)](./LICENSE) [![Build](https://github.com/connectrpc/connect-es/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/connectrpc/connect-es/actions/workflows/ci.yaml) [![NPM Version](https://img.shields.io/npm/v/@connectrpc/connect/latest?color=green&label=%40connectrpc%2Fconnect)](https://www.npmjs.com/package/@connectrpc/connect)
-
-> [!IMPORTANT]  
-> You are looking at the release candidate for version 2. For the current stable version, see the branch [v1](https://github.com/connectrpc/connect-es/tree/v1).
 
 Connect is a family of libraries for building type-safe APIs with different languages and platforms.
 [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings them to TypeScript,
@@ -110,10 +110,6 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 - [conformance](https://github.com/connectrpc/conformance):
   gRPC-Web and Connect interoperability tests
 - [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
-
-## Status: Stable
-
-All packages are stable and have reached a major version release.
 
 ## Legal
 
