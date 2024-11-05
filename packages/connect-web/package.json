@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-web",
-  "version": "2.0.0-rc.2",
+  "version": "2.0.0-rc.3",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -42,7 +42,7 @@
   "devDependencies": {
     "@bufbuild/buf": "^1.46.0",
     "@bufbuild/protoc-gen-es": "^2.2.2",
-    "@connectrpc/connect-conformance": "^2.0.0-rc.2",
+    "@connectrpc/connect-conformance": "^2.0.0-rc.3",
     "@wdio/browserstack-service": "^9.2.8",
     "@wdio/cli": "^9.2.8",
     "@wdio/jasmine-framework": "^9.2.8",
@@ -52,6 +52,6 @@
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.2.0",
-    "@connectrpc/connect": "2.0.0-rc.2"
+    "@connectrpc/connect": "2.0.0-rc.3"
   }
 }
