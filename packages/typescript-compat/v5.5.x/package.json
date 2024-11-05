@@ -1,0 +1,12 @@
+{
+  "name": "ts5.5",
+  "scripts": {
+    "test": "node_modules/.bin/tsc --outDir dist"
+  },
+  "dependencies": {
+    "@connectrpc/connect-conformance": "*",
+    "@connectrpc/example": "*",
+    "@types/node": "22.5.4",
+    "typescript": "5.5.x"
+  }
+}

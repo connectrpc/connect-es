@@ -132,7 +132,7 @@ export class ConnectError extends Error {
     return new ConnectError(String(reason), code, undefined, undefined, reason);
   }
 
-  static [Symbol.hasInstance](v: unknown): boolean {
+  static override [Symbol.hasInstance](v: unknown): boolean {
     if (!(v instanceof Error)) {
       return false;
     }
