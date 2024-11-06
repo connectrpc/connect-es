@@ -84,7 +84,7 @@ export default function (router: ConnectRouter) {
 
 ```diff
 // server.ts
-import * as http2 from "http2";
+import http2 from "node:http2";
 + import routes from "connect";
 + import { connectNodeAdapter } from "@connectrpc/connect-node";
 

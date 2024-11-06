@@ -18,9 +18,9 @@ import {
   compressionGzip,
   connectNodeAdapter,
 } from "../src/index.js";
-import * as http from "node:http";
-import * as http2 from "node:http2";
-import * as https from "node:https";
+import http from "node:http";
+import http2 from "node:http2";
+import https from "node:https";
 import * as net from "node:net";
 import { createRegistry } from "@bufbuild/protobuf";
 import {

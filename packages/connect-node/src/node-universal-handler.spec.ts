@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { useNodeServer } from "./use-node-server-helper.spec.js";
-import * as http2 from "http2";
-import * as http from "http";
+import http2 from "node:http2";
+import http from "node:http";
 import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
 import { ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";

@@ -15,7 +15,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-floating-promises */
 
 import { Http2SessionManager } from "../http2-session-manager.js";
-import * as http2 from "http2";
+import http2 from "node:http2";
 import { parentPort, workerData } from "worker_threads";
 
 const sm = new Http2SessionManager(workerData, {

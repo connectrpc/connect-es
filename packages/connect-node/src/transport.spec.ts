@@ -15,7 +15,7 @@
 /* eslint-disable @typescript-eslint/no-invalid-void-type */
 import { Int32Value, StringValue, MethodKind } from "@bufbuild/protobuf";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
-import * as http2 from "node:http2";
+import http2 from "node:http2";
 import { connectNodeAdapter } from "./connect-node-adapter.js";
 import { createClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";

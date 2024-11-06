@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { useNodeServer } from "./use-node-server-helper.spec.js";
-import * as http2 from "http2";
+import http2 from "node:http2";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { ConnectError } from "@connectrpc/connect";
 import { Worker } from "worker_threads";

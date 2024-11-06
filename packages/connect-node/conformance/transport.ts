@@ -33,7 +33,7 @@ import {
   createGrpcWebTransport,
 } from "../src/index.js";
 import type { Compression } from "@connectrpc/connect/protocol";
-import * as http2 from "node:http2";
+import http2 from "node:http2";
 
 /**
  * Configure a transport for a client from @connectrpc/connect-node under test.
