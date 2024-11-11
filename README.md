@@ -108,26 +108,21 @@ npm install @connectrpc/connect@^2.0.0 @connectrpc/connect-web@^2.0.0
 Next, you'll need to account for any breaking changes. Following is a list to
 be aware of:
 
-* `createGrpcTransport` now requires HTTP/2. 
+* The gRPC Transport now requires HTTP/2. If you are using `createGrpcTransport` 
+  and specifying an `httpVersion`, it will fail compilation. Remove the 
+  `httpVersion` property to use the default. 
 
-  If you are using `createGrpcTransport` and specifying an `httpVersion`, it will
-  now fail compilation. Remove the `httpVersion` property to use the default.
   Note that if you were relying on HTTP/1.1 as part of your gRPC strategy, this
   may require bigger architectural changes, but the hope is that this is not a
   common problem.
 
-* The deprecated `createPromiseClient` has been removed.
-
-  Promise clients are now the default. Any callsites using `createPromiseClient`
+* Promise clients are now the default and the previously-deprecated 
+  `createPromiseClient` has been removed. Any callsites using `createPromiseClient`
   should be updated to use `createClient`.
 
-* Node 16 is no longer supported.
+* Node 16 is no longer supported. Connect v2 now supports Node versions 18.14.1 and up.
 
-  Connect v2 now supports Node versions 18.14.1 and up.
-
-* Requests with similar shapes can no longer be used interchangeably. 
-
-  Previously, Connect allowed request objects with matching shapes to be passed
+* Previously, Connect allowed request objects with matching shapes to be passed
   to API calls interchangeably as long as the passed object was a superset of the
   target type. For example, given the following proto definitions:
 
@@ -157,9 +152,7 @@ be aware of:
   This was an unintended bug and not a feature and in Connect v2, only the specified
   target type will pass compilation.
 
-* `fetch`-related options `credentials` and `init` have been removed.
-
-  We have removed the `credentials` option from transports as well as the `init`
+* We have removed the `credentials` option from transports as well as the `init`
   option in interceptors. These two options were used to customize `fetch` routines.
   Users should now rely on the `fetch` option in transports as a way to perform
   these customizations. For example:
@@ -175,26 +168,66 @@ be aware of:
   Connect GET request in server-side interceptors, the property `requestMethod: string`
   has been added to intercepted requests. This property is symmetrical to `HandlerContext.requestMethod`.
 
-* The access pattern of `MethodDescriptor` has slightly changed.
-
-  In v2, the Protobuf-ES plugin generates service descriptors and changes the 
+* The access pattern of `MethodDescriptor` has slightly changed. In v2, the 
+  Protobuf-ES plugin generates service descriptors and changes the 
   access pattern for method descriptors. Instead of the plural form `methods`,
   it now uses the singular `method`.
 
-  For example: `ElizaService.methods.Say` becomes `ElizaService.method.Say`.
+  For example: `ElizaService.methods.Say` now becomes `ElizaService.method.Say`.
 
-* Errors details are a pair of desc and init values
+* Errors details are now a pair of desc and init values. In Connect v1, error 
+  details were specified as message instances. In v2, error 
+  details are now an object that specifies both a schema and initialization
+  object which are both passed to the `create` function of Protobuf-ES. For example:
 
-  TBD
+  ```diff
+  - import { LocalizedMessage } from "./gen/google/rpc/error_details_pb";
+  - const details = [
+  -   new LocalizedMessage({
+  -       locale: "fr-CH",
+  -       message: "Je n'ai plus de mots.",
+  -   }),
+  - ];
+  + import { LocalizedMessageSchema } from "./gen/google/rpc/error_details_pb";
+  + const details = [
+  +   {
+  +     desc: LocalizedMessageSchema,
+  +     value: {
+  +       locale: "fr-CH",
+  +       message: "Je n'ai plus de mots.",
+  +     }
+  +   },
+  + ];
+  const metadata = new Headers({
+    "words-left": "none"
+  }); 
+  throw new ConnectError(
+    "I have no words anymore.",
+    Code.ResourceExhausted,
+    metadata,
+    details
+  );
+  ```
 
-* MethodDescriptor is self sufficient
+* `MethodDescriptor` is now self-sufficient. In v1, method descriptors always 
+  had to be used alongside the service descriptors. In v2, they can now be used
+  standalone. This means that all callsites that previously passed a service 
+  and method descriptor can now just pass the method descriptor. 
 
-  TBD
+  A notable example is when using a Connect `Router` on the server-side:
 
-* Interceptors always use stream types
+  ```diff
+  const routes = ({rpc}: Router) => {
+  -   rpc(ElizaService, ElizaService.say, impl);
+  +   rpc(ElizaService.say, impl);
+  }
+  ```
 
-  TBD
-
+* Interceptors for streaming RPCs now use appropriate stream types. In 
+  v1, the server used more exact types in interceptors, for example `UnaryRequest`
+  for server-streaming rpcs while the client always used streaming variants. 
+  This was unintended behavior and has been fixed in v2. Now all streaming RPCs
+  use the `StreamRequest` and `StreamResponse` on the server as well. 
 
 ## Other platforms
 
