@@ -87,7 +87,7 @@ users, this means a combination of any of the following steps:
 * Remove any dependency on Generated SDKs for Connect from `package.json` using
   the same approach used for removing the plugin. Users should then rely on 
   types from the `@bufbuild_es` plugin instead. This will also necessitate a code 
-  change, which is usually a simple import path update from *_connect to *_pb.
+  change, which is usually a simple import path update from `*_connect` to `*_pb`.
 
 Next, as mentioned, Connect uses Protobuf-ES v2, so you will need to upgrade any
 dependencies you have on its relevant packages:
@@ -198,6 +198,7 @@ be aware of:
   +     }
   +   },
   + ];
+
   const metadata = new Headers({
     "words-left": "none"
   }); 
