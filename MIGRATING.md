@@ -140,15 +140,18 @@ ElizaService.method.say.methodKind; // "unary"
 ElizaService.method.say.idempotency; //  MethodOptions_IdempotencyLevel.NoSideEffects
 ```
 
-Notice that instead of the plural form `methods`, it now uses the singular 
-`method`.
+Note that:
+* instead of the plural form `methods`, it now uses the singular `method`.
+* the property `kind` for `MethodKind` has been renamed to `methodKind` and it now
+  returns a string.
+* the enum type of the `idempotency` property has slightly changed.
 
 Other than the above, the generated properties remain largely unchanged and 
 request and responses do not need any updates when initializers are used or 
 dot notation is used. However, a few noteworthy changes to be aware of:
 
 * The `toPlainMessage` function and the `PlainMessage<T>` type are no longer 
-  necessary. If you create a proto3 message with `create(UserSchema)`, the 
+  necessary. If you create a `proto3` message with `create(UserSchema)`, the 
   returned object is already a plain object. You can replace the 
   `PlainMessage<User>` types with `User`. The only difference is that `User` has 
   a property `$typeName`, which is a simple string with the full name of
@@ -157,12 +160,13 @@ dot notation is used. However, a few noteworthy changes to be aware of:
 * The `PartialMessage` type has been mostly replaced by `MessageInitShape`, which 
   extracts the init type from a message descriptor.
 * A message field using [`google.protobuf.Struct`](https://github.com/bufbuild/protobuf-es/blob/main/MANUAL.md#googleprotobufstruct) 
-  is now generated as more-convenient `JsonObject`.
+  is now generated as a more-convenient `JsonObject`.
 * `proto2` fields with default values are no longer generated as optional 
   properties.
 * All well-known types and helpers have been moved to an export under 
   `@bufbuild/protobuf/wkt`. For example, when converting a `google.protobuf.Timestamp` 
-  to an ECMAScript Date object, it is no longer possible via a method. 
+  to an ECMAScript `Date` object, it is no longer possible via a method and must
+  be done via helpers imported from this path.
 
 For more information on all Protobuf-ES v2 changes, see the Protobuf-ES [manual](https://github.com/bufbuild/protobuf-es/blob/main/MANUAL.md)
 as well as the [Protobuf-ES v2 migration guide](https://github.com/bufbuild/protobuf-es/blob/main/MANUAL.md#update-your-code).
@@ -284,6 +288,6 @@ as well as the [Protobuf-ES v2 migration guide](https://github.com/bufbuild/prot
   This was unintended behavior and has been fixed in v2. Now all streaming RPCs
   use the `StreamRequest` and `StreamResponse` types on the server as well.
 
-* Node 16 is no longer supported. Connect v2 now supports Node versions 18.14.1 and up.
+* Node 16 is no longer supported. Connect v2 now supports Node versions **18.14.1** and up.
 
-* Connect v2 now requires at least TypeScript v4.9.5.
+* Connect v2 now requires at least TypeScript **v4.9.5**.
