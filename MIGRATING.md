@@ -37,10 +37,9 @@ So the first major part of the migration path is removing any usage of the old
 - Removing any usage of the plugin in `buf.gen.yaml`.
 - Removing any dependency on Generated SDKs for Connect from `package.json`.
 
-The next step is to upgrade any dependencies on [Protobuf-ES packages](https://github.com/bufbuild/protobuf-es?tab=readme-ov-file#packages)  
-to use v2.
+The next step is to upgrade any dependencies on [Protobuf-ES packages](https://github.com/bufbuild/protobuf-es?tab=readme-ov-file#packages) to use v2.
 
-The final step is to update the Connect [packages](#packages) in your project 
+The final step is to update the [Connect packages](#packages) in your project 
 to use v2.
 
 :white_check_mark: The `connect-migrate` tool will handle all of these changes.
@@ -72,7 +71,7 @@ to any `buf generate` CLI commands you are running.
 ### Import paths
 
 Once your code is generated and the vestigial `*_connect` files are removed, 
-import paths should be updated. This is usually an update from `*_connect` to
+import paths will need to be updated. This is usually an update from `*_connect` to
 `*_pb`:
 
 ```diff
@@ -95,11 +94,11 @@ Protobuf-ES and pass the generated schema:
 
 ```diff
 - import { SayRequest } from "./gen/eliza_connect.js";
-- import { SayRequestSchema } from "./gen/eliza_pb.js";
++ import { SayRequestSchema } from "./gen/eliza_pb.js";
 + import { create } from "@bufbuild/protobuf";
 
 - const sayRequest = new SayRequest({
-+ const sayRequest = create(UserSchema, {
++ const sayRequest = create(SayRequestSchema, {
   sentence: "Hello",
 });
 ```
