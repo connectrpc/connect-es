@@ -194,12 +194,12 @@ files. An easy way to do this is to use the `clean` option provided by the
 Buf CLI introduced in v1.36.0:
 
 ```diff
-  # buf.gen.yaml
-  version: v2
+# buf.gen.yaml
+version: v2
 + clean: true
-  plugins:
-   - local: protoc-gen-es
-     out: src/gen
+plugins:
+  - local: protoc-gen-es
+    out: src/gen
 ```
 
 With this option, `buf generate` will delete the contents of `src/gen` before
