@@ -68,6 +68,10 @@ You can serve your Connect RPCs with vanilla Node.js, or use our [server plugins
 for **Fastify**, **Next.js**, and **Express**. We support Node.js v18.14.1 and later with
 the builtin `http` and `http2` modules.
 
+## Migrating from version 1
+
+If you are migrating from v1 to v2, check out our [migration guide](./MIGRATING.md);
+
 ## Other platforms
 
 Would you like to use Connect on other platforms like Bun, Deno, Vercel’s Edge Runtime,
