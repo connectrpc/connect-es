@@ -101,34 +101,26 @@ plugins:
 The migration tool does not handle updating generated SDKs so these types of
 dependencies will need updated manually.
 
-Since the Connect plugin no longer exists in v2, any generated
+Since the Connect plugin no longer exists in v2, any generated 
 SDK dependencies in your `package.json` that rely on this plugin (i.e. have
-`connectrpc_es` as part of their path) should be updated to use the Protobuf-ES
+`connectrpc_es` as part of their name) should be updated to use the Protobuf-ES
 v2 plugin instead.
 
-The path for a generated SDK dependency is structured as follows:
+The name of a generated SDK dependency is structured as follows:
 
 ```
-@buf/{module_owner}_{module_name}.{plugin_owner}_{plugin_name}@{version}
+@buf/{module_owner}_{module_name}.{plugin_owner}_{plugin_name}
 ```
 
-We will walk through updating a generated SDK on the `googleapis/googleapis`
-module. To do this for other modules, simply replace `googleapis/googleapis`
-with your module owner and name (also note that your versions will differ per
-module).
+For example, if you are using a generated SDK for the BSR module [buf.build/googleapis/googleapis](https://buf.build/googleapis/googleapis),
+you have dependency on `@buf/googleapis_googleapis.connectrpc_es` in your 
+package.json file, and you need to replace it with a dependency on `@buf/googleapis_googleapis.bufbuild_es`
+(same BSR module, but using the [Protobuf-ES v2 plugin](https://buf.build/bufbuild/es)).
 
-A dependency on `googleapis/googleapis` that uses the Connect v1 plugin will
-look something like the following (note the `connectrpc_es` in the path). Remove
-this line from your `package.json`.
-
-```
-@buf/googleapis_googleapis.connectrpc_es@1.4.0-20241107203341-553fd4b4b3a6.3
-```
-
-To use the corresponding generated SDK with Protobuf-ES v2, use the
-command:
+You can make this change with the following commands:
 
 ```shellsession
+npm remove  @buf/googleapis_googleapis.connectrpc_es
 npm install @buf/googleapis_googleapis.bufbuild_es@latest
 ```
 
@@ -143,6 +135,17 @@ Your `package.json` should now resemble the following:
     "@bufbuild/protobuf": "^2.2.0",
     ...
   }
+```
+
+To do this for other modules, simply replace `googleapis/googleapis`
+with your module owner and name (also note that your versions will differ per
+module).
+
+Finally, update your imports to the new package name and file suffix:
+
+```diff
+- import { ByteStream } from "@buf/googleapis_googleapis.connectrpc_es/google/bytestream_connect.js";
++ import { ByteStream } from "@buf/googleapis_googleapis.bufbuild_es/google/bytestream_pb.js";
 ```
 
 ### Generated code
