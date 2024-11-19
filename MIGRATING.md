@@ -267,7 +267,9 @@ const sayRequest: Omit<SayReqest, "$typeName"> = {
 };
 ```
 
-> [!TIP] > `proto3` messages are plain objects, but with `proto2` or Editions, messages
+> [!TIP] 
+> 
+> `proto3` messages are plain objects, but with `proto2` or Editions, messages
 > may use the prototype chain to track field presence. See the section
 > [Field presence and default values](https://github.com/bufbuild/protobuf-es/blob/v2.2.2/MANUAL.md#field-presence-and-default-values)
 > in the Protobuf-ES documentation.
