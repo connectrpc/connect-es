@@ -409,7 +409,7 @@ const registry = createRegistry(
 ### `createPromiseClient` is removed
 
 Promise clients are now the default and the previously-deprecated function `createPromiseClient`
-has been removed. Any callsites using `createPromiseClient` should be updated to use `createClient`.
+has been removed. Any call sites using `createPromiseClient` should be updated to use `createClient`.
 
 ```diff
 - import { createPromiseClient } from "@connectrpc/connect-node";
