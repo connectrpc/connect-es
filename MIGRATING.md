@@ -526,7 +526,9 @@ The `methods` property is renamed to `method`:
 + const say = ElizaService.method.say;
 ```
 
-> [!TIP] > `methods` provides an Array of the methods.
+> [!TIP]
+>
+> `methods` provides an Array of the methods.
 
 #### Method kind
 
