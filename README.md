@@ -1,6 +1,3 @@
-> [!IMPORTANT]  
-> You are looking at the release candidate for version 2. For the current stable version, see the branch [v1](https://github.com/connectrpc/connect-es/tree/v1).
-
 <img src=".github/connect-logo.png" width="15%" />
 
 # Connect for ECMAScript
