@@ -15,8 +15,7 @@ to know to migrate and start using it right away.
 To help with the process of migrating, we provide a tool called
 [@connectrpc/connect-migrate](https://www.npmjs.com/package/@connectrpc/connect-migrate)
 which will take care of dependency and plugin updates as well as a few minor code
-changes. So, as a first step, you will need to run the migration tool. To do so,
-execute the following command:
+changes. As a first step, execute the following command:
 
 ```shellsession
 npx @connectrpc/connect-migrate@latest
