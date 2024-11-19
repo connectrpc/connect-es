@@ -35,9 +35,9 @@ import {
 import { writeBufGenYamlFile } from "../lib/bufgenyaml";
 
 export const targetVersionProtobufEs = "2.2.2";
-export const targetVersionConnectEs = "2.0.0-rc.3"; // TODO
-export const targetVersionConnectQuery = "2.0.0-rc.3"; // TODO
-export const targetVersionConnectPlaywright = "0.5.0"; // TODO
+export const targetVersionConnectEs = "2.0.0";
+export const targetVersionConnectQuery = "2.0.0";
+export const targetVersionConnectPlaywright = "0.6.0";
 
 const dependencyMigrations: DependencyMigration[] = [
   // https://github.com/bufbuild/protobuf-es
