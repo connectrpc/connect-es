@@ -54,6 +54,7 @@ dependencies should look similar to the following:
     "@connectrpc/connect-fastify": "^2.0.0",
     "@connectrpc/connect-express": "^2.0.0",
     "@connectrpc/connect-query": "^2.0.0",
+    "@connectrpc/protoc-gen-connect-query": "^2.0.0",
     "@connectrpc/connect-playwright": "^0.6.0"
   }
 ```
