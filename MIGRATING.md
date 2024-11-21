@@ -470,7 +470,7 @@ const transport = createConnectTransport({
   baseUrl: "https://demo.connectrpc.com",
   jsonOptions: {
 -   typeRegistry: createRegistry(SayRequest),
--   registry: createRegistry(SayRequestSchema),
++   registry: createRegistry(SayRequestSchema),
   },
 });
 ```
