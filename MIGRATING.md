@@ -203,7 +203,7 @@ import { toBinary } from "@bufbuild/protobuf";
 import { SayRequestSchema } from "./gen/eliza_pb";
 
 - sayRequest.toBinary();
-+ toBinary(sayRequest, SayRequestSchema);
++ toBinary(SayRequestSchema, sayRequest);
 ```
 
 The same applies to the methods `equals`, `clone`, `toJson`, and `toJsonString`,
