@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { Scanned } from "../lib/scan";
-import modifyImports from "./v2.0.0-transform";
+import transportConnectPluginImports from "./v2.0.0-transform-connect-plugin-imports";
+import transportClassRefs from "./v2.0.0-transform-class-refs";
 import { MigrateError, MigrateSuccess, Migration } from "../migration";
 import { runInstall } from "../lib/run";
 import { writePackageJsonFile } from "../lib/package-json";
@@ -158,7 +159,7 @@ export const v2_0_0: Migration = {
     const errorLines: string[] = [];
     const { sourceFileErrors } = migrateSourceFiles(
       scanned,
-      modifyImports,
+      [transportConnectPluginImports, transportClassRefs],
       print,
       logger,
       updateSourceFileFn,
