@@ -150,4 +150,42 @@ describe("v2.0.0 transform class references", () => {
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
     expect(result.source).toBe(output);
   });
+  it("transforms static fromBinary call", () => {
+    const input = [
+      `import {Foo} from "./foo_pb";`,
+      `Foo.fromBinary(x, y);`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema } from "./foo_pb";`,
+      `import { fromBinary } from "@bufbuild/protobuf";`,
+      `fromBinary(FooSchema, x, y);`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
+  it("transforms static fromJson call", () => {
+    const input = [`import {Foo} from "./foo_pb";`, `Foo.fromJson(x, y);`].join(
+      "\n",
+    );
+    const output = [
+      `import { FooSchema } from "./foo_pb";`,
+      `import { fromJson } from "@bufbuild/protobuf";`,
+      `fromJson(FooSchema, x, y);`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
+  it("transforms static fromJsonString call", () => {
+    const input = [
+      `import {Foo} from "./foo_pb";`,
+      `Foo.fromJsonString(x, y);`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema } from "./foo_pb";`,
+      `import { fromJsonString } from "@bufbuild/protobuf";`,
+      `fromJsonString(FooSchema, x, y);`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
 });

@@ -30,8 +30,8 @@ const transform: j.Transform = (file, { j }, options) => {
   // Identifiers imported from generated protos
   const pbNames = new Set<string>();
 
-  // Will we need to import "create"?
-  let importCreate = false;
+  // Identifiers we'll need to import from @bufbuild/protobuf
+  const needBufbuildProtobufImports = new Set<string>();
 
   // Replace wkt imports from @bufbuild/protobuf to @bufbuild/protobuf/wkt
   root
@@ -92,7 +92,7 @@ const transform: j.Transform = (file, { j }, options) => {
         ]),
       );
       pbNames.add(name);
-      importCreate = true;
+      needBufbuildProtobufImports.add("create");
     });
 
   // Replace `isMessage(foo, Foo)` -> `isMessage(foo, FooSchema)`
@@ -126,6 +126,26 @@ const transform: j.Transform = (file, { j }, options) => {
       );
       pbNames.add(ident.name);
     });
+
+  // Replace `Foo.fromBinary(x, y)` -> `fromBinary(FooSchema, x, y)`
+  replaceStaticMethodCall(
+    "fromBinary",
+    pbNames,
+    needBufbuildProtobufImports,
+    root,
+  );
+  replaceStaticMethodCall(
+    "fromJson",
+    pbNames,
+    needBufbuildProtobufImports,
+    root,
+  );
+  replaceStaticMethodCall(
+    "fromJsonString",
+    pbNames,
+    needBufbuildProtobufImports,
+    root,
+  );
 
   // Replace `import {Foo}` -> `import {FooSchema}`
   for (const name of pbNames) {
@@ -164,7 +184,10 @@ const transform: j.Transform = (file, { j }, options) => {
 
   // Add `import {create} from "@bufbuild/protobuf"`
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- linter is wrong
-  if (importCreate) {
+  if (needBufbuildProtobufImports.size > 0) {
+    const needSpecifiers = Array.from(needBufbuildProtobufImports).map((name) =>
+      j.importSpecifier(j.identifier(name)),
+    );
     // Find existing import
     const importBufbuildProtobuf = root.find(j.ImportDeclaration, {
       specifiers: [
@@ -184,9 +207,7 @@ const transform: j.Transform = (file, { j }, options) => {
         .at(0)
         .replaceWith((path) =>
           j.importDeclaration(
-            (path.value.specifiers ?? []).concat(
-              j.importSpecifier(j.identifier("create")),
-            ),
+            [...(path.value.specifiers ?? []), ...needSpecifiers],
             path.value.source,
             path.value.importKind,
           ),
@@ -204,7 +225,7 @@ const transform: j.Transform = (file, { j }, options) => {
         .at(0)
         .insertAfter(
           j.importDeclaration(
-            [j.importSpecifier(j.identifier("create"))],
+            needSpecifiers,
             j.stringLiteral(bufbuildProtobufPackage),
           ),
         );
@@ -253,6 +274,43 @@ function findPbImports(name: string, root: j.Collection) {
         from.endsWith("_pb.js") ||
         from.endsWith("_pb.ts");
       return fromIsPb || fromIsWkt;
+    });
+}
+
+function replaceStaticMethodCall(
+  methodName: string,
+  pbNames: Set<string>,
+  needBufbuildProtobufImports: Set<string>,
+  root: j.Collection,
+): void {
+  root
+    .find(j.CallExpression, {
+      callee: {
+        type: "MemberExpression",
+        object: {
+          type: "Identifier",
+        },
+        property: {
+          type: "Identifier",
+          name: methodName,
+        },
+      },
+    })
+    .forEach((path) => {
+      const callee = path.value.callee as j.MemberExpression;
+      const object = callee.object as j.Identifier;
+      const pbImports = findPbImports(object.name, root);
+      if (pbImports.size() === 0) {
+        return;
+      }
+      path.replace(
+        j.callExpression(j.identifier(methodName), [
+          j.identifier(object.name + "Schema"),
+          ...path.value.arguments,
+        ]),
+      );
+      pbNames.add(object.name);
+      needBufbuildProtobufImports.add(methodName);
     });
 }
 
