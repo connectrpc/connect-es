@@ -48,7 +48,7 @@
     "@wdio/jasmine-framework": "^9.2.8",
     "@wdio/local-runner": "^9.2.8",
     "jasmine": "^5.2.0",
-    "webdriverio": "^9.2.8"
+    "webdriverio": "^9.4.1"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.2.0",
