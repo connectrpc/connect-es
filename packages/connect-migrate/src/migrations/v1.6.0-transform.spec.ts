@@ -29,7 +29,7 @@ function t(
       report: () => {},
     },
     {},
-  );
+  ) as string | null;
 }
 
 describe("rename symbols using", () => {
