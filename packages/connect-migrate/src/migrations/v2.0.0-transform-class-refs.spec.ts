@@ -52,6 +52,21 @@ describe("v2.0.0 transform class references", () => {
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
     expect(result.source).toEqual(output);
   });
+  it("does not add type import to .js file when transforming new", () => {
+    const input = [
+      `import {Foo} from "./x_pb.js";`,
+      `const foo = new Foo();`,
+      `foo instanceof Foo;`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema } from "./x_pb.js";`,
+      `import { create } from "@bufbuild/protobuf";`,
+      `const foo = create(FooSchema);`,
+      `foo instanceof Foo;`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.js");
+    expect(result.source).toEqual(output);
+  });
   it("adds create import to existing when transforming new", () => {
     const input = [
       `import {fake} from "@bufbuild/protobuf";`,
@@ -109,6 +124,22 @@ describe("v2.0.0 transform class references", () => {
       `isMessage(1, FooSchema);`,
     ].join("\n");
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
+  it("does not add type import to .ts file when transforming isMessage()", () => {
+    const input = [
+      `import {isMessage} from "@bufbuild/protobuf";`,
+      `import {Foo} from "./x_pb.js";`,
+      `isMessage(1, Foo);`,
+      `foo instanceof Foo;`,
+    ].join("\n");
+    const output = [
+      `import {isMessage} from "@bufbuild/protobuf";`,
+      `import { FooSchema } from "./x_pb.js";`,
+      `isMessage(1, FooSchema);`,
+      `foo instanceof Foo;`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.js");
     expect(result.source).toEqual(output);
   });
   it("transforms wkt", () => {

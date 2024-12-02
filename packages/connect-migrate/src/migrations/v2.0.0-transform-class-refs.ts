@@ -166,19 +166,21 @@ const transform: j.Transform = (file, { j }, options) => {
   }
 
   // Add type import when the name was used outside of new and isMessage()
-  for (const name of pbNames) {
-    if (root.find(j.Identifier, { name }).size() > 0) {
-      const pbImports = findPbImports(name + "Schema", root);
-      const firstImport = pbImports.at(0);
-      const from = (firstImport.get() as j.ASTPath<j.ImportDeclaration>).value
-        .source;
-      firstImport.insertAfter(
-        j.importDeclaration(
-          [j.importSpecifier(j.identifier(name))],
-          from,
-          "type",
-        ),
-      );
+  if (file.path.endsWith(".ts")) {
+    for (const name of pbNames) {
+      if (root.find(j.Identifier, { name }).size() > 0) {
+        const pbImports = findPbImports(name + "Schema", root);
+        const firstImport = pbImports.at(0);
+        const from = (firstImport.get() as j.ASTPath<j.ImportDeclaration>).value
+          .source;
+        firstImport.insertAfter(
+          j.importDeclaration(
+            [j.importSpecifier(j.identifier(name))],
+            from,
+            "type",
+          ),
+        );
+      }
     }
   }
 
