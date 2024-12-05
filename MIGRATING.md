@@ -722,7 +722,7 @@ Make sure to update your imports to the new package name and file names:
 
 ## Gotchas
 
-### The new plugins generates missing imports <a id="missing-imports"></a>
+### The new plugins generates missing imports
 
 Because Protobuf-ES supports custom options and other reflection-based features now, generated code includes more
 information than in the previous version, and will generate additional imports in some situations.
