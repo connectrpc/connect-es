@@ -73,7 +73,6 @@ version: v2
 plugins:
   - local: protoc-gen-es
     out: src/gen
-    include_wkt: true
     include_imports: true
     opt: target=ts
 - - local: protoc-gen-connect-es
@@ -90,7 +89,6 @@ plugins:
 - - remote: buf.build/bufbuild/es:v1.10.0
 + - remote: buf.build/bufbuild/es:v2.2.0
     out: src/gen
-    include_wkt: true
     include_imports: true
     opt: target=ts
 - - remote: buf.build/connectrpc/es
@@ -112,7 +110,6 @@ version: v2
 plugins:
   - local: protoc-gen-es
     out: src/gen
-    include_wkt: true
     include_imports: true
 ```
 
@@ -129,7 +126,6 @@ version: v2
 plugins:
  - local: protoc-gen-es
    out: src/gen
-   include_wkt: true
    include_imports: true
    opt:
      - target=ts
@@ -145,7 +141,6 @@ version: v2
 plugins:
   - local: protoc-gen-es
     out: src/gen
-    include_wkt: true
     include_imports: true
     opt:
       - target=ts
@@ -163,12 +158,10 @@ way your project is configured. For example, `npx buf generate` or `npm run gene
 
 > [!NOTE]
 > Ensure that your `buf.gen.yaml` includes the following options to generate
-> code for well-known types and imports.
-> `include_wkt: true`
-> `include_imports: true`
+> code for imports.
+> * `include_imports: true`
 
 See the [Gotchas](#missing-imports) section for an explanation.
-
 
 ## Update your application code
 
