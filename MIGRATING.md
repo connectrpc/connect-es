@@ -159,7 +159,8 @@ way your project is configured. For example, `npx buf generate` or `npm run gene
 > [!NOTE]
 > Ensure that your `buf.gen.yaml` includes the following options to generate
 > code for imports.
-> * `include_imports: true`
+>
+> - `include_imports: true`
 
 See the [Gotchas](#missing-imports) section for an explanation.
 
