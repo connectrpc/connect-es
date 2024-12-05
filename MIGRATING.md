@@ -162,7 +162,7 @@ way your project is configured. For example, `npx buf generate` or `npm run gene
 >
 > - `include_imports: true`
 
-See the [Gotchas](#missing-imports) section for an explanation.
+See the [Gotchas](#the-new-plugins-generates-missing-imports) section for an explanation.
 
 ## Update your application code
 
