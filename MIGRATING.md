@@ -73,6 +73,7 @@ version: v2
 plugins:
   - local: protoc-gen-es
     out: src/gen
+    include_imports: true
     opt: target=ts
 - - local: protoc-gen-connect-es
 -   out: src/gen
@@ -88,6 +89,7 @@ plugins:
 - - remote: buf.build/bufbuild/es:v1.10.0
 + - remote: buf.build/bufbuild/es:v2.2.0
     out: src/gen
+    include_imports: true
     opt: target=ts
 - - remote: buf.build/connectrpc/es
 -   out: src/gen
@@ -108,6 +110,7 @@ version: v2
 plugins:
   - local: protoc-gen-es
     out: src/gen
+    include_imports: true
 ```
 
 With this option, `buf generate` will delete the contents of `src/gen` before generating code.
@@ -123,6 +126,7 @@ version: v2
 plugins:
  - local: protoc-gen-es
    out: src/gen
+   include_imports: true
    opt:
      - target=ts
 +    - import_extension=js
@@ -137,6 +141,7 @@ version: v2
 plugins:
   - local: protoc-gen-es
     out: src/gen
+    include_imports: true
     opt:
       - target=ts
 -     - import_extension=none
@@ -150,6 +155,14 @@ as well - it's the default behavior now.
 Now that dependencies and `buf.gen.yaml` are updated, the next step is to re-generate code. The
 migration tool does not handle code generation, so be sure to do so in whatever
 way your project is configured. For example, `npx buf generate` or `npm run generate`.
+
+> [!NOTE]
+> Ensure that your `buf.gen.yaml` includes the following options to generate
+> code for imports.
+>
+> - `include_imports: true`
+
+See the [Gotchas](#the-new-plugins-generates-missing-imports) section for an explanation.
 
 ## Update your application code
 
