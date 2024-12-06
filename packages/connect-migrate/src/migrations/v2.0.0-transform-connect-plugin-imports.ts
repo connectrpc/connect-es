@@ -20,6 +20,10 @@ const replacements = [
   ["_connect.ts", "_pb.ts"],
 ];
 
+/**
+ * Replace imports for protoc-connect-es generated files (*_connect.js)
+ * with protoc-gen-es generated files (*_pb.js).
+ */
 const transform: j.Transform = (file, { j }, options) => {
   const root = j(file.source);
   const importPaths = root.find(j.ImportDeclaration);
