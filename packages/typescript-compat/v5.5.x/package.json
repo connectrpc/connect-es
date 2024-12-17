@@ -1,5 +1,6 @@
 {
   "name": "ts5.5",
+  "private": true,
   "scripts": {
     "test": "node_modules/.bin/tsc --outDir dist"
   },
