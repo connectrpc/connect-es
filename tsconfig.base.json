@@ -8,9 +8,12 @@
       // ES2018.AsyncIterable for AsyncIterator
       "ES2018.AsyncIterable"
     ],
+    "declaration": true,
+    // We don't have dependencies that require interop
     "esModuleInterop": false,
-    "forceConsistentCasingInFileNames": true,
+    // As strict as possible
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
@@ -22,8 +25,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-
-    // We need node's module resolution, so we do not have to skip lib checks
+    // We're building with Node16 module resolution
     "moduleResolution": "Node16",
     "module": "Node16",
     "verbatimModuleSyntax": true,
