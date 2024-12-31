@@ -202,6 +202,8 @@ Instead of the `new` keyword, you create a message with a function call:
 });
 ```
 
+:white_check_mark: The `connect-migrate` tool will handle this.
+
 Messages are now plain TypeScript types, which greatly improves compatibility
 with the ecosystem. For example, messages can be passed from a server-side
 component in Next.js to a client-side component without losing any data or types.
@@ -220,7 +222,10 @@ import { SayRequestSchema } from "./gen/eliza_pb";
 ```
 
 The same applies to the methods `equals`, `clone`, `toJson`, and `toJsonString`,
-and to the static methods `fromBinary`, `fromJson`, `fromJsonString`.
+and to the static class methods.
+
+:white_check_mark: The `connect-migrate` tool will handle the static class methods
+`fromBinary`, `fromJson`, and `fromJsonString`.
 
 > [!WARNING]
 >
@@ -250,6 +255,8 @@ import { isMessage } from "@bufbuild/protobuf";
   x.sentence;
 }
 ```
+
+:white_check_mark: The `connect-migrate` tool will handle `isMessage` calls.
 
 #### PlainMessage removed
 
@@ -349,10 +356,12 @@ The well-known type `google.protobuf.Struct` is now generated as a more-convenie
 All well-known types have been moved to the subpath export `@bufbuild/protobuf/wkt`.
 For example, if you want to refer to `google.protobuf.Timestamp`:
 
-```ts
+```diff
 - import type { Timestamp } from "@bufbuild/protobuf";
 + import type { Timestamp } from "@bufbuild/protobuf/wkt";
 ```
+
+:white_check_mark: The `connect-migrate` tool will handle this.
 
 Helpers that were previously part of the generated class are now standalone
 functions, also exported from `@bufbuild/protobuf/wkt`:
