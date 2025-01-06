@@ -26,13 +26,8 @@ import * as tar from "tar-stream";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { execFileSync } from "node:child_process";
-import { scripts } from "../package.json";
 
-export async function run() {
-  // Extract conformance runner version from the `generate` script
-  const [, version] = /conformance:(v\d+\.\d+\.\d+)/.exec(scripts.generate) ?? [
-    "?",
-  ];
+export async function run(version: string) {
   const { archive, bin } = getArtifactNameForEnv(version);
   const tempDir = getTempDir(version);
   const binPath = joinPath(tempDir, bin);
