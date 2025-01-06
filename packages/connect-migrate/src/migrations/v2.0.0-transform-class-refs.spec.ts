@@ -26,6 +26,80 @@ describe("v2.0.0 transform class references", () => {
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
     expect(result.source).toEqual(output);
   });
+  it("transforms new for import as", () => {
+    const input = [
+      `import {Foo as MyFoo} from "./x_pb.js";`,
+      `new MyFoo();`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema as MyFooSchema } from "./x_pb.js";`,
+      `import { create } from "@bufbuild/protobuf";`,
+      `create(MyFooSchema);`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
+  it("adds transforms multiple import as", () => {
+    const input = [
+      `import {Foo as MyFoo, Bar as MyBar} from "./x_pb.js";`,
+      `new MyFoo();`,
+      `new MyBar();`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema as MyFooSchema, BarSchema as MyBarSchema } from "./x_pb.js";`,
+      `import { create } from "@bufbuild/protobuf";`,
+      `create(MyFooSchema);`,
+      `create(MyBarSchema);`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
+  it("adds import to existing when transforming new", () => {
+    const input = [
+      `import {Foo, Bar} from "./x_pb.js";`,
+      `new Foo();`,
+      `new Bar();`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema, BarSchema } from "./x_pb.js";`,
+      `import { create } from "@bufbuild/protobuf";`,
+      `create(FooSchema);`,
+      `create(BarSchema);`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
+  it("adds import to existing when transforming import as", () => {
+    const input = [
+      `import {Foo as MyFoo, Bar} from "./x_pb.js";`,
+      `new MyFoo();`,
+      `new Bar();`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema as MyFooSchema, BarSchema } from "./x_pb.js";`,
+      `import { create } from "@bufbuild/protobuf";`,
+      `create(MyFooSchema);`,
+      `create(BarSchema);`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
+  it("adds type import when transforming new and import as", () => {
+    const input = [
+      `import {Foo as MyFoo, Bar} from "./x_pb.js";`,
+      `const foo: MyFoo = new MyFoo();`,
+      `const bar: Bar = new Bar();`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema as MyFooSchema, BarSchema } from "./x_pb.js";`,
+      `import { create } from "@bufbuild/protobuf";`,
+      `import type { Foo as MyFoo, Bar } from "./x_pb.js";`,
+      `const foo: MyFoo = create(MyFooSchema);`,
+      `const bar: Bar = create(BarSchema);`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toEqual(output);
+  });
   it("transforms new with init object", () => {
     const input = [`import {Foo} from "./x_pb.js";`, `new Foo({x:123});`].join(
       "\n",
@@ -38,16 +112,31 @@ describe("v2.0.0 transform class references", () => {
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
     expect(result.source).toBe(output);
   });
-  it("adds type import when transforming new", () => {
+  it("transforms new with init object and import as", () => {
     const input = [
-      `import {Foo} from "./x_pb.js";`,
-      `const foo: Foo = new Foo();`,
+      `import {Foo as MyFoo} from "./x_pb.js";`,
+      `new MyFoo({x:123});`,
     ].join("\n");
     const output = [
-      `import { FooSchema } from "./x_pb.js";`,
+      `import { FooSchema as MyFooSchema } from "./x_pb.js";`,
       `import { create } from "@bufbuild/protobuf";`,
-      `import type { Foo } from "./x_pb.js";`,
+      `create(MyFooSchema, {x:123});`,
+    ].join("\n");
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
+    expect(result.source).toBe(output);
+  });
+  it("adds type import when transforming new", () => {
+    const input = [
+      `import {Foo, Bar} from "./x_pb.js";`,
+      `const foo: Foo = new Foo();`,
+      `const bar: Bar = new Bar();`,
+    ].join("\n");
+    const output = [
+      `import { FooSchema, BarSchema } from "./x_pb.js";`,
+      `import { create } from "@bufbuild/protobuf";`,
+      `import type { Foo, Bar } from "./x_pb.js";`,
       `const foo: Foo = create(FooSchema);`,
+      `const bar: Bar = create(BarSchema);`,
     ].join("\n");
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
     expect(result.source).toEqual(output);

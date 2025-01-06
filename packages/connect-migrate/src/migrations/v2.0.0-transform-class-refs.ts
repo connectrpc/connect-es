@@ -152,12 +152,18 @@ const transform: j.Transform = (file, { j }, options) => {
     findPbImports(name, root).forEach((path) => {
       path.replace(
         j.importDeclaration(
-          path.value.specifiers?.map((specifier) =>
-            specifier.type === "ImportSpecifier" &&
-            specifier.imported.name === name
-              ? j.importSpecifier(j.identifier(name + "Schema"))
-              : specifier,
-          ),
+          path.value.specifiers?.map((specifier) => {
+            if (
+              specifier.type !== "ImportSpecifier" ||
+              !namesEqual(name, specifier)
+            ) {
+              return specifier;
+            }
+            return j.importSpecifier(
+              j.identifier(`${specifier.imported.name}Schema`),
+              j.identifier(`${specifier.local?.name}Schema`),
+            );
+          }),
           path.value.source,
           path.value.importKind,
         ),
@@ -169,17 +175,76 @@ const transform: j.Transform = (file, { j }, options) => {
   if (file.path.endsWith(".ts")) {
     for (const name of pbNames) {
       if (root.find(j.Identifier, { name }).size() > 0) {
+        // This is just used to find the source file
         const pbImports = findPbImports(name + "Schema", root);
         const firstImport = pbImports.at(0);
-        const from = (firstImport.get() as j.ASTPath<j.ImportDeclaration>).value
-          .source;
-        firstImport.insertAfter(
-          j.importDeclaration(
-            [j.importSpecifier(j.identifier(name))],
-            from,
-            "type",
-          ),
-        );
+        const from = firstImport.get() as j.ASTPath<j.ImportDeclaration>;
+        const fromSource = from.value.source;
+
+        // Search and see if its in the root yet. If it is, replace it, if not, insert it
+        // This is so we have this:
+        //  import type { Foo, Bar } from “./x.js”;
+        // instead of this:
+        //  import type { Foo } from “./x.js”;
+        //  import type { Bar } from “./x.js”;
+        const typeImports = root.find(j.ImportDeclaration, {
+          source: {
+            type: "StringLiteral",
+            value: fromSource.value as string,
+          },
+          importKind: "type",
+        });
+        // If the type import for this source file isn't in the root yet, add it
+        const finders = findByName(name + "Schema", root);
+        if (finders !== undefined) {
+          const specs =
+            finders.value.specifiers?.map((specifier) => {
+              if (specifier.type !== "ImportSpecifier") {
+                return specifier;
+              }
+              const localName = specifier.local?.name ?? "";
+              const importedName = specifier.imported.name;
+              const localMinusSchema = localName.substring(
+                0,
+                localName.length - 6,
+              );
+              const importedMinusSchema = importedName.substring(
+                0,
+                importedName.length - 6,
+              );
+
+              return j.importSpecifier(
+                j.identifier(`${localMinusSchema}`),
+                j.identifier(`${importedMinusSchema}`),
+              );
+            }) ?? [];
+
+          if (typeImports.length === 0) {
+            firstImport.insertAfter(
+              j.importDeclaration(specs, fromSource, "type"),
+            );
+          } else {
+            typeImports.forEach((path) => {
+              const sparcs =
+                path.value.specifiers?.map((specifier) => {
+                  if (specifier.type !== "ImportSpecifier") {
+                    return specifier;
+                  }
+                  return j.importSpecifier(
+                    // TODO - Need to also adds its import alias if there is one
+                    j.identifier(`${specifier.local?.name}`),
+                    j.identifier(`${specifier.imported.name}`),
+                  );
+                }) ?? [];
+
+              sparcs.concat(specs);
+
+              path.replace(
+                j.importDeclaration(sparcs, path.value.source, "type"),
+              );
+            });
+          }
+        }
       }
     }
   }
@@ -242,6 +307,37 @@ const transform: j.Transform = (file, { j }, options) => {
   );
 };
 
+function findByName(name: string, root: j.Collection) {
+  const result = root
+    .find(j.ImportDeclaration, {
+      specifiers: [
+        {
+          type: "ImportSpecifier",
+        },
+      ],
+    })
+    .filter((path) => {
+      return (
+        path.value.specifiers?.some((specifier) =>
+          namesEqual(name, specifier as j.ImportSpecifier),
+        ) ?? false
+      );
+    });
+  if (result.length === 0) {
+    return undefined;
+  }
+  return result.at(0).get() as j.ASTPath<j.ImportDeclaration>;
+}
+
+function namesEqual(name: string, importSpecifier: j.ImportSpecifier) {
+  if (importSpecifier.local?.name !== importSpecifier.imported.name) {
+    // This is an import alias, so use the localName for comparison
+    return importSpecifier.local?.name === name;
+  }
+
+  return importSpecifier.imported.name === name;
+}
+
 function findPbImports(name: string, root: j.Collection) {
   const nameMinusSchema = name.endsWith("Schema")
     ? name.substring(0, name.length - 6)
@@ -256,9 +352,8 @@ function findPbImports(name: string, root: j.Collection) {
     })
     .filter((path) => {
       const containsName =
-        path.value.specifiers?.some(
-          (specifier) =>
-            (specifier as j.ImportSpecifier).imported.name === name,
+        path.value.specifiers?.some((specifier) =>
+          namesEqual(name, specifier as j.ImportSpecifier),
         ) ?? false;
       if (!containsName) {
         return false;
