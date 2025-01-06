@@ -3,11 +3,11 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "main": "./dist/cjs/src/index.js",
+  "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
-      "import": "./dist/esm/src/index.js",
-      "require": "./dist/cjs/src/index.js"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     }
   },
   "bin": {
@@ -19,7 +19,7 @@
     "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
     "postbuild": "connectconformance --version",
-    "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs && echo >./dist/cjs/src/package.json '{\"type\":\"commonjs\"}'",
+    "build:cjs": "tsc --project tsconfig.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.json --outDir ./dist/esm",
     "format": "prettier --write --ignore-unknown '.' '!dist' '!src/gen'",
     "license-header": "license-header",

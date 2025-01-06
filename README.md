@@ -112,6 +112,11 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
   gRPC-Web and Connect interoperability tests
 - [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
 
+## Status
+
+This project is stable and follows semantic versioning, which means any breaking changes will result in a major version increase.
+Our goal is to not make breaking changes unless absolutely necessary.
+
 ## Legal
 
 Offered under the [Apache 2 license](/LICENSE).
