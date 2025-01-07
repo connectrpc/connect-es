@@ -175,16 +175,16 @@ const transform: j.Transform = (file, { j }, options) => {
   if (file.path.endsWith(".ts")) {
     for (const name of pbNames) {
       if (root.find(j.Identifier, { name }).size() > 0) {
-        // This is just used to find the source file
         const pbImports = findPbImports(name + "Schema", root);
         const firstImport = pbImports.at(0);
         const from = firstImport.get() as j.ASTPath<j.ImportDeclaration>;
         const fromSource = from.value.source;
 
-        // Search and see if its in the root yet. If it is, replace it, if not, insert it
-        // This is so we have this:
+        // Search and see if this name is in the root yet. If it is, replace it.
+        // If not, insert it
+        // This is so we end up with:
         //  import type { Foo, Bar } from “./x.js”;
-        // instead of this:
+        // instead of:
         //  import type { Foo } from “./x.js”;
         //  import type { Bar } from “./x.js”;
         const typeImports = root.find(j.ImportDeclaration, {
@@ -350,6 +350,7 @@ function findPbImports(name: string, root: j.Collection) {
       ],
     })
     .filter((path) => {
+      // First make sure that the given name is in the root doc
       const found = path.value.specifiers?.find((specifier) => {
         return namesEqual(name, specifier as j.ImportSpecifier);
       });
@@ -361,6 +362,9 @@ function findPbImports(name: string, root: j.Collection) {
         return false;
       }
 
+      // The given name may be an alias, so to test whether this is fromWkt,
+      // we need to use the imported name to compare against the list of wkt
+      // imports
       const importedName = (found as j.ImportSpecifier).imported.name;
       const importedNameMinusSchema = removeSchemaSuffix(importedName);
       const fromIsWkt =

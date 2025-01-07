@@ -46,7 +46,7 @@ describe("v2.0.0 transform connect plugin imports", () => {
     const result = updateSourceFileInMemory(transform, input, "foo.tsx");
     expect(result.source).toBe(output);
   });
-  it("should modify import as accordingly", () => {
+  it("should modify import alias", () => {
     const input = `import { ElizaService as MyEliza } from "./gen/eliza_connect.js";`;
     const output = `import { ElizaService as MyEliza } from "./gen/eliza_pb.js";`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
