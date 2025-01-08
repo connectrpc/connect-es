@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { updateSourceFileInMemory } from "../lib/migrate-source-files";
-import transform from "./v2.0.0-transform";
+import transform from "./v2.0.0-transform-connect-plugin-imports";
 
-describe("v2.0.0 transform", () => {
+describe("v2.0.0 transform connect plugin imports", () => {
   it("should modify import from *_connect.js to *_pb.js", () => {
     const input = `import { ElizaService } from "./gen/eliza_connect.js";`;
     const output = `import { ElizaService } from "./gen/eliza_pb.js";`;
@@ -44,6 +44,12 @@ describe("v2.0.0 transform", () => {
     const input = `import { ElizaService } from "./gen/eliza_connect.js";`;
     const output = `import { ElizaService } from "./gen/eliza_pb.js";`;
     const result = updateSourceFileInMemory(transform, input, "foo.tsx");
+    expect(result.source).toBe(output);
+  });
+  it("should modify import alias", () => {
+    const input = `import { ElizaService as MyEliza } from "./gen/eliza_connect.js";`;
+    const output = `import { ElizaService as MyEliza } from "./gen/eliza_pb.js";`;
+    const result = updateSourceFileInMemory(transform, input, "foo.ts");
     expect(result.source).toBe(output);
   });
   it("should not care about existing imports", () => {

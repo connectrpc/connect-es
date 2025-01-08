@@ -23,7 +23,7 @@ interface MigrateSourceFilesResult {
 
 export function migrateSourceFiles(
   scanned: Scanned,
-  transform: j.Transform,
+  transform: j.Transform | j.Transform[],
   print: PrintFn,
   logger?: Logger,
   updateSourceFileFn: typeof updateSourceFile = updateSourceFile,
@@ -68,19 +68,24 @@ interface UpdateSourceFileResult {
 }
 
 export function updateSourceFile(
-  transform: Transform,
+  transform: Transform | Transform[],
   path: string,
   logger?: Logger,
 ): UpdateSourceFileResult {
   logger?.log(`transform ${path}`);
   try {
-    const source = readFileSync(path, "utf8");
-    const result = updateSourceFileInMemory(transform, source, path);
-    if (!result.modified) {
+    let source = readFileSync(path, "utf8");
+    let modified = false;
+    for (const t of Array.isArray(transform) ? transform : [transform]) {
+      const result = updateSourceFileInMemory(t, source, path);
+      source = result.source;
+      modified = modified || result.modified;
+    }
+    if (!modified) {
       logger?.log(`skipped`);
       return { ok: true, modified: false };
     }
-    writeFileSync(path, result.source, "utf-8");
+    writeFileSync(path, source, "utf-8");
     logger?.log(`modified`);
     return { ok: true, modified: true };
   } catch (e) {
