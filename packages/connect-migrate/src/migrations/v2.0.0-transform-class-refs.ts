@@ -152,12 +152,18 @@ const transform: j.Transform = (file, { j }, options) => {
     findPbImports(name, root).forEach((path) => {
       path.replace(
         j.importDeclaration(
-          path.value.specifiers?.map((specifier) =>
-            specifier.type === "ImportSpecifier" &&
-            specifier.imported.name === name
-              ? j.importSpecifier(j.identifier(name + "Schema"))
-              : specifier,
-          ),
+          path.value.specifiers?.map((specifier) => {
+            if (
+              specifier.type !== "ImportSpecifier" ||
+              !namesEqual(name, specifier)
+            ) {
+              return specifier;
+            }
+            return j.importSpecifier(
+              j.identifier(`${specifier.imported.name}Schema`),
+              j.identifier(`${specifier.local?.name}Schema`),
+            );
+          }),
           path.value.source,
           path.value.importKind,
         ),
@@ -171,15 +177,69 @@ const transform: j.Transform = (file, { j }, options) => {
       if (root.find(j.Identifier, { name }).size() > 0) {
         const pbImports = findPbImports(name + "Schema", root);
         const firstImport = pbImports.at(0);
-        const from = (firstImport.get() as j.ASTPath<j.ImportDeclaration>).value
-          .source;
-        firstImport.insertAfter(
-          j.importDeclaration(
-            [j.importSpecifier(j.identifier(name))],
-            from,
-            "type",
-          ),
-        );
+        const from = firstImport.get() as j.ASTPath<j.ImportDeclaration>;
+        const fromSource = from.value.source;
+
+        // Search and see if this name is in the root yet. If it is, replace it.
+        // If not, insert it
+        // This is so we end up with:
+        //  import type { Foo, Bar } from “./x.js”;
+        // instead of:
+        //  import type { Foo } from “./x.js”;
+        //  import type { Bar } from “./x.js”;
+        const typeImports = root.find(j.ImportDeclaration, {
+          source: {
+            type: "StringLiteral",
+            value: fromSource.value as string,
+          },
+          importKind: "type",
+        });
+        // If the type import for this source file isn't in the root yet, add it
+        const importDecl = findImportByName(name + "Schema", root);
+        if (importDecl !== undefined) {
+          const importSpecs =
+            importDecl.value.specifiers?.map((specifier) => {
+              if (specifier.type !== "ImportSpecifier") {
+                return specifier;
+              }
+              const localMinusSchema = removeSchemaSuffix(
+                specifier.local?.name,
+              );
+              const importedMinusSchema = removeSchemaSuffix(
+                specifier.imported.name,
+              );
+
+              return j.importSpecifier(
+                j.identifier(`${importedMinusSchema}`),
+                j.identifier(`${localMinusSchema}`),
+              );
+            }) ?? [];
+
+          if (typeImports.length === 0) {
+            firstImport.insertAfter(
+              j.importDeclaration(importSpecs, fromSource, "type"),
+            );
+          } else {
+            typeImports.forEach((path) => {
+              const specs =
+                path.value.specifiers?.map((specifier) => {
+                  if (specifier.type !== "ImportSpecifier") {
+                    return specifier;
+                  }
+                  return j.importSpecifier(
+                    j.identifier(`${specifier.imported.name}`),
+                    j.identifier(`${specifier.local?.name}`),
+                  );
+                }) ?? [];
+
+              specs.concat(importSpecs);
+
+              path.replace(
+                j.importDeclaration(specs, path.value.source, "type"),
+              );
+            });
+          }
+        }
       }
     }
   }
@@ -242,10 +302,45 @@ const transform: j.Transform = (file, { j }, options) => {
   );
 };
 
+function findImportByName(name: string, root: j.Collection) {
+  const result = root
+    .find(j.ImportDeclaration, {
+      specifiers: [
+        {
+          type: "ImportSpecifier",
+        },
+      ],
+    })
+    .filter((path) => {
+      return (
+        path.value.specifiers?.some((specifier) =>
+          namesEqual(name, specifier as j.ImportSpecifier),
+        ) ?? false
+      );
+    });
+  if (result.length === 0) {
+    return undefined;
+  }
+  return result.at(0).get() as j.ASTPath<j.ImportDeclaration>;
+}
+
+function namesEqual(name: string, importSpecifier: j.ImportSpecifier) {
+  if (importSpecifier.local?.name !== importSpecifier.imported.name) {
+    // This is an import alias, so use the localName for comparison
+    return importSpecifier.local?.name === name;
+  }
+
+  return importSpecifier.imported.name === name;
+}
+
+function removeSchemaSuffix(name: string | undefined) {
+  if (name === undefined) {
+    return "";
+  }
+  return name.endsWith("Schema") ? name.substring(0, name.length - 6) : name;
+}
+
 function findPbImports(name: string, root: j.Collection) {
-  const nameMinusSchema = name.endsWith("Schema")
-    ? name.substring(0, name.length - 6)
-    : name;
   return root
     .find(j.ImportDeclaration, {
       specifiers: [
@@ -255,22 +350,27 @@ function findPbImports(name: string, root: j.Collection) {
       ],
     })
     .filter((path) => {
-      const containsName =
-        path.value.specifiers?.some(
-          (specifier) =>
-            (specifier as j.ImportSpecifier).imported.name === name,
-        ) ?? false;
-      if (!containsName) {
+      // First make sure that the given name is in the root doc
+      const found = path.value.specifiers?.find((specifier) => {
+        return namesEqual(name, specifier as j.ImportSpecifier);
+      });
+      if (!found) {
         return false;
       }
       const from = path.value.source.value;
       if (typeof from !== "string") {
         return false;
       }
+
+      // The given name may be an alias, so to test whether this is fromWkt,
+      // we need to use the imported name to compare against the list of wkt
+      // imports
+      const importedName = (found as j.ImportSpecifier).imported.name;
+      const importedNameMinusSchema = removeSchemaSuffix(importedName);
       const fromIsWkt =
         (from === bufbuildProtobufPackage ||
           from === bufbuildProtobufPackage + "/wkt") &&
-        (isWktMessage(name) || isWktMessage(nameMinusSchema));
+        (isWktMessage(importedName) || isWktMessage(importedNameMinusSchema));
       const fromIsPb =
         from.endsWith("_pb") ||
         from.endsWith("_pb.js") ||
