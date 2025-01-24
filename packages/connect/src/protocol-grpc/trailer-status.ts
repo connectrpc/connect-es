@@ -46,6 +46,13 @@ export function setTrailerStatus(
   error: ConnectError | undefined,
 ): Headers {
   if (error) {
+    // Copy any metadata specified in the error into the target Headers
+    // Note that if a protocol header happens to be specified in metadata, it
+    // its value will be overridden below by the official protocol headers.
+    error.metadata.forEach((value, key) => {
+      target.append(key, value);
+    });
+
     target.set(headerGrpcStatus, error.code.toString(10));
     target.set(headerGrpcMessage, encodeURIComponent(error.rawMessage));
     if (error.details.length > 0) {
