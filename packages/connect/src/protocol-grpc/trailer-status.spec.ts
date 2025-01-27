@@ -63,6 +63,36 @@ describe("setTrailerStatus()", function () {
       "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew",
     );
   });
+  it("should append any error metadata", function () {
+    const t = new Headers();
+    setTrailerStatus(
+      t,
+      new ConnectError("soirée 🎉", Code.ResourceExhausted, { foo: "bar" }),
+    );
+    let count = 0;
+    t.forEach(() => count++);
+    expect(count).toBe(3);
+    expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
+    expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
+    expect(t.get("foo")).toBe("bar");
+  });
+  it("should overwrite error metadata that uses reserved protocol headers", function () {
+    const t = new Headers();
+    setTrailerStatus(
+      t,
+      new ConnectError("soirée 🎉", Code.ResourceExhausted, {
+        foo: "bar",
+        "grpc-status": "foo-status",
+        "grpc-message": "foo-message",
+      }),
+    );
+    let count = 0;
+    t.forEach(() => count++);
+    expect(count).toBe(3);
+    expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
+    expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
+    expect(t.get("foo")).toBe("bar");
+  });
 });
 
 describe("findTrailerError()", function () {
