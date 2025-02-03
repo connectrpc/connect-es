@@ -35,7 +35,7 @@
     "copyrightHolder": "The Connect Authors"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.2",
+    "@arethetypeswrong/cli": "^0.17.3",
     "@bufbuild/license-header": "^0.0.4",
     "@typescript-eslint/eslint-plugin": "^7.14.0",
     "@typescript-eslint/parser": "^7.14.0",
