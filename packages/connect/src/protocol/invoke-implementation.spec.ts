@@ -268,7 +268,7 @@ describe("transformInvokeImplementation()", () => {
             expect(next.value).toBe(2);
             reqCount++;
           }
-          expect(reqCount).toBe(2)
+          expect(reqCount).toBe(2);
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           yield { value: "foo" };
