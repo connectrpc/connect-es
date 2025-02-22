@@ -31,7 +31,7 @@
   "packageManager": "npm@10.9.0",
   "licenseHeader": {
     "licenseType": "apache",
-    "yearRange": "2021-2024",
+    "yearRange": "2021-2025",
     "copyrightHolder": "The Connect Authors"
   },
   "devDependencies": {
