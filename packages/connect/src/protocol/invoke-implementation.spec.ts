@@ -14,7 +14,7 @@
 
 import { create } from "@bufbuild/protobuf";
 import { createContextKey } from "../context-values.js";
-import { createAsyncIterable } from "./async-iterable.js";
+import { createAsyncIterable, pipe } from "./async-iterable.js";
 import { transformInvokeImplementation } from "./invoke-implementation.js";
 import {
   createHandlerContext,
@@ -24,7 +24,7 @@ import type { MethodImplSpec } from "../implementation.js";
 import { readAll } from "./async-iterable-helper.spec.js";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
-import type { StringValue } from "@bufbuild/protobuf/wkt";
+import type { Int32Value, StringValue } from "@bufbuild/protobuf/wkt";
 
 const TestService = createServiceDesc({
   typeName: "handwritten.TestService",
@@ -123,8 +123,10 @@ describe("transformInvokeImplementation()", () => {
     const output = transformInvokeImplementation(
       createMethodImplSpec(
         TestService.method.clientStreaming,
-        // eslint-disable-next-line @typescript-eslint/require-await
-        async (_, { responseHeader, responseTrailer }) => {
+        async (req, { responseHeader, responseTrailer }) => {
+          for await (const next of req) {
+            expect(next.value).toBe(2);
+          }
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           return { value: "foo" };
@@ -146,6 +148,18 @@ describe("transformInvokeImplementation()", () => {
           expect(req.method).toEqual(TestService.method.clientStreaming);
           expect(context.values.get(kFoo)).toEqual("bar");
           req.header.set("Key", "bar");
+          if (req.stream) {
+            req = {
+              ...req,
+              // Change the value before passing it on
+              message: pipe(req.message, async function* (it) {
+                for await (const next of it) {
+                  (next as Int32Value).value = 2;
+                  yield next;
+                }
+              }),
+            };
+          }
           const res = await next(req);
           expect(res.stream).toEqual(true);
           expect(res.service).toEqual(TestService);
@@ -176,7 +190,8 @@ describe("transformInvokeImplementation()", () => {
       createMethodImplSpec(
         TestService.method.serverStreaming,
         // eslint-disable-next-line @typescript-eslint/require-await
-        async function* (_, { responseHeader, responseTrailer }) {
+        async function* (req, { responseHeader, responseTrailer }) {
+          expect(req.value).toBe(2); // Comes from the interceptor
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           yield { value: "foo" };
@@ -198,6 +213,18 @@ describe("transformInvokeImplementation()", () => {
           expect(req.method).toEqual(TestService.method.serverStreaming);
           expect(context.values.get(kFoo)).toEqual("bar");
           req.header.set("Key", "bar");
+          if (req.stream) {
+            req = {
+              ...req,
+              // Change the value before passing it on
+              message: pipe(req.message, async function* (it) {
+                for await (const next of it) {
+                  (next as Int32Value).value = 2;
+                  yield next;
+                }
+              }),
+            };
+          }
           const res = await next(req);
           const responses = [];
           for await (const next of res.message as AsyncIterable<StringValue>) {
@@ -235,8 +262,13 @@ describe("transformInvokeImplementation()", () => {
     const output = transformInvokeImplementation(
       createMethodImplSpec(
         TestService.method.bidiStreaming,
-        // eslint-disable-next-line @typescript-eslint/require-await
-        async function* (_, { responseHeader, responseTrailer }) {
+        async function* (req, { responseHeader, responseTrailer }) {
+          let reqCount = 0;
+          for await (const next of req) {
+            expect(next.value).toBe(2);
+            reqCount++;
+          }
+          expect(reqCount).toBe(2);
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           yield { value: "foo" };
@@ -258,6 +290,18 @@ describe("transformInvokeImplementation()", () => {
           expect(req.method).toEqual(TestService.method.bidiStreaming);
           expect(context.values.get(kFoo)).toEqual("bar");
           req.header.set("Key", "bar");
+          if (req.stream) {
+            req = {
+              ...req,
+              // Change the value before passing it on
+              message: pipe(req.message, async function* (it) {
+                for await (const next of it) {
+                  (next as Int32Value).value = 2;
+                  yield next;
+                }
+              }),
+            };
+          }
           const res = await next(req);
           const responses = [];
           for await (const next of res.message as AsyncIterable<StringValue>) {
@@ -279,7 +323,12 @@ describe("transformInvokeImplementation()", () => {
           return next(req);
         },
       ],
-    )(createAsyncIterable([create(Int32ValueSchema, { value: 1 })]));
+    )(
+      createAsyncIterable([
+        create(Int32ValueSchema, { value: 1 }),
+        create(Int32ValueSchema, { value: 3 }),
+      ]),
+    );
     expect(await readAll(output)).toEqual([
       create(StringValueSchema, { value: "foo" }),
     ]);

@@ -106,7 +106,7 @@ export function transformInvokeImplementation<
             const output = normalizeIterable(
               spec.method.output,
               spec.impl(
-                await ensureSingle(input, "server-streaming"),
+                await ensureSingle(req.message, "server-streaming"),
                 mergeRequest(context, req),
               ),
             );
