@@ -35,12 +35,12 @@
     "copyrightHolder": "The Connect Authors"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.3",
+    "@arethetypeswrong/cli": "^0.17.4",
     "@bufbuild/license-header": "^0.0.4",
-    "@typescript-eslint/eslint-plugin": "^7.14.0",
-    "@typescript-eslint/parser": "^7.14.0",
-    "eslint": "^8.56.0",
-    "eslint-import-resolver-typescript": "^3.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "eslint": "^9.21.0",
+    "eslint-import-resolver-typescript": "^3.8.3",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-n": "^17.15.1",
     "turbo": "^2.4.0",
