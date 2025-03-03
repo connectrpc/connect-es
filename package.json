@@ -43,7 +43,7 @@
     "eslint-import-resolver-typescript": "^3.7.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-n": "^17.15.1",
-    "turbo": "^2.4.0",
+    "turbo": "^2.4.4",
     "prettier": "^3.4.2",
     "typescript": "5.7.3"
   }
