@@ -51,7 +51,6 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
    *
    * Then pass this function here.
    * 
-   *
    * For more complex setups with multiple services, you may pass them as an array, like so:
    *
    * ```ts
