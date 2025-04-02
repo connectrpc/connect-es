@@ -44,7 +44,7 @@ export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
    *   router.service(ElizaService, {});
    * }
    * ```
-   * 
+   *
    * Then pass this function here.
    *
    * For more complex setups with multiple services, you may pass them as an array, like so:
@@ -54,10 +54,10 @@ export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
    * import HelloWorldRouter from "./hello-world.ts";
    *
    * const adapter = createNodeAdapter({
-   *  routes: [
-   *    ElizaRouter,
-   *    HelloWorldRouter
-   *  ]
+   *   routes: [
+   *     ElizaRouter,
+   *     HelloWorldRouter
+   *   ]
    * });
    *
    * ```
@@ -92,6 +92,7 @@ export function connectNodeAdapter(
   if (options.acceptCompression === undefined) {
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
+  
   const router = createConnectRouter(options);
 
   if (Array.isArray(options.routes)) {

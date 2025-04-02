@@ -54,10 +54,10 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
    * import HelloWorldRouter from "./hello-world.ts";
    *
    * const adapter = createNodeAdapter({
-   *  routes: [
-   *    ElizaRouter,
-   *    HelloWorldRouter
-   *  ]
+   *   routes: [
+   *     ElizaRouter,
+   *     HelloWorldRouter
+   *   ]
    * });
    *
    * ```
@@ -108,8 +108,9 @@ export function fastifyConnectPlugin(
       done();
     });
   }
-  const router = createConnectRouter(opts);
   
+  const router = createConnectRouter(opts);
+
   if (Array.isArray(opts.routes)) {
     // options.routes is an array of functions
     for (const routeFn of opts.routes) {

@@ -50,7 +50,7 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
    * ```
    *
    * Then pass this function here.
-   * 
+   *
    * For more complex setups with multiple services, you may pass them as an array, like so:
    *
    * ```ts
@@ -58,10 +58,10 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
    * import HelloWorldRouter from "./hello-world.ts";
    *
    * const adapter = createNodeAdapter({
-   *  routes: [
-   *    ElizaRouter,
-   *    HelloWorldRouter
-   *  ]
+   *   routes: [
+   *     ElizaRouter,
+   *     HelloWorldRouter
+   *   ]
    * });
    *
    * ```
@@ -89,6 +89,7 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
   if (options.acceptCompression === undefined) {
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
+  
   const router = createConnectRouter(options);
 
   if (Array.isArray(options.routes)) {

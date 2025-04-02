@@ -43,7 +43,7 @@ interface ExpressConnectMiddlewareOptions extends ConnectRouterOptions {
    * ```
    *
    * Then pass this function here.
-   * 
+   *
    * For more complex setups with multiple services, you may pass them as an array, like so:
    *
    * ```ts
@@ -51,10 +51,10 @@ interface ExpressConnectMiddlewareOptions extends ConnectRouterOptions {
    * import HelloWorldRouter from "./hello-world.ts";
    *
    * const adapter = createNodeAdapter({
-   *  routes: [
-   *    ElizaRouter,
-   *    HelloWorldRouter
-   *  ]
+   *   routes: [
+   *     ElizaRouter,
+   *     HelloWorldRouter
+   *   ]
    * });
    *
    * ```
@@ -83,6 +83,7 @@ export function expressConnectMiddleware(
   if (options.acceptCompression === undefined) {
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
+  
   const router = createConnectRouter(options);
 
   if (Array.isArray(options.routes)) {
