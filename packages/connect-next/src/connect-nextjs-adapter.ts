@@ -57,7 +57,7 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
    * import ElizaRouter from "./eliza.ts";
    * import HelloWorldRouter from "./hello-world.ts";
    *
-   * const adapter = createNodeAdapter({
+   * const adapter = nextJsApiRouter({
    *   routes: [
    *     ElizaRouter,
    *     HelloWorldRouter

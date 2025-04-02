@@ -53,7 +53,7 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
    * import ElizaRouter from "./eliza.ts";
    * import HelloWorldRouter from "./hello-world.ts";
    *
-   * const adapter = createNodeAdapter({
+   * const adapter = fastifyConnectPlugin({
    *   routes: [
    *     ElizaRouter,
    *     HelloWorldRouter
