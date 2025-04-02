@@ -108,7 +108,7 @@ export function fastifyConnectPlugin(
       done();
     });
   }
-  
+
   const router = createConnectRouter(opts);
 
   if (Array.isArray(opts.routes)) {

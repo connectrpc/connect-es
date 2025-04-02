@@ -83,7 +83,7 @@ export function expressConnectMiddleware(
   if (options.acceptCompression === undefined) {
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
-  
+
   const router = createConnectRouter(options);
 
   if (Array.isArray(options.routes)) {
