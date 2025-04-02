@@ -16,9 +16,9 @@ import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
 import { createLinkedAbortController } from "@connectrpc/connect/protocol";
 import type {
-  ConnectRouter,
   ConnectRouterOptions,
   ContextValues,
+  RouteFn,
 } from "@connectrpc/connect";
 import * as protoConnect from "@connectrpc/connect/protocol-connect";
 import * as protoGrpcWeb from "@connectrpc/connect/protocol-grpc-web";
@@ -46,8 +46,24 @@ interface FastifyConnectPluginOptions extends ConnectRouterOptions {
    * ```
    *
    * Then pass this function here.
+   * 
+   *
+   * For more complex setups with multiple services, you may pass them as an array, like so:
+   *
+   * ```ts
+   * import ElizaRouter from "./eliza.ts";
+   * import HelloWorldRouter from "./hello-world.ts";
+   *
+   * const adapter = createNodeAdapter({
+   *  routes: [
+   *    ElizaRouter,
+   *    HelloWorldRouter
+   *  ]
+   * });
+   *
+   * ```
    */
-  routes?: (router: ConnectRouter) => void;
+  routes?: RouteFn | RouteFn[];
 
   /**
    * If set, once `fastify.close` is called, waits for the requests to be finished for the specified duration
@@ -94,7 +110,16 @@ export function fastifyConnectPlugin(
     });
   }
   const router = createConnectRouter(opts);
-  opts.routes(router);
+  
+  if (Array.isArray(opts.routes)) {
+    // options.routes is an array of functions
+    for (const routeFn of opts.routes) {
+      routeFn(router);
+    }
+  } else {
+    // options.routes is function
+    opts.routes(router);
+  }
 
   const uHandlers = router.handlers;
   if (uHandlers.length == 0) {

@@ -75,6 +75,11 @@ export interface ConnectRouter {
 }
 
 /**
+ * To be used primarily in the context of Adapters, provides a common type.
+ */
+export type RouteFn = (router: ConnectRouter) => void;
+
+/**
  * Options for a ConnectRouter. By default, all three protocols gRPC, gRPC-web,
  * and Connect are enabled.
  */

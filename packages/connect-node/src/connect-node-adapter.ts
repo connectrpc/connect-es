@@ -14,9 +14,9 @@
 
 import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
 import type {
-  ConnectRouter,
   ConnectRouterOptions,
   ContextValues,
+  RouteFn,
 } from "@connectrpc/connect";
 import type { UniversalHandler } from "@connectrpc/connect/protocol";
 import { uResponseNotFound } from "@connectrpc/connect/protocol";
@@ -31,8 +31,6 @@ import type {
 } from "./node-universal-handler.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 
-export type RouteFn = (router: ConnectRouter) => void;
-
 export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
   /**
    * Route definitions. We recommend the following pattern:
@@ -46,6 +44,9 @@ export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
    *   router.service(ElizaService, {});
    * }
    * ```
+   * 
+   * Then pass this function here.
+   * 
    *
    * For more complex setups with multiple services, you may pass them as an array, like so:
    *
@@ -58,13 +59,11 @@ export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
    *    ElizaRouter,
    *    HelloWorldRouter
    *  ]
-   * })
+   * });
    *
    * ```
-   *
-   * Then pass this function here.
    */
-  routes: RouteFn | [RouteFn];
+  routes: RouteFn | RouteFn[];
   /**
    * If none of the handler request paths match, a 404 is served. This option
    * can provide a custom fallback for this case.
