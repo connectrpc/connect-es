@@ -31,6 +31,8 @@ import type {
 } from "./node-universal-handler.js";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 
+export type RouteFn = (router: ConnectRouter) => void;
+
 export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
   /**
    * Route definitions. We recommend the following pattern:
@@ -45,9 +47,24 @@ export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
    * }
    * ```
    *
+   * For more complex setups with multiple services, you may pass them as an array, like so:
+   *
+   * ```ts
+   * import ElizaRouter from "./eliza.ts";
+   * import HelloWorldRouter from "./hello-world.ts";
+   *
+   * const adapter = createNodeAdapter({
+   *  routes: [
+   *    ElizaRouter,
+   *    HelloWorldRouter
+   *  ]
+   * })
+   *
+   * ```
+   *
    * Then pass this function here.
    */
-  routes: (router: ConnectRouter) => void;
+  routes: RouteFn | [RouteFn];
   /**
    * If none of the handler request paths match, a 404 is served. This option
    * can provide a custom fallback for this case.
@@ -78,7 +95,17 @@ export function connectNodeAdapter(
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
   const router = createConnectRouter(options);
-  options.routes(router);
+
+  if (Array.isArray(options.routes)) {
+    // options.routes is an array of functions
+    for (const routeFn of options.routes) {
+      routeFn(router);
+    }
+  } else {
+    // options.routes is function
+    options.routes(router);
+  }
+
   const prefix = options.requestPathPrefix ?? "";
   const paths = new Map<string, UniversalHandler>();
   for (const uHandler of router.handlers) {
