@@ -38,20 +38,21 @@ const transform: j.Transform = (file, { j }, options) => {
     .forEach((path) => {
       path.value.specifiers?.forEach((s) => {
         s = s as j.ImportSpecifier;
-        if (![fromFunction, fromType].includes(s.imported.name)) {
+        const importedName = identifierToString(s.imported);
+        if (![fromFunction, fromType].includes(importedName)) {
           return;
         }
         // import { createPromiseClient as <local> } from "@connectrpc/connect";
         //
         // We should just rename createPromiseClient here and user code will continue to use local.
         if (s.local?.loc !== s.imported.loc) {
-          s.imported.name = s.imported.name === fromType ? toType : toFunction;
+          s.imported.name = importedName === fromType ? toType : toFunction;
           return;
         }
         replace(
           root,
-          s.imported.name,
-          s.imported.name === fromType ? toType : toFunction,
+          importedName,
+          importedName === fromType ? toType : toFunction,
         );
       });
     });
@@ -70,12 +71,12 @@ const transform: j.Transform = (file, { j }, options) => {
     .forEach((path) => {
       path.value.specifiers?.forEach((s) => {
         s = s as j.ImportNamespaceSpecifier | j.ImportDefaultSpecifier;
-        const qualifier = s.local?.name;
-        if (qualifier === undefined) {
+        const qualifier = s.local;
+        if (qualifier === undefined || qualifier === null) {
           return;
         }
-        replace(root, fromType, toType, qualifier);
-        replace(root, fromFunction, toFunction, qualifier);
+        replace(root, fromType, toType, identifierToString(qualifier));
+        replace(root, fromFunction, toFunction, identifierToString(qualifier));
       });
     });
   // require("@connectrpc/connect")
@@ -160,6 +161,18 @@ function replace(
     .forEach((path) => {
       (path.value.right as j.Identifier).name = to;
     });
+}
+
+function identifierToString(
+  ident: string | j.Identifier | j.JSXIdentifier | j.TSTypeParameter,
+): string {
+  if (typeof ident == "string") {
+    return ident;
+  }
+  if (ident.type == "TSTypeParameter") {
+    return identifierToString(ident.name);
+  }
+  return ident.name;
 }
 
 export default transform;

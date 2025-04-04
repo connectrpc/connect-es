@@ -52,7 +52,7 @@ const transform: j.Transform = (file, { j }, options) => {
       const specifiersWkt = specifiers.filter(
         (specifier) =>
           specifier.type === "ImportSpecifier" &&
-          isWktMessage(specifier.imported.name),
+          isWktMessage(getImportedName(specifier)),
       );
       const specifiersRest = specifiers.filter(
         (specifier) => !specifiersWkt.includes(specifier),
@@ -160,8 +160,8 @@ const transform: j.Transform = (file, { j }, options) => {
               return specifier;
             }
             return j.importSpecifier(
-              j.identifier(`${specifier.imported.name}Schema`),
-              j.identifier(`${specifier.local?.name}Schema`),
+              j.identifier(`${getImportedName(specifier)}Schema`),
+              j.identifier(`${getImportLocalName(specifier)}Schema`),
             );
           }),
           path.value.source,
@@ -203,12 +203,11 @@ const transform: j.Transform = (file, { j }, options) => {
                 return specifier;
               }
               const localMinusSchema = removeSchemaSuffix(
-                specifier.local?.name,
+                getImportLocalName(specifier),
               );
               const importedMinusSchema = removeSchemaSuffix(
-                specifier.imported.name,
+                getImportedName(specifier),
               );
-
               return j.importSpecifier(
                 j.identifier(`${importedMinusSchema}`),
                 j.identifier(`${localMinusSchema}`),
@@ -227,8 +226,8 @@ const transform: j.Transform = (file, { j }, options) => {
                     return specifier;
                   }
                   return j.importSpecifier(
-                    j.identifier(`${specifier.imported.name}`),
-                    j.identifier(`${specifier.local?.name}`),
+                    j.identifier(getImportedName(specifier)),
+                    j.identifier(getImportLocalName(specifier)),
                   );
                 }) ?? [];
 
@@ -325,12 +324,14 @@ function findImportByName(name: string, root: j.Collection) {
 }
 
 function namesEqual(name: string, importSpecifier: j.ImportSpecifier) {
-  if (importSpecifier.local?.name !== importSpecifier.imported.name) {
+  const importedName = getImportedName(importSpecifier);
+  const localName = getImportLocalName(importSpecifier);
+  if (localName !== importedName) {
     // This is an import alias, so use the localName for comparison
-    return importSpecifier.local?.name === name;
+    return localName === name;
   }
 
-  return importSpecifier.imported.name === name;
+  return importedName === name;
 }
 
 function removeSchemaSuffix(name: string | undefined) {
@@ -365,7 +366,7 @@ function findPbImports(name: string, root: j.Collection) {
       // The given name may be an alias, so to test whether this is fromWkt,
       // we need to use the imported name to compare against the list of wkt
       // imports
-      const importedName = (found as j.ImportSpecifier).imported.name;
+      const importedName = getImportedName(found as j.ImportSpecifier);
       const importedNameMinusSchema = removeSchemaSuffix(importedName);
       const fromIsWkt =
         (from === bufbuildProtobufPackage ||
@@ -500,6 +501,30 @@ function isWktMessage(name: string): boolean {
     "CodeGeneratorResponse",
     "CodeGeneratorResponse_File",
   ].includes(name);
+}
+
+function getImportedName(specifier: j.ImportSpecifier): string {
+  return identifierToString(specifier.imported);
+}
+
+function getImportLocalName(specifier: j.ImportSpecifier): string {
+  const ident = specifier.local?.name;
+  if (ident === undefined) {
+    return getImportedName(specifier);
+  }
+  return identifierToString(ident);
+}
+
+function identifierToString(
+  ident: string | j.Identifier | j.JSXIdentifier | j.TSTypeParameter,
+): string {
+  if (typeof ident == "string") {
+    return ident;
+  }
+  if (ident.type == "TSTypeParameter") {
+    return identifierToString(ident.name);
+  }
+  return ident.name;
 }
 
 export default transform;
