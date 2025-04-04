@@ -68,7 +68,7 @@
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.51.0",
-    "@bufbuild/protoc-gen-es": "^2.2.3",
+    "@bufbuild/protoc-gen-es": "^2.2.5",
     "@types/jasmine": "^5.1.7",
     "jasmine": "^5.6.0"
   }
