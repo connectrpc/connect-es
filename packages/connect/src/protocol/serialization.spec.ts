@@ -65,7 +65,7 @@ describe("createBinarySerialization()", function () {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
         expect(c.message).toBe(
-          "[internal] serialize binary: invalid uint32: -1",
+          "[internal] serialize binary: cannot encode field google.protobuf.UInt32Value.value to binary: invalid uint32: -1",
         );
       }
     });
