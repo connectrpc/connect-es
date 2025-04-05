@@ -121,6 +121,10 @@ export class ConnectError extends Error {
         // error object, and translate to the appropriate status code.
         return new ConnectError(reason.message, Code.Canceled);
       }
+      if (reason.name == "TimeoutError") {
+        // AbortSignal.timeout(0)
+        return new ConnectError(reason.message, Code.DeadlineExceeded);
+      }
       return new ConnectError(
         reason.message,
         code,
