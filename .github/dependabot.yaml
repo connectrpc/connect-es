@@ -44,3 +44,8 @@ updates:
         patterns:
           - "prettier"
           - "@bufbuild/license-header"
+      webdriver:
+        patterns:
+          - "@wdio/*"
+          - "webdriver"
+          - "webdriverio"
