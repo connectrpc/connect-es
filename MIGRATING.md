@@ -270,8 +270,8 @@ In most cases, you can simply remove usage of `PlainMessage`:
 - import type { PlainMessage } from "@bufbuild/protobuf";
 import type { SayRequest } from "./gen/eliza_pb";
 
-- const sayRequest: PlainMessage<SayReqest> = {
-+ const sayRequest: SayReqest = {
+- const sayRequest: PlainMessage<SayRequest> = {
++ const sayRequest: SayRequest = {
   $typeName: "connectrpc.eliza.v1.SayRequest",
   sentence: "Hello",
 };
@@ -281,7 +281,7 @@ The `$typeName` property is required to identify messages. If you have a use-cas
 where it's distracting, use built-in types to remove it:
 
 ```ts
-const sayRequest: Omit<SayReqest, "$typeName"> = {
+const sayRequest: Omit<SayRequest, "$typeName"> = {
   sentence: "Hello",
 };
 ```
@@ -415,7 +415,7 @@ To create a registry, you simply pass the schema objects instead of message clas
 ```diff
 import { createRegistry } from "@bufbuild/protobuf";
 - import { SayRequest, SayResponse } from "./gen/eliza_pb";
-+ import { SayRequestSchema, SayRequestSchema } from "./gen/eliza_pb";
++ import { SayRequestSchema, SayResponseSchema } from "./gen/eliza_pb";
 
 const registry = createRegistry(
 - SayRequest, SayResponse,
