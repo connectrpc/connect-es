@@ -9,7 +9,7 @@
     "generate": "buf generate",
     "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "eslint --max-warnings 0 ."
+    "lint": "biome lint --error-on-warnings"
   },
   "engines": {
     "node": ">=18.14.1"

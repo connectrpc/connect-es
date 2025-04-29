@@ -15,7 +15,7 @@
     "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-fastify.yaml -v -- tsx ./conformance/server.ts",
     "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "biome lint --error-on-warnings",
     "attw": "attw --pack"
   },
   "type": "module",

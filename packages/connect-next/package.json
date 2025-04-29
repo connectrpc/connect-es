@@ -14,7 +14,7 @@
     "build:esm": "tsc --project tsconfig.json --outDir ./dist/esm",
     "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "biome lint --error-on-warnings",
     "attw": "attw --pack"
   },
   "type": "module",

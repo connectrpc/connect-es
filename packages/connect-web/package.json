@@ -27,7 +27,7 @@
     "test-browserstack": "wdio run ./browserstack/wdio.browserstack.conf.js",
     "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "biome lint --error-on-warnings",
     "attw": "attw --pack"
   },
   "type": "module",

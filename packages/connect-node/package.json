@@ -17,7 +17,7 @@
     "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/client.ts",
     "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "biome lint --error-on-warnings",
     "attw": "attw --pack"
   },
   "type": "module",
