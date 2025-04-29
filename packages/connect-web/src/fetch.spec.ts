@@ -21,13 +21,17 @@ import { createConnectTransport } from "./connect-transport.js";
 import { createGrpcWebTransport } from "./grpc-web-transport.js";
 import { create, toBinary, toJsonString } from "@bufbuild/protobuf";
 
-describe("custom fetch", function () {
+describe("custom fetch", () => {
   let originFetch: typeof fetch;
-  beforeEach(() => (originFetch = globalThis.fetch));
-  afterEach(() => (globalThis.fetch = originFetch));
+  beforeEach(() => {
+    originFetch = globalThis.fetch;
+  });
+  afterEach(() => {
+    globalThis.fetch = originFetch;
+  });
 
   describe("with Connect transport", () => {
-    it("should only call Response#json with the JSON format", async function () {
+    it("should only call Response#json with the JSON format", async () => {
       const response = new Response(
         toJsonString(UnaryResponseSchema, create(UnaryResponseSchema)),
         {
@@ -49,10 +53,10 @@ describe("custom fetch", function () {
         undefined,
         create(UnaryRequestSchema),
       );
-      expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.json).toHaveBeenCalledTimes(1);
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(0);
     });
-    it("should only call Response#arrayBuffer with the binary format on the happy path", async function () {
+    it("should only call Response#arrayBuffer with the binary format on the happy path", async () => {
       const response = new Response(
         toBinary(UnaryResponseSchema, create(UnaryResponseSchema)),
         {
@@ -75,10 +79,10 @@ describe("custom fetch", function () {
         undefined,
         create(UnaryRequestSchema),
       );
-      expect(response.json).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.json).toHaveBeenCalledTimes(0);
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(1);
     });
-    it("should call Response#json with the binary format for an error response", async function () {
+    it("should call Response#json with the binary format for an error response", async () => {
       const response = new Response(
         JSON.stringify({
           code: "permission_denied",
@@ -107,10 +111,10 @@ describe("custom fetch", function () {
           create(UnaryRequestSchema),
         ),
       ).toBeRejectedWithError(/\[permission_denied] foobar/);
-      expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.json).toHaveBeenCalledTimes(1);
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(0);
     });
-    it("should should defer resolving fetch until calling endpoint", async function () {
+    it("should should defer resolving fetch until calling endpoint", async () => {
       const response = new Response(
         toJsonString(UnaryResponseSchema, create(UnaryResponseSchema)),
         {
@@ -133,12 +137,12 @@ describe("custom fetch", function () {
         undefined,
         create(UnaryRequestSchema),
       );
-      expect(response.json).toHaveBeenCalledTimes(1); // eslint-disable-line @typescript-eslint/unbound-method
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(0); // eslint-disable-line @typescript-eslint/unbound-method
+      expect(response.json).toHaveBeenCalledTimes(1);
+      expect(response.arrayBuffer).toHaveBeenCalledTimes(0);
     });
   });
   describe("with gRPC-web transport", () => {
-    it("should should defer resolving fetch until calling endpoint", async function () {
+    it("should should defer resolving fetch until calling endpoint", async () => {
       const response = new Response(
         toJsonString(UnaryResponseSchema, create(UnaryResponseSchema)),
         {
