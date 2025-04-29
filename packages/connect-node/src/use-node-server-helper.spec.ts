@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as http2 from "http2";
-import * as http from "http";
-import * as https from "https";
+import type * as http2 from "node:http2";
+import * as http from "node:http";
+import type * as https from "node:https";
 import type { UniversalClientFn } from "@connectrpc/connect/protocol";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { createNodeHttpClient } from "./node-universal-client.js";
@@ -42,14 +42,14 @@ export function useNodeServer(
   let client: UniversalClientFn | undefined;
   let clientSessionManager: Http2SessionManager | undefined;
 
-  beforeEach(function (doneFn) {
+  beforeEach((doneFn) => {
     server = createServer();
     server.listen(0, function listenCallback() {
       doneFn();
     });
   });
 
-  afterEach(async function () {
+  afterEach(async () => {
     if (server === undefined) {
       throw new Error("server not defined");
     }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type * as http from "http";
-import type * as http2 from "http2";
+import type * as http from "node:http";
+import type * as http2 from "node:http2";
 
 /**
  * Convert a Node.js header object to a fetch API Headers object.

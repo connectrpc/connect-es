@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as http2 from "http2";
-import * as http from "http";
+import * as http2 from "node:http2";
+import * as http from "node:http";
 import { ConnectError } from "@connectrpc/connect";
 import { createAsyncIterable } from "@connectrpc/connect/protocol";
 import { createNodeHttpClient } from "./node-universal-client.js";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 
-describe("node http/2 client closing with RST_STREAM with code CANCEL", function () {
+describe("node http/2 client closing with RST_STREAM with code CANCEL", () => {
   let serverReceivedRstCode: number | undefined;
   const server = useNodeServer(() =>
     http2.createServer().on("stream", (stream) => {
-      stream.on("close", () => (serverReceivedRstCode = stream.rstCode));
+      stream.on("close", () => {
+        serverReceivedRstCode = stream.rstCode;
+      });
     }),
   );
-  it("should send RST_STREAM frame to the server", async function () {
-    return new Promise<void>((resolve) => {
+  it("should send RST_STREAM frame to the server", async () => {
+    new Promise<void>((resolve) => {
       http2.connect(server.getUrl(), (session: http2.ClientHttp2Session) => {
         const stream = session.request(
           {
@@ -59,11 +61,11 @@ describe("node http/2 client closing with RST_STREAM with code CANCEL", function
   });
 });
 
-describe("universal node http client", function () {
-  describe("against an unresolvable host", function () {
+describe("universal node http client", () => {
+  describe("against an unresolvable host", () => {
     for (const httpVersion of ["2", "1.1"] as const) {
-      describe(`over http ${httpVersion}`, function () {
-        it("should raise Code.Unavailable", async function () {
+      describe(`over http ${httpVersion}`, () => {
+        it("should raise Code.Unavailable", async () => {
           const client = createNodeHttpClient({
             httpVersion,
           });
@@ -83,8 +85,8 @@ describe("universal node http client", function () {
     }
   });
 
-  describe("against a server that closes immediately", function () {
-    describe("over http/2", function () {
+  describe("against a server that closes immediately", () => {
+    describe("over http/2", () => {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
         http2.createServer((request, response) => {
@@ -92,7 +94,7 @@ describe("universal node http client", function () {
           response.stream.close(http2.constants.NGHTTP2_CANCEL);
         }),
       );
-      it("should reject the response promise with Code.Canceled", async function () {
+      it("should reject the response promise with Code.Canceled", async () => {
         const client = server.getClient();
         try {
           await client({
@@ -110,7 +112,7 @@ describe("universal node http client", function () {
         expect(serverReceivedRequest).toBeTrue();
       });
     });
-    describe("over http/1.1", function () {
+    describe("over http/1.1", () => {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
         http.createServer((req, res) => {
@@ -118,7 +120,7 @@ describe("universal node http client", function () {
           res.destroy();
         }),
       );
-      it("should reject the response promise", async function () {
+      it("should reject the response promise", async () => {
         const client = server.getClient();
         try {
           await client({
@@ -136,8 +138,8 @@ describe("universal node http client", function () {
     });
   });
 
-  describe("against a server that closes before the first response byte", function () {
-    describe("over http/2", function () {
+  describe("against a server that closes before the first response byte", () => {
+    describe("over http/2", () => {
       const server = useNodeServer(() =>
         http2.createServer((req, res) => {
           res.writeHead(200);
@@ -147,7 +149,7 @@ describe("universal node http client", function () {
           setTimeout(() => res.stream.close(http2.constants.NGHTTP2_CANCEL), 0);
         }),
       );
-      it("should reject the response promise with Code.Canceled", async function () {
+      it("should reject the response promise with Code.Canceled", async () => {
         const client = server.getClient();
         const res = await client({
           url: server.getUrl(),
@@ -170,7 +172,7 @@ describe("universal node http client", function () {
         }
       });
     });
-    describe("over http/1.1", function () {
+    describe("over http/1.1", () => {
       const server = useNodeServer(() =>
         http.createServer((req, res) => {
           res.writeHead(200);
@@ -178,7 +180,7 @@ describe("universal node http client", function () {
           res.destroy();
         }),
       );
-      it("should reject the response promise", async function () {
+      it("should reject the response promise", async () => {
         const client = server.getClient();
         const res = await client({
           url: server.getUrl(),
@@ -200,8 +202,8 @@ describe("universal node http client", function () {
     });
   });
 
-  describe("against a server that closes mid request", function () {
-    describe("over http/2", function () {
+  describe("against a server that closes mid request", () => {
+    describe("over http/2", () => {
       let serverReceivedBytes = 0;
       const server = useNodeServer(() =>
         http2.createServer((req, res) => {
@@ -214,7 +216,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should reject the response promise with Code.Canceled", async function () {
+      it("should reject the response promise with Code.Canceled", async () => {
         const client = server.getClient();
 
         async function* body() {
@@ -241,7 +243,7 @@ describe("universal node http client", function () {
         expect(serverReceivedBytes).toBe(32);
       });
     });
-    describe("over http/1.1", function () {
+    describe("over http/1.1", () => {
       let serverReceivedBytes = 0;
       const server = useNodeServer(() =>
         http.createServer((req, res) => {
@@ -254,7 +256,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should reject the response promise", async function () {
+      it("should reject the response promise", async () => {
         const client = server.getClient();
 
         async function* body() {
@@ -281,8 +283,8 @@ describe("universal node http client", function () {
     });
   });
 
-  describe("against a server that closes mid response", function () {
-    describe("over http/2", function () {
+  describe("against a server that closes mid response", () => {
+    describe("over http/2", () => {
       let serverSentBytes = 0;
       const server = useNodeServer(() =>
         http2.createServer((req, res) => {
@@ -298,7 +300,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should reject the response promise with Code.Canceled", async function () {
+      it("should reject the response promise with Code.Canceled", async () => {
         const client = server.getClient();
         const res = await client({
           url: server.getUrl(),
@@ -320,7 +322,7 @@ describe("universal node http client", function () {
         expect(serverSentBytes).toBe(64);
       });
     });
-    describe("over http/1.1", function () {
+    describe("over http/1.1", () => {
       let serverSentBytes = 0;
       const server = useNodeServer(() =>
         http.createServer((req, res) => {
@@ -334,7 +336,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should reject the response promise", async function () {
+      it("should reject the response promise", async () => {
         const client = server.getClient();
         const res = await client({
           url: server.getUrl(),
@@ -357,13 +359,15 @@ describe("universal node http client", function () {
     });
   });
 
-  describe("with a signal that is already aborted", function () {
-    describe("over http/2", function () {
+  describe("with a signal that is already aborted", () => {
+    describe("over http/2", () => {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
-        http2.createServer(() => (serverReceivedRequest = true)),
+        http2.createServer(() => {
+          serverReceivedRequest = true;
+        }),
       );
-      it("should raise error with Code.Canceled and never hit the server", async function () {
+      it("should raise error with Code.Canceled and never hit the server", async () => {
         const client = server.getClient();
         const signal = AbortSignal.abort();
         // client should raise error
@@ -385,12 +389,14 @@ describe("universal node http client", function () {
         expect(serverReceivedRequest).toBeFalse();
       });
     });
-    describe("over http/1.1", function () {
+    describe("over http/1.1", () => {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
-        http.createServer(() => (serverReceivedRequest = true)),
+        http.createServer(() => {
+          serverReceivedRequest = true;
+        }),
       );
-      it("should raise error with Code.Canceled and never hit the server", async function () {
+      it("should raise error with Code.Canceled and never hit the server", async () => {
         const client = server.getClient();
         const signal = AbortSignal.abort();
         // client should raise error
@@ -414,16 +420,15 @@ describe("universal node http client", function () {
     });
   });
 
-  describe("with a signal aborting before first request byte", function () {
-    describe("over http/2", function () {
+  describe("with a signal aborting before first request byte", () => {
+    describe("over http/2", () => {
       let serverReceivedRstCode: number | undefined;
       let serverReceivedBytes = 0;
       const server = useNodeServer(() =>
         http2.createServer((req, res) => {
-          res.stream.on(
-            "close",
-            () => (serverReceivedRstCode = res.stream.rstCode),
-          );
+          res.stream.on("close", () => {
+            serverReceivedRstCode = res.stream.rstCode;
+          });
           void (async () => {
             for await (const chunk of req) {
               serverReceivedBytes += (chunk as Uint8Array).byteLength;
@@ -431,7 +436,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
+      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async () => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
@@ -468,7 +473,7 @@ describe("universal node http client", function () {
         expect(serverReceivedBytes).toBe(0);
       });
     });
-    describe("over http/1.1", function () {
+    describe("over http/1.1", () => {
       let serverReceivedRequest = false;
       let serverReceivedBytes = 0;
       let serverRequestClosed = false;
@@ -479,10 +484,18 @@ describe("universal node http client", function () {
       const server = useNodeServer(() =>
         http.createServer((req, res) => {
           serverReceivedRequest = true;
-          req.on("aborted", () => (serverRequestEmittedAborted = true));
-          req.on("error", (e) => (serverRequestEmittedError = e));
-          req.on("close", () => (serverRequestClosed = true));
-          res.on("close", () => (serverResponseClosed = true));
+          req.on("aborted", () => {
+            serverRequestEmittedAborted = true;
+          });
+          req.on("error", (e) => {
+            serverRequestEmittedError = e;
+          });
+          req.on("close", () => {
+            serverRequestClosed = true;
+          });
+          res.on("close", () => {
+            serverResponseClosed = true;
+          });
           void (async () => {
             try {
               for await (const chunk of req) {
@@ -494,7 +507,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should raise error with code canceled", async function () {
+      it("should raise error with code canceled", async () => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
@@ -540,16 +553,15 @@ describe("universal node http client", function () {
     });
   });
 
-  describe("with a signal aborting mid request", function () {
-    describe("over http/2", function () {
+  describe("with a signal aborting mid request", () => {
+    describe("over http/2", () => {
       let serverReceivedRstCode: number | undefined;
       let serverReceivedBytes = 0;
       const server = useNodeServer(() =>
         http2.createServer((req, res) => {
-          res.stream.on(
-            "close",
-            () => (serverReceivedRstCode = res.stream.rstCode),
-          );
+          res.stream.on("close", () => {
+            serverReceivedRstCode = res.stream.rstCode;
+          });
           void (async () => {
             for await (const chunk of req) {
               serverReceivedBytes += (chunk as Uint8Array).byteLength;
@@ -557,7 +569,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
+      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async () => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
@@ -595,7 +607,7 @@ describe("universal node http client", function () {
         expect(serverReceivedBytes).toBe(32);
       });
     });
-    describe("over http/1.1", function () {
+    describe("over http/1.1", () => {
       let serverReceivedRequest = false;
       let serverReceivedBytes = 0;
       let serverRequestClosed = false;
@@ -606,10 +618,18 @@ describe("universal node http client", function () {
       const server = useNodeServer(() =>
         http.createServer((req, res) => {
           serverReceivedRequest = true;
-          req.on("aborted", () => (serverRequestEmittedAborted = true));
-          req.on("error", (e) => (serverRequestEmittedError = e));
-          req.on("close", () => (serverRequestClosed = true));
-          res.on("close", () => (serverResponseClosed = true));
+          req.on("aborted", () => {
+            serverRequestEmittedAborted = true;
+          });
+          req.on("error", (e) => {
+            serverRequestEmittedError = e;
+          });
+          req.on("close", () => {
+            serverRequestClosed = true;
+          });
+          res.on("close", () => {
+            serverResponseClosed = true;
+          });
           void (async () => {
             try {
               for await (const chunk of req) {
@@ -621,7 +641,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should raise error with code canceled", async function () {
+      it("should raise error with code canceled", async () => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
@@ -666,16 +686,15 @@ describe("universal node http client", function () {
     });
   });
 
-  describe("with a signal aborting mid response", function () {
-    describe("over http/2", function () {
+  describe("with a signal aborting mid response", () => {
+    describe("over http/2", () => {
       let serverReceivedRstCode: number | undefined;
       let serverSentBytes = 0;
       const server = useNodeServer(() =>
         http2.createServer((req, res) => {
-          res.stream.on(
-            "close",
-            () => (serverReceivedRstCode = res.stream.rstCode),
-          );
+          res.stream.on("close", () => {
+            serverReceivedRstCode = res.stream.rstCode;
+          });
           void (async () => {
             res.writeHead(200);
             res.write(new Uint8Array(64));
@@ -686,7 +705,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async function () {
+      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async () => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
@@ -722,14 +741,18 @@ describe("universal node http client", function () {
         expect(serverSentBytes).toBe(64);
       });
     });
-    describe("over http/1.1", function () {
+    describe("over http/1.1", () => {
       let serverSentBytes = 0;
       let serverRequestClosed = false;
       let serverResponseClosed = false;
       const server = useNodeServer(() =>
         http.createServer((req, res) => {
-          req.on("close", () => (serverRequestClosed = true));
-          res.on("close", () => (serverResponseClosed = true));
+          req.on("close", () => {
+            serverRequestClosed = true;
+          });
+          res.on("close", () => {
+            serverResponseClosed = true;
+          });
           void (async () => {
             res.writeHead(200);
             res.write(new Uint8Array(64));
@@ -740,7 +763,7 @@ describe("universal node http client", function () {
           })();
         }),
       );
-      it("should raise error with code canceled", async function () {
+      it("should raise error with code canceled", async () => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();

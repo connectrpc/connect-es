@@ -15,8 +15,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-floating-promises */
 
 import { Http2SessionManager } from "../http2-session-manager.js";
-import * as http2 from "http2";
-import { parentPort, workerData } from "worker_threads";
+import * as http2 from "node:http2";
+import { parentPort, workerData } from "node:worker_threads";
 
 const sm = new Http2SessionManager(workerData, {
   pingIntervalMs: 5, // intentionally short for faster tests
@@ -26,7 +26,7 @@ sm.request("POST", "/", {}, {}).then((req) => {
     setTimeout(() => {
       sm.request("POST", "/", {}, {}).then((req) => {
         req.close(http2.constants.NGHTTP2_NO_ERROR, () => {
-          parentPort!.postMessage("done");
+          parentPort?.postMessage("done");
         });
       });
     }, 10),
