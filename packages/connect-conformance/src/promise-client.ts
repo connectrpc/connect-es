@@ -72,7 +72,7 @@ export function invokeWithPromiseClient(
 async function unary(
   client: ConformanceClient,
   compatRequest: ClientCompatRequest,
-  idempotent: boolean = false,
+  idempotent = false,
 ) {
   await wait(compatRequest.requestDelayMs);
   const result = create(ClientResponseResultSchema);
