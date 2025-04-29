@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Scanned } from "./lib/scan";
-import { CommandLineArgs } from "./arguments";
-import { Logger, PrintFn } from "./lib/logger";
-import { updateSourceFile } from "./lib/migrate-source-files";
-import { writePackageJsonFile } from "./lib/package-json";
-import { runInstall } from "./lib/run";
-import { writeBufGenYamlFile } from "./lib/bufgenyaml";
+import type { Scanned } from "./lib/scan";
+import type { CommandLineArgs } from "./arguments";
+import type { Logger, PrintFn } from "./lib/logger";
+import type { updateSourceFile } from "./lib/migrate-source-files";
+import type { writePackageJsonFile } from "./lib/package-json";
+import type { runInstall } from "./lib/run";
+import type { writeBufGenYamlFile } from "./lib/bufgenyaml";
 
 export interface Migration {
   applicable(scanned: Scanned): boolean;

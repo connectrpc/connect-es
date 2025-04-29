@@ -14,9 +14,9 @@
 
 import { sync } from "fast-glob";
 import { basename } from "node:path";
-import { Logger, PrintFn } from "./logger";
-import { PackageJson, readPackageJsonFile } from "./package-json";
-import { BufGenYaml, readBufGenYamlFile } from "./bufgenyaml";
+import type { Logger, PrintFn } from "./logger";
+import { type PackageJson, readPackageJsonFile } from "./package-json";
+import { type BufGenYaml, readBufGenYamlFile } from "./bufgenyaml";
 
 const packageFilename = "package.json";
 export const lockFilenameNpm = "package-lock.json";

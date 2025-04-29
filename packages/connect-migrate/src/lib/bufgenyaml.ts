@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Document, isSeq, parseDocument, stringify } from "yaml";
+import { type Document, isSeq, parseDocument, stringify } from "yaml";
 import { readFileSync, writeFileSync } from "node:fs";
 
 export type BufGenYaml = Document.Parsed & {

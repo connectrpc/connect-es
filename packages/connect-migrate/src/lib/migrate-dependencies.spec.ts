@@ -14,8 +14,8 @@
 
 import { migrateDependencies } from "./migrate-dependencies";
 
-describe("migrateDependencies()", function () {
-  it("does nothing with empty migrations", function () {
+describe("migrateDependencies()", () => {
+  it("does nothing with empty migrations", () => {
     expect(
       migrateDependencies(
         {
@@ -28,7 +28,7 @@ describe("migrateDependencies()", function () {
     ).toBeNull();
   });
   describe("DependencyReplacement", () => {
-    it("replaces nothing with different package names", function () {
+    it("replaces nothing with different package names", () => {
       expect(
         migrateDependencies(
           {
@@ -196,7 +196,7 @@ describe("migrateDependencies()", function () {
     });
   });
   describe("DependencyRemoval", () => {
-    it("removes nothing with different package names", function () {
+    it("removes nothing with different package names", () => {
       expect(
         migrateDependencies(
           {

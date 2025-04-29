@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Scanned } from "./scan";
-import { Logger, PrintFn } from "./logger";
-import j, { Transform } from "jscodeshift";
+import type { Scanned } from "./scan";
+import type { Logger, PrintFn } from "./logger";
+import j, { type Transform } from "jscodeshift";
 import { readFileSync, writeFileSync } from "node:fs";
 
 interface MigrateSourceFilesResult {

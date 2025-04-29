@@ -15,19 +15,19 @@
 import { existsSync, unlinkSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { PackageJson, readPackageJsonFile } from "./package-json.js";
+import { type PackageJson, readPackageJsonFile } from "./package-json.js";
 
-describe("readPackageJsonFile", function () {
+describe("readPackageJsonFile", () => {
   let testFilePath: string;
 
-  it("should raise error for empty file", function () {
+  it("should raise error for empty file", () => {
     writeFileSync(testFilePath, "", "utf-8");
     expect(() => readPackageJsonFile(testFilePath)).toThrowError(
       /Failed to parse .*: Unexpected end of JSON input/,
     );
   });
 
-  describe("with expected structure", function () {
+  describe("with expected structure", () => {
     const goodContents = [
       { name: "ok" },
       { version: "1.2.3" },
@@ -39,7 +39,7 @@ describe("readPackageJsonFile", function () {
       { peerDependenciesMeta: { foo: { optional: false } } },
     ] satisfies PackageJson[];
     goodContents.forEach((content, index) => {
-      it(`should raise error for goodContents.${index}`, function () {
+      it(`should raise error for goodContents.${index}`, () => {
         writeFileSync(testFilePath, JSON.stringify(content), "utf-8");
         const result = readPackageJsonFile(testFilePath);
         expect(result).toEqual(content);
@@ -47,7 +47,7 @@ describe("readPackageJsonFile", function () {
     });
   });
 
-  describe("with unexpected structure", function () {
+  describe("with unexpected structure", () => {
     const badContents = [
       [/Failed to parse .*: not a valid package.json file/, []],
       [/Failed to parse .*: not a valid package.json file/, null],
@@ -93,19 +93,19 @@ describe("readPackageJsonFile", function () {
       ],
     ] satisfies [RegExp, JsonValue][];
     badContents.forEach(([error, content], index) => {
-      it(`should raise error for badContents.${index}`, function () {
+      it(`should raise error for badContents.${index}`, () => {
         writeFileSync(testFilePath, JSON.stringify(content), "utf-8");
         expect(() => readPackageJsonFile(testFilePath)).toThrowError(error);
       });
     });
   });
 
-  beforeEach(function () {
+  beforeEach(() => {
     testFilePath = `.tmp-package-${randomBytes(6)
       .readUIntLE(0, 6)
       .toString(36)}.json`;
   });
-  afterEach(function () {
+  afterEach(() => {
     if (existsSync(testFilePath)) {
       unlinkSync(testFilePath);
     }

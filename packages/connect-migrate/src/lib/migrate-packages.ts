@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Scanned } from "./scan";
-import { PrintFn } from "./logger";
+import type { Scanned } from "./scan";
+import type { PrintFn } from "./logger";
 import { writePackageJsonFile } from "./package-json";
 import {
-  DependencyMigration,
+  type DependencyMigration,
   migrateDependencies,
 } from "./migrate-dependencies";
 
@@ -50,7 +50,9 @@ export function migratePackages(
       print(`  No files modified.\n`);
     }
   } else {
-    updatedPackageFiles.forEach((path) => print(`  ${path} ✓\n`));
+    for (const path of updatedPackageFiles) {
+      print(`  ${path} ✓\n`);
+    }
   }
   return { updatedPackageFiles };
 }

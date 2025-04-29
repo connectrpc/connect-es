@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import j from "jscodeshift";
+import type j from "jscodeshift";
 
 const importReplacements: Record<string, string> = {
   "@bufbuild/connect-web": "@connectrpc/connect-web",
@@ -44,6 +44,7 @@ const transform: j.Transform = (file, { j }, options) => {
   }
   let importOrRequireModified = false;
   // ESM imports -- no dynamic imports
+  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   importPaths.forEach((path) => {
     if (typeof path.value.source.value === "string") {
       const sourceValue = path.value.source.value;
@@ -55,6 +56,7 @@ const transform: j.Transform = (file, { j }, options) => {
     }
   });
   // CJS imports
+  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   requirePaths.forEach((path) => {
     const firstArg = path.value.arguments[0];
     if (
@@ -69,14 +71,12 @@ const transform: j.Transform = (file, { j }, options) => {
     }
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- eslint is unaware of forEach callback
   if (!importOrRequireModified) {
     // no relevant imports in this file
     return root.toSource();
   }
 
   return root.toSource(
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- passing the printOptions onto toSource is safe
     options.printOptions ?? {
       quote: determineQuoteStyle(importPaths, requirePaths),
     },

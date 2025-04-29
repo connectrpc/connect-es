@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import path from "node:path";
-import { createWriteStream, existsSync, WriteStream } from "node:fs";
+import { createWriteStream, existsSync, type WriteStream } from "node:fs";
 
 export type PrintFn = (text: string) => void;
 

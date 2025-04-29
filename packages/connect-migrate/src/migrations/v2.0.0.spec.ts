@@ -19,16 +19,16 @@ import {
   targetVersionProtobufEs,
   v2_0_0,
 } from "./v2.0.0";
-import { PackageJson } from "../lib/package-json";
-import { MigrateOptions } from "../migration";
+import type { PackageJson } from "../lib/package-json";
+import type { MigrateOptions } from "../migration";
 import { parseBufGenYaml, stringifyBufGenYaml } from "../lib/bufgenyaml";
 
-describe("migration to v2.0.0", function () {
+describe("migration to v2.0.0", () => {
   const packageJsonWritten: { path: string; pkg: PackageJson }[] = [];
   const bufGenYamlWritten: { path: string; yaml: string }[] = [];
   const lockFilesUpdated: string[] = [];
   let opt: MigrateOptions;
-  beforeEach(function () {
+  beforeEach(() => {
     packageJsonWritten.splice(0);
     lockFilesUpdated.splice(0);
     bufGenYamlWritten.splice(0);
@@ -66,7 +66,7 @@ describe("migration to v2.0.0", function () {
     };
   });
   describe("for protobuf-es v1", () => {
-    beforeEach(function () {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -124,7 +124,7 @@ plugins:
     });
   });
   describe("for connect-es v1", () => {
-    beforeEach(function () {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -194,7 +194,7 @@ plugins:
     });
   });
   describe("for connect-query-es v1", () => {
-    beforeEach(function () {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -250,7 +250,7 @@ plugins:
     });
   });
   describe("for connect-playwright-es v1", () => {
-    beforeEach(function () {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -280,7 +280,7 @@ plugins:
     });
   });
   describe("for up-to-date versions", () => {
-    beforeEach(function () {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -353,7 +353,7 @@ plugins:
     });
   });
   describe("for protobuf-es pre v1 versions", () => {
-    beforeEach(function () {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -372,7 +372,7 @@ plugins:
     });
   });
   describe("for connect-es in @bufbuild", () => {
-    beforeEach(function () {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -408,8 +408,8 @@ plugins:
       expect(v2_0_0.applicable(opt.scanned)).toBeFalse();
     });
   });
-  describe("for connect-query-es in @bufbuild", function () {
-    beforeEach(function () {
+  describe("for connect-query-es in @bufbuild", () => {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -426,8 +426,8 @@ plugins:
       expect(v2_0_0.applicable(opt.scanned)).toBeFalse();
     });
   });
-  describe("for connect-playwright-es in @bufbuild", function () {
-    beforeEach(function () {
+  describe("for connect-playwright-es in @bufbuild", () => {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
