@@ -14,9 +14,9 @@
 
 import { readFileSync } from "node:fs";
 import { compressionBrotli, compressionGzip } from "@connectrpc/connect-node";
-import * as http from "node:http";
-import * as http2 from "node:http2";
-import * as https from "node:https";
+import type * as http from "node:http";
+import type * as http2 from "node:http2";
+import type * as https from "node:https";
 import {
   create,
   createRegistry,
