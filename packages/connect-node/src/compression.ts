@@ -79,7 +79,6 @@ function wrapZLibErrors<T>(
     const props = getNodeErrorProps(e);
     let code = Code.Internal;
     let message = "decompression failed";
-    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (props.code) {
       case "ERR_BUFFER_TOO_LARGE":
         code = Code.ResourceExhausted;

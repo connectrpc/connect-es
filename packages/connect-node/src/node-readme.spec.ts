@@ -30,7 +30,6 @@ import type {
   ConverseRequestSchema,
 } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
 import type { MessageInitShape } from "@bufbuild/protobuf";
-/* eslint-disable @typescript-eslint/require-await */
 
 describe("node readme", () => {
   const optionsHttp2 = {

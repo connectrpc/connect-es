@@ -106,7 +106,6 @@ export function connectNodeAdapter(
         if (ConnectError.from(reason).code == Code.Aborted) {
           return;
         }
-        // eslint-disable-next-line no-console
         console.error(
           `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
           reason,

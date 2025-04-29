@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-floating-promises */
-
 import { Http2SessionManager } from "../http2-session-manager.js";
 import * as http2 from "node:http2";
 import { parentPort, workerData } from "node:worker_threads";
