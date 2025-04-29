@@ -7,7 +7,7 @@
     "start": "tsx src/server.ts",
     "client": "tsx src/client.ts",
     "generate": "buf generate",
-    "format": "prettier --write --ignore-unknown '.' '!src/gen'",
+    "format": "biome format --write",
     "license-header": "license-header",
     "lint": "eslint --max-warnings 0 ."
   },

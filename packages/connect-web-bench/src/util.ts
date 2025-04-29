@@ -40,13 +40,18 @@ export function generateMarkdownTable(rows: Row[]) {
     minified: "minified",
     compressed: "compressed",
   });
-  // prettier-ignore
   const colSizes: Record<keyof Row, number> = {
     name: stringRows.reduce((size, row) => Math.max(size, row.name.length), 0),
     rpcs: stringRows.reduce((size, row) => Math.max(size, row.rpcs.length), 0),
     size: stringRows.reduce((size, row) => Math.max(size, row.size.length), 0),
-    minified: stringRows.reduce((size, row) => Math.max(size, row.minified.length), 0),
-    compressed: stringRows.reduce((size, row) => Math.max(size, row.compressed.length), 0),
+    minified: stringRows.reduce(
+      (size, row) => Math.max(size, row.minified.length),
+      0,
+    ),
+    compressed: stringRows.reduce(
+      (size, row) => Math.max(size, row.compressed.length),
+      0,
+    ),
   };
   const lines: string[] = [];
   for (const [index, row] of stringRows.entries()) {

@@ -17,7 +17,7 @@
     "build:esm": "tsc --project tsconfig.json --outDir ./dist/esm",
     "postbuild": "node scripts/update-user-agent.mjs",
     "test": "jasmine --config=jasmine.json",
-    "format": "prettier --write --ignore-unknown '.' '!dist' '!src/protocol-grpc/gen'",
+    "format": "biome format --write",
     "license-header": "license-header",
     "lint": "eslint --max-warnings 0 .",
     "attw": "attw --pack"
@@ -49,18 +49,10 @@
   },
   "typesVersions": {
     "*": {
-      "protocol": [
-        "./dist/cjs/protocol/index.d.ts"
-      ],
-      "protocol-connect": [
-        "./dist/cjs/protocol-connect/index.d.ts"
-      ],
-      "protocol-grpc": [
-        "./dist/cjs/protocol-grpc/index.d.ts"
-      ],
-      "protocol-grpc-web": [
-        "./dist/cjs/protocol-grpc-web/index.d.ts"
-      ]
+      "protocol": ["./dist/cjs/protocol/index.d.ts"],
+      "protocol-connect": ["./dist/cjs/protocol-connect/index.d.ts"],
+      "protocol-grpc": ["./dist/cjs/protocol-grpc/index.d.ts"],
+      "protocol-grpc-web": ["./dist/cjs/protocol-grpc-web/index.d.ts"]
     }
   },
   "peerDependencies": {

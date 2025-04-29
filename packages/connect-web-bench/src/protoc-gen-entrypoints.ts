@@ -51,7 +51,7 @@ runNodeJs(
   }),
 );
 
-// prettier-ignore
+// biome-ignore format: print calls should not be formatted
 function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
   f.print("/* eslint-disable no-console */");
   f.print();
@@ -79,7 +79,7 @@ function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
   f.print("}");
 }
 
-// prettier-ignore
+// biome-ignore format: print calls should not be formatted
 function generateGrpcWeb(f: GeneratedFile, methods: DescMethod[]) {
   f.print("/* eslint-disable no-console */");
   f.print();

@@ -15,7 +15,7 @@
     "test": "jasmine --config=jasmine.json",
     "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/server.ts",
     "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/client.ts",
-    "format": "prettier --write --ignore-unknown '.' '!dist'",
+    "format": "biome format --write",
     "license-header": "license-header",
     "lint": "eslint --max-warnings 0 .",
     "attw": "attw --pack"

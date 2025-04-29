@@ -25,7 +25,7 @@
     "generate": "buf generate --template browserstack/buf.gen.yaml",
     "postgenerate": "license-header browserstack/gen",
     "test-browserstack": "wdio run ./browserstack/wdio.browserstack.conf.js",
-    "format": "prettier --write --ignore-unknown '.' '!dist' '!browserstack/gen'",
+    "format": "biome format --write",
     "license-header": "license-header",
     "lint": "eslint --max-warnings 0 .",
     "attw": "attw --pack"

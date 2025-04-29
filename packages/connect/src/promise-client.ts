@@ -30,7 +30,7 @@ import { Code } from "./code.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import type { StreamResponse } from "./interceptor.js";
 
-// prettier-ignore
+// biome-ignore format: type should not be formatted
 /**
  * Client is a simple client that supports unary and server-streaming
  * methods. Methods will produce a promise for the response message,

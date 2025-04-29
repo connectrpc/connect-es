@@ -270,7 +270,6 @@ export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
   sink: AsyncIterableSink<T9, T10>,
   options?: PipeOptions,
 ): Promise<T10>;
-// prettier-ignore
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
@@ -278,20 +277,19 @@ export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
  * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
-    iterable: AsyncIterable<T1>,
-    transform1: AsyncIterableTransform<T1, T2>,
-    transform2: AsyncIterableTransform<T2, T3>,
-    transform3: AsyncIterableTransform<T3, T4>,
-    transform4: AsyncIterableTransform<T4, T5>,
-    transform5: AsyncIterableTransform<T5, T6>,
-    transform6: AsyncIterableTransform<T6, T7>,
-    transform7: AsyncIterableTransform<T7, T8>,
-    transform8: AsyncIterableTransform<T8, T9>,
-    transform9: AsyncIterableTransform<T9, T10>,
-    sink: AsyncIterableSink<T10, T11>,
-    options?: PipeOptions
+  iterable: AsyncIterable<T1>,
+  transform1: AsyncIterableTransform<T1, T2>,
+  transform2: AsyncIterableTransform<T2, T3>,
+  transform3: AsyncIterableTransform<T3, T4>,
+  transform4: AsyncIterableTransform<T4, T5>,
+  transform5: AsyncIterableTransform<T5, T6>,
+  transform6: AsyncIterableTransform<T6, T7>,
+  transform7: AsyncIterableTransform<T7, T8>,
+  transform8: AsyncIterableTransform<T8, T9>,
+  transform9: AsyncIterableTransform<T9, T10>,
+  sink: AsyncIterableSink<T10, T11>,
+  options?: PipeOptions,
 ): Promise<T11>;
-// prettier-ignore
 /**
  * Takes an asynchronous iterable as a source, applies transformations, and
  * passes it to a sink.
@@ -299,19 +297,19 @@ export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
  * @private Internal code, does not follow semantic versioning.
  */
 export function pipeTo<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
-    iterable: AsyncIterable<T1>,
-    transform1: AsyncIterableTransform<T1, T2>,
-    transform2: AsyncIterableTransform<T2, T3>,
-    transform3: AsyncIterableTransform<T3, T4>,
-    transform4: AsyncIterableTransform<T4, T5>,
-    transform5: AsyncIterableTransform<T5, T6>,
-    transform6: AsyncIterableTransform<T6, T7>,
-    transform7: AsyncIterableTransform<T7, T8>,
-    transform8: AsyncIterableTransform<T8, T9>,
-    transform9: AsyncIterableTransform<T9, T10>,
-    transform10: AsyncIterableTransform<T10, T11>,
-    sink: AsyncIterableSink<T11, T12>,
-    options?: PipeOptions
+  iterable: AsyncIterable<T1>,
+  transform1: AsyncIterableTransform<T1, T2>,
+  transform2: AsyncIterableTransform<T2, T3>,
+  transform3: AsyncIterableTransform<T3, T4>,
+  transform4: AsyncIterableTransform<T4, T5>,
+  transform5: AsyncIterableTransform<T5, T6>,
+  transform6: AsyncIterableTransform<T6, T7>,
+  transform7: AsyncIterableTransform<T7, T8>,
+  transform8: AsyncIterableTransform<T8, T9>,
+  transform9: AsyncIterableTransform<T9, T10>,
+  transform10: AsyncIterableTransform<T10, T11>,
+  sink: AsyncIterableSink<T11, T12>,
+  options?: PipeOptions,
 ): Promise<T12>;
 export function pipeTo(
   source: AsyncIterable<unknown>,
@@ -517,46 +515,44 @@ export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
   transform9: AsyncIterableTransform<T9, T10>,
   options?: PipeOptions,
 ): AsyncIterable<T10>;
-// prettier-ignore
 /**
  * Apply one or more transformations to an asynchronous iterable.
  *
  * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
-    iterable: AsyncIterable<T1>,
-    transform1: AsyncIterableTransform<T1, T2>,
-    transform2: AsyncIterableTransform<T2, T3>,
-    transform3: AsyncIterableTransform<T3, T4>,
-    transform4: AsyncIterableTransform<T4, T5>,
-    transform5: AsyncIterableTransform<T5, T6>,
-    transform6: AsyncIterableTransform<T6, T7>,
-    transform7: AsyncIterableTransform<T7, T8>,
-    transform8: AsyncIterableTransform<T8, T9>,
-    transform9: AsyncIterableTransform<T9, T10>,
-    transform10: AsyncIterableTransform<T10, T11>,
-    options?: PipeOptions
+  iterable: AsyncIterable<T1>,
+  transform1: AsyncIterableTransform<T1, T2>,
+  transform2: AsyncIterableTransform<T2, T3>,
+  transform3: AsyncIterableTransform<T3, T4>,
+  transform4: AsyncIterableTransform<T4, T5>,
+  transform5: AsyncIterableTransform<T5, T6>,
+  transform6: AsyncIterableTransform<T6, T7>,
+  transform7: AsyncIterableTransform<T7, T8>,
+  transform8: AsyncIterableTransform<T8, T9>,
+  transform9: AsyncIterableTransform<T9, T10>,
+  transform10: AsyncIterableTransform<T10, T11>,
+  options?: PipeOptions,
 ): AsyncIterable<T11>;
-// prettier-ignore
 /**
  * Apply one or more transformations to an asynchronous iterable.
  *
  * @private Internal code, does not follow semantic versioning.
  */
 export function pipe<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
-    iterable: AsyncIterable<T1>,
-    transform1: AsyncIterableTransform<T1, T2>,
-    transform2: AsyncIterableTransform<T2, T3>,
-    transform3: AsyncIterableTransform<T3, T4>,
-    transform4: AsyncIterableTransform<T4, T5>,
-    transform5: AsyncIterableTransform<T5, T6>,
-    transform6: AsyncIterableTransform<T6, T7>,
-    transform7: AsyncIterableTransform<T7, T8>,
-    transform8: AsyncIterableTransform<T8, T9>,
-    transform9: AsyncIterableTransform<T9, T10>,
-    transform10: AsyncIterableTransform<T10, T11>,
-    transform11: AsyncIterableTransform<T11, T12>,
-    options?: PipeOptions
+  iterable: AsyncIterable<T1>,
+  transform1: AsyncIterableTransform<T1, T2>,
+  transform2: AsyncIterableTransform<T2, T3>,
+  transform3: AsyncIterableTransform<T3, T4>,
+  transform4: AsyncIterableTransform<T4, T5>,
+  transform5: AsyncIterableTransform<T5, T6>,
+  transform6: AsyncIterableTransform<T6, T7>,
+  transform7: AsyncIterableTransform<T7, T8>,
+  transform8: AsyncIterableTransform<T8, T9>,
+  transform9: AsyncIterableTransform<T9, T10>,
+  transform10: AsyncIterableTransform<T10, T11>,
+  transform11: AsyncIterableTransform<T11, T12>,
+  options?: PipeOptions,
 ): AsyncIterable<T12>;
 export async function* pipe<I, O>(
   source: AsyncIterable<I>,

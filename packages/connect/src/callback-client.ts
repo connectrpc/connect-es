@@ -29,7 +29,6 @@ import { makeAnyClient } from "./any-client.js";
 import type { CallOptions } from "./call-options.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 
-// prettier-ignore
 /**
  * CallbackClient is a simple client that supports unary and server
  * streaming methods. Methods take callback functions, which will be
@@ -47,13 +46,28 @@ import { createAsyncIterable } from "./protocol/async-iterable.js";
  * a function returned by the effect is called when the effect is
  * torn down.
  */
-export type CallbackClient<Desc extends DescService> =
-  {
-    [P in keyof Desc["method"]]:
-    Desc["method"][P] extends DescMethodUnary<infer I, infer O> ? (request: MessageInitShape<I>, callback: (error: ConnectError | undefined, response: MessageShape<O>) => void, options?: CallOptions) => CancelFn
-    : Desc["method"][P] extends DescMethodServerStreaming<infer I, infer O> ? (request: MessageInitShape<I>, messageCallback: (response: MessageShape<O>) => void, closeCallback: (error: ConnectError | undefined) => void, options?: CallOptions) => CancelFn
-    : never;
-  }
+export type CallbackClient<Desc extends DescService> = {
+  [P in keyof Desc["method"]]: Desc["method"][P] extends DescMethodUnary<
+    infer I,
+    infer O
+  >
+    ? (
+        request: MessageInitShape<I>,
+        callback: (
+          error: ConnectError | undefined,
+          response: MessageShape<O>,
+        ) => void,
+        options?: CallOptions,
+      ) => CancelFn
+    : Desc["method"][P] extends DescMethodServerStreaming<infer I, infer O>
+      ? (
+          request: MessageInitShape<I>,
+          messageCallback: (response: MessageShape<O>) => void,
+          closeCallback: (error: ConnectError | undefined) => void,
+          options?: CallOptions,
+        ) => CancelFn
+      : never;
+};
 
 type CancelFn = () => void;
 
