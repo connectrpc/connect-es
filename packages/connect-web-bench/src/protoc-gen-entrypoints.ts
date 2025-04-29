@@ -21,7 +21,7 @@ import {
   type Schema,
   safeIdentifier,
 } from "@bufbuild/protoplugin";
-import { DescMethod, DescService } from "@bufbuild/protobuf";
+import type { DescMethod, DescService } from "@bufbuild/protobuf";
 import { sizes } from "./constants";
 
 runNodeJs(
@@ -53,8 +53,6 @@ runNodeJs(
 
 // biome-ignore format: print calls should not be formatted
 function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
-  f.print("/* eslint-disable no-console */");
-  f.print();
   const createClient = f.import("createClient", "@connectrpc/connect");
   const createConnectTransport = f.import("createConnectTransport", "@connectrpc/connect-web");
   let lastService: DescService | undefined = undefined;
@@ -81,8 +79,6 @@ function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
 
 // biome-ignore format: print calls should not be formatted
 function generateGrpcWeb(f: GeneratedFile, methods: DescMethod[]) {
-  f.print("/* eslint-disable no-console */");
-  f.print();
   let lastService: DescService | undefined = undefined;
   f.print(f.jsDoc(`Calls ${methods.length} RPCs with gRPC-Web`));
   f.print("export async function call() {");

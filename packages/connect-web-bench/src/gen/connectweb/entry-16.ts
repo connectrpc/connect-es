@@ -21,8 +21,6 @@ import { LabelService } from "./buf/registry/module/v1/label_service_pb";
 import { ModuleService } from "./buf/registry/module/v1/module_service_pb";
 import { ResourceService } from "./buf/registry/module/v1/resource_service_pb";
 
-/* eslint-disable no-console */
-
 /**
  * Calls 16 RPCs with Connect-Web
  */

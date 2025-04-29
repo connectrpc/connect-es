@@ -19,8 +19,6 @@ import { DownloadRequest } from "./buf/registry/module/v1/download_service_pb";
 import { GraphServicePromiseClient } from "./buf/registry/module/v1/graph_service_grpc_web_pb";
 import { GetGraphRequest } from "./buf/registry/module/v1/graph_service_pb";
 
-/* eslint-disable no-console */
-
 /**
  * Calls 4 RPCs with gRPC-Web
  */

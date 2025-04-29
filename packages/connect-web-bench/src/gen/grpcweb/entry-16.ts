@@ -25,8 +25,6 @@ import { CreateModulesRequest, DeleteModulesRequest, GetModulesRequest, ListModu
 import { ResourceServicePromiseClient } from "./buf/registry/module/v1/resource_service_grpc_web_pb";
 import { GetResourcesRequest } from "./buf/registry/module/v1/resource_service_pb";
 
-/* eslint-disable no-console */
-
 /**
  * Calls 16 RPCs with gRPC-Web
  */
