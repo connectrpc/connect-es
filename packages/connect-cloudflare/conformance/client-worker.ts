@@ -28,7 +28,10 @@ import {
 } from "@connectrpc/connect-conformance";
 import { createTransport } from "./transport.js";
 import { createWorkerHandler } from "./handler.js";
-import { InvokeService } from "./gen/invoke/v1/invoke_pb.js";
+import {
+  InvokeRequestSchema,
+  InvokeService,
+} from "./gen/invoke/v1/invoke_pb.js";
 
 export default createWorkerHandler({
   jsonOptions: {
@@ -45,13 +48,18 @@ export default createWorkerHandler({
   routes({ service }) {
     service(InvokeService, {
       async invoke(req) {
+        if (!req.request) {
+          throw new Error(
+            "Missing " + InvokeRequestSchema.field.request.toString(),
+          );
+        }
         const res = create(ClientCompatResponseSchema, {
-          testName: req.request?.testName,
+          testName: req.request.testName,
         });
         try {
           const invokeResult = await invokeWithPromiseClient(
-            createTransport(req.request!),
-            req.request!,
+            createTransport(req.request),
+            req.request,
           );
           res.result = { case: "response", value: invokeResult };
         } catch (e) {
