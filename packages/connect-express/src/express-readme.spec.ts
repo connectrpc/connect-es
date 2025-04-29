@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as http from "http";
+import * as http from "node:http";
 import { createClient } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-node";
@@ -20,8 +20,8 @@ import express from "express";
 import { expressConnectMiddleware } from "./express-connect-middleware.js";
 import { ElizaService } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
 
-describe("express readme", function () {
-  it("should work", async function () {
+describe("express readme", () => {
+  it("should work", async () => {
     let port = -1;
 
     function routes(router: ConnectRouter) {
