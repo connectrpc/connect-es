@@ -16,6 +16,11 @@ import { Http2SessionManager } from "../http2-session-manager.js";
 import * as http2 from "node:http2";
 import { parentPort, workerData } from "node:worker_threads";
 
+if (!parentPort) {
+  // See packages/connect-node/src/http2-session-manager.spec.ts
+  throw new Error("Missing parentPort. Expected to be run in a Worker.");
+}
+
 const sm = new Http2SessionManager(workerData, {
   pingIntervalMs: 5, // intentionally short for faster tests
 });
