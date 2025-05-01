@@ -83,6 +83,7 @@ describe("trailer roundtrip", () => {
 
 function countFields(h: Headers): number {
   let numKeys = 0;
+  // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
   h.forEach(() => numKeys++);
   return numKeys;
 }

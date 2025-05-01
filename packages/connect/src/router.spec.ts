@@ -42,8 +42,8 @@ const testService = createServiceDesc({
   },
 });
 
-describe("createConnectRouter", function () {
-  it("supports self describing method type", function () {
+describe("createConnectRouter", () => {
+  it("supports self describing method type", () => {
     const methodDefinition = testService.method.unary;
     const router = createConnectRouter({}).rpc(methodDefinition, (request) => {
       return { value: `${request.value}-RESPONSE` };
@@ -54,13 +54,12 @@ describe("createConnectRouter", function () {
     expect(router.handlers[0].service).toEqual(testService);
   });
 
-  it("supports chaining after destructuring", function () {
+  it("supports chaining after destructuring", () => {
     const router = createConnectRouter({});
 
     const { rpc } = router;
     rpc(testService.method.unary, (request) => {
       return { value: `${request.value}-RESPONSE` };
-      // eslint-disable-next-line @typescript-eslint/require-await
     }).rpc(testService.method.server, async function* (request) {
       yield { value: `${request.value}-RESPONSE` };
     });

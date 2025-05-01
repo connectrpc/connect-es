@@ -38,7 +38,7 @@ import type { WritableIterable } from "./async-iterable.js";
 // These tests aim to model the usage of iterable transforms in clients and servers.
 // Note that the tests were written as a proof of concept, and the coverage is
 // incomplete (cancellation, backpressure, error handling, etc.).
-describe("full story", function () {
+describe("full story", () => {
   const readMaxBytes = 0xffffffff; // zlib caps maxOutputLength at this value
   const serialization: Serialization<string> = {
     serialize(data: string): Uint8Array {
@@ -106,8 +106,8 @@ describe("full story", function () {
     { value: "end", end: true },
   ];
 
-  describe("write", function () {
-    it("should write expected bytes", async function () {
+  describe("write", () => {
+    it("should write expected bytes", async () => {
       const it = pipe(
         createAsyncIterable(goldenPayload),
         transformSerializeEnvelope(serialization, endFlag, endSerialization),
@@ -119,8 +119,8 @@ describe("full story", function () {
     });
   });
 
-  describe("read", function () {
-    it("should read expected bytes", async function () {
+  describe("read", () => {
+    it("should read expected bytes", async () => {
       const it = pipe(
         createAsyncIterableBytes(goldenBytes),
         transformSplitEnvelope(readMaxBytes),
@@ -132,7 +132,7 @@ describe("full story", function () {
     });
   });
 
-  describe("client integration", function () {
+  describe("client integration", () => {
     let writer: WritableIterable<Payload<string, "end">>;
     let writerIt: AsyncIterable<Uint8Array>;
     let readerIt: AsyncIterable<
@@ -153,7 +153,7 @@ describe("full story", function () {
         transformParseEnvelope(serialization, endFlag, endSerialization),
       );
     });
-    it("should correctly return results when caller waits properly", async function () {
+    it("should correctly return results when caller waits properly", async () => {
       void writer
         .write({ value: "alpha", end: false })
         .then(() => writer.write({ value: "beta", end: false }))
@@ -171,7 +171,7 @@ describe("full story", function () {
         { value: "delta", end: false },
       ]);
     });
-    it("should correctly return results when caller sends without waiting", async function () {
+    it("should correctly return results when caller sends without waiting", async () => {
       // Writes all the payloads without awaiting and saves off promises from the writes
       const writes = Promise.all([
         writer.write({ value: "alpha", end: false }),
@@ -194,11 +194,11 @@ describe("full story", function () {
         { value: "delta", end: false },
       ]);
     });
-    it("should allow close on a writer that is already closed", function () {
+    it("should allow close on a writer that is already closed", () => {
       writer.close();
       writer.close();
     });
-    it("should throw if write is called on a writer that is closed", function () {
+    it("should throw if write is called on a writer that is closed", () => {
       writer.close();
 
       writer
@@ -209,7 +209,7 @@ describe("full story", function () {
           ),
         );
     });
-    it("should correctly behave when consumer fails and throw is invoked", async function () {
+    it("should correctly behave when consumer fails and throw is invoked", async () => {
       // Send four total payloads, but don't close the writer.
       // successfulSends represents sends that are expected to succeed.
       const successfulSends = Promise.all([
@@ -275,7 +275,7 @@ describe("full story", function () {
     });
   });
 
-  describe("server integration", function () {
+  describe("server integration", () => {
     const echoImplReceived: string[] = [];
 
     async function* echoImpl(
@@ -287,11 +287,11 @@ describe("full story", function () {
       }
     }
 
-    beforeEach(function () {
+    beforeEach(() => {
       echoImplReceived.splice(0);
     });
 
-    it("should echo expected bytes", async function () {
+    it("should echo expected bytes", async () => {
       const inputIt = pipe(
         createAsyncIterableBytes(goldenBytes),
         transformSplitEnvelope(readMaxBytes),

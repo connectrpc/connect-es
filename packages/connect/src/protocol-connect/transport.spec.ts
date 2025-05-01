@@ -78,7 +78,7 @@ const TestService = createServiceDesc({
   },
 });
 
-describe("Connect transport", function () {
+describe("Connect transport", () => {
   const defaultTransportOptions = {
     baseUrl: "http://example.com",
     interceptors: [],
@@ -89,18 +89,17 @@ describe("Connect transport", function () {
     useBinaryFormat: true,
     writeMaxBytes: 0xffffff,
   };
-  describe("against server responding with an error", function () {
-    describe("for unary", function () {
+  describe("against server responding with an error", () => {
+    describe("for unary", () => {
       let httpRequestAborted = false;
       const getUnaryTransport = (opts: { contentType: string }) => {
         return createTransport({
           httpClient(
             request: UniversalClientRequest,
           ): Promise<UniversalClientResponse> {
-            request.signal?.addEventListener(
-              "abort",
-              () => (httpRequestAborted = true),
-            );
+            request.signal?.addEventListener("abort", () => {
+              httpRequestAborted = true;
+            });
             return Promise.resolve({
               status: 429,
               header: new Headers({
@@ -118,7 +117,7 @@ describe("Connect transport", function () {
           ...defaultTransportOptions,
         });
       };
-      it("should cancel the HTTP request and not parse the body", async function () {
+      it("should cancel the HTTP request and not parse the body", async () => {
         const t = getUnaryTransport({ contentType: contentTypeUnaryProto });
         try {
           await t.unary(
@@ -137,7 +136,7 @@ describe("Connect transport", function () {
         }
         expect(httpRequestAborted).toBeTrue();
       });
-      it("should cancel the HTTP request and parse the body", async function () {
+      it("should cancel the HTTP request and parse the body", async () => {
         const t = getUnaryTransport({ contentType: contentTypeUnaryJson });
         try {
           await t.unary(
@@ -157,16 +156,15 @@ describe("Connect transport", function () {
         expect(httpRequestAborted).toBeTrue();
       });
     });
-    describe("for server-streaming", function () {
+    describe("for server-streaming", () => {
       let httpRequestAborted = false;
       const t = createTransport({
         httpClient(
           request: UniversalClientRequest,
         ): Promise<UniversalClientResponse> {
-          request.signal?.addEventListener(
-            "abort",
-            () => (httpRequestAborted = true),
-          );
+          request.signal?.addEventListener("abort", () => {
+            httpRequestAborted = true;
+          });
           return Promise.resolve({
             status: 200,
             header: new Headers({
@@ -193,7 +191,7 @@ describe("Connect transport", function () {
         },
         ...defaultTransportOptions,
       });
-      it("should cancel the HTTP request", async function () {
+      it("should cancel the HTTP request", async () => {
         const res = await t.stream(
           TestService.method.server,
           undefined,
@@ -217,7 +215,7 @@ describe("Connect transport", function () {
     });
   });
 
-  describe("useHttpGet", function () {
+  describe("useHttpGet", () => {
     const httpClientResponse: UniversalClientResponse = {
       status: 200,
       header: new Headers({
@@ -255,8 +253,8 @@ describe("Connect transport", function () {
       }
       return httpClientResponse;
     };
-    describe("disabled", function () {
-      it("should issue POST for eligible RPC", async function () {
+    describe("disabled", () => {
+      it("should issue POST for eligible RPC", async () => {
         const t = createTransport({
           ...defaultTransportOptions,
           httpClient: expectPost,
@@ -270,8 +268,8 @@ describe("Connect transport", function () {
         );
       });
     });
-    describe("enabled", function () {
-      it("should issue GET for eligible RPC", async function () {
+    describe("enabled", () => {
+      it("should issue GET for eligible RPC", async () => {
         const t = createTransport({
           ...defaultTransportOptions,
           useHttpGet: true,
@@ -285,7 +283,7 @@ describe("Connect transport", function () {
           create(Int32ValueSchema, { value: 123 }),
         );
       });
-      it("should issue POST for RPC with side effects", async function () {
+      it("should issue POST for RPC with side effects", async () => {
         const t = createTransport({
           ...defaultTransportOptions,
           useHttpGet: true,
@@ -302,7 +300,7 @@ describe("Connect transport", function () {
     });
   });
 
-  describe("against server with new JSON field in response", function () {
+  describe("against server with new JSON field in response", () => {
     const OldService = createServiceDesc({
       typeName: "Service",
       method: {
@@ -334,7 +332,7 @@ describe("Connect transport", function () {
     );
     const httpClient = createUniversalHandlerClient([h]);
 
-    it("should ignore unknown field by default", async function () {
+    it("should ignore unknown field by default", async () => {
       const t = createTransport({
         ...defaultTransportOptions,
         httpClient,
@@ -349,7 +347,7 @@ describe("Connect transport", function () {
       );
       expect(isMessage(res.message, OldService.method.unary.output)).toBeTrue();
     });
-    it("should reject unknown field if explicitly asked for", async function () {
+    it("should reject unknown field if explicitly asked for", async () => {
       const t = createTransport({
         ...defaultTransportOptions,
         httpClient,
@@ -374,7 +372,7 @@ describe("Connect transport", function () {
     });
   });
 
-  describe("special handling of set-cookie", function () {
+  describe("special handling of set-cookie", () => {
     // Special handling of set-cookie is available since Node.js v22.0.0, v20.0.0, and v18.14.1.
     // eslint-disable-next-line @typescript-eslint/require-await
     const setMultiValueHeaders: UniversalClientFn = async () => {
@@ -389,7 +387,7 @@ describe("Connect transport", function () {
         trailer: new Headers(),
       };
     };
-    it("should produce the correct array of values in the response", async function () {
+    it("should produce the correct array of values in the response", async () => {
       const t = createTransport({
         ...defaultTransportOptions,
         httpClient: setMultiValueHeaders,

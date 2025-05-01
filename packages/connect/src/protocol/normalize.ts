@@ -54,10 +54,12 @@ export function normalizeIterable<Desc extends DescMessage>(
         next: () => it.next().then(transform),
       };
       if (it.throw !== undefined) {
-        res.throw = (e) => it.throw!(e).then(transform); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        res.throw = (e: unknown) =>
+          (it as Required<typeof it>).throw(e).then(transform);
       }
       if (it.return !== undefined) {
-        res.return = (v) => it.return!(v).then(transform); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        res.return = (v: unknown) =>
+          (it as Required<typeof it>).return(v).then(transform);
       }
       return res;
     },

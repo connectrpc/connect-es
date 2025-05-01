@@ -20,8 +20,8 @@ import {
   parseContentType,
 } from "./content-type.js";
 
-describe("parseContentType()", function () {
-  it("should parse", function () {
+describe("parseContentType()", () => {
+  it("should parse", () => {
     expect(parseContentType("text/plain")).toBeUndefined();
     expect(parseContentType("text/plain; charset=utf-8")).toBeUndefined();
     expect(parseContentType(contentTypeUnaryJson)).toEqual({

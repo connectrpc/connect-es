@@ -16,7 +16,7 @@ import { compressionNegotiate } from "./compression.js";
 import type { Compression } from "./compression.js";
 import { ConnectError } from "../connect-error.js";
 
-describe("compressionNegotiate()", function () {
+describe("compressionNegotiate()", () => {
   const compressionA: Compression = {
     name: "a",
     compress: (bytes) => Promise.resolve(bytes),
@@ -27,73 +27,73 @@ describe("compressionNegotiate()", function () {
     name: "b",
   };
 
-  describe("no encoding or accept-encoding specified", function () {
+  describe("no encoding or accept-encoding specified", () => {
     const r = compressionNegotiate(
       [compressionA, compressionB],
       null,
       null,
       "accept-encoding",
     );
-    it("should return null for request and response compression", function () {
+    it("should return null for request and response compression", () => {
       expect(r.error).toBeUndefined();
       expect(r.request).toBeNull();
       expect(r.response).toBeNull();
     });
   });
 
-  describe("accept-encoding specified, but no encoding set", function () {
+  describe("accept-encoding specified, but no encoding set", () => {
     const r = compressionNegotiate(
       [compressionA, compressionB],
       null,
       "z,b,a,f",
       "accept-encoding",
     );
-    it("should return request compression null", function () {
+    it("should return request compression null", () => {
       expect(r.error).toBeUndefined();
       expect(r.request).toBeNull();
     });
-    it("should use first accepted compression for the response", function () {
+    it("should use first accepted compression for the response", () => {
       expect(r.error).toBeUndefined();
       expect(r.response).toBe(compressionB);
     });
   });
 
-  describe("encoding specified, but no accept-encoding", function () {
+  describe("encoding specified, but no accept-encoding", () => {
     const r = compressionNegotiate(
       [compressionA, compressionB],
       "a",
       null,
       "accept-encoding",
     );
-    it("should return request encoding", function () {
+    it("should return request encoding", () => {
       expect(r.error).toBeUndefined();
       expect(r.request).toBe(compressionA);
       expect(r.response).toBe(compressionA);
     });
   });
 
-  describe("no supported accept-encoding specified", function () {
+  describe("no supported accept-encoding specified", () => {
     const r = compressionNegotiate(
       [compressionA, compressionB],
       "a",
       "x,y,z",
       "accept-encoding",
     );
-    it("should return response compression null", function () {
+    it("should return response compression null", () => {
       expect(r.error).toBeUndefined();
       expect(r.request).toBe(compressionA);
       expect(r.response).toBeNull();
     });
   });
 
-  describe("unsupported encoding set", function () {
+  describe("unsupported encoding set", () => {
     const r = compressionNegotiate(
       [compressionA, compressionB],
       "z",
       "a,b",
       "accept-encoding",
     );
-    it("should return error", function () {
+    it("should return error", () => {
       expect(r.error).toBeInstanceOf(ConnectError);
       if (r.error instanceof ConnectError) {
         expect(r.error.message).toBe(
@@ -102,7 +102,7 @@ describe("compressionNegotiate()", function () {
       }
       expect(r.request).toBe(null);
     });
-    it("should still use first accepted compression for the response", function () {
+    it("should still use first accepted compression for the response", () => {
       expect(r.response).toBe(compressionA);
     });
   });

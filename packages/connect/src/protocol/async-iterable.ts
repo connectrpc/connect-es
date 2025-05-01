@@ -323,7 +323,6 @@ export function pipeTo(
     iterable = abortable = makeIterableAbortable(iterable);
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   iterable = pipe(iterable, ...transforms, { propagateDownStreamError: false });
 
@@ -357,7 +356,7 @@ function pickTransformsAndSink(
  * @private Internal code, does not follow semantic versioning.
  */
 export function sinkAll<T>(): AsyncIterableSink<T, T[]> {
-  return async function (iterable: AsyncIterable<T>) {
+  return async (iterable: AsyncIterable<T>) => {
     const all: T[] = [];
     for await (const chunk of iterable) {
       all.push(chunk);
@@ -384,9 +383,8 @@ export function sinkAllBytes(
   readMaxBytes: number,
   lengthHint?: number | string | null,
 ): AsyncIterableSink<Uint8Array, Uint8Array> {
-  return async function (iterable: AsyncIterable<Uint8Array>) {
-    return await readAllBytes(iterable, readMaxBytes, lengthHint);
-  };
+  return async (iterable: AsyncIterable<Uint8Array>) =>
+    await readAllBytes(iterable, readMaxBytes, lengthHint);
 }
 
 /**
@@ -1173,12 +1171,11 @@ export async function untilFirst<T>(
         },
       };
       if (it.throw !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- can't handle mutated object sensibly
-        w.throw = (e: unknown) => it.throw!(e);
+        w.throw = (e: unknown) => (it as Required<typeof it>).throw(e);
       }
       if (it.return !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion,@typescript-eslint/no-explicit-any -- can't handle mutated object sensibly
-        w.return = (value?: any) => it.return!(value);
+        w.return = (value?: unknown) =>
+          (it as Required<typeof it>).return(value);
       }
       return w;
     },
@@ -1385,10 +1382,11 @@ export function createWritableIterable<T>(): WritableIterable<T> {
           // We return a promise immediately that is either resolved/rejected
           // as writes happen.
           let readResolve: (result: IteratorResult<T>) => void;
-          const readPromise = new Promise<IteratorResult<T>>(
-            (resolve) => (readResolve = resolve),
-          );
-          readQueue.push(readResolve!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          const readPromise = new Promise<IteratorResult<T>>((resolve) => {
+            readResolve = resolve;
+          });
+          // biome-ignore lint/style/noNonNullAssertion: initialized by promise executor
+          readQueue.push(readResolve!);
           return readPromise;
         },
         throw(throwErr: unknown) {
@@ -1428,7 +1426,6 @@ export function createWritableIterable<T>(): WritableIterable<T> {
  *
  * @private Internal code, does not follow semantic versioning.
  */
-// eslint-disable-next-line @typescript-eslint/require-await
 export async function* createAsyncIterable<T>(items: T[]): AsyncIterable<T> {
   yield* items;
 }

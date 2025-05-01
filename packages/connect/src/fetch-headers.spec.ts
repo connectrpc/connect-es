@@ -12,27 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export {}; // Required to transpile this file with isolatedModules
-
-describe("Fetch API Headers", function () {
+describe("Fetch API Headers", () => {
   let headers: Headers;
   beforeEach(() => {
     headers = new Headers({
       "Content-Type": "application/connect+json",
     });
   });
-  it("get()", function () {
+  it("get()", () => {
     expect(headers.get("Content-Type")).toEqual("application/connect+json");
     expect(headers.get("content-type")).toEqual("application/connect+json");
   });
-  it("forEach()", function () {
+  it("forEach()", () => {
     headers.forEach((value, key) => {
       // Note all keys are lowercase when iterating over them
       expect(key).toEqual("content-type");
       expect(value).toEqual("application/connect+json");
     });
   });
-  it("has()", function () {
+  it("has()", () => {
     expect(headers.has("Content-Type")).toBeTrue();
     expect(headers.has("content-type")).toBeTrue();
   });

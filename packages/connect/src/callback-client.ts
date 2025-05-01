@@ -110,7 +110,7 @@ function createUnaryFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
   method: DescMethodUnary<I, O>,
 ): UnaryFn<I, O> {
-  return function (requestMessage, callback, options) {
+  return (requestMessage, callback, options) => {
     const abort = new AbortController();
     options = wrapSignal(abort, options);
     transport
@@ -156,7 +156,7 @@ function createServerStreamingFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
   method: DescMethodServerStreaming<I, O>,
 ): ServerStreamingFn<I, O> {
-  return function (input, onResponse, onClose, options) {
+  return (input, onResponse, onClose, options) => {
     const abort = new AbortController();
     async function run() {
       options = wrapSignal(abort, options);

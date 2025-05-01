@@ -27,7 +27,7 @@ const TestService = createServiceDesc({
   },
 });
 
-describe("createHandlerContext()", function () {
+describe("createHandlerContext()", () => {
   const standardOptions = {
     service: TestService,
     method: TestService.method.unary,
@@ -36,13 +36,13 @@ describe("createHandlerContext()", function () {
     url: "https://example.com/foo",
   };
 
-  describe("signal", function () {
-    it("should have a default value", function () {
+  describe("signal", () => {
+    it("should have a default value", () => {
       const ctx = createHandlerContext({ ...standardOptions });
       expect(ctx.signal).toBeDefined();
       expect(ctx.signal.aborted).toBeFalse();
     });
-    it("should trigger on timeout", function () {
+    it("should trigger on timeout", () => {
       const ctx = createHandlerContext({
         ...standardOptions,
         timeoutMs: 0,
@@ -52,7 +52,7 @@ describe("createHandlerContext()", function () {
         "ConnectError: [deadline_exceeded] the operation timed out",
       );
     });
-    it("should trigger on request signal", function () {
+    it("should trigger on request signal", () => {
       const ctx = createHandlerContext({
         ...standardOptions,
         requestSignal: AbortSignal.abort("request-signal"),
@@ -60,7 +60,7 @@ describe("createHandlerContext()", function () {
       expect(ctx.signal.aborted).toBeTrue();
       expect(ctx.signal.reason).toBe("request-signal");
     });
-    it("should trigger on shutdown signal", function () {
+    it("should trigger on shutdown signal", () => {
       const ctx = createHandlerContext({
         ...standardOptions,
         shutdownSignal: AbortSignal.abort("shutdown-signal"),
@@ -68,7 +68,7 @@ describe("createHandlerContext()", function () {
       expect(ctx.signal.aborted).toBeTrue();
       expect(ctx.signal.reason).toBe("shutdown-signal");
     });
-    it("should trigger on abort", function () {
+    it("should trigger on abort", () => {
       const ctx = createHandlerContext({ ...standardOptions });
       ctx.abort("test-reason");
       expect(ctx.signal.aborted).toBeTrue();
@@ -76,12 +76,12 @@ describe("createHandlerContext()", function () {
     });
   });
 
-  describe("timeout()", function () {
-    it("should return undefined without a timeout", function () {
+  describe("timeout()", () => {
+    it("should return undefined without a timeout", () => {
       const ctx = createHandlerContext({ ...standardOptions });
       expect(ctx.timeoutMs()).toBeUndefined();
     });
-    it("should return remaining timeout", function () {
+    it("should return remaining timeout", () => {
       const ctx = createHandlerContext({
         ...standardOptions,
         timeoutMs: 1000,
@@ -92,7 +92,7 @@ describe("createHandlerContext()", function () {
     });
   });
 
-  it("should surface passed service, method, protocolName, requestMethod", function () {
+  it("should surface passed service, method, protocolName, requestMethod", () => {
     const ctx = createHandlerContext({
       ...standardOptions,
     });
@@ -101,7 +101,7 @@ describe("createHandlerContext()", function () {
     expect(ctx.protocolName).toBe("foo");
     expect(ctx.requestMethod).toBe("GET");
   });
-  it("should surface passed headers and trailers", function () {
+  it("should surface passed headers and trailers", () => {
     const ctx = createHandlerContext({
       ...standardOptions,
       requestHeader: { foo: "request" },

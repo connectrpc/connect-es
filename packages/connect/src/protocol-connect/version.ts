@@ -37,7 +37,8 @@ export function requireProtocolVersionHeader(requestHeader: Headers) {
       `missing required header: set ${headerProtocolVersion} to "${protocolVersion}"`,
       Code.InvalidArgument,
     );
-  } else if (v !== protocolVersion) {
+  }
+  if (v !== protocolVersion) {
     throw new ConnectError(
       `${headerProtocolVersion} must be "${protocolVersion}": got "${v}"`,
       Code.InvalidArgument,
@@ -58,7 +59,8 @@ export function requireProtocolVersionParam(queryParams: URLSearchParams) {
       `missing required parameter: set ${paramConnectVersion} to "v${protocolVersion}"`,
       Code.InvalidArgument,
     );
-  } else if (v !== `v${protocolVersion}`) {
+  }
+  if (v !== `v${protocolVersion}`) {
     throw new ConnectError(
       `${paramConnectVersion} must be "v${protocolVersion}": got "${v}"`,
       Code.InvalidArgument,

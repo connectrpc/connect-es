@@ -15,7 +15,7 @@
 import { ConnectError } from "../connect-error.js";
 import { parseTimeout } from "./parse-timeout.js";
 
-describe("parseTimeout()", function () {
+describe("parseTimeout()", () => {
   it("should parse proper timeout", () => {
     expect(parseTimeout("1", Number.MAX_SAFE_INTEGER)).toEqual({
       timeoutMs: 1,
@@ -32,7 +32,7 @@ describe("parseTimeout()", function () {
     expect(r.timeoutMs).toBeUndefined();
     expect(r.error).toBeUndefined();
   });
-  it("should return a ConnectError for a value exceeding maxTimeoutMs", function () {
+  it("should return a ConnectError for a value exceeding maxTimeoutMs", () => {
     expect(parseTimeout("1", 0).error?.message).toBe(
       "[invalid_argument] timeout 1ms must be <= 0",
     );

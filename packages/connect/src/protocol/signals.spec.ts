@@ -17,19 +17,19 @@ import {
   createLinkedAbortController,
 } from "./signals.js";
 
-describe("createLinkedAbortController()", function () {
-  it("should create an AbortController without any input", function () {
+describe("createLinkedAbortController()", () => {
+  it("should create an AbortController without any input", () => {
     const ac = createLinkedAbortController();
     expect(ac.signal.aborted).toBeFalse();
   });
-  it("should be aborted if one of the inputs is already aborted", function () {
+  it("should be aborted if one of the inputs is already aborted", () => {
     const aborted = AbortSignal.abort("test-reason");
     const nonAborted = new AbortController().signal;
     const ac = createLinkedAbortController(aborted, nonAborted);
     expect(ac.signal.aborted).toBeTrue();
     expect(ac.signal.reason).toBe("test-reason");
   });
-  it("should abort if one of the inputs aborts", function () {
+  it("should abort if one of the inputs aborts", () => {
     const a = new AbortController();
     const b = new AbortController();
     const c = new AbortController();
@@ -38,7 +38,7 @@ describe("createLinkedAbortController()", function () {
     b.abort();
     expect(ac.signal.aborted).toBeTrue();
   });
-  it("should use the abort reason", function () {
+  it("should use the abort reason", () => {
     const a = new AbortController();
     const ac = createLinkedAbortController(a.signal);
     expect(ac.signal.aborted).toBeFalse();
@@ -48,37 +48,37 @@ describe("createLinkedAbortController()", function () {
   });
 });
 
-describe("createDeadlineSignal()", function () {
-  describe("initially", function () {
-    it("should not be aborted", function () {
+describe("createDeadlineSignal()", () => {
+  describe("initially", () => {
+    it("should not be aborted", () => {
       const d = createDeadlineSignal(100);
       expect(d.signal.aborted).toBeFalse();
     });
-    it("should not be aborted initially", function () {
+    it("should not be aborted initially", () => {
       const d = createDeadlineSignal(100);
       expect(d.signal).toBeDefined();
       expect(d.cleanup).toBeDefined();
     });
   });
-  describe("with 0 timeout", function () {
-    it("should be aborted immediately", function () {
+  describe("with 0 timeout", () => {
+    it("should be aborted immediately", () => {
       const d = createDeadlineSignal(0);
       expect(d.signal.aborted).toBeTrue();
     });
   });
-  describe("with -1 timeout", function () {
-    it("should be aborted immediately", function () {
+  describe("with -1 timeout", () => {
+    it("should be aborted immediately", () => {
       const d = createDeadlineSignal(-1);
       expect(d.signal.aborted).toBeTrue();
     });
   });
-  describe("with undefined timeout", function () {
-    it("should still return a signal", function () {
+  describe("with undefined timeout", () => {
+    it("should still return a signal", () => {
       const d = createDeadlineSignal(undefined);
       expect(d.signal.aborted).toBeFalse();
     });
   });
-  it("should be aborted after timeout", async function () {
+  it("should be aborted after timeout", async () => {
     const timeoutMs = 5;
     const d = createDeadlineSignal(timeoutMs);
     await new Promise((resolve) => setTimeout(resolve, timeoutMs + 25));

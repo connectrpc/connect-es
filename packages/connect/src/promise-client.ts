@@ -81,7 +81,7 @@ export function createUnaryFn<I extends DescMessage, O extends DescMessage>(
   transport: Transport,
   method: DescMethodUnary<I, O>,
 ): UnaryFn<I, O> {
-  return async function (input, options) {
+  return async (input, options) => {
     const response = await transport.unary(
       method,
       options?.signal,
@@ -112,8 +112,8 @@ export function createServerStreamingFn<
   transport: Transport,
   method: DescMethodServerStreaming<I, O>,
 ): ServerStreamingFn<I, O> {
-  return function (input, options): AsyncIterable<MessageShape<O>> {
-    return handleStreamResponse(
+  return (input, options): AsyncIterable<MessageShape<O>> =>
+    handleStreamResponse(
       transport.stream(
         method,
         options?.signal,
@@ -124,7 +124,6 @@ export function createServerStreamingFn<
       ),
       options,
     );
-  };
 }
 
 /**
@@ -143,10 +142,10 @@ export function createClientStreamingFn<
   transport: Transport,
   method: DescMethodClientStreaming<I, O>,
 ): ClientStreamingFn<I, O> {
-  return async function (
+  return async (
     request: AsyncIterable<MessageInitShape<I>>,
     options?: CallOptions,
-  ): Promise<MessageShape<O>> {
+  ): Promise<MessageShape<O>> => {
     const response = await transport.stream(
       method,
       options?.signal,
@@ -195,11 +194,11 @@ export function createBiDiStreamingFn<
   transport: Transport,
   method: DescMethodBiDiStreaming<I, O>,
 ): BiDiStreamingFn<I, O> {
-  return function (
+  return (
     request: AsyncIterable<MessageInitShape<I>>,
     options?: CallOptions,
-  ): AsyncIterable<MessageShape<O>> {
-    return handleStreamResponse(
+  ): AsyncIterable<MessageShape<O>> =>
+    handleStreamResponse(
       transport.stream(
         method,
         options?.signal,
@@ -210,7 +209,6 @@ export function createBiDiStreamingFn<
       ),
       options,
     );
-  };
 }
 
 function handleStreamResponse<I extends DescMessage, O extends DescMessage>(

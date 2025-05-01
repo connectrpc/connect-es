@@ -26,8 +26,8 @@ import { Headers } from "undici";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
-describe("validateUniversalHandlerOptions()", function () {
-  it("should set defaults", function () {
+describe("validateUniversalHandlerOptions()", () => {
+  it("should set defaults", () => {
     const o = validateUniversalHandlerOptions({});
     expect(o).toEqual({
       acceptCompression: [],
@@ -42,7 +42,7 @@ describe("validateUniversalHandlerOptions()", function () {
       interceptors: [],
     });
   });
-  it("should accept inputs", function () {
+  it("should accept inputs", () => {
     const fakeCompression: Compression = {
       name: "fake",
       compress: (bytes) => Promise.resolve(bytes),
@@ -71,7 +71,7 @@ describe("validateUniversalHandlerOptions()", function () {
   });
 });
 
-describe("negotiateProtocol()", function () {
+describe("negotiateProtocol()", () => {
   const testService = createServiceDesc({
     typeName: "TestService",
     method: {
@@ -90,12 +90,11 @@ describe("negotiateProtocol()", function () {
 
   function stubHandler(o: Partial<UniversalHandler>): UniversalHandler {
     return Object.assign(
-      function () {
-        return Promise.resolve({
+      () =>
+        Promise.resolve({
           status: 200,
           header: new Headers({ "stub-handler": "1" }),
-        });
-      },
+        }),
       {
         protocolNames: ["protocol-x"],
         service: testService,
@@ -108,13 +107,13 @@ describe("negotiateProtocol()", function () {
     );
   }
 
-  it("should require at least one handler", function () {
+  it("should require at least one handler", () => {
     expect(() => negotiateProtocol([])).toThrowError(
       "[internal] at least one protocol is required",
     );
   });
 
-  it("should require all handlers to be for the same RPC", function () {
+  it("should require all handlers to be for the same RPC", () => {
     const foo = stubHandler({ method: testService.method.foo });
     const bar = stubHandler({ method: testService.method.bar });
     expect(() => negotiateProtocol([foo, bar])).toThrowError(
@@ -122,7 +121,7 @@ describe("negotiateProtocol()", function () {
     );
   });
 
-  it("should require all handlers to have the same request path", function () {
+  it("should require all handlers to have the same request path", () => {
     const a = stubHandler({ requestPath: `/a` });
     const b = stubHandler({ requestPath: `/b` });
     expect(() => negotiateProtocol([a, b])).toThrowError(
@@ -130,7 +129,7 @@ describe("negotiateProtocol()", function () {
     );
   });
 
-  it("should merge protocolNames", function () {
+  it("should merge protocolNames", () => {
     const h = negotiateProtocol([
       stubHandler({ protocolNames: ["x"] }),
       stubHandler({ protocolNames: ["y", "z"] }),
@@ -138,7 +137,7 @@ describe("negotiateProtocol()", function () {
     expect(h.protocolNames).toEqual(["x", "y", "z"]);
   });
 
-  it("should merge allowedMethods", function () {
+  it("should merge allowedMethods", () => {
     const h = negotiateProtocol([
       stubHandler({ allowedMethods: ["POST", "PUT"] }),
       stubHandler({ allowedMethods: ["POST", "GET"] }),
@@ -146,9 +145,9 @@ describe("negotiateProtocol()", function () {
     expect(h.allowedMethods).toEqual(["POST", "PUT", "GET"]);
   });
 
-  describe("negotiating handler", function () {
+  describe("negotiating handler", () => {
     const h = negotiateProtocol([stubHandler({})]);
-    it("should return HTTP 415 for unsupported request content-type", async function () {
+    it("should return HTTP 415 for unsupported request content-type", async () => {
       const r = await h({
         httpVersion: "1.1",
         method: "POST",
@@ -159,7 +158,7 @@ describe("negotiateProtocol()", function () {
       });
       expect(r.status).toBe(415);
     });
-    it("should return HTTP 405 for matching request content-type but unsupported method", async function () {
+    it("should return HTTP 405 for matching request content-type but unsupported method", async () => {
       const r = await h({
         httpVersion: "1.1",
         method: "UNSUPPORTED",
@@ -170,7 +169,7 @@ describe("negotiateProtocol()", function () {
       });
       expect(r.status).toBe(405);
     });
-    it("should call implementation for matching content-type and method", async function () {
+    it("should call implementation for matching content-type and method", async () => {
       const r = await h({
         httpVersion: "1.1",
         method: "POST",
@@ -182,7 +181,7 @@ describe("negotiateProtocol()", function () {
       expect(r.status).toBe(200);
       expect(r.header?.get("stub-handler")).toBe("1");
     });
-    it("should call implementation for matching method if no content-type is set", async function () {
+    it("should call implementation for matching method if no content-type is set", async () => {
       const r = await h({
         httpVersion: "1.1",
         method: "POST",
@@ -195,7 +194,7 @@ describe("negotiateProtocol()", function () {
       expect(r.header?.get("stub-handler")).toBe("1");
     });
 
-    describe("for bidi stream", function () {
+    describe("for bidi stream", () => {
       const h = negotiateProtocol([
         stubHandler({
           method: {
@@ -204,7 +203,7 @@ describe("negotiateProtocol()", function () {
           },
         }),
       ]);
-      it("should return HTTP 505 for HTTP 1.1", async function () {
+      it("should return HTTP 505 for HTTP 1.1", async () => {
         const r = await h({
           httpVersion: "1.1",
           method: "POST",
@@ -217,7 +216,7 @@ describe("negotiateProtocol()", function () {
         expect(r.header?.get("Connection")).toBe("close");
         expect(r.body).toBeUndefined();
       });
-      it("should require HTTP/2", async function () {
+      it("should require HTTP/2", async () => {
         const r = await h({
           httpVersion: "2",
           method: "POST",
