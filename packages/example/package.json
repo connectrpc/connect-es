@@ -21,7 +21,7 @@
     "tsx": "^4.19.3"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.52.1",
+    "@bufbuild/buf": "^1.53.0",
     "@bufbuild/protoc-gen-es": "^2.2.5",
     "esbuild": "^0.19.8",
     "typescript": "^5.8.3"
