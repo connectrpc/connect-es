@@ -95,6 +95,7 @@ async function extractBin(archivePath: string, binPath: string) {
 
 function getTempDir(version: string) {
   const tempDir = joinPath(
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
     process.env["TEMP"] ?? os.tmpdir(),
     `conformance-${version}`,
   );

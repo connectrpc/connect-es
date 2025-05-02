@@ -26,7 +26,8 @@ import type {
  */
 export type AnyClient = Record<string, AnyClientMethod>;
 
-type AnyClientMethod = (...args: any[]) => any; // eslint-disable-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: we do want any
+type AnyClientMethod = (...args: any[]) => any;
 
 type CreateAnyClientMethod = (
   method: DescMethodUnary | DescMethodStreaming,

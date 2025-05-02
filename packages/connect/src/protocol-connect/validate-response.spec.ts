@@ -16,9 +16,9 @@ import { validateResponse } from "./validate-response.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 
-describe("Connect validateResponse()", function () {
-  describe("with unary", function () {
-    it("should be successful for HTTP 200 with proper unary JSON content type", function () {
+describe("Connect validateResponse()", () => {
+  describe("with unary", () => {
+    it("should be successful for HTTP 200 with proper unary JSON content type", () => {
       const r = validateResponse(
         "unary",
         false,
@@ -28,7 +28,7 @@ describe("Connect validateResponse()", function () {
       expect(r.isUnaryError).toBeFalse();
       expect(r.unaryError).toBeUndefined();
     });
-    it("should return error for HTTP 204", function () {
+    it("should return error for HTTP 204", () => {
       const r = validateResponse(
         "unary",
         false,
@@ -38,7 +38,7 @@ describe("Connect validateResponse()", function () {
       expect(r.isUnaryError).toBeTrue();
       expect(r.unaryError?.message).toBe("[unknown] HTTP 204");
     });
-    it("should include headers as error metadata", function () {
+    it("should include headers as error metadata", () => {
       const r = validateResponse(
         "unary",
         false,
@@ -47,7 +47,7 @@ describe("Connect validateResponse()", function () {
       );
       expect(r.unaryError?.metadata.get("Foo")).toBe("Bar");
     });
-    it("should be successful for HTTP 200 with proper unary proto content type", function () {
+    it("should be successful for HTTP 200 with proper unary proto content type", () => {
       const r = validateResponse(
         "unary",
         true,
@@ -57,7 +57,7 @@ describe("Connect validateResponse()", function () {
       expect(r.isUnaryError).toBeFalse();
       expect(r.unaryError).toBeUndefined();
     });
-    it("should throw error for HTTP error status with binary response body", function () {
+    it("should throw error for HTTP error status with binary response body", () => {
       try {
         validateResponse(
           "unary",
@@ -73,7 +73,7 @@ describe("Connect validateResponse()", function () {
         expect(ConnectError.from(e).message).toBe("[internal] HTTP 400");
       }
     });
-    it("should return an error for HTTP error status if content type is JSON", function () {
+    it("should return an error for HTTP error status if content type is JSON", () => {
       const result = validateResponse(
         "unary",
         true,
@@ -87,8 +87,8 @@ describe("Connect validateResponse()", function () {
       expect(result.unaryError?.message).toBe("[internal] HTTP 400");
     });
   });
-  describe("with streaming", function () {
-    it("should include headers as error metadata", function () {
+  describe("with streaming", () => {
+    it("should include headers as error metadata", () => {
       try {
         validateResponse(
           "bidi_streaming",

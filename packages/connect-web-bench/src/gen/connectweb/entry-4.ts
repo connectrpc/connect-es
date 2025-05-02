@@ -18,8 +18,6 @@ import { CommitService } from "./buf/registry/module/v1/commit_service_pb";
 import { DownloadService } from "./buf/registry/module/v1/download_service_pb";
 import { GraphService } from "./buf/registry/module/v1/graph_service_pb";
 
-/* eslint-disable no-console */
-
 /**
  * Calls 4 RPCs with Connect-Web
  */

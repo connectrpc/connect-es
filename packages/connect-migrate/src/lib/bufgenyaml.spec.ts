@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BufGenYaml, parseBufGenYaml, stringifyBufGenYaml } from "./bufgenyaml";
+import {
+  type BufGenYaml,
+  parseBufGenYaml,
+  stringifyBufGenYaml,
+} from "./bufgenyaml";
 
 const goldenV1 = `# buf.gen.yaml defines a local generation template.
 # For details, see https://docs.buf.build/configuration/v1/buf-gen-yaml

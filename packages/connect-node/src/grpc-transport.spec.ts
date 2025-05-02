@@ -14,14 +14,14 @@
 
 import { createGrpcTransport } from "./grpc-transport.js";
 
-describe("createGrpcTransport()", function () {
-  it("should take just baseUrl", function () {
+describe("createGrpcTransport()", () => {
+  it("should take just baseUrl", () => {
     const t = createGrpcTransport({
       baseUrl: "https://example.com",
     });
     expect(t).toBeDefined();
   });
-  it("should raise type error for httpVersion: 2", function () {
+  it("should raise type error for httpVersion: 2", () => {
     const t = createGrpcTransport({
       // @ts-expect-error TS2353: Object literal may only specify known properties, and httpVersion does not exist in type GrpcTransportOptions
       httpVersion: "2",
@@ -29,7 +29,7 @@ describe("createGrpcTransport()", function () {
     });
     expect(t).toBeDefined();
   });
-  it("should raise type error for httpVersion: 1.1", function () {
+  it("should raise type error for httpVersion: 1.1", () => {
     const t = createGrpcTransport({
       // @ts-expect-error TS2353: Object literal may only specify known properties, and httpVersion does not exist in type GrpcTransportOptions
       httpVersion: "1.1",

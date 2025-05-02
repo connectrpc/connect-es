@@ -17,36 +17,39 @@ import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { Int32ValueSchema } from "@bufbuild/protobuf/wkt";
 
-describe("setTrailerStatus()", function () {
-  it("should set grpc-status when called without error", function () {
+describe("setTrailerStatus()", () => {
+  it("should set grpc-status when called without error", () => {
     const t = new Headers();
     setTrailerStatus(t, undefined);
     let count = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     expect(count).toBe(1);
     expect(t.get("grpc-status")).toBe("0");
   });
-  it("should keep existing fields", function () {
+  it("should keep existing fields", () => {
     const t = new Headers({
       foo: "bar",
     });
     setTrailerStatus(t, undefined);
     let count = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     expect(count).toBe(2);
     expect(t.get("grpc-status")).toBe("0");
     expect(t.get("foo")).toBe("bar");
   });
-  it("should set only grpc-status and grpc-message when called with an error", function () {
+  it("should set only grpc-status and grpc-message when called with an error", () => {
     const t = new Headers();
     setTrailerStatus(t, new ConnectError("soirée 🎉", Code.ResourceExhausted));
     let count = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     expect(count).toBe(2);
     expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
     expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
   });
-  it("should set all related fields when called with an error with details", function () {
+  it("should set all related fields when called with an error with details", () => {
     const t = new Headers();
     setTrailerStatus(
       t,
@@ -55,6 +58,7 @@ describe("setTrailerStatus()", function () {
       ]),
     );
     let count = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     expect(count).toBe(3);
     expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
@@ -63,20 +67,21 @@ describe("setTrailerStatus()", function () {
       "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew",
     );
   });
-  it("should append any error metadata", function () {
+  it("should append any error metadata", () => {
     const t = new Headers();
     setTrailerStatus(
       t,
       new ConnectError("soirée 🎉", Code.ResourceExhausted, { foo: "bar" }),
     );
     let count = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     expect(count).toBe(3);
     expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
     expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
     expect(t.get("foo")).toBe("bar");
   });
-  it("should overwrite error metadata that uses reserved protocol headers", function () {
+  it("should overwrite error metadata that uses reserved protocol headers", () => {
     const t = new Headers();
     setTrailerStatus(
       t,
@@ -87,6 +92,7 @@ describe("setTrailerStatus()", function () {
       }),
     );
     let count = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     expect(count).toBe(3);
     expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
@@ -95,30 +101,30 @@ describe("setTrailerStatus()", function () {
   });
 });
 
-describe("findTrailerError()", function () {
-  it("should not find an error on empty trailer", function () {
+describe("findTrailerError()", () => {
+  it("should not find an error on empty trailer", () => {
     const t = new Headers();
     expect(findTrailerError(t)).toBeUndefined();
   });
-  it("should not find an error for grpc-status 0", function () {
+  it("should not find an error for grpc-status 0", () => {
     const t = new Headers({
       "grpc-status": "0",
     });
     expect(findTrailerError(t)).toBeUndefined();
   });
-  it("should not find an error for grpc-status 0", function () {
+  it("should not find an error for grpc-status 0", () => {
     const t = new Headers({
       "grpc-status": "0",
     });
     expect(findTrailerError(t)).toBeUndefined();
   });
-  it("should find an error for the grpc-status field", function () {
+  it("should find an error for the grpc-status field", () => {
     const t = new Headers({
       "grpc-status": "8", // resource_exhausted
     });
     expect(findTrailerError(t)?.code).toBe(Code.ResourceExhausted);
   });
-  it("should use the grpc-message field", function () {
+  it("should use the grpc-message field", () => {
     const t = new Headers({
       "grpc-status": "8", // resource_exhausted
       "grpc-message": "soir%C3%A9e%20%F0%9F%8E%89",
@@ -126,7 +132,7 @@ describe("findTrailerError()", function () {
     expect(findTrailerError(t)?.code).toBe(Code.ResourceExhausted);
     expect(findTrailerError(t)?.rawMessage).toBe("soirée 🎉");
   });
-  it("should prefer the grpc-status-details-bin field", function () {
+  it("should prefer the grpc-status-details-bin field", () => {
     const t = new Headers({
       "grpc-status": "9", // failed_precondition
       "grpc-status-details-bin":

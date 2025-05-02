@@ -41,7 +41,7 @@ const TestService = createServiceDesc({
   },
 });
 
-describe("runUnaryCall()", function () {
+describe("runUnaryCall()", () => {
   function makeReq() {
     return {
       stream: false as const,
@@ -69,7 +69,7 @@ describe("runUnaryCall()", function () {
       trailer: new Headers(),
     };
   }
-  it("should return the response", async function () {
+  it("should return the response", async () => {
     const res = await runUnaryCall<
       typeof Int32ValueSchema,
       typeof StringValueSchema
@@ -85,7 +85,7 @@ describe("runUnaryCall()", function () {
     });
     expect(res.message.value).toBe("123");
   });
-  it("should trigger the signal when done", async function () {
+  it("should trigger the signal when done", async () => {
     let signal: AbortSignal | undefined;
     await runUnaryCall<typeof Int32ValueSchema, typeof StringValueSchema>({
       req: makeReq(),
@@ -97,7 +97,7 @@ describe("runUnaryCall()", function () {
     });
     expect(signal?.aborted).toBeTrue();
   });
-  it("should raise Code.Canceled on user abort", async function () {
+  it("should raise Code.Canceled on user abort", async () => {
     const userAbort = new AbortController();
     const resPromise = runUnaryCall<
       typeof Int32ValueSchema,
@@ -117,7 +117,7 @@ describe("runUnaryCall()", function () {
       "[canceled] This operation was aborted",
     );
   });
-  it("should raise Code.DeadlineExceeded on timeout", async function () {
+  it("should raise Code.DeadlineExceeded on timeout", async () => {
     const resPromise = runUnaryCall<
       typeof Int32ValueSchema,
       typeof StringValueSchema
@@ -137,7 +137,7 @@ describe("runUnaryCall()", function () {
   });
 });
 
-describe("runStreamingCall()", function () {
+describe("runStreamingCall()", () => {
   function makeReq() {
     return {
       stream: true as const,
@@ -169,7 +169,7 @@ describe("runStreamingCall()", function () {
     };
   }
 
-  it("should return the response", async function () {
+  it("should return the response", async () => {
     const req = makeReq();
     const res = await runStreamingCall<
       typeof Int32ValueSchema,
@@ -196,7 +196,7 @@ describe("runStreamingCall()", function () {
     expect(resIt.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
     expect(resIt.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
   });
-  it("should trigger the signal when done", async function () {
+  it("should trigger the signal when done", async () => {
     let signal: AbortSignal | undefined;
     const req = makeReq();
     const res = await runStreamingCall<
@@ -217,7 +217,7 @@ describe("runStreamingCall()", function () {
     const it = req.message[Symbol.asyncIterator]();
     expect(await it.next()).toEqual({ done: true, value: undefined });
   });
-  it("should raise Code.Canceled on user abort", async function () {
+  it("should raise Code.Canceled on user abort", async () => {
     const userAbort = new AbortController();
     const req = makeReq();
     const resPromise = runStreamingCall<
@@ -240,7 +240,7 @@ describe("runStreamingCall()", function () {
     const it = req.message[Symbol.asyncIterator]();
     expect(await it.next()).toEqual({ done: true, value: undefined });
   });
-  it("should raise Code.DeadlineExceeded on timeout", async function () {
+  it("should raise Code.DeadlineExceeded on timeout", async () => {
     const req = makeReq();
     const resPromise = runStreamingCall<
       typeof Int32ValueSchema,
@@ -261,7 +261,7 @@ describe("runStreamingCall()", function () {
     const it = req.message[Symbol.asyncIterator]();
     expect(await it.next()).toEqual({ done: true, value: undefined });
   });
-  it("should propagate the error thrown in next", async function () {
+  it("should propagate the error thrown in next", async () => {
     const req = makeReq();
     let reqError: Error | undefined;
     req.message = {

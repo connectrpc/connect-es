@@ -15,9 +15,9 @@
     "prebuild": "rm -rf ./dist/*",
     "build": "tsc --project tsconfig.json --outDir ./dist/cjs",
     "test": "jasmine --config=jasmine.json",
-    "format": "prettier --write --ignore-unknown '.' '!dist'",
+    "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "eslint --max-warnings 0 ."
+    "lint": "biome lint --error-on-warnings"
   },
   "engines": {
     "node": ">=18.14.1"

@@ -19,8 +19,6 @@ import { DownloadService } from "./buf/registry/module/v1/download_service_pb";
 import { GraphService } from "./buf/registry/module/v1/graph_service_pb";
 import { LabelService } from "./buf/registry/module/v1/label_service_pb";
 
-/* eslint-disable no-console */
-
 /**
  * Calls 8 RPCs with Connect-Web
  */

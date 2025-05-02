@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as zlib from "zlib";
-import { promisify } from "util";
+import * as zlib from "node:zlib";
+import { promisify } from "node:util";
 import type { Compression } from "@connectrpc/connect/protocol";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";
@@ -79,7 +79,6 @@ function wrapZLibErrors<T>(
     const props = getNodeErrorProps(e);
     let code = Code.Internal;
     let message = "decompression failed";
-    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (props.code) {
       case "ERR_BUFFER_TOO_LARGE":
         code = Code.ResourceExhausted;
@@ -90,10 +89,7 @@ function wrapZLibErrors<T>(
         code = Code.InvalidArgument;
         break;
       default:
-        if (
-          props.code !== undefined &&
-          props.code.startsWith("ERR__ERROR_FORMAT_")
-        ) {
+        if (props.code?.startsWith("ERR__ERROR_FORMAT_")) {
           code = Code.InvalidArgument;
         }
         break;

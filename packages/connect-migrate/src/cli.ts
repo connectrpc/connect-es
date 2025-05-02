@@ -109,5 +109,5 @@ function exitOk(message: string): never {
 function getCliVersion() {
   return JSON.parse(
     readFileSync(path.join(__dirname, "../../package.json"), "utf8"),
-  ).version as string; // eslint-disable-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- assumings valid package.json
+  ).version as string;
 }

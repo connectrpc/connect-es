@@ -14,15 +14,15 @@
 
 import { contentTypeMatcher } from "./content-type-matcher.js";
 
-describe("contentTypeMatcher()", function () {
-  it("matches multiple regular expressions as expected", function () {
+describe("contentTypeMatcher()", () => {
+  it("matches multiple regular expressions as expected", () => {
     const matcher = contentTypeMatcher(/a/, /b/);
     expect(matcher("a")).toBeTrue();
     expect(matcher("b")).toBeTrue();
     expect(matcher("c")).toBeFalse();
     expect(matcher("d")).toBeFalse();
   });
-  it("matches multiple content type matchers as expected", function () {
+  it("matches multiple content type matchers as expected", () => {
     const matcher = contentTypeMatcher(
       contentTypeMatcher(/a/, /b/),
       contentTypeMatcher(/c/),

@@ -15,8 +15,6 @@
 import { CommitServicePromiseClient } from "./buf/registry/module/v1/commit_service_grpc_web_pb";
 import { GetCommitsRequest } from "./buf/registry/module/v1/commit_service_pb";
 
-/* eslint-disable no-console */
-
 /**
  * Calls 1 RPCs with gRPC-Web
  */

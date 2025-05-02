@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { readdirSync, readFileSync } from "fs";
-import { join } from "path";
-import { existsSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
 
 /*
 
@@ -39,15 +38,17 @@ process.stdout.write(tag);
 function determinePublishTag(version) {
   if (/^\d+\.\d+\.\d+$/.test(version)) {
     return "latest";
-  } else if (/^\d+\.\d+\.\d+-alpha.*$/.test(version)) {
-    return "alpha";
-  } else if (/^\d+\.\d+\.\d+-beta.*$/.test(version)) {
-    return "beta";
-  } else if (/^\d+\.\d+\.\d+-rc.*$/.test(version)) {
-    return "rc";
-  } else {
-    throw new Error(`Unable to determine publish tag from version ${version}`);
   }
+  if (/^\d+\.\d+\.\d+-alpha.*$/.test(version)) {
+    return "alpha";
+  }
+  if (/^\d+\.\d+\.\d+-beta.*$/.test(version)) {
+    return "beta";
+  }
+  if (/^\d+\.\d+\.\d+-rc.*$/.test(version)) {
+    return "rc";
+  }
+  throw new Error(`Unable to determine publish tag from version ${version}`);
 }
 
 /**

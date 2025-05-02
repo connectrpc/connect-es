@@ -16,11 +16,11 @@ import { v1_6_0 } from "./v1.6.0";
 import type { PackageJson } from "../lib/package-json";
 import type { MigrateOptions } from "../migration";
 
-describe("migration", function () {
+describe("migration", () => {
   const packageJsonWritten: { path: string; pkg: PackageJson }[] = [];
   const lockFilesUpdated: string[] = [];
   let opt: MigrateOptions;
-  beforeEach(function () {
+  beforeEach(() => {
     packageJsonWritten.splice(0);
     lockFilesUpdated.splice(0);
     opt = {
@@ -54,7 +54,7 @@ describe("migration", function () {
       },
     };
   });
-  describe("should be applicable", function () {
+  describe("should be applicable", () => {
     it("for 1.6.0", () => {
       opt.scanned.packageFiles = [
         {
@@ -95,7 +95,7 @@ describe("migration", function () {
       expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
     });
   });
-  describe("should not be applicable", function () {
+  describe("should not be applicable", () => {
     it("from 2.0.0", () => {
       opt.scanned.packageFiles = [
         {

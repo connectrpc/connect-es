@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Scanned } from "../lib/scan";
+import type { Scanned } from "../lib/scan";
 import modifyImports from "./v0.13.1-transform";
-import { MigrateError, MigrateSuccess, Migration } from "../migration";
+import type { MigrateError, MigrateSuccess, Migration } from "../migration";
 import { runInstall } from "../lib/run";
 import { writePackageJsonFile } from "../lib/package-json";
 import {
-  DependencyMigration,
+  type DependencyMigration,
   migrateDependencies,
 } from "../lib/migrate-dependencies";
 import {

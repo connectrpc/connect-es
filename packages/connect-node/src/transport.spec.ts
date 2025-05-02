@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable @typescript-eslint/no-invalid-void-type */
 import { create } from "@bufbuild/protobuf";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
@@ -27,10 +26,10 @@ import {
   IntroduceResponseSchema,
 } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
 
-describe("Calls should fail with code internal on RST_STREAM no_error before trailers are received", function () {
+describe("Calls should fail with code internal on RST_STREAM no_error before trailers are received", () => {
   let firstMessage: ReturnType<typeof createCompleter<void>>;
   let rstStream: ReturnType<typeof createCompleter<void>>;
-  beforeEach(function () {
+  beforeEach(() => {
     firstMessage = createCompleter<void>();
     rstStream = createCompleter<void>();
   });
@@ -66,7 +65,7 @@ describe("Calls should fail with code internal on RST_STREAM no_error before tra
     );
     await expectAsync(it.next()).toBeRejected();
   }
-  it("for gRPC Transport", async function () {
+  it("for gRPC Transport", async () => {
     await testRstStream(
       createGrpcTransport({
         ...validateNodeTransportOptions({
@@ -78,7 +77,7 @@ describe("Calls should fail with code internal on RST_STREAM no_error before tra
       }),
     );
   });
-  it("for gRPC Transport", async function () {
+  it("for gRPC Transport", async () => {
     await testRstStream(
       createGrpcWebTransport({
         ...validateNodeTransportOptions({
@@ -101,7 +100,9 @@ function createCompleter<T>() {
   });
   return {
     promise,
+    // biome-ignore lint/style/noNonNullAssertion: acceptable in test
     resolve: resolve!,
+    // biome-ignore lint/style/noNonNullAssertion: acceptable in test
     reject: reject!,
   };
 }

@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { updateSourceFileInMemory } from "./migrate-source-files";
-import j from "jscodeshift";
+import type j from "jscodeshift";
 
-describe("updateSourceFileInMemory", function () {
+describe("updateSourceFileInMemory", () => {
   it("should return modified = false for unmodified", () => {
     const transform: j.Transform = (file, { j }) => {
       return j(file.source).toSource();

@@ -133,7 +133,6 @@ export function fastifyConnectPlugin(
           if (ConnectError.from(e).code == Code.Aborted) {
             return;
           }
-          // eslint-disable-next-line no-console
           console.error(
             `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
             e,

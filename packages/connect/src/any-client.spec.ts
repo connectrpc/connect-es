@@ -29,11 +29,10 @@ describe("makeAnyClient()", () => {
   });
   it("works as expected", () => {
     const client = makeAnyClient(TestService, (method) => {
-      return function (): string {
-        return `This is method ${method.name} of service ${method.parent.typeName}. It takes a ${method.input.typeName} as input and returns a ${method.output.typeName}.`;
-      };
+      return (): string =>
+        `This is method ${method.name} of service ${method.parent.typeName}. It takes a ${method.input.typeName} as input and returns a ${method.output.typeName}.`;
     });
-    const result = client.foo(); // eslint-disable-line
+    const result = client.foo();
     expect(result).toBe(
       "This is method Foo of service handwritten.TestService. It takes a google.protobuf.Empty as input and returns a google.protobuf.Struct.",
     );

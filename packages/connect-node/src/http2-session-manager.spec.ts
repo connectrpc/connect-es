@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import { useNodeServer } from "./use-node-server-helper.spec.js";
-import * as http2 from "http2";
+import * as http2 from "node:http2";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { ConnectError } from "@connectrpc/connect";
-import { Worker } from "worker_threads";
+import { Worker } from "node:worker_threads";
 
-describe("Http2SessionManager", function () {
+describe("Http2SessionManager", () => {
   const serverSessions: http2.ServerHttp2Session[] = [];
   const serverReceivedPings: Buffer[] = [];
   const server = useNodeServer(() => {
@@ -35,26 +35,26 @@ describe("Http2SessionManager", function () {
       });
   });
 
-  it("should initially be closed", function () {
+  it("should initially be closed", () => {
     const sm = new Http2SessionManager(server.getUrl());
     expect(sm.state()).toBe("closed");
   });
 
-  it("should be closed after calling abort()", function () {
+  it("should be closed after calling abort()", () => {
     const sm = new Http2SessionManager(server.getUrl());
     sm.abort();
     expect(sm.state()).toBe("closed");
   });
 
-  it("should be error after calling abort() with an error", function () {
+  it("should be error after calling abort() with an error", () => {
     const sm = new Http2SessionManager(server.getUrl());
     sm.abort(new ConnectError("foo"));
     expect(sm.state()).toBe("error");
     expect(String(sm.error())).toBe("ConnectError: [unknown] foo");
   });
 
-  describe("first request", function () {
-    it("should update state to 'connecting', 'open', and close cleanly after closing the stream", async function () {
+  describe("first request", () => {
+    it("should update state to 'connecting', 'open', and close cleanly after closing the stream", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       const reqPromise = sm.request("POST", "/", {}, {});
       expect(sm.state()).toBe("connecting");
@@ -66,7 +66,7 @@ describe("Http2SessionManager", function () {
       sm.abort();
       expect(sm.state()).toBe("closed");
     });
-    it("should update state to 'idle', when closing the stream", async function () {
+    it("should update state to 'idle', when closing the stream", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       const req = await sm.request("POST", "/", {}, {});
       await new Promise<void>((resolve) =>
@@ -76,7 +76,7 @@ describe("Http2SessionManager", function () {
       sm.abort();
       expect(sm.state()).toBe("closed");
     });
-    it("should reject if manager is aborted while connecting", async function () {
+    it("should reject if manager is aborted while connecting", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       const reqPromise = sm.request("POST", "/", {}, {});
       expect(sm.state()).toBe("connecting");
@@ -86,7 +86,7 @@ describe("Http2SessionManager", function () {
       );
       expect(sm.state()).toBe("closed");
     });
-    it("should error if manager aborts", async function () {
+    it("should error if manager aborts", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       const req = await sm.request("POST", "/", {}, {});
       expect(sm.state()).toBe("open");
@@ -106,8 +106,8 @@ describe("Http2SessionManager", function () {
     });
   });
 
-  describe("second request", function () {
-    it("should re-use the existing connection", async function () {
+  describe("second request", () => {
+    it("should re-use the existing connection", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       const req1 = await sm.request("POST", "/", {}, {});
       const req2 = await sm.request("POST", "/", {}, {});
@@ -126,7 +126,7 @@ describe("Http2SessionManager", function () {
       );
       sm.abort();
     });
-    it("should verify idle connection", async function () {
+    it("should verify idle connection", async () => {
       const sm = new Http2SessionManager(server.getUrl(), {
         pingIntervalMs: 10, // intentionally short to trigger verification in tests
       });
@@ -168,7 +168,7 @@ describe("Http2SessionManager", function () {
       sm.abort();
       expect(sm.state()).toBe("closed");
     });
-    it("verify should keep the process alive", async function () {
+    it("verify should keep the process alive", async () => {
       const worker = new Worker(
         "./dist/cjs/testdata/http2-session-manager-verify-ping.js",
         {
@@ -186,7 +186,7 @@ describe("Http2SessionManager", function () {
         }),
       ).toBeResolvedTo("done");
     });
-    it("conn should response to session events after verify", async function () {
+    it("conn should response to session events after verify", async () => {
       const sm = new Http2SessionManager(server.getUrl(), {
         pingIntervalMs: 10, // intentionally short to trigger verification in tests
       });
@@ -222,7 +222,7 @@ describe("Http2SessionManager", function () {
       sm.abort();
       expect(sm.state()).toBe("closed");
     });
-    it("should open a new connection if verification for the old one fails", async function () {
+    it("should open a new connection if verification for the old one fails", async () => {
       const sm = new Http2SessionManager(server.getUrl(), {
         pingTimeoutMs: 0, // intentionally unsatisfiable
         pingIntervalMs: 10, // intentionally short to trigger verification in tests
@@ -263,8 +263,8 @@ describe("Http2SessionManager", function () {
     });
   });
 
-  describe("with idleConnectionTimeoutMs", function () {
-    it("should close an idle connection", async function () {
+  describe("with idleConnectionTimeoutMs", () => {
+    it("should close an idle connection", async () => {
       const sm = new Http2SessionManager(server.getUrl(), {
         idleConnectionTimeoutMs: 5, // intentionally short for tests
       });
@@ -287,9 +287,9 @@ describe("Http2SessionManager", function () {
     });
   });
 
-  describe("receiving a GOAWAY frame", function () {
-    describe("with error ENHANCE_YOUR_CALM and debug data too_many_pings", function () {
-      it("should use double the original pingIntervalMs for a second connection", async function () {
+  describe("receiving a GOAWAY frame", () => {
+    describe("with error ENHANCE_YOUR_CALM and debug data too_many_pings", () => {
+      it("should use double the original pingIntervalMs for a second connection", async () => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 20, // intentionally small for faster tests
         });
@@ -297,7 +297,9 @@ describe("Http2SessionManager", function () {
         // issue a request to open a connection
         let req1Error: unknown;
         const req1 = await sm.request("POST", "/", {}, {});
-        req1.on("error", (err) => (req1Error = err as unknown));
+        req1.on("error", (err) => {
+          req1Error = err as unknown;
+        });
         expect(sm.state())
           .withContext("connection state after issuing a request")
           .toBe("open");
@@ -348,8 +350,8 @@ describe("Http2SessionManager", function () {
         sm.abort();
       });
     });
-    describe("with NO_ERROR and an open stream", function () {
-      it("should open a new session for a second request", async function () {
+    describe("with NO_ERROR and an open stream", () => {
+      it("should open a new session for a second request", async () => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection
@@ -390,8 +392,8 @@ describe("Http2SessionManager", function () {
         sm.abort();
       });
     });
-    describe("with NO_ERROR and no open streams", function () {
-      it("should close the session and open a new one for a second request", async function () {
+    describe("with NO_ERROR and no open streams", () => {
+      it("should close the session and open a new one for a second request", async () => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection, but close the request immediately
@@ -440,8 +442,8 @@ describe("Http2SessionManager", function () {
         sm.abort();
       });
     });
-    describe("with NO_ERROR and open stream that is closed after receiving the GOAWAY", function () {
-      it("should close the session and open a new one for a second request", async function () {
+    describe("with NO_ERROR and open stream that is closed after receiving the GOAWAY", () => {
+      it("should close the session and open a new one for a second request", async () => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection
@@ -483,8 +485,8 @@ describe("Http2SessionManager", function () {
         sm.abort();
       });
     });
-    describe("with INTERNAL_ERROR and open stream", function () {
-      it("should eventually go to the error state", async function () {
+    describe("with INTERNAL_ERROR and open stream", () => {
+      it("should eventually go to the error state", async () => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection
@@ -517,7 +519,7 @@ describe("Http2SessionManager", function () {
         await new Promise<void>((resolve) => setTimeout(resolve, 50));
         expect(sm.state()).toBe("error");
       });
-      it("should open a new connection for a second request", async function () {
+      it("should open a new connection for a second request", async () => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection
@@ -559,9 +561,9 @@ describe("Http2SessionManager", function () {
     });
   });
 
-  describe("ping frames", function () {
-    describe("for open streams", function () {
-      it("should be sent", async function () {
+  describe("ping frames", () => {
+    describe("for open streams", () => {
+      it("should be sent", async () => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
         });
@@ -574,7 +576,7 @@ describe("Http2SessionManager", function () {
         sm.abort();
         expect(sm.state()).toBe("closed");
       });
-      it("should not be sent while client is receiving data", async function () {
+      it("should not be sent while client is receiving data", async () => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 10, // intentionally short for faster tests
         });
@@ -592,7 +594,7 @@ describe("Http2SessionManager", function () {
         sm.abort();
         expect(sm.state()).toBe("closed");
       });
-      it("should destroy the connection if not answered in time", async function () {
+      it("should destroy the connection if not answered in time", async () => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
           pingTimeoutMs: 0, // intentionally unsatisfiable
@@ -612,8 +614,8 @@ describe("Http2SessionManager", function () {
       });
     });
 
-    describe("for connections without open streams", function () {
-      it("should not be sent by default", async function () {
+    describe("for connections without open streams", () => {
+      it("should not be sent by default", async () => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
         });
@@ -626,7 +628,7 @@ describe("Http2SessionManager", function () {
         expect(serverReceivedPings.length).toBe(0);
         sm.abort();
       });
-      it("should be sent if pingIdleConnection is enabled", async function () {
+      it("should be sent if pingIdleConnection is enabled", async () => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 1, // intentionally short for faster tests
           pingIdleConnection: true,
@@ -643,7 +645,7 @@ describe("Http2SessionManager", function () {
         sm.abort();
         expect(sm.state()).toBe("closed");
       });
-      it("should destroy the connection if not answered in time", async function () {
+      it("should destroy the connection if not answered in time", async () => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
           pingTimeoutMs: 0, // intentionally unsatisfiable
@@ -662,8 +664,8 @@ describe("Http2SessionManager", function () {
     });
   });
 
-  describe("idle timeout", function () {
-    it("should close the connection", async function () {
+  describe("idle timeout", () => {
+    it("should close the connection", async () => {
       const sm = new Http2SessionManager(
         server.getUrl(),
         {
@@ -683,8 +685,8 @@ describe("Http2SessionManager", function () {
     });
   });
 
-  describe("request against unresolvable host", function () {
-    it("should reject", async function () {
+  describe("request against unresolvable host", () => {
+    it("should reject", async () => {
       const sm = new Http2SessionManager(
         "https://unresolvable-host.some.domain",
       );
@@ -695,7 +697,7 @@ describe("Http2SessionManager", function () {
       );
       expect(sm.state()).toBe("error");
     });
-    it("should reject if manager is aborted while connecting", async function () {
+    it("should reject if manager is aborted while connecting", async () => {
       const sm = new Http2SessionManager(
         "https://unresolvable-host.some.domain",
       );
@@ -709,27 +711,27 @@ describe("Http2SessionManager", function () {
     });
   });
 
-  describe("connect", function () {
-    it("should go from closed to idle", async function () {
+  describe("connect", () => {
+    it("should go from closed to idle", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       expect(sm.state()).toBe("closed");
       await expectAsync(sm.connect()).toBeResolvedTo("idle");
       sm.abort();
     });
-    it("should go from error to idle", async function () {
+    it("should go from error to idle", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       sm.abort(new ConnectError("foo"));
       expect(sm.state()).toBe("error");
       await expectAsync(sm.connect()).toBeResolvedTo("idle");
       sm.abort();
     });
-    it("should go from idle to idle", async function () {
+    it("should go from idle to idle", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       await expectAsync(sm.connect()).toBeResolvedTo("idle");
       await expectAsync(sm.connect()).toBeResolvedTo("idle");
       sm.abort();
     });
-    it("should go from open to open", async function () {
+    it("should go from open to open", async () => {
       const sm = new Http2SessionManager(server.getUrl());
       const req = await sm.request("POST", "/", {}, {});
       expect(sm.state()).toBe("open");

@@ -70,7 +70,7 @@ describe("ConnectError", () => {
       expect(e.metadata.get("foo")).toBe("bar");
     });
   });
-  describe("findDetails()", function () {
+  describe("findDetails()", () => {
     describe("on error without details", () => {
       const err = new ConnectError("foo");
       it("with empty TypeRegistry produces no details", () => {

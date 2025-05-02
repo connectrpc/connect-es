@@ -18,8 +18,8 @@ import {
   contentTypeJson,
 } from "./content-type.js";
 
-describe("parseContentType()", function () {
-  it("should parse", function () {
+describe("parseContentType()", () => {
+  it("should parse", () => {
     expect(parseContentType(contentTypeProto)).toEqual({
       binary: true,
     });

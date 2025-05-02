@@ -16,15 +16,15 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { createConnectTransport } from "./connect-transport.js";
 import { Http2SessionManager } from "./http2-session-manager.js";
 
-describe("createConnectTransport()", function () {
-  it("should take just httpVersion and baseUrl", function () {
+describe("createConnectTransport()", () => {
+  it("should take just httpVersion and baseUrl", () => {
     const t = createConnectTransport({
       httpVersion: "2",
       baseUrl: "https://example.com",
     });
     expect(t).toBeDefined();
   });
-  it("should take session options", function () {
+  it("should take session options", () => {
     const t = createConnectTransport({
       httpVersion: "2",
       baseUrl: "https://example.com",
@@ -35,7 +35,7 @@ describe("createConnectTransport()", function () {
     });
     expect(t).toBeDefined();
   });
-  it("should take node options", function () {
+  it("should take node options", () => {
     const t = createConnectTransport({
       httpVersion: "2",
       baseUrl: "https://example.com",
@@ -45,7 +45,7 @@ describe("createConnectTransport()", function () {
     });
     expect(t).toBeDefined();
   });
-  it("should take session manager", function () {
+  it("should take session manager", () => {
     const sm = new Http2SessionManager(
       "https://example.com",
       {
@@ -64,8 +64,8 @@ describe("createConnectTransport()", function () {
   });
 });
 
-describe("using a session manager to open a connection before starting an application", function () {
-  it("should work", async function () {
+describe("using a session manager to open a connection before starting an application", () => {
+  it("should work", async () => {
     const sm = new Http2SessionManager("https://demo.connectrpc.com");
     for (let backoff = 1; ; backoff++) {
       const state = await sm.connect();
@@ -87,8 +87,8 @@ describe("using a session manager to open a connection before starting an applic
   });
 });
 
-describe("using a session manager to explicitly close all connections", function () {
-  it("should work", function () {
+describe("using a session manager to explicitly close all connections", () => {
+  it("should work", () => {
     // create a client, keeping a reference to the session manage
     const sessionManager = new Http2SessionManager(
       "https://demo.connectrpc.com",
