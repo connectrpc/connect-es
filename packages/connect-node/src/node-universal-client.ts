@@ -221,7 +221,7 @@ function h1Request(
   );
   // Node.js will only send headers with the first request body byte by default.
   // We force it to send headers right away for consistent behavior between
-  // HTTP/1.1 and HTTP/2.2 clients.
+  // HTTP/1.1 and HTTP/2.0 clients.
   request.flushHeaders();
 
   request.on("error", sentinel.reject);
