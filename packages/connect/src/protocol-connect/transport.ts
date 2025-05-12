@@ -128,6 +128,9 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             );
           } else {
             body = createAsyncIterable([requestBody]);
+            if (requestBody.byteLength === 0) {
+              req.header.set("Content-Length", "0");
+            }
           }
           const universalResponse = await opt.httpClient({
             url: req.url,
