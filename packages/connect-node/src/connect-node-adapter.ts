@@ -14,9 +14,9 @@
 
 import { Code, ConnectError, createConnectRouter } from "@connectrpc/connect";
 import type {
-  ConnectRouter,
   ConnectRouterOptions,
   ContextValues,
+  RouteFn,
 } from "@connectrpc/connect";
 import type { UniversalHandler } from "@connectrpc/connect/protocol";
 import { uResponseNotFound } from "@connectrpc/connect/protocol";
@@ -46,8 +46,23 @@ export interface ConnectNodeAdapterOptions extends ConnectRouterOptions {
    * ```
    *
    * Then pass this function here.
+   *
+   * For more complex setups with multiple services, you may pass them as an array, like so:
+   *
+   * ```ts
+   * import ElizaRouter from "./eliza.ts";
+   * import HelloWorldRouter from "./hello-world.ts";
+   *
+   * const adapter = createNodeAdapter({
+   *   routes: [
+   *     ElizaRouter,
+   *     HelloWorldRouter
+   *   ]
+   * });
+   *
+   * ```
    */
-  routes: (router: ConnectRouter) => void;
+  routes: RouteFn | RouteFn[];
   /**
    * If none of the handler request paths match, a 404 is served. This option
    * can provide a custom fallback for this case.
@@ -77,8 +92,19 @@ export function connectNodeAdapter(
   if (options.acceptCompression === undefined) {
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
+
   const router = createConnectRouter(options);
-  options.routes(router);
+
+  if (Array.isArray(options.routes)) {
+    // options.routes is an array of functions
+    for (const routeFn of options.routes) {
+      routeFn(router);
+    }
+  } else {
+    // options.routes is function
+    options.routes(router);
+  }
+
   const prefix = options.requestPathPrefix ?? "";
   const paths = new Map<string, UniversalHandler>();
   for (const uHandler of router.handlers) {
