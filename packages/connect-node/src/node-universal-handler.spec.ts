@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { useNodeServer } from "./use-node-server-helper.spec.js";
-import * as http2 from "http2";
-import * as http from "http";
+import * as http2 from "node:http2";
+import * as http from "node:http";
 import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
 import { ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";
@@ -24,12 +24,12 @@ import {
 } from "@connectrpc/connect/protocol";
 import type { UniversalServerRequest } from "@connectrpc/connect/protocol";
 
-describe("universalRequestFromNodeResponse()", function () {
-  describe("with HTTP/2 stream closed with an RST code", function () {
+describe("universalRequestFromNodeResponse()", () => {
+  describe("with HTTP/2 stream closed with an RST code", () => {
     let serverRequest: UniversalServerRequest | undefined;
     const server = useNodeServer(() => {
       serverRequest = undefined;
-      return http2.createServer(function (request, response) {
+      return http2.createServer((request, response) => {
         serverRequest = universalRequestFromNodeRequest(
           request,
           response,
@@ -65,7 +65,7 @@ describe("universalRequestFromNodeResponse()", function () {
         });
       });
     }
-    it("should abort request signal with ConnectError and Code.Canceled for NO_ERROR", async function () {
+    it("should abort request signal with ConnectError and Code.Canceled for NO_ERROR", async () => {
       await request(http2.constants.NGHTTP2_NO_ERROR);
       expect(serverRequest?.signal).toBeInstanceOf(AbortSignal);
       expect(serverRequest?.signal.aborted).toBeTrue();
@@ -77,7 +77,7 @@ describe("universalRequestFromNodeResponse()", function () {
         );
       }
     });
-    it("should silently end request body stream for NO_ERROR", async function () {
+    it("should silently end request body stream for NO_ERROR", async () => {
       await request(http2.constants.NGHTTP2_NO_ERROR);
       expect(serverRequest).toBeDefined();
       if (serverRequest !== undefined) {
@@ -87,7 +87,7 @@ describe("universalRequestFromNodeResponse()", function () {
         expect(r.done).toBeTrue();
       }
     });
-    it("should abort request signal with ConnectError and Code.Canceled for CANCEL", async function () {
+    it("should abort request signal with ConnectError and Code.Canceled for CANCEL", async () => {
       await request(http2.constants.NGHTTP2_CANCEL);
       expect(serverRequest?.signal).toBeInstanceOf(AbortSignal);
       expect(serverRequest?.signal.aborted).toBeTrue();
@@ -97,7 +97,7 @@ describe("universalRequestFromNodeResponse()", function () {
         "[canceled] http/2 stream closed with error code CANCEL (0x8)",
       );
     });
-    it("should silently end request body stream for CANCEL", async function () {
+    it("should silently end request body stream for CANCEL", async () => {
       await request(http2.constants.NGHTTP2_CANCEL);
       expect(serverRequest).toBeDefined();
       if (serverRequest !== undefined) {
@@ -107,7 +107,7 @@ describe("universalRequestFromNodeResponse()", function () {
         expect(r.done).toBeTrue();
       }
     });
-    it("should abort request signal with ConnectError and Code.ResourceExhausted for ENHANCE_YOUR_CALM", async function () {
+    it("should abort request signal with ConnectError and Code.ResourceExhausted for ENHANCE_YOUR_CALM", async () => {
       await request(http2.constants.NGHTTP2_ENHANCE_YOUR_CALM);
       expect(serverRequest?.signal).toBeInstanceOf(AbortSignal);
       expect(serverRequest?.signal.aborted).toBeTrue();
@@ -117,7 +117,7 @@ describe("universalRequestFromNodeResponse()", function () {
         "[resource_exhausted] http/2 stream closed with error code ENHANCE_YOUR_CALM (0xb)",
       );
     });
-    it("should silently end request body stream for ENHANCE_YOUR_CALM", async function () {
+    it("should silently end request body stream for ENHANCE_YOUR_CALM", async () => {
       await request(http2.constants.NGHTTP2_ENHANCE_YOUR_CALM);
       expect(serverRequest).toBeDefined();
       if (serverRequest !== undefined) {
@@ -127,7 +127,7 @@ describe("universalRequestFromNodeResponse()", function () {
         expect(r.done).toBeTrue();
       }
     });
-    it("should abort request signal with ConnectError and Code.Internal for FRAME_SIZE_ERROR", async function () {
+    it("should abort request signal with ConnectError and Code.Internal for FRAME_SIZE_ERROR", async () => {
       await request(http2.constants.NGHTTP2_FRAME_SIZE_ERROR);
       expect(serverRequest?.signal).toBeInstanceOf(AbortSignal);
       expect(serverRequest?.signal.aborted).toBeTrue();
@@ -137,7 +137,7 @@ describe("universalRequestFromNodeResponse()", function () {
         "[internal] http/2 stream closed with error code FRAME_SIZE_ERROR (0x6)",
       );
     });
-    it("should silently end request body stream for FRAME_SIZE_ERROR", async function () {
+    it("should silently end request body stream for FRAME_SIZE_ERROR", async () => {
       await request(http2.constants.NGHTTP2_FRAME_SIZE_ERROR);
       expect(serverRequest).toBeDefined();
       if (serverRequest !== undefined) {
@@ -148,7 +148,7 @@ describe("universalRequestFromNodeResponse()", function () {
       }
     });
   });
-  describe("with HTTP/1.1 ECONNRESET", function () {
+  describe("with HTTP/1.1 ECONNRESET", () => {
     let serverRequest: UniversalServerRequest | undefined;
     const server = useNodeServer(() => {
       serverRequest = undefined;
@@ -174,7 +174,7 @@ describe("universalRequestFromNodeResponse()", function () {
           connectionsCheckingInterval: 1,
           requestTimeout: 0,
         },
-        function (request, response) {
+        (request, response) => {
           serverRequest = universalRequestFromNodeRequest(
             request,
             response,
@@ -206,7 +206,7 @@ describe("universalRequestFromNodeResponse()", function () {
         }, 20);
       });
     }
-    it("should abort request signal with ConnectError and Code.Aborted", async function () {
+    it("should abort request signal with ConnectError and Code.Aborted", async () => {
       await request();
       while (serverRequest?.signal.reason === undefined) {
         await new Promise((r) => setTimeout(r, 1));
@@ -218,7 +218,7 @@ describe("universalRequestFromNodeResponse()", function () {
         expect(ce.message).toBe("[aborted] aborted");
       }
     });
-    it("should error request body stream with ECONNRESET", async function () {
+    it("should error request body stream with ECONNRESET", async () => {
       await request();
       expect(serverRequest).toBeDefined();
       if (serverRequest !== undefined) {
@@ -240,7 +240,7 @@ describe("universalRequestFromNodeResponse()", function () {
       }
     });
   });
-  describe("with HTTP/1.1 request finishing without error", function () {
+  describe("with HTTP/1.1 request finishing without error", () => {
     let serverRequest: UniversalServerRequest | undefined;
     const server = useNodeServer(() => {
       const s = http.createServer(
@@ -265,7 +265,7 @@ describe("universalRequestFromNodeResponse()", function () {
           connectionsCheckingInterval: 1,
           requestTimeout: 0,
         },
-        function (request, response) {
+        (request, response) => {
           serverRequest = universalRequestFromNodeRequest(
             request,
             response,
@@ -299,7 +299,7 @@ describe("universalRequestFromNodeResponse()", function () {
         });
       });
     }
-    it("should abort request signal with AbortError", async function () {
+    it("should abort request signal with AbortError", async () => {
       await request();
       expect(serverRequest?.signal).toBeInstanceOf(AbortSignal);
       expect(serverRequest?.signal.aborted).toBeTrue();
@@ -311,7 +311,7 @@ describe("universalRequestFromNodeResponse()", function () {
         );
       }
     });
-    it("should silently end request body stream", async function () {
+    it("should silently end request body stream", async () => {
       await request();
       expect(serverRequest).toBeDefined();
       if (serverRequest !== undefined) {
@@ -322,13 +322,13 @@ describe("universalRequestFromNodeResponse()", function () {
       }
     });
   });
-  describe("with HTTP/1.1", function () {
+  describe("with HTTP/1.1", () => {
     let serverRequest: UniversalServerRequest | undefined;
     let serverNodeResponse:
       | http.ServerResponse<http.IncomingMessage>
       | undefined;
     const server = useNodeServer(() =>
-      http.createServer(function (request, response) {
+      http.createServer((request, response) => {
         serverRequest = universalRequestFromNodeRequest(
           request,
           response,
@@ -346,7 +346,7 @@ describe("universalRequestFromNodeResponse()", function () {
         });
       }),
     );
-    it("signal should not be aborted on start", async function () {
+    it("signal should not be aborted on start", async () => {
       await new Promise<void>((resolve) => {
         const request = http.request(server.getUrl(), {
           method: "POST",

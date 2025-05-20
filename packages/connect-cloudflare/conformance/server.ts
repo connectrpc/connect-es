@@ -44,6 +44,7 @@ function main() {
     clearInterval(timeout);
   });
   const res = create(ServerCompatResponseSchema, {
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
     host: process.env["CLOUDFLARE_WORKERS_SERVER_HOST"],
     port: 443,
     pemCert: req.useTls

@@ -228,14 +228,11 @@ export function applyInterceptors<T>(
   next: T,
   interceptors: Interceptor[] | undefined,
 ): T {
-  return (
-    (interceptors
-      ?.concat()
-      .reverse()
-      .reduce(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        (n, i) => i(n),
-        next as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-      ) as T) ?? next
-  );
+  if (!interceptors) {
+    return next;
+  }
+  for (const i of interceptors.concat().reverse()) {
+    next = i(next as AnyFn) as T;
+  }
+  return next;
 }

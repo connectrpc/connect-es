@@ -18,8 +18,8 @@ import { create, isMessage, protoInt64 } from "@bufbuild/protobuf";
 import { readAll } from "./async-iterable-helper.spec.js";
 import { TimestampSchema } from "@bufbuild/protobuf/wkt";
 
-describe("normalize()", function () {
-  it("should normalize from object literal", function () {
+describe("normalize()", () => {
+  it("should normalize from object literal", () => {
     const normal = normalize(TimestampSchema, {
       nanos: 123,
     });
@@ -27,15 +27,15 @@ describe("normalize()", function () {
     expect(normal.nanos).toBe(123);
     expect(normal.seconds).toBe(protoInt64.parse(0));
   });
-  it("should not modify instance of the normal type", function () {
+  it("should not modify instance of the normal type", () => {
     const original = create(TimestampSchema);
     const normal = normalize(TimestampSchema, original);
     expect(normal).toBe(original);
   });
 });
 
-describe("normalizeIterable()", function () {
-  it("should normalize from object literal", async function () {
+describe("normalizeIterable()", () => {
+  it("should normalize from object literal", async () => {
     const input = [{ nanos: 123 }, { nanos: 456 }];
     const normal = await readAll(
       normalizeIterable(TimestampSchema, createAsyncIterable(input)),
@@ -48,7 +48,7 @@ describe("normalizeIterable()", function () {
     expect(normal[1].nanos).toBe(456);
     expect(normal[1].seconds).toBe(protoInt64.parse(0));
   });
-  it("should not modify instance of the normal type", async function () {
+  it("should not modify instance of the normal type", async () => {
     const input = [create(TimestampSchema), create(TimestampSchema)];
     const normal = await readAll(
       normalizeIterable(TimestampSchema, createAsyncIterable(input)),

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Scanned } from "../lib/scan";
+import type { Scanned } from "../lib/scan";
 import transportConnectPluginImports from "./v2.0.0-transform-connect-plugin-imports";
 import transportClassRefs from "./v2.0.0-transform-class-refs";
-import { MigrateError, MigrateSuccess, Migration } from "../migration";
+import type { MigrateError, MigrateSuccess, Migration } from "../migration";
 import { runInstall } from "../lib/run";
 import { writePackageJsonFile } from "../lib/package-json";
 import {
-  DependencyMigration,
+  type DependencyMigration,
   migrateDependencies,
 } from "../lib/migrate-dependencies";
 import {
@@ -29,7 +29,7 @@ import {
 import { migratePackages } from "../lib/migrate-packages";
 import { migrateLockFiles } from "../lib/migrate-lock-files";
 import {
-  BufGenYamlMigration,
+  type BufGenYamlMigration,
   migrateBufGenYaml,
   migrateBufGenYamls,
 } from "../lib/migrate-bufgenyaml";

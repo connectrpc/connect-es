@@ -34,13 +34,12 @@ updates:
           - "typescript"
           - "tsx"
           - "@bufbuild/protobuf"
-      lint:
+      lint-and-format:
         patterns:
-          - "@typescript-eslint/*"
-          - "eslint-*"
-          - "eslint"
-          - "@arethetypeswrong/*"
-      format:
-        patterns:
-          - "prettier"
+          - "biome"
           - "@bufbuild/license-header"
+      webdriver:
+        patterns:
+          - "@wdio/*"
+          - "webdriver"
+          - "webdriverio"

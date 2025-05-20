@@ -15,9 +15,9 @@
     "test": "jasmine --config=jasmine.json",
     "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/server.ts",
     "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/client.ts",
-    "format": "prettier --write --ignore-unknown '.' '!dist'",
+    "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "biome lint --error-on-warnings",
     "attw": "attw --pack"
   },
   "type": "module",
@@ -39,6 +39,6 @@
   "devDependencies": {
     "@connectrpc/connect-conformance": "^2.0.2",
     "@types/jasmine": "^5.1.7",
-    "jasmine": "^5.6.0"
+    "jasmine": "^5.7.1"
   }
 }

@@ -14,33 +14,33 @@
 
 import { createContextKey, createContextValues } from "./context-values.js";
 
-describe("ContextValues", function () {
-  it("should get default values", function () {
+describe("ContextValues", () => {
+  it("should get default values", () => {
     const contextValues = createContextValues();
     const kString = createContextKey("default");
     expect(contextValues.get(kString)).toBe(kString.defaultValue);
   });
-  it("should set values", function () {
+  it("should set values", () => {
     const contextValues = createContextValues();
     const kString = createContextKey("default");
     contextValues.set(kString, "foo");
     expect(contextValues.get(kString)).toBe("foo");
   });
-  it("should delete values", function () {
+  it("should delete values", () => {
     const contextValues = createContextValues();
     const kString = createContextKey("default");
     contextValues.set(kString, "foo");
     contextValues.delete(kString);
     expect(contextValues.get(kString)).toBe(kString.defaultValue);
   });
-  it("should work with undefined values", function () {
+  it("should work with undefined values", () => {
     const contextValues = createContextValues();
     const kUndefined = createContextKey<string | undefined>("default");
     expect(contextValues.get(kUndefined)).toBe(kUndefined.defaultValue);
     contextValues.set(kUndefined, undefined);
     expect(contextValues.get(kUndefined)).toBe(undefined);
   });
-  it("should be properties on the type", function () {
+  it("should be properties on the type", () => {
     const contextValues = createContextValues();
     const kString = createContextKey("default", { description: "string" });
     contextValues.set(kString, "foo");

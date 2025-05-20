@@ -57,7 +57,7 @@ const TestService = createServiceDesc({
 
 const kString = createContextKey("foo");
 
-describe("createUnaryFn()", function () {
+describe("createUnaryFn()", () => {
   it("passes the context values to interceptors", async () => {
     const input = create(Int32ValueSchema, { value: 1 });
 
@@ -67,12 +67,8 @@ describe("createUnaryFn()", function () {
     const transport = createRouterTransport(
       ({ service }) => {
         service(TestService, {
-          unaryMethod: (
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
-            _input: Int32Value,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
-            _context: HandlerContext,
-          ) => Promise.resolve(output),
+          unaryMethod: (_input: Int32Value, _context: HandlerContext) =>
+            Promise.resolve(output),
         });
       },
       {
@@ -99,7 +95,7 @@ describe("createUnaryFn()", function () {
   });
 });
 
-describe("createClientStreamingFn()", function () {
+describe("createClientStreamingFn()", () => {
   it("works as expected on the happy path", async () => {
     const input = create(Int32ValueSchema, { value: 1 });
 
@@ -108,9 +104,7 @@ describe("createClientStreamingFn()", function () {
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
         clientStream: (
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
           _input: AsyncIterable<Int32Value>,
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
           _context: HandlerContext,
         ) => Promise.resolve(output),
       });
@@ -120,7 +114,6 @@ describe("createClientStreamingFn()", function () {
       TestService.method.clientStream,
     );
     const res = await fn(
-      // eslint-disable-next-line @typescript-eslint/require-await
       (async function* () {
         yield input;
       })(),
@@ -139,9 +132,7 @@ describe("createClientStreamingFn()", function () {
       ({ service }) => {
         service(TestService, {
           clientStream: (
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
             _input: AsyncIterable<Int32Value>,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
             _context: HandlerContext,
           ) => Promise.resolve(output),
         });
@@ -165,7 +156,6 @@ describe("createClientStreamingFn()", function () {
       TestService.method.clientStream,
     );
     const res = await fn(
-      // eslint-disable-next-line @typescript-eslint/require-await
       (async function* () {
         yield input;
       })(),
@@ -199,7 +189,6 @@ describe("createClientStreamingFn()", function () {
     );
     let reqItrClosed = false;
     const res = await fn(
-      // eslint-disable-next-line @typescript-eslint/require-await
       (async function* () {
         try {
           yield { value: 1 };
@@ -234,7 +223,6 @@ describe("createClientStreamingFn()", function () {
     );
     let reqItrClosed = false;
     const res = fn(
-      // eslint-disable-next-line @typescript-eslint/require-await
       (async function* () {
         try {
           yield { value: 1 };
@@ -251,7 +239,7 @@ describe("createClientStreamingFn()", function () {
   });
 });
 
-describe("createServerStreamingFn()", function () {
+describe("createServerStreamingFn()", () => {
   it("works as expected on the happy path", async () => {
     const output = [
       create(StringValueSchema, { value: "input1" }),
@@ -261,7 +249,6 @@ describe("createServerStreamingFn()", function () {
 
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
         serverStream: (_input: Int32Value, _context: HandlerContext) =>
           createAsyncIterable(output),
       });
@@ -288,7 +275,6 @@ describe("createServerStreamingFn()", function () {
     const transport = createRouterTransport(
       ({ service }) => {
         service(TestService, {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- arguments not used for mock
           serverStream: (_input: Int32Value, _context: HandlerContext) =>
             createAsyncIterable(output),
         });
@@ -322,7 +308,7 @@ describe("createServerStreamingFn()", function () {
     expect(receivedMessages).toEqual(output);
     expect(interceptorCalled).toBeTrue();
   });
-  it("doesn't support throw/return on the returned response", function () {
+  it("doesn't support throw/return on the returned response", () => {
     const fn = createServerStreamingFn(
       createRouterTransport(({ service }) => {
         service(TestService, {
@@ -332,8 +318,8 @@ describe("createServerStreamingFn()", function () {
       TestService.method.serverStream,
     );
     const it = fn({})[Symbol.asyncIterator]();
-    expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
-    expect(it.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+    expect(it.throw).not.toBeDefined();
+    expect(it.return).not.toBeDefined();
   });
 });
 
@@ -484,7 +470,7 @@ describe("createBiDiStreamingFn()", () => {
       value: undefined,
     });
   });
-  it("doesn't support throw/return on the returned response", function () {
+  it("doesn't support throw/return on the returned response", () => {
     const fn = createBiDiStreamingFn(
       createRouterTransport(({ service }) => {
         service(TestService, {
@@ -494,7 +480,7 @@ describe("createBiDiStreamingFn()", () => {
       TestService.method.bidiStream,
     );
     const it = fn(createAsyncIterable([]))[Symbol.asyncIterator]();
-    expect(it.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
-    expect(it.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+    expect(it.throw).not.toBeDefined();
+    expect(it.return).not.toBeDefined();
   });
 });

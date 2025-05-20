@@ -73,7 +73,7 @@ export function invokeWithCallbackClient(
 async function unary(
   client: ConformanceClient,
   compatRequest: ClientCompatRequest,
-  idempotent: boolean = false,
+  idempotent = false,
 ) {
   await wait(compatRequest.requestDelayMs);
   const result = create(ClientResponseResultSchema);
@@ -197,7 +197,6 @@ async function unimplemented(
   return new Promise<ClientResponseResult>((resolve) => {
     client.unimplemented(
       getSingleRequestMessage(compatRequest, UnimplementedRequestSchema),
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       (err, _) => {
         if (err !== undefined) {
           setClientErrorResult(result, err);

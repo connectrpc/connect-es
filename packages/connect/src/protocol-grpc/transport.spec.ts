@@ -52,7 +52,7 @@ const TestService = createServiceDesc({
   },
 });
 
-describe("gRPC transport", function () {
+describe("gRPC transport", () => {
   const defaultOptions = {
     baseUrl: "http://example.com",
     interceptors: [],
@@ -63,19 +63,18 @@ describe("gRPC transport", function () {
     useBinaryFormat: true,
     writeMaxBytes: 0xffffff,
   };
-  describe("against server responding with an error", function () {
+  describe("against server responding with an error", () => {
     let httpRequestAborted = false;
     let transport: Transport = null as unknown as Transport;
-    beforeEach(function () {
+    beforeEach(() => {
       httpRequestAborted = false;
       transport = createTransport({
         httpClient(
           request: UniversalClientRequest,
         ): Promise<UniversalClientResponse> {
-          request.signal?.addEventListener(
-            "abort",
-            () => (httpRequestAborted = true),
-          );
+          request.signal?.addEventListener("abort", () => {
+            httpRequestAborted = true;
+          });
           return Promise.resolve({
             status: 200,
             header: new Headers({
@@ -100,7 +99,7 @@ describe("gRPC transport", function () {
       });
     });
 
-    it("should cancel the HTTP request for unary", async function () {
+    it("should cancel the HTTP request for unary", async () => {
       try {
         await transport.unary(
           TestService.method.unary,
@@ -117,7 +116,7 @@ describe("gRPC transport", function () {
       expect(httpRequestAborted).toBeTrue();
     });
 
-    it("should cancel the HTTP request for server-streaming", async function () {
+    it("should cancel the HTTP request for server-streaming", async () => {
       const res = await transport.stream(
         TestService.method.server,
         undefined,

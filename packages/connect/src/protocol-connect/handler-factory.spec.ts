@@ -50,7 +50,7 @@ import {
   StringValueSchema,
 } from "@bufbuild/protobuf/wkt";
 
-describe("createHandlerFactory()", function () {
+describe("createHandlerFactory()", () => {
   const testService = createServiceDesc({
     typeName: "TestService",
     method: {
@@ -98,15 +98,15 @@ describe("createHandlerFactory()", function () {
     };
   }
 
-  describe("returned handler", function () {
-    it("should allow POST for unary RPC", function () {
+  describe("returned handler", () => {
+    it("should allow POST for unary RPC", () => {
       const { handler } = setupTestHandler(testService.method.unary, {}, () =>
         Promise.reject(),
       );
       expect(handler.allowedMethods).toEqual(["POST"]);
       expect(handler.protocolNames).toEqual(["connect"]);
     });
-    it("should allow GET,POST for eligible RPC", function () {
+    it("should allow GET,POST for eligible RPC", () => {
       const { handler } = setupTestHandler(
         testService.method.unaryNoSideEffects,
         {},
@@ -115,7 +115,7 @@ describe("createHandlerFactory()", function () {
       expect(handler.allowedMethods).toEqual(["POST", "GET"]);
       expect(handler.protocolNames).toEqual(["connect"]);
     });
-    it("should surface headers for unary", async function () {
+    it("should surface headers for unary", async () => {
       const { transport, method } = setupTestHandler(
         testService.method.unary,
         {},
@@ -134,7 +134,7 @@ describe("createHandlerFactory()", function () {
       expect(r.header.get("implementation-called")).toBe("yes");
       expect(r.message.value).toBe("123");
     });
-    it("should surface headers for server-streaming", async function () {
+    it("should surface headers for server-streaming", async () => {
       const { transport, method } = setupTestHandler(
         testService.method.serverStreaming,
         {},
@@ -156,11 +156,15 @@ describe("createHandlerFactory()", function () {
       expect(all.length).toBe(1);
       expect(all[0].value).toBe("123");
     });
-    it("should propagate errors back to the handler", async function () {
+    it("should propagate errors back to the handler", async () => {
       let resolve: (e: unknown) => void;
-      const catchError = new Promise<unknown>((r) => (resolve = r));
+      const catchError = new Promise<unknown>((r) => {
+        resolve = r;
+      });
       let abortResolve: () => void;
-      const abortCalled = new Promise<void>((r) => (abortResolve = r));
+      const abortCalled = new Promise<void>((r) => {
+        abortResolve = r;
+      });
       const { handler } = setupTestHandler(
         testService.method.serverStreaming,
         {},
@@ -171,7 +175,7 @@ describe("createHandlerFactory()", function () {
             yield { value: `${req.value}` };
             fail("expected error");
           } catch (e: unknown) {
-            resolve!(e);
+            resolve?.(e);
           }
         },
       );
@@ -192,23 +196,23 @@ describe("createHandlerFactory()", function () {
         signal: new AbortController().signal,
       });
       expect(res.body).toBeDefined();
-      const it = res.body![Symbol.asyncIterator]();
-      await it.next();
+      const it = res.body?.[Symbol.asyncIterator]();
+      await it?.next();
       const writeError = new Error("write error");
-      await it.throw?.(writeError).catch(() => {});
+      await it?.throw?.(writeError).catch(() => {});
       await expectAsync(catchError).toBeResolvedTo(writeError);
       await expectAsync(abortCalled).toBeResolved();
     });
   });
 
-  describe("requireConnectProtocolHeader", function () {
-    describe("with unary RPC", function () {
+  describe("requireConnectProtocolHeader", () => {
+    describe("with unary RPC", () => {
       const { handler } = setupTestHandler(
         testService.method.unary,
         { requireConnectProtocolHeader: true },
         (req) => ({ value: req.value.toString(10) }),
       );
-      it("should raise error for missing header", async function () {
+      it("should raise error for missing header", async () => {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
@@ -232,7 +236,7 @@ describe("createHandlerFactory()", function () {
           );
         }
       });
-      it("should raise error for wrong header", async function () {
+      it("should raise error for wrong header", async () => {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
@@ -260,7 +264,7 @@ describe("createHandlerFactory()", function () {
         }
       });
     });
-    describe("with streaming RPC", function () {
+    describe("with streaming RPC", () => {
       const { handler } = setupTestHandler(
         testService.method.serverStreaming,
         { requireConnectProtocolHeader: true },
@@ -269,7 +273,7 @@ describe("createHandlerFactory()", function () {
           yield { value: req.value.toString(10) };
         },
       );
-      it("should raise error for missing header", async function () {
+      it("should raise error for missing header", async () => {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
@@ -290,7 +294,7 @@ describe("createHandlerFactory()", function () {
           );
         }
       });
-      it("should raise error for wrong header", async function () {
+      it("should raise error for wrong header", async () => {
         const res = await handler({
           httpVersion: "1.1",
           method: "POST",
@@ -317,9 +321,9 @@ describe("createHandlerFactory()", function () {
     });
   });
 
-  describe("deadlines", function () {
-    describe("with unary RPC", function () {
-      it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
+  describe("deadlines", () => {
+    describe("with unary RPC", () => {
+      it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async () => {
         const timeoutMs = 1;
         const { handler, service, method } = setupTestHandler(
           testService.method.unary,
@@ -359,7 +363,7 @@ describe("createHandlerFactory()", function () {
         }
       });
     });
-    describe("with streaming RPC", function () {
+    describe("with streaming RPC", () => {
       async function getLastEnvelope(res: UniversalServerResponse) {
         expect(res.body).toBeDefined();
         expect(res.body).not.toBeInstanceOf(Uint8Array);
@@ -376,7 +380,7 @@ describe("createHandlerFactory()", function () {
         return undefined;
       }
 
-      it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async function () {
+      it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async () => {
         const timeoutMs = 1;
         const { handler, service, method } = setupTestHandler(
           testService.method.serverStreaming,
@@ -415,8 +419,8 @@ describe("createHandlerFactory()", function () {
         }
       });
     });
-    describe("exceeding configured maxTimeoutMs", function () {
-      it("should raise an error with code INVALID_ARGUMENT", async function () {
+    describe("exceeding configured maxTimeoutMs", () => {
+      it("should raise an error with code INVALID_ARGUMENT", async () => {
         const maxTimeoutMs = 1000;
         const timeoutMs = 2000;
         let implementationCalled = false;
@@ -452,8 +456,8 @@ describe("createHandlerFactory()", function () {
     });
   });
 
-  describe("shutdown", function () {
-    it("should raise the abort reason", async function () {
+  describe("shutdown", () => {
+    it("should raise the abort reason", async () => {
       const shutdown = new AbortController();
       const { transport, method } = setupTestHandler(
         testService.method.unary,
@@ -485,9 +489,9 @@ describe("createHandlerFactory()", function () {
     });
   });
 
-  describe("request abort signal", function () {
-    describe("with unary RPC", function () {
-      it("should trigger handler context signal", async function () {
+  describe("request abort signal", () => {
+    describe("with unary RPC", () => {
+      it("should trigger handler context signal", async () => {
         let handlerContextSignal: AbortSignal | undefined;
         const { handler, service, method } = setupTestHandler(
           testService.method.unary,
@@ -522,8 +526,8 @@ describe("createHandlerFactory()", function () {
         expect(handlerContextSignal?.reason).toBe("test-reason");
       });
     });
-    describe("with streaming RPC", function () {
-      it("should trigger handler context signal", async function () {
+    describe("with streaming RPC", () => {
+      it("should trigger handler context signal", async () => {
         let handlerContextSignal: AbortSignal | undefined;
         const { handler, service, method } = setupTestHandler(
           testService.method.serverStreaming,
@@ -561,8 +565,8 @@ describe("createHandlerFactory()", function () {
     });
   });
 
-  describe("GET requests", function () {
-    it("should be accepted for eligible RPC", async function () {
+  describe("GET requests", () => {
+    it("should be accepted for eligible RPC", async () => {
       const { handler, service, method } = setupTestHandler(
         testService.method.unaryNoSideEffects,
         {},
@@ -585,7 +589,7 @@ describe("createHandlerFactory()", function () {
     });
   });
 
-  describe("receiving a new JSON field in a request", function () {
+  describe("receiving a new JSON field in a request", () => {
     const OldService = createServiceDesc({
       typeName: "Service",
       method: {
@@ -630,7 +634,7 @@ describe("createHandlerFactory()", function () {
       };
     }
 
-    it("should ignore unknown field by default", async function () {
+    it("should ignore unknown field by default", async () => {
       const { transport } = setupTestHandler({
         jsonOptions: {},
       });
@@ -646,7 +650,7 @@ describe("createHandlerFactory()", function () {
       );
       expect(isMessage(res.message, StringValueSchema)).toBeTrue();
     });
-    it("should reject unknown field if explicitly asked for", async function () {
+    it("should reject unknown field if explicitly asked for", async () => {
       const { transport } = setupTestHandler({
         jsonOptions: {
           ignoreUnknownFields: false,

@@ -170,7 +170,6 @@ export function connectErrorFromH2ResetCode(
         } (0x${rstCode.toString(16)})`,
         Code.PermissionDenied,
       );
-    case H2Code.STREAM_CLOSED:
     default:
       // Intentionally not mapping STREAM_CLOSED (0x5), see https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
       break;

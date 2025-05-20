@@ -21,9 +21,9 @@ import type {
   ConverseRequest,
 } from "./gen/eliza_pb.js";
 import * as esbuild from "esbuild";
-import * as http2 from "http2";
-import { readFileSync } from "fs";
-import { stdout } from "process";
+import * as http2 from "node:http2";
+import { readFileSync } from "node:fs";
+import { stdout } from "node:process";
 
 // Let's implement our RPCs and add them to the Connect router:
 function routes(router: ConnectRouter) {

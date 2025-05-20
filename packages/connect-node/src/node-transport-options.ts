@@ -22,9 +22,9 @@ import { createNodeHttpClient } from "./node-universal-client.js";
 import type { NodeHttp2ClientSessionManager } from "./node-universal-client.js";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import type { Http2SessionOptions } from "./http2-session-manager.js";
-import * as http2 from "http2";
-import * as http from "http";
-import * as https from "https";
+import type * as http2 from "node:http2";
+import type * as http from "node:http";
+import type * as https from "node:https";
 
 /**
  * Options specific to Node.js client transports that support HTTP/2 or HTTP 1.1.

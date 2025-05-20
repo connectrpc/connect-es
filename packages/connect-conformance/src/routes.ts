@@ -110,7 +110,7 @@ export default ({ service }: ConnectRouter) => {
       let reqInfo: ConformancePayload_RequestInfo | undefined =
         createRequestInfo(ctx, [anyReq]);
       for (const res of def?.responseData ?? []) {
-        await wait(def!.responseDelayMs);
+        await wait(def?.responseDelayMs ?? 0);
         yield {
           payload: create(ConformancePayloadSchema, {
             requestInfo: reqInfo,

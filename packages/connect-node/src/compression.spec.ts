@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { ConnectError } from "@connectrpc/connect";
-import * as zlib from "zlib";
+import * as zlib from "node:zlib";
 import { compressionBrotli, compressionGzip } from "./compression.js";
 
 describe("compression", () => {
@@ -30,7 +30,7 @@ describe("compression", () => {
   ];
 
   for (const { compression, payloadCompressed } of table) {
-    describe(compression.name, function () {
+    describe(compression.name, () => {
       it("should compress", async () => {
         const b = await compression.compress(payload);
         expect(b.length < payload.length).toBeTrue();

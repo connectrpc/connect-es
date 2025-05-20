@@ -12,36 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as http from "http";
+import type * as http from "node:http";
 import {
   nodeHeaderToWebHeader,
   webHeaderToNodeHeaders,
 } from "./node-universal-header.js";
 
-describe("nodeHeaderToWebHeader()", function () {
-  it("should accept empty node header", function () {
+describe("nodeHeaderToWebHeader()", () => {
+  it("should accept empty node header", () => {
     const h = nodeHeaderToWebHeader({});
     let numHeaders = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
     expect(numHeaders).toBe(0);
   });
-  it("should skip HTTP/2 pseudo-headers", function () {
+  it("should skip HTTP/2 pseudo-headers", () => {
     const h = nodeHeaderToWebHeader({
       ":path": "ignore",
     });
     let numHeaders = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
     expect(numHeaders).toBe(0);
   });
-  it("should skip undefined values", function () {
+  it("should skip undefined values", () => {
     const h = nodeHeaderToWebHeader({
       undef: undefined,
     });
     let numHeaders = 0;
+    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
     expect(numHeaders).toBe(0);
   });
-  it("should accept string, string[], and number", function () {
+  it("should accept string, string[], and number", () => {
     const h = nodeHeaderToWebHeader({
       string: "string",
       "string-array": ["a", "b", "c"],
@@ -53,14 +56,16 @@ describe("nodeHeaderToWebHeader()", function () {
   });
 });
 
-describe("webHeaderToNodeHeaders()", function () {
+describe("webHeaderToNodeHeaders()", () => {
   it("should accept object literal", () => {
     const h = webHeaderToNodeHeaders({
       foo: "bar",
       Custom: "a, b",
       custom: "c",
     });
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
     expect(h["custom"]).toEqual(["a, b", "c"]);
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
     expect(h["foo"]).toBe("bar");
   });
   it("should accept Headers object", () => {
@@ -70,7 +75,9 @@ describe("webHeaderToNodeHeaders()", function () {
       custom: "c",
     });
     const h = webHeaderToNodeHeaders(input);
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
     expect(h["custom"]).toEqual("a, b, c");
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
     expect(h["foo"]).toBe("bar");
   });
   it("should accept array of name-value pairs", () => {
@@ -79,10 +86,12 @@ describe("webHeaderToNodeHeaders()", function () {
       ["Custom", "b"],
       ["foo", "bar"],
     ]);
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
     expect(h["custom"]).toEqual(["a", "b"]);
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
     expect(h["foo"]).toBe("bar");
   });
-  describe("special handling of set-cookie", function () {
+  describe("special handling of set-cookie", () => {
     // Special handling of set-cookie is available since Node.js v22.0.0, v20.0.0, and v18.14.1.
     it("should accept object literal", () => {
       const h = webHeaderToNodeHeaders({
@@ -115,7 +124,7 @@ describe("webHeaderToNodeHeaders()", function () {
       ]);
     });
   });
-  it("should accept default node headers", function () {
+  it("should accept default node headers", () => {
     const nodeDefaults: http.OutgoingHttpHeaders = {
       a: "a",
       b: ["b1", "b2"],

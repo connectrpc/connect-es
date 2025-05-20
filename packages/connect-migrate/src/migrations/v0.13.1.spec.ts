@@ -17,14 +17,14 @@ import {
   targetVersionConnectQuery,
   v0_13_1,
 } from "./v0.13.1";
-import { PackageJson } from "../lib/package-json";
-import { MigrateOptions } from "../migration";
+import type { PackageJson } from "../lib/package-json";
+import type { MigrateOptions } from "../migration";
 
-describe("migration to v0.13.1", function () {
+describe("migration to v0.13.1", () => {
   const packageJsonWritten: { path: string; pkg: PackageJson }[] = [];
   const lockFilesUpdated: string[] = [];
   let opt: MigrateOptions;
-  beforeEach(function () {
+  beforeEach(() => {
     packageJsonWritten.splice(0);
     lockFilesUpdated.splice(0);
     opt = {
@@ -58,8 +58,8 @@ describe("migration to v0.13.1", function () {
       },
     };
   });
-  describe("from 0.7.0", function () {
-    beforeEach(function () {
+  describe("from 0.7.0", () => {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -102,8 +102,8 @@ describe("migration to v0.13.1", function () {
       expect(lockFilesUpdated.length).toBe(1);
     });
   });
-  describe("from protoc-gen-connect-web", function () {
-    beforeEach(function () {
+  describe("from protoc-gen-connect-web", () => {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -142,8 +142,8 @@ describe("migration to v0.13.1", function () {
       expect(lockFilesUpdated.length).toBe(1);
     });
   });
-  describe("from bufbuild v0.13.0", function () {
-    beforeEach(function () {
+  describe("from bufbuild v0.13.0", () => {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -172,8 +172,8 @@ describe("migration to v0.13.1", function () {
       expect(lockFilesUpdated.length).toBe(1);
     });
   });
-  describe("from bufbuild v0.12.0", function () {
-    beforeEach(function () {
+  describe("from bufbuild v0.12.0", () => {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -202,8 +202,8 @@ describe("migration to v0.13.1", function () {
       expect(lockFilesUpdated.length).toBe(1);
     });
   });
-  describe("from connectrpc v0.13.1", function () {
-    beforeEach(function () {
+  describe("from connectrpc v0.13.1", () => {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",
@@ -219,8 +219,8 @@ describe("migration to v0.13.1", function () {
       expect(v0_13_1.applicable(opt.scanned)).toBeFalse();
     });
   });
-  describe("from connect-query v0.3.0", function () {
-    beforeEach(function () {
+  describe("from connect-query v0.3.0", () => {
+    beforeEach(() => {
       opt.scanned.packageFiles = [
         {
           path: "package.json",

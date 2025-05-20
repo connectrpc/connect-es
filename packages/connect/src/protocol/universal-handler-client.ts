@@ -63,12 +63,11 @@ export function createUniversalHandlerClient(
               },
             };
             if (it.throw !== undefined) {
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- can't handle mutated object sensibly
-              w.throw = (e: unknown) => it.throw!(e);
+              w.throw = (e: unknown) => (it as Required<typeof it>).throw(e);
             }
             if (it.return !== undefined) {
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion,@typescript-eslint/no-explicit-any -- can't handle mutated object sensibly
-              w.return = (value?: any) => it.return!(value);
+              w.return = (value?: unknown) =>
+                (it as Required<typeof it>).return(value);
             }
             return w;
           },

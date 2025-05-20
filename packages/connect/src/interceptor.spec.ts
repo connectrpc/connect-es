@@ -35,11 +35,10 @@ function makeLoggingInterceptor(name: string, log: string[]): Interceptor {
         ...res,
         message: logStream(res),
       };
-    } else {
-      log.push(
-        `${name} response done with trailers: ${listHeaderKeys(res.trailer)}`,
-      );
     }
+    log.push(
+      `${name} response done with trailers: ${listHeaderKeys(res.trailer)}`,
+    );
     return res;
   };
 

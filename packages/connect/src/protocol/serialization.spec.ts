@@ -23,7 +23,7 @@ import { ConnectError } from "../connect-error.js";
 import { StringValueSchema, UInt32ValueSchema } from "@bufbuild/protobuf/wkt";
 import { clone, create, equals, toBinary } from "@bufbuild/protobuf";
 
-describe("createBinarySerialization()", function () {
+describe("createBinarySerialization()", () => {
   const goldenMessage = create(StringValueSchema, { value: "abc" });
   const goldenBytes = toBinary(
     StringValueSchema,
@@ -31,18 +31,18 @@ describe("createBinarySerialization()", function () {
   );
   const ser = createBinarySerialization(StringValueSchema, undefined);
 
-  it("should serialize", function () {
+  it("should serialize", () => {
     const bytes = ser.serialize(goldenMessage);
     expect(bytes).toEqual(goldenBytes);
   });
 
-  it("should parse", function () {
+  it("should parse", () => {
     const message = ser.parse(goldenBytes);
     expect(equals(StringValueSchema, goldenMessage, message)).toBeTrue();
   });
 
-  describe("parsing invalid data", function () {
-    it("should raise connect error", function () {
+  describe("parsing invalid data", () => {
+    it("should raise connect error", () => {
       try {
         ser.parse(new Uint8Array([0xde]));
         fail("expected error");
@@ -54,8 +54,8 @@ describe("createBinarySerialization()", function () {
     });
   });
 
-  describe("serializing invalid data", function () {
-    it("should raise connect error", function () {
+  describe("serializing invalid data", () => {
+    it("should raise connect error", () => {
       const ser = createBinarySerialization(UInt32ValueSchema, undefined);
       const f = create(UInt32ValueSchema, { value: -1 });
       try {
@@ -65,30 +65,30 @@ describe("createBinarySerialization()", function () {
         expect(e).toBeInstanceOf(ConnectError);
         const c = ConnectError.from(e);
         expect(c.message).toBe(
-          "[internal] serialize binary: invalid uint32: -1",
+          "[internal] serialize binary: cannot encode field google.protobuf.UInt32Value.value to binary: invalid uint32: -1",
         );
       }
     });
   });
 });
 
-describe("createJsonSerialization()", function () {
+describe("createJsonSerialization()", () => {
   const goldenMessage = create(StringValueSchema, { value: "abc" });
   const goldenBytes = new TextEncoder().encode(`"abc"`);
   const ser = createJsonSerialization(StringValueSchema, undefined);
 
-  it("should serialize", function () {
+  it("should serialize", () => {
     const bytes = ser.serialize(goldenMessage);
     expect(bytes).toEqual(goldenBytes);
   });
 
-  it("should parse", function () {
+  it("should parse", () => {
     const message = ser.parse(goldenBytes);
     expect(equals(StringValueSchema, goldenMessage, message)).toBeTrue();
   });
 
-  describe("parsing invalid data", function () {
-    it("should raise connect error", function () {
+  describe("parsing invalid data", () => {
+    it("should raise connect error", () => {
       try {
         ser.parse(new Uint8Array([0xde]));
         fail("expected error");
@@ -102,8 +102,8 @@ describe("createJsonSerialization()", function () {
     });
   });
 
-  describe("serializing invalid data", function () {
-    it("should raise connect error", function () {
+  describe("serializing invalid data", () => {
+    it("should raise connect error", () => {
       const f = clone(StringValueSchema, goldenMessage);
       f.value = new Error() as unknown as string;
       try {
@@ -120,7 +120,7 @@ describe("createJsonSerialization()", function () {
   });
 });
 
-describe("limitSerialization()", function () {
+describe("limitSerialization()", () => {
   const ser: Serialization<string> = {
     serialize(data: string): Uint8Array {
       return new TextEncoder().encode(data);
@@ -129,7 +129,7 @@ describe("limitSerialization()", function () {
       return new TextDecoder().decode(data);
     },
   };
-  it("limits serialize", function () {
+  it("limits serialize", () => {
     const limitedSer = limitSerialization(ser, {
       readMaxBytes: 0xffffffff,
       writeMaxBytes: 3,
@@ -142,7 +142,7 @@ describe("limitSerialization()", function () {
       limitedSer.parse(new TextEncoder().encode("abcdef")),
     ).not.toThrowError();
   });
-  it("limits parse", function () {
+  it("limits parse", () => {
     const limitedSer = limitSerialization(ser, {
       readMaxBytes: 3,
       writeMaxBytes: 0xffffffff,
@@ -157,16 +157,16 @@ describe("limitSerialization()", function () {
   });
 });
 
-describe("getJsonOptions()", function () {
-  it("sets ignoreUnknownFields to true if not already set on options object", function () {
+describe("getJsonOptions()", () => {
+  it("sets ignoreUnknownFields to true if not already set on options object", () => {
     const opts = getJsonOptions({ alwaysEmitImplicit: true });
     expect(opts.ignoreUnknownFields).toBeTrue();
   });
-  it("sets ignoreUnknownFields to true if undefined is passed", function () {
+  it("sets ignoreUnknownFields to true if undefined is passed", () => {
     const opts = getJsonOptions(undefined);
     expect(opts.ignoreUnknownFields).toBeTrue();
   });
-  it("doesn't change ignoreUnknownFields if already set", function () {
+  it("doesn't change ignoreUnknownFields if already set", () => {
     const opts = getJsonOptions({ ignoreUnknownFields: false });
     expect(opts.ignoreUnknownFields).toBeFalse();
   });

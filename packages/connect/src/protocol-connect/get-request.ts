@@ -29,9 +29,8 @@ const contentTypePrefix = "application/";
 function encodeMessageForUrl(message: Uint8Array, useBase64: boolean): string {
   if (useBase64) {
     return base64Encode(message, "url");
-  } else {
-    return encodeURIComponent(new TextDecoder().decode(message));
   }
+  return encodeURIComponent(new TextDecoder().decode(message));
 }
 
 /**
@@ -65,15 +64,17 @@ export function transformConnectPostToGetRequest<
   query += "&message=" + encodeMessageForUrl(message, useBase64);
   const url = request.url + query;
 
-  // Omit headers that are not used for unary GET requests.
   const header = new Headers(request.header);
-  [
+  // Omit headers that are not used for unary GET requests.
+  for (const h of [
     headerProtocolVersion,
     headerContentType,
     headerUnaryContentLength,
     headerUnaryEncoding,
     headerUnaryAcceptEncoding,
-  ].forEach((h) => header.delete(h));
+  ]) {
+    header.delete(h);
+  }
   return {
     ...request,
     requestMethod: "GET",

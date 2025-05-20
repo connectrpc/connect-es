@@ -16,7 +16,7 @@ import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import { createMethodUrl } from "./create-method-url.js";
 
-describe("createMethodUrl()", function () {
+describe("createMethodUrl()", () => {
   const testService = createServiceDesc({
     typeName: "example.Service",
     method: {
@@ -27,7 +27,7 @@ describe("createMethodUrl()", function () {
       },
     },
   });
-  it("should create the expected URL", function () {
+  it("should create the expected URL", () => {
     const url = createMethodUrl(
       "https://example.com",
       testService.method.method,
@@ -36,19 +36,19 @@ describe("createMethodUrl()", function () {
       "https://example.com/example.Service/Method",
     );
   });
-  it("should accept empty string as baseUrl", function () {
+  it("should accept empty string as baseUrl", () => {
     const url = createMethodUrl("", testService.method.method);
     expect(url.toString()).toEqual("/example.Service/Method");
   });
-  it("should accept '/' as baseUrl", function () {
+  it("should accept '/' as baseUrl", () => {
     const url = createMethodUrl("/", testService.method.method);
     expect(url.toString()).toEqual("/example.Service/Method");
   });
-  it("should handle protocol-relative baseUrl", function () {
+  it("should handle protocol-relative baseUrl", () => {
     const url = createMethodUrl("//example.com", testService.method.method);
     expect(url.toString()).toEqual("//example.com/example.Service/Method");
   });
-  it("should not duplicating slashes", function () {
+  it("should not duplicating slashes", () => {
     const url = createMethodUrl(
       "https://example.com/",
       testService.method.method,
@@ -57,7 +57,7 @@ describe("createMethodUrl()", function () {
       "https://example.com/example.Service/Method",
     );
   });
-  it("should merge paths", function () {
+  it("should merge paths", () => {
     const url = createMethodUrl(
       "https://example.com/twirp",
       testService.method.method,
@@ -66,7 +66,7 @@ describe("createMethodUrl()", function () {
       "https://example.com/twirp/example.Service/Method",
     );
   });
-  it("should merge paths without duplicating slashes", function () {
+  it("should merge paths without duplicating slashes", () => {
     const url = createMethodUrl(
       "https://example.com/twirp/",
       testService.method.method,

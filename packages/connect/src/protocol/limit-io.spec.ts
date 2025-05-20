@@ -14,8 +14,8 @@
 
 import { validateReadWriteMaxBytes } from "./limit-io.js";
 
-describe("validateReadWriteMaxBytes()", function () {
-  it("should set defaults", function () {
+describe("validateReadWriteMaxBytes()", () => {
+  it("should set defaults", () => {
     const o = validateReadWriteMaxBytes(undefined, undefined, undefined);
     expect(o).toEqual({
       readMaxBytes: 0xffffffff,
@@ -23,7 +23,7 @@ describe("validateReadWriteMaxBytes()", function () {
       compressMinBytes: 1024,
     });
   });
-  it("should accept inputs", function () {
+  it("should accept inputs", () => {
     const o = validateReadWriteMaxBytes(666, 777, 888);
     expect(o).toEqual({
       readMaxBytes: 666,
@@ -31,7 +31,7 @@ describe("validateReadWriteMaxBytes()", function () {
       compressMinBytes: 888,
     });
   });
-  it("should assert sane limits for readMaxBytes", function () {
+  it("should assert sane limits for readMaxBytes", () => {
     expect(() =>
       validateReadWriteMaxBytes(-1, undefined, undefined),
     ).toThrowError("[internal] readMaxBytes -1 must be >= 1 and <= 4294967295");
@@ -41,7 +41,7 @@ describe("validateReadWriteMaxBytes()", function () {
       "[internal] readMaxBytes 4294967296 must be >= 1 and <= 4294967295",
     );
   });
-  it("should assert sane limits for writeMaxBytes", function () {
+  it("should assert sane limits for writeMaxBytes", () => {
     expect(() =>
       validateReadWriteMaxBytes(undefined, -1, undefined),
     ).toThrowError(

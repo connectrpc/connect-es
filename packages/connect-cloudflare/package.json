@@ -5,9 +5,9 @@
   "scripts": {
     "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v tsx ./conformance/server.ts",
     "conformance:client": "npx wrangler deploy -c ./conformance/wrangler-client.toml && connectconformance --mode client --conf ./conformance/conformance-cloudflare-client.yaml -v --known-failing @./conformance/known-failing-client.txt --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY  -- tsx ./conformance/client.ts",
-    "format": "prettier --write --ignore-unknown '.'",
+    "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "eslint --max-warnings 0 ."
+    "lint": "biome lint --error-on-warnings"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.2.0",
@@ -17,7 +17,7 @@
   "devDependencies": {
     "wrangler": "^3.107.2",
     "@cloudflare/workers-types": "^4.20250124.3",
-    "tsx": "^4.19.2",
+    "tsx": "^4.19.4",
     "@connectrpc/connect-conformance": "^2.0.2"
   }
 }

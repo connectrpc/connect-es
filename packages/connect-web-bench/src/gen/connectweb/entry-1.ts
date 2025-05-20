@@ -16,8 +16,6 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient } from "@connectrpc/connect";
 import { CommitService } from "./buf/registry/module/v1/commit_service_pb";
 
-/* eslint-disable no-console */
-
 /**
  * Calls 1 RPCs with Connect-Web
  */

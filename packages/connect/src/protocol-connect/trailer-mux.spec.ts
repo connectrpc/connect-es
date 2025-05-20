@@ -20,7 +20,7 @@ function listHeaderKeys(header: Headers): string[] {
   return keys;
 }
 
-describe("trailer-mux", function () {
+describe("trailer-mux", () => {
   let headers: Headers, trailers: Headers, combined: Headers;
   beforeEach(() => {
     headers = new Headers({
@@ -34,7 +34,7 @@ describe("trailer-mux", function () {
       "Trailer-Buf": "buf.build",
     });
   });
-  describe("muxing()", function () {
+  describe("muxing()", () => {
     it("should return an empty headers object when headers and trailers are empty", () => {
       const muxed = trailerMux(new Headers(), new Headers());
       expect(listHeaderKeys(muxed)).toEqual([]);
@@ -49,7 +49,7 @@ describe("trailer-mux", function () {
     });
   });
 
-  describe("demuxing()", function () {
+  describe("demuxing()", () => {
     it("should return two empty header objects when the muxed object is empty", () => {
       const [gotHeader, gotTrailer] = trailerDemux(new Headers());
 

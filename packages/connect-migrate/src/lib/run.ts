@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { spawnSync } from "node:child_process";
-import { Logger } from "./logger";
+import type { Logger } from "./logger";
 import { basename, dirname } from "node:path";
 import { lockFilenameNpm, lockFilenamePnpm, lockFilenameYarn } from "./scan";
 
