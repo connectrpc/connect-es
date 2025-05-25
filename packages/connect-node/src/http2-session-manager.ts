@@ -120,8 +120,11 @@ export class Http2SessionManager {
    *   The connection is closed because of a transient error. A connection
    *   may have failed to reach the host, or the connection may have died,
    *   or it may have been aborted.
+   *
+   * - "unavailable"
+   *   The connection is open, but the ALPN protocol failed to negotiate HTTP/2.
    */
-  state(): "closed" | "connecting" | "open" | "idle" | "verifying" | "error" {
+  state(): "closed" | "connecting" | "open" | "idle" | "verifying" | "error" | "unavailable" {
     if (this.s.t == "ready") {
       if (this.verifying !== undefined) {
         return "verifying";
@@ -142,7 +145,7 @@ export class Http2SessionManager {
     return undefined;
   }
 
-  private s: StateClosed | StateError | StateConnecting | StateReady = closed();
+  private s: StateClosed | StateError | StateConnecting | StateReady | StateUnavailable = closed();
 
   private shuttingDown: StateReady[] = [];
 
@@ -280,6 +283,12 @@ export class Http2SessionManager {
       if (this.s.t === "error") {
         throw this.s.reason;
       }
+      if (this.s.t === "unavailable") {
+        throw new ConnectError(
+          "expected h2 session, but ALPN protocol failed to negotiate",
+          Code.Unavailable,
+        );
+      }
       if (this.s.t === "connecting") {
         await this.s.conn;
       }
@@ -289,7 +298,7 @@ export class Http2SessionManager {
 
   private setState(
     this: Http2SessionManager,
-    state: StateClosed | StateError | StateConnecting | StateReady,
+    state: StateClosed | StateError | StateConnecting | StateReady | StateUnavailable,
   ): void {
     this.s.onExitState?.();
     if (this.s.t == "ready" && this.s.isShuttingDown()) {
@@ -321,6 +330,8 @@ export class Http2SessionManager {
       case "closed":
         break;
       case "error":
+        break;
+      case "unavailable":
         break;
     }
     this.s = state;
@@ -417,6 +428,13 @@ interface StateConnecting extends StateCommon {
    * established, but rejects if the connection failed or the state was aborted.
    */
   readonly conn: Promise<http2.ClientHttp2Session>;
+}
+
+/**
+ * HTTP/2 unavailable
+ */
+interface StateUnavailable extends StateCommon {
+  readonly t: "unavailable";
 }
 
 function connect(
@@ -533,12 +551,18 @@ interface StateReady extends StateCommon {
 function ready(
   conn: http2.ClientHttp2Session,
   options: Required<Http2SessionOptions>,
-): StateReady {
+): StateReady | StateUnavailable {
   // Users have reported an error "The session has been destroyed" raised
   // from H2SessionManager.request(), see https://github.com/connectrpc/connect-es/issues/683
   // This assertion will show whether the session already died in the
   // "connecting" state.
   assertSessionOpen(conn);
+
+  if (conn.alpnProtocol !== 'h2') {
+    return {
+      t: "unavailable"
+    } as StateUnavailable;
+  }
 
   // Do not block Node.js from exiting on an idle connection.
   // Note that we ref() again for the first stream to open, and unref() again
