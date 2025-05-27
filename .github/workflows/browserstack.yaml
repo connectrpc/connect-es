@@ -27,7 +27,7 @@ jobs:
       - name: Check credentials
         id: credentials
         shell: bash
-        run: (test -n "${BROWSERSTACK_USERNAME}" && echo present=1 || echo present=0) >> $GITHUB_OUTPUT
+        run: (test -n "${BROWSERSTACK_USERNAME_XXX}" && echo present=1 || echo present=0) >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
         if: (steps.credentials.outputs.present == '1')
       - uses: actions/setup-node@v4
