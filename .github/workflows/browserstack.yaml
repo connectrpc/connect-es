@@ -17,9 +17,10 @@ env:
 
 jobs:
   browserstack:
-    name: "Test @connectrpc/connect-web"
+    name: "Test @connectrpc/connect-web on Browserstack"
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    if: ${{ secrets.BROWSERSTACK_USERNAME != '' && secrets.BROWSERSTACK_ACCESS_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
