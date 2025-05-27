@@ -41,51 +41,12 @@ export const config = {
         args: ["--headless", "--disable-gpu"],
       },
     },
-    {
-      browserName: "Safari",
-      "bstack:options": {
-        osVersion: "13",
-        deviceName: "iPhone 11",
-      },
-    },
-    {
-      browserName: "Safari",
-      "bstack:options": {
-        os: "OS X",
-        osVersion: "Big Sur",
-        browserVersion: "14.1",
-      },
-    },
-    {
-      browserName: "Safari",
-      "bstack:options": {
-        os: "OS X",
-        osVersion: "Catalina",
-        browserVersion: "13.1",
-      },
-    },
-    {
-      browserName: "Safari",
-      "bstack:options": {
-        os: "OS X",
-        osVersion: "Mojave",
-        browserVersion: "12.1",
-      },
-    },
-    {
+     {
       browserName: "Safari",
       "bstack:options": {
         os: "OS X",
         osVersion: "High Sierra",
         browserVersion: "11.1",
-      },
-    },
-    {
-      browserName: "Chrome",
-      "bstack:options": {
-        os: "Windows",
-        osVersion: "10",
-        browserVersion: "66.0",
       },
     },
     {
@@ -96,6 +57,46 @@ export const config = {
         browserVersion: "67.0",
       },
     },
+    // The following browsers are disabled to limit CI failures caused by browserstack's maximum queue size.
+    // {
+    //   browserName: "Safari",
+    //   "bstack:options": {
+    //     osVersion: "13",
+    //     deviceName: "iPhone 11",
+    //   },
+    // },
+    // {
+    //   browserName: "Safari",
+    //   "bstack:options": {
+    //     os: "OS X",
+    //     osVersion: "Big Sur",
+    //     browserVersion: "14.1",
+    //   },
+    // },
+    // {
+    //   browserName: "Safari",
+    //   "bstack:options": {
+    //     os: "OS X",
+    //     osVersion: "Catalina",
+    //     browserVersion: "13.1",
+    //   },
+    // },
+    // {
+    //   browserName: "Safari",
+    //   "bstack:options": {
+    //     os: "OS X",
+    //     osVersion: "Mojave",
+    //     browserVersion: "12.1",
+    //   },
+    // },
+    // {
+    //   browserName: "Chrome",
+    //   "bstack:options": {
+    //     os: "Windows",
+    //     osVersion: "10",
+    //     browserVersion: "66.0",
+    //   },
+    // },
   ],
   services: [["browserstack"]],
   specs: [["./*.spec.ts"]],
