@@ -41,7 +41,7 @@ export const config = {
         args: ["--headless", "--disable-gpu"],
       },
     },
-     {
+    {
       browserName: "Safari",
       "bstack:options": {
         os: "OS X",
