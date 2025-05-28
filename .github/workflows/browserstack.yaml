@@ -17,23 +17,34 @@ env:
 
 jobs:
   browserstack:
-    name: "Test @connectrpc/connect-web"
+    name: "Test @connectrpc/connect-web on Browserstack"
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
     steps:
+      - name: Check credentials
+        id: credentials
+        shell: bash
+        # Job and step conditions do not have access to secrets or the environment.
+        # This step makes presence of the browserstack credentials available as a step output.
+        run: (test -n "${BROWSERSTACK_USERNAME}" && echo present=1 || echo present=0) >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
+        if: (steps.credentials.outputs.present == '1')
       - uses: actions/setup-node@v4
+        if: (steps.credentials.outputs.present == '1')
         with:
           node-version-file: .nvmrc
       - uses: actions/cache@v4
+        if: (steps.credentials.outputs.present == '1')
         with:
           path: .turbo
           key: ${{ runner.os }}/browserstack/${{ github.sha }}
           restore-keys: ${{ runner.os }}/browserstack
       - name: NPM Install
+        if: (steps.credentials.outputs.present == '1')
         run: npm ci
       - name: Browserstack
-        env:
-          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
-          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        if: (steps.credentials.outputs.present == '1')
         run: npx turbo run test-browserstack --output-logs new-only --log-order stream
