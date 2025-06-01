@@ -8,6 +8,6 @@
     "@connectrpc/connect-conformance": "*",
     "@connectrpc/example": "*",
     "@types/node": "22.15.3",
-    "typescript": "5.1.x"
+    "typescript": "5.8.x"
   }
 }
