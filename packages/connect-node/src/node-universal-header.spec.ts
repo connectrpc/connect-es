@@ -145,6 +145,7 @@ describe("webHeaderToNodeHeaders()", () => {
     });
   });
   it("should accept default node headers array", () => {
+    // biome-ignore format: headers array is contiguous
     const nodeDefaults: string[] = [
       "a", "a",
       "b", "b1",
