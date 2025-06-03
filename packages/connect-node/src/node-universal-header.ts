@@ -54,30 +54,48 @@ export function nodeHeaderToWebHeader(
 /**
  * Convert a fetch API Headers object to a Node.js headers object.
  *
- * Optionally accepts default Node.js headers. If provided, fetch API headers
- * are appended to the defaults. The original defaults headers are not modified.
+ * Optionally accepts default Node.js headers as a dict or an array.
+ * If provided, fetch API headers are appended to the defaults.
+ * The original defaults headers are not modified.
  */
 export function webHeaderToNodeHeaders(
   headersInit: HeadersInit,
-  defaultNodeHeaders?: http.OutgoingHttpHeaders,
+  defaultNodeHeaders?: http.OutgoingHttpHeaders | readonly string[],
 ): http.OutgoingHttpHeaders;
 export function webHeaderToNodeHeaders(
   headersInit: HeadersInit | undefined,
 ): http.OutgoingHttpHeaders | undefined;
 export function webHeaderToNodeHeaders(
   headersInit: HeadersInit | undefined,
-  defaultNodeHeaders?: http.OutgoingHttpHeaders,
+  defaultNodeHeaders?: http.OutgoingHttpHeaders | readonly string[],
 ): http.OutgoingHttpHeaders | undefined {
   if (headersInit === undefined && defaultNodeHeaders === undefined) {
     return undefined;
   }
   const o = Object.create(null) as http.OutgoingHttpHeaders;
   if (defaultNodeHeaders !== undefined) {
-    for (const [key, value] of Object.entries(defaultNodeHeaders)) {
-      if (Array.isArray(value)) {
-        o[key] = value.concat();
-      } else if (value !== undefined) {
-        o[key] = value;
+    if (Array.isArray(defaultNodeHeaders)) {
+      // headers may be an Array where the keys and values are in the same list.
+      // It is _not_ a list of tuples. So, the even-numbered offsets are key values,
+      // and the odd-numbered offsets are the associated values.
+      for (let i = 0; i + 1 < defaultNodeHeaders.length; i += 2) {
+        const key = defaultNodeHeaders[i];
+        const value = defaultNodeHeaders[i + 1];
+        if (Array.isArray(o[key])) {
+          o[key].push(value);
+        } else if (typeof o[key] == "string") {
+          o[key] = [o[key], value];
+        } else {
+          o[key] = value;
+        }
+      }
+    } else {
+      for (const [key, value] of Object.entries(defaultNodeHeaders)) {
+        if (Array.isArray(value)) {
+          o[key] = value.concat();
+        } else if (value !== undefined) {
+          o[key] = value;
+        }
       }
     }
   }
