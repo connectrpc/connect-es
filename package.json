@@ -35,10 +35,10 @@
     "copyrightHolder": "The Connect Authors"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.4",
+    "@arethetypeswrong/cli": "^0.18.1",
     "@biomejs/biome": "^1.9.4",
     "@bufbuild/license-header": "^0.0.4",
-    "turbo": "^2.5.2",
+    "turbo": "^2.5.4",
     "typescript": "5.8.3"
   }
 }

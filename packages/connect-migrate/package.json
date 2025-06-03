@@ -25,8 +25,8 @@
   "dependencies": {
     "fast-glob": "3.3.3",
     "jscodeshift": "17.3.0",
-    "semver": "^7.7.0",
-    "yaml": "^2.7.1"
+    "semver": "^7.7.2",
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@types/jscodeshift": "17.3.0",
