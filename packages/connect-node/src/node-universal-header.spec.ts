@@ -144,4 +144,25 @@ describe("webHeaderToNodeHeaders()", () => {
       d: ["d1", "d2"],
     });
   });
+  it("should accept default node headers array", () => {
+    const nodeDefaults: string[] = [
+      "a", "a",
+      "b", "b1",
+      "b", "b2",
+      "c", "123",
+    ];
+    const webHeaders: HeadersInit = [
+      ["b", "web"],
+      ["c", "456"],
+      ["d", "d1"],
+      ["d", "d2"],
+    ];
+    const h = webHeaderToNodeHeaders(webHeaders, nodeDefaults);
+    expect(h).toEqual({
+      a: "a",
+      b: ["b1", "b2", "web"],
+      c: ["123", "456"],
+      d: ["d1", "d2"],
+    });
+  });
 });
