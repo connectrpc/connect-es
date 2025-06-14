@@ -12,7 +12,6 @@
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm",
-    "conformance:safari": "npm run conformance:safari:promise && npm run conformance:client:safari:callback",
     "conformance:safari:promise": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser safari",
     "conformance:safari:callback": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser safari --useCallbackClient",
     "conformance:chrome:promise": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser chrome",
@@ -40,8 +39,8 @@
     }
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.53.0",
-    "@bufbuild/protoc-gen-es": "^2.2.5",
+    "@bufbuild/buf": "^1.54.0",
+    "@bufbuild/protoc-gen-es": "^2.5.1",
     "@connectrpc/connect-conformance": "^2.0.2",
     "@wdio/jasmine-framework": "^9.12.7",
     "@wdio/cli": "^9.12.7",

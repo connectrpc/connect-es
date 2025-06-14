@@ -16,32 +16,7 @@ env:
   DO_NOT_TRACK: 1
 
 jobs:
-  browser:
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chrome, safari, firefox]
-        client: [promise, callback]
-        include:
-          - os: ubuntu-22.04
-          - browser: safari
-            os: macos-13
-    runs-on: ${{ matrix.os }}
-    name: "${{ matrix.browser }} ${{ matrix.client }}"
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: "npm"
-      - uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}/web-conformance/${{ github.sha }}
-          restore-keys: ${{ runner.os }}/web-conformance
-      - run: npm ci
-      - run: npx turbo run conformance:${{matrix.browser}}:${{matrix.client}} --filter '@connectrpc/connect-web' --output-logs new-only --log-order stream
+  # Conformance tests for @connectrpc/connect-web clients run only on Node.js in CI
   node:
     runs-on: ubuntu-22.04
     strategy:
