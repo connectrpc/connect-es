@@ -39,7 +39,7 @@
     }
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.54.0",
+    "@bufbuild/buf": "^1.55.1",
     "@bufbuild/protoc-gen-es": "^2.5.1",
     "@connectrpc/connect-conformance": "^2.0.2",
     "@wdio/jasmine-framework": "^9.12.7",
