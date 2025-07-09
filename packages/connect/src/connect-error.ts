@@ -102,8 +102,8 @@ export class ConnectError extends Error {
    * Convert any value - typically a caught error into a ConnectError,
    * following these rules:
    * - If the value is already a ConnectError, return it as is.
-   * - If the value is an AbortError from the fetch API, return the message
-   *   of the AbortError with code Canceled.
+   * - If the value is an AbortError or TimeoutError from the fetch API, return
+   *   the message of the error with code Canceled.
    * - For other Errors, return the error message with code Unknown by default.
    * - For other values, return the values String representation as a message,
    *   with the code Unknown by default.
@@ -115,10 +115,9 @@ export class ConnectError extends Error {
       return reason;
     }
     if (reason instanceof Error) {
-      if (reason.name == "AbortError") {
-        // Fetch requests can only be canceled with an AbortController.
-        // We detect that condition by looking at the name of the raised
-        // error object, and translate to the appropriate status code.
+      if (reason.name == "AbortError" || reason.name == "TimeoutError") {
+        // Fetch requests can only be canceled with an AbortController,
+        // or with AbortSignal.timeout().
         return new ConnectError(reason.message, Code.Canceled);
       }
       return new ConnectError(

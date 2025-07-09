@@ -155,6 +155,20 @@ describe("ConnectError", () => {
       expect(got.rawMessage).toBe("Not permitted");
       expect(got.cause).toBe(error);
     });
+    it("wraps AbortError with code canceled", () => {
+      // abort() on AbortSignal aborts with a AbortError
+      const error: unknown = new DOMException("foo", "AbortError");
+      const got = ConnectError.from(error);
+      expect(got.code).toBe(Code.Canceled);
+      expect(got.rawMessage).toBe("foo");
+    });
+    it("wraps TimeoutError with code canceled", () => {
+      // AbortSignal.timeout() aborts with a TimeoutError
+      const error: unknown = new DOMException("foo", "TimeoutError");
+      const got = ConnectError.from(error);
+      expect(got.code).toBe(Code.Canceled);
+      expect(got.rawMessage).toBe("foo");
+    });
   });
   describe("instanceof", () => {
     it("works for the actual ConnectError", () => {
