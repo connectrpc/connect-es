@@ -39,7 +39,7 @@ export type {
   HandlerContext,
 } from "./implementation.js";
 export { createConnectRouter } from "./router.js";
-export type { ConnectRouter, ConnectRouterOptions } from "./router.js";
+export type { ConnectRouter, ConnectRouterOptions, RouteFn } from "./router.js";
 export { createHandlerContext } from "./implementation.js";
 export { cors } from "./cors.js";
 export { createContextKey, createContextValues } from "./context-values.js";
