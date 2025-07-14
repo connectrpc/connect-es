@@ -13,10 +13,6 @@
     "conformance": {
       "dependsOn": ["conformance:node:promise", "conformance:node:callback"]
     },
-    "conformance:safari": {
-      "cache": false,
-      "dependsOn": ["^build"]
-    },
     "conformance:safari:promise": {
       "cache": false,
       "dependsOn": ["^build"]

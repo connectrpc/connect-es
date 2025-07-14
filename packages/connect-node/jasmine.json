@@ -4,6 +4,7 @@
   "helpers": [],
   "env": {
     "stopSpecOnExpectationFailure": false,
-    "random": true
+    "random": true,
+    "defaultTimeoutInterval": 10000
   }
 }

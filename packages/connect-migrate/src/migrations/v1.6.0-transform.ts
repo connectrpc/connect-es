@@ -26,6 +26,7 @@ const toType = "Client";
 const transform: j.Transform = (file, { j }, options) => {
   const root = j(file.source);
   // import { createPromiseClient [as <local>]) } from "@connectrpc/connect";
+  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root
     .find(j.ImportDeclaration, {
       source: { value: importPath },
@@ -36,27 +37,30 @@ const transform: j.Transform = (file, { j }, options) => {
       ],
     })
     .forEach((path) => {
+      // biome-ignore lint/complexity/noForEach: not alternative to forEach available
       path.value.specifiers?.forEach((s) => {
         s = s as j.ImportSpecifier;
-        if (![fromFunction, fromType].includes(s.imported.name)) {
+        const importedName = identifierToString(s.imported);
+        if (![fromFunction, fromType].includes(importedName)) {
           return;
         }
         // import { createPromiseClient as <local> } from "@connectrpc/connect";
         //
         // We should just rename createPromiseClient here and user code will continue to use local.
         if (s.local?.loc !== s.imported.loc) {
-          s.imported.name = s.imported.name === fromType ? toType : toFunction;
+          s.imported.name = importedName === fromType ? toType : toFunction;
           return;
         }
         replace(
           root,
-          s.imported.name,
-          s.imported.name === fromType ? toType : toFunction,
+          importedName,
+          importedName === fromType ? toType : toFunction,
         );
       });
     });
   // import * as connect from "@connectrpc/connect";
   // import connect from "@connectrpc/connect";
+  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root
     .find(j.ImportDeclaration, {
       source: { value: importPath },
@@ -68,14 +72,15 @@ const transform: j.Transform = (file, { j }, options) => {
         ) ?? false,
     })
     .forEach((path) => {
+      // biome-ignore lint/complexity/noForEach: not alternative to forEach available
       path.value.specifiers?.forEach((s) => {
         s = s as j.ImportNamespaceSpecifier | j.ImportDefaultSpecifier;
-        const qualifier = s.local?.name;
-        if (qualifier === undefined) {
+        const qualifier = s.local;
+        if (qualifier === undefined || qualifier === null) {
           return;
         }
-        replace(root, fromType, toType, qualifier);
-        replace(root, fromFunction, toFunction, qualifier);
+        replace(root, fromType, toType, identifierToString(qualifier));
+        replace(root, fromFunction, toFunction, identifierToString(qualifier));
       });
     });
   // require("@connectrpc/connect")
@@ -92,6 +97,7 @@ const transform: j.Transform = (file, { j }, options) => {
     ],
   } as const;
   // const ... = require("@connectrpc/connect");
+  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root.find(j.VariableDeclarator, { init: requireCall }).forEach((path) => {
     // const connect = require("@connectrpc/connect");
     if (path.value.id.type === "Identifier") {
@@ -120,6 +126,7 @@ const transform: j.Transform = (file, { j }, options) => {
   });
   // let connect;
   // connect = require("@connectrpc/connect");
+  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root.find(j.AssignmentExpression, { right: requireCall }).forEach((path) => {
     if (path.value.left.type === "Identifier") {
       replace(root, fromType, toType, path.value.left.name);
@@ -137,12 +144,14 @@ function replace(
   qualifier?: string,
 ) {
   if (qualifier === undefined) {
-    root
-      .find(j.Identifier, { name: from })
-      .forEach((path) => (path.value.name = to));
+    // biome-ignore lint/complexity/noForEach: not alternative to forEach available
+    root.find(j.Identifier, { name: from }).forEach((path) => {
+      path.value.name = to;
+    });
     return;
   }
   // connect.createPromiseClient
+  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root
     .find(j.MemberExpression, {
       object: { type: "Identifier", name: qualifier },
@@ -152,6 +161,7 @@ function replace(
       (path.value.property as j.Identifier).name = to;
     });
   // typeof connect.createPromiseClient
+  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root
     .find(j.TSQualifiedName, {
       left: { type: "Identifier", name: qualifier },
@@ -160,6 +170,18 @@ function replace(
     .forEach((path) => {
       (path.value.right as j.Identifier).name = to;
     });
+}
+
+function identifierToString(
+  ident: string | j.Identifier | j.JSXIdentifier | j.TSTypeParameter,
+): string {
+  if (typeof ident == "string") {
+    return ident;
+  }
+  if (ident.type == "TSTypeParameter") {
+    return identifierToString(ident.name);
+  }
+  return ident.name;
 }
 
 export default transform;

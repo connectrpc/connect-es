@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Scanned } from "./scan";
-import { CommandLineArgs } from "../arguments";
-import { Logger, PrintFn } from "./logger";
+import type { Scanned } from "./scan";
+import type { CommandLineArgs } from "../arguments";
+import type { Logger, PrintFn } from "./logger";
 import { runInstall } from "./run";
 
 interface MigrateLockFilesResult {

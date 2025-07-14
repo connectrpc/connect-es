@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as http2 from "http2";
+import * as http2 from "node:http2";
 import {
   createContextKey,
   createContextValues,
@@ -30,9 +30,8 @@ import type {
   ConverseRequestSchema,
 } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
 import type { MessageInitShape } from "@bufbuild/protobuf";
-/* eslint-disable @typescript-eslint/require-await */
 
-describe("node readme", function () {
+describe("node readme", () => {
   const optionsHttp2 = {
     baseUrl: "https://demo.connectrpc.com",
     httpVersion: "2" as const,
@@ -42,7 +41,7 @@ describe("node readme", function () {
     httpVersion: "1.1" as const,
   };
 
-  it("createConnectTransport()", async function () {
+  it("createConnectTransport()", async () => {
     // A transport for clients using the gRPC protocol with Node.js `http` module
     const transport = createConnectTransport({
       baseUrl: "https://demo.connectrpc.com",
@@ -53,7 +52,7 @@ describe("node readme", function () {
     expect(sentence).toBeDefined();
   });
 
-  it("createGrpcTransport()", async function () {
+  it("createGrpcTransport()", async () => {
     // A transport for clients using the gRPC protocol with Node.js `http2` module
     const transport = createGrpcTransport(optionsHttp2);
     const client = createClient(ElizaService, transport);
@@ -61,7 +60,7 @@ describe("node readme", function () {
     expect(sentence).toBeDefined();
   });
 
-  it("createGrpcWebTransport()", async function () {
+  it("createGrpcWebTransport()", async () => {
     // A transport for clients using the gRPC-web protocol with Node.js `http` module
     const transport = createGrpcWebTransport(optionsHttp1);
     const client = createClient(ElizaService, transport);
@@ -69,7 +68,7 @@ describe("node readme", function () {
     expect(sentence).toBeDefined();
   });
 
-  it("should work as well", async function () {
+  it("should work as well", async () => {
     let port = -1;
 
     function routes(router: ConnectRouter) {
@@ -106,7 +105,7 @@ describe("node readme", function () {
     server.close();
   });
 
-  it("using context value", async function () {
+  it("using context value", async () => {
     let port = -1;
 
     const kUser = createContextKey<string | undefined>(undefined);
@@ -151,7 +150,7 @@ describe("node readme", function () {
     server.close();
   });
 
-  it("using writable iterable", async function () {
+  it("using writable iterable", async () => {
     let port = -1;
 
     function routes(router: ConnectRouter) {

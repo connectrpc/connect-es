@@ -6,12 +6,14 @@ It uses the [conformance runner](https://github.com/connectrpc/conformance/relea
 
 ## Running conformance tests
 
-Tests run in the following environments:
+Tests can run in the following environments:
 
 - Chrome
 - Firefox
 - Safari (only if running in OSX. Safari requires users to enable the "Allow Remote Automation" option in Safari's Develop menu)
 - Node.js
+
+Browsers are instrumented with [webdriverio](https://webdriver.io/).
 
 For every environment, two client flavors are available:
 
@@ -21,6 +23,8 @@ For every environment, two client flavors are available:
 For every combination, a task is available:
 
 `npx turbo run conformance:<chrome|firefox|safari|node>:<promise|callback>`
+
+Note tests only run on Node.js in CI, or with the `conformance` task.
 
 ## Using a local browser
 

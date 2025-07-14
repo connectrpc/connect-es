@@ -31,7 +31,7 @@ import { contentTypeProto } from "./content-type.js";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
-describe("createHandlerFactory()", function () {
+describe("createHandlerFactory()", () => {
   const testService = createServiceDesc({
     typeName: "TestService",
     method: {
@@ -72,8 +72,8 @@ describe("createHandlerFactory()", function () {
     };
   }
 
-  describe("returned handler", function () {
-    it("should surface headers for unary", async function () {
+  describe("returned handler", () => {
+    it("should surface headers for unary", async () => {
       const { transport, method } = setupTestHandler(
         testService.method.unary,
         {},
@@ -93,7 +93,7 @@ describe("createHandlerFactory()", function () {
       expect(r.message.value).toBe("123");
     });
 
-    it("should surface headers for server-streaming", async function () {
+    it("should surface headers for server-streaming", async () => {
       const { transport, method } = setupTestHandler(
         testService.method.serverStreaming,
         {},
@@ -115,11 +115,15 @@ describe("createHandlerFactory()", function () {
       expect(all.length).toBe(1);
       expect(all[0].value).toBe("123");
     });
-    it("should propagate errors back to the handler", async function () {
+    it("should propagate errors back to the handler", async () => {
       let resolve: (e: unknown) => void;
-      const catchError = new Promise<unknown>((r) => (resolve = r));
+      const catchError = new Promise<unknown>((r) => {
+        resolve = r;
+      });
       let abortResolve: () => void;
-      const abortCalled = new Promise<void>((r) => (abortResolve = r));
+      const abortCalled = new Promise<void>((r) => {
+        abortResolve = r;
+      });
       const { handler } = setupTestHandler(
         testService.method.serverStreaming,
         {},
@@ -130,7 +134,7 @@ describe("createHandlerFactory()", function () {
             yield { value: `${req.value}` };
             fail("expected error");
           } catch (e: unknown) {
-            resolve!(e);
+            resolve?.(e);
           }
         },
       );
@@ -151,17 +155,17 @@ describe("createHandlerFactory()", function () {
         signal: new AbortController().signal,
       });
       expect(res.body).toBeDefined();
-      const it = res.body![Symbol.asyncIterator]();
-      await it.next();
+      const it = res.body?.[Symbol.asyncIterator]();
+      await it?.next();
       const writeError = new Error("write error");
-      await it.throw?.(writeError).catch(() => {});
+      await it?.throw?.(writeError).catch(() => {});
       await expectAsync(catchError).toBeResolvedTo(writeError);
       await expectAsync(abortCalled).toBeResolved();
     });
   });
 
-  describe("deadlines", function () {
-    it("should trigger handler context signal", async function () {
+  describe("deadlines", () => {
+    it("should trigger handler context signal", async () => {
       const timeoutMs = 1;
       let handlerContextSignal: AbortSignal | undefined;
       const { handler, method } = setupTestHandler(
@@ -190,8 +194,8 @@ describe("createHandlerFactory()", function () {
         "[deadline_exceeded] the operation timed out",
       );
     });
-    describe("exceeding configured maxTimeoutMs", function () {
-      it("should raise an error with code INVALID_ARGUMENT", async function () {
+    describe("exceeding configured maxTimeoutMs", () => {
+      it("should raise an error with code INVALID_ARGUMENT", async () => {
         const maxTimeoutMs = 1000;
         const timeoutMs = 2000;
         let implementationCalled = false;
@@ -227,8 +231,8 @@ describe("createHandlerFactory()", function () {
     });
   });
 
-  describe("shutdown", function () {
-    it("should raise the abort reason", async function () {
+  describe("shutdown", () => {
+    it("should raise the abort reason", async () => {
       const shutdown = new AbortController();
       const { transport, method } = setupTestHandler(
         testService.method.unary,
@@ -260,8 +264,8 @@ describe("createHandlerFactory()", function () {
     });
   });
 
-  describe("request abort signal", function () {
-    it("should trigger handler context signal", async function () {
+  describe("request abort signal", () => {
+    it("should trigger handler context signal", async () => {
       let handlerContextSignal: AbortSignal | undefined;
       const { handler, method } = setupTestHandler(
         testService.method.unary,

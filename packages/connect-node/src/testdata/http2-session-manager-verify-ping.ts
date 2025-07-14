@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-floating-promises */
-
 import { Http2SessionManager } from "../http2-session-manager.js";
-import * as http2 from "http2";
-import { parentPort, workerData } from "worker_threads";
+import * as http2 from "node:http2";
+import { parentPort, workerData } from "node:worker_threads";
+
+if (!parentPort) {
+  // See packages/connect-node/src/http2-session-manager.spec.ts
+  throw new Error("Missing parentPort. Expected to be run in a Worker.");
+}
 
 const sm = new Http2SessionManager(workerData, {
   pingIntervalMs: 5, // intentionally short for faster tests
@@ -26,7 +29,7 @@ sm.request("POST", "/", {}, {}).then((req) => {
     setTimeout(() => {
       sm.request("POST", "/", {}, {}).then((req) => {
         req.close(http2.constants.NGHTTP2_NO_ERROR, () => {
-          parentPort!.postMessage("done");
+          parentPort?.postMessage("done");
         });
       });
     }, 10),

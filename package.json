@@ -22,9 +22,9 @@
     "postsetversion": "npm run all",
     "release": "node scripts/release.js",
     "prerelease": "npm run all",
-    "format": "prettier --write --ignore-unknown '.' '!packages' '!.turbo' '!node_modules'",
+    "format": "biome format --write",
     "license-header": "license-header --ignore 'packages/**'",
-    "lint": "eslint --max-warnings 0 . --ignore-pattern 'packages/**'"
+    "lint": "biome lint --error-on-warnings --config-path biome.json"
   },
   "type": "module",
   "engineStrict": true,
@@ -35,16 +35,10 @@
     "copyrightHolder": "The Connect Authors"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.17.3",
+    "@arethetypeswrong/cli": "^0.18.2",
+    "@biomejs/biome": "^1.9.4",
     "@bufbuild/license-header": "^0.0.4",
-    "@typescript-eslint/eslint-plugin": "^7.14.0",
-    "@typescript-eslint/parser": "^7.14.0",
-    "eslint": "^8.56.0",
-    "eslint-import-resolver-typescript": "^3.7.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-n": "^17.15.1",
-    "turbo": "^2.4.4",
-    "prettier": "^3.4.2",
-    "typescript": "5.7.3"
+    "turbo": "^2.5.4",
+    "typescript": "5.8.3"
   }
 }

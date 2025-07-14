@@ -15,7 +15,7 @@
 import { validateResponse } from "./validate-response.js";
 import { ConnectError } from "../connect-error.js";
 
-describe("gRPC validateResponse()", function () {
+describe("gRPC validateResponse()", () => {
   function v(
     httpStatus: number,
     headers: Record<string, string>,
@@ -37,7 +37,7 @@ describe("gRPC validateResponse()", function () {
     }
   }
 
-  it("should honor grpc-status field", function () {
+  it("should honor grpc-status field", () => {
     const e = v(200, {
       "grpc-status": "8",
       "content-type": "application/grpc+proto",
@@ -45,7 +45,7 @@ describe("gRPC validateResponse()", function () {
     expect(e?.message).toBe("[resource_exhausted]");
   });
 
-  it("should honor grpc-message field", function () {
+  it("should honor grpc-message field", () => {
     const e = v(200, {
       "grpc-status": "8",
       "grpc-message": "out of space",
@@ -54,7 +54,7 @@ describe("gRPC validateResponse()", function () {
     expect(e?.message).toBe("[resource_exhausted] out of space");
   });
 
-  it("should include headers as error metadata with grpc-status", function () {
+  it("should include headers as error metadata with grpc-status", () => {
     const e = v(200, {
       "grpc-status": "8",
       Foo: "Bar",
@@ -63,32 +63,32 @@ describe("gRPC validateResponse()", function () {
     expect(e?.metadata.get("Foo")).toBe("Bar");
   });
 
-  it("should honor HTTP error code", function () {
+  it("should honor HTTP error code", () => {
     const e = v(429, { "Content-Type": "application/csv" });
     expect(e?.message).toBe("[unavailable] HTTP 429");
   });
 
-  it("should treat HTTP 204 as an error", function () {
+  it("should treat HTTP 204 as an error", () => {
     const e = v(204, {});
     expect(e?.message).toBe(`[unknown] HTTP 204`);
   });
 
-  it("should include headers as error metadata with HTTP error code", function () {
+  it("should include headers as error metadata with HTTP error code", () => {
     const e = v(429, { Foo: "Bar" });
     expect(e?.metadata.get("Foo")).toBe("Bar");
   });
 
-  it("should prefer HTTP error code over grpc-status field", function () {
+  it("should prefer HTTP error code over grpc-status field", () => {
     const e = v(401, { "grpc-status": "8" });
     expect(e?.message).toBe("[unauthenticated] HTTP 401");
   });
 
-  it("should not use grpc-message with a HTTP error code", function () {
+  it("should not use grpc-message with a HTTP error code", () => {
     const e = v(401, { "grpc-status": "8", "grpc-message": "out of space" });
     expect(e?.message).toBe("[unauthenticated] HTTP 401");
   });
 
-  it("should return foundStatus for grpc-status OK", function () {
+  it("should return foundStatus for grpc-status OK", () => {
     const { foundStatus } = validateResponse(
       200,
       new Headers({

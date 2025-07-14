@@ -18,8 +18,8 @@ import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { errorToJson } from "./error-json.js";
 
-describe("endStreamFromJson()", function () {
-  it("should parse expected", function () {
+describe("endStreamFromJson()", () => {
+  it("should parse expected", () => {
     const json: JsonObject = {
       error: {
         code: "resource_exhausted",
@@ -32,7 +32,7 @@ describe("endStreamFromJson()", function () {
     expect(endStream.error?.code).toBe(Code.ResourceExhausted);
     expect(endStream.error?.rawMessage).toBe("my bad");
   });
-  it("should raise protocol error on malformed metadata", function () {
+  it("should raise protocol error on malformed metadata", () => {
     const json: JsonObject = {
       metadata: false,
     };
@@ -42,13 +42,13 @@ describe("endStreamFromJson()", function () {
   });
 });
 
-describe("endStreamToJson()", function () {
-  it("should be {} in the most simple form", function () {
+describe("endStreamToJson()", () => {
+  it("should be {} in the most simple form", () => {
     const got = endStreamToJson(new Headers(), undefined, undefined);
     const want: JsonObject = {};
     expect(got).toEqual(want);
   });
-  it("should serialize the error", function () {
+  it("should serialize the error", () => {
     const err = new ConnectError("my bad", Code.ResourceExhausted);
     const got = endStreamToJson(new Headers(), err, undefined);
     const want: JsonObject = {
@@ -56,7 +56,7 @@ describe("endStreamToJson()", function () {
     };
     expect(got).toEqual(want);
   });
-  it("should serialize metadata", function () {
+  it("should serialize metadata", () => {
     const got = endStreamToJson(
       new Headers({
         foo: "bar",
@@ -69,7 +69,7 @@ describe("endStreamToJson()", function () {
     };
     expect(got).toEqual(want);
   });
-  it("should serialize metadata from the error", function () {
+  it("should serialize metadata from the error", () => {
     const err = new ConnectError("my bad", Code.ResourceExhausted, {
       foo: "bar",
     });
@@ -80,7 +80,7 @@ describe("endStreamToJson()", function () {
     };
     expect(got).toEqual(want);
   });
-  it("should append metadata from the error", function () {
+  it("should append metadata from the error", () => {
     const err = new ConnectError("my bad", Code.ResourceExhausted, {
       foo: "bar",
     });

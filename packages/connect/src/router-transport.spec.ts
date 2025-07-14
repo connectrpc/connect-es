@@ -19,7 +19,7 @@ import { ConnectError } from "./connect-error.js";
 import { createServiceDesc } from "./descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
-describe("createRoutesTransport", function () {
+describe("createRoutesTransport", () => {
   const testService = createServiceDesc({
     typeName: "TestService",
     method: {
@@ -50,7 +50,6 @@ describe("createRoutesTransport", function () {
       unary(req) {
         return { value: req.value.toString() };
       },
-      // eslint-disable-next-line @typescript-eslint/require-await
       async *server(req) {
         for (let i = 0; i < req.value; i++) {
           yield { value: req.value.toString() };
@@ -71,11 +70,11 @@ describe("createRoutesTransport", function () {
     });
   });
   const client = createClient(testService, transport);
-  it("should work for unary", async function () {
+  it("should work for unary", async () => {
     const res = await client.unary({ value: 13 });
     expect(res.value).toBe("13");
   });
-  it("should work for server steam", async function () {
+  it("should work for server steam", async () => {
     const res = client.server({ value: 13 });
     let count = 0;
     for await (const next of res) {
@@ -84,13 +83,13 @@ describe("createRoutesTransport", function () {
     }
     expect(count).toBe(13);
   });
-  it("should work for client steam", async function () {
+  it("should work for client steam", async () => {
     const res = await client.client(
       createAsyncIterable([{ value: 12 }, { value: 13 }]),
     );
     expect(res.value).toBe("13");
   });
-  it("should work for bidi steam", async function () {
+  it("should work for bidi steam", async () => {
     const payload = [{ value: 1 }, { value: 2 }];
     const res = client.biDi(createAsyncIterable(payload));
     let count = 0;
@@ -100,7 +99,7 @@ describe("createRoutesTransport", function () {
     }
     expect(count).toBe(payload.length);
   });
-  it("should handle calling an RPC on a router transport that isn't registered", async function () {
+  it("should handle calling an RPC on a router transport that isn't registered", async () => {
     const transport = createRouterTransport(() => {
       // intentionally not registering any transports
     });

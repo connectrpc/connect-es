@@ -16,7 +16,7 @@ import { fromJson, toJson } from "@bufbuild/protobuf";
 import { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
 import { StructSchema } from "@bufbuild/protobuf/wkt";
 
-describe("encodeBinaryHeader()", function () {
+describe("encodeBinaryHeader()", () => {
   it("accepts unicode string", () => {
     const input = "👋";
     const encoded = encodeBinaryHeader(input);
@@ -40,7 +40,7 @@ describe("encodeBinaryHeader()", function () {
   });
 });
 
-describe("decodeBinaryHeader()", function () {
+describe("decodeBinaryHeader()", () => {
   it("decodes Uint8Array with padding", () => {
     const decoded = decodeBinaryHeader("3q2+7w==");
     expect(decoded).toBeInstanceOf(Uint8Array);

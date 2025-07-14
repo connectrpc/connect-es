@@ -21,7 +21,7 @@ import {
 import * as http from "node:http";
 import * as http2 from "node:http2";
 import * as https from "node:https";
-import * as net from "node:net";
+import type * as net from "node:net";
 import {
   create,
   createRegistry,

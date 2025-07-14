@@ -28,11 +28,10 @@ import {
 import type { NextApiRequest, NextApiResponse, PageConfig } from "next";
 import type { JsonValue } from "@bufbuild/protobuf";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: necessary for compat with next
 type NextApiHandler<T = any> = (
   req: NextApiRequest,
   res: NextApiResponse<T>,
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 ) => unknown | Promise<unknown>;
 
 interface NextJsApiRouterOptions extends ConnectRouterOptions {
@@ -102,7 +101,6 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
       );
       await universalResponseToNodeResponse(uRes, res);
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error(
         `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
         e,

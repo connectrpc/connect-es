@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ConnectError, Code } from "@connectrpc/connect";
+import { ConnectError, type Code } from "@connectrpc/connect";
 import { create, createRegistry } from "@bufbuild/protobuf";
 import type { DescMessage, MessageShape } from "@bufbuild/protobuf";
 import {
@@ -24,7 +24,7 @@ import type {
   Error as ConformanceError,
   Header as ConformanceHeader,
 } from "./gen/connectrpc/conformance/v1/service_pb.js";
-import { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
+import type { Code as ConformanceCode } from "./gen/connectrpc/conformance/v1/config_pb.js";
 import { AnySchema, anyPack, anyUnpack } from "@bufbuild/protobuf/wkt";
 import type { Any } from "@bufbuild/protobuf/wkt";
 

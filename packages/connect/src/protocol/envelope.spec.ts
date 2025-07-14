@@ -144,7 +144,7 @@ describe("createEnvelopeReadableStream()", () => {
   });
 });
 
-describe("envelope compression", function () {
+describe("envelope compression", () => {
   const compressionReverse: Compression = {
     name: "fake",
     compress(bytes) {
@@ -174,8 +174,8 @@ describe("envelope compression", function () {
     flags: 0 | 0b00000001,
     data: new Uint8Array([0xde, 0xad, 0xbe, 0xe1].reverse()),
   };
-  describe("envelopeDecompress()", function () {
-    it("should decompress envelopes", async function () {
+  describe("envelopeDecompress()", () => {
+    it("should decompress envelopes", async () => {
       const got = await envelopeDecompress(
         compressedEnvelope,
         compressionReverse,
@@ -183,7 +183,7 @@ describe("envelope compression", function () {
       );
       expect(got).toEqual(uncompressedEnvelope);
     });
-    it("should not decompress uncompressed envelopes", async function () {
+    it("should not decompress uncompressed envelopes", async () => {
       const got = await envelopeDecompress(
         uncompressedEnvelope,
         compressionReverse,
@@ -191,7 +191,7 @@ describe("envelope compression", function () {
       );
       expect(got).toEqual(uncompressedEnvelope);
     });
-    it("should pass readMaxBytes to compression", async function () {
+    it("should pass readMaxBytes to compression", async () => {
       try {
         await envelopeDecompress(compressedEnvelope, compressionReverse, 3);
         fail("expected error");
@@ -202,7 +202,7 @@ describe("envelope compression", function () {
         );
       }
     });
-    it("should ignore readMaxBytes for uncompressed envelope", async function () {
+    it("should ignore readMaxBytes for uncompressed envelope", async () => {
       const got = await envelopeDecompress(
         uncompressedEnvelope,
         compressionReverse,
@@ -210,8 +210,8 @@ describe("envelope compression", function () {
       );
       expect(got).toEqual(uncompressedEnvelope);
     });
-    describe("with null compression", function () {
-      it("should not decompress uncompressed envelopes", async function () {
+    describe("with null compression", () => {
+      it("should not decompress uncompressed envelopes", async () => {
         const got = await envelopeDecompress(
           uncompressedEnvelope,
           null,
@@ -219,7 +219,7 @@ describe("envelope compression", function () {
         );
         expect(got).toEqual(uncompressedEnvelope);
       });
-      it("should raise error on compressed envelope", async function () {
+      it("should raise error on compressed envelope", async () => {
         try {
           await envelopeDecompress(
             compressedEnvelope,
@@ -234,15 +234,15 @@ describe("envelope compression", function () {
           );
         }
       });
-      it("should ignore readMaxBytes", async function () {
+      it("should ignore readMaxBytes", async () => {
         const got = await envelopeDecompress(uncompressedEnvelope, null, 0);
         expect(got).toEqual(uncompressedEnvelope);
       });
     });
   });
 
-  describe("envelopeCompress()", function () {
-    it("should compress uncompressed envelope", async function () {
+  describe("envelopeCompress()", () => {
+    it("should compress uncompressed envelope", async () => {
       const got = await envelopeCompress(
         uncompressedEnvelope,
         compressionReverse,
@@ -250,7 +250,7 @@ describe("envelope compression", function () {
       );
       expect(got).toEqual(compressedEnvelope);
     });
-    it("should compress uncompressed envelope", async function () {
+    it("should compress uncompressed envelope", async () => {
       const got = await envelopeCompress(
         uncompressedEnvelope,
         compressionReverse,
@@ -258,7 +258,7 @@ describe("envelope compression", function () {
       );
       expect(got).toEqual(compressedEnvelope);
     });
-    it("should throw on compressed input", async function () {
+    it("should throw on compressed input", async () => {
       try {
         await envelopeCompress(compressedEnvelope, compressionReverse, 0);
         fail("expected error");
@@ -269,12 +269,12 @@ describe("envelope compression", function () {
         );
       }
     });
-    it("should honor compressMinBytes", async function () {
+    it("should honor compressMinBytes", async () => {
       const got = await envelopeCompress(uncompressedEnvelope, null, 5);
       expect(got).toEqual(uncompressedEnvelope);
     });
-    describe("with null compression", function () {
-      it("should not compress", async function () {
+    describe("with null compression", () => {
+      it("should not compress", async () => {
         const got = await envelopeCompress(uncompressedEnvelope, null, 0);
         expect(got).toEqual(uncompressedEnvelope);
       });

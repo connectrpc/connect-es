@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Scanned } from "./scan";
-import { PrintFn } from "./logger";
+import type { Scanned } from "./scan";
+import type { PrintFn } from "./logger";
 import {
-  BufGenYaml,
+  type BufGenYaml,
   stringifyBufGenYaml,
   writeBufGenYamlFile,
 } from "./bufgenyaml";
@@ -48,7 +48,9 @@ export function migrateBufGenYamls(
   if (updatedBufGenYamls.length == 0) {
     print(`  No files modified.\n`);
   } else {
-    updatedBufGenYamls.forEach((path) => print(`  ${path} ✓\n`));
+    for (const path of updatedBufGenYamls) {
+      print(`  ${path} ✓\n`);
+    }
   }
   return { updatedBufGenYamls };
 }

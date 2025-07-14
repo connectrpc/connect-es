@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as http2 from "http2";
-import * as http from "http";
-import * as https from "https";
-import type * as net from "net";
+import type * as http2 from "node:http2";
+import * as http from "node:http";
+import * as https from "node:https";
+import type * as net from "node:net";
 import { Code, ConnectError } from "@connectrpc/connect";
 import {
   nodeHeaderToWebHeader,
@@ -221,7 +221,7 @@ function h1Request(
   );
   // Node.js will only send headers with the first request body byte by default.
   // We force it to send headers right away for consistent behavior between
-  // HTTP/1.1 and HTTP/2.2 clients.
+  // HTTP/1.1 and HTTP/2.0 clients.
   request.flushHeaders();
 
   request.on("error", sentinel.reject);
@@ -393,7 +393,7 @@ async function sinkRequest(
             nodeRequest.end(resolve);
             return;
           }
-          nodeRequest.write(r.value, "binary", function (e) {
+          nodeRequest.write(r.value, "binary", (e) => {
             if (e === null || e === undefined) {
               writeNext();
               return;

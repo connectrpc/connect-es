@@ -49,6 +49,7 @@ void main();
  * to stdout.
  */
 async function main() {
+  // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
   const workerUrl = `https://${process.env["CLOUDFLARE_WORKERS_CLIENT_HOST"]}/`;
   const transportOptions = { baseUrl: workerUrl, httpVersion: "2" } as const;
   let transport: Transport;
@@ -68,7 +69,8 @@ async function main() {
   const client = createClient(InvokeService, transport);
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const req = fromBinary(ClientCompatRequestSchema, next);
-    req.host = process.env["CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST"]!;
+    // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
+    req.host = process.env["CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST"] ?? "";
     let res = create(ClientCompatResponseSchema, {
       testName: req.testName,
     });

@@ -14,7 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import { readFileSync, writeFileSync, existsSync, globSync } from "node:fs";
 import { dirname, join } from "node:path";
 
@@ -119,7 +118,6 @@ function updatePackageDep(pkg, depName, toVersion) {
     "peerDependencies",
     "optionalDependencies",
   ]) {
-    // eslint-disable-next-line n/no-unsupported-features/es-builtins,n/no-unsupported-features/es-syntax
     if (!Object.hasOwn(pkg, key)) {
       continue;
     }
@@ -242,7 +240,6 @@ function readLockfile(path) {
  */
 function findLockPackage(lock, packageName) {
   for (const [path, lockPkg] of Object.entries(lock.packages)) {
-    // eslint-disable-next-line n/no-unsupported-features/es-builtins,n/no-unsupported-features/es-syntax
     if (Object.hasOwn(lockPkg, "name") && lockPkg.name === packageName) {
       return lockPkg;
     }

@@ -15,7 +15,7 @@
 import { Code } from "./code.js";
 import { codeFromString, codeToString } from "./protocol-connect/index.js";
 
-describe("codeFromString", function () {
+describe("codeFromString", () => {
   it("parses as expected", () => {
     expect(codeFromString("canceled")).toBe(Code.Canceled);
     expect(codeFromString("unknown")).toBe(Code.Unknown);
@@ -44,7 +44,7 @@ describe("codeFromString", function () {
   });
 });
 
-describe("codeToString", function () {
+describe("codeToString", () => {
   it("stringifies as expected", () => {
     expect(codeToString(Code.Canceled)).toBe("canceled");
     expect(codeToString(Code.Unknown)).toBe("unknown");

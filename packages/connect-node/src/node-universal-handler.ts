@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type * as http from "http";
-import type * as http2 from "http2";
-import type * as stream from "stream";
+import type * as http from "node:http";
+import type * as http2 from "node:http2";
+import type * as stream from "node:stream";
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import type {
@@ -262,7 +262,7 @@ function write(stream: stream.Writable, data: Uint8Array): Promise<void> {
     // flushed == false: the stream wishes for the calling code to wait for
     // the 'drain' event to be emitted before continuing to write additional
     // data.
-    const flushed = stream.write(data, "binary", function (err) {
+    const flushed = stream.write(data, "binary", (err) => {
       if (err && !flushed) {
         // We are never getting a "drain" nor an "error" event if the stream
         // has already ended (ERR_STREAM_WRITE_AFTER_END), so we have to
