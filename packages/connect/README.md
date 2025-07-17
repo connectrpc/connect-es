@@ -6,7 +6,7 @@ the web browser, and to Node.js.
 
 With Connect, you define your schema first:
 
-```
+```proto
 service ElizaService {
   rpc Say(SayRequest) returns (SayResponse) {}
 }
