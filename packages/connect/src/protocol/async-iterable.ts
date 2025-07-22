@@ -14,7 +14,7 @@
 
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
-import type { EnvelopedMessage } from "./envelope.js";
+import { createEnvelopeDecoder, type EnvelopedMessage } from "./envelope.js";
 import {
   encodeEnvelope,
   envelopeCompress,
@@ -1002,73 +1002,18 @@ export function transformJoinEnvelopes(): AsyncIterableTransform<
 export function transformSplitEnvelope(
   readMaxBytes: number,
 ): AsyncIterableTransform<Uint8Array, EnvelopedMessage> {
-  // append chunk to buffer, returning updated buffer
-  function append(buffer: Uint8Array, chunk: Uint8Array): Uint8Array {
-    const n = new Uint8Array(buffer.byteLength + chunk.byteLength);
-    n.set(buffer);
-    n.set(chunk, buffer.length);
-    return n;
-  }
-
-  // tuple 0: envelope, or undefined if incomplete
-  // tuple 1: remainder of the buffer
-  function shiftEnvelope(
-    buffer: Uint8Array,
-    header: { length: number; flags: number },
-  ): [EnvelopedMessage | undefined, Uint8Array] {
-    if (buffer.byteLength < 5 + header.length) {
-      return [undefined, buffer];
-    }
-    return [
-      { flags: header.flags, data: buffer.subarray(5, 5 + header.length) },
-      buffer.subarray(5 + header.length),
-    ];
-  }
-
-  // undefined: header is incomplete
-  function peekHeader(
-    buffer: Uint8Array,
-  ): { length: number; flags: number } | undefined {
-    if (buffer.byteLength < 5) {
-      return undefined;
-    }
-    const view = new DataView(
-      buffer.buffer,
-      buffer.byteOffset,
-      buffer.byteLength,
-    );
-    const length = view.getUint32(1); // 4 bytes message length
-    const flags = view.getUint8(0); // first byte is flags
-    return { length, flags };
-  }
-
   return async function* (iterable): AsyncIterable<EnvelopedMessage> {
-    let buffer = new Uint8Array(0);
+    const buffer = createEnvelopeDecoder(readMaxBytes);
     for await (const chunk of iterable) {
-      buffer = append(buffer, chunk);
-      for (;;) {
-        const header = peekHeader(buffer);
-        if (!header) {
-          break;
-        }
-        assertReadMaxBytes(readMaxBytes, header.length, true);
-        let env: EnvelopedMessage | undefined;
-        [env, buffer] = shiftEnvelope(buffer, header);
-        if (!env) {
-          break;
-        }
+      for (const env of buffer.decode(chunk)) {
         yield env;
       }
     }
     if (buffer.byteLength > 0) {
-      const header = peekHeader(buffer);
-      let message = "protocol error: incomplete envelope";
-      if (header) {
-        message = `protocol error: promised ${
-          header.length
-        } bytes in enveloped message, got ${buffer.byteLength - 5} bytes`;
-      }
-      throw new ConnectError(message, Code.InvalidArgument);
+      throw new ConnectError(
+        "protocol error: incomplete envelope",
+        Code.InvalidArgument,
+      );
     }
   };
 }

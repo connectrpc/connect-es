@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { EnvelopedMessage } from "./envelope.js";
+import {
+  createEnvelopeDecoder,
+  encodeEnvelope,
+  type EnvelopedMessage,
+} from "./envelope.js";
 import {
   createEnvelopeReadableStream,
   encodeEnvelopes,
@@ -279,5 +283,106 @@ describe("envelope compression", () => {
         expect(got).toEqual(uncompressedEnvelope);
       });
     });
+  });
+});
+
+describe("createEnvelopeDecoder()", () => {
+  it("byteLength initially 0", () => {
+    const buf = createEnvelopeDecoder(4);
+    expect(buf.byteLength).toBe(0);
+  });
+  it("readMaxBytes", () => {
+    const buf = createEnvelopeDecoder(444);
+    expect(buf.readMaxBytes).toBe(444);
+  });
+  it("excessive message size", () => {
+    {
+      const buf = createEnvelopeDecoder(4);
+      const chunk = encodeEnvelope(
+        0b10000000,
+        new Uint8Array([0x01, 0x02, 0x03, 0x04, 0x05]),
+      );
+      expect(() => buf.decode(chunk)).toThrowError(
+        /message size 5 is larger than configured readMaxBytes 4$/,
+      );
+    }
+    {
+      const buf = createEnvelopeDecoder(4);
+      const chunk = encodeEnvelope(
+        0b10000000,
+        new Uint8Array([0x01, 0x02, 0x03, 0x04, 0x05]),
+      ).slice(0, 5);
+      expect(() => buf.decode(chunk)).toThrowError(
+        /message size 5 is larger than configured readMaxBytes 4$/,
+      );
+    }
+  });
+  it("decode exact size", () => {
+    const buf = createEnvelopeDecoder(4);
+
+    const chunk1 = encodeEnvelope(
+      0b10000000,
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    );
+    const envelopes1 = buf.decode(chunk1);
+    expect(buf.byteLength).toBe(0);
+    expect(envelopes1.length).toBe(1);
+    expect(envelopes1[0].flags).toBe(0b10000000);
+    expect(envelopes1[0].data).toEqual(
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    );
+
+    const chunk2 = encodeEnvelope(
+      0b00000001,
+      new Uint8Array([0xde, 0xad, 0xbe, 0xe0]),
+    );
+    const envelopes2 = buf.decode(chunk2);
+    expect(buf.byteLength).toBe(0);
+    expect(envelopes2.length).toBe(1);
+    expect(envelopes2[0].flags).toBe(0b00000001);
+    expect(envelopes2[0].data).toEqual(
+      new Uint8Array([0xde, 0xad, 0xbe, 0xe0]),
+    );
+  });
+  it("decode remainder", () => {
+    const buf = createEnvelopeDecoder(4);
+    const data = encodeEnvelope(
+      0b10000000,
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    );
+    const chunk1 = data.slice(0, 3);
+    const chunk2 = data.slice(3, 6);
+    const chunk3 = data.slice(6);
+
+    const envelopes1 = buf.decode(chunk1);
+    expect(buf.byteLength).toBe(3);
+    expect(envelopes1.length).toBe(0);
+
+    const envelopes2 = buf.decode(chunk2);
+    expect(buf.byteLength).toBe(1);
+    expect(envelopes2.length).toBe(0);
+
+    const envelopes3 = buf.decode(chunk3);
+    expect(buf.byteLength).toBe(0);
+    expect(envelopes3.length).toBe(1);
+    expect(envelopes3[0].flags).toBe(0b10000000);
+    expect(envelopes3[0].data).toEqual(
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    );
+  });
+  it("decode multiple", () => {
+    const buf = createEnvelopeDecoder(4);
+    const envelopes = buf.decode(
+      encodeEnvelopes(
+        { flags: 0b10000000, data: new Uint8Array([0xde, 0xad, 0xbe, 0xef]) },
+        { flags: 0b00000001, data: new Uint8Array([0xde, 0xad, 0xbe, 0xe0]) },
+      ),
+    );
+    expect(buf.byteLength).toBe(0);
+    expect(envelopes.length).toBe(2);
+    expect(envelopes[0].flags).toBe(0b10000000);
+    expect(envelopes[0].data).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
+    expect(envelopes[1].flags).toBe(0b00000001);
+    expect(envelopes[1].data).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xe0]));
   });
 });

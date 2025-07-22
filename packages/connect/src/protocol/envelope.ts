@@ -16,6 +16,7 @@ import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { compressedFlag } from "./compression.js";
 import type { Compression } from "./compression.js";
+import { assertReadMaxBytes } from "./limit-io.js";
 
 /**
  * Represents an Enveloped-Message of the Connect protocol.
@@ -36,6 +37,125 @@ export interface EnvelopedMessage {
 }
 
 /**
+ * Decodes chunks of raw bytes into enveloped messages.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export type EnvelopeDecoder = {
+  /**
+   * Decode enveloped messages.
+   *
+   * If the chunk is incomplete, buffer for subsequent calls.
+   *
+   * If a message exceeds `readMaxBytes`, raise an error. The decoder must be
+   * discarded.
+   */
+  decode(chunk: Uint8Array): EnvelopedMessage[];
+
+  /**
+   * Size of the buffer. Use this property to check for incomplete data.
+   */
+  readonly byteLength: number;
+
+  /**
+   * Maximum size for individual messages.
+   */
+  readonly readMaxBytes: number;
+};
+
+/**
+ * Create an EnvelopeDecoder. The `readMaxBytes` argument limits the maximum
+ * size for individual messages.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function createEnvelopeDecoder(readMaxBytes: number): EnvelopeDecoder {
+  return new EnvelopeDecoderImpl(readMaxBytes);
+}
+
+class EnvelopeDecoderImpl implements EnvelopeDecoder {
+  private readonly header: Uint8Array;
+  private readonly headerView: DataView;
+  private readonly buf: Uint8Array[];
+  private env: EnvelopedMessage | undefined;
+
+  constructor(public readonly readMaxBytes: number) {
+    // Envelope headers are 5 bytes: 1 byte for flags, 4 bytes message length
+    this.header = new Uint8Array(5);
+    this.headerView = new DataView(this.header.buffer);
+    this.buf = [];
+  }
+
+  get byteLength(): number {
+    return this.buf.reduce((a, b) => a + b.byteLength, 0);
+  }
+
+  decode(chunk: Uint8Array): EnvelopedMessage[] {
+    this.buf.push(chunk);
+    const envs: EnvelopedMessage[] = [];
+    for (;;) {
+      let env = this.pop();
+      if (!env) {
+        break;
+      }
+      envs.push(env);
+    }
+    return envs;
+  }
+
+  // consume an enveloped message
+  pop(): EnvelopedMessage | undefined {
+    if (!this.env) {
+      this.env = this.head();
+      if (!this.env) {
+        return undefined;
+      }
+    }
+    if (this.cons(this.env.data)) {
+      const env = this.env;
+      this.env = undefined;
+      return env;
+    }
+    return undefined;
+  }
+
+  // consume header
+  head(): EnvelopedMessage | undefined {
+    if (!this.cons(this.header)) {
+      return undefined;
+    }
+    const flags = this.headerView.getUint8(0); // first byte is flags
+    const length = this.headerView.getUint32(1); // 4 bytes message length
+    assertReadMaxBytes(this.readMaxBytes, length, true);
+    return {
+      flags,
+      data: new Uint8Array(length),
+    };
+  }
+
+  // consume from buffer, fill target
+  cons(target: Uint8Array): boolean {
+    const wantLength = target.byteLength;
+    if (this.byteLength < wantLength) {
+      return false;
+    }
+    let offset = 0;
+    while (offset < wantLength) {
+      const chunk = this.buf.shift() as Uint8Array; // we check length above
+      if (chunk.byteLength > wantLength - offset) {
+        target.set(chunk.subarray(0, wantLength - offset), offset);
+        this.buf.unshift(chunk.subarray(wantLength - offset));
+        offset += wantLength - offset;
+      } else {
+        target.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+    }
+    return true;
+  }
+}
+
+/**
  * Create a WHATWG ReadableStream of enveloped messages from a ReadableStream
  * of bytes.
  *
@@ -48,54 +168,32 @@ export function createEnvelopeReadableStream(
   stream: ReadableStream<Uint8Array>,
 ): ReadableStream<EnvelopedMessage> {
   let reader: ReadableStreamDefaultReader<Uint8Array>;
-  let buffer = new Uint8Array(0);
-
-  function append(chunk: Uint8Array): void {
-    const n = new Uint8Array(buffer.length + chunk.length);
-    n.set(buffer);
-    n.set(chunk, buffer.length);
-    buffer = n;
-  }
-
+  const buffer = createEnvelopeDecoder(0xffffffff);
   return new ReadableStream<EnvelopedMessage>({
     start() {
       reader = stream.getReader();
     },
     async pull(controller): Promise<void> {
-      let header: { length: number; flags: number } | undefined = undefined;
-      for (;;) {
-        if (header === undefined && buffer.byteLength >= 5) {
-          let length = 0;
-          for (let i = 1; i < 5; i++) {
-            length = (length << 8) + buffer[i];
-          }
-          header = { flags: buffer[0], length };
-        }
-        if (header !== undefined && buffer.byteLength >= header.length + 5) {
-          break;
-        }
+      let enqueuedOnce = false;
+      while (!enqueuedOnce) {
         const result = await reader.read();
         if (result.done) {
-          break;
-        }
-        append(result.value);
-      }
-      if (header === undefined) {
-        if (buffer.byteLength == 0) {
+          if (buffer.byteLength > 0) {
+            controller.error(
+              new ConnectError(
+                "protocol error: incomplete envelope",
+                Code.InvalidArgument,
+              ),
+            );
+          }
           controller.close();
-          return;
+        } else {
+          for (const env of buffer.decode(result.value)) {
+            controller.enqueue(env);
+            enqueuedOnce = true;
+          }
         }
-        controller.error(
-          new ConnectError("premature end of stream", Code.DataLoss),
-        );
-        return;
       }
-      const data = buffer.subarray(5, 5 + header.length);
-      buffer = buffer.subarray(5 + header.length);
-      controller.enqueue({
-        flags: header.flags,
-        data,
-      });
     },
   });
 }
