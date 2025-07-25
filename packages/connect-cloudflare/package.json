@@ -11,13 +11,13 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.2.0",
-    "@connectrpc/connect": "2.0.2",
-    "@connectrpc/connect-node": "2.0.2"
+    "@connectrpc/connect": "2.0.3",
+    "@connectrpc/connect-node": "2.0.3"
   },
   "devDependencies": {
     "wrangler": "^3.114.11",
     "@cloudflare/workers-types": "^4.20250712.0",
     "tsx": "^4.20.3",
-    "@connectrpc/connect-conformance": "^2.0.2"
+    "@connectrpc/connect-conformance": "^2.0.3"
   }
 }
