@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.1.4",
     "@bufbuild/license-header": "^0.0.4",
     "turbo": "^2.5.5",
     "typescript": "5.8.3"
