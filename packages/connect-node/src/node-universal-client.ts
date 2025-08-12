@@ -142,9 +142,7 @@ function createNodeHttp1Client(
           void sinkRequest(req, request, sentinel);
           request.on("response", (response) => {
             response.on("error", sentinel.error);
-            sentinel.onError((reason) =>
-              response.destroy(connectErrorFromNodeReason(reason)),
-            );
+            sentinel.onError((reason) => response.destroy(reason));
             const trailer = new Headers();
             resolve({
               status: response.statusCode ?? 0,
@@ -216,9 +214,7 @@ function h1Request(
   } else {
     request = http.request(url, options);
   }
-  sentinel.onError((reason) =>
-    request.destroy(connectErrorFromNodeReason(reason)),
-  );
+  sentinel.onError((reason) => request.destroy(reason));
   // Node.js will only send headers with the first request body byte by default.
   // We force it to send headers right away for consistent behavior between
   // HTTP/1.1 and HTTP/2.0 clients.
@@ -297,9 +293,7 @@ function h2Request(
         // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
         // See https://www.rfc-editor.org/rfc/rfc7540#section-7
         const rstCode =
-          reason instanceof ConnectError && reason.code == Code.Canceled
-            ? H2Code.CANCEL
-            : H2Code.INTERNAL_ERROR;
+          reason.code == Code.Canceled ? H2Code.CANCEL : H2Code.INTERNAL_ERROR;
         return new Promise<void>((resolve) => stream.close(rstCode, resolve));
       });
 
@@ -455,21 +449,24 @@ type Sentinel = {
   /**
    * Listen to the sentinel closing with an error.
    */
-  onError(onError: (reason: unknown) => void): void;
+  onError(onError: (reason: ConnectError) => void): void;
 };
 
 function createSentinel(signal?: AbortSignal): Sentinel {
   let rejectRace: ((reason: unknown) => void) | undefined;
   let closed = false;
-  let closedError: unknown | undefined = undefined;
-  let onErrorListeners: ((reason: unknown) => void)[] = [];
+  let closedError: ConnectError | undefined = undefined;
+  let onErrorListeners: ((reason: ConnectError) => void)[] = [];
   const sentinel = {
     error(error: unknown): void {
       if (closed) {
         return;
       }
       closed = true;
-      closedError = connectErrorFromNodeReason(error);
+      closedError =
+        error instanceof ConnectError
+          ? error
+          : connectErrorFromNodeReason(error);
       rejectRace?.(closedError);
       for (const onRejected of onErrorListeners) {
         onRejected(closedError);
@@ -489,7 +486,7 @@ function createSentinel(signal?: AbortSignal): Sentinel {
     isClosed() {
       return closed;
     },
-    onError(onError: (reason: unknown) => void): void {
+    onError(onError: (reason: ConnectError) => void): void {
       if (closed) {
         if (closedError !== undefined) {
           onError(closedError);
@@ -521,14 +518,14 @@ function createSentinel(signal?: AbortSignal): Sentinel {
       return race;
     },
   };
-  function cleanup() {
+  function cleanup(): void {
     if (signal) {
       signal.removeEventListener("abort", onSignalAbort);
     }
     onErrorListeners = [];
     rejectRace = undefined;
   }
-  function onSignalAbort(this: AbortSignal) {
+  function onSignalAbort(this: AbortSignal): void {
     sentinel.error(getAbortSignalReason(this));
   }
   if (signal) {
