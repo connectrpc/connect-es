@@ -16,6 +16,11 @@ updates:
       time: "07:00"
     open-pull-requests-limit: 50
     groups:
+      protobuf-es:
+        patterns:
+          - "@bufbuild/protobuf"
+          - "@bufbuild/protoplugin"
+          - "@bufbuild/protoc-gen-es"
       bench:
         patterns:
           - "google-protobuf"
@@ -24,20 +29,15 @@ updates:
           - "@bufbuild/protobuf"
           - "@bufbuild/protoc-gen-es"
           - "esbuild"
-      protobuf-es:
-        patterns:
-          - "@bufbuild/protobuf"
-          - "@bufbuild/protoplugin"
-          - "@bufbuild/protoc-gen-es"
       build:
         patterns:
           - "typescript"
           - "tsx"
-          - "@bufbuild/protobuf"
       lint-and-format:
         patterns:
           - "biome"
           - "@bufbuild/license-header"
+          - "@arethetypeswrong/cli"
       webdriver:
         patterns:
           - "@wdio/*"
