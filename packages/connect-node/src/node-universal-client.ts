@@ -127,7 +127,7 @@ function createNodeHttp1Client(
   ): Promise<UniversalClientResponse> {
     const sentinel = createSentinel(req.signal);
     return new Promise<UniversalClientResponse>((resolve, reject) => {
-      sentinel.catch((e) => {
+      sentinel.onError((e) => {
         reject(e);
       });
       h1Request(
@@ -141,10 +141,8 @@ function createNodeHttp1Client(
         (request) => {
           void sinkRequest(req, request, sentinel);
           request.on("response", (response) => {
-            response.on("error", sentinel.reject);
-            sentinel.catch((reason) =>
-              response.destroy(connectErrorFromNodeReason(reason)),
-            );
+            response.on("error", sentinel.error);
+            sentinel.onError((reason) => response.destroy(reason));
             const trailer = new Headers();
             resolve({
               status: response.statusCode ?? 0,
@@ -175,7 +173,7 @@ function createNodeHttp2Client(
     const sentinel = createSentinel(req.signal);
     const sessionManager = sessionProvider(req.url);
     return new Promise<UniversalClientResponse>((resolve, reject) => {
-      sentinel.catch((e) => {
+      sentinel.onError((e) => {
         reject(e);
       });
       h2Request(
@@ -216,15 +214,13 @@ function h1Request(
   } else {
     request = http.request(url, options);
   }
-  sentinel.catch((reason) =>
-    request.destroy(connectErrorFromNodeReason(reason)),
-  );
+  sentinel.onError((reason) => request.destroy(reason));
   // Node.js will only send headers with the first request body byte by default.
   // We force it to send headers right away for consistent behavior between
   // HTTP/1.1 and HTTP/2.0 clients.
   request.flushHeaders();
 
-  request.on("error", sentinel.reject);
+  request.on("error", sentinel.error);
   request.on("socket", function onRequestSocket(socket: net.Socket) {
     function onSocketConnect() {
       socket.off("connect", onSocketConnect);
@@ -256,13 +252,12 @@ function h1ResponseIterable(
             nodeHeaderToWebHeader(response.trailers).forEach((value, key) => {
               trailer.set(key, value);
             });
-            sentinel.resolve();
-            await sentinel;
+            sentinel.close();
           }
           return r;
         },
         throw(e?: unknown): Promise<IteratorResult<Uint8Array>> {
-          sentinel.reject(e);
+          sentinel.error(e);
           throw e;
         },
       };
@@ -282,12 +277,12 @@ function h2Request(
   const requestUrl = new URL(url);
   if (requestUrl.origin !== sm.authority) {
     const message = `cannot make a request to ${requestUrl.origin}: the http2 session is connected to ${sm.authority}`;
-    sentinel.reject(new ConnectError(message, Code.Internal));
+    sentinel.error(new ConnectError(message, Code.Internal));
     return;
   }
   sm.request(method, requestUrl.pathname + requestUrl.search, headers, {}).then(
     (stream) => {
-      sentinel.catch((reason) => {
+      sentinel.onError((reason) => {
         if (stream.closed) {
           return;
         }
@@ -298,9 +293,7 @@ function h2Request(
         // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors
         // See https://www.rfc-editor.org/rfc/rfc7540#section-7
         const rstCode =
-          reason instanceof ConnectError && reason.code == Code.Canceled
-            ? H2Code.CANCEL
-            : H2Code.INTERNAL_ERROR;
+          reason.code == Code.Canceled ? H2Code.CANCEL : H2Code.INTERNAL_ERROR;
         return new Promise<void>((resolve) => stream.close(rstCode, resolve));
       });
 
@@ -313,19 +306,19 @@ function h2Request(
         ) {
           return;
         }
-        sentinel.reject(e);
+        sentinel.error(e);
       });
 
       stream.on("close", function h2StreamClose() {
         const err = connectErrorFromH2ResetCode(stream.rstCode);
         if (err) {
-          sentinel.reject(err);
+          sentinel.error(err);
         }
       });
       onStream(stream);
     },
     (reason) => {
-      sentinel.reject(reason);
+      sentinel.error(reason);
     },
   );
 }
@@ -355,14 +348,13 @@ function h2ResponseIterable(
         async next(): Promise<IteratorResult<Uint8Array>> {
           const r = await sentinel.race(inner.next());
           if (r.done === true) {
-            sentinel.resolve();
-            await sentinel;
+            sentinel.close();
           }
           sm?.notifyResponseByteRead(response);
           return r;
         },
         throw(e?: unknown): Promise<IteratorResult<Uint8Array>> {
-          sentinel.reject(e);
+          sentinel.error(e);
           throw e;
         },
       };
@@ -384,7 +376,7 @@ async function sinkRequest(
     writeNext();
 
     function writeNext() {
-      if (sentinel.isRejected()) {
+      if (sentinel.isClosed()) {
         return;
       }
       it.next().then(
@@ -415,32 +407,33 @@ async function sinkRequest(
             ) {
               return;
             }
-            sentinel.reject(e);
+            sentinel.error(e);
           });
         },
         (e) => {
-          sentinel.reject(e);
+          sentinel.error(e);
         },
       );
     }
   });
 }
 
-type Sentinel = Promise<void> & {
+type Sentinel = {
   /**
-   * Resolve the sentinel.
+   * Close the sentinel.
    */
-  resolve(): void;
-
-  isResolved(): boolean;
+  close(): void;
 
   /**
-   * Reject the sentinel. Unless the reason is already a ConnectError, it is
-   * converted to one via ConnectError.from().
+   * Close the sentinel with an error.
+   *
+   * If error is not a ConnectError, it is converted to one via ConnectError.from().
+   *
+   * Triggers onError handlers.
    */
-  reject: (reason: unknown) => void;
+  error(error?: unknown): void;
 
-  isRejected(): boolean;
+  isClosed(): boolean;
 
   /**
    * Race a promise against the sentinel.
@@ -451,66 +444,95 @@ type Sentinel = Promise<void> & {
    * Rejects if the sentinel is faster, even if the sentinel resolved
    * successfully.
    */
-  race<T>(promise: PromiseLike<T>): Promise<Awaited<T>>;
+  race<T>(promise: Promise<T>): Promise<T>;
+
+  /**
+   * Listen to the sentinel closing with an error.
+   */
+  onError(onError: (reason: ConnectError) => void): void;
 };
 
 function createSentinel(signal?: AbortSignal): Sentinel {
-  let res: (() => void) | undefined;
-  let rej: ((reason: unknown) => void) | undefined;
-  let resolved = false;
-  let rejected = false;
-  const p = new Promise<void>((resolve, reject) => {
-    res = resolve;
-    rej = reject;
-  });
-  const c: Pick<
-    Sentinel,
-    "resolve" | "isResolved" | "reject" | "isRejected" | "race"
-  > = {
-    resolve(): void {
-      if (!resolved && !rejected) {
-        resolved = true;
-        res?.();
+  let rejectRace: ((reason: unknown) => void) | undefined;
+  let closed = false;
+  let closedError: ConnectError | undefined = undefined;
+  let onErrorListeners: ((reason: ConnectError) => void)[] = [];
+  const sentinel = {
+    error(error: unknown): void {
+      if (closed) {
+        return;
+      }
+      closed = true;
+      closedError =
+        error instanceof ConnectError
+          ? error
+          : connectErrorFromNodeReason(error);
+      rejectRace?.(closedError);
+      for (const onRejected of onErrorListeners) {
+        onRejected(closedError);
+      }
+      cleanup();
+    },
+    close(): void {
+      if (closed) {
+        return;
+      }
+      closed = true;
+      if (rejectRace) {
+        rejectRace(new ConnectError("sentinel completed early", Code.Internal));
+      }
+      cleanup();
+    },
+    isClosed() {
+      return closed;
+    },
+    onError(onError: (reason: ConnectError) => void): void {
+      if (closed) {
+        if (closedError !== undefined) {
+          onError(closedError);
+        }
+      } else {
+        onErrorListeners.push(onError);
       }
     },
-    isResolved() {
-      return resolved;
-    },
-    reject(reason): void {
-      if (!resolved && !rejected) {
-        rejected = true;
-        rej?.(connectErrorFromNodeReason(reason));
+    race<T>(promise: Promise<T>): Promise<T> {
+      let resolveRace: ((value: T) => void) | undefined;
+      const race = new Promise<T>((resolve, reject) => {
+        resolveRace = resolve;
+        rejectRace = reject;
+      });
+      promise.then(
+        (value) => {
+          resolveRace?.(value);
+        },
+        (reason: unknown) => {
+          rejectRace?.(reason);
+        },
+      );
+      if (closed) {
+        rejectRace?.(
+          closedError ??
+            new ConnectError("sentinel completed early", Code.Internal),
+        );
       }
-    },
-    isRejected() {
-      return rejected;
-    },
-    async race<T>(promise: PromiseLike<T>): Promise<Awaited<T>> {
-      const r = await Promise.race([promise, p]);
-      if (r === undefined && resolved) {
-        throw new ConnectError("sentinel completed early", Code.Internal);
-      }
-      return r as Awaited<T>;
+      return race;
     },
   };
-  const s = Object.assign(p, c);
-
-  function onSignalAbort(this: AbortSignal) {
-    c.reject(getAbortSignalReason(this));
-  }
-
-  if (signal) {
-    if (signal.aborted) {
-      c.reject(getAbortSignalReason(signal));
-    } else {
-      signal.addEventListener("abort", onSignalAbort);
+  function cleanup(): void {
+    if (signal) {
+      signal.removeEventListener("abort", onSignalAbort);
     }
-    p.finally(() => signal.removeEventListener("abort", onSignalAbort)).catch(
-      () => {
-        // We intentionally swallow sentinel rejection - errors must
-        // propagate through the request or response iterables.
-      },
-    );
+    onErrorListeners = [];
+    rejectRace = undefined;
   }
-  return s;
+  function onSignalAbort(this: AbortSignal): void {
+    sentinel.error(getAbortSignalReason(this));
+  }
+  if (signal) {
+    signal.addEventListener("abort", onSignalAbort);
+    if (signal.aborted) {
+      sentinel.error(getAbortSignalReason(signal));
+    }
+  }
+  return sentinel;
 }
