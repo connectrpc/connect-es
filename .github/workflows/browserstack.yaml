@@ -30,7 +30,7 @@ jobs:
         # Job and step conditions do not have access to secrets or the environment.
         # This step makes presence of the browserstack credentials available as a step output.
         run: (test -n "${BROWSERSTACK_USERNAME}" && echo present=1 || echo present=0) >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: (steps.credentials.outputs.present == '1')
       - uses: actions/setup-node@v4
         if: (steps.credentials.outputs.present == '1')
