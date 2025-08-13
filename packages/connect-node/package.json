@@ -30,7 +30,7 @@
     }
   },
   "engines": {
-    "node": ">=18.14.1"
+    "node": ">=20"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.2.0",
