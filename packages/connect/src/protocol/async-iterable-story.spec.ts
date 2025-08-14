@@ -41,7 +41,7 @@ import type { WritableIterable } from "./async-iterable.js";
 describe("full story", () => {
   const readMaxBytes = 0xffffffff; // zlib caps maxOutputLength at this value
   const serialization: Serialization<string> = {
-    serialize(data: string): Uint8Array {
+    serialize(data: string): Uint8Array<ArrayBuffer> {
       return new TextEncoder().encode(data);
     },
     parse(data: Uint8Array): string {
@@ -49,7 +49,7 @@ describe("full story", () => {
     },
   };
   const endSerialization: Serialization<"end"> = {
-    serialize(data: string): Uint8Array {
+    serialize(data: string): Uint8Array<ArrayBuffer> {
       return new TextEncoder().encode(data + ".");
     },
     parse(data: Uint8Array): "end" {

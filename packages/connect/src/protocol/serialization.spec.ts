@@ -122,7 +122,7 @@ describe("createJsonSerialization()", () => {
 
 describe("limitSerialization()", () => {
   const ser: Serialization<string> = {
-    serialize(data: string): Uint8Array {
+    serialize(data: string): Uint8Array<ArrayBuffer> {
       return new TextEncoder().encode(data);
     },
     parse(data: Uint8Array): string {

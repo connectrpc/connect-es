@@ -418,7 +418,7 @@ describe("transforming asynchronous iterables", () => {
       },
     ];
     const fakeSerialization: Serialization<string> = {
-      serialize(data: string): Uint8Array {
+      serialize(data: string): Uint8Array<ArrayBuffer> {
         return new TextEncoder().encode(data);
       },
       parse(data: Uint8Array): string {
@@ -469,7 +469,7 @@ describe("transforming asynchronous iterables", () => {
       },
     ];
     const serialization: Serialization<string> = {
-      serialize(data: string): Uint8Array {
+      serialize(data: string): Uint8Array<ArrayBuffer> {
         return new TextEncoder().encode(data);
       },
       parse(data: Uint8Array): string {
@@ -477,7 +477,7 @@ describe("transforming asynchronous iterables", () => {
       },
     };
     const endSerialization: Serialization<string> = {
-      serialize(data: string): Uint8Array {
+      serialize(data: string): Uint8Array<ArrayBuffer> {
         return new TextEncoder().encode(data + ".");
       },
       parse(data: Uint8Array): string {
@@ -792,7 +792,7 @@ describe("transforming asynchronous iterables", () => {
   describe("error handling", () => {
     const goldenItems = ["a", "b", "c"];
     const serialization: Serialization<string> = {
-      serialize(data: string): Uint8Array {
+      serialize(data: string): Uint8Array<ArrayBuffer> {
         if (data === "c") {
           throw new ConnectError("cannot serialize 'c'", Code.Internal);
         }
@@ -861,7 +861,7 @@ describe("transforming asynchronous iterables", () => {
       { value: "end", end: true },
     ];
     const serialization: Serialization<string> = {
-      serialize(data: string): Uint8Array {
+      serialize(data: string): Uint8Array<ArrayBuffer> {
         return new TextEncoder().encode(data);
       },
       parse(data: Uint8Array): string {
@@ -869,7 +869,7 @@ describe("transforming asynchronous iterables", () => {
       },
     };
     const endSerialization: Serialization<string> = {
-      serialize(data: string): Uint8Array {
+      serialize(data: string): Uint8Array<ArrayBuffer> {
         return new TextEncoder().encode(data + ".");
       },
       parse(data: Uint8Array): string {
