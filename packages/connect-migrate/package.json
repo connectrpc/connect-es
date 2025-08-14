@@ -20,7 +20,7 @@
     "lint": "biome lint --error-on-warnings"
   },
   "engines": {
-    "node": ">=18.14.1"
+    "node": ">=20"
   },
   "dependencies": {
     "fast-glob": "3.3.3",
