@@ -214,7 +214,7 @@ export async function* readSizeDelimitedBuffers(
     n.set(chunk, buffer.length);
     return n;
   }
-  let buffer = new Uint8Array(0);
+  let buffer: Uint8Array = new Uint8Array(0);
   for await (const chunk of stream) {
     buffer = append(buffer, chunk);
     for (;;) {

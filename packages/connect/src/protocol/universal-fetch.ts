@@ -127,8 +127,8 @@ function iterableToReadableStream(
   iterable: AsyncIterable<Uint8Array>,
 ): ReadableStream<Uint8Array> {
   const it = iterable[Symbol.asyncIterator]();
-  return new ReadableStream<Uint8Array>(<UnderlyingSource<Uint8Array>>{
-    async pull(controller: ReadableByteStreamController) {
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
       const r = await it.next();
       if (r.done === true) {
         controller.close();

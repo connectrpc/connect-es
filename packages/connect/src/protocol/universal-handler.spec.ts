@@ -45,8 +45,8 @@ describe("validateUniversalHandlerOptions()", () => {
   it("should accept inputs", () => {
     const fakeCompression: Compression = {
       name: "fake",
-      compress: (bytes) => Promise.resolve(bytes),
-      decompress: (bytes) => Promise.resolve(bytes),
+      compress: (bytes) => Promise.resolve(new Uint8Array(bytes)),
+      decompress: (bytes) => Promise.resolve(new Uint8Array(bytes)),
     };
     const i: UniversalHandlerOptions = {
       acceptCompression: [fakeCompression],

@@ -32,17 +32,19 @@ const brotliDecompress = promisify(zlib.brotliDecompress);
 export const compressionGzip: Compression = {
   name: "gzip",
   compress(bytes) {
-    return gzip(bytes, {});
+    return asUint8ArrayArrayBuffer(gzip(bytes, {}));
   },
   decompress(bytes, readMaxBytes) {
     if (bytes.length == 0) {
       return Promise.resolve(new Uint8Array(0));
     }
-    return wrapZLibErrors(
-      gunzip(bytes, {
-        maxOutputLength: readMaxBytes,
-      }),
-      readMaxBytes,
+    return asUint8ArrayArrayBuffer(
+      wrapZLibErrors(
+        gunzip(bytes, {
+          maxOutputLength: readMaxBytes,
+        }),
+        readMaxBytes,
+      ),
     );
   },
 };
@@ -56,20 +58,33 @@ export const compressionGzip: Compression = {
 export const compressionBrotli: Compression = {
   name: "br",
   compress(bytes) {
-    return brotliCompress(bytes, {});
+    return asUint8ArrayArrayBuffer(brotliCompress(bytes, {}));
   },
   decompress(bytes, readMaxBytes) {
     if (bytes.length == 0) {
       return Promise.resolve(new Uint8Array(0));
     }
-    return wrapZLibErrors(
-      brotliDecompress(bytes, {
-        maxOutputLength: readMaxBytes,
-      }),
-      readMaxBytes,
+    return asUint8ArrayArrayBuffer(
+      wrapZLibErrors(
+        brotliDecompress(bytes, {
+          maxOutputLength: readMaxBytes,
+        }),
+        readMaxBytes,
+      ),
     );
   },
 };
+
+function asUint8ArrayArrayBuffer(
+  bytes: Promise<Uint8Array>,
+): Promise<Uint8Array<ArrayBuffer>> {
+  return bytes.then((b) => {
+    if (b.buffer instanceof ArrayBuffer) {
+      return b as Uint8Array<ArrayBuffer>;
+    }
+    return new Uint8Array(b);
+  });
+}
 
 function wrapZLibErrors<T>(
   promise: Promise<T>,

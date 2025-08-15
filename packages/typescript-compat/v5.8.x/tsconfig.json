@@ -1,0 +1,21 @@
+{
+  "include": [
+    "./src/**/*.ts",
+    "../../connect-conformance/src/index.ts",
+    "../../example/src/**/*.ts"
+  ],
+  // These are the default compiler options for TypeScript v5.8.x, created
+  // with `tsc --init` (except where noted in comments below)
+  "compilerOptions": {
+    "target": "es2016",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "module": "commonjs",                                /* Specify what module code is generated. */
+    "esModuleInterop": true,                             /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */
+    "forceConsistentCasingInFileNames": true,            /* Ensure that casing is correct in imports. */
+    "strict": true,                                      /* Enable all strict type-checking options. */
+    "skipLibCheck": true, /* Skip type checking all .d.ts files. */
+    // Certain errors are only triggered by actually emitting declaration files,
+    // see https://github.com/bufbuild/protobuf-es/pull/398
+    "declaration": true,
+    "declarationMap": true
+  }
+}

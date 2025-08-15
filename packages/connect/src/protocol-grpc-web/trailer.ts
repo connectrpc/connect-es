@@ -49,7 +49,7 @@ export function trailerParse(data: Uint8Array): Headers {
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export function trailerSerialize(trailer: Headers): Uint8Array {
+export function trailerSerialize(trailer: Headers): Uint8Array<ArrayBuffer> {
   const lines: string[] = [];
   trailer.forEach((value, key) => {
     lines.push(`${key}: ${value}\r\n`);

@@ -42,7 +42,7 @@ export interface Serialization<T> {
   /**
    * Serialize T. Raises a ConnectError with Code.Internal if an error occurs.
    */
-  serialize: (data: T) => Uint8Array;
+  serialize: (data: T) => Uint8Array<ArrayBuffer>;
 
   /**
    * Parse T. Raises a ConnectError with Code.InvalidArgument if an error occurs.
@@ -202,7 +202,7 @@ export function createBinarySerialization<Desc extends DescMessage>(
         throw new ConnectError(`parse binary: ${m}`, Code.Internal);
       }
     },
-    serialize(data: MessageShape<Desc>): Uint8Array {
+    serialize(data: MessageShape<Desc>): Uint8Array<ArrayBuffer> {
       try {
         return toBinary(desc, data, options);
       } catch (e) {
@@ -217,7 +217,7 @@ export function createBinarySerialization<Desc extends DescMessage>(
  * Options for createJsonSerialization()
  */
 type JsonSerializationOptions = Partial<JsonReadOptions & JsonWriteOptions> & {
-  textEncoder?: { encode(input?: string): Uint8Array };
+  textEncoder?: { encode(input?: string): Uint8Array<ArrayBuffer> };
   textDecoder?: { decode(input?: Uint8Array): string };
 };
 
@@ -243,7 +243,7 @@ export function createJsonSerialization<Desc extends DescMessage>(
         throw ConnectError.from(e, Code.InvalidArgument);
       }
     },
-    serialize(data: MessageShape<Desc>): Uint8Array {
+    serialize(data: MessageShape<Desc>): Uint8Array<ArrayBuffer> {
       try {
         const json = toJsonString(desc, data, o);
         return textEncoder.encode(json);

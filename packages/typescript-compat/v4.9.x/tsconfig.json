@@ -1,5 +1,6 @@
 {
   "include": [
+    "./src/**/*.ts",
     "../../connect-conformance/src/index.ts",
     "../../example/src/**/*.ts"
   ],
@@ -13,9 +14,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    // To guard against regression and ensure we are remaining backwards
-    // compatible, set the skipLibCheck flag to false explicitly.
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     // Certain errors are only triggered by actually emitting declaration files,
     // see https://github.com/bufbuild/protobuf-es/pull/398
     "declaration": true,

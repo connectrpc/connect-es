@@ -62,9 +62,10 @@ describe("requestHeader", () => {
   it("should create request headers with compression", () => {
     const compressionMock: Compression = {
       name: "gzip",
-      compress: (bytes: Uint8Array) => Promise.resolve(bytes),
+      compress: (bytes: Uint8Array) => Promise.resolve(new Uint8Array(bytes)),
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      decompress: (bytes: Uint8Array, _: number) => Promise.resolve(bytes),
+      decompress: (bytes: Uint8Array, _: number) =>
+        Promise.resolve(new Uint8Array(bytes)),
     };
     const headers = requestHeaderWithCompression(
       true,
