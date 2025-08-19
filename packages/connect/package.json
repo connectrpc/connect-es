@@ -56,11 +56,11 @@
     }
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^2.6.3"
+    "@bufbuild/protobuf": "^2.7.0"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.56.0",
-    "@bufbuild/protoc-gen-es": "^2.6.3",
+    "@bufbuild/protoc-gen-es": "^2.7.0",
     "@types/jasmine": "^5.1.8",
     "jasmine": "^5.9.0"
   }

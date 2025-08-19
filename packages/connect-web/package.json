@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.56.0",
-    "@bufbuild/protoc-gen-es": "^2.6.3",
+    "@bufbuild/protoc-gen-es": "^2.7.0",
     "@connectrpc/connect-conformance": "^2.0.4",
     "@wdio/jasmine-framework": "^9.19.1",
     "@wdio/cli": "^9.19.1",
@@ -50,7 +50,7 @@
     "webdriverio": "^9.7.2"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "^2.6.3",
+    "@bufbuild/protobuf": "^2.7.0",
     "@connectrpc/connect": "2.0.4"
   }
 }
