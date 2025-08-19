@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         # Fastify v5 only supports Node.js v20+
-        node-version: [22.7.0, 20.17.0]
+        node-version: [24.x, 22.x, 20.x]
     name: "Node.js ${{ matrix.node-version }}"
     timeout-minutes: 10
     steps:
