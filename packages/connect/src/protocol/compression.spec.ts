@@ -19,8 +19,8 @@ import { ConnectError } from "../connect-error.js";
 describe("compressionNegotiate()", () => {
   const compressionA: Compression = {
     name: "a",
-    compress: (bytes) => Promise.resolve(bytes),
-    decompress: (bytes) => Promise.resolve(bytes),
+    compress: (bytes) => Promise.resolve(new Uint8Array(bytes)),
+    decompress: (bytes) => Promise.resolve(new Uint8Array(bytes)),
   };
   const compressionB: Compression = {
     ...compressionA,

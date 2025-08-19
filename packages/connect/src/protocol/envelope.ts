@@ -259,7 +259,10 @@ export async function envelopeDecompress(
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export function encodeEnvelope(flags: number, data: Uint8Array): Uint8Array {
+export function encodeEnvelope(
+  flags: number,
+  data: Uint8Array,
+): Uint8Array<ArrayBuffer> {
   const bytes = new Uint8Array(data.length + 5);
   bytes.set(data, 5);
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -273,7 +276,9 @@ export function encodeEnvelope(flags: number, data: Uint8Array): Uint8Array {
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export function encodeEnvelopes(...envelopes: EnvelopedMessage[]): Uint8Array {
+export function encodeEnvelopes(
+  ...envelopes: EnvelopedMessage[]
+): Uint8Array<ArrayBuffer> {
   const len = envelopes.reduce(
     (previousValue, currentValue) =>
       previousValue + currentValue.data.length + 5,

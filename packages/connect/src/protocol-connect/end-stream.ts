@@ -139,7 +139,7 @@ export function createEndStreamSerialization(
 ): Serialization<EndStreamResponse> {
   const textEncoder = new TextEncoder();
   return {
-    serialize(data: EndStreamResponse): Uint8Array {
+    serialize(data: EndStreamResponse): Uint8Array<ArrayBuffer> {
       try {
         const jsonObject = endStreamToJson(data.metadata, data.error, options);
         const jsonString = JSON.stringify(jsonObject);

@@ -37,7 +37,7 @@ export interface Compression {
   /**
    * Compress a chunk of data.
    */
-  compress: (bytes: Uint8Array) => Promise<Uint8Array>;
+  compress: (bytes: Uint8Array) => Promise<Uint8Array<ArrayBuffer>>;
 
   /**
    * Decompress a chunk of data.
@@ -47,7 +47,10 @@ export interface Compression {
    * Raises a ConnectError with Code.InvalidArgument if the decompressed
    * size exceeds readMaxBytes.
    */
-  decompress: (bytes: Uint8Array, readMaxBytes: number) => Promise<Uint8Array>;
+  decompress: (
+    bytes: Uint8Array,
+    readMaxBytes: number,
+  ) => Promise<Uint8Array<ArrayBuffer>>;
 }
 
 /**

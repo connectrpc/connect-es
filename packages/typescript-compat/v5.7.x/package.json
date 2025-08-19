@@ -1,0 +1,13 @@
+{
+  "name": "ts5.7",
+  "private": true,
+  "scripts": {
+    "test": "node_modules/.bin/tsc --outDir dist"
+  },
+  "dependencies": {
+    "@connectrpc/connect-conformance": "*",
+    "@connectrpc/example": "*",
+    "@types/node": "24.2.1",
+    "typescript": "5.7.x"
+  }
+}
