@@ -49,11 +49,8 @@ Follow our [10 minute tutorial](https://connectrpc.com/docs/web/getting-started)
 we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
 web interface for ELIZA.
 
-**React**, **Svelte**, **Vue**, **Next.js** and **Angular** are supported (see [examples](https://github.com/connectrpc/examples-es)),
-and we have an expansion pack for [TanStack Query](https://github.com/connectrpc/connect-query-es).
-We support all modern web browsers that implement the widely available
-[fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
-and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding_API).
+For other frameworks, such as **Svelte**, **Vue**, **Next.js** and **Angular**, see [our examples](https://github.com/connectrpc/examples-es).
+For **TanStack Query**, see our expansion pack [Connect-Query](https://github.com/connectrpc/connect-query-es).
 
 ## Get started on Node.js
 
@@ -62,8 +59,7 @@ to spin up a service in Node.js, and call it from the web, and from a gRPC clien
 in your terminal.
 
 You can serve your Connect RPCs with vanilla Node.js, or use our [server plugins](https://connectrpc.com/docs/node/server-plugins)
-for **Fastify**, **Next.js**, and **Express**. We support Node.js v20 and later with
-the builtin `http` and `http2` modules.
+for **Fastify**, **Next.js**, and **Express**.
 
 ## Migrating from version 1
 
@@ -92,8 +88,6 @@ be more than happy to chat!
 - [@connectrpc/connect-express](https://www.npmjs.com/package/@connectrpc/connect-express):
   Adds your services to an [Express](https://expressjs.com/) server.
 
-The libraries and the generated code are compatible with ES2017 and TypeScript 4.9.5.
-
 ## Ecosystem
 
 - [examples-es](https://github.com/connectrpc/examples-es):
@@ -111,6 +105,20 @@ The libraries and the generated code are compatible with ES2017 and TypeScript 4
 - [conformance](https://github.com/connectrpc/conformance):
   gRPC-Web and Connect interoperability tests
 - [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
+
+## Compatibility
+
+All maintained releases of Node.js ([Current, Active LTS, and the Maintenance LTS release](https://nodejs.org/en/about/previous-releases))
+are supported.
+
+[Baseline web browsers](https://developer.mozilla.org/en-US/docs/Glossary/Baseline/Compatibility)
+from the last 2.5 years are supported.  
+
+[Same as Definitely Typed](https://github.com/DefinitelyTyped/DefinitelyTyped#support-window),
+we support versions of TypeScript that are less than 2 years old, with default compiler
+settings. Note that for some changes in TypeScript, it is impossible to support both
+new and old versions in the support window. We break the tie by supporting the newer
+version.
 
 ## Status
 
