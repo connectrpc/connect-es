@@ -14,6 +14,8 @@
 
 syntax = "proto3";
 
+import "google/type/date.proto";
+
 package connectrpc.eliza.v1;
 
 // ElizaService provides a way to talk to Eliza, a port of the DOCTOR script
@@ -37,6 +39,7 @@ service ElizaService {
 // SayRequest is a single-sentence request.
 message SayRequest {
   string sentence = 1;
+  google.type.Date date = 2;
 }
 
 // SayResponse is a single-sentence response.

@@ -4,5 +4,6 @@ version: v2
 clean: true
 plugins:
   - local: protoc-gen-es
-    opt: target=ts
+    opt: target=ts,import_extension=js
     out: src/gen
+    include_imports: true

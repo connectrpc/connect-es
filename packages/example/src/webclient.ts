@@ -15,49 +15,31 @@
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { ElizaService } from "./gen/eliza_pb.js";
+import { DateSchema } from "./gen/google/type/date_pb.js";
+import { create, createRegistry } from "@bufbuild/protobuf";
 
 // Alternatively, use createGrpcWebTransport here for the gRPC-web
 // protocol.
-const transport = createConnectTransport({ baseUrl: "/" });
+const transport = createConnectTransport({
+  baseUrl: "/",
+  jsonOptions: {
+    alwaysEmitImplicit: false,
+    ignoreUnknownFields: true,
+    useProtoFieldName: true,
+    registry: createRegistry(),
+  },
+  useHttpGet: true,
+});
 
 void (async () => {
   const client = createClient(ElizaService, transport);
-
-  print("What is your name?");
-  const name = await prompt();
-  print(`> ${name}`);
-
-  for await (const res of client.introduce({ name })) {
-    print(res.sentence);
-  }
-
-  for (;;) {
-    const sentence = await prompt();
-    print(`> ${sentence}`);
-    const res = await client.say({ sentence });
-    print(res.sentence);
-  }
-})();
-
-function print(text: string): void {
-  const p = document.createElement("p");
-  p.innerText = text;
-  p.scrollIntoView();
-  document.querySelector<HTMLElement>("#root")?.append(p);
-}
-
-function prompt(): Promise<string> {
-  const input = document.createElement("input");
-  input.value = "";
-  document.querySelector<HTMLElement>("#root")?.append(input);
-  input.focus();
-  return new Promise<string>((resolve) => {
-    input.onkeyup = (ev) => {
-      if (ev.key == "Enter" && input.value.length > 0) {
-        input.remove();
-        input.onkeyup = null;
-        resolve(input.value);
-      }
-    };
+  const sentence = "hello";
+  const date = create(DateSchema, {
+    year: 2010,
+    month: 8,
+    day: 26,
   });
-}
+  console.log({ date });
+  const res = await client.say({ sentence, date: date });
+  console.log({ res });
+})();
