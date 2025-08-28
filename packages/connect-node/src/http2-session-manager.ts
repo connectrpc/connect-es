@@ -712,23 +712,12 @@ function ready(
     lastStreamID: number,
     opaqueData: Buffer | undefined | null,
   ) {
-    receivedGoAway = true;
-    const tooManyPingsAscii = Buffer.from("too_many_pings", "ascii");
-    if (
-      errorCode === http2.constants.NGHTTP2_ENHANCE_YOUR_CALM &&
-      opaqueData != null &&
-      opaqueData.equals(tooManyPingsAscii)
-    ) {
-      // double pingIntervalMs, following the last paragraph of https://github.com/grpc/proposal/blob/0ba0c1905050525f9b0aee46f3f23c8e1e515489/A8-client-side-keepalive.md#basic-keepalive
-      options.pingIntervalMs = options.pingIntervalMs * 2;
-      receivedGoAwayEnhanceYourCalmTooManyPings = true;
-    }
-    if (errorCode === http2.constants.NGHTTP2_NO_ERROR && streamCount == 0) {
+    if (errorCode === http2.constants.NGHTTP2_NO_ERROR && streamCount === 0) {
       // Node.js v16 closes the connection on its own when it receives a GOAWAY
       // frame and there are no open streams (emitting a "close" event and
       // destroying the session), but later versions do not.
-      // Calling close() ourselves is ineffective here - it appears that the
-      // method is already being called, see https://github.com/nodejs/node/blob/198affc63973805ce5102d246f6b7822be57f5fc/lib/internal/http2/core.js#L681
+      // We call conn.destroy() because calling conn.close() ourselves is ineffective
+      // here - it appears that the method is already being called, see https://github.com/nodejs/node/blob/198affc63973805ce5102d246f6b7822be57f5fc/lib/internal/http2/core.js#L681
       conn.destroy(
         new ConnectError(
           "received GOAWAY without any open streams",
@@ -736,6 +725,14 @@ function ready(
         ),
         http2.constants.NGHTTP2_NO_ERROR,
       );
+      return;
+    }
+    receivedGoAway = true;
+    const tooManyPingsAscii = Buffer.from("too_many_pings", "ascii");
+    if (opaqueData?.equals(tooManyPingsAscii)) {
+      // double pingIntervalMs, following the last paragraph of https://github.com/grpc/proposal/blob/0ba0c1905050525f9b0aee46f3f23c8e1e515489/A8-client-side-keepalive.md#basic-keepalive
+      options.pingIntervalMs = options.pingIntervalMs * 2;
+      receivedGoAwayEnhanceYourCalmTooManyPings = true;
     }
   }
 
