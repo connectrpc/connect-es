@@ -418,6 +418,11 @@ describe("Http2SessionManager", () => {
           .withContext("connection state after receiving GOAWAY")
           .toBe("closed");
 
+        // manager should not hold on to connection without streams
+        expect(
+          (sm as unknown as { shuttingDown: unknown[] }).shuttingDown.length,
+        ).toBe(0);
+
         // second request should open a new session
         const req2 = await sm.request("POST", "/", {}, {});
         expect(sm.state())
