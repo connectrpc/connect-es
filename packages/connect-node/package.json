@@ -37,7 +37,7 @@
     "@connectrpc/connect": "2.1.0"
   },
   "devDependencies": {
-    "@types/node": "^24.2.1",
+    "@types/node": "^24.3.0",
     "@connectrpc/connect-conformance": "^2.1.0",
     "@types/jasmine": "^5.1.8",
     "jasmine": "^5.9.0"
