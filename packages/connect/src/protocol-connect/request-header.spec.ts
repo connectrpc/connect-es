@@ -61,6 +61,23 @@ describe("requestHeader", () => {
     expect(headers.get("Connect-Timeout-Ms")).toBe("10");
   });
 
+  it("should create request headers with user provided user-agent", () => {
+    const headers = requestHeader(
+      MethodKind.Unary,
+      true,
+      10,
+      { "User-Agent": "grpc-es/0.0.0" },
+      true,
+    );
+    expect(listHeaderKeys(headers)).toEqual([
+      "connect-protocol-version",
+      "connect-timeout-ms",
+      "content-type",
+      "user-agent",
+    ]);
+    expect(headers.get("User-Agent")).toBe("grpc-es/0.0.0");
+  });
+
   it("should exclude user-agent", () => {
     const headers = requestHeader(
       MethodKind.Unary,
