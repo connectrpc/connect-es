@@ -37,10 +37,12 @@ export function requestHeader(
     headerContentType,
     useBinaryFormat ? contentTypeProto : contentTypeJson,
   );
-  // Note that we do not strictly comply with gRPC user agents.
-  // We use "connect-es/1.2.3" where gRPC would use "grpc-es/1.2.3".
-  // See https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
-  result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
+  if (!result.has(headerUserAgent)) {
+    // Note that we do not strictly comply with gRPC user agents.
+    // We use "connect-es/1.2.3" where gRPC would use "grpc-es/1.2.3".
+    // See https://github.com/grpc/grpc/blob/c462bb8d485fc1434ecfae438823ca8d14cf3154/doc/PROTOCOL-HTTP2.md#user-agents
+    result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
+  }
   if (timeoutMs !== undefined) {
     result.set(headerTimeout, `${timeoutMs}m`);
   }

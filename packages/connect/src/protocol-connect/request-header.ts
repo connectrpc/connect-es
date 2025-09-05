@@ -59,7 +59,7 @@ export function requestHeader(
         : contentTypeStreamJson,
   );
   result.set(headerProtocolVersion, protocolVersion);
-  if (setUserAgent) {
+  if (setUserAgent && !result.has(headerUserAgent)) {
     result.set(headerUserAgent, "CONNECT_ES_USER_AGENT");
   }
   return result;
