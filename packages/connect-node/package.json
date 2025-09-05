@@ -39,7 +39,7 @@
   "devDependencies": {
     "@types/node": "^24.2.1",
     "@connectrpc/connect-conformance": "^2.1.0",
-    "@types/jasmine": "^5.1.8",
-    "jasmine": "^5.9.0"
+    "@types/jasmine": "^5.1.9",
+    "jasmine": "^5.10.0"
   }
 }
