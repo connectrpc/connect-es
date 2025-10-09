@@ -18,7 +18,7 @@ service ElizaService {
 }
 ```
 
-And with the magic of code generation, we generate an `ElizaService` type that we can implement and serve:
+And with the magic of code generation, we can implement and serve our service:
 
 ```ts
 import * as http from "node:http";
