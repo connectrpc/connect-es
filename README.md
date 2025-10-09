@@ -33,13 +33,13 @@ const handler = connectNodeAdapter({
   // Validation via Protovalidate is almost always recommended
   interceptors: [createValidateInterceptor()],
   routes: (router: ConnectRouter) => {
-      router.service(ElizaService, {
-          say(req: SayRequest) {
-              return {
-                  sentence: `You said "${req.sentence}"`,
-              };
-          },
-      });
+    router.service(ElizaService, {
+      say(req: SayRequest) {
+        return {
+          sentence: `You said "${req.sentence}"`,
+        };
+      },
+    });
   },
 });
 
@@ -54,18 +54,18 @@ import { createConnectTransport } from "@connectrpc/connect-node";
 import { ElizaService } from "./gen/eliza_pb.js";
 
 const client = createClient(
-    ElizaService,
-    createConnectTransport({
-        httpVersion: "1.1",
-        baseUrl: "http://localhost:8080",
-    })
+  ElizaService,
+  createConnectTransport({
+    httpVersion: "1.1",
+    baseUrl: "http://localhost:8080",
+  })
 );
 
 try {
-    const res = await client.say({sentence: "Hello, world!"})
-    console.log(res.sentence)
+  const res = await client.say({sentence: "Hello, world!"})
+  console.log(res.sentence)
 } catch (err) {
-    console.error(err);
+  console.error(err);
 }
 ```
 
