@@ -47,7 +47,7 @@ http.createServer(handler).listen(8080)
 ```
 
 Connect also generates SDKs for services.
-Instead of making raw HTTP requests, we just create a client, point it to our server's URL, and call RPCs:
+Just create a client with your server's URL and call RPCs:
 
 ```ts
 import { createClient } from "@connectrpc/connect";
