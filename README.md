@@ -46,8 +46,7 @@ const handler = connectNodeAdapter({
 http.createServer(handler).listen(8080)
 ```
 
-Connect also generates SDKs for services.
-Just create a client with your server's URL and call RPCs:
+Calling an RPC is just as simple. You create a client with your server's URL and call a method:
 
 ```ts
 import { createClient } from "@connectrpc/connect";
@@ -66,7 +65,7 @@ try {
     const res = await client.say({sentence: "Hello, world!"})
     console.log(res.sentence)
 } catch (err) {
-    console.error(err instanceof Error ? err.message : "unknown error");
+    console.error(err);
 }
 ```
 
