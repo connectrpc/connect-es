@@ -63,7 +63,7 @@ for **Fastify**, **Next.js**, and **Express**.
 
 ## Migrating from version 1
 
-If you are migrating from v1 to v2, check out our [migration guide](./MIGRATING.md);
+If you are migrating from v1 to v2, check out our [migration guide](./MIGRATING.md).
 
 ## Other platforms
 
@@ -77,6 +77,8 @@ be more than happy to chat!
 
 - [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect):
   RPC clients and servers for your schema ([source code](packages/connect)).
+- [@connectrpc/validate](https://www.npmjs.com/package/@connectrpc/validate):
+  [Protovalidate](https://protovalidate.com) interceptor for Connect.
 - [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web):
   Adapters for web browsers, and any other platform that has the fetch API on board.
 - [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node):
