@@ -6,9 +6,11 @@
 
 Connect is a family of libraries for building type-safe APIs with different languages and platforms.
 [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings them to TypeScript,
-the web browser, and to Node.js.
+web browsers, and Node.js.
 
-With Connect, you define your schema first:
+## A small example
+
+With Connect, we define our schema first:
 
 ```proto
 service ElizaService {
@@ -16,15 +18,64 @@ service ElizaService {
 }
 ```
 
-And with the magic of code generation, this schema produces servers and clients:
+And with the magic of code generation, we can implement and serve our service:
 
 ```ts
-const answer = await eliza.say({ sentence: "I feel happy." });
-console.log(answer);
-// {sentence: 'When you feel happy, what do you do?'}
+import * as http from "node:http";
+import type { ConnectRouter } from "@connectrpc/connect";
+import { connectNodeAdapter } from "@connectrpc/connect-node";
+import { createValidateInterceptor } from "@connectrpc/validate";
+import type { SayRequest } from "./gen/eliza_pb.js";
+import { ElizaService } from "./gen/eliza_pb.js";
+
+// The adapter turns our RPC routes into a Node.js request handler.
+const handler = connectNodeAdapter({
+  // Validation via Protovalidate is almost always recommended
+  interceptors: [createValidateInterceptor()],
+  routes: (router: ConnectRouter) => {
+    router.service(ElizaService, {
+      say(req: SayRequest) {
+        return {
+          sentence: `You said "${req.sentence}"`,
+        };
+      },
+    });
+  },
+});
+
+http.createServer(handler).listen(8080)
 ```
 
-Unlike REST, the Remote Procedure Call are type-safe, but they are regular HTTP
+Calling an RPC is just as simple. You create a client with your server's URL and call a method:
+
+```ts
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-node";
+import { ElizaService } from "./gen/eliza_pb.js";
+
+const client = createClient(
+  ElizaService,
+  createConnectTransport({
+    httpVersion: "1.1",
+    baseUrl: "http://localhost:8080",
+  })
+);
+
+try {
+  const res = await client.say({sentence: "Hello, world!"})
+  console.log(res.sentence)
+} catch (err) {
+  console.error(err);
+}
+```
+
+Of course, a plain HTTP server isn't fit for production use! See
+Connect's [server plugins](https://connectrpc.com/docs/node/server-plugins)
+for a guide to production deployment with Fastify, Next.js, Express, and more.
+
+## Simple, cURL-friendly RPC protocol
+
+Unlike REST, the Remote Procedure Calls are type-safe, but they are regular HTTP
 under the hood. You can see all requests in the network inspector, and you
 can `curl` them if you want:
 
@@ -41,11 +92,11 @@ Connect uses [Protobuf-ES](https://github.com/bufbuild/protobuf-es), the only
 Connect implements RPC three protocols: The widely available gRPC and
 gRPC-web protocols, and Connect's [own protocol](https://connectrpc.com/docs/protocol/),
 optimized for the web. This gives you unparalleled interoperability across many
-platforms and languages, with type-safety end-to-end.
+platforms and languages, with type safety end-to-end.
 
 ## Get started on the web
 
-Follow our [10 minute tutorial](https://connectrpc.com/docs/web/getting-started) where
+Follow our [10-minute tutorial](https://connectrpc.com/docs/web/getting-started) where
 we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
 web interface for ELIZA.
 
@@ -54,7 +105,7 @@ For **TanStack Query**, see our expansion pack [Connect-Query](https://github.co
 
 ## Get started on Node.js
 
-Follow our [10 minute tutorial](https://connectrpc.com/docs/node/getting-started)
+Follow our [10-minute tutorial](https://connectrpc.com/docs/node/getting-started)
 to spin up a service in Node.js, and call it from the web, and from a gRPC client
 in your terminal.
 
@@ -78,7 +129,7 @@ be more than happy to chat!
 - [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect):
   RPC clients and servers for your schema ([source code](packages/connect)).
 - [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web):
-  Adapters for web browsers, and any other platform that has the fetch API on board.
+  Adapters for web browsers and any other platform that has the fetch API on board.
 - [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node):
   Serve RPCs on vanilla Node.js servers. Call RPCs with any protocol.
 - [@connectrpc/connect-fastify](https://www.npmjs.com/package/@connectrpc/connect-fastify):
@@ -114,7 +165,7 @@ All maintained releases of Node.js ([Current, Active LTS, and the Maintenance LT
 are supported.
 
 [Baseline web browsers](https://developer.mozilla.org/en-US/docs/Glossary/Baseline/Compatibility)
-from the last 2.5 years are supported.  
+from the last 2.5 years are supported.
 
 [Same as Definitely Typed](https://github.com/DefinitelyTyped/DefinitelyTyped#support-window),
 we support versions of TypeScript that are less than 2 years old, with default compiler

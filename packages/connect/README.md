@@ -2,7 +2,7 @@
 
 Connect is a family of libraries for building type-safe APIs with different languages and platforms.
 [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings them to TypeScript,
-the web browser, and to Node.js.
+web browsers, and Node.js.
 
 With Connect, you define your schema first:
 
@@ -37,11 +37,11 @@ from the web, the terminal, or native mobile clients. Under the hood, it uses
 implements RPC (remote procedure calls) with three protocols: The widely available
 gRPC and gRPC-web, and Connect's [own protocol](https://connectrpc.com/docs/protocol/),
 optimized for the web. This gives you unparalleled interoperability with
-full-stack type-safety.
+full-stack type safety.
 
 ## Get started on the web
 
-Follow our [10 minute tutorial](https://connectrpc.com/docs/web/getting-started) where
+Follow our [10-minute tutorial](https://connectrpc.com/docs/web/getting-started) where
 we use [Vite](https://vitejs.dev/) and [React](https://reactjs.org/) to create a
 web interface for ELIZA.
 
@@ -53,7 +53,7 @@ and the [Encoding API](https://developer.mozilla.org/en-US/docs/Web/API/Encoding
 
 ## Get started on Node.js
 
-Follow our [10 minute tutorial](https://connectrpc.com/docs/node/getting-started)
+Follow our [10-minute tutorial](https://connectrpc.com/docs/node/getting-started)
 to spin up a service in Node.js, and call it from the web, and from a gRPC client
 in your terminal.
 
