@@ -114,7 +114,7 @@ for **Fastify**, **Next.js**, and **Express**.
 
 ## Migrating from version 1
 
-If you are migrating from v1 to v2, check out our [migration guide](./MIGRATING.md);
+If you are migrating from v1 to v2, check out our [migration guide](./MIGRATING.md).
 
 ## Other platforms
 
@@ -143,6 +143,8 @@ be more than happy to chat!
 
 - [examples-es](https://github.com/connectrpc/examples-es):
   Examples for using Connect with various TypeScript web frameworks and tooling
+- [validate-es](https://www.npmjs.com/package/@connectrpc/validate):
+  [Protovalidate](https://protovalidate.com) interceptor for Connect.
 - [connect-query-es](https://github.com/connectrpc/connect-query-es):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
 - [connect-playwright-es](https://github.com/connectrpc/connect-playwright-es):
