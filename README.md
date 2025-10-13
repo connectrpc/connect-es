@@ -143,7 +143,7 @@ be more than happy to chat!
 
 - [examples-es](https://github.com/connectrpc/examples-es):
   Examples for using Connect with various TypeScript web frameworks and tooling
-- [@connectrpc/validate](https://www.npmjs.com/package/@connectrpc/validate):
+- [validate-es](https://www.npmjs.com/package/@connectrpc/validate):
   [Protovalidate](https://protovalidate.com) interceptor for Connect.
 - [connect-query-es](https://github.com/connectrpc/connect-query-es):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
