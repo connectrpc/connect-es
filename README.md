@@ -77,8 +77,6 @@ be more than happy to chat!
 
 - [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect):
   RPC clients and servers for your schema ([source code](packages/connect)).
-- [@connectrpc/validate](https://www.npmjs.com/package/@connectrpc/validate):
-  [Protovalidate](https://protovalidate.com) interceptor for Connect.
 - [@connectrpc/connect-web](https://www.npmjs.com/package/@connectrpc/connect-web):
   Adapters for web browsers, and any other platform that has the fetch API on board.
 - [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node):
@@ -94,6 +92,8 @@ be more than happy to chat!
 
 - [examples-es](https://github.com/connectrpc/examples-es):
   Examples for using Connect with various TypeScript web frameworks and tooling
+- [@connectrpc/validate](https://www.npmjs.com/package/@connectrpc/validate):
+  [Protovalidate](https://protovalidate.com) interceptor for Connect.
 - [connect-query-es](https://github.com/connectrpc/connect-query-es):
   TypeScript-first expansion pack for TanStack Query that gives you Protobuf superpowers
 - [connect-playwright-es](https://github.com/connectrpc/connect-playwright-es):
