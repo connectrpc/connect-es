@@ -27,22 +27,27 @@
   "main": "./dist/cjs/index.js",
   "exports": {
     ".": {
+      "types": "./dist/cjs/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
     "./protocol": {
+      "types": "./dist/cjs/protocol/index.d.ts",
       "import": "./dist/esm/protocol/index.js",
       "require": "./dist/cjs/protocol/index.js"
     },
     "./protocol-connect": {
+      "types": "./dist/cjs/protocol-connect/index.d.ts",
       "import": "./dist/esm/protocol-connect/index.js",
       "require": "./dist/cjs/protocol-connect/index.js"
     },
     "./protocol-grpc": {
+      "types": "./dist/cjs/protocol-grpc/index.d.ts",
       "import": "./dist/esm/protocol-grpc/index.js",
       "require": "./dist/cjs/protocol-grpc/index.js"
     },
     "./protocol-grpc-web": {
+      "types": "./dist/cjs/protocol-grpc-web/index.d.ts",
       "import": "./dist/esm/protocol-grpc-web/index.js",
       "require": "./dist/cjs/protocol-grpc-web/index.js"
     }
