@@ -47,7 +47,7 @@ import type { DescMethod, DescService } from "@bufbuild/protobuf";
  * }
  * ```
  *
- * The pass this function to adapters and plugins, for example
+ * Then pass this function to adapters and plugins, for example
  * from @connectrpc/connect-node, or from @connectrpc/connect-fastify.
  */
 export interface ConnectRouter {

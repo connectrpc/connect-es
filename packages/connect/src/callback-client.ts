@@ -39,7 +39,7 @@ import { createAsyncIterable } from "./protocol/async-iterable.js";
  * its AbortSignal as an option to the method.
  *
  * If a call is cancelled by an AbortController or by the returned
- * cancel-function, ConnectErrors with the code Canceled are
+ * cancel function, ConnectErrors with the code Canceled are
  * silently discarded.
  *
  * CallbackClient is most convenient for use in React effects, where

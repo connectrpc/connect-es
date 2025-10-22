@@ -23,7 +23,7 @@
  */
 export enum Code {
   /**
-   * Canceled, usually be the user
+   * Canceled, usually by the user
    */
   Canceled = 1,
 
