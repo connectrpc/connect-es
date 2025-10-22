@@ -187,7 +187,7 @@ export function createHandlerContext(
 }
 
 /**
- * UnaryImp is the signature of the implementation of a unary RPC.
+ * UnaryImpl is the signature of the implementation of a unary RPC.
  */
 export type UnaryImpl<I extends DescMessage, O extends DescMessage> = (
   request: MessageShape<I>,
