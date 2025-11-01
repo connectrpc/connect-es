@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.57.2",
-    "@bufbuild/protoc-gen-es": "^2.7.0",
+    "@bufbuild/protoc-gen-es": "^2.10.0",
     "@types/debug": "^4.1.12",
     "@types/node-forge": "^1.3.14",
     "@types/tar-stream": "^3.1.4"
