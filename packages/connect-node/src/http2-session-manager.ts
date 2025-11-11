@@ -613,11 +613,19 @@ function ready(
     verify() {
       conn.ref();
       return new Promise<boolean>((resolve) => {
+        let errorListener: (()=>void) | null = () => {
+          errorListener = null;
+          resolve(false)
+        }
         commonPing(() => {
           if (streamCount == 0) conn.unref();
+          if (errorListener) {
+            conn.off("error", errorListener);
+            errorListener = null;
+          }
           resolve(true);
         });
-        conn.once("error", () => resolve(false));
+        conn.once("error", errorListener);
       });
     },
     abort(reason) {
