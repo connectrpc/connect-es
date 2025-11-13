@@ -39,9 +39,9 @@ export class GetGraphRequest extends jspb.Message {
 
 export namespace GetGraphRequest {
   export type AsObject = {
-    resourceRefsList: Array<GetGraphRequest.ResourceRef.AsObject>,
-    digestType: buf_registry_module_v1beta1_digest_pb.DigestType,
-  }
+    resourceRefsList: Array<GetGraphRequest.ResourceRef.AsObject>;
+    digestType: buf_registry_module_v1beta1_digest_pb.DigestType;
+  };
 
   export class ResourceRef extends jspb.Message {
     getResourceRef(): buf_registry_module_v1beta1_resource_pb.ResourceRef | undefined;
@@ -62,9 +62,9 @@ export namespace GetGraphRequest {
 
   export namespace ResourceRef {
     export type AsObject = {
-      resourceRef?: buf_registry_module_v1beta1_resource_pb.ResourceRef.AsObject,
-      registry: string,
-    }
+      resourceRef?: buf_registry_module_v1beta1_resource_pb.ResourceRef.AsObject;
+      registry: string;
+    };
   }
 
 }
@@ -85,7 +85,7 @@ export class GetGraphResponse extends jspb.Message {
 
 export namespace GetGraphResponse {
   export type AsObject = {
-    graph?: buf_registry_module_v1beta1_graph_pb.Graph.AsObject,
-  }
+    graph?: buf_registry_module_v1beta1_graph_pb.Graph.AsObject;
+  };
 }
 

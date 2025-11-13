@@ -36,8 +36,8 @@ export class GetLabelsRequest extends jspb.Message {
 
 export namespace GetLabelsRequest {
   export type AsObject = {
-    labelRefsList: Array<buf_registry_module_v1_label_pb.LabelRef.AsObject>,
-  }
+    labelRefsList: Array<buf_registry_module_v1_label_pb.LabelRef.AsObject>;
+  };
 }
 
 export class GetLabelsResponse extends jspb.Message {
@@ -56,8 +56,8 @@ export class GetLabelsResponse extends jspb.Message {
 
 export namespace GetLabelsResponse {
   export type AsObject = {
-    labelsList: Array<buf_registry_module_v1_label_pb.Label.AsObject>,
-  }
+    labelsList: Array<buf_registry_module_v1_label_pb.Label.AsObject>;
+  };
 }
 
 export class ListLabelsRequest extends jspb.Message {
@@ -96,16 +96,16 @@ export class ListLabelsRequest extends jspb.Message {
 
 export namespace ListLabelsRequest {
   export type AsObject = {
-    pageSize: number,
-    pageToken: string,
-    resourceRef?: buf_registry_module_v1_resource_pb.ResourceRef.AsObject,
-    order: ListLabelsRequest.Order,
-    commitCheckStatusesList: Array<buf_registry_module_v1_label_pb.CommitCheckStatus>,
-    nameQuery: string,
-    archiveFilter: ListLabelsRequest.ArchiveFilter,
-  }
+    pageSize: number;
+    pageToken: string;
+    resourceRef?: buf_registry_module_v1_resource_pb.ResourceRef.AsObject;
+    order: ListLabelsRequest.Order;
+    commitCheckStatusesList: Array<buf_registry_module_v1_label_pb.CommitCheckStatus>;
+    nameQuery: string;
+    archiveFilter: ListLabelsRequest.ArchiveFilter;
+  };
 
-  export enum Order { 
+  export enum Order {
     ORDER_UNSPECIFIED = 0,
     ORDER_CREATE_TIME_DESC = 1,
     ORDER_CREATE_TIME_ASC = 2,
@@ -113,7 +113,7 @@ export namespace ListLabelsRequest {
     ORDER_UPDATE_TIME_ASC = 4,
   }
 
-  export enum ArchiveFilter { 
+  export enum ArchiveFilter {
     ARCHIVE_FILTER_UNSPECIFIED = 0,
     ARCHIVE_FILTER_UNARCHIVED_ONLY = 1,
     ARCHIVE_FILTER_ARCHIVED_ONLY = 2,
@@ -140,9 +140,9 @@ export class ListLabelsResponse extends jspb.Message {
 
 export namespace ListLabelsResponse {
   export type AsObject = {
-    nextPageToken: string,
-    labelsList: Array<buf_registry_module_v1_label_pb.Label.AsObject>,
-  }
+    nextPageToken: string;
+    labelsList: Array<buf_registry_module_v1_label_pb.Label.AsObject>;
+  };
 }
 
 export class ListLabelHistoryRequest extends jspb.Message {
@@ -181,16 +181,16 @@ export class ListLabelHistoryRequest extends jspb.Message {
 
 export namespace ListLabelHistoryRequest {
   export type AsObject = {
-    pageSize: number,
-    pageToken: string,
-    labelRef?: buf_registry_module_v1_label_pb.LabelRef.AsObject,
-    order: ListLabelHistoryRequest.Order,
-    commitCheckStatusesList: Array<buf_registry_module_v1_label_pb.CommitCheckStatus>,
-    startCommitId: string,
-    onlyCommitsWithChangedDigests: boolean,
-  }
+    pageSize: number;
+    pageToken: string;
+    labelRef?: buf_registry_module_v1_label_pb.LabelRef.AsObject;
+    order: ListLabelHistoryRequest.Order;
+    commitCheckStatusesList: Array<buf_registry_module_v1_label_pb.CommitCheckStatus>;
+    startCommitId: string;
+    onlyCommitsWithChangedDigests: boolean;
+  };
 
-  export enum Order { 
+  export enum Order {
     ORDER_UNSPECIFIED = 0,
     ORDER_DESC = 1,
     ORDER_ASC = 2,
@@ -216,9 +216,9 @@ export class ListLabelHistoryResponse extends jspb.Message {
 
 export namespace ListLabelHistoryResponse {
   export type AsObject = {
-    nextPageToken: string,
-    valuesList: Array<ListLabelHistoryResponse.Value.AsObject>,
-  }
+    nextPageToken: string;
+    valuesList: Array<ListLabelHistoryResponse.Value.AsObject>;
+  };
 
   export class Value extends jspb.Message {
     getCommit(): buf_registry_module_v1_commit_pb.Commit | undefined;
@@ -241,9 +241,9 @@ export namespace ListLabelHistoryResponse {
 
   export namespace Value {
     export type AsObject = {
-      commit?: buf_registry_module_v1_commit_pb.Commit.AsObject,
-      commitCheckState?: buf_registry_module_v1_label_pb.CommitCheckState.AsObject,
-    }
+      commit?: buf_registry_module_v1_commit_pb.Commit.AsObject;
+      commitCheckState?: buf_registry_module_v1_label_pb.CommitCheckState.AsObject;
+    };
   }
 
 }
@@ -264,8 +264,8 @@ export class CreateOrUpdateLabelsRequest extends jspb.Message {
 
 export namespace CreateOrUpdateLabelsRequest {
   export type AsObject = {
-    valuesList: Array<CreateOrUpdateLabelsRequest.Value.AsObject>,
-  }
+    valuesList: Array<CreateOrUpdateLabelsRequest.Value.AsObject>;
+  };
 
   export class Value extends jspb.Message {
     getLabelRef(): buf_registry_module_v1_label_pb.LabelRef | undefined;
@@ -286,9 +286,9 @@ export namespace CreateOrUpdateLabelsRequest {
 
   export namespace Value {
     export type AsObject = {
-      labelRef?: buf_registry_module_v1_label_pb.LabelRef.AsObject,
-      commitId: string,
-    }
+      labelRef?: buf_registry_module_v1_label_pb.LabelRef.AsObject;
+      commitId: string;
+    };
   }
 
 }
@@ -309,8 +309,8 @@ export class CreateOrUpdateLabelsResponse extends jspb.Message {
 
 export namespace CreateOrUpdateLabelsResponse {
   export type AsObject = {
-    labelsList: Array<buf_registry_module_v1_label_pb.Label.AsObject>,
-  }
+    labelsList: Array<buf_registry_module_v1_label_pb.Label.AsObject>;
+  };
 }
 
 export class ArchiveLabelsRequest extends jspb.Message {
@@ -329,8 +329,8 @@ export class ArchiveLabelsRequest extends jspb.Message {
 
 export namespace ArchiveLabelsRequest {
   export type AsObject = {
-    labelRefsList: Array<buf_registry_module_v1_label_pb.LabelRef.AsObject>,
-  }
+    labelRefsList: Array<buf_registry_module_v1_label_pb.LabelRef.AsObject>;
+  };
 }
 
 export class ArchiveLabelsResponse extends jspb.Message {
@@ -344,7 +344,7 @@ export class ArchiveLabelsResponse extends jspb.Message {
 
 export namespace ArchiveLabelsResponse {
   export type AsObject = {
-  }
+  };
 }
 
 export class UnarchiveLabelsRequest extends jspb.Message {
@@ -363,8 +363,8 @@ export class UnarchiveLabelsRequest extends jspb.Message {
 
 export namespace UnarchiveLabelsRequest {
   export type AsObject = {
-    labelRefsList: Array<buf_registry_module_v1_label_pb.LabelRef.AsObject>,
-  }
+    labelRefsList: Array<buf_registry_module_v1_label_pb.LabelRef.AsObject>;
+  };
 }
 
 export class UnarchiveLabelsResponse extends jspb.Message {
@@ -378,6 +378,6 @@ export class UnarchiveLabelsResponse extends jspb.Message {
 
 export namespace UnarchiveLabelsResponse {
   export type AsObject = {
-  }
+  };
 }
 

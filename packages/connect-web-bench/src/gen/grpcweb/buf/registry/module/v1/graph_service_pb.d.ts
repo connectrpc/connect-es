@@ -35,8 +35,8 @@ export class GetGraphRequest extends jspb.Message {
 
 export namespace GetGraphRequest {
   export type AsObject = {
-    resourceRefsList: Array<buf_registry_module_v1_resource_pb.ResourceRef.AsObject>,
-  }
+    resourceRefsList: Array<buf_registry_module_v1_resource_pb.ResourceRef.AsObject>;
+  };
 }
 
 export class GetGraphResponse extends jspb.Message {
@@ -55,7 +55,7 @@ export class GetGraphResponse extends jspb.Message {
 
 export namespace GetGraphResponse {
   export type AsObject = {
-    graph?: buf_registry_module_v1_graph_pb.Graph.AsObject,
-  }
+    graph?: buf_registry_module_v1_graph_pb.Graph.AsObject;
+  };
 }
 

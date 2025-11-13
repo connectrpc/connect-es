@@ -27,13 +27,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var buf_registry_owner_v1_organization_pb = require('../../../../buf/registry/owner/v1/organization_pb.js');
 goog.object.extend(proto, buf_registry_owner_v1_organization_pb);
@@ -713,7 +707,7 @@ proto.buf.registry.owner.v1.ListUsersRequest.deserializeBinaryFromReader = funct
       msg.setPageSize(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setPageToken(value);
       break;
     case 3:
@@ -726,16 +720,10 @@ proto.buf.registry.owner.v1.ListUsersRequest.deserializeBinaryFromReader = funct
       msg.setOrder(value);
       break;
     case 5:
-      var values = /** @type {!Array<!proto.buf.registry.owner.v1.UserType>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addHasTypes(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getHasTypesList());
       break;
     case 6:
-      var values = /** @type {!Array<!proto.buf.registry.owner.v1.UserState>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addHasStates(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getHasStatesList());
       break;
     default:
       reader.skipField();
@@ -1066,7 +1054,7 @@ proto.buf.registry.owner.v1.ListUsersResponse.deserializeBinaryFromReader = func
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setNextPageToken(value);
       break;
     case 2:
@@ -1373,7 +1361,7 @@ proto.buf.registry.owner.v1.CreateUsersRequest.Value.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setName(value);
       break;
     case 2:
@@ -1381,11 +1369,11 @@ proto.buf.registry.owner.v1.CreateUsersRequest.Value.deserializeBinaryFromReader
       msg.setType(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setDescription(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setUrl(value);
       break;
     case 5:
@@ -1952,11 +1940,11 @@ proto.buf.registry.owner.v1.UpdateUsersRequest.Value.deserializeBinaryFromReader
       msg.setState(value);
       break;
     case 3:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setDescription(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setUrl(value);
       break;
     case 5:

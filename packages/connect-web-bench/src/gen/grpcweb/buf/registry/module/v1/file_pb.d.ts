@@ -36,12 +36,12 @@ export class File extends jspb.Message {
 
 export namespace File {
   export type AsObject = {
-    path: string,
-    content: Uint8Array | string,
-  }
+    path: string;
+    content: Uint8Array | string;
+  };
 }
 
-export enum FileType { 
+export enum FileType {
   FILE_TYPE_UNSPECIFIED = 0,
   FILE_TYPE_PROTO = 1,
   FILE_TYPE_DOC = 2,

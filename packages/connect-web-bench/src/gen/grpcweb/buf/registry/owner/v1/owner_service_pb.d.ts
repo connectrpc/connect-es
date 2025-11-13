@@ -34,8 +34,8 @@ export class GetOwnersRequest extends jspb.Message {
 
 export namespace GetOwnersRequest {
   export type AsObject = {
-    ownerRefsList: Array<buf_registry_owner_v1_owner_pb.OwnerRef.AsObject>,
-  }
+    ownerRefsList: Array<buf_registry_owner_v1_owner_pb.OwnerRef.AsObject>;
+  };
 }
 
 export class GetOwnersResponse extends jspb.Message {
@@ -54,7 +54,7 @@ export class GetOwnersResponse extends jspb.Message {
 
 export namespace GetOwnersResponse {
   export type AsObject = {
-    ownersList: Array<buf_registry_owner_v1_owner_pb.Owner.AsObject>,
-  }
+    ownersList: Array<buf_registry_owner_v1_owner_pb.Owner.AsObject>;
+  };
 }
 

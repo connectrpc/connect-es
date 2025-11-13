@@ -34,8 +34,8 @@ export class GetResourcesRequest extends jspb.Message {
 
 export namespace GetResourcesRequest {
   export type AsObject = {
-    resourceRefsList: Array<buf_registry_module_v1_resource_pb.ResourceRef.AsObject>,
-  }
+    resourceRefsList: Array<buf_registry_module_v1_resource_pb.ResourceRef.AsObject>;
+  };
 }
 
 export class GetResourcesResponse extends jspb.Message {
@@ -54,7 +54,7 @@ export class GetResourcesResponse extends jspb.Message {
 
 export namespace GetResourcesResponse {
   export type AsObject = {
-    resourcesList: Array<buf_registry_module_v1_resource_pb.Resource.AsObject>,
-  }
+    resourcesList: Array<buf_registry_module_v1_resource_pb.Resource.AsObject>;
+  };
 }
 
