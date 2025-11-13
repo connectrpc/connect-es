@@ -39,6 +39,6 @@
     "@biomejs/biome": "^1.9.4",
     "@bufbuild/license-header": "^0.0.4",
     "turbo": "^2.6.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }
