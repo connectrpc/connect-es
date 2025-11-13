@@ -35,7 +35,7 @@
     "@connectrpc/connect-conformance": "^2.1.0",
     "@connectrpc/connect": "2.1.0",
     "@connectrpc/connect-node": "2.1.0",
-    "@types/express": "^5.0.3",
+    "@types/express": "^5.0.5",
     "express": "^5.1.0",
     "tsx": "^4.20.4"
   },

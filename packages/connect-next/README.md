@@ -43,9 +43,13 @@ export default function (router: ConnectRouter) {
 ```ts
 // pages/api/[[..connect]].ts
 import { nextJsApiRouter } from "@connectrpc/connect-next";
+import { createValidateInterceptor } from "@connectrpc/validate";
 import routes from "../../connect";
 
-const { handler, config } = nextJsApiRouter({ routes });
+const { handler, config } = nextJsApiRouter({
+  interceptors: [createValidateInterceptor()],
+  routes 
+});
 export { handler as default, config };
 ```
 
