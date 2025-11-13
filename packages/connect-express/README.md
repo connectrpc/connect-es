@@ -29,13 +29,10 @@ import http from "http";
 import express from "express";
 + import routes from "connect";
 + import { expressConnectMiddleware } from "@connectrpc/connect-express";
-+ import { createValidateInterceptor } from "@connectrpc/validate";
 
 const app = express();
 
 + app.use(expressConnectMiddleware({
-+  // Validation via Protovalidate is almost always recommended
-+  interceptors: [createValidateInterceptor()],  
 +  routes
 + }));
 

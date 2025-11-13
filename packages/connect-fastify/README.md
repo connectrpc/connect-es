@@ -28,15 +28,12 @@ export default function (router: ConnectRouter) {
 import { fastify } from "fastify";
 + import routes from "connect";
 + import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
-+ import { createValidateInterceptor } from "@connectrpc/validate";
 
 const server = fastify({
   http2: true,
 });
 
 + await server.register(fastifyConnectPlugin, {
-+  // Validation via Protovalidate is almost always recommended
-+  interceptors: [createValidateInterceptor()],  
 +  routes
 + });
 
