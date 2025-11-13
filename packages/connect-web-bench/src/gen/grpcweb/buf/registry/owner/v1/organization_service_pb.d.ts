@@ -35,8 +35,8 @@ export class GetOrganizationsRequest extends jspb.Message {
 
 export namespace GetOrganizationsRequest {
   export type AsObject = {
-    organizationRefsList: Array<buf_registry_owner_v1_organization_pb.OrganizationRef.AsObject>,
-  }
+    organizationRefsList: Array<buf_registry_owner_v1_organization_pb.OrganizationRef.AsObject>;
+  };
 }
 
 export class GetOrganizationsResponse extends jspb.Message {
@@ -55,8 +55,8 @@ export class GetOrganizationsResponse extends jspb.Message {
 
 export namespace GetOrganizationsResponse {
   export type AsObject = {
-    organizationsList: Array<buf_registry_owner_v1_organization_pb.Organization.AsObject>,
-  }
+    organizationsList: Array<buf_registry_owner_v1_organization_pb.Organization.AsObject>;
+  };
 }
 
 export class ListOrganizationsRequest extends jspb.Message {
@@ -84,13 +84,13 @@ export class ListOrganizationsRequest extends jspb.Message {
 
 export namespace ListOrganizationsRequest {
   export type AsObject = {
-    pageSize: number,
-    pageToken: string,
-    userRefsList: Array<buf_registry_owner_v1_user_pb.UserRef.AsObject>,
-    order: ListOrganizationsRequest.Order,
-  }
+    pageSize: number;
+    pageToken: string;
+    userRefsList: Array<buf_registry_owner_v1_user_pb.UserRef.AsObject>;
+    order: ListOrganizationsRequest.Order;
+  };
 
-  export enum Order { 
+  export enum Order {
     ORDER_UNSPECIFIED = 0,
     ORDER_CREATE_TIME_DESC = 1,
     ORDER_CREATE_TIME_ASC = 2,
@@ -116,9 +116,9 @@ export class ListOrganizationsResponse extends jspb.Message {
 
 export namespace ListOrganizationsResponse {
   export type AsObject = {
-    nextPageToken: string,
-    organizationsList: Array<buf_registry_owner_v1_organization_pb.Organization.AsObject>,
-  }
+    nextPageToken: string;
+    organizationsList: Array<buf_registry_owner_v1_organization_pb.Organization.AsObject>;
+  };
 }
 
 export class CreateOrganizationsRequest extends jspb.Message {
@@ -137,8 +137,8 @@ export class CreateOrganizationsRequest extends jspb.Message {
 
 export namespace CreateOrganizationsRequest {
   export type AsObject = {
-    valuesList: Array<CreateOrganizationsRequest.Value.AsObject>,
-  }
+    valuesList: Array<CreateOrganizationsRequest.Value.AsObject>;
+  };
 
   export class Value extends jspb.Message {
     getName(): string;
@@ -163,11 +163,11 @@ export namespace CreateOrganizationsRequest {
 
   export namespace Value {
     export type AsObject = {
-      name: string,
-      description: string,
-      url: string,
-      verificationStatus: buf_registry_owner_v1_organization_pb.OrganizationVerificationStatus,
-    }
+      name: string;
+      description: string;
+      url: string;
+      verificationStatus: buf_registry_owner_v1_organization_pb.OrganizationVerificationStatus;
+    };
   }
 
 }
@@ -188,8 +188,8 @@ export class CreateOrganizationsResponse extends jspb.Message {
 
 export namespace CreateOrganizationsResponse {
   export type AsObject = {
-    organizationsList: Array<buf_registry_owner_v1_organization_pb.Organization.AsObject>,
-  }
+    organizationsList: Array<buf_registry_owner_v1_organization_pb.Organization.AsObject>;
+  };
 }
 
 export class UpdateOrganizationsRequest extends jspb.Message {
@@ -208,8 +208,8 @@ export class UpdateOrganizationsRequest extends jspb.Message {
 
 export namespace UpdateOrganizationsRequest {
   export type AsObject = {
-    valuesList: Array<UpdateOrganizationsRequest.Value.AsObject>,
-  }
+    valuesList: Array<UpdateOrganizationsRequest.Value.AsObject>;
+  };
 
   export class Value extends jspb.Message {
     getOrganizationRef(): buf_registry_owner_v1_organization_pb.OrganizationRef | undefined;
@@ -242,23 +242,23 @@ export namespace UpdateOrganizationsRequest {
 
   export namespace Value {
     export type AsObject = {
-      organizationRef?: buf_registry_owner_v1_organization_pb.OrganizationRef.AsObject,
-      description?: string,
-      url?: string,
-      verificationStatus?: buf_registry_owner_v1_organization_pb.OrganizationVerificationStatus,
-    }
+      organizationRef?: buf_registry_owner_v1_organization_pb.OrganizationRef.AsObject;
+      description?: string;
+      url?: string;
+      verificationStatus?: buf_registry_owner_v1_organization_pb.OrganizationVerificationStatus;
+    };
 
-    export enum DescriptionCase { 
+    export enum DescriptionCase {
       _DESCRIPTION_NOT_SET = 0,
       DESCRIPTION = 2,
     }
 
-    export enum UrlCase { 
+    export enum UrlCase {
       _URL_NOT_SET = 0,
       URL = 3,
     }
 
-    export enum VerificationStatusCase { 
+    export enum VerificationStatusCase {
       _VERIFICATION_STATUS_NOT_SET = 0,
       VERIFICATION_STATUS = 4,
     }
@@ -282,8 +282,8 @@ export class UpdateOrganizationsResponse extends jspb.Message {
 
 export namespace UpdateOrganizationsResponse {
   export type AsObject = {
-    organizationsList: Array<buf_registry_owner_v1_organization_pb.Organization.AsObject>,
-  }
+    organizationsList: Array<buf_registry_owner_v1_organization_pb.Organization.AsObject>;
+  };
 }
 
 export class DeleteOrganizationsRequest extends jspb.Message {
@@ -302,8 +302,8 @@ export class DeleteOrganizationsRequest extends jspb.Message {
 
 export namespace DeleteOrganizationsRequest {
   export type AsObject = {
-    organizationRefsList: Array<buf_registry_owner_v1_organization_pb.OrganizationRef.AsObject>,
-  }
+    organizationRefsList: Array<buf_registry_owner_v1_organization_pb.OrganizationRef.AsObject>;
+  };
 }
 
 export class DeleteOrganizationsResponse extends jspb.Message {
@@ -317,6 +317,6 @@ export class DeleteOrganizationsResponse extends jspb.Message {
 
 export namespace DeleteOrganizationsResponse {
   export type AsObject = {
-  }
+  };
 }
 

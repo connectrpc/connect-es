@@ -64,22 +64,24 @@ export class Module extends jspb.Message {
 
 export namespace Module {
   export type AsObject = {
-    id: string,
-    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    name: string,
-    ownerId: string,
-    visibility: ModuleVisibility,
-    state: ModuleState,
-    description: string,
-    url: string,
-    defaultLabelName: string,
-  }
+    id: string;
+    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    name: string;
+    ownerId: string;
+    visibility: ModuleVisibility;
+    state: ModuleState;
+    description: string;
+    url: string;
+    defaultLabelName: string;
+  };
 }
 
 export class ModuleRef extends jspb.Message {
   getId(): string;
   setId(value: string): ModuleRef;
+  hasId(): boolean;
+  clearId(): ModuleRef;
 
   getName(): ModuleRef.Name | undefined;
   setName(value?: ModuleRef.Name): ModuleRef;
@@ -98,9 +100,9 @@ export class ModuleRef extends jspb.Message {
 
 export namespace ModuleRef {
   export type AsObject = {
-    id: string,
-    name?: ModuleRef.Name.AsObject,
-  }
+    id?: string;
+    name?: ModuleRef.Name.AsObject;
+  };
 
   export class Name extends jspb.Message {
     getOwner(): string;
@@ -119,25 +121,25 @@ export namespace ModuleRef {
 
   export namespace Name {
     export type AsObject = {
-      owner: string,
-      module: string,
-    }
+      owner: string;
+      module: string;
+    };
   }
 
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     ID = 1,
     NAME = 2,
   }
 }
 
-export enum ModuleVisibility { 
+export enum ModuleVisibility {
   MODULE_VISIBILITY_UNSPECIFIED = 0,
   MODULE_VISIBILITY_PUBLIC = 1,
   MODULE_VISIBILITY_PRIVATE = 2,
 }
-export enum ModuleState { 
+export enum ModuleState {
   MODULE_STATE_UNSPECIFIED = 0,
   MODULE_STATE_ACTIVE = 1,
   MODULE_STATE_DEPRECATED = 2,

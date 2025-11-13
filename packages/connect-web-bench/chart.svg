@@ -51,13 +51,13 @@
 <circle cx="420" cy="177.500390625" r="4" fill="#ffa600"><title>Connect-ES 38.79 KiB for 16 RPCs</title></circle>
 </g>
 <g transform="translate(110, 20)">
-  <polyline fill="none" stroke="#ff6361" stroke-width="2" points="0,90.78359375 140,83.72333984375001 280,77.09921875 420,65.36611328125">
+  <polyline fill="none" stroke="#ff6361" stroke-width="2" points="0,91.23671875 140,84.50214843750001 280,77.43056640625 420,66.39697265625">
     <title>gRPC-Web</title>
   </polyline>
-<circle cx="0" cy="90.78359375" r="4" fill="#ff6361"><title>gRPC-Web 68.7 KiB for 1 RPCs</title></circle>
-<circle cx="140" cy="83.72333984375001" r="4" fill="#ff6361"><title>gRPC-Web 71.13 KiB for 4 RPCs</title></circle>
-<circle cx="280" cy="77.09921875" r="4" fill="#ff6361"><title>gRPC-Web 73.41 KiB for 8 RPCs</title></circle>
-<circle cx="420" cy="65.36611328125" r="4" fill="#ff6361"><title>gRPC-Web 77.46 KiB for 16 RPCs</title></circle>
+<circle cx="0" cy="91.23671875" r="4" fill="#ff6361"><title>gRPC-Web 68.54 KiB for 1 RPCs</title></circle>
+<circle cx="140" cy="84.50214843750001" r="4" fill="#ff6361"><title>gRPC-Web 70.86 KiB for 4 RPCs</title></circle>
+<circle cx="280" cy="77.43056640625" r="4" fill="#ff6361"><title>gRPC-Web 73.3 KiB for 8 RPCs</title></circle>
+<circle cx="420" cy="66.39697265625" r="4" fill="#ff6361"><title>gRPC-Web 77.1 KiB for 16 RPCs</title></circle>
 </g>
 <g transform="translate(125, 30)">
 <g transform="translate(0, 0)">

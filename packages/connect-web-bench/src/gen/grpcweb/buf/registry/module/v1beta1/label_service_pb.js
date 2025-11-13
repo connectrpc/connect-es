@@ -27,13 +27,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var buf_registry_module_v1beta1_commit_pb = require('../../../../buf/registry/module/v1beta1/commit_pb.js');
 goog.object.extend(proto, buf_registry_module_v1beta1_commit_pb);
@@ -763,7 +757,7 @@ proto.buf.registry.module.v1beta1.ListLabelsRequest.deserializeBinaryFromReader 
       msg.setPageSize(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setPageToken(value);
       break;
     case 3:
@@ -776,13 +770,10 @@ proto.buf.registry.module.v1beta1.ListLabelsRequest.deserializeBinaryFromReader 
       msg.setOrder(value);
       break;
     case 5:
-      var values = /** @type {!Array<!proto.buf.registry.module.v1beta1.CommitCheckStatus>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addCommitCheckStatuses(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getCommitCheckStatusesList());
       break;
     case 6:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setNameQuery(value);
       break;
     case 7:
@@ -1135,7 +1126,7 @@ proto.buf.registry.module.v1beta1.ListLabelsResponse.deserializeBinaryFromReader
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setNextPageToken(value);
       break;
     case 2:
@@ -1334,7 +1325,7 @@ proto.buf.registry.module.v1beta1.ListLabelHistoryRequest.deserializeBinaryFromR
       msg.setPageSize(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setPageToken(value);
       break;
     case 3:
@@ -1351,13 +1342,10 @@ proto.buf.registry.module.v1beta1.ListLabelHistoryRequest.deserializeBinaryFromR
       msg.setDigestType(value);
       break;
     case 6:
-      var values = /** @type {!Array<!proto.buf.registry.module.v1beta1.CommitCheckStatus>} */ (reader.isDelimited() ? reader.readPackedEnum() : [reader.readEnum()]);
-      for (var i = 0; i < values.length; i++) {
-        msg.addCommitCheckStatuses(values[i]);
-      }
+      reader.readPackableEnumInto(msg.getCommitCheckStatusesList());
       break;
     case 7:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setStartCommitId(value);
       break;
     case 8:
@@ -1723,7 +1711,7 @@ proto.buf.registry.module.v1beta1.ListLabelHistoryResponse.deserializeBinaryFrom
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setNextPageToken(value);
       break;
     case 2:
@@ -2234,7 +2222,7 @@ proto.buf.registry.module.v1beta1.CreateOrUpdateLabelsRequest.Value.deserializeB
       msg.setLabelRef(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setCommitId(value);
       break;
     default:

@@ -40,9 +40,9 @@ export class Graph extends jspb.Message {
 
 export namespace Graph {
   export type AsObject = {
-    commitsList: Array<buf_registry_module_v1_commit_pb.Commit.AsObject>,
-    edgesList: Array<Graph.Edge.AsObject>,
-  }
+    commitsList: Array<buf_registry_module_v1_commit_pb.Commit.AsObject>;
+    edgesList: Array<Graph.Edge.AsObject>;
+  };
 
   export class Node extends jspb.Message {
     getCommitId(): string;
@@ -58,8 +58,8 @@ export namespace Graph {
 
   export namespace Node {
     export type AsObject = {
-      commitId: string,
-    }
+      commitId: string;
+    };
   }
 
 
@@ -84,9 +84,9 @@ export namespace Graph {
 
   export namespace Edge {
     export type AsObject = {
-      fromNode?: Graph.Node.AsObject,
-      toNode?: Graph.Node.AsObject,
-    }
+      fromNode?: Graph.Node.AsObject;
+      toNode?: Graph.Node.AsObject;
+    };
   }
 
 }

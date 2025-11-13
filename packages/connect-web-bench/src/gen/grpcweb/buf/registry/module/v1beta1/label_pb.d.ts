@@ -68,17 +68,17 @@ export class Label extends jspb.Message {
 
 export namespace Label {
   export type AsObject = {
-    id: string,
-    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    archiveTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    name: string,
-    ownerId: string,
-    moduleId: string,
-    commitId: string,
-    updatedByUserId: string,
-    commitCheckState?: CommitCheckState.AsObject,
-  }
+    id: string;
+    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    archiveTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    name: string;
+    ownerId: string;
+    moduleId: string;
+    commitId: string;
+    updatedByUserId: string;
+    commitCheckState?: CommitCheckState.AsObject;
+  };
 }
 
 export class CommitCheckState extends jspb.Message {
@@ -100,14 +100,16 @@ export class CommitCheckState extends jspb.Message {
 
 export namespace CommitCheckState {
   export type AsObject = {
-    status: CommitCheckStatus,
-    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-  }
+    status: CommitCheckStatus;
+    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+  };
 }
 
 export class LabelRef extends jspb.Message {
   getId(): string;
   setId(value: string): LabelRef;
+  hasId(): boolean;
+  clearId(): LabelRef;
 
   getName(): LabelRef.Name | undefined;
   setName(value?: LabelRef.Name): LabelRef;
@@ -126,9 +128,9 @@ export class LabelRef extends jspb.Message {
 
 export namespace LabelRef {
   export type AsObject = {
-    id: string,
-    name?: LabelRef.Name.AsObject,
-  }
+    id?: string;
+    name?: LabelRef.Name.AsObject;
+  };
 
   export class Name extends jspb.Message {
     getOwner(): string;
@@ -150,14 +152,14 @@ export namespace LabelRef {
 
   export namespace Name {
     export type AsObject = {
-      owner: string,
-      module: string,
-      label: string,
-    }
+      owner: string;
+      module: string;
+      label: string;
+    };
   }
 
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     ID = 1,
     NAME = 2,
@@ -167,9 +169,13 @@ export namespace LabelRef {
 export class ScopedLabelRef extends jspb.Message {
   getId(): string;
   setId(value: string): ScopedLabelRef;
+  hasId(): boolean;
+  clearId(): ScopedLabelRef;
 
   getName(): string;
   setName(value: string): ScopedLabelRef;
+  hasName(): boolean;
+  clearName(): ScopedLabelRef;
 
   getValueCase(): ScopedLabelRef.ValueCase;
 
@@ -183,18 +189,18 @@ export class ScopedLabelRef extends jspb.Message {
 
 export namespace ScopedLabelRef {
   export type AsObject = {
-    id: string,
-    name: string,
-  }
+    id?: string;
+    name?: string;
+  };
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     ID = 1,
     NAME = 2,
   }
 }
 
-export enum CommitCheckStatus { 
+export enum CommitCheckStatus {
   COMMIT_CHECK_STATUS_UNSPECIFIED = 0,
   COMMIT_CHECK_STATUS_DISABLED = 1,
   COMMIT_CHECK_STATUS_PASSED = 2,

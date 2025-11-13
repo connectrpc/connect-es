@@ -49,12 +49,12 @@ export class Resource extends jspb.Message {
 
 export namespace Resource {
   export type AsObject = {
-    module?: buf_registry_module_v1beta1_module_pb.Module.AsObject,
-    label?: buf_registry_module_v1beta1_label_pb.Label.AsObject,
-    commit?: buf_registry_module_v1beta1_commit_pb.Commit.AsObject,
-  }
+    module?: buf_registry_module_v1beta1_module_pb.Module.AsObject;
+    label?: buf_registry_module_v1beta1_label_pb.Label.AsObject;
+    commit?: buf_registry_module_v1beta1_commit_pb.Commit.AsObject;
+  };
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     MODULE = 1,
     LABEL = 2,
@@ -65,6 +65,8 @@ export namespace Resource {
 export class ResourceRef extends jspb.Message {
   getId(): string;
   setId(value: string): ResourceRef;
+  hasId(): boolean;
+  clearId(): ResourceRef;
 
   getName(): ResourceRef.Name | undefined;
   setName(value?: ResourceRef.Name): ResourceRef;
@@ -83,9 +85,9 @@ export class ResourceRef extends jspb.Message {
 
 export namespace ResourceRef {
   export type AsObject = {
-    id: string,
-    name?: ResourceRef.Name.AsObject,
-  }
+    id?: string;
+    name?: ResourceRef.Name.AsObject;
+  };
 
   export class Name extends jspb.Message {
     getOwner(): string;
@@ -96,9 +98,13 @@ export namespace ResourceRef {
 
     getLabelName(): string;
     setLabelName(value: string): Name;
+    hasLabelName(): boolean;
+    clearLabelName(): Name;
 
     getRef(): string;
     setRef(value: string): Name;
+    hasRef(): boolean;
+    clearRef(): Name;
 
     getChildCase(): Name.ChildCase;
 
@@ -112,13 +118,13 @@ export namespace ResourceRef {
 
   export namespace Name {
     export type AsObject = {
-      owner: string,
-      module: string,
-      labelName: string,
-      ref: string,
-    }
+      owner: string;
+      module: string;
+      labelName?: string;
+      ref?: string;
+    };
 
-    export enum ChildCase { 
+    export enum ChildCase {
       CHILD_NOT_SET = 0,
       LABEL_NAME = 3,
       REF = 4,
@@ -126,7 +132,7 @@ export namespace ResourceRef {
   }
 
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     ID = 1,
     NAME = 2,

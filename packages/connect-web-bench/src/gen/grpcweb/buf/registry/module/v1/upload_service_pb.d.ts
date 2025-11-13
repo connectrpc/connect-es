@@ -42,9 +42,9 @@ export class UploadRequest extends jspb.Message {
 
 export namespace UploadRequest {
   export type AsObject = {
-    contentsList: Array<UploadRequest.Content.AsObject>,
-    depCommitIdsList: Array<string>,
-  }
+    contentsList: Array<UploadRequest.Content.AsObject>;
+    depCommitIdsList: Array<string>;
+  };
 
   export class Content extends jspb.Message {
     getModuleRef(): buf_registry_module_v1_module_pb.ModuleRef | undefined;
@@ -75,11 +75,11 @@ export namespace UploadRequest {
 
   export namespace Content {
     export type AsObject = {
-      moduleRef?: buf_registry_module_v1_module_pb.ModuleRef.AsObject,
-      filesList: Array<buf_registry_module_v1_file_pb.File.AsObject>,
-      scopedLabelRefsList: Array<buf_registry_module_v1_label_pb.ScopedLabelRef.AsObject>,
-      sourceControlUrl: string,
-    }
+      moduleRef?: buf_registry_module_v1_module_pb.ModuleRef.AsObject;
+      filesList: Array<buf_registry_module_v1_file_pb.File.AsObject>;
+      scopedLabelRefsList: Array<buf_registry_module_v1_label_pb.ScopedLabelRef.AsObject>;
+      sourceControlUrl: string;
+    };
   }
 
 }
@@ -100,7 +100,7 @@ export class UploadResponse extends jspb.Message {
 
 export namespace UploadResponse {
   export type AsObject = {
-    commitsList: Array<buf_registry_module_v1_commit_pb.Commit.AsObject>,
-  }
+    commitsList: Array<buf_registry_module_v1_commit_pb.Commit.AsObject>;
+  };
 }
 

@@ -43,11 +43,11 @@ export class Owner extends jspb.Message {
 
 export namespace Owner {
   export type AsObject = {
-    user?: buf_registry_owner_v1_user_pb.User.AsObject,
-    organization?: buf_registry_owner_v1_organization_pb.Organization.AsObject,
-  }
+    user?: buf_registry_owner_v1_user_pb.User.AsObject;
+    organization?: buf_registry_owner_v1_organization_pb.Organization.AsObject;
+  };
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     USER = 1,
     ORGANIZATION = 2,
@@ -57,9 +57,13 @@ export namespace Owner {
 export class OwnerRef extends jspb.Message {
   getId(): string;
   setId(value: string): OwnerRef;
+  hasId(): boolean;
+  clearId(): OwnerRef;
 
   getName(): string;
   setName(value: string): OwnerRef;
+  hasName(): boolean;
+  clearName(): OwnerRef;
 
   getValueCase(): OwnerRef.ValueCase;
 
@@ -73,11 +77,11 @@ export class OwnerRef extends jspb.Message {
 
 export namespace OwnerRef {
   export type AsObject = {
-    id: string,
-    name: string,
-  }
+    id?: string;
+    name?: string;
+  };
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     ID = 1,
     NAME = 2,

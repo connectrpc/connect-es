@@ -61,24 +61,28 @@ export class User extends jspb.Message {
 
 export namespace User {
   export type AsObject = {
-    id: string,
-    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    name: string,
-    type: UserType,
-    state: UserState,
-    description: string,
-    url: string,
-    verificationStatus: UserVerificationStatus,
-  }
+    id: string;
+    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    name: string;
+    type: UserType;
+    state: UserState;
+    description: string;
+    url: string;
+    verificationStatus: UserVerificationStatus;
+  };
 }
 
 export class UserRef extends jspb.Message {
   getId(): string;
   setId(value: string): UserRef;
+  hasId(): boolean;
+  clearId(): UserRef;
 
   getName(): string;
   setName(value: string): UserRef;
+  hasName(): boolean;
+  clearName(): UserRef;
 
   getValueCase(): UserRef.ValueCase;
 
@@ -92,29 +96,29 @@ export class UserRef extends jspb.Message {
 
 export namespace UserRef {
   export type AsObject = {
-    id: string,
-    name: string,
-  }
+    id?: string;
+    name?: string;
+  };
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     ID = 1,
     NAME = 2,
   }
 }
 
-export enum UserState { 
+export enum UserState {
   USER_STATE_UNSPECIFIED = 0,
   USER_STATE_ACTIVE = 1,
   USER_STATE_INACTIVE = 2,
 }
-export enum UserType { 
+export enum UserType {
   USER_TYPE_UNSPECIFIED = 0,
   USER_TYPE_STANDARD = 1,
   USER_TYPE_BOT = 2,
   USER_TYPE_SYSTEM = 3,
 }
-export enum UserVerificationStatus { 
+export enum UserVerificationStatus {
   USER_VERIFICATION_STATUS_UNSPECIFIED = 0,
   USER_VERIFICATION_STATUS_UNVERIFIED = 1,
   USER_VERIFICATION_STATUS_VERIFIED = 2,

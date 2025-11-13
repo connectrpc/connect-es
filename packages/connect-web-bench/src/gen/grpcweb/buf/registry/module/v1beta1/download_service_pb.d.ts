@@ -40,9 +40,9 @@ export class DownloadRequest extends jspb.Message {
 
 export namespace DownloadRequest {
   export type AsObject = {
-    valuesList: Array<DownloadRequest.Value.AsObject>,
-    digestType: buf_registry_module_v1beta1_digest_pb.DigestType,
-  }
+    valuesList: Array<DownloadRequest.Value.AsObject>;
+    digestType: buf_registry_module_v1beta1_digest_pb.DigestType;
+  };
 
   export class Value extends jspb.Message {
     getResourceRef(): buf_registry_module_v1beta1_resource_pb.ResourceRef | undefined;
@@ -73,11 +73,11 @@ export namespace DownloadRequest {
 
   export namespace Value {
     export type AsObject = {
-      resourceRef?: buf_registry_module_v1beta1_resource_pb.ResourceRef.AsObject,
-      fileTypesList: Array<buf_registry_module_v1beta1_file_pb.FileType>,
-      pathsList: Array<string>,
-      pathsAllowNotExist: boolean,
-    }
+      resourceRef?: buf_registry_module_v1beta1_resource_pb.ResourceRef.AsObject;
+      fileTypesList: Array<buf_registry_module_v1beta1_file_pb.FileType>;
+      pathsList: Array<string>;
+      pathsAllowNotExist: boolean;
+    };
   }
 
 }
@@ -98,8 +98,8 @@ export class DownloadResponse extends jspb.Message {
 
 export namespace DownloadResponse {
   export type AsObject = {
-    contentsList: Array<DownloadResponse.Content.AsObject>,
-  }
+    contentsList: Array<DownloadResponse.Content.AsObject>;
+  };
 
   export class Content extends jspb.Message {
     getCommit(): buf_registry_module_v1beta1_commit_pb.Commit | undefined;
@@ -132,11 +132,11 @@ export namespace DownloadResponse {
 
   export namespace Content {
     export type AsObject = {
-      commit?: buf_registry_module_v1beta1_commit_pb.Commit.AsObject,
-      filesList: Array<buf_registry_module_v1beta1_file_pb.File.AsObject>,
-      v1BufYamlFile?: buf_registry_module_v1beta1_file_pb.File.AsObject,
-      v1BufLockFile?: buf_registry_module_v1beta1_file_pb.File.AsObject,
-    }
+      commit?: buf_registry_module_v1beta1_commit_pb.Commit.AsObject;
+      filesList: Array<buf_registry_module_v1beta1_file_pb.File.AsObject>;
+      v1BufYamlFile?: buf_registry_module_v1beta1_file_pb.File.AsObject;
+      v1BufLockFile?: buf_registry_module_v1beta1_file_pb.File.AsObject;
+    };
   }
 
 }

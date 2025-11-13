@@ -37,9 +37,9 @@ export class MessageConstraints extends jspb.Message {
 
 export namespace MessageConstraints {
   export type AsObject = {
-    requestOnly: boolean,
-    responseOnly: boolean,
-    noSideEffectsOnly: boolean,
-  }
+    requestOnly: boolean;
+    responseOnly: boolean;
+    noSideEffectsOnly: boolean;
+  };
 }
 

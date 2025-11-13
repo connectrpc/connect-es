@@ -55,22 +55,26 @@ export class Organization extends jspb.Message {
 
 export namespace Organization {
   export type AsObject = {
-    id: string,
-    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    name: string,
-    description: string,
-    url: string,
-    verificationStatus: OrganizationVerificationStatus,
-  }
+    id: string;
+    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    updateTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    name: string;
+    description: string;
+    url: string;
+    verificationStatus: OrganizationVerificationStatus;
+  };
 }
 
 export class OrganizationRef extends jspb.Message {
   getId(): string;
   setId(value: string): OrganizationRef;
+  hasId(): boolean;
+  clearId(): OrganizationRef;
 
   getName(): string;
   setName(value: string): OrganizationRef;
+  hasName(): boolean;
+  clearName(): OrganizationRef;
 
   getValueCase(): OrganizationRef.ValueCase;
 
@@ -84,18 +88,18 @@ export class OrganizationRef extends jspb.Message {
 
 export namespace OrganizationRef {
   export type AsObject = {
-    id: string,
-    name: string,
-  }
+    id?: string;
+    name?: string;
+  };
 
-  export enum ValueCase { 
+  export enum ValueCase {
     VALUE_NOT_SET = 0,
     ID = 1,
     NAME = 2,
   }
 }
 
-export enum OrganizationVerificationStatus { 
+export enum OrganizationVerificationStatus {
   ORGANIZATION_VERIFICATION_STATUS_UNSPECIFIED = 0,
   ORGANIZATION_VERIFICATION_STATUS_UNVERIFIED = 1,
   ORGANIZATION_VERIFICATION_STATUS_VERIFIED = 2,
