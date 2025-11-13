@@ -42,9 +42,9 @@ export class UploadRequest extends jspb.Message {
 
 export namespace UploadRequest {
   export type AsObject = {
-    contentsList: Array<UploadRequest.Content.AsObject>,
-    depRefsList: Array<UploadRequest.DepRef.AsObject>,
-  }
+    contentsList: Array<UploadRequest.Content.AsObject>;
+    depRefsList: Array<UploadRequest.DepRef.AsObject>;
+  };
 
   export class DepRef extends jspb.Message {
     getCommitId(): string;
@@ -63,9 +63,9 @@ export namespace UploadRequest {
 
   export namespace DepRef {
     export type AsObject = {
-      commitId: string,
-      registry: string,
-    }
+      commitId: string;
+      registry: string;
+    };
   }
 
 
@@ -98,11 +98,11 @@ export namespace UploadRequest {
 
   export namespace Content {
     export type AsObject = {
-      moduleRef?: buf_registry_module_v1beta1_module_pb.ModuleRef.AsObject,
-      filesList: Array<buf_registry_module_v1beta1_file_pb.File.AsObject>,
-      scopedLabelRefsList: Array<buf_registry_module_v1beta1_label_pb.ScopedLabelRef.AsObject>,
-      sourceControlUrl: string,
-    }
+      moduleRef?: buf_registry_module_v1beta1_module_pb.ModuleRef.AsObject;
+      filesList: Array<buf_registry_module_v1beta1_file_pb.File.AsObject>;
+      scopedLabelRefsList: Array<buf_registry_module_v1beta1_label_pb.ScopedLabelRef.AsObject>;
+      sourceControlUrl: string;
+    };
   }
 
 }
@@ -123,7 +123,7 @@ export class UploadResponse extends jspb.Message {
 
 export namespace UploadResponse {
   export type AsObject = {
-    commitsList: Array<buf_registry_module_v1beta1_commit_pb.Commit.AsObject>,
-  }
+    commitsList: Array<buf_registry_module_v1beta1_commit_pb.Commit.AsObject>;
+  };
 }
 

@@ -56,13 +56,13 @@ export class Commit extends jspb.Message {
 
 export namespace Commit {
   export type AsObject = {
-    id: string,
-    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject,
-    ownerId: string,
-    moduleId: string,
-    digest?: buf_registry_module_v1_digest_pb.Digest.AsObject,
-    createdByUserId: string,
-    sourceControlUrl: string,
-  }
+    id: string;
+    createTime?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    ownerId: string;
+    moduleId: string;
+    digest?: buf_registry_module_v1_digest_pb.Digest.AsObject;
+    createdByUserId: string;
+    sourceControlUrl: string;
+  };
 }
 

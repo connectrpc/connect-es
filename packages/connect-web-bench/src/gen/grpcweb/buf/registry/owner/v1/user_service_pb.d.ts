@@ -35,8 +35,8 @@ export class GetUsersRequest extends jspb.Message {
 
 export namespace GetUsersRequest {
   export type AsObject = {
-    userRefsList: Array<buf_registry_owner_v1_user_pb.UserRef.AsObject>,
-  }
+    userRefsList: Array<buf_registry_owner_v1_user_pb.UserRef.AsObject>;
+  };
 }
 
 export class GetUsersResponse extends jspb.Message {
@@ -55,8 +55,8 @@ export class GetUsersResponse extends jspb.Message {
 
 export namespace GetUsersResponse {
   export type AsObject = {
-    usersList: Array<buf_registry_owner_v1_user_pb.User.AsObject>,
-  }
+    usersList: Array<buf_registry_owner_v1_user_pb.User.AsObject>;
+  };
 }
 
 export class ListUsersRequest extends jspb.Message {
@@ -94,15 +94,15 @@ export class ListUsersRequest extends jspb.Message {
 
 export namespace ListUsersRequest {
   export type AsObject = {
-    pageSize: number,
-    pageToken: string,
-    organizationRefsList: Array<buf_registry_owner_v1_organization_pb.OrganizationRef.AsObject>,
-    order: ListUsersRequest.Order,
-    hasTypesList: Array<buf_registry_owner_v1_user_pb.UserType>,
-    hasStatesList: Array<buf_registry_owner_v1_user_pb.UserState>,
-  }
+    pageSize: number;
+    pageToken: string;
+    organizationRefsList: Array<buf_registry_owner_v1_organization_pb.OrganizationRef.AsObject>;
+    order: ListUsersRequest.Order;
+    hasTypesList: Array<buf_registry_owner_v1_user_pb.UserType>;
+    hasStatesList: Array<buf_registry_owner_v1_user_pb.UserState>;
+  };
 
-  export enum Order { 
+  export enum Order {
     ORDER_UNSPECIFIED = 0,
     ORDER_CREATE_TIME_DESC = 1,
     ORDER_CREATE_TIME_ASC = 2,
@@ -128,9 +128,9 @@ export class ListUsersResponse extends jspb.Message {
 
 export namespace ListUsersResponse {
   export type AsObject = {
-    nextPageToken: string,
-    usersList: Array<buf_registry_owner_v1_user_pb.User.AsObject>,
-  }
+    nextPageToken: string;
+    usersList: Array<buf_registry_owner_v1_user_pb.User.AsObject>;
+  };
 }
 
 export class CreateUsersRequest extends jspb.Message {
@@ -149,8 +149,8 @@ export class CreateUsersRequest extends jspb.Message {
 
 export namespace CreateUsersRequest {
   export type AsObject = {
-    valuesList: Array<CreateUsersRequest.Value.AsObject>,
-  }
+    valuesList: Array<CreateUsersRequest.Value.AsObject>;
+  };
 
   export class Value extends jspb.Message {
     getName(): string;
@@ -178,12 +178,12 @@ export namespace CreateUsersRequest {
 
   export namespace Value {
     export type AsObject = {
-      name: string,
-      type: buf_registry_owner_v1_user_pb.UserType,
-      description: string,
-      url: string,
-      verificationStatus: buf_registry_owner_v1_user_pb.UserVerificationStatus,
-    }
+      name: string;
+      type: buf_registry_owner_v1_user_pb.UserType;
+      description: string;
+      url: string;
+      verificationStatus: buf_registry_owner_v1_user_pb.UserVerificationStatus;
+    };
   }
 
 }
@@ -204,8 +204,8 @@ export class CreateUsersResponse extends jspb.Message {
 
 export namespace CreateUsersResponse {
   export type AsObject = {
-    usersList: Array<buf_registry_owner_v1_user_pb.User.AsObject>,
-  }
+    usersList: Array<buf_registry_owner_v1_user_pb.User.AsObject>;
+  };
 }
 
 export class UpdateUsersRequest extends jspb.Message {
@@ -224,8 +224,8 @@ export class UpdateUsersRequest extends jspb.Message {
 
 export namespace UpdateUsersRequest {
   export type AsObject = {
-    valuesList: Array<UpdateUsersRequest.Value.AsObject>,
-  }
+    valuesList: Array<UpdateUsersRequest.Value.AsObject>;
+  };
 
   export class Value extends jspb.Message {
     getUserRef(): buf_registry_owner_v1_user_pb.UserRef | undefined;
@@ -263,29 +263,29 @@ export namespace UpdateUsersRequest {
 
   export namespace Value {
     export type AsObject = {
-      userRef?: buf_registry_owner_v1_user_pb.UserRef.AsObject,
-      state?: buf_registry_owner_v1_user_pb.UserState,
-      description?: string,
-      url?: string,
-      verificationStatus?: buf_registry_owner_v1_user_pb.UserVerificationStatus,
-    }
+      userRef?: buf_registry_owner_v1_user_pb.UserRef.AsObject;
+      state?: buf_registry_owner_v1_user_pb.UserState;
+      description?: string;
+      url?: string;
+      verificationStatus?: buf_registry_owner_v1_user_pb.UserVerificationStatus;
+    };
 
-    export enum StateCase { 
+    export enum StateCase {
       _STATE_NOT_SET = 0,
       STATE = 2,
     }
 
-    export enum DescriptionCase { 
+    export enum DescriptionCase {
       _DESCRIPTION_NOT_SET = 0,
       DESCRIPTION = 3,
     }
 
-    export enum UrlCase { 
+    export enum UrlCase {
       _URL_NOT_SET = 0,
       URL = 4,
     }
 
-    export enum VerificationStatusCase { 
+    export enum VerificationStatusCase {
       _VERIFICATION_STATUS_NOT_SET = 0,
       VERIFICATION_STATUS = 5,
     }
@@ -309,8 +309,8 @@ export class UpdateUsersResponse extends jspb.Message {
 
 export namespace UpdateUsersResponse {
   export type AsObject = {
-    usersList: Array<buf_registry_owner_v1_user_pb.User.AsObject>,
-  }
+    usersList: Array<buf_registry_owner_v1_user_pb.User.AsObject>;
+  };
 }
 
 export class DeleteUsersRequest extends jspb.Message {
@@ -329,8 +329,8 @@ export class DeleteUsersRequest extends jspb.Message {
 
 export namespace DeleteUsersRequest {
   export type AsObject = {
-    userRefsList: Array<buf_registry_owner_v1_user_pb.UserRef.AsObject>,
-  }
+    userRefsList: Array<buf_registry_owner_v1_user_pb.UserRef.AsObject>;
+  };
 }
 
 export class DeleteUsersResponse extends jspb.Message {
@@ -344,6 +344,6 @@ export class DeleteUsersResponse extends jspb.Message {
 
 export namespace DeleteUsersResponse {
   export type AsObject = {
-  }
+  };
 }
 

@@ -35,8 +35,8 @@ export class GetCommitsRequest extends jspb.Message {
 
 export namespace GetCommitsRequest {
   export type AsObject = {
-    resourceRefsList: Array<buf_registry_module_v1_resource_pb.ResourceRef.AsObject>,
-  }
+    resourceRefsList: Array<buf_registry_module_v1_resource_pb.ResourceRef.AsObject>;
+  };
 }
 
 export class GetCommitsResponse extends jspb.Message {
@@ -55,8 +55,8 @@ export class GetCommitsResponse extends jspb.Message {
 
 export namespace GetCommitsResponse {
   export type AsObject = {
-    commitsList: Array<buf_registry_module_v1_commit_pb.Commit.AsObject>,
-  }
+    commitsList: Array<buf_registry_module_v1_commit_pb.Commit.AsObject>;
+  };
 }
 
 export class ListCommitsRequest extends jspb.Message {
@@ -87,14 +87,14 @@ export class ListCommitsRequest extends jspb.Message {
 
 export namespace ListCommitsRequest {
   export type AsObject = {
-    pageSize: number,
-    pageToken: string,
-    resourceRef?: buf_registry_module_v1_resource_pb.ResourceRef.AsObject,
-    order: ListCommitsRequest.Order,
-    idQuery: string,
-  }
+    pageSize: number;
+    pageToken: string;
+    resourceRef?: buf_registry_module_v1_resource_pb.ResourceRef.AsObject;
+    order: ListCommitsRequest.Order;
+    idQuery: string;
+  };
 
-  export enum Order { 
+  export enum Order {
     ORDER_UNSPECIFIED = 0,
     ORDER_CREATE_TIME_DESC = 1,
     ORDER_CREATE_TIME_ASC = 2,
@@ -120,8 +120,8 @@ export class ListCommitsResponse extends jspb.Message {
 
 export namespace ListCommitsResponse {
   export type AsObject = {
-    nextPageToken: string,
-    commitsList: Array<buf_registry_module_v1_commit_pb.Commit.AsObject>,
-  }
+    nextPageToken: string;
+    commitsList: Array<buf_registry_module_v1_commit_pb.Commit.AsObject>;
+  };
 }
 

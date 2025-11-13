@@ -36,12 +36,12 @@ export class Digest extends jspb.Message {
 
 export namespace Digest {
   export type AsObject = {
-    type: DigestType,
-    value: Uint8Array | string,
-  }
+    type: DigestType;
+    value: Uint8Array | string;
+  };
 }
 
-export enum DigestType { 
+export enum DigestType {
   DIGEST_TYPE_UNSPECIFIED = 0,
   DIGEST_TYPE_B4 = 1,
   DIGEST_TYPE_B5 = 2,

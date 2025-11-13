@@ -7,11 +7,11 @@ plugins:
     out: src/gen/connectweb
     opt: target=ts
     include_imports: true
-  - remote: buf.build/protocolbuffers/js:v3.21.4
+  - remote: buf.build/protocolbuffers/js:v4.0.0
     out: src/gen/grpcweb
     opt: import_style=commonjs
     include_imports: true
-  - remote: buf.build/grpc/web:v1.5.0
+  - remote: buf.build/grpc/web:v2.0.2
     out: src/gen/grpcweb
     opt: import_style=commonjs+dts,mode=grpcweb
   - local: ["tsx", "./src/protoc-gen-entrypoints.ts"]

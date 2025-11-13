@@ -35,8 +35,8 @@ export class GetModulesRequest extends jspb.Message {
 
 export namespace GetModulesRequest {
   export type AsObject = {
-    moduleRefsList: Array<buf_registry_module_v1beta1_module_pb.ModuleRef.AsObject>,
-  }
+    moduleRefsList: Array<buf_registry_module_v1beta1_module_pb.ModuleRef.AsObject>;
+  };
 }
 
 export class GetModulesResponse extends jspb.Message {
@@ -55,8 +55,8 @@ export class GetModulesResponse extends jspb.Message {
 
 export namespace GetModulesResponse {
   export type AsObject = {
-    modulesList: Array<buf_registry_module_v1beta1_module_pb.Module.AsObject>,
-  }
+    modulesList: Array<buf_registry_module_v1beta1_module_pb.Module.AsObject>;
+  };
 }
 
 export class ListModulesRequest extends jspb.Message {
@@ -84,13 +84,13 @@ export class ListModulesRequest extends jspb.Message {
 
 export namespace ListModulesRequest {
   export type AsObject = {
-    pageSize: number,
-    pageToken: string,
-    ownerRefsList: Array<buf_registry_owner_v1_owner_pb.OwnerRef.AsObject>,
-    order: ListModulesRequest.Order,
-  }
+    pageSize: number;
+    pageToken: string;
+    ownerRefsList: Array<buf_registry_owner_v1_owner_pb.OwnerRef.AsObject>;
+    order: ListModulesRequest.Order;
+  };
 
-  export enum Order { 
+  export enum Order {
     ORDER_UNSPECIFIED = 0,
     ORDER_CREATE_TIME_DESC = 1,
     ORDER_CREATE_TIME_ASC = 2,
@@ -116,9 +116,9 @@ export class ListModulesResponse extends jspb.Message {
 
 export namespace ListModulesResponse {
   export type AsObject = {
-    nextPageToken: string,
-    modulesList: Array<buf_registry_module_v1beta1_module_pb.Module.AsObject>,
-  }
+    nextPageToken: string;
+    modulesList: Array<buf_registry_module_v1beta1_module_pb.Module.AsObject>;
+  };
 }
 
 export class CreateModulesRequest extends jspb.Message {
@@ -137,8 +137,8 @@ export class CreateModulesRequest extends jspb.Message {
 
 export namespace CreateModulesRequest {
   export type AsObject = {
-    valuesList: Array<CreateModulesRequest.Value.AsObject>,
-  }
+    valuesList: Array<CreateModulesRequest.Value.AsObject>;
+  };
 
   export class Value extends jspb.Message {
     getOwnerRef(): buf_registry_owner_v1_owner_pb.OwnerRef | undefined;
@@ -171,13 +171,13 @@ export namespace CreateModulesRequest {
 
   export namespace Value {
     export type AsObject = {
-      ownerRef?: buf_registry_owner_v1_owner_pb.OwnerRef.AsObject,
-      name: string,
-      visibility: buf_registry_module_v1beta1_module_pb.ModuleVisibility,
-      description: string,
-      url: string,
-      defaultLabelName: string,
-    }
+      ownerRef?: buf_registry_owner_v1_owner_pb.OwnerRef.AsObject;
+      name: string;
+      visibility: buf_registry_module_v1beta1_module_pb.ModuleVisibility;
+      description: string;
+      url: string;
+      defaultLabelName: string;
+    };
   }
 
 }
@@ -198,8 +198,8 @@ export class CreateModulesResponse extends jspb.Message {
 
 export namespace CreateModulesResponse {
   export type AsObject = {
-    modulesList: Array<buf_registry_module_v1beta1_module_pb.Module.AsObject>,
-  }
+    modulesList: Array<buf_registry_module_v1beta1_module_pb.Module.AsObject>;
+  };
 }
 
 export class UpdateModulesRequest extends jspb.Message {
@@ -218,8 +218,8 @@ export class UpdateModulesRequest extends jspb.Message {
 
 export namespace UpdateModulesRequest {
   export type AsObject = {
-    valuesList: Array<UpdateModulesRequest.Value.AsObject>,
-  }
+    valuesList: Array<UpdateModulesRequest.Value.AsObject>;
+  };
 
   export class Value extends jspb.Message {
     getModuleRef(): buf_registry_module_v1beta1_module_pb.ModuleRef | undefined;
@@ -262,35 +262,35 @@ export namespace UpdateModulesRequest {
 
   export namespace Value {
     export type AsObject = {
-      moduleRef?: buf_registry_module_v1beta1_module_pb.ModuleRef.AsObject,
-      visibility?: buf_registry_module_v1beta1_module_pb.ModuleVisibility,
-      state?: buf_registry_module_v1beta1_module_pb.ModuleState,
-      description?: string,
-      url?: string,
-      defaultLabelName?: string,
-    }
+      moduleRef?: buf_registry_module_v1beta1_module_pb.ModuleRef.AsObject;
+      visibility?: buf_registry_module_v1beta1_module_pb.ModuleVisibility;
+      state?: buf_registry_module_v1beta1_module_pb.ModuleState;
+      description?: string;
+      url?: string;
+      defaultLabelName?: string;
+    };
 
-    export enum VisibilityCase { 
+    export enum VisibilityCase {
       _VISIBILITY_NOT_SET = 0,
       VISIBILITY = 3,
     }
 
-    export enum StateCase { 
+    export enum StateCase {
       _STATE_NOT_SET = 0,
       STATE = 4,
     }
 
-    export enum DescriptionCase { 
+    export enum DescriptionCase {
       _DESCRIPTION_NOT_SET = 0,
       DESCRIPTION = 5,
     }
 
-    export enum UrlCase { 
+    export enum UrlCase {
       _URL_NOT_SET = 0,
       URL = 6,
     }
 
-    export enum DefaultLabelNameCase { 
+    export enum DefaultLabelNameCase {
       _DEFAULT_LABEL_NAME_NOT_SET = 0,
       DEFAULT_LABEL_NAME = 7,
     }
@@ -314,8 +314,8 @@ export class UpdateModulesResponse extends jspb.Message {
 
 export namespace UpdateModulesResponse {
   export type AsObject = {
-    modulesList: Array<buf_registry_module_v1beta1_module_pb.Module.AsObject>,
-  }
+    modulesList: Array<buf_registry_module_v1beta1_module_pb.Module.AsObject>;
+  };
 }
 
 export class DeleteModulesRequest extends jspb.Message {
@@ -334,8 +334,8 @@ export class DeleteModulesRequest extends jspb.Message {
 
 export namespace DeleteModulesRequest {
   export type AsObject = {
-    moduleRefsList: Array<buf_registry_module_v1beta1_module_pb.ModuleRef.AsObject>,
-  }
+    moduleRefsList: Array<buf_registry_module_v1beta1_module_pb.ModuleRef.AsObject>;
+  };
 }
 
 export class DeleteModulesResponse extends jspb.Message {
@@ -349,6 +349,6 @@ export class DeleteModulesResponse extends jspb.Message {
 
 export namespace DeleteModulesResponse {
   export type AsObject = {
-  }
+  };
 }
 

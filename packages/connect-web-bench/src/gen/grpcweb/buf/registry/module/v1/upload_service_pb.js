@@ -27,13 +27,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+var global = globalThis;
 
 var buf_registry_module_v1_commit_pb = require('../../../../buf/registry/module/v1/commit_pb.js');
 goog.object.extend(proto, buf_registry_module_v1_commit_pb);
@@ -195,7 +189,7 @@ proto.buf.registry.module.v1.UploadRequest.deserializeBinaryFromReader = functio
       msg.addContents(value);
       break;
     case 2:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.addDepCommitIds(value);
       break;
     default:
@@ -342,7 +336,7 @@ proto.buf.registry.module.v1.UploadRequest.Content.deserializeBinaryFromReader =
       msg.addScopedLabelRefs(value);
       break;
     case 4:
-      var value = /** @type {string} */ (reader.readString());
+      var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setSourceControlUrl(value);
       break;
     default:
