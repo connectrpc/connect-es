@@ -47,8 +47,8 @@ export type NodeServerRequest = http.IncomingMessage | http2.Http2ServerRequest;
 
 /**
  * A Node.js server response from the http, https, or the http2 module.
- * Note that we are taking the liberty to patch the type of write() so
- * that they are compatible with each other.
+ * Note that we are taking the liberty to patch the types of write()
+ * and writeHead() so that they are compatible with each other.
  */
 export type NodeServerResponse = (
   | Omit<http.ServerResponse, "write">
@@ -63,6 +63,7 @@ export type NodeServerResponse = (
     encoding: BufferEncoding,
     callback?: (err: Error | null | undefined) => void,
   ): boolean;
+  writeHead(status: number, headers?: http.OutgoingHttpHeaders): unknown;
 };
 
 /**
