@@ -614,8 +614,8 @@ function ready(
       conn.ref();
       return new Promise<boolean>((resolve) => {
         const onError = () => {
-          resolve(false)
-        }
+          resolve(false);
+        };
         commonPing(() => {
           if (streamCount == 0) conn.unref();
           conn.off("error", onError);
