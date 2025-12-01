@@ -36,7 +36,7 @@
     "@connectrpc/connect": "2.1.1",
     "@connectrpc/connect-node": "2.1.1",
     "@types/express": "^5.0.5",
-    "express": "^5.1.0",
+    "express": "^5.2.0",
     "tsx": "^4.20.6"
   },
   "peerDependencies": {
