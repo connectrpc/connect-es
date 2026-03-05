@@ -89,7 +89,7 @@ curl \
 Connect uses [Protobuf-ES](https://github.com/bufbuild/protobuf-es), the only
 [fully-compliant](https://buf.build/blog/protobuf-conformance) Protobuf JavaScript library.
 
-Connect implements RPC three protocols: The widely available gRPC and
+Connect implements three RPC protocols: The widely available gRPC and
 gRPC-web protocols, and Connect's [own protocol](https://connectrpc.com/docs/protocol/),
 optimized for the web. This gives you unparalleled interoperability across many
 platforms and languages, with type safety end-to-end.
