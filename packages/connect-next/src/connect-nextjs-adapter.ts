@@ -68,6 +68,24 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
 
 /**
  * Provide your Connect RPCs via Next.js API routes.
+ *
+ * Usage in `pages/api/[[...connect]].ts`:
+ *
+ * ```ts
+ * import { nextJsApiRouter } from "@connectrpc/connect-next";
+ * import routes from "../../connect";
+ *
+ * const { handler } = nextJsApiRouter({ routes });
+ * export default handler;
+ *
+ * // Required: Connect parses request bodies itself, so the Next.js
+ * // body parser must be disabled. Without this, RPCs will fail.
+ * export const config = {
+ *   api: {
+ *     bodyParser: false,
+ *   },
+ * };
+ * ```
  */
 export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
   if (options.acceptCompression === undefined) {
@@ -120,5 +138,18 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
 
 interface ApiRoute {
   handler: NextApiHandler;
+  /**
+   * @deprecated Export the config directly in your API route file
+   * instead. Turbopack requires config exports to be statically analyzable at
+   * compile time, which means re-exporting this value will fail:
+   *
+   * ```ts
+   * export const config = {
+   *   api: {
+   *     bodyParser: false,
+   *   },
+   * };
+   * ```
+   */
   config: PageConfig;
 }

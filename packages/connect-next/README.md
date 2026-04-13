@@ -20,9 +20,8 @@ add two files to your project:
         └── [[...connect]].ts
 ```
 
-> **Note:** Next.js 13 introduced the new App Router. Your Connect API routes
-> need to be placed in `pages/`, but you can use the `app/` directory for the
-> App Router at the same time.
+> **Note:** Your Connect API routes need to be placed in `pages/`, but you
+> can use the `app/` directory for the App Router at the same time.
 
 The new file `connect.ts` is where you register your RPCs:
 
@@ -46,11 +45,19 @@ import { nextJsApiRouter } from "@connectrpc/connect-next";
 import { createValidateInterceptor } from "@connectrpc/validate";
 import routes from "../../connect";
 
-const { handler, config } = nextJsApiRouter({
+const { handler } = nextJsApiRouter({
   interceptors: [createValidateInterceptor()],
-  routes 
+  routes,
 });
-export { handler as default, config };
+export default handler;
+
+// Required: Connect parses request bodies itself, so the Next.js body
+// parser must be disabled. Without this, RPCs will fail.
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 ```
 
 With that server running, you can make requests with any Connect or gRPC-Web client.
@@ -88,7 +95,7 @@ simply use `createConnectTransport` from [@connectrpc/connect-web](https://www.n
 instead.
 
 Note that support for gRPC is limited, since many gRPC clients require HTTP/2,
-and Express does not support the Node.js `http2` module.
+and Next.js does not support the Node.js `http2` module.
 
 ### Deploying to Vercel
 
