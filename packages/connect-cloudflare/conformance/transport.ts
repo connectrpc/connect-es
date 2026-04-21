@@ -83,7 +83,7 @@ export function createTransport(req: ClientCompatRequest) {
       // Cloudflare decompresses the response, but retains the original content-encoding and
       // content-length headers.
       //
-      // https://github.com/wintercg/fetch/issues/23
+      // https://github.com/WinterTC55/fetch/issues/23
       if (res.headers.has("content-encoding")) {
         const headers = new Headers(res.headers);
         headers.delete("content-encoding");
