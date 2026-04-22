@@ -88,7 +88,11 @@ export function createTransport(req: ClientCompatRequest) {
         const headers = new Headers(res.headers);
         headers.delete("content-encoding");
         headers.delete("content-length");
-        return new Response(res.body, { ...res, headers });
+        return new Response(res.body, {
+          headers,
+          status: res.status,
+          statusText: res.statusText,
+        });
       }
       return res;
     }),
