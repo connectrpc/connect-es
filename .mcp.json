@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "leftenant": {
+      "command": "node",
+      "args": [
+        "${LEFTENANT_MCP_SERVER}"
+      ],
+      "env": {
+        "LEFTENANT_SOCKET": "${LEFTENANT_SOCKET}"
+      }
+    }
+  }
+}

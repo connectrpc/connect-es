@@ -1,0 +1,312 @@
+{
+  "version": "2",
+  "project": {
+    "name": "joe-blueghost-cate-20260430225918-640ce3"
+  },
+  "tracker": {
+    "provider": "local",
+    "label": "cate"
+  },
+  "git": {
+    "defaultBranch": "joe-blueghost/cate-20260430225918-640ce3",
+    "branchPattern": "task/ISSUE-{number}-{description}",
+    "commitFormat": "conventional"
+  },
+  "autonomy": {
+    "default": "full"
+  },
+  "statuses": [
+    {
+      "id": "ready",
+      "name": "To Do",
+      "color": "#969696"
+    },
+    {
+      "id": "in_progress",
+      "name": "In Progress",
+      "color": "#3D7BF8"
+    },
+    {
+      "id": "in_review",
+      "name": "AI Review",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "human_review",
+      "name": "In Review",
+      "color": "#22c55e"
+    },
+    {
+      "id": "done",
+      "name": "Done",
+      "color": "#969696"
+    }
+  ],
+  "commands": {
+    "work": {
+      "name": "Work",
+      "description": "Find and execute the highest-priority task",
+      "prompt": "commands/work.md",
+      "tab": {
+        "persistent": {
+          "minAllocation": 3
+        }
+      },
+      "parameters": {
+        "issue_id": {
+          "type": "string",
+          "required": true,
+          "description": "The issue number to work on"
+        }
+      },
+      "transitions": [
+        {
+          "from": "ready",
+          "to": "in_progress",
+          "on": "claim_new"
+        },
+        {
+          "from": "in_progress",
+          "to": "in_review",
+          "on": "submit"
+        },
+        {
+          "from": "ready",
+          "to": "in_progress",
+          "on": "promote_parent"
+        },
+        {
+          "from": "in_progress",
+          "to": "ready",
+          "on": "stuck"
+        }
+      ]
+    },
+    "review": {
+      "name": "Review",
+      "description": "Review a pull request for correctness and quality",
+      "prompt": "commands/review.md",
+      "tab": {
+        "persistent": {
+          "minAllocation": 1
+        }
+      },
+      "parameters": {
+        "issue_id": {
+          "type": "string",
+          "required": true,
+          "description": "The issue to review"
+        }
+      },
+      "transitions": [
+        {
+          "from": "in_review",
+          "to": "human_review",
+          "on": "approve"
+        },
+        {
+          "from": "in_review",
+          "to": "done",
+          "on": "approve_subtask"
+        },
+        {
+          "from": "in_review",
+          "to": "ready",
+          "on": "request_changes"
+        },
+        {
+          "from": "in_progress",
+          "to": "human_review",
+          "on": "complete_epic"
+        }
+      ]
+    },
+    "build": {
+      "name": "Build",
+      "description": "Plan features or triage bugs",
+      "prompt": "commands/build.md",
+      "tab": {
+        "ephemeral": {}
+      },
+      "parameters": {
+        "issue_id": {
+          "type": "string",
+          "description": "Plan around an existing issue"
+        },
+        "description": {
+          "type": "string",
+          "description": "Freeform description of what to build or fix"
+        }
+      },
+      "transitions": [
+        {
+          "to": "ready",
+          "on": "create_single_issue"
+        },
+        {
+          "to": "ready",
+          "on": "create_sub_issue"
+        },
+        {
+          "to": "ready",
+          "on": "create_bug"
+        }
+      ]
+    },
+    "collaborate": {
+      "name": "Collaborate",
+      "description": "Pair with another agent in a shared session",
+      "prompt": "commands/collaborate.md",
+      "tab": {
+        "ephemeral": {}
+      },
+      "transitions": [
+        {
+          "to": "in_progress",
+          "on": "create_tracking"
+        },
+        {
+          "from": "in_progress",
+          "to": "human_review",
+          "on": "submit"
+        }
+      ]
+    },
+    "guardrail": {
+      "name": "Guardrail",
+      "description": "Define and update quality gates",
+      "prompt": "commands/guardrail.md",
+      "tab": {
+        "ephemeral": {}
+      }
+    },
+    "permissions": {
+      "name": "Permissions",
+      "description": "Scan and consolidate agent tool permissions",
+      "prompt": "commands/permissions.md",
+      "tab": {
+        "ephemeral": {}
+      }
+    },
+    "human_review": {
+      "name": "Human Review",
+      "description": "Human-driven review session for an issue and its PR",
+      "prompt": "commands/human-review.md",
+      "tab": {
+        "ephemeral": {}
+      },
+      "parameters": {
+        "issue_id": {
+          "type": "string",
+          "description": "The issue number to review (prompts if not provided)"
+        }
+      },
+      "transitions": [
+        {
+          "from": "human_review",
+          "to": "done",
+          "on": "approve"
+        },
+        {
+          "from": "in_review",
+          "to": "done",
+          "on": "approve"
+        },
+        {
+          "from": "human_review",
+          "to": "ready",
+          "on": "request_changes"
+        },
+        {
+          "from": "in_review",
+          "to": "ready",
+          "on": "request_changes"
+        },
+        {
+          "from": "human_review",
+          "to": "in_review",
+          "on": "rereview"
+        }
+      ]
+    },
+    "claude_chat": {
+      "name": "Claude Chat",
+      "description": "Open a Claude SDK chat session",
+      "tab": {
+        "ephemeral": {
+          "shellType": "SHELL_TYPE_CLAUDE_SDK"
+        }
+      }
+    },
+    "claude_cli": {
+      "name": "Claude CLI",
+      "description": "Open a Claude CLI terminal session",
+      "tab": {
+        "ephemeral": {
+          "shellType": "SHELL_TYPE_CLAUDE"
+        }
+      }
+    },
+    "run_config": {
+      "name": "Run Config",
+      "description": "Generate or update run configurations interactively",
+      "prompt": "commands/run-config.md",
+      "tab": {
+        "ephemeral": {}
+      }
+    },
+    "custom_workflow": {
+      "name": "Custom Workflow",
+      "description": "Create a new custom workflow interactively",
+      "prompt": "commands/custom-workflow.md",
+      "tab": {
+        "ephemeral": {}
+      }
+    },
+    "connect_tracker": {
+      "name": "Connect Tracker",
+      "description": "Connect to an issue tracker",
+      "prompt": "commands/connect-tracker.md",
+      "tab": {
+        "ephemeral": {}
+      },
+      "parameters": {
+        "tracker_preference": {
+          "type": "string",
+          "required": true,
+          "description": "Tracker provider: github, jira, or linear"
+        }
+      }
+    }
+  },
+  "queue": {
+    "worker": {
+      "entries": [
+        {
+          "status": "ready"
+        }
+      ]
+    },
+    "reviewer": {
+      "entries": [
+        {
+          "status": "in_review"
+        }
+      ]
+    },
+    "human-review": {
+      "entries": [
+        {
+          "status": "human_review"
+        }
+      ]
+    },
+    "in_progress": {
+      "entries": [
+        {
+          "status": "in_progress"
+        }
+      ]
+    }
+  }
+}

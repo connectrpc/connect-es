@@ -1,0 +1,10 @@
+{
+  "enabledMcpjsonServers": [
+    "leftenant"
+  ],
+  "permissions": {
+    "allow": [
+      "mcp__leftenant__*"
+    ]
+  }
+}
