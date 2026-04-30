@@ -6,7 +6,17 @@
       // DOM for the fetch and streams API
       "DOM",
       // ES2018.AsyncIterable for AsyncIterator
-      "ES2018.AsyncIterable"
+      "ES2018.AsyncIterable",
+      // ES2018.AsyncGenerator for AsyncGenerator
+      "ES2018.AsyncGenerator",
+      // ES2018.Promise for Promise.prototype.finally
+      "ES2018.Promise",
+      // ES2019.Array for Array.prototype.flatMap
+      "ES2019.Array",
+      // ES2019.Object for Object.fromEntries
+      "ES2019.Object",
+      // ES2020.Promise for Promise.allSettled
+      "ES2020.Promise"
     ],
     "declaration": true,
     // We don't have dependencies that require interop
