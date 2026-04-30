@@ -2,6 +2,7 @@
   "include": ["src/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "rootDir": "./src",
     // required for jscodeshift
     "esModuleInterop": true,
     // This package is CommonJS
