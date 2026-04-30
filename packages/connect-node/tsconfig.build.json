@@ -3,6 +3,7 @@
   "include": ["src/**/*.spec.ts", "src/testdata/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "types": ["jasmine", "node"]
   }
 }

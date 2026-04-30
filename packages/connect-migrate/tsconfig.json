@@ -3,6 +3,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "./src",
+    "types": ["jasmine", "node"],
     // required for jscodeshift
     "esModuleInterop": true,
     // This package is CommonJS

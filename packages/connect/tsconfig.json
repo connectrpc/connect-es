@@ -9,6 +9,7 @@
   "include": ["src/**/*.spec.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "types": ["jasmine"]
   }
 }

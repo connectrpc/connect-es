@@ -1,4 +1,7 @@
 {
   "include": ["src/**/*.ts", "conformance/**/*.ts", "browserstack/**/*.ts"],
-  "extends": "../../tsconfig.base.json"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["jasmine"]
+  }
 }
