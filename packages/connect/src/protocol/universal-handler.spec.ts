@@ -22,7 +22,6 @@ import type {
 } from "./universal-handler.js";
 import type { Compression } from "./compression.js";
 import { contentTypeMatcher } from "./content-type-matcher.js";
-import { Headers } from "undici";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
