@@ -46,7 +46,7 @@ function createRequestInfo(
   return create(ConformancePayload_RequestInfoSchema, {
     requestHeaders: convertToProtoHeaders(ctx.requestHeader),
     requests: reqs,
-    timeoutMs: timeoutMs !== undefined ? BigInt(timeoutMs) : undefined,
+    ...(timeoutMs !== undefined ? { timeoutMs: BigInt(timeoutMs) } : {}),
   });
 }
 
@@ -70,7 +70,9 @@ async function handleUnaryResponse(
   return {
     payload: create(ConformancePayloadSchema, {
       requestInfo: createRequestInfo(ctx, reqs),
-      data: def?.response.value,
+      ...(def?.response.value !== undefined
+        ? { data: def.response.value }
+        : {}),
     }),
   };
 }
@@ -113,7 +115,7 @@ export default ({ service }: ConnectRouter) => {
         await wait(def?.responseDelayMs ?? 0);
         yield {
           payload: create(ConformancePayloadSchema, {
-            requestInfo: reqInfo,
+            ...(reqInfo !== undefined ? { requestInfo: reqInfo } : {}),
             data: res,
           }),
         };
@@ -153,12 +155,13 @@ export default ({ service }: ConnectRouter) => {
           break;
         }
         await wait(def.responseDelayMs);
+        const data = def.responseData[resNum];
         yield {
           payload: create(ConformancePayloadSchema, {
             requestInfo: createRequestInfo(ctx, [
               anyPack(BidiStreamRequestSchema, req),
             ]),
-            data: def.responseData[resNum],
+            ...(data !== undefined ? { data } : {}),
           }),
         };
         resNum++;
@@ -170,10 +173,11 @@ export default ({ service }: ConnectRouter) => {
       const reqInfo = createRequestInfo(ctx, reqs);
       for (; resNum < (def?.responseData.length ?? 0); resNum++) {
         await wait(def?.responseDelayMs ?? 0);
+        const data = def?.responseData[resNum];
         yield {
           payload: create(ConformancePayloadSchema, {
-            requestInfo: resNum === 0 ? reqInfo : undefined,
-            data: def?.responseData[resNum],
+            ...(resNum === 0 ? { requestInfo: reqInfo } : {}),
+            ...(data !== undefined ? { data } : {}),
           }),
         };
       }

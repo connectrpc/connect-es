@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node_modules/.bin/tsc --outDir dist"
+    "test": "tsc --outDir dist"
   },
   "dependencies": {
     "@connectrpc/connect-conformance": "*",
