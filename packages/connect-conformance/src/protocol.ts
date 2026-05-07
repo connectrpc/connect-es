@@ -76,12 +76,12 @@ export function getSingleRequestMessage<T extends DescMessage>(
   compatRequest: ClientCompatRequest,
   desc: T,
 ): MessageShape<T> {
-  if (compatRequest.requestMessages.length !== 1) {
+  const any = compatRequest.requestMessages[0];
+  if (any === undefined || compatRequest.requestMessages.length > 1) {
     throw new Error(
       `Expected exactly one request_message in ClientCompatRequest, found ${compatRequest.requestMessages.length}`,
     );
   }
-  const any = compatRequest.requestMessages[0];
   const target = anyUnpack(any, desc);
   if (!target) {
     throw new Error(
@@ -146,10 +146,7 @@ export function connectErrorFromProto(err: ConformanceError) {
   );
 }
 
-export function convertToProtoError(err: ConnectError | undefined) {
-  if (err === undefined) {
-    return undefined;
-  }
+export function convertToProtoError(err: ConnectError) {
   const details: Any[] = [];
   for (const detail of err.details) {
     if ("desc" in detail) {
