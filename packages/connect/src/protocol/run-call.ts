@@ -28,6 +28,7 @@ import {
   getAbortSignalReason,
 } from "./signals.js";
 import { normalize, normalizeIterable } from "./normalize.js";
+import { Code } from "../code.js";
 
 /**
  * UnaryFn represents the client-side invocation of a unary RPC - a method
@@ -175,11 +176,11 @@ function setupSignal(opt: {
   return [
     controller.signal,
     function abort(reason: unknown): Promise<never> {
-      // We peek at the deadline signal because fetch() will throw an error on
-      // abort that discards the signal reason.
-      const e = ConnectError.from(
-        signal.aborted ? getAbortSignalReason(signal) : reason,
-      );
+      // We peek at the signal because fetch() will throw an error on abort
+      // that discards the signal reason.
+      const e = controller.signal.aborted
+        ? ConnectError.from(getAbortSignalReason(controller.signal), Code.Canceled)
+        : ConnectError.from(reason);
       controller.abort(e);
       cleanup();
       return Promise.reject(e);
