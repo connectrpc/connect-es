@@ -9,6 +9,6 @@
     // This package is CommonJS
     "verbatimModuleSyntax": false,
     "module": "CommonJS",
-    "moduleResolution": "Node10"
+    "moduleResolution": "Bundler"
   }
 }
