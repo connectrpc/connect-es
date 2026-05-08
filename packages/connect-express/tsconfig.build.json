@@ -2,6 +2,8 @@
   "include": ["src/**/*.ts", "src/**/*.spec.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "rootDir": "./src",
+    "types": ["jasmine", "node"],
     "allowSyntheticDefaultImports": true
   }
 }
