@@ -179,7 +179,10 @@ function setupSignal(opt: {
       // We peek at the signal because fetch() will throw an error on abort
       // that discards the signal reason.
       const e = controller.signal.aborted
-        ? ConnectError.from(getAbortSignalReason(controller.signal), Code.Canceled)
+        ? ConnectError.from(
+            getAbortSignalReason(controller.signal),
+            Code.Canceled,
+          )
         : ConnectError.from(reason);
       controller.abort(e);
       cleanup();
