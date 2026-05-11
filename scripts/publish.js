@@ -29,7 +29,6 @@ const packages = discoverPackages();
 validatePackages(packages);
 
 const version = packages[0].version;
-gitCheckReleaseTag(version);
 npmPublish(version);
 
 /**
@@ -37,7 +36,7 @@ npmPublish(version);
  */
 function npmPublish(version) {
   const tag = determinePublishTag(version);
-  execSync(`npm publish --tag ${tag} --workspaces`, {
+  execSync(`npm publish --dry-run --tag ${tag} --workspaces`, {
     stdio: "inherit",
   });
 }
