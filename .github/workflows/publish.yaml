@@ -1,0 +1,28 @@
+name: Publish Package
+
+# Requires npm trusted publishing to be configured for each package.
+# Minimum versions: npm >= 11.5.1, Node.js >= 22.14.0.
+# See: https://docs.npmjs.com/trusted-publishers
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  id-token: write # Required for OIDC, see https://docs.npmjs.com/trusted-publishers
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - run: npm run all
+      - run: node scripts/gh-diffcheck.js
+      - run: node scripts/publish.js

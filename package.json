@@ -20,8 +20,6 @@
     "clean": "git clean -Xdf",
     "setversion": "node scripts/set-workspace-version.js",
     "postsetversion": "npm run all",
-    "release": "node scripts/release.js",
-    "prerelease": "npm run all",
     "format": "biome format --write",
     "license-header": "license-header --ignore 'packages/**'",
     "lint": "biome lint --error-on-warnings --config-path biome.json"
