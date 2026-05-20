@@ -290,10 +290,10 @@ const sayRequest: Omit<SayRequest, "$typeName"> = {
 >
 > `proto3` messages are plain objects, but with `proto2` or Editions, messages
 > may use the prototype chain to track field presence. See the section
-> [Field presence and default values](https://github.com/bufbuild/protobuf-es/blob/v2.2.2/MANUAL.md#field-presence-and-default-values)
+> [Field presence and default values](https://protobufes.com/guides/messages/#field-presence-and-default-values)
 > in the Protobuf-ES documentation.
 > If you need messages to be as simple as possible in all cases, see the section
-> about [JSON types](https://github.com/bufbuild/protobuf-es/blob/v2.2.2/MANUAL.md#json-types).
+> about [JSON types](https://protobufes.com/reference/json-types/).
 
 #### PartialMessage removed
 
@@ -324,7 +324,7 @@ types.
 > on the default value `0` instead. If you need to distinguish between an absent
 > value for a field and the default value, use the function `isFieldSet` from
 > `@bufbuild/protobuf`. You can learn more in the section
-> [Field presence and default values](https://github.com/bufbuild/protobuf-es/blob/v2.2.2/MANUAL.md#field-presence-and-default-values)
+> [Field presence and default values](https://protobufes.com/guides/messages/#field-presence-and-default-values)
 > in the Protobuf-ES documentation.
 
 #### Struct field changes
@@ -405,7 +405,7 @@ changed to consolidate the API and provide new features:
 
 > [!TIP]
 >
-> For more information, see the [Protobuf reflection documentation](https://github.com/bufbuild/protobuf-es/blob/v2.2.2/MANUAL.md#reflection).
+> For more information, see the [Protobuf reflection documentation](http://protobufes.com/guides/reflection/).
 
 #### Registries
 
@@ -425,7 +425,7 @@ const registry = createRegistry(
 
 > [!TIP]
 > In the new version, registries also support files, and can be composed or mutated.
-> See the [documentation on Protobuf registries](https://github.com/bufbuild/protobuf-es/blob/v2.2.2/MANUAL.md#registries) to learn more.
+> See the [documentation on Protobuf registries](https://protobufes.com/reference/reflection/registries/) to learn more.
 
 ### `createPromiseClient` is removed
 
@@ -500,7 +500,7 @@ const transport = createConnectTransport({
 > [!TIP]
 > Registries have received a major update in Protobuf-ES v2 and are
 > much more capable and flexible now. For more information, see the
-> [Protobuf registry documentation](https://github.com/bufbuild/protobuf-es/blob/v2.2.2/MANUAL.md#registries).
+> [Protobuf registry documentation](https://protobufes.com/reference/reflection/registries/).
 
 ### JSON option `emitDefaultValues` renamed
 
@@ -539,7 +539,7 @@ to consolidate the reflection APIs and to provide new features.
 >
 > Service and method descriptors provide access to custom options now, which can
 > be very useful in interceptors to control authorization and other details.
-> See the documentation for [Protobuf custom options](https://github.com/bufbuild/protobuf-es/blob/v2.2.2/MANUAL.md#custom-options) to learn more.
+> See the documentation for [Protobuf custom options](https://protobufes.com/reference/reflection/custom-options/) to learn more.
 
 #### Access a method by name
 
