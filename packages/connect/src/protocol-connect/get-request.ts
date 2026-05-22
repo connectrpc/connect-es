@@ -44,22 +44,26 @@ export function transformConnectPostToGetRequest<
   message: Uint8Array,
   useBase64: boolean,
 ): UnaryRequest<I, O> {
+  // Parameters are ordered per the Connect protocol Query-Get rule
+  // (connect, base64, compression, encoding, message). 
   let query = `?connect=v${protocolVersion}`;
-  const contentType = request.header.get(headerContentType);
-  if (contentType?.indexOf(contentTypePrefix) === 0) {
-    query +=
-      "&encoding=" +
-      encodeURIComponent(contentType.slice(contentTypePrefix.length));
-  }
+  let compressionQuery = "";
   const compression = request.header.get(headerUnaryEncoding);
   if (compression !== null && compression !== "identity") {
-    query += "&compression=" + encodeURIComponent(compression);
+    compressionQuery = "&compression=" + encodeURIComponent(compression);
 
     // Force base64 for compressed payloads.
     useBase64 = true;
   }
   if (useBase64) {
     query += "&base64=1";
+  }
+  query += compressionQuery;
+  const contentType = request.header.get(headerContentType);
+  if (contentType?.indexOf(contentTypePrefix) === 0) {
+    query +=
+      "&encoding=" +
+      encodeURIComponent(contentType.slice(contentTypePrefix.length));
   }
   query += "&message=" + encodeMessageForUrl(message, useBase64);
   const url = request.url + query;
