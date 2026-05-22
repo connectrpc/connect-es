@@ -45,7 +45,7 @@ export function transformConnectPostToGetRequest<
   useBase64: boolean,
 ): UnaryRequest<I, O> {
   // Parameters are ordered per the Connect protocol Query-Get rule
-  // (connect, base64, compression, encoding, message). 
+  // (connect, base64, compression, encoding, message).
   let query = `?connect=v${protocolVersion}`;
   let compressionQuery = "";
   const compression = request.header.get(headerUnaryEncoding);
