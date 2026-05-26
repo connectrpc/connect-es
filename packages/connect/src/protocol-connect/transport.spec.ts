@@ -18,6 +18,7 @@ import type {
   UniversalClientRequest,
   UniversalClientResponse,
 } from "../protocol/universal.js";
+import type { Compression } from "../protocol/index.js";
 import {
   createAsyncIterable,
   readAllBytes,
@@ -233,7 +234,7 @@ describe("Connect transport", () => {
     const expectGet: UniversalClientFn = async (request) => {
       expect(request.method).toBe("GET");
       expect(request.url).toBe(
-        "http://example.com/TestService/UnaryNoSideEffects?connect=v1&encoding=proto&base64=1&message=CHs",
+        "http://example.com/TestService/UnaryNoSideEffects?connect=v1&base64=1&encoding=proto&message=CHs",
       );
       // no headers
       const headerFields: string[] = [];
@@ -274,6 +275,34 @@ describe("Connect transport", () => {
           ...defaultTransportOptions,
           useHttpGet: true,
           httpClient: expectGet,
+        });
+        await t.unary(
+          TestService.method.unaryNoSideEffects,
+          undefined,
+          undefined,
+          undefined,
+          create(Int32ValueSchema, { value: 123 }),
+        );
+      });
+      it("should order all five query parameters per the Query-Get rule when compression is enabled", async () => {
+        const identityGzip: Compression = {
+          name: "gzip",
+          compress: (bytes) => Promise.resolve(new Uint8Array(bytes)),
+          decompress: (bytes) => Promise.resolve(new Uint8Array(bytes)),
+        };
+        // eslint-disable-next-line @typescript-eslint/require-await
+        const expectGetWithCompression: UniversalClientFn = async (request) => {
+          expect(request.method).toBe("GET");
+          expect(request.url).toBe(
+            "http://example.com/TestService/UnaryNoSideEffects?connect=v1&base64=1&compression=gzip&encoding=proto&message=CHs",
+          );
+          return httpClientResponse;
+        };
+        const t = createTransport({
+          ...defaultTransportOptions,
+          useHttpGet: true,
+          sendCompression: identityGzip,
+          httpClient: expectGetWithCompression,
         });
         await t.unary(
           TestService.method.unaryNoSideEffects,

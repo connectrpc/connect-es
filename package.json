@@ -20,8 +20,6 @@
     "clean": "git clean -Xdf",
     "setversion": "node scripts/set-workspace-version.js",
     "postsetversion": "npm run all",
-    "release": "node scripts/release.js",
-    "prerelease": "npm run all",
     "format": "biome format --write",
     "license-header": "license-header --ignore 'packages/**'",
     "lint": "biome lint --error-on-warnings --config-path biome.json"
@@ -38,7 +36,7 @@
     "@arethetypeswrong/cli": "^0.18.2",
     "@biomejs/biome": "^1.9.4",
     "@bufbuild/license-header": "^0.0.4",
-    "turbo": "^2.9.6",
+    "turbo": "^2.9.7",
     "typescript": "^5.9.3"
   }
 }
