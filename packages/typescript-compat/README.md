@@ -38,6 +38,23 @@ and merge it with the existing one:
   transpilation issues only occur when emitting them.
 - We explicitly want to check libs.
 
+Newer versions of TypeScript ship stricter `tsc --init` defaults. For example,
+5.9 enables `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`. Because
+we want compatibility tests to reflect the out-of-the-box experience, keep these
+flags on. If existing test sources don't satisfy a newly-stricter default, drop
+them from `include` (with a comment explaining why) rather than disabling the
+flag.
+
+#### Hoisting and the `test` script
+
+The `test` script runs `tsc`. For most compatibility packages, the pinned
+`typescript` version differs from the rest of the repo, so npm installs it
+locally and we invoke it as `node_modules/.bin/tsc`. The one exception is the
+package whose version matches the root workspace's `typescript` (see the root
+`package.json`): npm hoists that copy to the repo root, so use the bare `tsc`
+instead. When bumping the root TypeScript version, swap both `test` scripts
+accordingly.
+
 ### Running and maintaining the tests
 
 Run `npx turbo run test -F './packages/typescript-compat/*'` to run all tests.
