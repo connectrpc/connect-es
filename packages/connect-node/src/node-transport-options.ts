@@ -75,7 +75,7 @@ export function validateNodeTransportOptions(
   options: NodeTransportOptions &
     Partial<Omit<CommonTransportOptions, "baseUrl">> &
     Pick<CommonTransportOptions, "baseUrl">,
-): CommonTransportOptions & NodeTransportOptions {
+) {
   let httpClient: UniversalClientFn;
   if (options.httpVersion == "2") {
     let sessionManager: NodeHttp2ClientSessionManager;

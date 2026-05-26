@@ -10,7 +10,7 @@
   "scripts": {
     "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --moduleResolution bundler --verbatimModuleSyntax false --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --moduleResolution node10 --verbatimModuleSyntax false --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm",
     "test": "jasmine --config=jasmine.json",
     "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/server.ts",

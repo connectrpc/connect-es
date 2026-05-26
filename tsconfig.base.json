@@ -19,6 +19,8 @@
       "ES2020.Promise",
     ],
     "declaration": true,
+    // We don't have dependencies that require interop
+    "esModuleInterop": false,
     // As strict as possible
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -38,5 +40,7 @@
     "module": "Node16",
     "verbatimModuleSyntax": true,
     "skipLibCheck": false,
+    // Silence TS 6.0 deprecation of moduleResolution=node10, which some builds still rely on.
+    "ignoreDeprecations": "6.0",
   },
 }
