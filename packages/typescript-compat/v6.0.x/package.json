@@ -1,14 +1,14 @@
 {
-  "name": "ts5.9",
+  "name": "ts6.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node_modules/.bin/tsc --outDir dist"
+    "test": "tsc --outDir dist"
   },
   "dependencies": {
     "@connectrpc/connect-conformance": "*",
     "@connectrpc/example": "*",
     "@types/node": "24.10.1",
-    "typescript": "5.9.x"
+    "typescript": "6.0.x"
   }
 }
