@@ -1,0 +1,26 @@
+{
+  "include": [
+    "./src/**/*.ts",
+    "../../connect-conformance/src/index.ts",
+    "../../example/src/**/*.ts"
+  ],
+  "compilerOptions": {
+    "module": "nodenext",
+    "target": "esnext",
+    "types": ["node"],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "strict": true,
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noUncheckedSideEffectImports": true,
+    "moduleDetection": "force",
+    // To guard against regression and ensure we are remaining backwards
+    // compatible, set the skipLibCheck flag to false explicitly.
+    "skipLibCheck": false,
+  }
+}

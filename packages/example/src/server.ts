@@ -82,8 +82,12 @@ const handler = connectNodeAdapter({
             write: false,
           })
           .then((result) => {
+            const output = result.outputFiles[0];
+            if (output === undefined) {
+              throw new Error("esbuild produced no output");
+            }
             res.writeHead(200, { "content-type": "application/javascript" });
-            res.write(result.outputFiles[0].text, "utf8");
+            res.write(output.text, "utf8");
             res.end();
           });
         break;
