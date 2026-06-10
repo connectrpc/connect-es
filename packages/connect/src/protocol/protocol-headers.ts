@@ -78,9 +78,7 @@ const protocolHeaders: ReadonlySet<string> = new Set(
  * @private Internal code, does not follow semantic versioning.
  */
 const protocolHeaderPrefixes: ReadonlySet<string> = new Set(
-  [
-    headerConnectUnaryTrailerPrefix,
-  ].map((prefix) => prefix.toLowerCase()),
+  [headerConnectUnaryTrailerPrefix].map((prefix) => prefix.toLowerCase()),
 );
 
 /**
