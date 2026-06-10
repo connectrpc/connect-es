@@ -21,6 +21,7 @@ export const headerAcceptEncoding = "Grpc-Accept-Encoding";
 export const headerTimeout = "Grpc-Timeout";
 export const headerGrpcStatus = "Grpc-Status";
 export const headerGrpcMessage = "Grpc-Message";
+export const headerGrpcDetails = "Grpc-Status-Details-Bin"
 export const headerStatusDetailsBin = "Grpc-Status-Details-Bin";
 export const headerMessageType = "Grpc-Message-Type";
 export const headerUserAgent = "User-Agent";

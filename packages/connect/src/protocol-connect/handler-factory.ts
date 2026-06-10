@@ -61,6 +61,7 @@ import {
 } from "./version.js";
 import { compressionNegotiate } from "../protocol/compression.js";
 import type { Compression } from "../protocol/compression.js";
+import { mergeNonProtocolHeaders } from "../protocol/protocol-headers.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
 import type {
   MethodSerializationLookup,
@@ -273,9 +274,12 @@ function createUnaryHandler<I extends DescMessage, O extends DescMessage>(
       }
       status = codeToHttpStatus(error.code);
       context.responseHeader.set(headerContentType, contentTypeUnaryJson);
-      error.metadata.forEach((value, key) => {
-        context.responseHeader.set(key, value);
-      });
+      // Copy any metadata specified in the error into the target Headers.
+      // For errors parsed from the wire, we only relay the structured payload
+      // and ignore the metadata.
+      if (!error.isWireError) {
+        mergeNonProtocolHeaders(context.responseHeader, error.metadata);
+      }
       body = errorToJsonBytes(error, opt.jsonOptions);
     } finally {
       context.abort();

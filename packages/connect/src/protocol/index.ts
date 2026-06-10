@@ -114,3 +114,7 @@ export {
 export type { UniversalHandlerOptions } from "./universal-handler.js";
 export type { ProtocolHandlerFactory } from "./protocol-handler-factory.js";
 export type { CommonTransportOptions } from "./transport-options.js";
+export {
+  isProtocolHeader,
+  mergeNonProtocolHeaders,
+} from "./protocol-headers.js";
