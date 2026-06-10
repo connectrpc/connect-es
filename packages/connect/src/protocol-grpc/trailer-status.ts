@@ -111,6 +111,7 @@ export function findTrailerError(
       type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
       value: any.value,
     }));
+    error.isWireError = true;
     return error;
   }
   const grpcStatus = headerOrTrailer.get(headerGrpcStatus);
@@ -119,18 +120,22 @@ export function findTrailerError(
       return undefined;
     }
     const code = parseInt(grpcStatus, 10);
+    let error: ConnectError;
     if (code in Code) {
-      return new ConnectError(
+      error = new ConnectError(
         decodeURIComponent(headerOrTrailer.get(headerGrpcMessage) ?? ""),
         code,
         headerOrTrailer,
       );
+    } else {
+      error = new ConnectError(
+        `invalid grpc-status: ${grpcStatus}`,
+        Code.Internal,
+        headerOrTrailer,
+      );
     }
-    return new ConnectError(
-      `invalid grpc-status: ${grpcStatus}`,
-      Code.Internal,
-      headerOrTrailer,
-    );
+    error.isWireError = true;
+    return error;
   }
   return undefined;
 }

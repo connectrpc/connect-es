@@ -55,6 +55,7 @@ export function errorFromJson(
     throw fallback;
   }
   const error = new ConnectError(message ?? "", code, metadata);
+  error.isWireError = true;
   if ("details" in jsonValue && Array.isArray(jsonValue.details)) {
     for (const detail of jsonValue.details) {
       if (
