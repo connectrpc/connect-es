@@ -49,18 +49,10 @@
   },
   "typesVersions": {
     "*": {
-      "protocol": [
-        "./dist/cjs/protocol/index.d.ts"
-      ],
-      "protocol-connect": [
-        "./dist/cjs/protocol-connect/index.d.ts"
-      ],
-      "protocol-grpc": [
-        "./dist/cjs/protocol-grpc/index.d.ts"
-      ],
-      "protocol-grpc-web": [
-        "./dist/cjs/protocol-grpc-web/index.d.ts"
-      ]
+      "protocol": ["./dist/cjs/protocol/index.d.ts"],
+      "protocol-connect": ["./dist/cjs/protocol-connect/index.d.ts"],
+      "protocol-grpc": ["./dist/cjs/protocol-grpc/index.d.ts"],
+      "protocol-grpc-web": ["./dist/cjs/protocol-grpc-web/index.d.ts"]
     }
   },
   "peerDependencies": {
