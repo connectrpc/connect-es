@@ -3,6 +3,7 @@
   "include": ["src/**/*.spec.ts", "src/testdata/*.ts", "conformance/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "verbatimModuleSyntax": false,
     "types": ["jasmine", "node"]
   }
 }
