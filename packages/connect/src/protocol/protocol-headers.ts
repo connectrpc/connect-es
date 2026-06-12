@@ -23,6 +23,9 @@ import {
   headerUnaryEncoding,
   headerUnaryTrailerPrefix as headerConnectUnaryTrailerPrefix,
   headerUserAgent,
+  headerHost,
+  headerTrailer,
+  headerDate,
 } from "../protocol-connect/headers.js";
 import {
   headerAcceptEncoding as headerGrpcAcceptEncoding,
@@ -49,12 +52,13 @@ const protocolHeaders: ReadonlySet<string> = new Set(
     headerContentType,
     headerUnaryContentLength,
     headerUnaryEncoding,
-    "Host",
+    headerHost,
     headerUserAgent,
-    "Trailer",
-    "Date",
+    headerTrailer,
+    headerDate,
     // Connect headers.
     headerUnaryAcceptEncoding,
+    headerConnectUnaryTrailerPrefix,
     headerConnectStreamEncoding,
     headerConnectStreamAcceptEncoding,
     headerConnectTimeout,
@@ -70,41 +74,6 @@ const protocolHeaders: ReadonlySet<string> = new Set(
 );
 
 /**
- * The set of HTTP header name prefixes that carry protocol-level information.
- *
- * Mirrors protocolHeaderPrefixes in connect-go. Any changes to this constant must be
- * made there first.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-const protocolHeaderPrefixes: ReadonlySet<string> = new Set(
-  [headerConnectUnaryTrailerPrefix].map((prefix) => prefix.toLowerCase()),
-);
-
-/**
- * Returns true if the given header name is a protocol header, i.e. it carries
- * protocol-level information rather than user metadata. Protocol headers are
- * reserved by the Connect, gRPC, and gRPC-Web protocol implementations.
- *
- * Mirrors isProtocolHeader in connect-go. Any changes to this method must be
- * made there first.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export function isProtocolHeader(name: string): boolean {
-  const lower = name.toLowerCase();
-  if (protocolHeaders.has(lower)) {
-    return true;
-  }
-  for (const prefix of protocolHeaderPrefixes) {
-    if (lower.startsWith(prefix)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
  * Append all headers from `from` into `into`, skipping any protocol headers
  * (see isProtocolHeader).
  *
@@ -115,7 +84,7 @@ export function isProtocolHeader(name: string): boolean {
  */
 export function mergeNonProtocolHeaders(into: Headers, from: Headers): void {
   from.forEach((value, key) => {
-    if (!isProtocolHeader(key)) {
+    if (!protocolHeaders.has(key.toLowerCase())) {
       into.append(key, value);
     }
   });
