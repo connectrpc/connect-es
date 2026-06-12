@@ -18,7 +18,7 @@ import type {
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
 import { errorFromJson, errorToJson } from "./error-json.js";
-import { appendHeaders } from "../http-headers.js";
+import { mergeNonProtocolHeaders } from "../protocol/protocol-headers.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import type { Serialization } from "../protocol/serialization.js";
@@ -114,7 +114,12 @@ export function endStreamToJson(
   const es: JsonObject = {};
   if (error !== undefined) {
     es.error = errorToJson(error, jsonWriteOptions);
-    metadata = appendHeaders(metadata, error.metadata);
+    // Copy any metadata specified in the error into the target Headers.
+    // For errors parsed from the wire, we only relay the structured payload
+    // and ignore the metadata.
+    if (!error.isWireError) {
+      mergeNonProtocolHeaders(metadata, error.metadata);
+    }
   }
   let hasMetadata = false;
   const md: JsonObject = {};

@@ -75,6 +75,14 @@ export class ConnectError extends Error {
   cause: unknown;
 
   /**
+   * @private Internal field, indicates whether this error was parsed from the
+   * wire by a Connect client, as opposed to being created by application code.
+   *
+   * Do not set this field in application code.
+   */
+  isWireError = false;
+
+  /**
    * Create a new ConnectError.
    * If no code is provided, code "unknown" is used.
    * Outgoing details are only relevant for the server side - a service may

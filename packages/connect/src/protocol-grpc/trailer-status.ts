@@ -15,6 +15,7 @@
 import { StatusSchema } from "./gen/status_pb.js";
 import { ConnectError } from "../connect-error.js";
 import { decodeBinaryHeader, encodeBinaryHeader } from "../http-headers.js";
+import { mergeNonProtocolHeaders } from "../protocol/protocol-headers.js";
 import { Code } from "../code.js";
 import { anyPack } from "@bufbuild/protobuf/wkt";
 import {
@@ -46,12 +47,12 @@ export function setTrailerStatus(
   error: ConnectError | undefined,
 ): Headers {
   if (error) {
-    // Copy any metadata specified in the error into the target Headers
-    // Note that if a protocol header happens to be specified in metadata, it
-    // its value will be overridden below by the official protocol headers.
-    error.metadata.forEach((value, key) => {
-      target.append(key, value);
-    });
+    // Copy any metadata specified in the error into the target Headers.
+    // For errors parsed from the wire, we only relay the structured payload
+    // and ignore the metadata.
+    if (!error.isWireError) {
+      mergeNonProtocolHeaders(target, error.metadata);
+    }
 
     target.set(headerGrpcStatus, error.code.toString(10));
     target.set(headerGrpcMessage, encodeURIComponent(error.rawMessage));
@@ -111,6 +112,7 @@ export function findTrailerError(
       type: any.typeUrl.substring(any.typeUrl.lastIndexOf("/") + 1),
       value: any.value,
     }));
+    error.isWireError = true;
     return error;
   }
   const grpcStatus = headerOrTrailer.get(headerGrpcStatus);
@@ -119,18 +121,22 @@ export function findTrailerError(
       return undefined;
     }
     const code = parseInt(grpcStatus, 10);
+    let error: ConnectError;
     if (code in Code) {
-      return new ConnectError(
+      error = new ConnectError(
         decodeURIComponent(headerOrTrailer.get(headerGrpcMessage) ?? ""),
         code,
         headerOrTrailer,
       );
+    } else {
+      error = new ConnectError(
+        `invalid grpc-status: ${grpcStatus}`,
+        Code.Internal,
+        headerOrTrailer,
+      );
     }
-    return new ConnectError(
-      `invalid grpc-status: ${grpcStatus}`,
-      Code.Internal,
-      headerOrTrailer,
-    );
+    error.isWireError = true;
+    return error;
   }
   return undefined;
 }
