@@ -74,8 +74,7 @@ const protocolHeaders: ReadonlySet<string> = new Set(
 );
 
 /**
- * Append all headers from `from` into `into`, skipping any protocol headers
- * (see isProtocolHeader).
+ * Append all headers from `from` into `into`, skipping any protocol headers.
  *
  * Mirrors mergeNonProtocolHeaders in connect-go. Any changes to this method must be
  * made there first.
