@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const { run } = require("../dist/cjs/conformance.js");
+const { run } = require("../dist/commonjs/conformance.js");
 const { scripts } = require("../package.json");
 
 // Extract conformance runner version from the `generate` script
