@@ -27,8 +27,7 @@
       "./protocol": "./src/protocol/index.ts",
       "./protocol-connect": "./src/protocol-connect/index.ts",
       "./protocol-grpc": "./src/protocol-grpc/index.ts",
-      "./protocol-grpc-web": "./src/protocol-grpc-web/index.ts",
-      "./package.json": "./package.json"
+      "./protocol-grpc-web": "./src/protocol-grpc-web/index.ts"
     }
   },
   "peerDependencies": {
@@ -96,8 +95,7 @@
         "types": "./dist/commonjs/protocol-grpc-web/index.d.ts",
         "default": "./dist/commonjs/protocol-grpc-web/index.js"
       }
-    },
-    "./package.json": "./package.json"
+    }
   },
   "main": "./dist/commonjs/index.js",
   "types": "./dist/commonjs/index.d.ts",

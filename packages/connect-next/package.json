@@ -18,8 +18,7 @@
   "sideEffects": false,
   "tshy": {
     "exports": {
-      ".": "./src/index.ts",
-      "./package.json": "./package.json"
+      ".": "./src/index.ts"
     }
   },
   "engines": {
@@ -49,8 +48,7 @@
         "types": "./dist/commonjs/index.d.ts",
         "default": "./dist/commonjs/index.js"
       }
-    },
-    "./package.json": "./package.json"
+    }
   },
   "main": "./dist/commonjs/index.js",
   "types": "./dist/commonjs/index.d.ts",
