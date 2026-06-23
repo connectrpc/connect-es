@@ -19,9 +19,9 @@ const paths = [
   "dist/esm/protocol-connect/request-header.js",
   "dist/esm/protocol-grpc/request-header.js",
   "dist/esm/protocol-grpc-web/request-header.js",
-  "dist/cjs/protocol-connect/request-header.js",
-  "dist/cjs/protocol-grpc/request-header.js",
-  "dist/cjs/protocol-grpc-web/request-header.js",
+  "dist/commonjs/protocol-connect/request-header.js",
+  "dist/commonjs/protocol-grpc/request-header.js",
+  "dist/commonjs/protocol-grpc-web/request-header.js",
 ];
 
 const { version } = JSON.parse(
