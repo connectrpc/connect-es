@@ -170,7 +170,7 @@ describe("Http2SessionManager", () => {
     });
     it("verify should keep the process alive", async () => {
       const worker = new Worker(
-        "./dist/cjs/testdata/http2-session-manager-verify-ping.js",
+        "./dist/commonjs/testdata/http2-session-manager-verify-ping.js",
         {
           workerData: server.getUrl(),
         },
