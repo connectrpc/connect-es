@@ -20,6 +20,7 @@
   "type": "module",
   "sideEffects": false,
   "tshy": {
+    "selfLink": false,
     "exports": {
       ".": "./src/index.ts"
     }

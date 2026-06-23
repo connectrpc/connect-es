@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "tshy": {
+    "selfLink": false,
     "exports": {
       ".": "./src/index.ts"
     }
