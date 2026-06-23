@@ -45,7 +45,8 @@
   "files": [
     "dist/**",
     "!dist/**/*.spec.js",
-    "!dist/**/*.spec.d.ts"
+    "!dist/**/*.spec.d.ts",
+    "!dist/**/testdata/**"
   ],
   "exports": {
     ".": {
