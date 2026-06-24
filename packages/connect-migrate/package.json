@@ -14,7 +14,7 @@
   "scripts": {
     "prebuild": "rm -rf ./dist/*",
     "build": "tsc --project tsconfig.json --outDir ./dist/cjs",
-    "test": "tsc --noEmit && node --import tsx --test \"src/**/*.spec.ts\"",
+    "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings"

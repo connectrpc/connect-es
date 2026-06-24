@@ -20,7 +20,7 @@
     "conformance:firefox:callback": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser firefox --useCallbackClient",
     "conformance:node:promise": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node",
     "conformance:node:callback": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node --useCallbackClient",
-    "test": "tsc --noEmit && node --import tsx --test src/*.spec.ts",
+    "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
     "generate": "buf generate --template browserstack/buf.gen.yaml",
     "postgenerate": "license-header browserstack/gen",
     "test-browserstack": "wdio run ./browserstack/wdio.browserstack.conf.js",
