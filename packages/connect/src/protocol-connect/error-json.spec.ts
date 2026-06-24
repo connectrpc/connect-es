@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 import { fromJson, toBinary, toJson } from "@bufbuild/protobuf";
@@ -26,16 +28,16 @@ describe("errorToJson()", () => {
       new ConnectError("Not permitted", Code.PermissionDenied),
       undefined,
     );
-    expect(json.code as unknown).toBe("permission_denied");
-    expect(json.message as unknown).toBe("Not permitted");
+    assert.strictEqual(json.code as unknown, "permission_denied");
+    assert.strictEqual(json.message as unknown, "Not permitted");
   });
   it("does not serialize empty message", () => {
     const json = errorToJson(
       new ConnectError("", Code.PermissionDenied),
       undefined,
     );
-    expect(json.code as unknown).toBe("permission_denied");
-    expect(json.message as unknown).toBeUndefined();
+    assert.strictEqual(json.code as unknown, "permission_denied");
+    assert.strictEqual(json.message as unknown, undefined);
   });
   it("serializes details", () => {
     const err = new ConnectError("Not permitted", Code.PermissionDenied);
@@ -70,7 +72,7 @@ describe("errorToJson()", () => {
         },
       ],
     };
-    expect(got).toEqual(want);
+    assert.deepStrictEqual(got, want);
   });
 });
 
@@ -84,9 +86,9 @@ describe("errorFromJson()", () => {
       undefined,
       new ConnectError("foo", Code.ResourceExhausted),
     );
-    expect(error.code).toBe(Code.PermissionDenied);
-    expect(error.rawMessage).toBe("Not permitted");
-    expect(error.details.length).toBe(0);
+    assert.strictEqual(error.code, Code.PermissionDenied);
+    assert.strictEqual(error.rawMessage, "Not permitted");
+    assert.strictEqual(error.details.length, 0);
   });
   it("does not require message", () => {
     const error = errorFromJson(
@@ -96,8 +98,8 @@ describe("errorFromJson()", () => {
       undefined,
       new ConnectError("foo", Code.ResourceExhausted),
     );
-    expect(error.message).toBe("[permission_denied]");
-    expect(error.rawMessage).toBe("");
+    assert.strictEqual(error.message, "[permission_denied]");
+    assert.strictEqual(error.rawMessage, "");
   });
   it("with invalid code throws fallback", () => {
     const e = errorFromJson(
@@ -108,8 +110,9 @@ describe("errorFromJson()", () => {
       undefined,
       new ConnectError("foo", Code.ResourceExhausted),
     );
-    expect(e).toBeInstanceOf(ConnectError);
-    expect(ConnectError.from(e).message).toBe(
+    assert.ok(e instanceof ConnectError);
+    assert.strictEqual(
+      e.message,
       "[resource_exhausted] Not permitted",
     );
   });
@@ -122,11 +125,12 @@ describe("errorFromJson()", () => {
       new Headers({ foo: "bar" }),
       new ConnectError("foo", Code.ResourceExhausted),
     );
-    expect(e).toBeInstanceOf(ConnectError);
-    expect(ConnectError.from(e).message).toBe(
+    assert.ok(e instanceof ConnectError);
+    assert.strictEqual(
+      e.message,
       "[resource_exhausted] Not permitted",
     );
-    expect(ConnectError.from(e).metadata.get("foo")).toBe("bar");
+    assert.strictEqual(e.metadata.get("foo"), "bar");
   });
   it("with code Ok returns fallback code", () => {
     const e = errorFromJson(
@@ -137,8 +141,9 @@ describe("errorFromJson()", () => {
       undefined,
       new ConnectError("foo", Code.ResourceExhausted),
     );
-    expect(e).toBeInstanceOf(ConnectError);
-    expect(ConnectError.from(e).message).toBe(
+    assert.ok(e instanceof ConnectError);
+    assert.strictEqual(
+      e.message,
       "[resource_exhausted] Not permitted",
     );
   });
@@ -150,8 +155,9 @@ describe("errorFromJson()", () => {
       undefined,
       new ConnectError("foo", Code.ResourceExhausted),
     );
-    expect(e).toBeInstanceOf(ConnectError);
-    expect(ConnectError.from(e).message).toBe(
+    assert.ok(e instanceof ConnectError);
+    assert.strictEqual(
+      e.message,
       "[resource_exhausted] Not permitted",
     );
   });
@@ -181,7 +187,7 @@ describe("errorFromJson()", () => {
         undefined,
         new ConnectError("foo", Code.ResourceExhausted),
       );
-      expect(error.details.length).toBe(1);
+      assert.strictEqual(error.details.length, 1);
     });
     it("works with findDetails()", () => {
       const error = errorFromJson(
@@ -190,10 +196,11 @@ describe("errorFromJson()", () => {
         new ConnectError("foo", Code.ResourceExhausted),
       );
       const details = error.findDetails(StructSchema);
-      expect(details.length).toBe(1);
-      expect(
+      assert.strictEqual(details.length, 1);
+      assert.deepStrictEqual(
         toJson(StructSchema, details[0]) as Record<string, unknown>,
-      ).toEqual({ reason: "soirée 🎉", domain: "example.com" });
+        { reason: "soirée 🎉", domain: "example.com" },
+      );
     });
   });
 });

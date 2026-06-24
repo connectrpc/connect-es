@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { compressionNegotiate } from "./compression.js";
 import type { Compression } from "./compression.js";
 import { ConnectError } from "../connect-error.js";
@@ -35,9 +37,9 @@ describe("compressionNegotiate()", () => {
       "accept-encoding",
     );
     it("should return null for request and response compression", () => {
-      expect(r.error).toBeUndefined();
-      expect(r.request).toBeNull();
-      expect(r.response).toBeNull();
+      assert.strictEqual(r.error, undefined);
+      assert.strictEqual(r.request, null);
+      assert.strictEqual(r.response, null);
     });
   });
 
@@ -49,12 +51,12 @@ describe("compressionNegotiate()", () => {
       "accept-encoding",
     );
     it("should return request compression null", () => {
-      expect(r.error).toBeUndefined();
-      expect(r.request).toBeNull();
+      assert.strictEqual(r.error, undefined);
+      assert.strictEqual(r.request, null);
     });
     it("should use first accepted compression for the response", () => {
-      expect(r.error).toBeUndefined();
-      expect(r.response).toBe(compressionB);
+      assert.strictEqual(r.error, undefined);
+      assert.strictEqual(r.response, compressionB);
     });
   });
 
@@ -66,9 +68,9 @@ describe("compressionNegotiate()", () => {
       "accept-encoding",
     );
     it("should return request encoding", () => {
-      expect(r.error).toBeUndefined();
-      expect(r.request).toBe(compressionA);
-      expect(r.response).toBe(compressionA);
+      assert.strictEqual(r.error, undefined);
+      assert.strictEqual(r.request, compressionA);
+      assert.strictEqual(r.response, compressionA);
     });
   });
 
@@ -80,9 +82,9 @@ describe("compressionNegotiate()", () => {
       "accept-encoding",
     );
     it("should return response compression null", () => {
-      expect(r.error).toBeUndefined();
-      expect(r.request).toBe(compressionA);
-      expect(r.response).toBeNull();
+      assert.strictEqual(r.error, undefined);
+      assert.strictEqual(r.request, compressionA);
+      assert.strictEqual(r.response, null);
     });
   });
 
@@ -94,16 +96,17 @@ describe("compressionNegotiate()", () => {
       "accept-encoding",
     );
     it("should return error", () => {
-      expect(r.error).toBeInstanceOf(ConnectError);
+      assert.ok(r.error instanceof ConnectError);
       if (r.error instanceof ConnectError) {
-        expect(r.error.message).toBe(
+        assert.strictEqual(
+          r.error.message,
           '[unimplemented] unknown compression "z": supported encodings are a,b',
         );
       }
-      expect(r.request).toBe(null);
+      assert.strictEqual(r.request, null);
     });
     it("should still use first accepted compression for the response", () => {
-      expect(r.response).toBe(compressionA);
+      assert.strictEqual(r.response, compressionA);
     });
   });
 });

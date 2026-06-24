@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import { createMethodUrl } from "./create-method-url.js";
@@ -32,28 +34,30 @@ describe("createMethodUrl()", () => {
       "https://example.com",
       testService.method.method,
     );
-    expect(url.toString()).toEqual(
+    assert.strictEqual(
+      url.toString(),
       "https://example.com/example.Service/Method",
     );
   });
   it("should accept empty string as baseUrl", () => {
     const url = createMethodUrl("", testService.method.method);
-    expect(url.toString()).toEqual("/example.Service/Method");
+    assert.strictEqual(url.toString(), "/example.Service/Method");
   });
   it("should accept '/' as baseUrl", () => {
     const url = createMethodUrl("/", testService.method.method);
-    expect(url.toString()).toEqual("/example.Service/Method");
+    assert.strictEqual(url.toString(), "/example.Service/Method");
   });
   it("should handle protocol-relative baseUrl", () => {
     const url = createMethodUrl("//example.com", testService.method.method);
-    expect(url.toString()).toEqual("//example.com/example.Service/Method");
+    assert.strictEqual(url.toString(), "//example.com/example.Service/Method");
   });
   it("should not duplicating slashes", () => {
     const url = createMethodUrl(
       "https://example.com/",
       testService.method.method,
     );
-    expect(url.toString()).toEqual(
+    assert.strictEqual(
+      url.toString(),
       "https://example.com/example.Service/Method",
     );
   });
@@ -62,7 +66,8 @@ describe("createMethodUrl()", () => {
       "https://example.com/twirp",
       testService.method.method,
     );
-    expect(url.toString()).toEqual(
+    assert.strictEqual(
+      url.toString(),
       "https://example.com/twirp/example.Service/Method",
     );
   });
@@ -71,7 +76,8 @@ describe("createMethodUrl()", () => {
       "https://example.com/twirp/",
       testService.method.method,
     );
-    expect(url.toString()).toEqual(
+    assert.strictEqual(
+      url.toString(),
       "https://example.com/twirp/example.Service/Method",
     );
   });

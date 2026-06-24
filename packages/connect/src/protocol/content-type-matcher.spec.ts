@@ -12,24 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { contentTypeMatcher } from "./content-type-matcher.js";
 
 describe("contentTypeMatcher()", () => {
   it("matches multiple regular expressions as expected", () => {
     const matcher = contentTypeMatcher(/a/, /b/);
-    expect(matcher("a")).toBeTrue();
-    expect(matcher("b")).toBeTrue();
-    expect(matcher("c")).toBeFalse();
-    expect(matcher("d")).toBeFalse();
+    assert.ok(matcher("a"));
+    assert.ok(matcher("b"));
+    assert.ok(!matcher("c"));
+    assert.ok(!matcher("d"));
   });
   it("matches multiple content type matchers as expected", () => {
     const matcher = contentTypeMatcher(
       contentTypeMatcher(/a/, /b/),
       contentTypeMatcher(/c/),
     );
-    expect(matcher("a")).toBeTrue();
-    expect(matcher("b")).toBeTrue();
-    expect(matcher("c")).toBeTrue();
-    expect(matcher("d")).toBeFalse();
+    assert.ok(matcher("a"));
+    assert.ok(matcher("b"));
+    assert.ok(matcher("c"));
+    assert.ok(!matcher("d"));
   });
 });

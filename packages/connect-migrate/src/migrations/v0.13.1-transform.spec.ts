@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import transform from "./v0.13.1-transform";
 import { updateSourceFileInMemory } from "../lib/migrate-source-files";
 
@@ -20,49 +22,49 @@ describe("v0.13.1 transform", () => {
     const input = `import a from "@bufbuild/connect";`;
     const output = `import a from "@connectrpc/connect";`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify type imports", () => {
     const input = `import type {a} from "@bufbuild/connect";`;
     const output = `import type {a} from "@connectrpc/connect";`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify import with single quotes", () => {
     const input = `import a from '@bufbuild/connect';`;
     const output = `import a from '@connectrpc/connect';`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify subpath import", () => {
     const input = `import a from "@bufbuild/connect/protocol";`;
     const output = `import a from "@connectrpc/connect/protocol";`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should not modify irrelevant import", () => {
     const input = `import a from "@foobar/connect";`;
     const output = input;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify require", () => {
     const input = `const a = require("@bufbuild/connect");`;
     const output = `const a = require("@connectrpc/connect");`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should not modify irrelevant require", () => {
     const input = `const a = require("@foobar/connect");`;
     const output = input;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify require with single quotes", () => {
     const input = `const a = require('@bufbuild/connect');`;
     const output = `const a = require('@connectrpc/connect');`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should parse generics using the ts parser", () => {
     const input = `
@@ -84,6 +86,6 @@ describe("v0.13.1 transform", () => {
       };
     }`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
 });

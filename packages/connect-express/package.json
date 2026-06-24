@@ -12,7 +12,7 @@
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm",
-    "test": "jasmine --config=jasmine.json",
+    "test": "tsc --noEmit && node --import tsx --test src/*.spec.ts",
     "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-express.yaml -v -- tsx ./conformance/server.ts",
     "format": "biome format --write",
     "license-header": "license-header",

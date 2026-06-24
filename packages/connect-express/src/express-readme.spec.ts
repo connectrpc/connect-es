@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import * as http from "node:http";
 import { createClient } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
@@ -54,7 +56,7 @@ describe("express readme", () => {
       const client = createClient(ElizaService, transport);
       const res = await client.say({ sentence: "I feel happy." });
       // console.log(res.sentence) // you said: I feel happy.
-      expect(res.sentence).toBe("you said: I feel happy.");
+      assert.strictEqual(res.sentence, "you said: I feel happy.");
     }
 
     const server = await startServer();

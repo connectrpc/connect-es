@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { fromJson, toJson } from "@bufbuild/protobuf";
 import { decodeBinaryHeader, encodeBinaryHeader } from "./http-headers.js";
 import { StructSchema } from "@bufbuild/protobuf/wkt";
@@ -20,12 +22,12 @@ describe("encodeBinaryHeader()", () => {
   it("accepts unicode string", () => {
     const input = "👋";
     const encoded = encodeBinaryHeader(input);
-    expect(encoded).toEqual("8J+Riw");
+    assert.strictEqual(encoded, "8J+Riw");
   });
   it("accepts Uint8Array", () => {
     const input = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
     const encoded = encodeBinaryHeader(input);
-    expect(encoded).toEqual("3q2+7w");
+    assert.strictEqual(encoded, "3q2+7w");
   });
   it("accepts message", () => {
     const input = fromJson(StructSchema, {
@@ -34,7 +36,8 @@ describe("encodeBinaryHeader()", () => {
       c: true,
     });
     const encoded = encodeBinaryHeader(input, StructSchema);
-    expect(encoded).toEqual(
+    assert.strictEqual(
+      encoded,
       "CgoKAWESBRoDYWJjCg4KAWISCREAAAAAAIB8QAoHCgFjEgIgAQ",
     );
   });
@@ -43,13 +46,13 @@ describe("encodeBinaryHeader()", () => {
 describe("decodeBinaryHeader()", () => {
   it("decodes Uint8Array with padding", () => {
     const decoded = decodeBinaryHeader("3q2+7w==");
-    expect(decoded).toBeInstanceOf(Uint8Array);
-    expect(decoded).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
+    assert.ok(decoded instanceof Uint8Array);
+    assert.deepStrictEqual(decoded, new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
   });
   it("decodes Uint8Array without padding", () => {
     const decoded = decodeBinaryHeader("3q2+7w");
-    expect(decoded).toBeInstanceOf(Uint8Array);
-    expect(decoded).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
+    assert.ok(decoded instanceof Uint8Array);
+    assert.deepStrictEqual(decoded, new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
   });
   it("decodes message", () => {
     const decoded = toJson(
@@ -59,7 +62,7 @@ describe("decodeBinaryHeader()", () => {
         StructSchema,
       ),
     ) as Record<string, unknown>; // Otherwise TS can't compute the type in expect
-    expect(decoded).toEqual({
+    assert.deepStrictEqual(decoded, {
       a: "abc",
       b: 456,
       c: true,
@@ -67,13 +70,13 @@ describe("decodeBinaryHeader()", () => {
   });
   it("throws error on invalid base64 input", () => {
     const encoded = "not-base-64-😞";
-    expect(() => decodeBinaryHeader(encoded)).toThrowError(
-      "[data_loss] invalid base64 string",
-    );
+    assert.throws(() => decodeBinaryHeader(encoded), {
+      message: "[data_loss] invalid base64 string",
+    });
   });
   it("throws error on invalid message input", () => {
-    expect(() => decodeBinaryHeader("3q2+7w==", StructSchema)).toThrowError(
-      "[data_loss] premature EOF",
-    );
+    assert.throws(() => decodeBinaryHeader("3q2+7w==", StructSchema), {
+      message: "[data_loss] premature EOF",
+    });
   });
 });

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach } from "node:test";
+import * as assert from "node:assert";
 import type { Serialization } from "./serialization.js";
 import type { Compression } from "./compression.js";
 import { encodeEnvelopes } from "./envelope.js";
@@ -115,7 +117,7 @@ describe("full story", () => {
         transformJoinEnvelopes(),
       );
       const all = await readAllBytes(it);
-      expect(all).toEqual(goldenBytes);
+      assert.deepStrictEqual(all, goldenBytes);
     });
   });
 
@@ -128,7 +130,7 @@ describe("full story", () => {
         transformParseEnvelope(serialization, endFlag, endSerialization),
       );
       const all = await readAll(it);
-      expect(all).toEqual(goldenPayload);
+      assert.deepStrictEqual(all, goldenPayload);
     });
   });
 
@@ -164,7 +166,7 @@ describe("full story", () => {
         });
 
       const resp = await readAll(readerIt);
-      expect(resp).toEqual([
+      assert.deepStrictEqual(resp, [
         { value: "alpha", end: false },
         { value: "beta", end: false },
         { value: "gamma", end: false },
@@ -187,7 +189,7 @@ describe("full story", () => {
       // Await on the write promises now.  These should all be resolved since all payloads have been read.
       await writes;
 
-      expect(resp).toEqual([
+      assert.deepStrictEqual(resp, [
         { value: "alpha", end: false },
         { value: "beta", end: false },
         { value: "gamma", end: false },
@@ -198,16 +200,13 @@ describe("full story", () => {
       writer.close();
       writer.close();
     });
-    it("should throw if write is called on a writer that is closed", () => {
+    it("should throw if write is called on a writer that is closed", async () => {
       writer.close();
 
-      writer
-        .write({ value: "alpha", end: false })
-        .catch((e) =>
-          expect(e).toEqual(
-            new Error("cannot write, WritableIterable already closed"),
-          ),
-        );
+      await assert.rejects(
+        writer.write({ value: "alpha", end: false }),
+        new Error("cannot write, WritableIterable already closed"),
+      );
     });
     it("should correctly behave when consumer fails and throw is invoked", async () => {
       // Send four total payloads, but don't close the writer.
@@ -234,8 +233,8 @@ describe("full story", () => {
         throw "READER_ERROR";
       } catch (e) {
         // Verify we got the first send only and then verify we caught the expected error.
-        expect(resp).toEqual([{ value: "alpha", end: false }]);
-        expect(e).toBe("READER_ERROR");
+        assert.deepStrictEqual(resp, [{ value: "alpha", end: false }]);
+        assert.strictEqual(e, "READER_ERROR");
         // Then call the throw function on the writer to tell it an error has occurred.
         const it = writer[Symbol.asyncIterator]();
         if (it.throw) {
@@ -243,35 +242,34 @@ describe("full story", () => {
         }
       }
 
-      // Verify that our expected successfulSends and failedSends resolved and rejected accordingly
-      successfulSends
-        .then((result) => expect(result).toEqual([undefined]))
-        .catch(() =>
-          fail("expected successful writes were unexpectedly rejected"),
-        );
-
-      failedSends
-        .then(() => fail("expected failed writes were unexpectedly resolved"))
-        .catch((e) => expect(e).toBe("READER_ERROR"));
-
-      // At this point, the writer was closed courtesy of our call to .throw above, so no further
-      // sends to the writer will succeed.
-      // They will all be rejected with the error passed to throw.
-      writer
-        .write({ value: "omega", end: false })
-        .then(() => fail("send was unexpectedly resolved."))
-        .catch((e) => expect(e).toBe("READER_ERROR"));
-
-      // The reader's internal writer is closed so any future reads should result in the
-      // done.
-      readerIt[Symbol.asyncIterator]()
-        .next()
-        .then((result) =>
-          expect(result).toEqual({ done: true, value: undefined }),
-        )
-        .catch(() =>
-          fail("expected successful done result but unexpectedly rejected"),
-        );
+      // Verify that our expected successfulSends and failedSends resolved and
+      // rejected accordingly. The handlers are attached synchronously (no await
+      // in between) so the already-settled failedSends never goes unhandled,
+      // and they are awaited together below so any failure fails the test.
+      const assertions = [
+        successfulSends.then((result) =>
+          assert.deepStrictEqual(result, [undefined]),
+        ),
+        assert.rejects(failedSends, (e) => {
+          assert.strictEqual(e, "READER_ERROR");
+          return true;
+        }),
+        // At this point, the writer was closed courtesy of our call to .throw
+        // above, so no further sends to the writer will succeed. They will all
+        // be rejected with the error passed to throw.
+        assert.rejects(writer.write({ value: "omega", end: false }), (e) => {
+          assert.strictEqual(e, "READER_ERROR");
+          return true;
+        }),
+        // The reader's internal writer is closed so any future reads should
+        // result in done.
+        readerIt[Symbol.asyncIterator]()
+          .next()
+          .then((result) =>
+            assert.deepStrictEqual(result, { done: true, value: undefined }),
+          ),
+      ];
+      await Promise.all(assertions);
     });
   });
 
@@ -332,10 +330,10 @@ describe("full story", () => {
         transformJoinEnvelopes(),
       );
 
-      expect(await readAllBytes(outputIt)).toEqual(goldenBytes);
+      assert.deepStrictEqual(await readAllBytes(outputIt), goldenBytes);
 
       // sanity check that the implementation was invoked
-      expect(echoImplReceived).toEqual(["alpha", "beta"]);
+      assert.deepStrictEqual(echoImplReceived, ["alpha", "beta"]);
     });
   });
 });

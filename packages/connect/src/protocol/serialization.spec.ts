@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import type { Serialization } from "./serialization.js";
 import {
   createBinarySerialization,
@@ -33,24 +35,27 @@ describe("createBinarySerialization()", () => {
 
   it("should serialize", () => {
     const bytes = ser.serialize(goldenMessage);
-    expect(bytes).toEqual(goldenBytes);
+    assert.deepStrictEqual(bytes, goldenBytes);
   });
 
   it("should parse", () => {
     const message = ser.parse(goldenBytes);
-    expect(equals(StringValueSchema, goldenMessage, message)).toBeTrue();
+    assert.ok(equals(StringValueSchema, goldenMessage, message));
   });
 
   describe("parsing invalid data", () => {
     it("should raise connect error", () => {
-      try {
-        ser.parse(new Uint8Array([0xde]));
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        const c = ConnectError.from(e);
-        expect(c.message).toBe("[internal] parse binary: premature EOF");
-      }
+      assert.throws(
+        () => ser.parse(new Uint8Array([0xde])),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
+            "[internal] parse binary: premature EOF",
+          );
+          return true;
+        },
+      );
     });
   });
 
@@ -58,16 +63,17 @@ describe("createBinarySerialization()", () => {
     it("should raise connect error", () => {
       const ser = createBinarySerialization(UInt32ValueSchema, undefined);
       const f = create(UInt32ValueSchema, { value: -1 });
-      try {
-        ser.serialize(f);
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        const c = ConnectError.from(e);
-        expect(c.message).toBe(
-          "[internal] serialize binary: cannot encode field google.protobuf.UInt32Value.value to binary: invalid uint32: -1",
-        );
-      }
+      assert.throws(
+        () => ser.serialize(f),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
+            "[internal] serialize binary: cannot encode field google.protobuf.UInt32Value.value to binary: invalid uint32: -1",
+          );
+          return true;
+        },
+      );
     });
   });
 });
@@ -79,26 +85,27 @@ describe("createJsonSerialization()", () => {
 
   it("should serialize", () => {
     const bytes = ser.serialize(goldenMessage);
-    expect(bytes).toEqual(goldenBytes);
+    assert.deepStrictEqual(bytes, goldenBytes);
   });
 
   it("should parse", () => {
     const message = ser.parse(goldenBytes);
-    expect(equals(StringValueSchema, goldenMessage, message)).toBeTrue();
+    assert.ok(equals(StringValueSchema, goldenMessage, message));
   });
 
   describe("parsing invalid data", () => {
     it("should raise connect error", () => {
-      try {
-        ser.parse(new Uint8Array([0xde]));
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        const c = ConnectError.from(e);
-        expect(c.message).toMatch(
-          /^\[invalid_argument] cannot decode message google.protobuf.StringValue from JSON: Unexpected token/,
-        );
-      }
+      assert.throws(
+        () => ser.parse(new Uint8Array([0xde])),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.match(
+            e.message,
+            /^\[invalid_argument] cannot decode message google.protobuf.StringValue from JSON: Unexpected token/,
+          );
+          return true;
+        },
+      );
     });
   });
 
@@ -106,16 +113,17 @@ describe("createJsonSerialization()", () => {
     it("should raise connect error", () => {
       const f = clone(StringValueSchema, goldenMessage);
       f.value = new Error() as unknown as string;
-      try {
-        ser.serialize(f);
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        const c = ConnectError.from(e);
-        expect(c.message).toBe(
-          "[internal] cannot encode field google.protobuf.StringValue.value to JSON: expected string, got object",
-        );
-      }
+      assert.throws(
+        () => ser.serialize(f),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
+            "[internal] cannot encode field google.protobuf.StringValue.value to JSON: expected string, got object",
+          );
+          return true;
+        },
+      );
     });
   });
 });
@@ -134,25 +142,29 @@ describe("limitSerialization()", () => {
       readMaxBytes: 0xffffffff,
       writeMaxBytes: 3,
     });
-    expect(() => limitedSer.serialize("abcdef")).toThrowError(
-      ConnectError,
-      "[resource_exhausted] message size 6 is larger than configured writeMaxBytes 3",
+    assert.throws(
+      () => limitedSer.serialize("abcdef"),
+      (err) =>
+        err instanceof ConnectError &&
+        err.message ===
+          "[resource_exhausted] message size 6 is larger than configured writeMaxBytes 3",
     );
-    expect(() =>
+    assert.doesNotThrow(() =>
       limitedSer.parse(new TextEncoder().encode("abcdef")),
-    ).not.toThrowError();
+    );
   });
   it("limits parse", () => {
     const limitedSer = limitSerialization(ser, {
       readMaxBytes: 3,
       writeMaxBytes: 0xffffffff,
     });
-    expect(() => limitedSer.serialize("abcdef")).not.toThrowError();
-    expect(() =>
-      limitedSer.parse(new TextEncoder().encode("abcdef")),
-    ).toThrowError(
-      ConnectError,
-      "[resource_exhausted] message size 6 is larger than configured readMaxBytes 3",
+    assert.doesNotThrow(() => limitedSer.serialize("abcdef"));
+    assert.throws(
+      () => limitedSer.parse(new TextEncoder().encode("abcdef")),
+      (err) =>
+        err instanceof ConnectError &&
+        err.message ===
+          "[resource_exhausted] message size 6 is larger than configured readMaxBytes 3",
     );
   });
 });
@@ -160,14 +172,14 @@ describe("limitSerialization()", () => {
 describe("getJsonOptions()", () => {
   it("sets ignoreUnknownFields to true if not already set on options object", () => {
     const opts = getJsonOptions({ alwaysEmitImplicit: true });
-    expect(opts.ignoreUnknownFields).toBeTrue();
+    assert.strictEqual(opts.ignoreUnknownFields, true);
   });
   it("sets ignoreUnknownFields to true if undefined is passed", () => {
     const opts = getJsonOptions(undefined);
-    expect(opts.ignoreUnknownFields).toBeTrue();
+    assert.strictEqual(opts.ignoreUnknownFields, true);
   });
   it("doesn't change ignoreUnknownFields if already set", () => {
     const opts = getJsonOptions({ ignoreUnknownFields: false });
-    expect(opts.ignoreUnknownFields).toBeFalse();
+    assert.strictEqual(opts.ignoreUnknownFields, false);
   });
 });

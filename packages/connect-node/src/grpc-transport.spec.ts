@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { createGrpcTransport } from "./grpc-transport.js";
 
 describe("createGrpcTransport()", () => {
@@ -19,7 +21,7 @@ describe("createGrpcTransport()", () => {
     const t = createGrpcTransport({
       baseUrl: "https://example.com",
     });
-    expect(t).toBeDefined();
+    assert.notStrictEqual(t, undefined);
   });
   it("should raise type error for httpVersion: 2", () => {
     const t = createGrpcTransport({
@@ -27,7 +29,7 @@ describe("createGrpcTransport()", () => {
       httpVersion: "2",
       baseUrl: "https://example.com",
     });
-    expect(t).toBeDefined();
+    assert.notStrictEqual(t, undefined);
   });
   it("should raise type error for httpVersion: 1.1", () => {
     const t = createGrpcTransport({
@@ -35,6 +37,6 @@ describe("createGrpcTransport()", () => {
       httpVersion: "1.1",
       baseUrl: "https://example.com",
     });
-    expect(t).toBeDefined();
+    assert.notStrictEqual(t, undefined);
   });
 });

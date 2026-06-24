@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { afterEach, beforeEach } from "node:test";
 import type * as http2 from "node:http2";
 import * as http from "node:http";
 import type * as https from "node:https";
@@ -42,10 +43,11 @@ export function useNodeServer(
   let client: UniversalClientFn | undefined;
   let clientSessionManager: Http2SessionManager | undefined;
 
-  beforeEach((doneFn) => {
-    server = createServer();
-    server.listen(0, function listenCallback() {
-      doneFn();
+  beforeEach(async () => {
+    const s = createServer();
+    server = s;
+    await new Promise<void>((resolve) => {
+      s.listen(0, () => resolve());
     });
   });
 

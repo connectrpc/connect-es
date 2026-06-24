@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { createConnectTransport } from "./connect-transport.js";
 import { Http2SessionManager } from "./http2-session-manager.js";
@@ -22,7 +24,7 @@ describe("createConnectTransport()", () => {
       httpVersion: "2",
       baseUrl: "https://example.com",
     });
-    expect(t).toBeDefined();
+    assert.notStrictEqual(t, undefined);
   });
   it("should take session options", () => {
     const t = createConnectTransport({
@@ -33,7 +35,7 @@ describe("createConnectTransport()", () => {
       pingTimeoutMs: 1000 * 5,
       idleConnectionTimeoutMs: 1000 * 60 * 5,
     });
-    expect(t).toBeDefined();
+    assert.notStrictEqual(t, undefined);
   });
   it("should take node options", () => {
     const t = createConnectTransport({
@@ -43,7 +45,7 @@ describe("createConnectTransport()", () => {
         maxSessionMemory: 1024 * 1024 * 4,
       },
     });
-    expect(t).toBeDefined();
+    assert.notStrictEqual(t, undefined);
   });
   it("should take session manager", () => {
     const sm = new Http2SessionManager(
@@ -60,7 +62,7 @@ describe("createConnectTransport()", () => {
       baseUrl: "https://example.com",
       sessionManager: sm,
     });
-    expect(t).toBeDefined();
+    assert.notStrictEqual(t, undefined);
   });
 });
 

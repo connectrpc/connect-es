@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import jscodeshift from "jscodeshift";
 import transform from "./v1.6.0-transform";
 
@@ -45,7 +47,7 @@ describe("rename symbols using", () => {
             import { Client as client } from "@connectrpc/connect";
             type PromiseClient = client;
             `;
-          expect(t(got)?.trim()).toBe(want.trim());
+          assert.strictEqual(t(got)?.trim(), want.trim());
         });
         it("type qualified", () => {
           const got = `
@@ -56,7 +58,7 @@ describe("rename symbols using", () => {
             import { type Client as client } from "@connectrpc/connect";
             type PromiseClient = client;
             `;
-          expect(t(got)?.trim()).toBe(want.trim());
+          assert.strictEqual(t(got)?.trim(), want.trim());
         });
         it("type only", () => {
           const got = `
@@ -67,7 +69,7 @@ describe("rename symbols using", () => {
             import type { Client as client } from "@connectrpc/connect";
             type PromiseClient = client;
             `;
-          expect(t(got)?.trim()).toBe(want.trim());
+          assert.strictEqual(t(got)?.trim(), want.trim());
         });
       });
       describe("identifier", () => {
@@ -82,7 +84,7 @@ describe("rename symbols using", () => {
             type a = Client;
             type R = Readonly<Client>;
             `;
-          expect(t(got)?.trim()).toBe(want.trim());
+          assert.strictEqual(t(got)?.trim(), want.trim());
         });
       });
     });
@@ -95,7 +97,7 @@ describe("rename symbols using", () => {
         import { createClient as create } from "@connectrpc/connect";
         const createPromiseClient = create;
         `;
-      expect(t(got)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(got)?.trim(), want.trim());
     });
     it("identifier", () => {
       const got = `
@@ -112,7 +114,7 @@ describe("rename symbols using", () => {
         const c = createClient();
         type R = ReturnType<typeof createClient>;
         `;
-      expect(t(got)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(got)?.trim(), want.trim());
     });
     it("namespace", () => {
       const got = `
@@ -129,7 +131,7 @@ describe("rename symbols using", () => {
         const c = connect.createClient();
         type R = ReturnType<typeof connect.createClient>;
         `;
-      expect(t(got)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(got)?.trim(), want.trim());
     });
     it("default", () => {
       const got = `
@@ -146,7 +148,7 @@ describe("rename symbols using", () => {
         const c = connect.createClient();
         type R = ReturnType<typeof connect.createClient>;
         `;
-      expect(t(got)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(got)?.trim(), want.trim());
     });
 
     it("handles other imports", () => {
@@ -159,7 +161,7 @@ describe("rename symbols using", () => {
         const promiseClient = createClient(ResourceService, transport);
       `;
 
-      expect(t(input)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(input)?.trim(), want.trim());
     });
   });
   describe("'require' with", () => {
@@ -178,7 +180,7 @@ describe("rename symbols using", () => {
     const c = connect.createClient();
     type R = ReturnType<typeof connect.createClient>;
     `;
-      expect(t(got)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(got)?.trim(), want.trim());
     });
     it("spread", () => {
       const got = `
@@ -195,7 +197,7 @@ describe("rename symbols using", () => {
     const c = createClient();
     type R = ReturnType<typeof createClient>;
     `;
-      expect(t(got)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(got)?.trim(), want.trim());
     });
 
     it("handles other imports", () => {
@@ -205,7 +207,7 @@ describe("rename symbols using", () => {
       const want = `
     const { Code, createClient } = require("@connectrpc/connect");
     `;
-      expect(t(got)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(got)?.trim(), want.trim());
     });
 
     it("let", () => {
@@ -225,7 +227,7 @@ describe("rename symbols using", () => {
       const c = connect.createClient();
       type R = ReturnType<typeof connect.createClient>;
       `;
-      expect(t(got)?.trim()).toBe(want.trim());
+      assert.strictEqual(t(got)?.trim(), want.trim());
     });
   });
 });

@@ -2,7 +2,7 @@
   "include": ["src/**/*.ts", "src/**/*.spec.ts", "conformance/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["jasmine", "node"],
+    "types": ["node"],
     "allowSyntheticDefaultImports": true
   }
 }

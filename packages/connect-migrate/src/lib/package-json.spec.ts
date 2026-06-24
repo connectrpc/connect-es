@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach, afterEach } from "node:test";
+import * as assert from "node:assert";
 import { existsSync, unlinkSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import type { JsonValue } from "@bufbuild/protobuf";
@@ -22,7 +24,8 @@ describe("readPackageJsonFile", () => {
 
   it("should raise error for empty file", () => {
     writeFileSync(testFilePath, "", "utf-8");
-    expect(() => readPackageJsonFile(testFilePath)).toThrowError(
+    assert.throws(
+      () => readPackageJsonFile(testFilePath),
       /Failed to parse .*: Unexpected end of JSON input/,
     );
   });
@@ -42,7 +45,7 @@ describe("readPackageJsonFile", () => {
       it(`should raise error for goodContents.${index}`, () => {
         writeFileSync(testFilePath, JSON.stringify(content), "utf-8");
         const result = readPackageJsonFile(testFilePath);
-        expect(result).toEqual(content);
+        assert.deepStrictEqual(result, content);
       });
     });
   });
@@ -95,7 +98,7 @@ describe("readPackageJsonFile", () => {
     badContents.forEach(([error, content], index) => {
       it(`should raise error for badContents.${index}`, () => {
         writeFileSync(testFilePath, JSON.stringify(content), "utf-8");
-        expect(() => readPackageJsonFile(testFilePath)).toThrowError(error);
+        assert.throws(() => readPackageJsonFile(testFilePath), error);
       });
     });
   });

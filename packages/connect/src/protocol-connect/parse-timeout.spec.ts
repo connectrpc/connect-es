@@ -12,31 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { ConnectError } from "../connect-error.js";
 import { parseTimeout } from "./parse-timeout.js";
 
 describe("parseTimeout()", () => {
   it("should parse proper timeout", () => {
-    expect(parseTimeout("1", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("1", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 1,
     });
-    expect(parseTimeout("1234567890", Number.MAX_SAFE_INTEGER)).toEqual({
-      timeoutMs: 1234567890,
-    });
-    expect(parseTimeout("0", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(
+      parseTimeout("1234567890", Number.MAX_SAFE_INTEGER),
+      {
+        timeoutMs: 1234567890,
+      },
+    );
+    assert.deepStrictEqual(parseTimeout("0", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 0,
     });
   });
   it("should should return undefined for null value", () => {
     const r = parseTimeout(null, Number.MAX_SAFE_INTEGER);
-    expect(r.timeoutMs).toBeUndefined();
-    expect(r.error).toBeUndefined();
+    assert.strictEqual(r.timeoutMs, undefined);
+    assert.strictEqual(r.error, undefined);
   });
   it("should return a ConnectError for a value exceeding maxTimeoutMs", () => {
-    expect(parseTimeout("1", 0).error?.message).toBe(
+    assert.strictEqual(
+      parseTimeout("1", 0).error?.message,
       "[invalid_argument] timeout 1ms must be <= 0",
     );
-    expect(parseTimeout("1024", 1000).error?.message).toBe(
+    assert.strictEqual(
+      parseTimeout("1024", 1000).error?.message,
       "[invalid_argument] timeout 1024ms must be <= 1000",
     );
   });
@@ -44,10 +51,11 @@ describe("parseTimeout()", () => {
   for (const invalidValue of invalidValues) {
     it(`should should return a ConnectError for an incorrect value "${invalidValue}"`, () => {
       const r = parseTimeout(invalidValue, Number.MAX_SAFE_INTEGER);
-      expect(r.timeoutMs).toBeUndefined();
-      expect(r.error).toBeInstanceOf(ConnectError);
+      assert.strictEqual(r.timeoutMs, undefined);
+      assert.ok(r.error instanceof ConnectError);
       if (r instanceof ConnectError) {
-        expect(r.message).toBe(
+        assert.strictEqual(
+          r.message,
           `protocol error: invalid connect timeout value: ${invalidValue}`,
         );
       }

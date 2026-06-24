@@ -14,7 +14,7 @@
   "scripts": {
     "prebuild": "rm -rf ./dist/*",
     "build": "tsc --project tsconfig.json --outDir ./dist/cjs",
-    "test": "jasmine --config=jasmine.json",
+    "test": "tsc --noEmit && node --import tsx --test \"src/**/*.spec.ts\"",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings"
@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@types/jscodeshift": "17.3.0",
-    "@types/semver": "^7.7.1"
+    "@types/semver": "^7.7.1",
+    "tsx": "^4.20.6"
   }
 }

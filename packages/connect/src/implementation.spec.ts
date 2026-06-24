@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 import { createHandlerContext } from "./implementation.js";
 import { createServiceDesc } from "./descriptor-helper.spec.js";
@@ -39,16 +41,17 @@ describe("createHandlerContext()", () => {
   describe("signal", () => {
     it("should have a default value", () => {
       const ctx = createHandlerContext({ ...standardOptions });
-      expect(ctx.signal).toBeDefined();
-      expect(ctx.signal.aborted).toBeFalse();
+      assert.notStrictEqual(ctx.signal, undefined);
+      assert.ok(!ctx.signal.aborted);
     });
     it("should trigger on timeout", () => {
       const ctx = createHandlerContext({
         ...standardOptions,
         timeoutMs: 0,
       });
-      expect(ctx.signal.aborted).toBeTrue();
-      expect(String(ctx.signal.reason)).toBe(
+      assert.ok(ctx.signal.aborted);
+      assert.strictEqual(
+        String(ctx.signal.reason),
         "ConnectError: [deadline_exceeded] the operation timed out",
       );
     });
@@ -57,38 +60,39 @@ describe("createHandlerContext()", () => {
         ...standardOptions,
         requestSignal: AbortSignal.abort("request-signal"),
       });
-      expect(ctx.signal.aborted).toBeTrue();
-      expect(ctx.signal.reason).toBe("request-signal");
+      assert.ok(ctx.signal.aborted);
+      assert.strictEqual(ctx.signal.reason, "request-signal");
     });
     it("should trigger on shutdown signal", () => {
       const ctx = createHandlerContext({
         ...standardOptions,
         shutdownSignal: AbortSignal.abort("shutdown-signal"),
       });
-      expect(ctx.signal.aborted).toBeTrue();
-      expect(ctx.signal.reason).toBe("shutdown-signal");
+      assert.ok(ctx.signal.aborted);
+      assert.strictEqual(ctx.signal.reason, "shutdown-signal");
     });
     it("should trigger on abort", () => {
       const ctx = createHandlerContext({ ...standardOptions });
       ctx.abort("test-reason");
-      expect(ctx.signal.aborted).toBeTrue();
-      expect(ctx.signal.reason).toBe("test-reason");
+      assert.ok(ctx.signal.aborted);
+      assert.strictEqual(ctx.signal.reason, "test-reason");
     });
   });
 
   describe("timeout()", () => {
     it("should return undefined without a timeout", () => {
       const ctx = createHandlerContext({ ...standardOptions });
-      expect(ctx.timeoutMs()).toBeUndefined();
+      assert.strictEqual(ctx.timeoutMs(), undefined);
     });
     it("should return remaining timeout", () => {
       const ctx = createHandlerContext({
         ...standardOptions,
         timeoutMs: 1000,
       });
-      expect(ctx.timeoutMs()).toBeDefined();
-      expect(ctx.timeoutMs()).toBeLessThanOrEqual(1000);
-      expect(ctx.timeoutMs()).toBeGreaterThanOrEqual(990);
+      const timeoutMs = ctx.timeoutMs();
+      assert.ok(timeoutMs !== undefined);
+      assert.ok(timeoutMs <= 1000);
+      assert.ok(timeoutMs >= 990);
     });
   });
 
@@ -96,10 +100,10 @@ describe("createHandlerContext()", () => {
     const ctx = createHandlerContext({
       ...standardOptions,
     });
-    expect(ctx.service).toBe(TestService);
-    expect(ctx.method).toBe(TestService.method.unary);
-    expect(ctx.protocolName).toBe("foo");
-    expect(ctx.requestMethod).toBe("GET");
+    assert.strictEqual(ctx.service, TestService);
+    assert.strictEqual(ctx.method, TestService.method.unary);
+    assert.strictEqual(ctx.protocolName, "foo");
+    assert.strictEqual(ctx.requestMethod, "GET");
   });
   it("should surface passed headers and trailers", () => {
     const ctx = createHandlerContext({
@@ -108,8 +112,8 @@ describe("createHandlerContext()", () => {
       responseHeader: { foo: "response" },
       responseTrailer: { foo: "trailer" },
     });
-    expect(ctx.requestHeader.get("foo")).toBe("request");
-    expect(ctx.responseHeader.get("foo")).toBe("response");
-    expect(ctx.responseTrailer.get("foo")).toBe("trailer");
+    assert.strictEqual(ctx.requestHeader.get("foo"), "request");
+    assert.strictEqual(ctx.responseHeader.get("foo"), "response");
+    assert.strictEqual(ctx.responseTrailer.get("foo"), "trailer");
   });
 });

@@ -2,6 +2,7 @@
   "include": ["src/**/*.ts", "conformance/**/*.ts", "browserstack/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["jasmine"]
+    "skipLibCheck": true,
+    "types": ["jasmine", "node"]
   }
 }

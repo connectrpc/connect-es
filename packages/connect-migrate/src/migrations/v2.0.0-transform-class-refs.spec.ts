@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { updateSourceFileInMemory } from "../lib/migrate-source-files";
 import transform from "./v2.0.0-transform-class-refs";
 
@@ -25,7 +27,7 @@ describe("v2.0.0 transform class references", () => {
         `create(FooSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("transforms multiple imports", () => {
       const input = [
@@ -40,7 +42,7 @@ describe("v2.0.0 transform class references", () => {
         `create(BarSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("transforms single import alias", () => {
       const input = [
@@ -53,7 +55,7 @@ describe("v2.0.0 transform class references", () => {
         `create(MyFooSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("transforms multiple import aliases", () => {
       const input = [
@@ -68,7 +70,7 @@ describe("v2.0.0 transform class references", () => {
         `create(MyBarSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("transforms mix of regular and import aliases", () => {
       const input = [
@@ -83,7 +85,7 @@ describe("v2.0.0 transform class references", () => {
         `create(BarSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("transforms new with init object", () => {
       const input = [
@@ -96,7 +98,7 @@ describe("v2.0.0 transform class references", () => {
         `create(FooSchema, {x:123});`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toBe(output);
+      assert.strictEqual(result.source, output);
     });
     it("transforms new with init object and import alias", () => {
       const input = [
@@ -109,7 +111,7 @@ describe("v2.0.0 transform class references", () => {
         `create(MyFooSchema, {x:123});`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toBe(output);
+      assert.strictEqual(result.source, output);
     });
     it("adds type import for single import", () => {
       const input = [
@@ -123,7 +125,7 @@ describe("v2.0.0 transform class references", () => {
         `const foo: Foo = create(FooSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("adds type import for multiple imports", () => {
       const input = [
@@ -139,7 +141,7 @@ describe("v2.0.0 transform class references", () => {
         `const bar: Bar = create(BarSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("adds type import for multiple import aliases", () => {
       const input = [
@@ -155,7 +157,7 @@ describe("v2.0.0 transform class references", () => {
         `const bar: SomeBar = create(SomeBarSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("adds type import for multiple imports with mix of aliases and regular", () => {
       const input = [
@@ -171,13 +173,13 @@ describe("v2.0.0 transform class references", () => {
         `const bar: Bar = create(BarSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("does not transform when identifier is not imported from _pb", () => {
       const input = `import {Foo} from "./x.js"; new Foo()`;
       const output = `import {Foo} from "./x.js"; new Foo()`;
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toBe(output);
+      assert.strictEqual(result.source, output);
     });
     it("does not add type import to .js file", () => {
       const input = [
@@ -192,7 +194,7 @@ describe("v2.0.0 transform class references", () => {
         `foo instanceof Foo;`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.js");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("adds create import to existing @bufbuild/protobuf import", () => {
       const input = [
@@ -206,7 +208,7 @@ describe("v2.0.0 transform class references", () => {
         `create(FooSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
   });
 
@@ -223,7 +225,7 @@ describe("v2.0.0 transform class references", () => {
         `isMessage(1, FooSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("transforms with schema argument and import alias", () => {
       const input = [
@@ -237,7 +239,7 @@ describe("v2.0.0 transform class references", () => {
         `isMessage(1, MyFooSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("does not transform without schema argument", () => {
       const input = [
@@ -251,7 +253,7 @@ describe("v2.0.0 transform class references", () => {
         `isMessage(1);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("adds type import", () => {
       const input = [
@@ -268,7 +270,7 @@ describe("v2.0.0 transform class references", () => {
         `isMessage(1, FooSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("adds type import with import alias", () => {
       const input = [
@@ -285,13 +287,13 @@ describe("v2.0.0 transform class references", () => {
         `isMessage(1, MyFooSchema);`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     it("does not transform isMessage when identifier is not imported from _pb", () => {
       const input = `import {Foo} from "./x.js"; isMessage(1, Foo);`;
       const output = `import {Foo} from "./x.js"; isMessage(1, Foo);`;
       const result = updateSourceFileInMemory(transform, input, "foo.ts");
-      expect(result.source).toBe(output);
+      assert.strictEqual(result.source, output);
     });
     it("does not add type import to .js file", () => {
       const input = [
@@ -307,7 +309,7 @@ describe("v2.0.0 transform class references", () => {
         `foo instanceof Foo;`,
       ].join("\n");
       const result = updateSourceFileInMemory(transform, input, "foo.js");
-      expect(result.source).toEqual(output);
+      assert.strictEqual(result.source, output);
     });
     describe("update wkt import", () => {
       it("regular import", () => {
@@ -321,7 +323,7 @@ describe("v2.0.0 transform class references", () => {
           `create(TimestampSchema);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
       it("import alias", () => {
         const input = [
@@ -334,7 +336,7 @@ describe("v2.0.0 transform class references", () => {
           `create(TSSchema);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
       it("adds type import", () => {
         const input = [
@@ -348,7 +350,7 @@ describe("v2.0.0 transform class references", () => {
           `const ts: Timestamp = create(TimestampSchema);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
       it("adds type import for multiple import aliases", () => {
         const input = [
@@ -364,7 +366,7 @@ describe("v2.0.0 transform class references", () => {
           `const duration: Dur = create(DurSchema);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
     });
     describe("static methods", () => {
@@ -379,7 +381,7 @@ describe("v2.0.0 transform class references", () => {
           `fromBinary(FooSchema, x, y);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
       it("transforms fromBinary call for alias", () => {
         const input = [
@@ -392,7 +394,7 @@ describe("v2.0.0 transform class references", () => {
           `fromBinary(MyFooSchema, x, y);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
       it("transforms fromJson call", () => {
         const input = [
@@ -405,7 +407,7 @@ describe("v2.0.0 transform class references", () => {
           `fromJson(FooSchema, x, y);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
       it("transforms fromJson call for alias", () => {
         const input = [
@@ -418,7 +420,7 @@ describe("v2.0.0 transform class references", () => {
           `fromJson(MyFooSchema, x, y);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
       it("transforms fromJsonString call", () => {
         const input = [
@@ -431,7 +433,7 @@ describe("v2.0.0 transform class references", () => {
           `fromJsonString(FooSchema, x, y);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
       it("transforms fromJsonString call for alias", () => {
         const input = [
@@ -444,7 +446,7 @@ describe("v2.0.0 transform class references", () => {
           `fromJsonString(MyFooSchema, x, y);`,
         ].join("\n");
         const result = updateSourceFileInMemory(transform, input, "foo.ts");
-        expect(result.source).toEqual(output);
+        assert.strictEqual(result.source, output);
       });
     });
   });

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { create } from "@bufbuild/protobuf";
 import { createContextKey } from "../context-values.js";
 import { createAsyncIterable, pipe } from "./async-iterable.js";
@@ -86,33 +88,33 @@ describe("transformInvokeImplementation()", () => {
       context,
       [
         (next) => async (req) => {
-          expect(req.stream).toEqual(false);
-          expect(req.requestMethod).toEqual("POST");
-          expect(req.service).toEqual(TestService);
-          expect(req.header.get("Key")).toEqual("Value");
-          expect(req.url).toEqual("https://example.com/foo");
-          expect(req.method).toEqual(TestService.method.unary);
-          expect(context.values.get(kFoo)).toEqual("bar");
+          assert.ok(!req.stream);
+          assert.strictEqual(req.requestMethod, "POST");
+          assert.deepStrictEqual(req.service, TestService);
+          assert.strictEqual(req.header.get("Key"), "Value");
+          assert.strictEqual(req.url, "https://example.com/foo");
+          assert.deepStrictEqual(req.method, TestService.method.unary);
+          assert.strictEqual(context.values.get(kFoo), "bar");
           req.header.set("Key", "bar");
           const res = await next(req);
-          expect(res.stream).toEqual(false);
-          expect(res.service).toEqual(TestService);
-          expect(res.header.get("Key")).toEqual("bar");
-          expect(res.method).toEqual(TestService.method.unary);
+          assert.ok(!res.stream);
+          assert.deepStrictEqual(res.service, TestService);
+          assert.strictEqual(res.header.get("Key"), "bar");
+          assert.deepStrictEqual(res.method, TestService.method.unary);
           res.header.set("Key", "baz");
           return { ...res, trailer: new Headers({ TKey: "tfoo" }) };
         },
         (next) => async (req) => {
-          expect(req.header.get("Key")).toEqual("bar");
+          assert.strictEqual(req.header.get("Key"), "bar");
           return next(req);
         },
       ],
     )(createAsyncIterable([create(Int32ValueSchema, { value: 1 })]));
-    expect(await readAll(output)).toEqual([
+    assert.deepStrictEqual(await readAll(output), [
       create(StringValueSchema, { value: "foo" }),
     ]);
-    expect(context.responseHeader.get("Key")).toEqual("baz");
-    expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
+    assert.strictEqual(context.responseHeader.get("Key"), "baz");
+    assert.strictEqual(context.responseTrailer.get("TKey"), "tfoo");
   });
   it("should apply interceptors to client streaming calls", async () => {
     const context = createHandlerContext({
@@ -125,7 +127,7 @@ describe("transformInvokeImplementation()", () => {
         TestService.method.clientStreaming,
         async (req, { responseHeader, responseTrailer }) => {
           for await (const next of req) {
-            expect(next.value).toBe(2);
+            assert.strictEqual(next.value, 2);
           }
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
@@ -140,13 +142,16 @@ describe("transformInvokeImplementation()", () => {
       context,
       [
         (next) => async (req) => {
-          expect(req.stream).toEqual(true);
-          expect(req.requestMethod).toEqual("POST");
-          expect(req.service).toEqual(TestService);
-          expect(req.header.get("Key")).toEqual("Value");
-          expect(req.url).toEqual("https://example.com/foo");
-          expect(req.method).toEqual(TestService.method.clientStreaming);
-          expect(context.values.get(kFoo)).toEqual("bar");
+          assert.ok(req.stream);
+          assert.strictEqual(req.requestMethod, "POST");
+          assert.deepStrictEqual(req.service, TestService);
+          assert.strictEqual(req.header.get("Key"), "Value");
+          assert.strictEqual(req.url, "https://example.com/foo");
+          assert.deepStrictEqual(
+            req.method,
+            TestService.method.clientStreaming,
+          );
+          assert.strictEqual(context.values.get(kFoo), "bar");
           req.header.set("Key", "bar");
           if (req.stream) {
             req = {
@@ -161,24 +166,27 @@ describe("transformInvokeImplementation()", () => {
             };
           }
           const res = await next(req);
-          expect(res.stream).toEqual(true);
-          expect(res.service).toEqual(TestService);
-          expect(res.header.get("Key")).toEqual("bar");
-          expect(res.method).toEqual(TestService.method.clientStreaming);
+          assert.ok(res.stream);
+          assert.deepStrictEqual(res.service, TestService);
+          assert.strictEqual(res.header.get("Key"), "bar");
+          assert.deepStrictEqual(
+            res.method,
+            TestService.method.clientStreaming,
+          );
           res.header.set("Key", "baz");
           return { ...res, trailer: new Headers({ TKey: "tfoo" }) };
         },
         (next) => async (req) => {
-          expect(req.header.get("Key")).toEqual("bar");
+          assert.strictEqual(req.header.get("Key"), "bar");
           return next(req);
         },
       ],
     )(createAsyncIterable([create(Int32ValueSchema, { value: 1 })]));
-    expect(await readAll(output)).toEqual([
+    assert.deepStrictEqual(await readAll(output), [
       create(StringValueSchema, { value: "foo" }),
     ]);
-    expect(context.responseHeader.get("Key")).toEqual("baz");
-    expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
+    assert.strictEqual(context.responseHeader.get("Key"), "baz");
+    assert.strictEqual(context.responseTrailer.get("TKey"), "tfoo");
   });
   it("should apply interceptors to server streaming calls", async () => {
     const context = createHandlerContext({
@@ -191,7 +199,7 @@ describe("transformInvokeImplementation()", () => {
         TestService.method.serverStreaming,
         // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, { responseHeader, responseTrailer }) {
-          expect(req.value).toBe(2); // Comes from the interceptor
+          assert.strictEqual(req.value, 2); // Comes from the interceptor
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           yield { value: "foo" };
@@ -205,13 +213,16 @@ describe("transformInvokeImplementation()", () => {
       context,
       [
         (next) => async (req) => {
-          expect(req.stream).toEqual(true);
-          expect(req.requestMethod).toEqual("POST");
-          expect(req.service).toEqual(TestService);
-          expect(req.header.get("Key")).toEqual("Value");
-          expect(req.url).toEqual("https://example.com/foo");
-          expect(req.method).toEqual(TestService.method.serverStreaming);
-          expect(context.values.get(kFoo)).toEqual("bar");
+          assert.ok(req.stream);
+          assert.strictEqual(req.requestMethod, "POST");
+          assert.deepStrictEqual(req.service, TestService);
+          assert.strictEqual(req.header.get("Key"), "Value");
+          assert.strictEqual(req.url, "https://example.com/foo");
+          assert.deepStrictEqual(
+            req.method,
+            TestService.method.serverStreaming,
+          );
+          assert.strictEqual(context.values.get(kFoo), "bar");
           req.header.set("Key", "bar");
           if (req.stream) {
             req = {
@@ -230,10 +241,13 @@ describe("transformInvokeImplementation()", () => {
           for await (const next of res.message as AsyncIterable<StringValue>) {
             responses.push(next);
           }
-          expect(res.stream).toEqual(true);
-          expect(res.service).toEqual(TestService);
-          expect(res.header.get("Key")).toEqual("bar");
-          expect(res.method).toEqual(TestService.method.serverStreaming);
+          assert.ok(res.stream);
+          assert.deepStrictEqual(res.service, TestService);
+          assert.strictEqual(res.header.get("Key"), "bar");
+          assert.deepStrictEqual(
+            res.method,
+            TestService.method.serverStreaming,
+          );
           res.header.set("Key", "baz");
           return {
             ...res,
@@ -242,16 +256,16 @@ describe("transformInvokeImplementation()", () => {
           } as typeof res;
         },
         (next) => async (req) => {
-          expect(req.header.get("Key")).toEqual("bar");
+          assert.strictEqual(req.header.get("Key"), "bar");
           return next(req);
         },
       ],
     )(createAsyncIterable([create(Int32ValueSchema, { value: 1 })]));
-    expect(await readAll(output)).toEqual([
+    assert.deepStrictEqual(await readAll(output), [
       create(StringValueSchema, { value: "foo" }),
     ]);
-    expect(context.responseHeader.get("Key")).toEqual("baz");
-    expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
+    assert.strictEqual(context.responseHeader.get("Key"), "baz");
+    assert.strictEqual(context.responseTrailer.get("TKey"), "tfoo");
   });
   it("should apply interceptors to bidi streaming calls", async () => {
     const context = createHandlerContext({
@@ -265,10 +279,10 @@ describe("transformInvokeImplementation()", () => {
         async function* (req, { responseHeader, responseTrailer }) {
           let reqCount = 0;
           for await (const next of req) {
-            expect(next.value).toBe(2);
+            assert.strictEqual(next.value, 2);
             reqCount++;
           }
-          expect(reqCount).toBe(2);
+          assert.strictEqual(reqCount, 2);
           responseHeader.set("Key", "bar");
           responseTrailer.set("TKey", "tbar");
           yield { value: "foo" };
@@ -282,13 +296,13 @@ describe("transformInvokeImplementation()", () => {
       context,
       [
         (next) => async (req) => {
-          expect(req.stream).toEqual(true);
-          expect(req.requestMethod).toEqual("POST");
-          expect(req.service).toEqual(TestService);
-          expect(req.header.get("Key")).toEqual("Value");
-          expect(req.url).toEqual("https://example.com/foo");
-          expect(req.method).toEqual(TestService.method.bidiStreaming);
-          expect(context.values.get(kFoo)).toEqual("bar");
+          assert.ok(req.stream);
+          assert.strictEqual(req.requestMethod, "POST");
+          assert.deepStrictEqual(req.service, TestService);
+          assert.strictEqual(req.header.get("Key"), "Value");
+          assert.strictEqual(req.url, "https://example.com/foo");
+          assert.deepStrictEqual(req.method, TestService.method.bidiStreaming);
+          assert.strictEqual(context.values.get(kFoo), "bar");
           req.header.set("Key", "bar");
           if (req.stream) {
             req = {
@@ -307,10 +321,10 @@ describe("transformInvokeImplementation()", () => {
           for await (const next of res.message as AsyncIterable<StringValue>) {
             responses.push(next);
           }
-          expect(res.stream).toEqual(true);
-          expect(res.service).toEqual(TestService);
-          expect(res.header.get("Key")).toEqual("bar");
-          expect(res.method).toEqual(TestService.method.bidiStreaming);
+          assert.ok(res.stream);
+          assert.deepStrictEqual(res.service, TestService);
+          assert.strictEqual(res.header.get("Key"), "bar");
+          assert.deepStrictEqual(res.method, TestService.method.bidiStreaming);
           res.header.set("Key", "baz");
           return {
             ...res,
@@ -319,7 +333,7 @@ describe("transformInvokeImplementation()", () => {
           } as typeof res;
         },
         (next) => async (req) => {
-          expect(req.header.get("Key")).toEqual("bar");
+          assert.strictEqual(req.header.get("Key"), "bar");
           return next(req);
         },
       ],
@@ -329,10 +343,10 @@ describe("transformInvokeImplementation()", () => {
         create(Int32ValueSchema, { value: 3 }),
       ]),
     );
-    expect(await readAll(output)).toEqual([
+    assert.deepStrictEqual(await readAll(output), [
       create(StringValueSchema, { value: "foo" }),
     ]);
-    expect(context.responseHeader.get("Key")).toEqual("baz");
-    expect(context.responseTrailer.get("TKey")).toEqual("tfoo");
+    assert.strictEqual(context.responseHeader.get("Key"), "baz");
+    assert.strictEqual(context.responseTrailer.get("TKey"), "tfoo");
   });
 });

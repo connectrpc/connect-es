@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { createClient } from "./promise-client.js";
 import { createAsyncIterable } from "./protocol/async-iterable.js";
 import { createRouterTransport } from "./router-transport.js";
@@ -72,46 +74,45 @@ describe("createRoutesTransport", () => {
   const client = createClient(testService, transport);
   it("should work for unary", async () => {
     const res = await client.unary({ value: 13 });
-    expect(res.value).toBe("13");
+    assert.strictEqual(res.value, "13");
   });
   it("should work for server steam", async () => {
     const res = client.server({ value: 13 });
     let count = 0;
     for await (const next of res) {
       count++;
-      expect(next.value).toBe("13");
+      assert.strictEqual(next.value, "13");
     }
-    expect(count).toBe(13);
+    assert.strictEqual(count, 13);
   });
   it("should work for client steam", async () => {
     const res = await client.client(
       createAsyncIterable([{ value: 12 }, { value: 13 }]),
     );
-    expect(res.value).toBe("13");
+    assert.strictEqual(res.value, "13");
   });
   it("should work for bidi steam", async () => {
     const payload = [{ value: 1 }, { value: 2 }];
     const res = client.biDi(createAsyncIterable(payload));
     let count = 0;
     for await (const next of res) {
-      expect(next.value).toBe(payload[count].value.toString());
+      assert.strictEqual(next.value, payload[count].value.toString());
       count++;
     }
-    expect(count).toBe(payload.length);
+    assert.strictEqual(count, payload.length);
   });
   it("should handle calling an RPC on a router transport that isn't registered", async () => {
     const transport = createRouterTransport(() => {
       // intentionally not registering any transports
     });
     const client = createClient(testService, transport);
-    try {
-      await client.unary({});
-      fail("expected error");
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConnectError);
-      expect(ConnectError.from(e).message).toBe(
+    await assert.rejects(client.unary({}), (e) => {
+      assert.ok(e instanceof ConnectError);
+      assert.strictEqual(
+        e.message,
         "[unimplemented] RouterHttpClient: no handler registered for /TestService/Unary",
       );
-    }
+      return true;
+    });
   });
 });

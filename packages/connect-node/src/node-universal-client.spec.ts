@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import * as http2 from "node:http2";
 import * as http from "node:http";
 import { ConnectError } from "@connectrpc/connect";
@@ -57,7 +59,7 @@ describe("node http/2 client closing with RST_STREAM with code CANCEL", () => {
       // wait for the server to see the reset code
       await new Promise((resolve) => setTimeout(resolve, 1));
     }
-    expect(serverReceivedRstCode).toBe(http2.constants.NGHTTP2_CANCEL);
+    assert.strictEqual(serverReceivedRstCode, http2.constants.NGHTTP2_CANCEL);
   });
 });
 
@@ -76,7 +78,8 @@ describe("universal node http client", () => {
               header: new Headers(),
             });
           } catch (e) {
-            expect(ConnectError.from(e).message).toBe(
+            assert.strictEqual(
+              ConnectError.from(e).message,
               "[unavailable] getaddrinfo ENOTFOUND unresolvable-host.some.domain",
             );
           }
@@ -96,20 +99,22 @@ describe("universal node http client", () => {
       );
       it("should reject the response promise with Code.Canceled", async () => {
         const client = server.getClient();
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with error code CANCEL (0x8)",
-          );
-        }
-        expect(serverReceivedRequest).toBeTrue();
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] http/2 stream closed with error code CANCEL (0x8)",
+            );
+            return true;
+          },
+        );
+        assert.ok(serverReceivedRequest);
       });
     });
     describe("over http/1.1", () => {
@@ -122,18 +127,22 @@ describe("universal node http client", () => {
       );
       it("should reject the response promise", async () => {
         const client = server.getClient();
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe("[aborted] socket hang up");
-        }
-        expect(serverReceivedRequest).toBeTrue();
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[aborted] socket hang up",
+            );
+            return true;
+          },
+        );
+        assert.ok(serverReceivedRequest);
       });
     });
   });
@@ -156,20 +165,25 @@ describe("universal node http client", () => {
           method: "POST",
           header: new Headers(),
         });
-        try {
-          for await (const chunk of res.body) {
-            expect(chunk)
-              .withContext("response body iterable should be empty")
-              .toBeUndefined();
-          }
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with error code CANCEL (0x8)",
-          );
-        }
+        await assert.rejects(
+          async () => {
+            for await (const chunk of res.body) {
+              assert.strictEqual(
+                chunk,
+                undefined,
+                "response body iterable should be empty",
+              );
+            }
+          },
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] http/2 stream closed with error code CANCEL (0x8)",
+            );
+            return true;
+          },
+        );
       });
     });
     describe("over http/1.1", () => {
@@ -187,17 +201,25 @@ describe("universal node http client", () => {
           method: "POST",
           header: new Headers(),
         });
-        try {
-          for await (const chunk of res.body) {
-            expect(chunk)
-              .withContext("response body iterable should be empty")
-              .toBeUndefined();
-          }
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe("[aborted] aborted");
-        }
+        await assert.rejects(
+          async () => {
+            for await (const chunk of res.body) {
+              assert.strictEqual(
+                chunk,
+                undefined,
+                "response body iterable should be empty",
+              );
+            }
+          },
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[aborted] aborted",
+            );
+            return true;
+          },
+        );
       });
     });
   });
@@ -226,21 +248,23 @@ describe("universal node http client", () => {
           });
         }
 
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
             body: body(),
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with error code CANCEL (0x8)",
-          );
-        }
-        expect(serverReceivedBytes).toBe(32);
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] http/2 stream closed with error code CANCEL (0x8)",
+            );
+            return true;
+          },
+        );
+        assert.strictEqual(serverReceivedBytes, 32);
       });
     });
     describe("over http/1.1", () => {
@@ -266,19 +290,23 @@ describe("universal node http client", () => {
           });
         }
 
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
             body: body(),
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe("[aborted] socket hang up");
-        }
-        expect(serverReceivedBytes).toBe(32);
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[aborted] socket hang up",
+            );
+            return true;
+          },
+        );
+        assert.strictEqual(serverReceivedBytes, 32);
       });
     });
   });
@@ -307,19 +335,22 @@ describe("universal node http client", () => {
           method: "POST",
           header: new Headers(),
         });
-        try {
-          for await (const chunk of res.body) {
-            expect(chunk.byteLength).toBe(64);
-          }
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] http/2 stream closed with error code CANCEL (0x8)",
-          );
-        }
-        expect(serverSentBytes).toBe(64);
+        await assert.rejects(
+          async () => {
+            for await (const chunk of res.body) {
+              assert.strictEqual(chunk.byteLength, 64);
+            }
+          },
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] http/2 stream closed with error code CANCEL (0x8)",
+            );
+            return true;
+          },
+        );
+        assert.strictEqual(serverSentBytes, 64);
       });
     });
     describe("over http/1.1", () => {
@@ -343,18 +374,22 @@ describe("universal node http client", () => {
           method: "POST",
           header: new Headers(),
         });
-        try {
-          for await (const chunk of res.body) {
-            expect(chunk.byteLength).toBe(64);
-          }
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toMatch(
-            /\[aborted] (aborted|read ECONNRESET)/,
-          );
-        }
-        expect(serverSentBytes).toBe(64);
+        await assert.rejects(
+          async () => {
+            for await (const chunk of res.body) {
+              assert.strictEqual(chunk.byteLength, 64);
+            }
+          },
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.match(
+              e.message,
+              /\[aborted] (aborted|read ECONNRESET)/,
+            );
+            return true;
+          },
+        );
+        assert.strictEqual(serverSentBytes, 64);
       });
     });
   });
@@ -371,22 +406,24 @@ describe("universal node http client", () => {
         const client = server.getClient();
         const signal = AbortSignal.abort();
         // client should raise error
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
             signal,
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted",
-          );
-        }
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] This operation was aborted",
+            );
+            return true;
+          },
+        );
         // request should never hit the server
-        expect(serverReceivedRequest).toBeFalse();
+        assert.ok(!serverReceivedRequest);
       });
     });
     describe("over http/1.1", () => {
@@ -400,22 +437,24 @@ describe("universal node http client", () => {
         const client = server.getClient();
         const signal = AbortSignal.abort();
         // client should raise error
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
             signal,
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted",
-          );
-        }
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] This operation was aborted",
+            );
+            return true;
+          },
+        );
         // request should never hit the server
-        expect(serverReceivedRequest).toBeFalse();
+        assert.ok(!serverReceivedRequest);
       });
     });
   });
@@ -448,29 +487,34 @@ describe("universal node http client", () => {
         }
 
         // client should raise error
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
             body: body(),
             signal: ac.signal,
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted",
-          );
-        }
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] This operation was aborted",
+            );
+            return true;
+          },
+        );
 
         // server should receive chunks until client cancelled
         while (serverReceivedRstCode === undefined) {
           // wait for the server to see the reset code
           await new Promise((resolve) => setTimeout(resolve, 1));
         }
-        expect(serverReceivedRstCode).toBe(http2.constants.NGHTTP2_CANCEL);
-        expect(serverReceivedBytes).toBe(0);
+        assert.strictEqual(
+          serverReceivedRstCode,
+          http2.constants.NGHTTP2_CANCEL,
+        );
+        assert.strictEqual(serverReceivedBytes, 0);
       });
     });
     describe("over http/1.1", () => {
@@ -519,36 +563,40 @@ describe("universal node http client", () => {
         }
 
         // client should raise error
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
             body: body(),
             signal: ac.signal,
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted",
-          );
-        }
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] This operation was aborted",
+            );
+            return true;
+          },
+        );
 
         // server should receive chunks until client cancelled
-        expect(serverReceivedRequest)
-          .withContext("serverReceivedRequest")
-          .toBeTrue();
+        assert.strictEqual(
+          serverReceivedRequest,
+          true,
+          "serverReceivedRequest",
+        );
         while (!serverResponseClosed) {
           // wait for the server to see the response being closed
           await new Promise((resolve) => setTimeout(resolve, 1));
         }
-        expect(serverRequestClosed).toBeTrue();
-        expect(serverResponseClosed).toBeTrue();
-        expect(serverRequestEmittedAborted).toBeTrue();
-        expect(serverRequestEmittedError?.code).toBe("ECONNRESET");
-        expect(serverRequestIterableErrored?.code).toBe("ECONNRESET");
-        expect(serverReceivedBytes).toBe(0);
+        assert.ok(serverRequestClosed);
+        assert.ok(serverResponseClosed);
+        assert.ok(serverRequestEmittedAborted);
+        assert.strictEqual(serverRequestEmittedError?.code, "ECONNRESET");
+        assert.strictEqual(serverRequestIterableErrored?.code, "ECONNRESET");
+        assert.strictEqual(serverReceivedBytes, 0);
       });
     });
   });
@@ -582,29 +630,34 @@ describe("universal node http client", () => {
         }
 
         // client should raise error
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
             body: body(),
             signal: ac.signal,
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted",
-          );
-        }
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] This operation was aborted",
+            );
+            return true;
+          },
+        );
 
         // server should receive chunks until client cancelled
         while (serverReceivedRstCode === undefined) {
           // wait for the server to see the reset code
           await new Promise((resolve) => setTimeout(resolve, 1));
         }
-        expect(serverReceivedRstCode).toBe(http2.constants.NGHTTP2_CANCEL);
-        expect(serverReceivedBytes).toBe(32);
+        assert.strictEqual(
+          serverReceivedRstCode,
+          http2.constants.NGHTTP2_CANCEL,
+        );
+        assert.strictEqual(serverReceivedBytes, 32);
       });
     });
     describe("over http/1.1", () => {
@@ -654,34 +707,36 @@ describe("universal node http client", () => {
         }
 
         // client should raise error
-        try {
-          await client({
+        await assert.rejects(
+          client({
             url: server.getUrl(),
             method: "POST",
             header: new Headers(),
             body: body(),
             signal: ac.signal,
-          });
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted",
-          );
-        }
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] This operation was aborted",
+            );
+            return true;
+          },
+        );
 
         // server should receive chunks until client cancelled
-        expect(serverReceivedRequest).toBeTrue();
+        assert.ok(serverReceivedRequest);
         while (!serverResponseClosed) {
           // wait for the server to see the response being closed
           await new Promise((resolve) => setTimeout(resolve, 1));
         }
-        expect(serverRequestClosed).toBeTrue();
-        expect(serverResponseClosed).toBeTrue();
-        expect(serverRequestEmittedAborted).toBeTrue();
-        expect(serverRequestEmittedError?.code).toBe("ECONNRESET");
-        expect(serverRequestIterableErrored?.code).toBe("ECONNRESET");
-        expect(serverReceivedBytes).toBe(32);
+        assert.ok(serverRequestClosed);
+        assert.ok(serverResponseClosed);
+        assert.ok(serverRequestEmittedAborted);
+        assert.strictEqual(serverRequestEmittedError?.code, "ECONNRESET");
+        assert.strictEqual(serverRequestIterableErrored?.code, "ECONNRESET");
+        assert.strictEqual(serverReceivedBytes, 32);
       });
     });
   });
@@ -719,26 +774,33 @@ describe("universal node http client", () => {
         });
 
         // should raise error with code canceled
-        try {
-          for await (const chunk of res.body) {
-            expect(chunk.byteLength).toBe(64);
-            ac.abort();
-          }
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted",
-          );
-        }
+        await assert.rejects(
+          async () => {
+            for await (const chunk of res.body) {
+              assert.strictEqual(chunk.byteLength, 64);
+              ac.abort();
+            }
+          },
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] This operation was aborted",
+            );
+            return true;
+          },
+        );
 
         // server should receive RST_STREAM with code CANCEL
         while (serverReceivedRstCode === undefined) {
           // wait for the server to see the reset code
           await new Promise((resolve) => setTimeout(resolve, 1));
         }
-        expect(serverReceivedRstCode).toBe(http2.constants.NGHTTP2_CANCEL);
-        expect(serverSentBytes).toBe(64);
+        assert.strictEqual(
+          serverReceivedRstCode,
+          http2.constants.NGHTTP2_CANCEL,
+        );
+        assert.strictEqual(serverSentBytes, 64);
       });
     });
     describe("over http/1.1", () => {
@@ -777,27 +839,31 @@ describe("universal node http client", () => {
         });
 
         // should raise error with code canceled
-        try {
-          for await (const chunk of res.body) {
-            expect(chunk.byteLength).toBe(64);
-            ac.abort();
-          }
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[canceled] This operation was aborted",
-          );
-        }
+        await assert.rejects(
+          async () => {
+            for await (const chunk of res.body) {
+              assert.strictEqual(chunk.byteLength, 64);
+              ac.abort();
+            }
+          },
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[canceled] This operation was aborted",
+            );
+            return true;
+          },
+        );
 
         // server should see request close
         while (!serverResponseClosed) {
           // wait for the server to see the response being closed
           await new Promise((resolve) => setTimeout(resolve, 1));
         }
-        expect(serverRequestClosed).toBeTrue();
-        expect(serverResponseClosed).toBeTrue();
-        expect(serverSentBytes).toBe(64);
+        assert.ok(serverRequestClosed);
+        assert.ok(serverResponseClosed);
+        assert.strictEqual(serverSentBytes, 64);
       });
     });
   });

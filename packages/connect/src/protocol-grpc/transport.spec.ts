@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach } from "node:test";
+import * as assert from "node:assert";
 import { create, toBinary } from "@bufbuild/protobuf";
 import type { Transport } from "../transport.js";
 import { createTransport } from "./transport.js";
@@ -100,20 +102,24 @@ describe("gRPC transport", () => {
     });
 
     it("should cancel the HTTP request for unary", async () => {
-      try {
-        await transport.unary(
+      await assert.rejects(
+        transport.unary(
           TestService.method.unary,
           undefined,
           undefined,
           undefined,
           {},
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
-      }
-      expect(httpRequestAborted).toBeTrue();
+        ),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
+            "[resource_exhausted] foo",
+          );
+          return true;
+        },
+      );
+      assert.ok(httpRequestAborted);
     });
 
     it("should cancel the HTTP request for server-streaming", async () => {
@@ -125,17 +131,23 @@ describe("gRPC transport", () => {
         createAsyncIterable([]),
       );
       const messagesReceived: StringValue[] = [];
-      try {
-        for await (const m of res.message) {
-          messagesReceived.push(m);
-        }
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
-      }
-      expect(messagesReceived.length).toBe(1);
-      expect(httpRequestAborted).toBeTrue();
+      await assert.rejects(
+        (async () => {
+          for await (const m of res.message) {
+            messagesReceived.push(m);
+          }
+        })(),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
+            "[resource_exhausted] foo",
+          );
+          return true;
+        },
+      );
+      assert.strictEqual(messagesReceived.length, 1);
+      assert.ok(httpRequestAborted);
     });
   });
 });

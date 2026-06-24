@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { validateResponse } from "./validate-response.js";
 import { ConnectError } from "../connect-error.js";
 
@@ -42,7 +44,7 @@ describe("gRPC validateResponse()", () => {
       "grpc-status": "8",
       "content-type": "application/grpc+proto",
     });
-    expect(e?.message).toBe("[resource_exhausted]");
+    assert.strictEqual(e?.message, "[resource_exhausted]");
   });
 
   it("should honor grpc-message field", () => {
@@ -51,7 +53,7 @@ describe("gRPC validateResponse()", () => {
       "grpc-message": "out of space",
       "content-type": "application/grpc+proto",
     });
-    expect(e?.message).toBe("[resource_exhausted] out of space");
+    assert.strictEqual(e?.message, "[resource_exhausted] out of space");
   });
 
   it("should include headers as error metadata with grpc-status", () => {
@@ -60,32 +62,32 @@ describe("gRPC validateResponse()", () => {
       Foo: "Bar",
       "content-type": "application/grpc+proto",
     });
-    expect(e?.metadata.get("Foo")).toBe("Bar");
+    assert.strictEqual(e?.metadata.get("Foo"), "Bar");
   });
 
   it("should honor HTTP error code", () => {
     const e = v(429, { "Content-Type": "application/csv" });
-    expect(e?.message).toBe("[unavailable] HTTP 429");
+    assert.strictEqual(e?.message, "[unavailable] HTTP 429");
   });
 
   it("should treat HTTP 204 as an error", () => {
     const e = v(204, {});
-    expect(e?.message).toBe(`[unknown] HTTP 204`);
+    assert.strictEqual(e?.message, `[unknown] HTTP 204`);
   });
 
   it("should include headers as error metadata with HTTP error code", () => {
     const e = v(429, { Foo: "Bar" });
-    expect(e?.metadata.get("Foo")).toBe("Bar");
+    assert.strictEqual(e?.metadata.get("Foo"), "Bar");
   });
 
   it("should prefer HTTP error code over grpc-status field", () => {
     const e = v(401, { "grpc-status": "8" });
-    expect(e?.message).toBe("[unauthenticated] HTTP 401");
+    assert.strictEqual(e?.message, "[unauthenticated] HTTP 401");
   });
 
   it("should not use grpc-message with a HTTP error code", () => {
     const e = v(401, { "grpc-status": "8", "grpc-message": "out of space" });
-    expect(e?.message).toBe("[unauthenticated] HTTP 401");
+    assert.strictEqual(e?.message, "[unauthenticated] HTTP 401");
   });
 
   it("should return foundStatus for grpc-status OK", () => {
@@ -96,6 +98,6 @@ describe("gRPC validateResponse()", () => {
         "content-type": "application/grpc+proto",
       }),
     );
-    expect(foundStatus).toBeTrue();
+    assert.ok(foundStatus);
   });
 });
