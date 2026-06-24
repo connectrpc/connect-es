@@ -72,10 +72,7 @@ describe("Connect validateResponse()", () => {
           ),
         (e) => {
           assert.ok(e instanceof ConnectError);
-          assert.strictEqual(
-            e.message,
-            "[internal] HTTP 400",
-          );
+          assert.strictEqual(e.message, "[internal] HTTP 400");
           return true;
         },
       );

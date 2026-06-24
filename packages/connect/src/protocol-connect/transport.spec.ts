@@ -134,10 +134,7 @@ describe("Connect transport", () => {
             assert.ok(e instanceof ConnectError);
             // Body should not be parsed because the Content-Type response header is not application/json
             assert.strictEqual(e.code, Code.Unavailable);
-            assert.strictEqual(
-              e.message,
-              "[unavailable] HTTP 429",
-            );
+            assert.strictEqual(e.message, "[unavailable] HTTP 429");
             return true;
           },
         );
@@ -156,14 +153,8 @@ describe("Connect transport", () => {
           (e) => {
             assert.ok(e instanceof ConnectError);
             // Body should be parsed because the Content-Type response header is application/json
-            assert.strictEqual(
-              e.code,
-              Code.ResourceExhausted,
-            );
-            assert.strictEqual(
-              e.message,
-              "[resource_exhausted] foo",
-            );
+            assert.strictEqual(e.code, Code.ResourceExhausted);
+            assert.strictEqual(e.message, "[resource_exhausted] foo");
             return true;
           },
         );
@@ -222,10 +213,7 @@ describe("Connect transport", () => {
           })(),
           (e) => {
             assert.ok(e instanceof ConnectError);
-            assert.strictEqual(
-              e.message,
-              "[resource_exhausted] foo",
-            );
+            assert.strictEqual(e.message, "[resource_exhausted] foo");
             return true;
           },
         );

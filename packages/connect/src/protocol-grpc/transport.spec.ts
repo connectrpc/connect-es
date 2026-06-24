@@ -112,10 +112,7 @@ describe("gRPC transport", () => {
         ),
         (e) => {
           assert.ok(e instanceof ConnectError);
-          assert.strictEqual(
-            e.message,
-            "[resource_exhausted] foo",
-          );
+          assert.strictEqual(e.message, "[resource_exhausted] foo");
           return true;
         },
       );
@@ -139,10 +136,7 @@ describe("gRPC transport", () => {
         })(),
         (e) => {
           assert.ok(e instanceof ConnectError);
-          assert.strictEqual(
-            e.message,
-            "[resource_exhausted] foo",
-          );
+          assert.strictEqual(e.message, "[resource_exhausted] foo");
           return true;
         },
       );

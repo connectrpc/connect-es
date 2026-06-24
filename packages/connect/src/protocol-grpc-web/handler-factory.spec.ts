@@ -264,10 +264,7 @@ describe("createHandlerFactory()", () => {
         ),
         (e) => {
           assert.ok(e instanceof ConnectError);
-          assert.strictEqual(
-            e.message,
-            "[unavailable] shutting down",
-          );
+          assert.strictEqual(e.message, "[unavailable] shutting down");
           return true;
         },
       );

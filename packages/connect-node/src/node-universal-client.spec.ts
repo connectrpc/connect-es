@@ -135,10 +135,7 @@ describe("universal node http client", () => {
           }),
           (e: unknown) => {
             assert.ok(e instanceof ConnectError);
-            assert.strictEqual(
-              e.message,
-              "[aborted] socket hang up",
-            );
+            assert.strictEqual(e.message, "[aborted] socket hang up");
             return true;
           },
         );
@@ -213,10 +210,7 @@ describe("universal node http client", () => {
           },
           (e: unknown) => {
             assert.ok(e instanceof ConnectError);
-            assert.strictEqual(
-              e.message,
-              "[aborted] aborted",
-            );
+            assert.strictEqual(e.message, "[aborted] aborted");
             return true;
           },
         );
@@ -299,10 +293,7 @@ describe("universal node http client", () => {
           }),
           (e: unknown) => {
             assert.ok(e instanceof ConnectError);
-            assert.strictEqual(
-              e.message,
-              "[aborted] socket hang up",
-            );
+            assert.strictEqual(e.message, "[aborted] socket hang up");
             return true;
           },
         );
@@ -382,10 +373,7 @@ describe("universal node http client", () => {
           },
           (e: unknown) => {
             assert.ok(e instanceof ConnectError);
-            assert.match(
-              e.message,
-              /\[aborted] (aborted|read ECONNRESET)/,
-            );
+            assert.match(e.message, /\[aborted] (aborted|read ECONNRESET)/);
             return true;
           },
         );

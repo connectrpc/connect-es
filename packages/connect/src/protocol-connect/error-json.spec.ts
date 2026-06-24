@@ -111,10 +111,7 @@ describe("errorFromJson()", () => {
       new ConnectError("foo", Code.ResourceExhausted),
     );
     assert.ok(e instanceof ConnectError);
-    assert.strictEqual(
-      e.message,
-      "[resource_exhausted] Not permitted",
-    );
+    assert.strictEqual(e.message, "[resource_exhausted] Not permitted");
   });
   it("with invalid code returns fallback code with metadata", () => {
     const e = errorFromJson(
@@ -126,10 +123,7 @@ describe("errorFromJson()", () => {
       new ConnectError("foo", Code.ResourceExhausted),
     );
     assert.ok(e instanceof ConnectError);
-    assert.strictEqual(
-      e.message,
-      "[resource_exhausted] Not permitted",
-    );
+    assert.strictEqual(e.message, "[resource_exhausted] Not permitted");
     assert.strictEqual(e.metadata.get("foo"), "bar");
   });
   it("with code Ok returns fallback code", () => {
@@ -142,10 +136,7 @@ describe("errorFromJson()", () => {
       new ConnectError("foo", Code.ResourceExhausted),
     );
     assert.ok(e instanceof ConnectError);
-    assert.strictEqual(
-      e.message,
-      "[resource_exhausted] Not permitted",
-    );
+    assert.strictEqual(e.message, "[resource_exhausted] Not permitted");
   });
   it("with missing code returns fallback code", () => {
     const e = errorFromJson(
@@ -156,10 +147,7 @@ describe("errorFromJson()", () => {
       new ConnectError("foo", Code.ResourceExhausted),
     );
     assert.ok(e instanceof ConnectError);
-    assert.strictEqual(
-      e.message,
-      "[resource_exhausted] Not permitted",
-    );
+    assert.strictEqual(e.message, "[resource_exhausted] Not permitted");
   });
   describe("with details", () => {
     const json = {

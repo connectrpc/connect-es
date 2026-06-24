@@ -3,6 +3,6 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "types": ["jasmine"]
+    "types": ["jasmine", "node"]
   }
 }
