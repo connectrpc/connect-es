@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach } from "node:test";
+import * as assert from "node:assert";
 import {
   targetVersionConnectEs,
   targetVersionConnectQuery,
@@ -74,13 +76,14 @@ describe("migration to v0.13.1", () => {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v0_13_1.applicable(opt.scanned));
     });
     it("should abort without --force", () => {
       const result = v0_13_1.migrate(opt);
-      expect(result.ok).toBeFalse();
+      assert.ok(!result.ok);
       if (!result.ok) {
-        expect(result.errorMessage).toMatch(
+        assert.match(
+          result.errorMessage,
           /You depend on @bufbuild\/connect-web@<0.9.0/,
         );
       }
@@ -88,18 +91,18 @@ describe("migration to v0.13.1", () => {
     it("should migrate with --force", () => {
       opt.args.forceUpdate = true;
       const result = v0_13_1.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@connectrpc/connect": `^${targetVersionConnectEs}`,
           "@connectrpc/connect-web": `^${targetVersionConnectEs}`,
           "@connectrpc/protoc-gen-connect-es": `^${targetVersionConnectEs}`,
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
   });
   describe("from protoc-gen-connect-web", () => {
@@ -116,13 +119,14 @@ describe("migration to v0.13.1", () => {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v0_13_1.applicable(opt.scanned));
     });
     it("should abort", () => {
       const result = v0_13_1.migrate(opt);
-      expect(result.ok).toBeFalse();
+      assert.ok(!result.ok);
       if (!result.ok) {
-        expect(result.errorMessage).toMatch(
+        assert.match(
+          result.errorMessage,
           /You depend on the deprecated @bufbuild\/protoc-gen-connect-web/,
         );
       }
@@ -130,16 +134,16 @@ describe("migration to v0.13.1", () => {
     it("should migrate with --force", () => {
       opt.args.forceUpdate = true;
       const result = v0_13_1.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@connectrpc/protoc-gen-connect-es": "^" + targetVersionConnectEs,
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
   });
   describe("from bufbuild v0.13.0", () => {
@@ -156,20 +160,20 @@ describe("migration to v0.13.1", () => {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v0_13_1.applicable(opt.scanned));
     });
     it("should migrate", () => {
       const result = v0_13_1.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@connectrpc/connect": "^1.6.0",
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
   });
   describe("from bufbuild v0.12.0", () => {
@@ -186,20 +190,20 @@ describe("migration to v0.13.1", () => {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v0_13_1.applicable(opt.scanned));
     });
     it("should migrate", () => {
       const result = v0_13_1.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@connectrpc/connect": "^" + targetVersionConnectEs,
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
   });
   describe("from connectrpc v0.13.1", () => {
@@ -216,7 +220,7 @@ describe("migration to v0.13.1", () => {
       ];
     });
     it("should not be applicable", () => {
-      expect(v0_13_1.applicable(opt.scanned)).toBeFalse();
+      assert.ok(!v0_13_1.applicable(opt.scanned));
     });
   });
   describe("from connect-query v0.3.0", () => {
@@ -235,15 +239,15 @@ describe("migration to v0.13.1", () => {
       ];
     });
     it("should be applicable", () => {
-      expect(v0_13_1.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v0_13_1.applicable(opt.scanned));
     });
     it("should migrate", () => {
       const result = v0_13_1.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@connectrpc/connect-query": "^" + targetVersionConnectQuery,
           "@connectrpc/protoc-gen-connect-query":
@@ -252,7 +256,7 @@ describe("migration to v0.13.1", () => {
             "^" + targetVersionConnectQuery,
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
   });
 });

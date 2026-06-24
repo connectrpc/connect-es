@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import {
   type BufGenYaml,
   parseBufGenYaml,
@@ -52,29 +54,31 @@ plugins:
 describe("parseBufGenYaml()", () => {
   it("should parse golden v1", () => {
     const y: BufGenYaml = parseBufGenYaml(goldenV1);
-    expect(y).toBeDefined();
-    expect(y.get("version")).toBe("v1");
+    assert.notStrictEqual(y, undefined);
+    assert.strictEqual(y.get("version"), "v1");
   });
   it("should parse golden v2", () => {
     const y: BufGenYaml = parseBufGenYaml(goldenV2);
-    expect(y).toBeDefined();
-    expect(y.get("version")).toBe("v2");
+    assert.notStrictEqual(y, undefined);
+    assert.strictEqual(y.get("version"), "v2");
   });
   it("raises error for unknown version", () => {
-    expect(() => parseBufGenYaml(`version: true`)).toThrowError(
-      "Failed to parse: not a valid buf.gen.yaml file: unknown version: true",
-    );
+    assert.throws(() => parseBufGenYaml(`version: true`), {
+      message:
+        "Failed to parse: not a valid buf.gen.yaml file: unknown version: true",
+    });
   });
   it("raises error for plugins not a yaml list", () => {
-    expect(() => parseBufGenYaml(`version: v1\nplugins: true`)).toThrowError(
-      'Failed to parse: not a valid buf.gen.yaml file: expected "plugins" to be a yaml list',
-    );
+    assert.throws(() => parseBufGenYaml(`version: v1\nplugins: true`), {
+      message:
+        'Failed to parse: not a valid buf.gen.yaml file: expected "plugins" to be a yaml list',
+    });
   });
 });
 
 describe("stringifyBufGenYaml()", () => {
   it("should keep comments", () => {
     const str = stringifyBufGenYaml(parseBufGenYaml(goldenV2));
-    expect(str).toEqual(goldenV2);
+    assert.strictEqual(str, goldenV2);
   });
 });

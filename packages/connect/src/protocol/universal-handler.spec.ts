@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import {
   negotiateProtocol,
   validateUniversalHandlerOptions,
@@ -28,7 +30,7 @@ import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 describe("validateUniversalHandlerOptions()", () => {
   it("should set defaults", () => {
     const o = validateUniversalHandlerOptions({});
-    expect(o).toEqual({
+    assert.deepStrictEqual(o, {
       acceptCompression: [],
       compressMinBytes: 1024,
       readMaxBytes: 0xffffffff,
@@ -66,7 +68,7 @@ describe("validateUniversalHandlerOptions()", () => {
       interceptors: [],
     };
     const o = validateUniversalHandlerOptions(i);
-    expect(o).toEqual(i);
+    assert.deepStrictEqual(o, i);
   });
 });
 
@@ -107,25 +109,26 @@ describe("negotiateProtocol()", () => {
   }
 
   it("should require at least one handler", () => {
-    expect(() => negotiateProtocol([])).toThrowError(
-      "[internal] at least one protocol is required",
-    );
+    assert.throws(() => negotiateProtocol([]), {
+      message: "[internal] at least one protocol is required",
+    });
   });
 
   it("should require all handlers to be for the same RPC", () => {
     const foo = stubHandler({ method: testService.method.foo });
     const bar = stubHandler({ method: testService.method.bar });
-    expect(() => negotiateProtocol([foo, bar])).toThrowError(
-      "[internal] cannot negotiate protocol for different RPCs",
-    );
+    assert.throws(() => negotiateProtocol([foo, bar]), {
+      message: "[internal] cannot negotiate protocol for different RPCs",
+    });
   });
 
   it("should require all handlers to have the same request path", () => {
     const a = stubHandler({ requestPath: `/a` });
     const b = stubHandler({ requestPath: `/b` });
-    expect(() => negotiateProtocol([a, b])).toThrowError(
-      "[internal] cannot negotiate protocol for different requestPaths",
-    );
+    assert.throws(() => negotiateProtocol([a, b]), {
+      message:
+        "[internal] cannot negotiate protocol for different requestPaths",
+    });
   });
 
   it("should merge protocolNames", () => {
@@ -133,7 +136,7 @@ describe("negotiateProtocol()", () => {
       stubHandler({ protocolNames: ["x"] }),
       stubHandler({ protocolNames: ["y", "z"] }),
     ]);
-    expect(h.protocolNames).toEqual(["x", "y", "z"]);
+    assert.deepStrictEqual(h.protocolNames, ["x", "y", "z"]);
   });
 
   it("should merge allowedMethods", () => {
@@ -141,7 +144,7 @@ describe("negotiateProtocol()", () => {
       stubHandler({ allowedMethods: ["POST", "PUT"] }),
       stubHandler({ allowedMethods: ["POST", "GET"] }),
     ]);
-    expect(h.allowedMethods).toEqual(["POST", "PUT", "GET"]);
+    assert.deepStrictEqual(h.allowedMethods, ["POST", "PUT", "GET"]);
   });
 
   describe("negotiating handler", () => {
@@ -155,7 +158,7 @@ describe("negotiateProtocol()", () => {
         body: null,
         signal: new AbortController().signal,
       });
-      expect(r.status).toBe(415);
+      assert.strictEqual(r.status, 415);
     });
     it("should return HTTP 405 for matching request content-type but unsupported method", async () => {
       const r = await h({
@@ -166,7 +169,7 @@ describe("negotiateProtocol()", () => {
         body: null,
         signal: new AbortController().signal,
       });
-      expect(r.status).toBe(405);
+      assert.strictEqual(r.status, 405);
     });
     it("should call implementation for matching content-type and method", async () => {
       const r = await h({
@@ -177,8 +180,8 @@ describe("negotiateProtocol()", () => {
         body: null,
         signal: new AbortController().signal,
       });
-      expect(r.status).toBe(200);
-      expect(r.header?.get("stub-handler")).toBe("1");
+      assert.strictEqual(r.status, 200);
+      assert.strictEqual(r.header?.get("stub-handler"), "1");
     });
     it("should call implementation for matching method if no content-type is set", async () => {
       const r = await h({
@@ -189,8 +192,8 @@ describe("negotiateProtocol()", () => {
         body: null,
         signal: new AbortController().signal,
       });
-      expect(r.status).toBe(200);
-      expect(r.header?.get("stub-handler")).toBe("1");
+      assert.strictEqual(r.status, 200);
+      assert.strictEqual(r.header?.get("stub-handler"), "1");
     });
 
     describe("for bidi stream", () => {
@@ -211,9 +214,9 @@ describe("negotiateProtocol()", () => {
           body: null,
           signal: new AbortController().signal,
         });
-        expect(r.status).toBe(505);
-        expect(r.header?.get("Connection")).toBe("close");
-        expect(r.body).toBeUndefined();
+        assert.strictEqual(r.status, 505);
+        assert.strictEqual(r.header?.get("Connection"), "close");
+        assert.strictEqual(r.body, undefined);
       });
       it("should require HTTP/2", async () => {
         const r = await h({
@@ -224,8 +227,8 @@ describe("negotiateProtocol()", () => {
           body: null,
           signal: new AbortController().signal,
         });
-        expect(r.status).toBe(200);
-        expect(r.header?.get("stub-handler")).toBe("1");
+        assert.strictEqual(r.status, 200);
+        assert.strictEqual(r.header?.get("stub-handler"), "1");
       });
     });
   });

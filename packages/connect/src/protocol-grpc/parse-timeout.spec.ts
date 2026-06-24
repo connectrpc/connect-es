@@ -12,52 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { ConnectError } from "../connect-error.js";
 import { parseTimeout } from "./parse-timeout.js";
 
 describe("parseTimeout()", () => {
   it("should parse proper timeout", () => {
-    expect(parseTimeout("1H", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("1H", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 3600000,
     });
-    expect(parseTimeout("1M", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("1M", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 60000,
     });
-    expect(parseTimeout("1S", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("1S", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 1000,
     });
-    expect(parseTimeout("12345678m", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("12345678m", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 12345678,
     });
-    expect(parseTimeout("1m", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("1m", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 1,
     });
-    expect(parseTimeout("1000u", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("1000u", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 1,
     });
-    expect(parseTimeout("1000000n", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("1000000n", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 1,
     });
-    expect(parseTimeout("0n", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("0n", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 0,
     });
-    expect(parseTimeout("0H", Number.MAX_SAFE_INTEGER)).toEqual({
+    assert.deepStrictEqual(parseTimeout("0H", Number.MAX_SAFE_INTEGER), {
       timeoutMs: 0,
     });
   });
   it("should should return undefined for null value", () => {
     const r = parseTimeout(null, Number.MAX_SAFE_INTEGER);
-    expect(r.timeoutMs).toBeUndefined();
-    expect(r.error).toBeUndefined();
+    assert.strictEqual(r.timeoutMs, undefined);
+    assert.strictEqual(r.error, undefined);
   });
   it("should return a ConnectError for a value exceeding maxTimeoutMs", () => {
-    expect(parseTimeout("1m", 0).error?.message).toBe(
+    assert.strictEqual(
+      parseTimeout("1m", 0).error?.message,
       "[invalid_argument] timeout 1ms must be <= 0",
     );
-    expect(parseTimeout("1024m", 1000).error?.message).toBe(
+    assert.strictEqual(
+      parseTimeout("1024m", 1000).error?.message,
       "[invalid_argument] timeout 1024ms must be <= 1000",
     );
-    expect(parseTimeout("1S", 999).error?.message).toBe(
+    assert.strictEqual(
+      parseTimeout("1S", 999).error?.message,
       "[invalid_argument] timeout 1000ms must be <= 999",
     );
   });
@@ -74,10 +79,11 @@ describe("parseTimeout()", () => {
   for (const invalidValue of invalidValues) {
     it(`should should return a ConnectError for an incorrect value "${invalidValue}"`, () => {
       const r = parseTimeout(invalidValue, Number.MAX_SAFE_INTEGER);
-      expect(r.timeoutMs).toBeUndefined();
-      expect(r.error).toBeInstanceOf(ConnectError);
+      assert.strictEqual(r.timeoutMs, undefined);
+      assert.ok(r.error instanceof ConnectError);
       if (r instanceof ConnectError) {
-        expect(r.message).toBe(
+        assert.strictEqual(
+          r.message,
           `protocol error: invalid grpc timeout value: ${invalidValue}`,
         );
       }

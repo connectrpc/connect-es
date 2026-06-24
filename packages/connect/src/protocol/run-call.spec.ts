@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { create } from "@bufbuild/protobuf";
 import { runStreamingCall, runUnaryCall } from "./run-call.js";
 import type {
@@ -83,7 +85,7 @@ describe("runUnaryCall()", () => {
         return makeRes(req);
       },
     });
-    expect(res.message.value).toBe("123");
+    assert.strictEqual(res.message.value, "123");
   });
   it("should trigger the signal when done", async () => {
     let signal: AbortSignal | undefined;
@@ -95,7 +97,7 @@ describe("runUnaryCall()", () => {
         return makeRes(req);
       },
     });
-    expect(signal?.aborted).toBeTrue();
+    assert.strictEqual(signal?.aborted, true);
   });
   it("should raise Code.Canceled on user abort", async () => {
     const userAbort = new AbortController();
@@ -113,9 +115,9 @@ describe("runUnaryCall()", () => {
       },
     });
     userAbort.abort();
-    await expectAsync(resPromise).toBeRejectedWithError(
-      "[canceled] This operation was aborted",
-    );
+    await assert.rejects(resPromise, {
+      message: "[canceled] This operation was aborted",
+    });
   });
   it("should raise Code.DeadlineExceeded on timeout", async () => {
     const resPromise = runUnaryCall<
@@ -131,9 +133,9 @@ describe("runUnaryCall()", () => {
         }
       },
     });
-    await expectAsync(resPromise).toBeRejectedWithError(
-      "[deadline_exceeded] the operation timed out",
-    );
+    await assert.rejects(resPromise, {
+      message: "[deadline_exceeded] the operation timed out",
+    });
   });
 });
 
@@ -188,13 +190,13 @@ describe("runStreamingCall()", () => {
     for await (const m of res.message) {
       values.push(m.value);
     }
-    expect(values).toEqual(["1", "2", "3"]);
+    assert.deepStrictEqual(values, ["1", "2", "3"]);
     const it = req.message[Symbol.asyncIterator]();
-    expect(await it.next()).toEqual({ done: true, value: undefined });
+    assert.deepStrictEqual(await it.next(), { done: true, value: undefined });
     // Check to see if response iterator doesn't provide throw/return.
     const resIt = res.message[Symbol.asyncIterator]();
-    expect(resIt.throw).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
-    expect(resIt.return).not.toBeDefined(); // eslint-disable-line  @typescript-eslint/unbound-method
+    assert.strictEqual(resIt.throw, undefined); // eslint-disable-line  @typescript-eslint/unbound-method
+    assert.strictEqual(resIt.return, undefined); // eslint-disable-line  @typescript-eslint/unbound-method
   });
   it("should trigger the signal when done", async () => {
     let signal: AbortSignal | undefined;
@@ -211,11 +213,11 @@ describe("runStreamingCall()", () => {
       },
     });
     for await (const m of res.message) {
-      expect(m).toBeDefined();
+      assert.notStrictEqual(m, undefined);
     }
-    expect(signal?.aborted).toBeTrue();
+    assert.strictEqual(signal?.aborted, true);
     const it = req.message[Symbol.asyncIterator]();
-    expect(await it.next()).toEqual({ done: true, value: undefined });
+    assert.deepStrictEqual(await it.next(), { done: true, value: undefined });
   });
   it("should raise Code.Canceled on user abort", async () => {
     const userAbort = new AbortController();
@@ -234,11 +236,11 @@ describe("runStreamingCall()", () => {
       },
     });
     userAbort.abort();
-    await expectAsync(resPromise).toBeRejectedWithError(
-      "[canceled] This operation was aborted",
-    );
+    await assert.rejects(resPromise, {
+      message: "[canceled] This operation was aborted",
+    });
     const it = req.message[Symbol.asyncIterator]();
-    expect(await it.next()).toEqual({ done: true, value: undefined });
+    assert.deepStrictEqual(await it.next(), { done: true, value: undefined });
   });
   it("should raise Code.DeadlineExceeded on timeout", async () => {
     const req = makeReq();
@@ -255,11 +257,11 @@ describe("runStreamingCall()", () => {
         }
       },
     });
-    await expectAsync(resPromise).toBeRejectedWithError(
-      "[deadline_exceeded] the operation timed out",
-    );
+    await assert.rejects(resPromise, {
+      message: "[deadline_exceeded] the operation timed out",
+    });
     const it = req.message[Symbol.asyncIterator]();
-    expect(await it.next()).toEqual({ done: true, value: undefined });
+    assert.deepStrictEqual(await it.next(), { done: true, value: undefined });
   });
   it("should propagate the error thrown in next", async () => {
     const req = makeReq();
@@ -268,7 +270,7 @@ describe("runStreamingCall()", () => {
       [Symbol.asyncIterator]() {
         return {
           next() {
-            fail("unexpected call");
+            assert.fail("unexpected call");
             throw new Error("unexpected call");
           },
           throw(e) {
@@ -278,14 +280,15 @@ describe("runStreamingCall()", () => {
         };
       },
     };
-    await expectAsync(
+    await assert.rejects(
       runStreamingCall<typeof Int32ValueSchema, typeof StringValueSchema>({
         req: req,
         next() {
           return Promise.reject(new Error("foo"));
         },
       }),
-    ).toBeRejectedWithError("[unknown] foo");
-    expect(reqError?.message).toEqual("[unknown] foo");
+      { message: "[unknown] foo" },
+    );
+    assert.strictEqual(reqError?.message, "[unknown] foo");
   });
 });

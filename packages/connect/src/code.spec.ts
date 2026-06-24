@@ -12,55 +12,84 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { Code } from "./code.js";
 import { codeFromString, codeToString } from "./protocol-connect/index.js";
 
 describe("codeFromString", () => {
   it("parses as expected", () => {
-    expect(codeFromString("canceled")).toBe(Code.Canceled);
-    expect(codeFromString("unknown")).toBe(Code.Unknown);
-    expect(codeFromString("invalid_argument")).toBe(Code.InvalidArgument);
-    expect(codeFromString("deadline_exceeded")).toBe(Code.DeadlineExceeded);
-    expect(codeFromString("not_found")).toBe(Code.NotFound);
-    expect(codeFromString("already_exists")).toBe(Code.AlreadyExists);
-    expect(codeFromString("permission_denied")).toBe(Code.PermissionDenied);
-    expect(codeFromString("resource_exhausted")).toBe(Code.ResourceExhausted);
-    expect(codeFromString("failed_precondition")).toBe(Code.FailedPrecondition);
-    expect(codeFromString("aborted")).toBe(Code.Aborted);
-    expect(codeFromString("out_of_range")).toBe(Code.OutOfRange);
-    expect(codeFromString("unimplemented")).toBe(Code.Unimplemented);
-    expect(codeFromString("internal")).toBe(Code.Internal);
-    expect(codeFromString("unavailable")).toBe(Code.Unavailable);
-    expect(codeFromString("data_loss")).toBe(Code.DataLoss);
-    expect(codeFromString("unauthenticated")).toBe(Code.Unauthenticated);
+    assert.strictEqual(codeFromString("canceled"), Code.Canceled);
+    assert.strictEqual(codeFromString("unknown"), Code.Unknown);
+    assert.strictEqual(
+      codeFromString("invalid_argument"),
+      Code.InvalidArgument,
+    );
+    assert.strictEqual(
+      codeFromString("deadline_exceeded"),
+      Code.DeadlineExceeded,
+    );
+    assert.strictEqual(codeFromString("not_found"), Code.NotFound);
+    assert.strictEqual(codeFromString("already_exists"), Code.AlreadyExists);
+    assert.strictEqual(
+      codeFromString("permission_denied"),
+      Code.PermissionDenied,
+    );
+    assert.strictEqual(
+      codeFromString("resource_exhausted"),
+      Code.ResourceExhausted,
+    );
+    assert.strictEqual(
+      codeFromString("failed_precondition"),
+      Code.FailedPrecondition,
+    );
+    assert.strictEqual(codeFromString("aborted"), Code.Aborted);
+    assert.strictEqual(codeFromString("out_of_range"), Code.OutOfRange);
+    assert.strictEqual(codeFromString("unimplemented"), Code.Unimplemented);
+    assert.strictEqual(codeFromString("internal"), Code.Internal);
+    assert.strictEqual(codeFromString("unavailable"), Code.Unavailable);
+    assert.strictEqual(codeFromString("data_loss"), Code.DataLoss);
+    assert.strictEqual(codeFromString("unauthenticated"), Code.Unauthenticated);
   });
   it("does not parse PermissionDenied", () => {
     const got = codeFromString("PermissionDenied");
-    expect(got).toBeUndefined();
+    assert.strictEqual(got, undefined);
   });
   it("does not parse permissiondenied", () => {
     const got = codeFromString("permissiondenied");
-    expect(got).toBeUndefined();
+    assert.strictEqual(got, undefined);
   });
 });
 
 describe("codeToString", () => {
   it("stringifies as expected", () => {
-    expect(codeToString(Code.Canceled)).toBe("canceled");
-    expect(codeToString(Code.Unknown)).toBe("unknown");
-    expect(codeToString(Code.InvalidArgument)).toBe("invalid_argument");
-    expect(codeToString(Code.DeadlineExceeded)).toBe("deadline_exceeded");
-    expect(codeToString(Code.NotFound)).toBe("not_found");
-    expect(codeToString(Code.AlreadyExists)).toBe("already_exists");
-    expect(codeToString(Code.PermissionDenied)).toBe("permission_denied");
-    expect(codeToString(Code.ResourceExhausted)).toBe("resource_exhausted");
-    expect(codeToString(Code.FailedPrecondition)).toBe("failed_precondition");
-    expect(codeToString(Code.Aborted)).toBe("aborted");
-    expect(codeToString(Code.OutOfRange)).toBe("out_of_range");
-    expect(codeToString(Code.Unimplemented)).toBe("unimplemented");
-    expect(codeToString(Code.Internal)).toBe("internal");
-    expect(codeToString(Code.Unavailable)).toBe("unavailable");
-    expect(codeToString(Code.DataLoss)).toBe("data_loss");
-    expect(codeToString(Code.Unauthenticated)).toBe("unauthenticated");
+    assert.strictEqual(codeToString(Code.Canceled), "canceled");
+    assert.strictEqual(codeToString(Code.Unknown), "unknown");
+    assert.strictEqual(codeToString(Code.InvalidArgument), "invalid_argument");
+    assert.strictEqual(
+      codeToString(Code.DeadlineExceeded),
+      "deadline_exceeded",
+    );
+    assert.strictEqual(codeToString(Code.NotFound), "not_found");
+    assert.strictEqual(codeToString(Code.AlreadyExists), "already_exists");
+    assert.strictEqual(
+      codeToString(Code.PermissionDenied),
+      "permission_denied",
+    );
+    assert.strictEqual(
+      codeToString(Code.ResourceExhausted),
+      "resource_exhausted",
+    );
+    assert.strictEqual(
+      codeToString(Code.FailedPrecondition),
+      "failed_precondition",
+    );
+    assert.strictEqual(codeToString(Code.Aborted), "aborted");
+    assert.strictEqual(codeToString(Code.OutOfRange), "out_of_range");
+    assert.strictEqual(codeToString(Code.Unimplemented), "unimplemented");
+    assert.strictEqual(codeToString(Code.Internal), "internal");
+    assert.strictEqual(codeToString(Code.Unavailable), "unavailable");
+    assert.strictEqual(codeToString(Code.DataLoss), "data_loss");
+    assert.strictEqual(codeToString(Code.Unauthenticated), "unauthenticated");
   });
 });

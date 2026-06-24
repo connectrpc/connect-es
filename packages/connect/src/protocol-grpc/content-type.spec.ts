@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import {
   parseContentType,
   contentTypeProto,
@@ -20,34 +22,44 @@ import {
 
 describe("parseContentType()", () => {
   it("should parse", () => {
-    expect(parseContentType(contentTypeProto)).toEqual({
+    assert.deepStrictEqual(parseContentType(contentTypeProto), {
       binary: true,
     });
-    expect(parseContentType(contentTypeJson)).toEqual({
+    assert.deepStrictEqual(parseContentType(contentTypeJson), {
       binary: false,
     });
-    expect(parseContentType("application/grpc")).toEqual({
+    assert.deepStrictEqual(parseContentType("application/grpc"), {
       binary: true,
     });
-    expect(parseContentType("application/GRPC")).toEqual({
+    assert.deepStrictEqual(parseContentType("application/GRPC"), {
       binary: true,
     });
-    expect(parseContentType("application/grpc+proto")).toEqual({
+    assert.deepStrictEqual(parseContentType("application/grpc+proto"), {
       binary: true,
     });
-    expect(parseContentType("application/grpc+json")).toEqual({
+    assert.deepStrictEqual(parseContentType("application/grpc+json"), {
       binary: false,
     });
-    expect(parseContentType("application/grpc+json;charset=utf8")).toEqual({
-      binary: false,
-    });
-    expect(parseContentType("application/grpc+json; charset=utf-8")).toEqual({
-      binary: false,
-    });
-    expect(parseContentType("application/octet-stream")).toBeUndefined();
-    expect(
+    assert.deepStrictEqual(
+      parseContentType("application/grpc+json;charset=utf8"),
+      {
+        binary: false,
+      },
+    );
+    assert.deepStrictEqual(
+      parseContentType("application/grpc+json; charset=utf-8"),
+      {
+        binary: false,
+      },
+    );
+    assert.strictEqual(parseContentType("application/octet-stream"), undefined);
+    assert.strictEqual(
       parseContentType("application/grpc-web+json;charset=iso-8859-1"),
-    ).toBeUndefined();
-    expect(parseContentType("application/grpc-web+thrift")).toBeUndefined();
+      undefined,
+    );
+    assert.strictEqual(
+      parseContentType("application/grpc-web+thrift"),
+      undefined,
+    );
   });
 });

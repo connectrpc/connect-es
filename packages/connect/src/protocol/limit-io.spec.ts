@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { validateReadWriteMaxBytes } from "./limit-io.js";
 
 describe("validateReadWriteMaxBytes()", () => {
   it("should set defaults", () => {
     const o = validateReadWriteMaxBytes(undefined, undefined, undefined);
-    expect(o).toEqual({
+    assert.deepStrictEqual(o, {
       readMaxBytes: 0xffffffff,
       writeMaxBytes: 0xffffffff,
       compressMinBytes: 1024,
@@ -25,32 +27,34 @@ describe("validateReadWriteMaxBytes()", () => {
   });
   it("should accept inputs", () => {
     const o = validateReadWriteMaxBytes(666, 777, 888);
-    expect(o).toEqual({
+    assert.deepStrictEqual(o, {
       readMaxBytes: 666,
       writeMaxBytes: 777,
       compressMinBytes: 888,
     });
   });
   it("should assert sane limits for readMaxBytes", () => {
-    expect(() =>
-      validateReadWriteMaxBytes(-1, undefined, undefined),
-    ).toThrowError("[internal] readMaxBytes -1 must be >= 1 and <= 4294967295");
-    expect(() =>
-      validateReadWriteMaxBytes(0xffffffff + 1, undefined, undefined),
-    ).toThrowError(
-      "[internal] readMaxBytes 4294967296 must be >= 1 and <= 4294967295",
+    assert.throws(() => validateReadWriteMaxBytes(-1, undefined, undefined), {
+      message: "[internal] readMaxBytes -1 must be >= 1 and <= 4294967295",
+    });
+    assert.throws(
+      () => validateReadWriteMaxBytes(0xffffffff + 1, undefined, undefined),
+      {
+        message:
+          "[internal] readMaxBytes 4294967296 must be >= 1 and <= 4294967295",
+      },
     );
   });
   it("should assert sane limits for writeMaxBytes", () => {
-    expect(() =>
-      validateReadWriteMaxBytes(undefined, -1, undefined),
-    ).toThrowError(
-      "[internal] writeMaxBytes -1 must be >= 1 and <= 4294967295",
-    );
-    expect(() =>
-      validateReadWriteMaxBytes(undefined, 0xffffffff + 1, undefined),
-    ).toThrowError(
-      "[internal] writeMaxBytes 4294967296 must be >= 1 and <= 4294967295",
+    assert.throws(() => validateReadWriteMaxBytes(undefined, -1, undefined), {
+      message: "[internal] writeMaxBytes -1 must be >= 1 and <= 4294967295",
+    });
+    assert.throws(
+      () => validateReadWriteMaxBytes(undefined, 0xffffffff + 1, undefined),
+      {
+        message:
+          "[internal] writeMaxBytes 4294967296 must be >= 1 and <= 4294967295",
+      },
     );
   });
 });

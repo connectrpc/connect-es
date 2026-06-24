@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { create, isMessage, toBinary } from "@bufbuild/protobuf";
 import type {
   UniversalClientFn,
@@ -120,41 +122,43 @@ describe("Connect transport", () => {
       };
       it("should cancel the HTTP request and not parse the body", async () => {
         const t = getUnaryTransport({ contentType: contentTypeUnaryProto });
-        try {
-          await t.unary(
+        await assert.rejects(
+          t.unary(
             TestService.method.unary,
             undefined,
             undefined,
             undefined,
             {},
-          );
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          // Body should not be parsed because the Content-Type response header is not application/json
-          expect(ConnectError.from(e).code).toBe(Code.Unavailable);
-          expect(ConnectError.from(e).message).toBe("[unavailable] HTTP 429");
-        }
-        expect(httpRequestAborted).toBeTrue();
+          ),
+          (e) => {
+            assert.ok(e instanceof ConnectError);
+            // Body should not be parsed because the Content-Type response header is not application/json
+            assert.strictEqual(e.code, Code.Unavailable);
+            assert.strictEqual(e.message, "[unavailable] HTTP 429");
+            return true;
+          },
+        );
+        assert.ok(httpRequestAborted);
       });
       it("should cancel the HTTP request and parse the body", async () => {
         const t = getUnaryTransport({ contentType: contentTypeUnaryJson });
-        try {
-          await t.unary(
+        await assert.rejects(
+          t.unary(
             TestService.method.unary,
             undefined,
             undefined,
             undefined,
             {},
-          );
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          // Body should be parsed because the Content-Type response header is application/json
-          expect(ConnectError.from(e).code).toBe(Code.ResourceExhausted);
-          expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
-        }
-        expect(httpRequestAborted).toBeTrue();
+          ),
+          (e) => {
+            assert.ok(e instanceof ConnectError);
+            // Body should be parsed because the Content-Type response header is application/json
+            assert.strictEqual(e.code, Code.ResourceExhausted);
+            assert.strictEqual(e.message, "[resource_exhausted] foo");
+            return true;
+          },
+        );
+        assert.ok(httpRequestAborted);
       });
     });
     describe("for server-streaming", () => {
@@ -201,17 +205,20 @@ describe("Connect transport", () => {
           createAsyncIterable([]),
         );
         const messagesReceived: StringValue[] = [];
-        try {
-          for await (const m of res.message) {
-            messagesReceived.push(m);
-          }
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe("[resource_exhausted] foo");
-        }
-        expect(messagesReceived.length).toBe(1);
-        expect(httpRequestAborted).toBeTrue();
+        await assert.rejects(
+          (async () => {
+            for await (const m of res.message) {
+              messagesReceived.push(m);
+            }
+          })(),
+          (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(e.message, "[resource_exhausted] foo");
+            return true;
+          },
+        );
+        assert.strictEqual(messagesReceived.length, 1);
+        assert.ok(httpRequestAborted);
       });
     });
   });
@@ -232,25 +239,26 @@ describe("Connect transport", () => {
     };
     // eslint-disable-next-line @typescript-eslint/require-await
     const expectGet: UniversalClientFn = async (request) => {
-      expect(request.method).toBe("GET");
-      expect(request.url).toBe(
+      assert.strictEqual(request.method, "GET");
+      assert.strictEqual(
+        request.url,
         "http://example.com/TestService/UnaryNoSideEffects?connect=v1&base64=1&encoding=proto&message=CHs",
       );
       // no headers
       const headerFields: string[] = [];
       request.header.forEach((_, key) => headerFields.push(key));
-      expect(headerFields).toEqual(["user-agent"]);
+      assert.deepStrictEqual(headerFields, ["user-agent"]);
       // no body
-      expect(request.body).toBeUndefined();
+      assert.strictEqual(request.body, undefined);
       return httpClientResponse;
     };
     const expectPost: UniversalClientFn = async (request) => {
-      expect(request.method).toBe("POST");
-      expect(new URL(request.url).search).toBe("");
-      expect(request.body).toBeDefined();
+      assert.strictEqual(request.method, "POST");
+      assert.strictEqual(new URL(request.url).search, "");
+      assert.notStrictEqual(request.body, undefined);
       if (request.body !== undefined) {
         const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
-        expect(body.byteLength).toBeGreaterThan(0);
+        assert.ok(body.byteLength > 0);
       }
       return httpClientResponse;
     };
@@ -292,8 +300,9 @@ describe("Connect transport", () => {
         };
         // eslint-disable-next-line @typescript-eslint/require-await
         const expectGetWithCompression: UniversalClientFn = async (request) => {
-          expect(request.method).toBe("GET");
-          expect(request.url).toBe(
+          assert.strictEqual(request.method, "GET");
+          assert.strictEqual(
+            request.url,
             "http://example.com/TestService/UnaryNoSideEffects?connect=v1&base64=1&compression=gzip&encoding=proto&message=CHs",
           );
           return httpClientResponse;
@@ -374,7 +383,10 @@ describe("Connect transport", () => {
         undefined,
         {},
       );
-      expect(isMessage(res.message, OldService.method.unary.output)).toBeTrue();
+      assert.strictEqual(
+        isMessage(res.message, OldService.method.unary.output),
+        true,
+      );
     });
     it("should reject unknown field if explicitly asked for", async () => {
       const t = createTransport({
@@ -383,21 +395,17 @@ describe("Connect transport", () => {
         useBinaryFormat: false,
         jsonOptions: { ignoreUnknownFields: false },
       });
-      try {
-        await t.unary(
-          OldService.method.unary,
-          undefined,
-          undefined,
-          undefined,
-          {},
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          '[invalid_argument] cannot decode message google.protobuf.Api from JSON: key "responseStreaming" is unknown',
-        );
-      }
+      await assert.rejects(
+        t.unary(OldService.method.unary, undefined, undefined, undefined, {}),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
+            '[invalid_argument] cannot decode message google.protobuf.Api from JSON: key "responseStreaming" is unknown',
+          );
+          return true;
+        },
+      );
     });
   });
 
@@ -428,7 +436,7 @@ describe("Connect transport", () => {
         undefined,
         {},
       );
-      expect(res.header.getSetCookie()).toEqual([
+      assert.deepStrictEqual(res.header.getSetCookie(), [
         "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
         "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
       ]);

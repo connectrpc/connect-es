@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { findTrailerError, setTrailerStatus } from "./trailer-status.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
@@ -24,8 +26,8 @@ describe("setTrailerStatus()", () => {
     let count = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
-    expect(count).toBe(1);
-    expect(t.get("grpc-status")).toBe("0");
+    assert.strictEqual(count, 1);
+    assert.strictEqual(t.get("grpc-status"), "0");
   });
   it("should keep existing fields", () => {
     const t = new Headers({
@@ -35,9 +37,9 @@ describe("setTrailerStatus()", () => {
     let count = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
-    expect(count).toBe(2);
-    expect(t.get("grpc-status")).toBe("0");
-    expect(t.get("foo")).toBe("bar");
+    assert.strictEqual(count, 2);
+    assert.strictEqual(t.get("grpc-status"), "0");
+    assert.strictEqual(t.get("foo"), "bar");
   });
   it("should set only grpc-status and grpc-message when called with an error", () => {
     const t = new Headers();
@@ -45,9 +47,9 @@ describe("setTrailerStatus()", () => {
     let count = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
-    expect(count).toBe(2);
-    expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
-    expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
+    assert.strictEqual(count, 2);
+    assert.strictEqual(t.get("grpc-status"), "8"); // resource_exhausted
+    assert.strictEqual(t.get("grpc-message"), "soir%C3%A9e%20%F0%9F%8E%89");
   });
   it("should set all related fields when called with an error with details", () => {
     const t = new Headers();
@@ -60,10 +62,11 @@ describe("setTrailerStatus()", () => {
     let count = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
-    expect(count).toBe(3);
-    expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
-    expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
-    expect(t.get("grpc-status-details-bin")).toBe(
+    assert.strictEqual(count, 3);
+    assert.strictEqual(t.get("grpc-status"), "8"); // resource_exhausted
+    assert.strictEqual(t.get("grpc-message"), "soir%C3%A9e%20%F0%9F%8E%89");
+    assert.strictEqual(
+      t.get("grpc-status-details-bin"),
       "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew",
     );
   });
@@ -76,10 +79,10 @@ describe("setTrailerStatus()", () => {
     let count = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
-    expect(count).toBe(3);
-    expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
-    expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
-    expect(t.get("foo")).toBe("bar");
+    assert.strictEqual(count, 3);
+    assert.strictEqual(t.get("grpc-status"), "8"); // resource_exhausted
+    assert.strictEqual(t.get("grpc-message"), "soir%C3%A9e%20%F0%9F%8E%89");
+    assert.strictEqual(t.get("foo"), "bar");
   });
   it("should overwrite error metadata that uses reserved protocol headers", () => {
     const t = new Headers();
@@ -94,43 +97,43 @@ describe("setTrailerStatus()", () => {
     let count = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
-    expect(count).toBe(3);
-    expect(t.get("grpc-status")).toBe("8"); // resource_exhausted
-    expect(t.get("grpc-message")).toBe("soir%C3%A9e%20%F0%9F%8E%89");
-    expect(t.get("foo")).toBe("bar");
+    assert.strictEqual(count, 3);
+    assert.strictEqual(t.get("grpc-status"), "8"); // resource_exhausted
+    assert.strictEqual(t.get("grpc-message"), "soir%C3%A9e%20%F0%9F%8E%89");
+    assert.strictEqual(t.get("foo"), "bar");
   });
 });
 
 describe("findTrailerError()", () => {
   it("should not find an error on empty trailer", () => {
     const t = new Headers();
-    expect(findTrailerError(t)).toBeUndefined();
+    assert.strictEqual(findTrailerError(t), undefined);
   });
   it("should not find an error for grpc-status 0", () => {
     const t = new Headers({
       "grpc-status": "0",
     });
-    expect(findTrailerError(t)).toBeUndefined();
+    assert.strictEqual(findTrailerError(t), undefined);
   });
   it("should not find an error for grpc-status 0", () => {
     const t = new Headers({
       "grpc-status": "0",
     });
-    expect(findTrailerError(t)).toBeUndefined();
+    assert.strictEqual(findTrailerError(t), undefined);
   });
   it("should find an error for the grpc-status field", () => {
     const t = new Headers({
       "grpc-status": "8", // resource_exhausted
     });
-    expect(findTrailerError(t)?.code).toBe(Code.ResourceExhausted);
+    assert.strictEqual(findTrailerError(t)?.code, Code.ResourceExhausted);
   });
   it("should use the grpc-message field", () => {
     const t = new Headers({
       "grpc-status": "8", // resource_exhausted
       "grpc-message": "soir%C3%A9e%20%F0%9F%8E%89",
     });
-    expect(findTrailerError(t)?.code).toBe(Code.ResourceExhausted);
-    expect(findTrailerError(t)?.rawMessage).toBe("soirée 🎉");
+    assert.strictEqual(findTrailerError(t)?.code, Code.ResourceExhausted);
+    assert.strictEqual(findTrailerError(t)?.rawMessage, "soirée 🎉");
   });
   it("should prefer the grpc-status-details-bin field", () => {
     const t = new Headers({
@@ -138,6 +141,6 @@ describe("findTrailerError()", () => {
       "grpc-status-details-bin":
         "CAgSDHNvaXLDqWUg8J+OiRo0Ci50eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5wcm90b2J1Zi5JbnQzMlZhbHVlEgIIew==",
     });
-    expect(findTrailerError(t)?.code).toBe(Code.ResourceExhausted);
+    assert.strictEqual(findTrailerError(t)?.code, Code.ResourceExhausted);
   });
 });

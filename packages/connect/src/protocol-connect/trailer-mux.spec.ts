@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach } from "node:test";
+import * as assert from "node:assert";
 import { trailerMux, trailerDemux } from "./trailer-mux.js";
 
 function listHeaderKeys(header: Headers): string[] {
@@ -37,15 +39,18 @@ describe("trailer-mux", () => {
   describe("muxing()", () => {
     it("should return an empty headers object when headers and trailers are empty", () => {
       const muxed = trailerMux(new Headers(), new Headers());
-      expect(listHeaderKeys(muxed)).toEqual([]);
+      assert.deepStrictEqual(listHeaderKeys(muxed), []);
     });
 
     it("should correctly mux headers and trailers", () => {
       const muxed = trailerMux(headers, trailers);
 
-      expect(listHeaderKeys(muxed)).toEqual(["content-type", "trailer-buf"]);
-      expect(muxed.get("Content-Type")).toBe("application/connect+json");
-      expect(muxed.get("Trailer-Buf")).toBe("buf.build");
+      assert.deepStrictEqual(listHeaderKeys(muxed), [
+        "content-type",
+        "trailer-buf",
+      ]);
+      assert.strictEqual(muxed.get("Content-Type"), "application/connect+json");
+      assert.strictEqual(muxed.get("Trailer-Buf"), "buf.build");
     });
   });
 
@@ -53,27 +58,33 @@ describe("trailer-mux", () => {
     it("should return two empty header objects when the muxed object is empty", () => {
       const [gotHeader, gotTrailer] = trailerDemux(new Headers());
 
-      expect(listHeaderKeys(gotHeader)).toEqual([]);
-      expect(listHeaderKeys(gotTrailer)).toEqual([]);
+      assert.deepStrictEqual(listHeaderKeys(gotHeader), []);
+      assert.deepStrictEqual(listHeaderKeys(gotTrailer), []);
     });
 
     it("should correctly demux headers and trailers", () => {
       const [gotHeader, gotTrailer] = trailerDemux(combined);
 
-      expect(listHeaderKeys(gotHeader)).toEqual(["content-type"]);
-      expect(gotHeader.get("Content-Type")).toBe("application/connect+json");
+      assert.deepStrictEqual(listHeaderKeys(gotHeader), ["content-type"]);
+      assert.strictEqual(
+        gotHeader.get("Content-Type"),
+        "application/connect+json",
+      );
 
-      expect(listHeaderKeys(gotTrailer)).toEqual(["buf"]);
-      expect(gotTrailer.get("Buf")).toBe("buf.build");
+      assert.deepStrictEqual(listHeaderKeys(gotTrailer), ["buf"]);
+      assert.strictEqual(gotTrailer.get("Buf"), "buf.build");
     });
 
     it("should return an empty trailers object if there are no trailers", () => {
       const [gotHeader, gotTrailer] = trailerDemux(headers);
 
-      expect(listHeaderKeys(gotHeader)).toEqual(["content-type"]);
-      expect(gotHeader.get("Content-Type")).toBe("application/connect+json");
+      assert.deepStrictEqual(listHeaderKeys(gotHeader), ["content-type"]);
+      assert.strictEqual(
+        gotHeader.get("Content-Type"),
+        "application/connect+json",
+      );
 
-      expect(listHeaderKeys(gotTrailer)).toEqual([]);
+      assert.deepStrictEqual(listHeaderKeys(gotTrailer), []);
     });
   });
 });

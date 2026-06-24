@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { createConnectRouter } from "./router.js";
 import { createServiceDesc } from "./descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
@@ -49,9 +51,9 @@ describe("createConnectRouter", () => {
       return { value: `${request.value}-RESPONSE` };
     });
 
-    expect(router.handlers).toHaveSize(1);
-    expect(router.handlers[0].method).toEqual(methodDefinition);
-    expect(router.handlers[0].service).toEqual(testService);
+    assert.strictEqual(router.handlers.length, 1);
+    assert.deepStrictEqual(router.handlers[0].method, methodDefinition);
+    assert.deepStrictEqual(router.handlers[0].service, testService);
   });
 
   it("supports chaining after destructuring", () => {
@@ -64,10 +66,13 @@ describe("createConnectRouter", () => {
       yield { value: `${request.value}-RESPONSE` };
     });
 
-    expect(router.handlers).toHaveSize(2);
-    expect(router.handlers[0].method).toEqual(testService.method.unary);
-    expect(router.handlers[0].service).toEqual(testService);
-    expect(router.handlers[1].method).toEqual(testService.method.server);
-    expect(router.handlers[1].service).toEqual(testService);
+    assert.strictEqual(router.handlers.length, 2);
+    assert.deepStrictEqual(router.handlers[0].method, testService.method.unary);
+    assert.deepStrictEqual(router.handlers[0].service, testService);
+    assert.deepStrictEqual(
+      router.handlers[1].method,
+      testService.method.server,
+    );
+    assert.deepStrictEqual(router.handlers[1].service, testService);
   });
 });

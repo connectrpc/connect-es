@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { create, isMessage } from "@bufbuild/protobuf";
 import {
   createBiDiStreamingFn,
@@ -77,7 +79,7 @@ describe("createUnaryFn()", () => {
             (next) => {
               return (req) => {
                 interceptorCalled = true;
-                expect(req.contextValues.get(kString)).toBe("bar");
+                assert.strictEqual(req.contextValues.get(kString), "bar");
                 return next(req);
               };
             },
@@ -89,9 +91,9 @@ describe("createUnaryFn()", () => {
     const res = await fn(input, {
       contextValues: createContextValues().set(kString, "bar"),
     });
-    expect(isMessage(res, StringValueSchema));
-    expect(res.value).toEqual(output.value);
-    expect(interceptorCalled).toBe(true);
+    assert.ok(isMessage(res, StringValueSchema));
+    assert.strictEqual(res.value, output.value);
+    assert.ok(interceptorCalled);
   });
 });
 
@@ -118,8 +120,8 @@ describe("createClientStreamingFn()", () => {
         yield input;
       })(),
     );
-    expect(isMessage(res, StringValueSchema));
-    expect(res.value).toEqual(output.value);
+    assert.ok(isMessage(res, StringValueSchema));
+    assert.strictEqual(res.value, output.value);
   });
   it("passes the context values to interceptors", async () => {
     const input = create(Int32ValueSchema, { value: 1 });
@@ -143,7 +145,7 @@ describe("createClientStreamingFn()", () => {
             (next) => {
               return (req) => {
                 interceptorCalled = true;
-                expect(req.contextValues.get(kString)).toBe("bar");
+                assert.strictEqual(req.contextValues.get(kString), "bar");
                 return next(req);
               };
             },
@@ -163,9 +165,9 @@ describe("createClientStreamingFn()", () => {
         contextValues: createContextValues().set(kString, "bar"),
       },
     );
-    expect(isMessage(res, StringValueSchema));
-    expect(res.value).toEqual(output.value);
-    expect(interceptorCalled).toBe(true);
+    assert.ok(isMessage(res, StringValueSchema));
+    assert.strictEqual(res.value, output.value);
+    assert.ok(interceptorCalled);
   });
   it("closes the request iterable when response is received", async () => {
     const output = create(StringValueSchema, { value: "yield 1" });
@@ -173,7 +175,7 @@ describe("createClientStreamingFn()", () => {
       service(TestService, {
         clientStream: async (input: AsyncIterable<Int32Value>) => {
           for await (const next of input) {
-            expect(next.value).toBe(1);
+            assert.strictEqual(next.value, 1);
             return output;
           }
           throw new ConnectError(
@@ -192,22 +194,22 @@ describe("createClientStreamingFn()", () => {
       (async function* () {
         try {
           yield { value: 1 };
-          fail("expected early return");
+          assert.fail("expected early return");
         } finally {
           reqItrClosed = true;
         }
       })(),
     );
-    expect(isMessage(res, StringValueSchema));
-    expect(res.value).toEqual(output.value);
-    expect(reqItrClosed).toBe(true);
+    assert.ok(isMessage(res, StringValueSchema));
+    assert.strictEqual(res.value, output.value);
+    assert.ok(reqItrClosed);
   });
   it("closes the request iterable when response is received", async () => {
     const transport = createRouterTransport(({ service }) => {
       service(TestService, {
         clientStream: async (input: AsyncIterable<Int32Value>) => {
           for await (const next of input) {
-            expect(next.value).toBe(1);
+            assert.strictEqual(next.value, 1);
             throw new ConnectError("foo", Code.Internal);
           }
           throw new ConnectError(
@@ -226,16 +228,18 @@ describe("createClientStreamingFn()", () => {
       (async function* () {
         try {
           yield { value: 1 };
-          fail("expected early return");
+          assert.fail("expected early return");
         } finally {
           reqItrClosed = true;
         }
       })(),
     );
-    await expectAsync(res).toBeRejectedWith(
-      new ConnectError("foo", Code.Internal),
-    );
-    expect(reqItrClosed).toBe(true);
+    await assert.rejects(res, {
+      code: Code.Internal,
+      rawMessage: "foo",
+      isWireError: true,
+    });
+    assert.ok(reqItrClosed);
   });
 });
 
@@ -263,7 +267,7 @@ describe("createServerStreamingFn()", () => {
     for await (const res of fn(input)) {
       receivedMessages.push(res);
     }
-    expect(receivedMessages).toEqual(output);
+    assert.deepStrictEqual(receivedMessages, output);
   });
   it("passes the context values to interceptors", async () => {
     const output = [
@@ -285,7 +289,7 @@ describe("createServerStreamingFn()", () => {
             (next) => {
               return (req) => {
                 interceptorCalled = true;
-                expect(req.contextValues.get(kString)).toBe("bar");
+                assert.strictEqual(req.contextValues.get(kString), "bar");
                 return next(req);
               };
             },
@@ -305,8 +309,8 @@ describe("createServerStreamingFn()", () => {
     })) {
       receivedMessages.push(res);
     }
-    expect(receivedMessages).toEqual(output);
-    expect(interceptorCalled).toBeTrue();
+    assert.deepStrictEqual(receivedMessages, output);
+    assert.ok(interceptorCalled);
   });
   it("doesn't support throw/return on the returned response", () => {
     const fn = createServerStreamingFn(
@@ -318,8 +322,8 @@ describe("createServerStreamingFn()", () => {
       TestService.method.serverStream,
     );
     const it = fn({})[Symbol.asyncIterator]();
-    expect(it.throw).not.toBeDefined();
-    expect(it.return).not.toBeDefined();
+    assert.strictEqual(it.throw, undefined);
+    assert.strictEqual(it.return, undefined);
   });
 });
 
@@ -336,7 +340,7 @@ describe("createBiDiStreamingFn()", () => {
       service(TestService, {
         bidiStream: async function* (input: AsyncIterable<Int32Value>) {
           for await (const thing of input) {
-            expect(thing.value).toBe(values[bidiIndex]);
+            assert.strictEqual(thing.value, values[bidiIndex]);
             bidiIndex += 1;
             yield create(StringValueSchema, { value: thing.value.toString() });
           }
@@ -347,13 +351,14 @@ describe("createBiDiStreamingFn()", () => {
 
     let index = 0;
     for await (const res of fn(input)) {
-      expect(res).toEqual(
+      assert.deepStrictEqual(
+        res,
         create(StringValueSchema, { value: values[index].toString() }),
       );
       index += 1;
     }
-    expect(index).toBe(3);
-    expect(bidiIndex).toBe(3);
+    assert.strictEqual(index, 3);
+    assert.strictEqual(bidiIndex, 3);
   });
   it("passes the context values to interceptors", async () => {
     const values = [123, 456, 789];
@@ -368,7 +373,7 @@ describe("createBiDiStreamingFn()", () => {
         service(TestService, {
           bidiStream: async function* (input: AsyncIterable<Int32Value>) {
             for await (const thing of input) {
-              expect(thing.value).toBe(values[bidiIndex]);
+              assert.strictEqual(thing.value, values[bidiIndex]);
               bidiIndex += 1;
               yield create(StringValueSchema, {
                 value: thing.value.toString(),
@@ -383,7 +388,7 @@ describe("createBiDiStreamingFn()", () => {
             (next) => {
               return (req) => {
                 interceptorCalled = true;
-                expect(req.contextValues.get(kString)).toBe("bar");
+                assert.strictEqual(req.contextValues.get(kString), "bar");
                 return next(req);
               };
             },
@@ -397,14 +402,15 @@ describe("createBiDiStreamingFn()", () => {
     for await (const res of fn(input, {
       contextValues: createContextValues().set(kString, "bar"),
     })) {
-      expect(res).toEqual(
+      assert.deepStrictEqual(
+        res,
         create(StringValueSchema, { value: values[index].toString() }),
       );
       index += 1;
     }
-    expect(index).toBe(3);
-    expect(bidiIndex).toBe(3);
-    expect(interceptorCalled).toBeTrue();
+    assert.strictEqual(index, 3);
+    assert.strictEqual(bidiIndex, 3);
+    assert.ok(interceptorCalled);
   });
   it("closes the request iterable when response is received", async () => {
     const values = [123, 456, 789];
@@ -426,11 +432,14 @@ describe("createBiDiStreamingFn()", () => {
 
     let count = 0;
     for await (const res of fn(input)) {
-      expect(res).toEqual(create(StringValueSchema, { value: "yield 123" }));
+      assert.deepStrictEqual(
+        res,
+        create(StringValueSchema, { value: "yield 123" }),
+      );
       count += 1;
     }
-    expect(count).toBe(1);
-    expect(await input[Symbol.asyncIterator]().next()).toEqual({
+    assert.strictEqual(count, 1);
+    assert.deepStrictEqual(await input[Symbol.asyncIterator]().next(), {
       done: true,
       value: undefined,
     });
@@ -456,16 +465,19 @@ describe("createBiDiStreamingFn()", () => {
     let count = 0;
     try {
       for await (const res of fn(input)) {
-        expect(res).toEqual(create(StringValueSchema, { value: "yield 123" }));
+        assert.deepStrictEqual(
+          res,
+          create(StringValueSchema, { value: "yield 123" }),
+        );
         count += 1;
       }
     } catch (e) {
-      expect(e).toBeInstanceOf(ConnectError);
-      expect((e as ConnectError).code).toBe(Code.Internal);
-      expect((e as ConnectError).rawMessage).toBe("foo");
+      assert.ok(e instanceof ConnectError);
+      assert.strictEqual((e as ConnectError).code, Code.Internal);
+      assert.strictEqual((e as ConnectError).rawMessage, "foo");
     }
-    expect(count).toBe(1);
-    expect(await input[Symbol.asyncIterator]().next()).toEqual({
+    assert.strictEqual(count, 1);
+    assert.deepStrictEqual(await input[Symbol.asyncIterator]().next(), {
       done: true,
       value: undefined,
     });
@@ -480,7 +492,7 @@ describe("createBiDiStreamingFn()", () => {
       TestService.method.bidiStream,
     );
     const it = fn(createAsyncIterable([]))[Symbol.asyncIterator]();
-    expect(it.throw).not.toBeDefined();
-    expect(it.return).not.toBeDefined();
+    assert.strictEqual(it.throw, undefined);
+    assert.strictEqual(it.return, undefined);
   });
 });

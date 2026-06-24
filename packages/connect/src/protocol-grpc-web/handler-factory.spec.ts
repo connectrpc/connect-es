@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { create, toBinary, type DescMethod } from "@bufbuild/protobuf";
 import type { MethodImpl } from "../implementation.js";
 import { createMethodImplSpec } from "../implementation.js";
@@ -90,8 +92,8 @@ describe("createHandlerFactory()", () => {
         undefined,
         create(Int32ValueSchema, { value: 123 }),
       );
-      expect(r.header.get("implementation-called")).toBe("yes");
-      expect(r.message.value).toBe("123");
+      assert.strictEqual(r.header.get("implementation-called"), "yes");
+      assert.strictEqual(r.message.value, "123");
     });
 
     it("should surface headers for server-streaming", async () => {
@@ -111,10 +113,10 @@ describe("createHandlerFactory()", () => {
         undefined,
         createAsyncIterable([create(Int32ValueSchema, { value: 123 })]),
       );
-      expect(r.header.get("implementation-called")).toBe("yes");
+      assert.strictEqual(r.header.get("implementation-called"), "yes");
       const all = await pipeTo(r.message, sinkAll());
-      expect(all.length).toBe(1);
-      expect(all[0].value).toBe("123");
+      assert.strictEqual(all.length, 1);
+      assert.strictEqual(all[0].value, "123");
     });
     it("should propagate errors back to the handler", async () => {
       let resolve: (e: unknown) => void;
@@ -133,7 +135,7 @@ describe("createHandlerFactory()", () => {
           signal.addEventListener("abort", abortResolve);
           try {
             yield { value: `${req.value}` };
-            fail("expected error");
+            assert.fail("expected error");
           } catch (e: unknown) {
             resolve?.(e);
           }
@@ -155,13 +157,13 @@ describe("createHandlerFactory()", () => {
         ]),
         signal: new AbortController().signal,
       });
-      expect(res.body).toBeDefined();
+      assert.notStrictEqual(res.body, undefined);
       const it = res.body?.[Symbol.asyncIterator]();
       await it?.next();
       const writeError = new Error("write error");
       await it?.throw?.(writeError).catch(() => {});
-      await expectAsync(catchError).toBeResolvedTo(writeError);
-      await expectAsync(abortCalled).toBeResolved();
+      assert.deepStrictEqual(await catchError, writeError);
+      await abortCalled;
     });
   });
 
@@ -188,10 +190,11 @@ describe("createHandlerFactory()", () => {
         body: createAsyncIterable([encodeEnvelope(0, new Uint8Array(0))]),
         signal: new AbortController().signal,
       });
-      expect(handlerContextSignal).toBeDefined();
-      expect(handlerContextSignal?.aborted).toBeTrue();
-      expect(handlerContextSignal?.reason).toBeInstanceOf(ConnectError);
-      expect(ConnectError.from(handlerContextSignal?.reason).message).toBe(
+      assert.notStrictEqual(handlerContextSignal, undefined);
+      assert.strictEqual(handlerContextSignal?.aborted, true);
+      assert.ok(handlerContextSignal?.reason instanceof ConnectError);
+      assert.strictEqual(
+        ConnectError.from(handlerContextSignal?.reason).message,
         "[deadline_exceeded] the operation timed out",
       );
     });
@@ -210,24 +213,28 @@ describe("createHandlerFactory()", () => {
             return Promise.resolve(create(StringValueSchema));
           },
         );
-        try {
-          await transport.unary(
+        await assert.rejects(
+          transport.unary(
             method,
             undefined,
             timeoutMs,
             undefined,
             create(Int32ValueSchema),
-          );
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[invalid_argument] timeout 2000ms must be <= 1000",
-          );
-        }
-        expect(implementationCalled)
-          .withContext("did not expect implementation to be called")
-          .toBeFalse();
+          ),
+          (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[invalid_argument] timeout 2000ms must be <= 1000",
+            );
+            return true;
+          },
+        );
+        assert.strictEqual(
+          implementationCalled,
+          false,
+          "did not expect implementation to be called",
+        );
       });
     });
   });
@@ -242,26 +249,25 @@ describe("createHandlerFactory()", () => {
         },
         async (_req, ctx) => {
           shutdown.abort(new ConnectError("shutting down", Code.Unavailable));
-          expect(ctx.signal.aborted).toBeTrue();
+          assert.ok(ctx.signal.aborted);
           ctx.signal.throwIfAborted();
           return Promise.resolve(create(StringValueSchema));
         },
       );
-      try {
-        await transport.unary(
+      await assert.rejects(
+        transport.unary(
           method,
           undefined,
           undefined,
           undefined,
           create(Int32ValueSchema),
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          "[unavailable] shutting down",
-        );
-      }
+        ),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(e.message, "[unavailable] shutting down");
+          return true;
+        },
+      );
     });
   });
 
@@ -290,9 +296,9 @@ describe("createHandlerFactory()", () => {
       });
       ac.abort("test-reason");
       await resPromise;
-      expect(handlerContextSignal).toBeDefined();
-      expect(handlerContextSignal?.aborted).toBeTrue();
-      expect(handlerContextSignal?.reason).toBe("test-reason");
+      assert.notStrictEqual(handlerContextSignal, undefined);
+      assert.strictEqual(handlerContextSignal?.aborted, true);
+      assert.strictEqual(handlerContextSignal?.reason, "test-reason");
     });
   });
 });
