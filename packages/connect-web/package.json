@@ -21,9 +21,6 @@
     "conformance:node:promise": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node",
     "conformance:node:callback": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node --useCallbackClient",
     "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
-    "generate": "buf generate --template browserstack/buf.gen.yaml",
-    "postgenerate": "license-header browserstack/gen",
-    "test-browserstack": "wdio run ./browserstack/wdio.browserstack.conf.js",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings",
@@ -39,14 +36,7 @@
     }
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.66.1",
-    "@bufbuild/protoc-gen-es": "^2.10.0",
     "@connectrpc/connect-conformance": "^2.1.2",
-    "@types/jasmine": "^5.1.13",
-    "@wdio/jasmine-framework": "^9.19.2",
-    "@wdio/cli": "^9.19.2",
-    "@wdio/local-runner": "^9.19.2",
-    "@wdio/browserstack-service": "^9.19.2",
     "tsx": "^4.20.6",
     "webdriverio": "^9.7.2"
   },
