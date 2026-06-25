@@ -43,3 +43,23 @@ updates:
           - "@wdio/*"
           - "webdriver"
           - "webdriverio"
+  # The typescript-compat packages deliberately pin older versions of
+  # typescript and @types/node to test compatibility. Only allow patch
+  # updates for those two dependencies in these directories.
+  - package-ecosystem: "npm"
+    directories:
+      - "/packages/typescript-compat/*"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      timezone: UTC
+      time: "07:00"
+    ignore:
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
