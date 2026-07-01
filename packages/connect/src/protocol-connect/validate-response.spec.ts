@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { validateResponse } from "./validate-response.js";
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
@@ -25,8 +27,8 @@ describe("Connect validateResponse()", () => {
         200,
         new Headers({ "Content-Type": "application/json" }),
       );
-      expect(r.isUnaryError).toBeFalse();
-      expect(r.unaryError).toBeUndefined();
+      assert.ok(!r.isUnaryError);
+      assert.strictEqual(r.unaryError, undefined);
     });
     it("should return error for HTTP 204", () => {
       const r = validateResponse(
@@ -35,8 +37,8 @@ describe("Connect validateResponse()", () => {
         204,
         new Headers({ "Content-Type": "application/json" }),
       );
-      expect(r.isUnaryError).toBeTrue();
-      expect(r.unaryError?.message).toBe("[unknown] HTTP 204");
+      assert.ok(r.isUnaryError);
+      assert.strictEqual(r.unaryError?.message, "[unknown] HTTP 204");
     });
     it("should include headers as error metadata", () => {
       const r = validateResponse(
@@ -45,7 +47,7 @@ describe("Connect validateResponse()", () => {
         204,
         new Headers({ "Content-Type": "application/json", Foo: "Bar" }),
       );
-      expect(r.unaryError?.metadata.get("Foo")).toBe("Bar");
+      assert.strictEqual(r.unaryError?.metadata.get("Foo"), "Bar");
     });
     it("should be successful for HTTP 200 with proper unary proto content type", () => {
       const r = validateResponse(
@@ -54,24 +56,26 @@ describe("Connect validateResponse()", () => {
         200,
         new Headers({ "Content-Type": "application/proto" }),
       );
-      expect(r.isUnaryError).toBeFalse();
-      expect(r.unaryError).toBeUndefined();
+      assert.ok(!r.isUnaryError);
+      assert.strictEqual(r.unaryError, undefined);
     });
     it("should throw error for HTTP error status with binary response body", () => {
-      try {
-        validateResponse(
-          "unary",
-          true,
-          400,
-          new Headers({
-            "Content-Type": "application/proto",
-          }),
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe("[internal] HTTP 400");
-      }
+      assert.throws(
+        () =>
+          validateResponse(
+            "unary",
+            true,
+            400,
+            new Headers({
+              "Content-Type": "application/proto",
+            }),
+          ),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(e.message, "[internal] HTTP 400");
+          return true;
+        },
+      );
     });
     it("should return an error for HTTP error status if content type is JSON", () => {
       const result = validateResponse(
@@ -82,28 +86,30 @@ describe("Connect validateResponse()", () => {
           "Content-Type": "application/json",
         }),
       );
-      expect(result.isUnaryError).toBeTrue();
-      expect(result.unaryError?.code).toBe(Code.Internal);
-      expect(result.unaryError?.message).toBe("[internal] HTTP 400");
+      assert.ok(result.isUnaryError);
+      assert.strictEqual(result.unaryError?.code, Code.Internal);
+      assert.strictEqual(result.unaryError?.message, "[internal] HTTP 400");
     });
   });
   describe("with streaming", () => {
     it("should include headers as error metadata", () => {
-      try {
-        validateResponse(
-          "bidi_streaming",
-          true,
-          400,
-          new Headers({
-            "Content-Type": "application/connect+proto",
-            Foo: "Bar",
-          }),
-        );
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).metadata.get("Foo")).toBe("Bar");
-      }
+      assert.throws(
+        () =>
+          validateResponse(
+            "bidi_streaming",
+            true,
+            400,
+            new Headers({
+              "Content-Type": "application/connect+proto",
+              Foo: "Bar",
+            }),
+          ),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(e.metadata.get("Foo"), "Bar");
+          return true;
+        },
+      );
     });
   });
 });

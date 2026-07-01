@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { updateSourceFileInMemory } from "../lib/migrate-source-files";
 import transform from "./v2.0.0-transform-connect-plugin-imports";
 
@@ -20,37 +22,37 @@ describe("v2.0.0 transform connect plugin imports", () => {
     const input = `import { ElizaService } from "./gen/eliza_connect.js";`;
     const output = `import { ElizaService } from "./gen/eliza_pb.js";`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify import from *_connect to *_pb", () => {
     const input = `import { ElizaService } from "./gen/eliza_connect";`;
     const output = `import { ElizaService } from "./gen/eliza_pb";`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify import from *_connect.ts to *_pb.ts", () => {
     const input = `import { ElizaService } from "./gen/eliza_connect.ts";`;
     const output = `import { ElizaService } from "./gen/eliza_pb.ts";`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify js", () => {
     const input = `import { ElizaService } from "./gen/eliza_connect.js";`;
     const output = `import { ElizaService } from "./gen/eliza_pb.js";`;
     const result = updateSourceFileInMemory(transform, input, "foo.js");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify tsx", () => {
     const input = `import { ElizaService } from "./gen/eliza_connect.js";`;
     const output = `import { ElizaService } from "./gen/eliza_pb.js";`;
     const result = updateSourceFileInMemory(transform, input, "foo.tsx");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should modify import alias", () => {
     const input = `import { ElizaService as MyEliza } from "./gen/eliza_connect.js";`;
     const output = `import { ElizaService as MyEliza } from "./gen/eliza_pb.js";`;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
   it("should not care about existing imports", () => {
     const input = `
@@ -62,6 +64,6 @@ describe("v2.0.0 transform connect plugin imports", () => {
       import { Foo } from "./gen/eliza_pb.js";
     `;
     const result = updateSourceFileInMemory(transform, input, "foo.ts");
-    expect(result.source).toBe(output);
+    assert.strictEqual(result.source, output);
   });
 });

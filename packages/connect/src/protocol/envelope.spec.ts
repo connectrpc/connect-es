@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import {
   createEnvelopeDecoder,
   encodeEnvelope,
@@ -51,8 +53,8 @@ describe("createEnvelopeReadableStream()", () => {
       createReadableByteStream(new Uint8Array(0)),
     ).getReader();
     const r = await reader.read();
-    expect(r.done).toBeTrue();
-    expect(r.value).toBeUndefined();
+    assert.ok(r.done);
+    assert.strictEqual(r.value, undefined);
   });
   it("reads multiple messages", async () => {
     const input = [
@@ -74,13 +76,13 @@ describe("createEnvelopeReadableStream()", () => {
     ).getReader();
     for (const want of input) {
       const r = await reader.read();
-      expect(r.done).toBeFalse();
-      expect(r.value).toBeDefined();
-      expect(r.value?.flags).toBe(want.flags);
-      expect(r.value?.data).toEqual(want.data);
+      assert.ok(!r.done);
+      assert.notStrictEqual(r.value, undefined);
+      assert.strictEqual(r.value?.flags, want.flags);
+      assert.deepStrictEqual(r.value?.data, want.data);
     }
     const r = await reader.read();
-    expect(r.done).toBeTrue();
+    assert.ok(r.done);
   });
   it("reads multiple messages arriving at once", async () => {
     const input = [
@@ -116,10 +118,10 @@ describe("createEnvelopeReadableStream()", () => {
     const reader = createEnvelopeReadableStream(sourceStream).getReader();
     for (const want of input) {
       const r = await reader.read();
-      expect(r.done).toBeFalse();
-      expect(r.value).toBeDefined();
-      expect(r.value?.flags).toBe(want.flags);
-      expect(r.value?.data).toEqual(want.data);
+      assert.ok(!r.done);
+      assert.notStrictEqual(r.value, undefined);
+      assert.strictEqual(r.value?.flags, want.flags);
+      assert.deepStrictEqual(r.value?.data, want.data);
     }
   });
   it("reads an EndStreamResponse out of usual order", async () => {
@@ -138,13 +140,13 @@ describe("createEnvelopeReadableStream()", () => {
     ).getReader();
     for (const want of input) {
       const r = await reader.read();
-      expect(r.done).toBeFalse();
-      expect(r.value).toBeDefined();
-      expect(r.value?.flags).toBe(want.flags);
-      expect(r.value?.data).toEqual(want.data);
+      assert.ok(!r.done);
+      assert.notStrictEqual(r.value, undefined);
+      assert.strictEqual(r.value?.flags, want.flags);
+      assert.deepStrictEqual(r.value?.data, want.data);
     }
     const r = await reader.read();
-    expect(r.done).toBeTrue();
+    assert.ok(r.done);
   });
 });
 
@@ -185,7 +187,7 @@ describe("envelope compression", () => {
         compressionReverse,
         Number.MAX_SAFE_INTEGER,
       );
-      expect(got).toEqual(uncompressedEnvelope);
+      assert.deepStrictEqual(got, uncompressedEnvelope);
     });
     it("should not decompress uncompressed envelopes", async () => {
       const got = await envelopeDecompress(
@@ -193,18 +195,20 @@ describe("envelope compression", () => {
         compressionReverse,
         Number.MAX_SAFE_INTEGER,
       );
-      expect(got).toEqual(uncompressedEnvelope);
+      assert.deepStrictEqual(got, uncompressedEnvelope);
     });
     it("should pass readMaxBytes to compression", async () => {
-      try {
-        await envelopeDecompress(compressedEnvelope, compressionReverse, 3);
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression",
-        );
-      }
+      await assert.rejects(
+        envelopeDecompress(compressedEnvelope, compressionReverse, 3),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
+            "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression",
+          );
+          return true;
+        },
+      );
     });
     it("should ignore readMaxBytes for uncompressed envelope", async () => {
       const got = await envelopeDecompress(
@@ -212,7 +216,7 @@ describe("envelope compression", () => {
         compressionReverse,
         0,
       );
-      expect(got).toEqual(uncompressedEnvelope);
+      assert.deepStrictEqual(got, uncompressedEnvelope);
     });
     describe("with null compression", () => {
       it("should not decompress uncompressed envelopes", async () => {
@@ -221,26 +225,24 @@ describe("envelope compression", () => {
           null,
           Number.MAX_SAFE_INTEGER,
         );
-        expect(got).toEqual(uncompressedEnvelope);
+        assert.deepStrictEqual(got, uncompressedEnvelope);
       });
       it("should raise error on compressed envelope", async () => {
-        try {
-          await envelopeDecompress(
-            compressedEnvelope,
-            null,
-            Number.MAX_SAFE_INTEGER,
-          );
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[internal] received compressed envelope, but do not know how to decompress",
-          );
-        }
+        await assert.rejects(
+          envelopeDecompress(compressedEnvelope, null, Number.MAX_SAFE_INTEGER),
+          (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[internal] received compressed envelope, but do not know how to decompress",
+            );
+            return true;
+          },
+        );
       });
       it("should ignore readMaxBytes", async () => {
         const got = await envelopeDecompress(uncompressedEnvelope, null, 0);
-        expect(got).toEqual(uncompressedEnvelope);
+        assert.deepStrictEqual(got, uncompressedEnvelope);
       });
     });
   });
@@ -252,7 +254,7 @@ describe("envelope compression", () => {
         compressionReverse,
         0,
       );
-      expect(got).toEqual(compressedEnvelope);
+      assert.deepStrictEqual(got, compressedEnvelope);
     });
     it("should compress uncompressed envelope", async () => {
       const got = await envelopeCompress(
@@ -260,27 +262,29 @@ describe("envelope compression", () => {
         compressionReverse,
         0,
       );
-      expect(got).toEqual(compressedEnvelope);
+      assert.deepStrictEqual(got, compressedEnvelope);
     });
     it("should throw on compressed input", async () => {
-      try {
-        await envelopeCompress(compressedEnvelope, compressionReverse, 0);
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
-          "[internal] invalid envelope, already compressed",
-        );
-      }
+      await assert.rejects(
+        envelopeCompress(compressedEnvelope, compressionReverse, 0),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
+            "[internal] invalid envelope, already compressed",
+          );
+          return true;
+        },
+      );
     });
     it("should honor compressMinBytes", async () => {
       const got = await envelopeCompress(uncompressedEnvelope, null, 5);
-      expect(got).toEqual(uncompressedEnvelope);
+      assert.deepStrictEqual(got, uncompressedEnvelope);
     });
     describe("with null compression", () => {
       it("should not compress", async () => {
         const got = await envelopeCompress(uncompressedEnvelope, null, 0);
-        expect(got).toEqual(uncompressedEnvelope);
+        assert.deepStrictEqual(got, uncompressedEnvelope);
       });
     });
   });
@@ -289,11 +293,11 @@ describe("envelope compression", () => {
 describe("createEnvelopeDecoder()", () => {
   it("byteLength initially 0", () => {
     const buf = createEnvelopeDecoder(4);
-    expect(buf.byteLength).toBe(0);
+    assert.strictEqual(buf.byteLength, 0);
   });
   it("readMaxBytes", () => {
     const buf = createEnvelopeDecoder(444);
-    expect(buf.readMaxBytes).toBe(444);
+    assert.strictEqual(buf.readMaxBytes, 444);
   });
   it("excessive message size", () => {
     {
@@ -302,8 +306,15 @@ describe("createEnvelopeDecoder()", () => {
         0b10000000,
         new Uint8Array([0x01, 0x02, 0x03, 0x04, 0x05]),
       );
-      expect(() => buf.decode(chunk)).toThrowError(
-        /message size 5 is larger than configured readMaxBytes 4$/,
+      assert.throws(
+        () => buf.decode(chunk),
+        (err) => {
+          assert.match(
+            (err as Error).message,
+            /message size 5 is larger than configured readMaxBytes 4$/,
+          );
+          return true;
+        },
       );
     }
     {
@@ -312,8 +323,15 @@ describe("createEnvelopeDecoder()", () => {
         0b10000000,
         new Uint8Array([0x01, 0x02, 0x03, 0x04, 0x05]),
       ).slice(0, 5);
-      expect(() => buf.decode(chunk)).toThrowError(
-        /message size 5 is larger than configured readMaxBytes 4$/,
+      assert.throws(
+        () => buf.decode(chunk),
+        (err) => {
+          assert.match(
+            (err as Error).message,
+            /message size 5 is larger than configured readMaxBytes 4$/,
+          );
+          return true;
+        },
       );
     }
   });
@@ -325,10 +343,11 @@ describe("createEnvelopeDecoder()", () => {
       new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
     );
     const envelopes1 = buf.decode(chunk1);
-    expect(buf.byteLength).toBe(0);
-    expect(envelopes1.length).toBe(1);
-    expect(envelopes1[0].flags).toBe(0b10000000);
-    expect(envelopes1[0].data).toEqual(
+    assert.strictEqual(buf.byteLength, 0);
+    assert.strictEqual(envelopes1.length, 1);
+    assert.strictEqual(envelopes1[0].flags, 0b10000000);
+    assert.deepStrictEqual(
+      envelopes1[0].data,
       new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
     );
 
@@ -337,10 +356,11 @@ describe("createEnvelopeDecoder()", () => {
       new Uint8Array([0xde, 0xad, 0xbe, 0xe0]),
     );
     const envelopes2 = buf.decode(chunk2);
-    expect(buf.byteLength).toBe(0);
-    expect(envelopes2.length).toBe(1);
-    expect(envelopes2[0].flags).toBe(0b00000001);
-    expect(envelopes2[0].data).toEqual(
+    assert.strictEqual(buf.byteLength, 0);
+    assert.strictEqual(envelopes2.length, 1);
+    assert.strictEqual(envelopes2[0].flags, 0b00000001);
+    assert.deepStrictEqual(
+      envelopes2[0].data,
       new Uint8Array([0xde, 0xad, 0xbe, 0xe0]),
     );
   });
@@ -355,18 +375,19 @@ describe("createEnvelopeDecoder()", () => {
     const chunk3 = data.slice(6);
 
     const envelopes1 = buf.decode(chunk1);
-    expect(buf.byteLength).toBe(3);
-    expect(envelopes1.length).toBe(0);
+    assert.strictEqual(buf.byteLength, 3);
+    assert.strictEqual(envelopes1.length, 0);
 
     const envelopes2 = buf.decode(chunk2);
-    expect(buf.byteLength).toBe(1);
-    expect(envelopes2.length).toBe(0);
+    assert.strictEqual(buf.byteLength, 1);
+    assert.strictEqual(envelopes2.length, 0);
 
     const envelopes3 = buf.decode(chunk3);
-    expect(buf.byteLength).toBe(0);
-    expect(envelopes3.length).toBe(1);
-    expect(envelopes3[0].flags).toBe(0b10000000);
-    expect(envelopes3[0].data).toEqual(
+    assert.strictEqual(buf.byteLength, 0);
+    assert.strictEqual(envelopes3.length, 1);
+    assert.strictEqual(envelopes3[0].flags, 0b10000000);
+    assert.deepStrictEqual(
+      envelopes3[0].data,
       new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
     );
   });
@@ -378,11 +399,17 @@ describe("createEnvelopeDecoder()", () => {
         { flags: 0b00000001, data: new Uint8Array([0xde, 0xad, 0xbe, 0xe0]) },
       ),
     );
-    expect(buf.byteLength).toBe(0);
-    expect(envelopes.length).toBe(2);
-    expect(envelopes[0].flags).toBe(0b10000000);
-    expect(envelopes[0].data).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xef]));
-    expect(envelopes[1].flags).toBe(0b00000001);
-    expect(envelopes[1].data).toEqual(new Uint8Array([0xde, 0xad, 0xbe, 0xe0]));
+    assert.strictEqual(buf.byteLength, 0);
+    assert.strictEqual(envelopes.length, 2);
+    assert.strictEqual(envelopes[0].flags, 0b10000000);
+    assert.deepStrictEqual(
+      envelopes[0].data,
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    );
+    assert.strictEqual(envelopes[1].flags, 0b00000001);
+    assert.deepStrictEqual(
+      envelopes[1].data,
+      new Uint8Array([0xde, 0xad, 0xbe, 0xe0]),
+    );
   });
 });

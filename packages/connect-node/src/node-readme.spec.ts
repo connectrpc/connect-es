@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import * as http2 from "node:http2";
 import {
   createContextKey,
@@ -49,7 +51,7 @@ describe("node readme", () => {
     });
     const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
-    expect(sentence).toBeDefined();
+    assert.notStrictEqual(sentence, undefined);
   });
 
   it("createGrpcTransport()", async () => {
@@ -57,7 +59,7 @@ describe("node readme", () => {
     const transport = createGrpcTransport(optionsHttp2);
     const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
-    expect(sentence).toBeDefined();
+    assert.notStrictEqual(sentence, undefined);
   });
 
   it("createGrpcWebTransport()", async () => {
@@ -65,7 +67,7 @@ describe("node readme", () => {
     const transport = createGrpcWebTransport(optionsHttp1);
     const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
-    expect(sentence).toBeDefined();
+    assert.notStrictEqual(sentence, undefined);
   });
 
   it("should work as well", async () => {
@@ -97,7 +99,7 @@ describe("node readme", () => {
       const client = createClient(ElizaService, transport);
       const res = await client.say({ sentence: "I feel happy." });
       // console.log(res.sentence) // you said: I feel happy.
-      expect(res.sentence).toBe("you said: I feel happy.");
+      assert.strictEqual(res.sentence, "you said: I feel happy.");
     }
 
     const server = await startServer();
@@ -142,7 +144,7 @@ describe("node readme", () => {
         { headers: { "x-user": "alice" } },
       );
       // console.log(res.sentence) // Hey alice! You said: I feel happy.
-      expect(res.sentence).toBe("Hey alice! You said: I feel happy.");
+      assert.strictEqual(res.sentence, "Hey alice! You said: I feel happy.");
     }
 
     const server = await startServer();
@@ -159,7 +161,7 @@ describe("node readme", () => {
         async function* (req: AsyncIterable<ConverseRequest>) {
           yield { sentence: "ping" };
           for await (const next of req) {
-            expect(next.sentence).toBe("pong");
+            assert.strictEqual(next.sentence, "pong");
           }
         },
       );
@@ -190,7 +192,7 @@ describe("node readme", () => {
       try {
         const res = client.converse(req);
         for await (const next of res) {
-          expect(next.sentence).toBe("ping");
+          assert.strictEqual(next.sentence, "ping");
           await req.write({ sentence: "pong" });
           break;
         }

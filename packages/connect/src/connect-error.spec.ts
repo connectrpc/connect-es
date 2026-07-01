@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import {
   createRegistry,
   fromJson,
@@ -53,21 +55,21 @@ describe("ConnectError", () => {
   describe("constructor", () => {
     it("should have status unknown by default", () => {
       const e = new ConnectError("foo");
-      expect(e.code).toBe(Code.Unknown);
-      expect(e.message).toBe("[unknown] foo");
-      expect(e.rawMessage).toBe("foo");
-      expect(String(e)).toBe("ConnectError: [unknown] foo");
+      assert.strictEqual(e.code, Code.Unknown);
+      assert.strictEqual(e.message, "[unknown] foo");
+      assert.strictEqual(e.rawMessage, "foo");
+      assert.strictEqual(String(e), "ConnectError: [unknown] foo");
     });
     it("should take other status", () => {
       const e = new ConnectError("foo", Code.AlreadyExists);
-      expect(e.code).toBe(Code.AlreadyExists);
-      expect(e.message).toBe("[already_exists] foo");
-      expect(e.rawMessage).toBe("foo");
-      expect(String(e)).toBe("ConnectError: [already_exists] foo");
+      assert.strictEqual(e.code, Code.AlreadyExists);
+      assert.strictEqual(e.message, "[already_exists] foo");
+      assert.strictEqual(e.rawMessage, "foo");
+      assert.strictEqual(String(e), "ConnectError: [already_exists] foo");
     });
     it("accepts metadata", () => {
       const e = new ConnectError("foo", Code.AlreadyExists, { foo: "bar" });
-      expect(e.metadata.get("foo")).toBe("bar");
+      assert.strictEqual(e.metadata.get("foo"), "bar");
     });
   });
   describe("findDetails()", () => {
@@ -75,15 +77,15 @@ describe("ConnectError", () => {
       const err = new ConnectError("foo");
       it("with empty TypeRegistry produces no details", () => {
         const details = err.findDetails(createRegistry());
-        expect(details.length).toBe(0);
+        assert.strictEqual(details.length, 0);
       });
       it("with non-empty TypeRegistry produces no details", () => {
         const details = err.findDetails(createRegistry(StructSchema));
-        expect(details.length).toBe(0);
+        assert.strictEqual(details.length, 0);
       });
       it("with MessageType produces no details", () => {
         const details = err.findDetails(StructSchema);
-        expect(details.length).toBe(0);
+        assert.strictEqual(details.length, 0);
       });
     });
     describe("on error with Any details", () => {
@@ -97,34 +99,34 @@ describe("ConnectError", () => {
       });
       it("with empty TypeRegistry produces no details", () => {
         const details = err.findDetails(createRegistry());
-        expect(details.length).toBe(0);
+        assert.strictEqual(details.length, 0);
       });
       it("with non-empty TypeRegistry produces detail", () => {
         const details = err.findDetails(createRegistry(StructSchema));
-        expect(details.length).toBe(1);
+        assert.strictEqual(details.length, 1);
       });
       it("with MessageType produces detail", () => {
         const details = err.findDetails(StructSchema);
-        expect(details.length).toBe(1);
+        assert.strictEqual(details.length, 1);
         if (isMessage(details[0], StructSchema)) {
           const detail = toJson(StructSchema, details[0]) as Record<
             string,
             unknown
           >; // Otherwise TS can't compute the type in expect
-          expect(detail).toEqual({
+          assert.deepStrictEqual(detail, {
             domain: "example.com",
             reason: "soirée 🎉",
           });
         } else {
-          fail();
+          assert.fail();
         }
       });
       it("with multiple MessageTypes produces detail", () => {
         const details = err.findDetails(
           createRegistry(StructSchema, BoolValueSchema),
         );
-        expect(details.length).toBe(1);
-        expect(isMessage(details[0], StructSchema)).toBeTrue();
+        assert.strictEqual(details.length, 1);
+        assert.ok(isMessage(details[0], StructSchema));
       });
     });
   });
@@ -135,53 +137,53 @@ describe("ConnectError", () => {
         Code.PermissionDenied,
       );
       const got = ConnectError.from(error);
-      expect(got as unknown).toBe(error);
-      expect(got.code).toBe(Code.PermissionDenied);
-      expect(got.rawMessage).toBe("Not permitted");
-      expect(got.cause).toBeUndefined();
+      assert.strictEqual(got as unknown, error);
+      assert.strictEqual(got.code, Code.PermissionDenied);
+      assert.strictEqual(got.rawMessage, "Not permitted");
+      assert.strictEqual(got.cause, undefined);
     });
     it("accepts any Error", () => {
       const error: unknown = new Error("Not permitted");
       const got = ConnectError.from(error);
-      expect(got as unknown).not.toBe(error);
-      expect(got.code).toBe(Code.Unknown);
-      expect(got.rawMessage).toBe("Not permitted");
-      expect(got.cause).toBe(error);
+      assert.notStrictEqual(got as unknown, error);
+      assert.strictEqual(got.code, Code.Unknown);
+      assert.strictEqual(got.rawMessage, "Not permitted");
+      assert.strictEqual(got.cause, error);
     });
     it("accepts string value", () => {
       const error: unknown = "Not permitted";
       const got = ConnectError.from(error);
-      expect(got.code).toBe(Code.Unknown);
-      expect(got.rawMessage).toBe("Not permitted");
-      expect(got.cause).toBe(error);
+      assert.strictEqual(got.code, Code.Unknown);
+      assert.strictEqual(got.rawMessage, "Not permitted");
+      assert.strictEqual(got.cause, error);
     });
     it("wraps AbortError with code canceled", () => {
       // abort() on AbortSignal aborts with a AbortError
       const error: unknown = new DOMException("foo", "AbortError");
       const got = ConnectError.from(error);
-      expect(got.code).toBe(Code.Canceled);
-      expect(got.rawMessage).toBe("foo");
+      assert.strictEqual(got.code, Code.Canceled);
+      assert.strictEqual(got.rawMessage, "foo");
     });
     it("wraps TimeoutError with code canceled", () => {
       // AbortSignal.timeout() aborts with a TimeoutError
       const error: unknown = new DOMException("foo", "TimeoutError");
       const got = ConnectError.from(error);
-      expect(got.code).toBe(Code.Canceled);
-      expect(got.rawMessage).toBe("foo");
+      assert.strictEqual(got.code, Code.Canceled);
+      assert.strictEqual(got.rawMessage, "foo");
     });
   });
   describe("instanceof", () => {
     it("works for the actual ConnectError", () => {
-      expect(new ConnectError("foo")).toBeInstanceOf(ConnectError);
+      assert.ok(new ConnectError("foo") instanceof ConnectError);
     });
     it("works for ConnectError like errors", () => {
-      expect(new ConnectError2("foo")).toBeInstanceOf(ConnectError);
+      assert.ok(new ConnectError2("foo") instanceof ConnectError);
     });
     it("fails for other errors", () => {
-      expect(new Error("foo")).not.toBeInstanceOf(ConnectError);
-      expect(null).not.toBeInstanceOf(ConnectError);
-      expect(undefined).not.toBeInstanceOf(ConnectError);
-      expect("err").not.toBeInstanceOf(ConnectError);
+      assert.ok(!(new Error("foo") instanceof ConnectError));
+      assert.ok(!((null as unknown) instanceof ConnectError));
+      assert.ok(!((undefined as unknown) instanceof ConnectError));
+      assert.ok(!(("err" as unknown) instanceof ConnectError));
     });
   });
 });
@@ -211,19 +213,25 @@ describe("assertConnectError() example", () => {
   it("asserts ConnectError", () => {
     const err: unknown = new ConnectError("foo");
     assertConnectError(err);
-    expect(err.rawMessage).toBe("foo");
+    assert.strictEqual(err.rawMessage, "foo");
   });
   it("asserts ConnectError with Code", () => {
     const err: unknown = new ConnectError("foo", Code.PermissionDenied);
     assertConnectError(err, Code.PermissionDenied);
-    expect(err.code).toBe(Code.PermissionDenied);
-    expect(err.rawMessage).toBe("foo");
+    assert.strictEqual(err.code, Code.PermissionDenied);
+    assert.strictEqual(err.rawMessage, "foo");
   });
   it("rethrows non-ConnectErrors", () => {
-    expect(() => assertConnectError(true)).toThrow(true);
+    assert.throws(
+      () => assertConnectError(true),
+      (err) => err === true,
+    );
   });
   it("rethrows ConnectError with unwanted Code", () => {
     const err: unknown = new ConnectError("foo", Code.PermissionDenied);
-    expect(() => assertConnectError(err, Code.InvalidArgument)).toThrow(err);
+    assert.throws(
+      () => assertConnectError(err, Code.InvalidArgument),
+      (e) => e === err,
+    );
   });
 });

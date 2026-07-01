@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { parseBufGenYaml, stringifyBufGenYaml } from "./bufgenyaml";
 import { migrateBufGenYaml } from "./migrate-bufgenyaml";
 import type { BufGenYamlMigration } from "./migrate-bufgenyaml";
@@ -52,8 +54,8 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      expect(updated).toBeDefined();
-      expect(stringifyBufGenYaml(updated ?? yaml)).toBe(expected);
+      assert.notStrictEqual(updated, undefined);
+      assert.strictEqual(stringifyBufGenYaml(updated ?? yaml), expected);
     });
     it("should update plugin in v1", () => {
       const input = `# comment
@@ -78,8 +80,8 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      expect(updated).toBeDefined();
-      expect(stringifyBufGenYaml(updated ?? yaml)).toBe(expected);
+      assert.notStrictEqual(updated, undefined);
+      assert.strictEqual(stringifyBufGenYaml(updated ?? yaml), expected);
     });
     it("should not update up-to-date plugin in v1", () => {
       const input = `version: v1
@@ -89,7 +91,7 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      expect(updated).toBeNull();
+      assert.strictEqual(updated, null);
     });
     it("should not update up-to-date plugin in v2", () => {
       const input = `version: v2
@@ -99,7 +101,7 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      expect(updated).toBeNull();
+      assert.strictEqual(updated, null);
     });
   });
   describe("BufGenYamlPluginRemoval", () => {
@@ -145,8 +147,8 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      expect(updated).toBeDefined();
-      expect(stringifyBufGenYaml(updated ?? yaml)).toBe(expected);
+      assert.notStrictEqual(updated, undefined);
+      assert.strictEqual(stringifyBufGenYaml(updated ?? yaml), expected);
     });
     it("should remove plugin from v1", () => {
       const input = `# comment
@@ -180,8 +182,8 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      expect(updated).toBeDefined();
-      expect(stringifyBufGenYaml(updated ?? yaml)).toBe(expected);
+      assert.notStrictEqual(updated, undefined);
+      assert.strictEqual(stringifyBufGenYaml(updated ?? yaml), expected);
     });
   });
 });

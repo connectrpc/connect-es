@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import type { Interceptor, StreamResponse } from "./interceptor.js";
 import { createRouterTransport } from "./router-transport.js";
 import type { HandlerContext } from "./implementation.js";
@@ -141,17 +143,20 @@ describe("unary interceptors", () => {
       { value: 9001 },
     );
 
-    expect(response.message).toEqual(
+    assert.deepStrictEqual(
+      response.message,
       create(StringValueSchema, { value: "9001" }),
     );
-    expect(response.header.get("unary-response-header")).toEqual(
+    assert.strictEqual(
+      response.header.get("unary-response-header"),
       "response-header",
     );
-    expect(response.trailer.get("unary-response-trailer")).toEqual(
+    assert.strictEqual(
+      response.trailer.get("unary-response-trailer"),
       "response-trailer",
     );
 
-    expect(log).toEqual(wantLog);
+    assert.deepStrictEqual(log, wantLog);
   });
 });
 
@@ -206,14 +211,19 @@ describe("stream interceptors", () => {
     );
 
     for await (const message of response.message) {
-      expect(message).toEqual(create(StringValueSchema, { value: "42" }));
+      assert.deepStrictEqual(
+        message,
+        create(StringValueSchema, { value: "42" }),
+      );
     }
 
-    expect(log).toEqual(wantLog);
-    expect(response.header.get("stream-response-header")).toEqual(
+    assert.deepStrictEqual(log, wantLog);
+    assert.strictEqual(
+      response.header.get("stream-response-header"),
       "response-header",
     );
-    expect(response.trailer.get("stream-response-trailer")).toEqual(
+    assert.strictEqual(
+      response.trailer.get("stream-response-trailer"),
       "response-trailer",
     );
   });

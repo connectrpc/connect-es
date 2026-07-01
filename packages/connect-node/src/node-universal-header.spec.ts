@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import type * as http from "node:http";
 import {
   nodeHeaderToWebHeader,
@@ -24,7 +26,7 @@ describe("nodeHeaderToWebHeader()", () => {
     let numHeaders = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
-    expect(numHeaders).toBe(0);
+    assert.strictEqual(numHeaders, 0);
   });
   it("should skip HTTP/2 pseudo-headers", () => {
     const h = nodeHeaderToWebHeader({
@@ -33,7 +35,7 @@ describe("nodeHeaderToWebHeader()", () => {
     let numHeaders = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
-    expect(numHeaders).toBe(0);
+    assert.strictEqual(numHeaders, 0);
   });
   it("should skip undefined values", () => {
     const h = nodeHeaderToWebHeader({
@@ -42,7 +44,7 @@ describe("nodeHeaderToWebHeader()", () => {
     let numHeaders = 0;
     // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
-    expect(numHeaders).toBe(0);
+    assert.strictEqual(numHeaders, 0);
   });
   it("should accept string, string[], and number", () => {
     const h = nodeHeaderToWebHeader({
@@ -50,9 +52,9 @@ describe("nodeHeaderToWebHeader()", () => {
       "string-array": ["a", "b", "c"],
       number: 123,
     });
-    expect(h.get("string")).toBe("string");
-    expect(h.get("string-array")).toBe("a, b, c");
-    expect(h.get("number")).toBe("123");
+    assert.strictEqual(h.get("string"), "string");
+    assert.strictEqual(h.get("string-array"), "a, b, c");
+    assert.strictEqual(h.get("number"), "123");
   });
 });
 
@@ -64,9 +66,9 @@ describe("webHeaderToNodeHeaders()", () => {
       custom: "c",
     });
     // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
-    expect(h["custom"]).toEqual(["a, b", "c"]);
+    assert.deepStrictEqual(h["custom"], ["a, b", "c"]);
     // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
-    expect(h["foo"]).toBe("bar");
+    assert.strictEqual(h["foo"], "bar");
   });
   it("should accept Headers object", () => {
     const input = new Headers({
@@ -76,9 +78,9 @@ describe("webHeaderToNodeHeaders()", () => {
     });
     const h = webHeaderToNodeHeaders(input);
     // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
-    expect(h["custom"]).toEqual("a, b, c");
+    assert.strictEqual(h["custom"], "a, b, c");
     // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
-    expect(h["foo"]).toBe("bar");
+    assert.strictEqual(h["foo"], "bar");
   });
   it("should accept array of name-value pairs", () => {
     const h = webHeaderToNodeHeaders([
@@ -87,9 +89,9 @@ describe("webHeaderToNodeHeaders()", () => {
       ["foo", "bar"],
     ]);
     // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
-    expect(h["custom"]).toEqual(["a", "b"]);
+    assert.deepStrictEqual(h["custom"], ["a", "b"]);
     // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
-    expect(h["foo"]).toBe("bar");
+    assert.strictEqual(h["foo"], "bar");
   });
   describe("special handling of set-cookie", () => {
     // Special handling of set-cookie is available since Node.js v22.0.0, v20.0.0, and v18.14.1.
@@ -98,7 +100,7 @@ describe("webHeaderToNodeHeaders()", () => {
         "set-cookie": "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
         "Set-Cookie": "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
       });
-      expect(h["set-cookie"]).toEqual([
+      assert.deepStrictEqual(h["set-cookie"], [
         "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
         "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
       ]);
@@ -108,7 +110,7 @@ describe("webHeaderToNodeHeaders()", () => {
       input.append("set-cookie", "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT");
       input.append("Set-Cookie", "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT");
       const h = webHeaderToNodeHeaders(input);
-      expect(h["set-cookie"]).toEqual([
+      assert.deepStrictEqual(h["set-cookie"], [
         "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
         "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
       ]);
@@ -118,7 +120,7 @@ describe("webHeaderToNodeHeaders()", () => {
         ["set-cookie", "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT"],
         ["Set-Cookie", "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT"],
       ]);
-      expect(h["set-cookie"]).toEqual([
+      assert.deepStrictEqual(h["set-cookie"], [
         "a=a; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
         "b=b; Expires=Wed, 21 Oct 2015 07:28:00 GMT",
       ]);
@@ -137,7 +139,8 @@ describe("webHeaderToNodeHeaders()", () => {
       ["d", "d2"],
     ];
     const h = webHeaderToNodeHeaders(webHeaders, nodeDefaults);
-    expect(h).toEqual({
+    assert.deepStrictEqual(h, {
+      __proto__: null,
       a: "a",
       b: ["b1", "b2", "web"],
       c: ["123", "456"],
@@ -159,7 +162,8 @@ describe("webHeaderToNodeHeaders()", () => {
       ["d", "d2"],
     ];
     const h = webHeaderToNodeHeaders(webHeaders, nodeDefaults);
-    expect(h).toEqual({
+    assert.deepStrictEqual(h, {
+      __proto__: null,
       a: "a",
       b: ["b1", "b2", "web"],
       c: ["123", "456"],

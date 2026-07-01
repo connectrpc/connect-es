@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach } from "node:test";
+import * as assert from "node:assert";
 import {
   createAsyncIterable,
   createWritableIterable,
@@ -59,7 +61,7 @@ describe("slowly consuming an async iterable", () => {
     async function slowConsume(source: AsyncIterable<string>) {
       const tsStart = Date.now();
       for await (const chunk of source) {
-        expect(chunk).toBeDefined(); // only to satisfy type checks
+        assert.notStrictEqual(chunk, undefined); // only to satisfy type checks
         await new Promise((resolve) => setTimeout(resolve, consumerDelayMs));
       }
       consumeElapsedMs = Date.now() - tsStart;
@@ -72,8 +74,8 @@ describe("slowly consuming an async iterable", () => {
     // We have to be a bit lenient to account for the time it takes run the
     // actual code, and variance introduced by setTimeout.
     const leniency = 50;
-    expect(sourceElapsedMs).toBeGreaterThanOrEqual(consumeElapsedMs - leniency);
-    expect(sourceElapsedMs).toBeLessThanOrEqual(consumeElapsedMs + leniency);
+    assert.ok(sourceElapsedMs >= consumeElapsedMs - leniency);
+    assert.ok(sourceElapsedMs <= consumeElapsedMs + leniency);
   });
 });
 
@@ -91,7 +93,7 @@ describe("pipe()", () => {
     for await (const chunk of iterable) {
       sum += chunk;
     }
-    expect(sum).toBe(9);
+    assert.strictEqual(sum, 9);
   });
 
   describe("with error-raising consumer", () => {
@@ -150,8 +152,8 @@ describe("pipe()", () => {
         // propagateDownStreamError: false <- default
       });
       await consumeWithError(iterable);
-      expect(sourceLog).toEqual(["yield a"]);
-      expect(consumerLog).toEqual([
+      assert.deepStrictEqual(sourceLog, ["yield a"]);
+      assert.deepStrictEqual(consumerLog, [
         "received a",
         "threw DOWNSTREAM_ERROR",
         "done",
@@ -162,8 +164,12 @@ describe("pipe()", () => {
         propagateDownStreamError: true,
       });
       await consumeWithError(iterable);
-      expect(sourceLog).toEqual(["yield a", "saw DOWNSTREAM_ERROR", "finally"]);
-      expect(consumerLog).toEqual([
+      assert.deepStrictEqual(sourceLog, [
+        "yield a",
+        "saw DOWNSTREAM_ERROR",
+        "finally",
+      ]);
+      assert.deepStrictEqual(consumerLog, [
         "received a",
         "threw DOWNSTREAM_ERROR",
         "done",
@@ -177,7 +183,7 @@ describe("pipe()", () => {
       (async function* () {
         try {
           yield 1;
-          fail("expected early return");
+          assert.fail("expected early return");
           yield 2;
         } finally {
           returned = true;
@@ -191,9 +197,9 @@ describe("pipe()", () => {
       { propagateDownStreamError: true },
     );
     const it = iterable[Symbol.asyncIterator]();
-    expect(await it.next()).toEqual({ done: false, value: 2 });
+    assert.deepStrictEqual(await it.next(), { done: false, value: 2 });
     await it.return?.();
-    expect(returned).toBe(true);
+    assert.ok(returned);
   });
 });
 
@@ -209,7 +215,7 @@ describe("pipeTo()", () => {
         return sum;
       },
     );
-    expect(sum).toBe(6);
+    assert.strictEqual(sum, 6);
   });
   it("should apply transforms", async () => {
     const sum = await pipeTo(
@@ -227,7 +233,7 @@ describe("pipeTo()", () => {
         return sum;
       },
     );
-    expect(sum).toBe(9);
+    assert.strictEqual(sum, 9);
   });
 
   describe("with error-raising sink", () => {
@@ -252,7 +258,7 @@ describe("pipeTo()", () => {
 
     async function errorRaisingSink(iterable: AsyncIterable<string>) {
       for await (const chunk of iterable) {
-        expect(chunk).toBeDefined(); // only to satisfy type checks
+        assert.notStrictEqual(chunk, undefined); // only to satisfy type checks
         throw "SINK_ERROR";
       }
     }
@@ -264,26 +270,32 @@ describe("pipeTo()", () => {
     }
 
     it("should not propagate error to source by default, and leave it dangling", async () => {
-      try {
-        await pipeTo(source(), noopTransform, errorRaisingSink, {
+      await assert.rejects(
+        pipeTo(source(), noopTransform, errorRaisingSink, {
           // propagateDownStreamError: false <- default
-        });
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBe("SINK_ERROR");
-      }
-      expect(sourceLog).toEqual(["yield a"]);
+        }),
+        (e) => {
+          assert.strictEqual(e, "SINK_ERROR");
+          return true;
+        },
+      );
+      assert.deepStrictEqual(sourceLog, ["yield a"]);
     });
     it("should propagate error to source with propagateDownStreamError: true", async () => {
-      try {
-        await pipeTo(source(), noopTransform, errorRaisingSink, {
+      await assert.rejects(
+        pipeTo(source(), noopTransform, errorRaisingSink, {
           propagateDownStreamError: true,
-        });
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBe("SINK_ERROR");
-      }
-      expect(sourceLog).toEqual(["yield a", "saw SINK_ERROR", "finally"]);
+        }),
+        (e) => {
+          assert.strictEqual(e, "SINK_ERROR");
+          return true;
+        },
+      );
+      assert.deepStrictEqual(sourceLog, [
+        "yield a",
+        "saw SINK_ERROR",
+        "finally",
+      ]);
     });
   });
 });
@@ -310,11 +322,11 @@ describe("makeIterableAbortable()", () => {
     it("should abort source", async () => {
       const abortable = makeIterableAbortable(source());
       for await (const chunk of abortable) {
-        expect(chunk).toBe("a");
+        assert.strictEqual(chunk, "a");
         const state = await abortable.abort("ERR");
-        expect(state).toBe("rethrown");
+        assert.strictEqual(state, "rethrown");
       }
-      expect(sourceLog).toEqual(["yield a", "saw ERR", "finally"]);
+      assert.deepStrictEqual(sourceLog, ["yield a", "saw ERR", "finally"]);
     });
   });
   describe("with error swallowing source", () => {
@@ -333,11 +345,15 @@ describe("makeIterableAbortable()", () => {
     it("should abort source", async () => {
       const abortable = makeIterableAbortable(source());
       for await (const chunk of abortable) {
-        expect(chunk).toBe("a");
+        assert.strictEqual(chunk, "a");
         const state = await abortable.abort("ERR");
-        expect(state).toBe("completed");
+        assert.strictEqual(state, "completed");
       }
-      expect(sourceLog).toEqual(["yield a", "swallowed ERR", "finally"]);
+      assert.deepStrictEqual(sourceLog, [
+        "yield a",
+        "swallowed ERR",
+        "finally",
+      ]);
     });
   });
   describe("with error-catching source", () => {
@@ -357,11 +373,11 @@ describe("makeIterableAbortable()", () => {
     it("should abort source and ignore result for downstream error", async () => {
       const abortable = makeIterableAbortable(source());
       for await (const chunk of abortable) {
-        expect(chunk).toBe("a");
+        assert.strictEqual(chunk, "a");
         const state = await abortable.abort("ERR");
-        expect(state).toBe("caught");
+        assert.strictEqual(state, "caught");
       }
-      expect(sourceLog).toEqual(["yield a", "caught ERR", "finally"]);
+      assert.deepStrictEqual(sourceLog, ["yield a", "caught ERR", "finally"]);
     });
   });
 
@@ -391,11 +407,11 @@ describe("makeIterableAbortable()", () => {
       );
       const abortable = makeIterableAbortable(iterable);
       for await (const chunk of abortable) {
-        expect(chunk).toBe("a");
+        assert.strictEqual(chunk, "a");
         const state = await abortable.abort("ERR");
-        expect(state).toBe("rethrown");
+        assert.strictEqual(state, "rethrown");
       }
-      expect(sourceLog).toEqual(["yield a", "saw ERR", "finally"]);
+      assert.deepStrictEqual(sourceLog, ["yield a", "saw ERR", "finally"]);
     });
   });
 });
@@ -432,7 +448,7 @@ describe("transforming asynchronous iterables", () => {
           transformSerializeEnvelope(fakeSerialization),
         );
         const got = await readAll(it);
-        expect(got).toEqual(goldenEnvelopes);
+        assert.deepStrictEqual(got, goldenEnvelopes);
       });
     });
     describe("transformParseEnvelope()", () => {
@@ -442,7 +458,7 @@ describe("transforming asynchronous iterables", () => {
           transformParseEnvelope(fakeSerialization),
         );
         const got = await readAll(it);
-        expect(got).toEqual(goldenItems);
+        assert.deepStrictEqual(got, goldenItems);
       });
     });
   });
@@ -492,7 +508,7 @@ describe("transforming asynchronous iterables", () => {
           transformSerializeEnvelope(serialization, endFlag, endSerialization),
         );
         const got = await readAll(it);
-        expect(got).toEqual(goldenEnvelopes);
+        assert.deepStrictEqual(got, goldenEnvelopes);
       });
     });
 
@@ -507,7 +523,7 @@ describe("transforming asynchronous iterables", () => {
           transformParseEnvelope(serialization, endFlag, endSerialization),
         );
         const got = await readAll(it);
-        expect(got).toEqual(goldenItems);
+        assert.deepStrictEqual(got, goldenItems);
       });
       describe("with endStreamFlag but endCompression omitted", () => {
         it("should skip unexpected end flag", async () => {
@@ -516,7 +532,7 @@ describe("transforming asynchronous iterables", () => {
             transformParseEnvelope(serialization, endFlag),
           );
           const got = await readAll(it);
-          expect(got).toEqual(itemsWithoutEndFlag);
+          assert.deepStrictEqual(got, itemsWithoutEndFlag);
         });
         it("should still parse to T", async () => {
           const it = pipe(
@@ -524,7 +540,7 @@ describe("transforming asynchronous iterables", () => {
             transformParseEnvelope(serialization, endFlag),
           );
           const got = await readAll(it);
-          expect(got).toEqual(itemsWithoutEndFlag);
+          assert.deepStrictEqual(got, itemsWithoutEndFlag);
         });
       });
       describe("with endStreamFlag and endCompression null", () => {
@@ -533,15 +549,14 @@ describe("transforming asynchronous iterables", () => {
             createAsyncIterable(goldenEnvelopes),
             transformParseEnvelope(serialization, endFlag, null),
           );
-          try {
-            await readAll(it);
-            fail("expected error");
-          } catch (e) {
-            expect(e).toBeInstanceOf(ConnectError);
-            expect(ConnectError.from(e).message).toBe(
+          await assert.rejects(readAll(it), (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
               "[invalid_argument] unexpected end flag",
             );
-          }
+            return true;
+          });
         });
         it("should still parse to T", async () => {
           const it = pipe(
@@ -549,7 +564,7 @@ describe("transforming asynchronous iterables", () => {
             transformParseEnvelope(serialization, endFlag, null),
           );
           const got = await readAll(it);
-          expect(got).toEqual(itemsWithoutEndFlag);
+          assert.deepStrictEqual(got, itemsWithoutEndFlag);
         });
       });
     });
@@ -582,7 +597,7 @@ describe("transforming asynchronous iterables", () => {
           transformJoinEnvelopes(),
         );
         const gotBytes = await readAllBytes(it);
-        expect(gotBytes).toEqual(goldenBytes);
+        assert.deepStrictEqual(gotBytes, goldenBytes);
       });
     });
 
@@ -593,22 +608,21 @@ describe("transforming asynchronous iterables", () => {
           transformSplitEnvelope(Number.MAX_SAFE_INTEGER),
         );
         const got = await readAll(it);
-        expect(got).toEqual(goldenEnvelopes);
+        assert.deepStrictEqual(got, goldenEnvelopes);
       });
       it("should honor readMaxBytes", async () => {
         const it = pipe(
           createAsyncIterableBytes(goldenBytes),
           transformSplitEnvelope(3),
         );
-        try {
-          await readAll(it);
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
+        await assert.rejects(readAll(it), (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
             "[resource_exhausted] message size 4 is larger than configured readMaxBytes 3",
           );
-        }
+          return true;
+        });
       });
     });
   });
@@ -671,22 +685,21 @@ describe("transforming asynchronous iterables", () => {
           transformCompressEnvelope(compressionReverse, 0),
         );
         const gotEnvelopes = await readAll(it);
-        expect(gotEnvelopes).toEqual(compressedEnvelopes);
+        assert.deepStrictEqual(gotEnvelopes, compressedEnvelopes);
       });
       it("should throw on compressed input", async () => {
         const it = pipe(
           createAsyncIterable(compressedEnvelopes),
           transformCompressEnvelope(compressionReverse, 0),
         );
-        try {
-          await readAll(it);
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
+        await assert.rejects(readAll(it), (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
             "[internal] invalid envelope, already compressed",
           );
-        }
+          return true;
+        });
       });
       it("should honor compressMinBytes", async () => {
         const it = pipe(
@@ -694,7 +707,7 @@ describe("transforming asynchronous iterables", () => {
           transformCompressEnvelope(compressionReverse, 5),
         );
         const gotEnvelopes = await readAll(it);
-        expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
+        assert.deepStrictEqual(gotEnvelopes, uncompressedEnvelopes);
       });
       describe("with null compression", () => {
         it("should not compress", async () => {
@@ -703,22 +716,21 @@ describe("transforming asynchronous iterables", () => {
             transformCompressEnvelope(null, 0),
           );
           const gotEnvelopes = await readAll(it);
-          expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
+          assert.deepStrictEqual(gotEnvelopes, uncompressedEnvelopes);
         });
         it("should throw on compressed input", async () => {
           const it = pipe(
             createAsyncIterable(compressedEnvelopes),
             transformCompressEnvelope(compressionReverse, 0),
           );
-          try {
-            await readAll(it);
-            fail("expected error");
-          } catch (e) {
-            expect(e).toBeInstanceOf(ConnectError);
-            expect(ConnectError.from(e).message).toBe(
+          await assert.rejects(readAll(it), (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
               "[internal] invalid envelope, already compressed",
             );
-          }
+            return true;
+          });
         });
       });
     });
@@ -733,7 +745,7 @@ describe("transforming asynchronous iterables", () => {
           ),
         );
         const gotEnvelopes = await readAll(it);
-        expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
+        assert.deepStrictEqual(gotEnvelopes, uncompressedEnvelopes);
       });
       it("should not decompress uncompressed envelopes", async () => {
         const it = pipe(
@@ -744,22 +756,21 @@ describe("transforming asynchronous iterables", () => {
           ),
         );
         const gotEnvelopes = await readAll(it);
-        expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
+        assert.deepStrictEqual(gotEnvelopes, uncompressedEnvelopes);
       });
       it("should pass readMaxBytes to compression", async () => {
         const it = pipe(
           createAsyncIterable(compressedEnvelopes),
           transformDecompressEnvelope(compressionReverse, 3),
         );
-        try {
-          await readAll(it);
-          fail("expected error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
+        await assert.rejects(readAll(it), (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(
+            e.message,
             "[resource_exhausted] message is larger than configured readMaxBytes 3 after decompression",
           );
-        }
+          return true;
+        });
       });
       describe("with null compression", () => {
         it("should not decompress uncompressed envelopes", async () => {
@@ -768,22 +779,21 @@ describe("transforming asynchronous iterables", () => {
             transformDecompressEnvelope(null, Number.MAX_SAFE_INTEGER),
           );
           const gotEnvelopes = await readAll(it);
-          expect(gotEnvelopes).toEqual(uncompressedEnvelopes);
+          assert.deepStrictEqual(gotEnvelopes, uncompressedEnvelopes);
         });
         it("should raise error on compressed envelope", async () => {
           const it = pipe(
             createAsyncIterable(compressedEnvelopes),
             transformDecompressEnvelope(null, Number.MAX_SAFE_INTEGER),
           );
-          try {
-            await readAll(it);
-            fail("expected error");
-          } catch (e) {
-            expect(e).toBeInstanceOf(ConnectError);
-            expect(ConnectError.from(e).message).toBe(
+          await assert.rejects(readAll(it), (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
               "[internal] received compressed envelope, but do not know how to decompress",
             );
-          }
+            return true;
+          });
         });
       });
     });
@@ -808,17 +818,13 @@ describe("transforming asynchronous iterables", () => {
         createAsyncIterable(goldenItems),
         transformSerializeEnvelope(serialization),
       );
-      try {
-        await readAll(it);
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        if (e instanceof ConnectError) {
-          expect(e.code).toBe(Code.Internal);
-          expect(e.rawMessage).toBe("cannot serialize 'c'");
-          expect(e.cause).toBeUndefined();
-        }
-      }
+      await assert.rejects(readAll(it), (e) => {
+        assert.ok(e instanceof ConnectError);
+        assert.strictEqual(e.code, Code.Internal);
+        assert.strictEqual(e.rawMessage, "cannot serialize 'c'");
+        assert.strictEqual(e.cause, undefined);
+        return true;
+      });
     });
 
     describe("transformCatch()", () => {
@@ -848,7 +854,7 @@ describe("transforming asynchronous iterables", () => {
           }),
         );
         const result = await readAll(it);
-        expect(result).toEqual(goldenEnvelopes);
+        assert.deepStrictEqual(result, goldenEnvelopes);
       });
     });
   });
@@ -912,7 +918,7 @@ describe("transforming asynchronous iterables", () => {
         transformParseEnvelope(serialization, endFlag, endSerialization),
       );
       const result = await readAll(it);
-      expect(result).toEqual(goldenItemsWithEnd);
+      assert.deepStrictEqual(result, goldenItemsWithEnd);
     });
   });
 
@@ -927,22 +933,21 @@ describe("transforming asynchronous iterables", () => {
         transformReadAllBytes(Number.MAX_SAFE_INTEGER),
       );
       const got = await readAllBytes(it);
-      expect(got).toEqual(goldenBytes);
+      assert.deepStrictEqual(got, goldenBytes);
     });
     it("should honor readMaxBytes", async () => {
       const it = pipe(
         createAsyncIterableBytes(goldenBytes),
         transformReadAllBytes(4),
       );
-      try {
-        await readAllBytes(it);
-        fail("expected error");
-      } catch (e) {
-        expect(e).toBeInstanceOf(ConnectError);
-        expect(ConnectError.from(e).message).toBe(
+      await assert.rejects(readAllBytes(it), (e) => {
+        assert.ok(e instanceof ConnectError);
+        assert.strictEqual(
+          e.message,
           "[resource_exhausted] message size is larger than configured readMaxBytes 4",
         );
-      }
+        return true;
+      });
     });
     describe("with length hint", () => {
       describe("that matches actual length", () => {
@@ -955,7 +960,7 @@ describe("transforming asynchronous iterables", () => {
             ),
           );
           const got = await readAllBytes(it);
-          expect(got).toEqual(goldenBytes);
+          assert.deepStrictEqual(got, goldenBytes);
         });
       });
       describe("that exceeds readMaxBytes", () => {
@@ -964,15 +969,14 @@ describe("transforming asynchronous iterables", () => {
             createAsyncIterableBytes(goldenBytes),
             transformReadAllBytes(4, 5),
           );
-          try {
-            await readAllBytes(it);
-            fail("expected error");
-          } catch (e) {
-            expect(e).toBeInstanceOf(ConnectError);
-            expect(ConnectError.from(e).message).toBe(
+          await assert.rejects(readAllBytes(it), (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
               "[resource_exhausted] message size 5 is larger than configured readMaxBytes 4",
             );
-          }
+            return true;
+          });
         });
       });
       describe("that is not an integer", () => {
@@ -982,7 +986,7 @@ describe("transforming asynchronous iterables", () => {
             transformReadAllBytes(100, 100.75),
           );
           const got = await readAllBytes(it);
-          expect(got).toEqual(goldenBytes);
+          assert.deepStrictEqual(got, goldenBytes);
         });
       });
       describe("that is NaN", () => {
@@ -992,7 +996,7 @@ describe("transforming asynchronous iterables", () => {
             transformReadAllBytes(Number.MAX_SAFE_INTEGER, Number.NaN),
           );
           const got = await readAllBytes(it);
-          expect(got).toEqual(goldenBytes);
+          assert.deepStrictEqual(got, goldenBytes);
         });
       });
       describe("that is negative", () => {
@@ -1002,7 +1006,7 @@ describe("transforming asynchronous iterables", () => {
             transformReadAllBytes(Number.MAX_SAFE_INTEGER, -10),
           );
           const got = await readAllBytes(it);
-          expect(got).toEqual(goldenBytes);
+          assert.deepStrictEqual(got, goldenBytes);
         });
       });
       describe("that is larger than the actual length", () => {
@@ -1014,15 +1018,14 @@ describe("transforming asynchronous iterables", () => {
               goldenBytes.byteLength + 100,
             ),
           );
-          try {
-            await readAllBytes(it);
-            fail("expected error");
-          } catch (e) {
-            expect(e).toBeInstanceOf(ConnectError);
-            expect(ConnectError.from(e).message).toBe(
+          await assert.rejects(readAllBytes(it), (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
               "[invalid_argument] protocol error: promised 116 bytes, received 16",
             );
-          }
+            return true;
+          });
         });
       });
       describe("that is smaller than the actual length", () => {
@@ -1034,15 +1037,14 @@ describe("transforming asynchronous iterables", () => {
               goldenBytes.byteLength - 10,
             ),
           );
-          try {
-            await readAllBytes(it);
-            fail("expected error");
-          } catch (e) {
-            expect(e).toBeInstanceOf(ConnectError);
-            expect(ConnectError.from(e).message).toBe(
+          await assert.rejects(readAllBytes(it), (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
               "[invalid_argument] protocol error: promised 6 bytes, received 8",
             );
-          }
+            return true;
+          });
         });
       });
     });
@@ -1055,7 +1057,7 @@ describe("createWritableIterable()", () => {
     let readCount = 0;
     const read = (async () => {
       for await (const next of wIterable) {
-        expect(next).toBe(readCount);
+        assert.strictEqual(next, readCount);
         readCount++;
       }
     })();
@@ -1065,7 +1067,7 @@ describe("createWritableIterable()", () => {
     }
     wIterable.close();
     await read;
-    expect(readCount).toEqual(writCount);
+    assert.strictEqual(readCount, writCount);
   });
   it("write is interrupted when read fails", async () => {
     const wIterable = createWritableIterable<number>();
@@ -1073,21 +1075,21 @@ describe("createWritableIterable()", () => {
       const itr = wIterable[Symbol.asyncIterator]();
       const next = await itr.next();
       if (next.done === true) {
-        fail("expected at least one value");
+        assert.fail("expected at least one value");
       } else {
-        expect(await itr.throw?.(new Error("read failed"))).toEqual({
+        assert.deepStrictEqual(await itr.throw?.(new Error("read failed")), {
           done: true,
           value: undefined,
         });
       }
       // All further calls to next should also result in done results.
-      expect(await itr.next()).toEqual({
+      assert.deepStrictEqual(await itr.next(), {
         done: true,
         value: undefined,
       });
     })();
-    await expectAsync(wIterable.write(1)).toBeRejected();
-    await expectAsync(wIterable.write(2)).toBeRejected();
+    await assert.rejects(wIterable.write(1));
+    await assert.rejects(wIterable.write(2));
     await read;
   });
   it("queues writes", async () => {
@@ -1100,13 +1102,13 @@ describe("createWritableIterable()", () => {
     let readCount = 0;
     const read = (async () => {
       for await (const next of wIterable) {
-        expect(next).toBe(readCount);
+        assert.strictEqual(next, readCount);
         readCount++;
       }
     })();
     wIterable.close();
     await read;
-    expect(readCount).toEqual(writCount);
+    assert.strictEqual(readCount, writCount);
     await Promise.all(writes);
   });
   it("queues reads", async () => {
@@ -1119,9 +1121,15 @@ describe("createWritableIterable()", () => {
         readPromises.push(itr.next());
       }
       const reads = await Promise.all(readPromises);
-      expect(reads.find((r) => r.done === true)).toBeUndefined();
-      expect(reads.map((r) => r.value)).toEqual([...Array(writCount).keys()]);
-      await expectAsync(itr.next()).toBeResolvedTo({
+      assert.strictEqual(
+        reads.find((r) => r.done === true),
+        undefined,
+      );
+      assert.deepStrictEqual(
+        reads.map((r) => r.value),
+        [...Array(writCount).keys()],
+      );
+      assert.deepStrictEqual(await itr.next(), {
         done: true,
         value: undefined,
       });
@@ -1142,9 +1150,15 @@ describe("createWritableIterable()", () => {
         readPromises.push(itr.next());
       }
       const reads = await Promise.all(readPromises);
-      expect(reads.find((r) => r.done === true)).toBeUndefined();
-      expect(reads.map((r) => r.value)).toEqual([...Array(writCount).keys()]);
-      await expectAsync(itr.next()).toBeResolvedTo({
+      assert.strictEqual(
+        reads.find((r) => r.done === true),
+        undefined,
+      );
+      assert.deepStrictEqual(
+        reads.map((r) => r.value),
+        [...Array(writCount).keys()],
+      );
+      assert.deepStrictEqual(await itr.next(), {
         done: true,
         value: undefined,
       });
@@ -1170,7 +1184,8 @@ describe("createWritableIterable()", () => {
       await it.throw?.(readError);
     })();
     await read;
-    expect(await Promise.allSettled(writes)).toEqual(
+    assert.deepStrictEqual(
+      await Promise.allSettled(writes),
       new Array(50).fill({ status: "rejected", reason: readError }),
     );
   });
@@ -1186,7 +1201,8 @@ describe("createWritableIterable()", () => {
       await it.return?.();
     })();
     await read;
-    expect(await Promise.allSettled(writes)).toEqual(
+    assert.deepStrictEqual(
+      await Promise.allSettled(writes),
       new Array(50).fill({
         status: "rejected",
         reason: new Error("cannot write, consumer called return"),
@@ -1200,7 +1216,10 @@ describe("createWritableIterable()", () => {
       const it = wIterable[Symbol.asyncIterator]();
       await it.throw?.(readError);
     })();
-    await expectAsync(wIterable.write(1)).toBeRejectedWith(readError);
+    await assert.rejects(wIterable.write(1), (err) => {
+      assert.deepStrictEqual(err, readError);
+      return true;
+    });
     await read;
   });
   it("resolves already written value and rejects future writes on return", async () => {
@@ -1209,22 +1228,22 @@ describe("createWritableIterable()", () => {
       const itr = wIterable[Symbol.asyncIterator]();
       const next = await itr.next();
       if (next.done === true) {
-        fail("expected at least one value");
+        assert.fail("expected at least one value");
       } else {
-        expect(next.value).toEqual(1);
-        expect(await itr.return?.()).toEqual({
+        assert.strictEqual(next.value, 1);
+        assert.deepStrictEqual(await itr.return?.(), {
           done: true,
           value: undefined,
         });
       }
       // All further calls to next should also result in done results.
-      expect(await itr.next()).toEqual({
+      assert.deepStrictEqual(await itr.next(), {
         done: true,
         value: undefined,
       });
     })();
-    await expectAsync(wIterable.write(1)).toBeResolved();
-    await expectAsync(wIterable.write(2)).toBeRejected();
+    await wIterable.write(1);
+    await assert.rejects(wIterable.write(2));
     await read;
   });
 });

@@ -13,7 +13,7 @@
     "postgenerate": "license-header src/protocol-grpc/gen",
     "build": "tshy",
     "postbuild": "node scripts/update-user-agent.mjs",
-    "test": "jasmine --config=jasmine.json",
+    "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings",
@@ -37,9 +37,9 @@
   "devDependencies": {
     "@bufbuild/buf": "^1.66.1",
     "@bufbuild/protoc-gen-es": "^2.10.0",
-    "@types/jasmine": "^5.1.13",
-    "jasmine": "^5.13.0",
-    "tshy": "^4.1.3"
+    "@types/node": "^24.10.1",
+    "tshy": "^4.1.3",
+    "tsx": "^4.20.6"
   },
   "files": [
     "dist/**",

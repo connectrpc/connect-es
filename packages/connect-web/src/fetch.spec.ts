@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import * as assert from "node:assert";
 import {
   ConformanceService,
   UnaryRequestSchema,
@@ -40,8 +42,8 @@ describe("custom fetch", () => {
           },
         },
       );
-      spyOn(response, "arrayBuffer").and.callThrough();
-      spyOn(response, "json").and.callThrough();
+      const arrayBufferSpy = mock.method(response, "arrayBuffer");
+      const jsonSpy = mock.method(response, "json");
       const transport = createConnectTransport({
         baseUrl: "https://example.com",
         fetch: () => Promise.resolve(response),
@@ -53,8 +55,8 @@ describe("custom fetch", () => {
         undefined,
         create(UnaryRequestSchema),
       );
-      expect(response.json).toHaveBeenCalledTimes(1);
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(0);
+      assert.strictEqual(jsonSpy.mock.callCount(), 1);
+      assert.strictEqual(arrayBufferSpy.mock.callCount(), 0);
     });
     it("should only call Response#arrayBuffer with the binary format on the happy path", async () => {
       const response = new Response(
@@ -65,8 +67,8 @@ describe("custom fetch", () => {
           },
         },
       );
-      spyOn(response, "arrayBuffer").and.callThrough();
-      spyOn(response, "json").and.callThrough();
+      const arrayBufferSpy = mock.method(response, "arrayBuffer");
+      const jsonSpy = mock.method(response, "json");
       const transport = createConnectTransport({
         fetch: () => Promise.resolve(response),
         baseUrl: "https://example.com",
@@ -79,8 +81,8 @@ describe("custom fetch", () => {
         undefined,
         create(UnaryRequestSchema),
       );
-      expect(response.json).toHaveBeenCalledTimes(0);
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(1);
+      assert.strictEqual(jsonSpy.mock.callCount(), 0);
+      assert.strictEqual(arrayBufferSpy.mock.callCount(), 1);
     });
     it("should call Response#json with the binary format for an error response", async () => {
       const response = new Response(
@@ -95,14 +97,14 @@ describe("custom fetch", () => {
           },
         },
       );
-      spyOn(response, "arrayBuffer").and.callThrough();
-      spyOn(response, "json").and.callThrough();
+      const arrayBufferSpy = mock.method(response, "arrayBuffer");
+      const jsonSpy = mock.method(response, "json");
       const transport = createConnectTransport({
         fetch: () => Promise.resolve(response),
         baseUrl: "https://example.com",
         useBinaryFormat: true,
       });
-      await expectAsync(
+      await assert.rejects(
         transport.unary(
           ConformanceService.method.unary,
           undefined,
@@ -110,9 +112,10 @@ describe("custom fetch", () => {
           undefined,
           create(UnaryRequestSchema),
         ),
-      ).toBeRejectedWithError(/\[permission_denied] foobar/);
-      expect(response.json).toHaveBeenCalledTimes(1);
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(0);
+        /\[permission_denied] foobar/,
+      );
+      assert.strictEqual(jsonSpy.mock.callCount(), 1);
+      assert.strictEqual(arrayBufferSpy.mock.callCount(), 0);
     });
     it("should should defer resolving fetch until calling endpoint", async () => {
       const response = new Response(
@@ -123,8 +126,8 @@ describe("custom fetch", () => {
           },
         },
       );
-      spyOn(response, "arrayBuffer").and.callThrough();
-      spyOn(response, "json").and.callThrough();
+      const arrayBufferSpy = mock.method(response, "arrayBuffer");
+      const jsonSpy = mock.method(response, "json");
       const transport = createConnectTransport({
         baseUrl: "https://example.com",
       });
@@ -137,8 +140,8 @@ describe("custom fetch", () => {
         undefined,
         create(UnaryRequestSchema),
       );
-      expect(response.json).toHaveBeenCalledTimes(1);
-      expect(response.arrayBuffer).toHaveBeenCalledTimes(0);
+      assert.strictEqual(jsonSpy.mock.callCount(), 1);
+      assert.strictEqual(arrayBufferSpy.mock.callCount(), 0);
     });
   });
   describe("with gRPC-web transport", () => {
@@ -151,8 +154,8 @@ describe("custom fetch", () => {
           },
         },
       );
-      spyOn(response, "arrayBuffer").and.callThrough();
-      spyOn(response, "json").and.callThrough();
+      mock.method(response, "arrayBuffer");
+      mock.method(response, "json");
       const transport = createGrpcWebTransport({
         baseUrl: "https://example.com",
         useBinaryFormat: false,
@@ -160,7 +163,7 @@ describe("custom fetch", () => {
       // Patch globalThis.fetch to mimic a polyfill or patch
       globalThis.fetch = () =>
         Promise.reject("test-error-raised-from-patched-fetch");
-      await expectAsync(
+      await assert.rejects(
         transport.unary(
           ConformanceService.method.unary,
           undefined,
@@ -168,7 +171,8 @@ describe("custom fetch", () => {
           undefined,
           create(UnaryRequestSchema),
         ),
-      ).toBeRejectedWithError(/test-error-raised-from-patched-fetch/);
+        /test-error-raised-from-patched-fetch/,
+      );
     });
   });
 });

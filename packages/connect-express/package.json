@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tshy",
-    "test": "jasmine --config=jasmine.json",
+    "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
     "conformance": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-express.yaml -v -- tsx ./conformance/server.ts",
     "format": "biome format --write",
     "license-header": "license-header",

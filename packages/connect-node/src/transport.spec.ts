@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { beforeEach, describe, it } from "node:test";
+import * as assert from "node:assert";
 import { create } from "@bufbuild/protobuf";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
@@ -52,18 +54,19 @@ describe("Calls should fail with code internal on RST_STREAM no_error before tra
         .then(() => {
           response.stream.close(0, () => rstStream.resolve());
         })
-        .catch(fail);
+        .catch(assert.fail);
     }),
   );
   async function testRstStream(transport: Transport) {
     const client = createClient(ElizaService, transport);
-    const it = client.introduce({ name: "1" })[Symbol.asyncIterator]();
-    const first = await it.next();
-    expect(first.done).toBeFalse();
-    expect(first.value).toEqual(
+    const iterator = client.introduce({ name: "1" })[Symbol.asyncIterator]();
+    const first = await iterator.next();
+    assert.ok(!first.done);
+    assert.deepStrictEqual(
+      first.value,
       create(IntroduceResponseSchema, { sentence: "foo" }),
     );
-    await expectAsync(it.next()).toBeRejected();
+    await assert.rejects(iterator.next());
   }
   it("for gRPC Transport", async () => {
     await testRstStream(
@@ -77,7 +80,7 @@ describe("Calls should fail with code internal on RST_STREAM no_error before tra
       }),
     );
   });
-  it("for gRPC Transport", async () => {
+  it("for gRPC-Web Transport", async () => {
     await testRstStream(
       createGrpcWebTransport({
         ...validateNodeTransportOptions({

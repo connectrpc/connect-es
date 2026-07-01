@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { migrateDependencies } from "./migrate-dependencies";
 
 describe("migrateDependencies()", () => {
   it("does nothing with empty migrations", () => {
-    expect(
+    assert.strictEqual(
       migrateDependencies(
         {
           dependencies: {
@@ -25,11 +27,12 @@ describe("migrateDependencies()", () => {
         },
         [],
       ),
-    ).toBeNull();
+      null,
+    );
   });
   describe("DependencyReplacement", () => {
     it("replaces nothing with different package names", () => {
-      expect(
+      assert.strictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -43,10 +46,11 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toBeNull();
+        null,
+      );
     });
     it("replaces nothing with newer version installed", () => {
-      expect(
+      assert.strictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -60,10 +64,11 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toBeNull();
+        null,
+      );
     });
     it("replaces nothing with newer version installed", () => {
-      expect(
+      assert.strictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -77,10 +82,11 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toBeNull();
+        null,
+      );
     });
     it("replaces version", () => {
-      expect(
+      assert.deepStrictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -94,14 +100,15 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toEqual({
-        dependencies: {
-          foo: "^2.0.1",
+        {
+          dependencies: {
+            foo: "^2.0.1",
+          },
         },
-      });
+      );
     });
     it("replaces name", () => {
-      expect(
+      assert.deepStrictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -115,14 +122,15 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toEqual({
-        dependencies: {
-          bar: "^1.0.0",
+        {
+          dependencies: {
+            bar: "^1.0.0",
+          },
         },
-      });
+      );
     });
     it("replaces name and version", () => {
-      expect(
+      assert.deepStrictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -136,14 +144,15 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toEqual({
-        dependencies: {
-          bar: "^2.0.0",
+        {
+          dependencies: {
+            bar: "^2.0.0",
+          },
         },
-      });
+      );
     });
     it("replaces peerDependenciesMeta", () => {
-      expect(
+      assert.deepStrictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -161,18 +170,19 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toEqual({
-        dependencies: {
-          bar: "^1.0.0",
+        {
+          dependencies: {
+            bar: "^1.0.0",
+          },
+          peerDependenciesMeta: {
+            bar: { optional: true },
+            baz: { optional: true },
+          },
         },
-        peerDependenciesMeta: {
-          bar: { optional: true },
-          baz: { optional: true },
-        },
-      });
+      );
     });
     it("replaces bundledDependency", () => {
-      expect(
+      assert.deepStrictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -187,17 +197,18 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toEqual({
-        dependencies: {
-          bar: "^1.0.0",
+        {
+          dependencies: {
+            bar: "^1.0.0",
+          },
+          bundledDependencies: ["bar", "baz"],
         },
-        bundledDependencies: ["bar", "baz"],
-      });
+      );
     });
   });
   describe("DependencyRemoval", () => {
     it("removes nothing with different package names", () => {
-      expect(
+      assert.strictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -210,10 +221,11 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toBeNull();
+        null,
+      );
     });
     it("removes nothing with newer version installed", () => {
-      expect(
+      assert.strictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -226,10 +238,11 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toBeNull();
+        null,
+      );
     });
     it("removes nothing with newer version installed", () => {
-      expect(
+      assert.strictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -242,10 +255,11 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toBeNull();
+        null,
+      );
     });
     it("removes dependency", () => {
-      expect(
+      assert.deepStrictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -259,14 +273,15 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toEqual({
-        dependencies: {
-          bar: "^1.0.0",
+        {
+          dependencies: {
+            bar: "^1.0.0",
+          },
         },
-      });
+      );
     });
     it("removes peerDependenciesMeta", () => {
-      expect(
+      assert.deepStrictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -284,17 +299,18 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toEqual({
-        dependencies: {
-          bar: "^1.0.0",
+        {
+          dependencies: {
+            bar: "^1.0.0",
+          },
+          peerDependenciesMeta: {
+            bar: { optional: true },
+          },
         },
-        peerDependenciesMeta: {
-          bar: { optional: true },
-        },
-      });
+      );
     });
     it("removes bundledDependency", () => {
-      expect(
+      assert.deepStrictEqual(
         migrateDependencies(
           {
             dependencies: {
@@ -309,12 +325,13 @@ describe("migrateDependencies()", () => {
             },
           ],
         ),
-      ).toEqual({
-        dependencies: {
-          bar: "^1.0.0",
+        {
+          dependencies: {
+            bar: "^1.0.0",
+          },
+          bundledDependencies: ["bar"],
         },
-        bundledDependencies: ["bar"],
-      });
+      );
     });
   });
 });

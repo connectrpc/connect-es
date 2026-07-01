@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach } from "node:test";
+import * as assert from "node:assert";
 import { v1_6_0 } from "./v1.6.0";
 import type { PackageJson } from "../lib/package-json";
 import type { MigrateOptions } from "../migration";
@@ -66,7 +68,7 @@ describe("migration", () => {
           },
         },
       ];
-      expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v1_6_0.applicable(opt.scanned));
     });
     it("after 1.6.0", () => {
       opt.scanned.packageFiles = [
@@ -79,7 +81,7 @@ describe("migration", () => {
           },
         },
       ];
-      expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v1_6_0.applicable(opt.scanned));
     });
     it("before 1.6.0", () => {
       opt.scanned.packageFiles = [
@@ -92,7 +94,7 @@ describe("migration", () => {
           },
         },
       ];
-      expect(v1_6_0.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v1_6_0.applicable(opt.scanned));
     });
   });
   describe("should not be applicable", () => {
@@ -107,7 +109,7 @@ describe("migration", () => {
           },
         },
       ];
-      expect(v1_6_0.applicable(opt.scanned)).toBeFalse();
+      assert.ok(!v1_6_0.applicable(opt.scanned));
     });
   });
 });

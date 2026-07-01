@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import {
   contentTypeStreamJson,
   contentTypeStreamProto,
@@ -22,49 +24,58 @@ import {
 
 describe("parseContentType()", () => {
   it("should parse", () => {
-    expect(parseContentType("text/plain")).toBeUndefined();
-    expect(parseContentType("text/plain; charset=utf-8")).toBeUndefined();
-    expect(parseContentType(contentTypeUnaryJson)).toEqual({
+    assert.strictEqual(parseContentType("text/plain"), undefined);
+    assert.strictEqual(
+      parseContentType("text/plain; charset=utf-8"),
+      undefined,
+    );
+    assert.deepStrictEqual(parseContentType(contentTypeUnaryJson), {
       stream: false,
       binary: false,
     });
-    expect(parseContentType(contentTypeUnaryProto)).toEqual({
-      stream: false,
-      binary: true,
-    });
-    expect(parseContentType(contentTypeStreamJson)).toEqual({
-      stream: true,
-      binary: false,
-    });
-    expect(parseContentType(contentTypeStreamProto)).toEqual({
-      stream: true,
-      binary: true,
-    });
-    expect(parseContentType("application/json")).toEqual({
-      stream: false,
-      binary: false,
-    });
-    expect(parseContentType("application/json;charset=utf8")).toEqual({
-      stream: false,
-      binary: false,
-    });
-    expect(parseContentType("application/json; charset=utf-8")).toEqual({
-      stream: false,
-      binary: false,
-    });
-    expect(parseContentType("application/proto")).toEqual({
+    assert.deepStrictEqual(parseContentType(contentTypeUnaryProto), {
       stream: false,
       binary: true,
     });
-    expect(parseContentType("application/connect+json")).toEqual({
+    assert.deepStrictEqual(parseContentType(contentTypeStreamJson), {
       stream: true,
       binary: false,
     });
-    expect(parseContentType("application/connect+json;charset=utf8")).toEqual({
+    assert.deepStrictEqual(parseContentType(contentTypeStreamProto), {
+      stream: true,
+      binary: true,
+    });
+    assert.deepStrictEqual(parseContentType("application/json"), {
+      stream: false,
+      binary: false,
+    });
+    assert.deepStrictEqual(parseContentType("application/json;charset=utf8"), {
+      stream: false,
+      binary: false,
+    });
+    assert.deepStrictEqual(
+      parseContentType("application/json; charset=utf-8"),
+      {
+        stream: false,
+        binary: false,
+      },
+    );
+    assert.deepStrictEqual(parseContentType("application/proto"), {
+      stream: false,
+      binary: true,
+    });
+    assert.deepStrictEqual(parseContentType("application/connect+json"), {
       stream: true,
       binary: false,
     });
-    expect(parseContentType("application/connect+proto")).toEqual({
+    assert.deepStrictEqual(
+      parseContentType("application/connect+json;charset=utf8"),
+      {
+        stream: true,
+        binary: false,
+      },
+    );
+    assert.deepStrictEqual(parseContentType("application/connect+proto"), {
       stream: true,
       binary: true,
     });

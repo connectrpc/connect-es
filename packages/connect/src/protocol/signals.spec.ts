@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import {
   createDeadlineSignal,
   createLinkedAbortController,
@@ -20,31 +22,31 @@ import {
 describe("createLinkedAbortController()", () => {
   it("should create an AbortController without any input", () => {
     const ac = createLinkedAbortController();
-    expect(ac.signal.aborted).toBeFalse();
+    assert.ok(!ac.signal.aborted);
   });
   it("should be aborted if one of the inputs is already aborted", () => {
     const aborted = AbortSignal.abort("test-reason");
     const nonAborted = new AbortController().signal;
     const ac = createLinkedAbortController(aborted, nonAborted);
-    expect(ac.signal.aborted).toBeTrue();
-    expect(ac.signal.reason).toBe("test-reason");
+    assert.ok(ac.signal.aborted);
+    assert.strictEqual(ac.signal.reason, "test-reason");
   });
   it("should abort if one of the inputs aborts", () => {
     const a = new AbortController();
     const b = new AbortController();
     const c = new AbortController();
     const ac = createLinkedAbortController(a.signal, b.signal, c.signal);
-    expect(ac.signal.aborted).toBeFalse();
+    assert.ok(!ac.signal.aborted);
     b.abort();
-    expect(ac.signal.aborted).toBeTrue();
+    assert.ok(ac.signal.aborted);
   });
   it("should use the abort reason", () => {
     const a = new AbortController();
     const ac = createLinkedAbortController(a.signal);
-    expect(ac.signal.aborted).toBeFalse();
+    assert.ok(!ac.signal.aborted);
     a.abort("test-reason");
-    expect(ac.signal.aborted).toBeTrue();
-    expect(ac.signal.reason).toBe("test-reason");
+    assert.ok(ac.signal.aborted);
+    assert.strictEqual(ac.signal.reason, "test-reason");
   });
 });
 
@@ -52,38 +54,39 @@ describe("createDeadlineSignal()", () => {
   describe("initially", () => {
     it("should not be aborted", () => {
       const d = createDeadlineSignal(100);
-      expect(d.signal.aborted).toBeFalse();
+      assert.ok(!d.signal.aborted);
     });
     it("should not be aborted initially", () => {
       const d = createDeadlineSignal(100);
-      expect(d.signal).toBeDefined();
-      expect(d.cleanup).toBeDefined();
+      assert.notStrictEqual(d.signal, undefined);
+      assert.notStrictEqual(d.cleanup, undefined);
     });
   });
   describe("with 0 timeout", () => {
     it("should be aborted immediately", () => {
       const d = createDeadlineSignal(0);
-      expect(d.signal.aborted).toBeTrue();
+      assert.ok(d.signal.aborted);
     });
   });
   describe("with -1 timeout", () => {
     it("should be aborted immediately", () => {
       const d = createDeadlineSignal(-1);
-      expect(d.signal.aborted).toBeTrue();
+      assert.ok(d.signal.aborted);
     });
   });
   describe("with undefined timeout", () => {
     it("should still return a signal", () => {
       const d = createDeadlineSignal(undefined);
-      expect(d.signal.aborted).toBeFalse();
+      assert.ok(!d.signal.aborted);
     });
   });
   it("should be aborted after timeout", async () => {
     const timeoutMs = 5;
     const d = createDeadlineSignal(timeoutMs);
     await new Promise((resolve) => setTimeout(resolve, timeoutMs + 25));
-    expect(d.signal.aborted).toBeTrue();
-    expect(String(d.signal.reason)).toEqual(
+    assert.ok(d.signal.aborted);
+    assert.strictEqual(
+      String(d.signal.reason),
       "ConnectError: [deadline_exceeded] the operation timed out",
     );
   });

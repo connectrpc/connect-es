@@ -1,8 +1,9 @@
 {
-  "include": ["src/**/*.ts", "conformance/**/*.ts", "browserstack/**/*.ts"],
+  "include": ["src/**/*.ts", "conformance/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "verbatimModuleSyntax": false,
-    "types": ["jasmine"]
+    "skipLibCheck": true,
+    "types": ["node"]
   }
 }

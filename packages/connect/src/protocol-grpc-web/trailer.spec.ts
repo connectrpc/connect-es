@@ -12,28 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { trailerParse, trailerSerialize } from "./trailer.js";
 
 describe("trailerParse()", () => {
   it("parses very simple case", () => {
     const h = trailerParse(new TextEncoder().encode("foo: bar\r\n"));
-    expect(h.get("foo")).toBe("bar");
+    assert.strictEqual(h.get("foo"), "bar");
   });
   it("parses empty", () => {
     const h = trailerParse(new TextEncoder().encode(""));
-    expect(countFields(h)).toBe(0);
+    assert.strictEqual(countFields(h), 0);
   });
   it("trims values", () => {
     const h = trailerParse(new TextEncoder().encode("foo:bar \r\n"));
-    expect(h.get("foo")).toBe("bar");
+    assert.strictEqual(h.get("foo"), "bar");
   });
   it("does not require last newline", () => {
     const h = trailerParse(new TextEncoder().encode("foo: bar"));
-    expect(h.get("foo")).toBe("bar");
+    assert.strictEqual(h.get("foo"), "bar");
   });
   it("appends", () => {
     const h = trailerParse(new TextEncoder().encode("foo: a\r\nfoo: b\r\n"));
-    expect(h.get("foo")).toBe("a, b");
+    assert.strictEqual(h.get("foo"), "a, b");
   });
 });
 
@@ -41,22 +43,22 @@ describe("trailerSerialize()", () => {
   it("serializes empty", () => {
     const trailer = new Headers();
     const data = trailerSerialize(trailer);
-    expect(new TextDecoder().decode(data)).toBe("");
+    assert.strictEqual(new TextDecoder().decode(data), "");
   });
   it("Headers trims whitespace", () => {
     const trailer = new Headers({
       foo: "bar ",
     });
-    expect(trailer.get("foo")).toBe("bar");
+    assert.strictEqual(trailer.get("foo"), "bar");
     const data = trailerSerialize(trailer);
-    expect(new TextDecoder().decode(data)).toBe("foo: bar\r\n");
+    assert.strictEqual(new TextDecoder().decode(data), "foo: bar\r\n");
   });
   it("serializes lowercase field names", () => {
     const trailer = new Headers({
       Foo: "bar ",
     });
     const data = trailerSerialize(trailer);
-    expect(new TextDecoder().decode(data)).toBe("foo: bar\r\n");
+    assert.strictEqual(new TextDecoder().decode(data), "foo: bar\r\n");
   });
 });
 
@@ -67,17 +69,17 @@ describe("trailer roundtrip", () => {
       bar: "123",
     });
     const b = trailerParse(trailerSerialize(a));
-    expect(countFields(b)).toBe(2);
-    expect(b.get("foo")).toBe("a, b");
-    expect(b.get("bar")).toBe("123");
+    assert.strictEqual(countFields(b), 2);
+    assert.strictEqual(b.get("foo"), "a, b");
+    assert.strictEqual(b.get("bar"), "123");
   });
   it("happens to preserve non-ascii", () => {
     const a = new Headers({
       foo: "bär",
     });
     const b = trailerParse(trailerSerialize(a));
-    expect(countFields(b)).toBe(1);
-    expect(b.get("foo")).toBe("bär");
+    assert.strictEqual(countFields(b), 1);
+    assert.strictEqual(b.get("foo"), "bär");
   });
 });
 

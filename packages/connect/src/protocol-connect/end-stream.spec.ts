@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import type { JsonObject } from "@bufbuild/protobuf";
 import { endStreamFromJson, endStreamToJson } from "./end-stream.js";
 import { ConnectError } from "../connect-error.js";
@@ -28,17 +30,17 @@ describe("endStreamFromJson()", () => {
       metadata: { foo: ["baz", "bar"] },
     };
     const endStream = endStreamFromJson(JSON.stringify(json));
-    expect(endStream.metadata.get("foo")).toBe("baz, bar");
-    expect(endStream.error?.code).toBe(Code.ResourceExhausted);
-    expect(endStream.error?.rawMessage).toBe("my bad");
+    assert.strictEqual(endStream.metadata.get("foo"), "baz, bar");
+    assert.strictEqual(endStream.error?.code, Code.ResourceExhausted);
+    assert.strictEqual(endStream.error?.rawMessage, "my bad");
   });
   it("should raise protocol error on malformed metadata", () => {
     const json: JsonObject = {
       metadata: false,
     };
-    expect(() => endStreamFromJson(JSON.stringify(json))).toThrowError(
-      "[unknown] invalid end stream",
-    );
+    assert.throws(() => endStreamFromJson(JSON.stringify(json)), {
+      message: "[unknown] invalid end stream",
+    });
   });
 });
 
@@ -46,7 +48,7 @@ describe("endStreamToJson()", () => {
   it("should be {} in the most simple form", () => {
     const got = endStreamToJson(new Headers(), undefined, undefined);
     const want: JsonObject = {};
-    expect(got).toEqual(want);
+    assert.deepStrictEqual(got, want);
   });
   it("should serialize the error", () => {
     const err = new ConnectError("my bad", Code.ResourceExhausted);
@@ -54,7 +56,7 @@ describe("endStreamToJson()", () => {
     const want: JsonObject = {
       error: errorToJson(err, undefined),
     };
-    expect(got).toEqual(want);
+    assert.deepStrictEqual(got, want);
   });
   it("should serialize metadata", () => {
     const got = endStreamToJson(
@@ -67,7 +69,7 @@ describe("endStreamToJson()", () => {
     const want: JsonObject = {
       metadata: { foo: ["bar"] },
     };
-    expect(got).toEqual(want);
+    assert.deepStrictEqual(got, want);
   });
   it("should serialize metadata from the error", () => {
     const err = new ConnectError("my bad", Code.ResourceExhausted, {
@@ -78,7 +80,7 @@ describe("endStreamToJson()", () => {
       error: errorToJson(err, undefined),
       metadata: { foo: ["bar"] },
     };
-    expect(got).toEqual(want);
+    assert.deepStrictEqual(got, want);
   });
   it("should append metadata from the error", () => {
     const err = new ConnectError("my bad", Code.ResourceExhausted, {
@@ -95,6 +97,6 @@ describe("endStreamToJson()", () => {
       error: errorToJson(err, undefined),
       metadata: { foo: ["baz, bar"] },
     };
-    expect(got).toEqual(want);
+    assert.deepStrictEqual(got, want);
   });
 });

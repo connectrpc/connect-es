@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { ConnectError } from "@connectrpc/connect";
 import * as zlib from "node:zlib";
 import { compressionBrotli, compressionGzip } from "./compression.js";
@@ -33,41 +35,45 @@ describe("compression", () => {
     describe(compression.name, () => {
       it("should compress", async () => {
         const b = await compression.compress(payload);
-        expect(b.length < payload.length).toBeTrue();
+        assert.ok(b.length < payload.length);
       });
       it("should decompress", async () => {
         const b = await compression.decompress(payloadCompressed, 0xffffffff);
         const equal = payload.every((value, index) => b[index] === value);
-        expect(equal).toBeTrue();
+        assert.ok(equal);
       });
       it("should decompress zero-length payload", async () => {
         const b = await compression.decompress(new Uint8Array(0), 0xffffffff);
-        expect(b.byteLength).toBe(0);
+        assert.strictEqual(b.byteLength, 0);
       });
       it("should raise resource_exhausted if maxReadBytes exceeded", async () => {
-        try {
-          await compression.decompress(payloadCompressed, 2);
-          fail("excepted an error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[resource_exhausted] message is larger than configured readMaxBytes 2 after decompression",
-          );
-        }
+        await assert.rejects(
+          compression.decompress(payloadCompressed, 2),
+          (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[resource_exhausted] message is larger than configured readMaxBytes 2 after decompression",
+            );
+            return true;
+          },
+        );
       });
       it("should raise invalid_argument on invalid input", async () => {
-        try {
-          await compression.decompress(
+        await assert.rejects(
+          compression.decompress(
             new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
             0xffffffff,
-          );
-          fail("excepted an error");
-        } catch (e) {
-          expect(e).toBeInstanceOf(ConnectError);
-          expect(ConnectError.from(e).message).toBe(
-            "[invalid_argument] decompression failed",
-          );
-        }
+          ),
+          (e) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(
+              e.message,
+              "[invalid_argument] decompression failed",
+            );
+            return true;
+          },
+        );
       });
     });
   }

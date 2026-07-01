@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tshy",
-    "test": "jasmine --config=jasmine.json",
+    "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
     "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/server.ts",
     "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/client.ts",
     "format": "biome format --write",
@@ -35,9 +35,8 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@connectrpc/connect-conformance": "^2.1.2",
-    "@types/jasmine": "^5.1.13",
-    "jasmine": "^5.13.0",
-    "tshy": "^4.1.3"
+    "tshy": "^4.1.3",
+    "tsx": "^4.20.6"
   },
   "files": [
     "dist/**",

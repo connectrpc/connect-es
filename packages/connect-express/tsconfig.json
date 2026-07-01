@@ -3,7 +3,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "verbatimModuleSyntax": false,
-    "types": ["jasmine", "node"],
+    "types": ["node"],
     "allowSyntheticDefaultImports": true
   }
 }

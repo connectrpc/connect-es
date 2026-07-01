@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach } from "node:test";
+import * as assert from "node:assert";
+
 describe("Fetch API Headers", () => {
   let headers: Headers;
   beforeEach(() => {
@@ -20,18 +23,18 @@ describe("Fetch API Headers", () => {
     });
   });
   it("get()", () => {
-    expect(headers.get("Content-Type")).toEqual("application/connect+json");
-    expect(headers.get("content-type")).toEqual("application/connect+json");
+    assert.strictEqual(headers.get("Content-Type"), "application/connect+json");
+    assert.strictEqual(headers.get("content-type"), "application/connect+json");
   });
   it("forEach()", () => {
     headers.forEach((value, key) => {
       // Note all keys are lowercase when iterating over them
-      expect(key).toEqual("content-type");
-      expect(value).toEqual("application/connect+json");
+      assert.strictEqual(key, "content-type");
+      assert.strictEqual(value, "application/connect+json");
     });
   });
   it("has()", () => {
-    expect(headers.has("Content-Type")).toBeTrue();
-    expect(headers.has("content-type")).toBeTrue();
+    assert.ok(headers.has("Content-Type"));
+    assert.ok(headers.has("content-type"));
   });
 });

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it, beforeEach } from "node:test";
+import * as assert from "node:assert";
 import {
   targetVersionConnectEs,
   targetVersionConnectPlaywright,
@@ -93,34 +95,37 @@ plugins:
       ];
     });
     it("should be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v2_0_0.applicable(opt.scanned));
     });
     it("should migrate packages", () => {
       const result = v2_0_0.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@bufbuild/protobuf": `^${targetVersionProtobufEs}`,
           "@bufbuild/protoplugin": `^${targetVersionProtobufEs}`,
           "@bufbuild/protoc-gen-es": `^${targetVersionProtobufEs}`,
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
     it("should migrate buf.gen.yaml", () => {
       const result = v2_0_0.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(bufGenYamlWritten.length).toBe(1);
-      expect(bufGenYamlWritten[0]?.yaml).toEqual(`version: v2
+      assert.strictEqual(bufGenYamlWritten.length, 1);
+      assert.strictEqual(
+        bufGenYamlWritten[0]?.yaml,
+        `version: v2
 plugins:
   - remote: buf.build/bufbuild/es:v${targetVersionProtobufEs}
     out: src/gen
-`);
+`,
+      );
     });
   });
   describe("for connect-es v1", () => {
@@ -160,15 +165,15 @@ plugins:
       ];
     });
     it("should be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v2_0_0.applicable(opt.scanned));
     });
     it("should migrate packages", () => {
       const result = v2_0_0.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@connectrpc/connect": `^${targetVersionConnectEs}`,
           "@connectrpc/connect-express": `^${targetVersionConnectEs}`,
@@ -178,19 +183,22 @@ plugins:
           "@connectrpc/connect-web": `^${targetVersionConnectEs}`,
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
     it("should migrate buf.gen.yaml", () => {
       const result = v2_0_0.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(bufGenYamlWritten.length).toBe(1);
-      expect(bufGenYamlWritten[0]?.yaml).toEqual(`version: v2
+      assert.strictEqual(bufGenYamlWritten.length, 1);
+      assert.strictEqual(
+        bufGenYamlWritten[0]?.yaml,
+        `version: v2
 plugins:
   - local: es
     out: src/gen
-`);
+`,
+      );
     });
   });
   describe("for connect-query-es v1", () => {
@@ -220,33 +228,36 @@ plugins:
       ];
     });
     it("should be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v2_0_0.applicable(opt.scanned));
     });
     it("should migrate packages", () => {
       const result = v2_0_0.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@connectrpc/connect-query": `^${targetVersionConnectQuery}`,
           "@connectrpc/protoc-gen-connect-query": `^${targetVersionConnectQuery}`,
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
     it("should migrate buf.gen.yaml", () => {
       const result = v2_0_0.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(bufGenYamlWritten.length).toBe(1);
-      expect(bufGenYamlWritten[0]?.yaml).toEqual(`version: v2
+      assert.strictEqual(bufGenYamlWritten.length, 1);
+      assert.strictEqual(
+        bufGenYamlWritten[0]?.yaml,
+        `version: v2
 plugins:
   - remote: buf.build/connectrpc/query-es:v${targetVersionConnectQuery}
     out: src/gen
-`);
+`,
+      );
     });
   });
   describe("for connect-playwright-es v1", () => {
@@ -263,20 +274,20 @@ plugins:
       ];
     });
     it("should be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeTrue();
+      assert.ok(v2_0_0.applicable(opt.scanned));
     });
     it("should migrate", () => {
       const result = v2_0_0.migrate(opt);
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         ok: true,
       });
-      expect(packageJsonWritten.length).toBe(1);
-      expect(packageJsonWritten[0].pkg).toEqual({
+      assert.strictEqual(packageJsonWritten.length, 1);
+      assert.deepStrictEqual(packageJsonWritten[0].pkg, {
         dependencies: {
           "@connectrpc/connect-playwright": `^${targetVersionConnectPlaywright}`,
         },
       });
-      expect(lockFilesUpdated.length).toBe(1);
+      assert.strictEqual(lockFilesUpdated.length, 1);
     });
   });
   describe("for up-to-date versions", () => {
@@ -349,7 +360,7 @@ plugins:
       ];
     });
     it("should not be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeFalse();
+      assert.ok(!v2_0_0.applicable(opt.scanned));
     });
   });
   describe("for protobuf-es pre v1 versions", () => {
@@ -368,7 +379,7 @@ plugins:
       ];
     });
     it("should not be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeFalse();
+      assert.ok(!v2_0_0.applicable(opt.scanned));
     });
   });
   describe("for connect-es in @bufbuild", () => {
@@ -405,7 +416,7 @@ plugins:
       ];
     });
     it("should not be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeFalse();
+      assert.ok(!v2_0_0.applicable(opt.scanned));
     });
   });
   describe("for connect-query-es in @bufbuild", () => {
@@ -423,7 +434,7 @@ plugins:
       ];
     });
     it("should not be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeFalse();
+      assert.ok(!v2_0_0.applicable(opt.scanned));
     });
   });
   describe("for connect-playwright-es in @bufbuild", () => {
@@ -440,7 +451,7 @@ plugins:
       ];
     });
     it("should not be applicable", () => {
-      expect(v2_0_0.applicable(opt.scanned)).toBeFalse();
+      assert.ok(!v2_0_0.applicable(opt.scanned));
     });
   });
 });

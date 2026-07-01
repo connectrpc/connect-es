@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import type { Compression } from "../protocol/index.js";
 import {
   requestHeader,
@@ -33,25 +35,27 @@ function listHeaderKeys(header: Headers): string[] {
 describe("requestHeader", () => {
   it("should create request headers", () => {
     const headers = requestHeader("unary", true, undefined, undefined, true);
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "connect-protocol-version",
       "content-type",
       "user-agent",
     ]);
-    expect(headers.get("Content-Type")).toBe("application/proto");
-    expect(headers.get("Connect-Protocol-Version")).toBe("1");
-    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+/);
+    assert.strictEqual(headers.get("Content-Type"), "application/proto");
+    assert.strictEqual(headers.get("Connect-Protocol-Version"), "1");
+    // The user-agent placeholder is replaced with the actual version at build
+    // time (see scripts/update-user-agent.mjs); these tests run against source.
+    assert.strictEqual(headers.get("User-Agent"), "CONNECT_ES_USER_AGENT");
   });
 
   it("should create request headers with timeout", () => {
     const headers = requestHeader("unary", true, 10, undefined, true);
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "connect-protocol-version",
       "connect-timeout-ms",
       "content-type",
       "user-agent",
     ]);
-    expect(headers.get("Connect-Timeout-Ms")).toBe("10");
+    assert.strictEqual(headers.get("Connect-Timeout-Ms"), "10");
   });
 
   it("should create request headers with user provided user-agent", () => {
@@ -62,18 +66,18 @@ describe("requestHeader", () => {
       { "User-Agent": "grpc-es/0.0.0" },
       true,
     );
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "connect-protocol-version",
       "connect-timeout-ms",
       "content-type",
       "user-agent",
     ]);
-    expect(headers.get("User-Agent")).toBe("grpc-es/0.0.0");
+    assert.strictEqual(headers.get("User-Agent"), "grpc-es/0.0.0");
   });
 
   it("should exclude user-agent", () => {
     const headers = requestHeader("unary", true, undefined, undefined, false);
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "connect-protocol-version",
       "content-type",
     ]);
@@ -98,15 +102,18 @@ describe("requestHeaderWithCompression", () => {
       compressionMock,
       true,
     );
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "accept-encoding",
       "connect-protocol-version",
       "content-encoding",
       "content-type",
       "user-agent",
     ]);
-    expect(headers.get(headerUnaryEncoding)).toBe(compressionMock.name);
-    expect(headers.get(headerUnaryAcceptEncoding)).toBe(compressionMock.name);
+    assert.strictEqual(headers.get(headerUnaryEncoding), compressionMock.name);
+    assert.strictEqual(
+      headers.get(headerUnaryAcceptEncoding),
+      compressionMock.name,
+    );
   });
 
   it("should create request headers with compression for stream request", () => {
@@ -119,14 +126,17 @@ describe("requestHeaderWithCompression", () => {
       compressionMock,
       true,
     );
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "connect-accept-encoding",
       "connect-content-encoding",
       "connect-protocol-version",
       "content-type",
       "user-agent",
     ]);
-    expect(headers.get(headerStreamEncoding)).toBe(compressionMock.name);
-    expect(headers.get(headerStreamAcceptEncoding)).toBe(compressionMock.name);
+    assert.strictEqual(headers.get(headerStreamEncoding), compressionMock.name);
+    assert.strictEqual(
+      headers.get(headerStreamAcceptEncoding),
+      compressionMock.name,
+    );
   });
 });

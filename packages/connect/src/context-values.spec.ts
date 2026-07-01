@@ -12,40 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { createContextKey, createContextValues } from "./context-values.js";
 
 describe("ContextValues", () => {
   it("should get default values", () => {
     const contextValues = createContextValues();
     const kString = createContextKey("default");
-    expect(contextValues.get(kString)).toBe(kString.defaultValue);
+    assert.strictEqual(contextValues.get(kString), kString.defaultValue);
   });
   it("should set values", () => {
     const contextValues = createContextValues();
     const kString = createContextKey("default");
     contextValues.set(kString, "foo");
-    expect(contextValues.get(kString)).toBe("foo");
+    assert.strictEqual(contextValues.get(kString), "foo");
   });
   it("should delete values", () => {
     const contextValues = createContextValues();
     const kString = createContextKey("default");
     contextValues.set(kString, "foo");
     contextValues.delete(kString);
-    expect(contextValues.get(kString)).toBe(kString.defaultValue);
+    assert.strictEqual(contextValues.get(kString), kString.defaultValue);
   });
   it("should work with undefined values", () => {
     const contextValues = createContextValues();
     const kUndefined = createContextKey<string | undefined>("default");
-    expect(contextValues.get(kUndefined)).toBe(kUndefined.defaultValue);
+    assert.strictEqual(contextValues.get(kUndefined), kUndefined.defaultValue);
     contextValues.set(kUndefined, undefined);
-    expect(contextValues.get(kUndefined)).toBe(undefined);
+    assert.strictEqual(contextValues.get(kUndefined), undefined);
   });
   it("should be properties on the type", () => {
     const contextValues = createContextValues();
     const kString = createContextKey("default", { description: "string" });
     contextValues.set(kString, "foo");
-    expect(contextValues).toEqual(
-      jasmine.objectContaining({ [kString.id]: "foo" }),
+    assert.strictEqual(
+      (contextValues as unknown as Record<symbol, unknown>)[kString.id],
+      "foo",
     );
   });
 });

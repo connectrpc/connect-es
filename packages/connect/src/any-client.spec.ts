@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { makeAnyClient } from "./any-client.js";
 import { EmptySchema, StructSchema } from "@bufbuild/protobuf/wkt";
 import { createServiceDesc } from "./descriptor-helper.spec.js";
@@ -33,7 +35,8 @@ describe("makeAnyClient()", () => {
         `This is method ${method.name} of service ${method.parent.typeName}. It takes a ${method.input.typeName} as input and returns a ${method.output.typeName}.`;
     });
     const result = client.foo();
-    expect(result).toBe(
+    assert.strictEqual(
+      result,
       "This is method Foo of service handwritten.TestService. It takes a google.protobuf.Empty as input and returns a google.protobuf.Struct.",
     );
   });

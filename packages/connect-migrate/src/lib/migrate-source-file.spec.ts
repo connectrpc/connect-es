@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import { updateSourceFileInMemory } from "./migrate-source-files";
 import type j from "jscodeshift";
 
@@ -27,7 +29,7 @@ describe("updateSourceFileInMemory", () => {
     `,
       "foo.ts",
     );
-    expect(result.modified).toBe(false);
+    assert.ok(!result.modified);
   });
   it("should parse js", () => {
     const transform: j.Transform = (file, { j }) => {
@@ -43,10 +45,13 @@ describe("updateSourceFileInMemory", () => {
     `,
       "foo.ts",
     );
-    expect(result.modified).toBe(true);
-    expect(result.source).toBe(`
+    assert.ok(result.modified);
+    assert.strictEqual(
+      result.source,
+      `
       const bar = 123;
-    `);
+    `,
+    );
   });
   it("should parse ts", () => {
     const transform: j.Transform = (file, { j }) => {
@@ -62,10 +67,13 @@ describe("updateSourceFileInMemory", () => {
     `,
       "foo.ts",
     );
-    expect(result.modified).toBe(true);
-    expect(result.source).toBe(`
+    assert.ok(result.modified);
+    assert.strictEqual(
+      result.source,
+      `
       const bar: number = 123;
-    `);
+    `,
+    );
   });
   it("should parse tsx", () => {
     const transform: j.Transform = (file, { j }) => {
@@ -81,9 +89,12 @@ describe("updateSourceFileInMemory", () => {
     `,
       "foo.tsx",
     );
-    expect(result.modified).toBe(true);
-    expect(result.source).toBe(`
+    assert.ok(result.modified);
+    assert.strictEqual(
+      result.source,
+      `
       const bar = () => (<body>body</body>);
-    `);
+    `,
+    );
   });
 });

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { describe, it } from "node:test";
+import * as assert from "node:assert";
 import type { Compression } from "../protocol/index.js";
 import {
   requestHeader,
@@ -31,39 +33,44 @@ function listHeaderKeys(header: Headers): string[] {
 describe("requestHeader", () => {
   it("should create request headers", () => {
     const headers = requestHeader(true, undefined, undefined, true);
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "content-type",
       "user-agent",
       "x-grpc-web",
       "x-user-agent",
     ]);
-    expect(headers.get("Content-Type")).toBe("application/grpc-web+proto");
-    expect(headers.get("X-User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+/);
-    expect(headers.get("User-Agent")).toMatch(/^connect-es\/\d+\.\d+\.\d+/);
-    expect(headers.get("X-Grpc-Web")).toBe("1");
+    assert.strictEqual(
+      headers.get("Content-Type"),
+      "application/grpc-web+proto",
+    );
+    // The user-agent placeholder is replaced with the actual version at build
+    // time (see scripts/update-user-agent.mjs); these tests run against source.
+    assert.strictEqual(headers.get("X-User-Agent"), "CONNECT_ES_USER_AGENT");
+    assert.strictEqual(headers.get("User-Agent"), "CONNECT_ES_USER_AGENT");
+    assert.strictEqual(headers.get("X-Grpc-Web"), "1");
   });
 
   it("should create request headers with timeout", () => {
     const headers = requestHeader(true, 10, undefined, true);
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "content-type",
       "grpc-timeout",
       "user-agent",
       "x-grpc-web",
       "x-user-agent",
     ]);
-    expect(headers.get("Grpc-Timeout")).toBe("10m");
+    assert.strictEqual(headers.get("Grpc-Timeout"), "10m");
   });
 
   it("should not set user-agent header", () => {
     const headers = requestHeader(true, 10, undefined, false);
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "content-type",
       "grpc-timeout",
       "x-grpc-web",
       "x-user-agent",
     ]);
-    expect(headers.get("Grpc-Timeout")).toBe("10m");
+    assert.strictEqual(headers.get("Grpc-Timeout"), "10m");
   });
 
   it("should set user provided user-agent header", () => {
@@ -73,15 +80,15 @@ describe("requestHeader", () => {
       { "User-Agent": "grpc-es/0.0.0" },
       true,
     );
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "content-type",
       "grpc-timeout",
       "user-agent",
       "x-grpc-web",
       "x-user-agent",
     ]);
-    expect(headers.get("User-Agent")).toBe("grpc-es/0.0.0");
-    expect(headers.get("X-User-Agent")).toBe("grpc-es/0.0.0");
+    assert.strictEqual(headers.get("User-Agent"), "grpc-es/0.0.0");
+    assert.strictEqual(headers.get("X-User-Agent"), "grpc-es/0.0.0");
   });
 
   it("should set user provided x-user-agent header", () => {
@@ -91,15 +98,15 @@ describe("requestHeader", () => {
       { "X-User-Agent": "grpc-es/0.0.0" },
       true,
     );
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "content-type",
       "grpc-timeout",
       "user-agent",
       "x-grpc-web",
       "x-user-agent",
     ]);
-    expect(headers.get("User-Agent")).toBe("grpc-es/0.0.0");
-    expect(headers.get("X-User-Agent")).toBe("grpc-es/0.0.0");
+    assert.strictEqual(headers.get("User-Agent"), "grpc-es/0.0.0");
+    assert.strictEqual(headers.get("X-User-Agent"), "grpc-es/0.0.0");
   });
 
   it("should create request headers with compression", () => {
@@ -117,7 +124,7 @@ describe("requestHeader", () => {
       compressionMock,
       true,
     );
-    expect(listHeaderKeys(headers)).toEqual([
+    assert.deepStrictEqual(listHeaderKeys(headers), [
       "content-type",
       "grpc-accept-encoding",
       "grpc-encoding",
@@ -125,7 +132,7 @@ describe("requestHeader", () => {
       "x-grpc-web",
       "x-user-agent",
     ]);
-    expect(headers.get(headerEncoding)).toBe(compressionMock.name);
-    expect(headers.get(headerAcceptEncoding)).toBe(compressionMock.name);
+    assert.strictEqual(headers.get(headerEncoding), compressionMock.name);
+    assert.strictEqual(headers.get(headerAcceptEncoding), compressionMock.name);
   });
 });
