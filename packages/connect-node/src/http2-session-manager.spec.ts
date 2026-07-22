@@ -16,6 +16,7 @@ import { describe, it } from "node:test";
 import * as assert from "node:assert";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
+import * as net from "node:net";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { ConnectError } from "@connectrpc/connect";
 import { Worker } from "node:worker_threads";
@@ -269,6 +270,76 @@ describe("Http2SessionManager", () => {
       );
       sm.abort();
       assert.strictEqual(sm.state(), "closed");
+    });
+    it("should open a new connection if the existing one closes gracefully during verification", async (t) => {
+      // proxy the server, so that the answer to a verification PING can be dropped
+      let dropServerToClient = false;
+      const proxy = net.createServer((clientSide) => {
+        const serverSide = net.connect(
+          Number(new URL(server.getUrl()).port),
+          "localhost",
+        );
+        clientSide.pipe(serverSide);
+        serverSide.on("data", (chunk) => {
+          if (!dropServerToClient) {
+            clientSide.write(chunk);
+          }
+        });
+        clientSide.on("error", () => {});
+        serverSide.on("error", () => {});
+        clientSide.on("close", () => serverSide.destroy());
+        serverSide.on("close", () => clientSide.destroy());
+      });
+      await new Promise<void>((resolve) =>
+        proxy.listen(0, "localhost", resolve),
+      );
+      t.after(() => proxy.close());
+
+      const sm = new Http2SessionManager(
+        `http://localhost:${(proxy.address() as net.AddressInfo).port}`,
+        {
+          pingIntervalMs: 10, // intentionally short to trigger verification in tests
+          pingTimeoutMs: 250, // intentionally long, so that the idle timeout below fires first
+          idleConnectionTimeoutMs: 50, // intentionally short, so that the connection closes during verification
+        },
+      );
+      t.after(() => sm.abort());
+
+      // issue a request and close it, then wait for more than pingIntervalMs to trigger a verification
+      const req1 = await sm.request("POST", "/", {}, {});
+      const req1Session = req1.session;
+      await new Promise<void>((resolve) =>
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      dropServerToClient = true;
+      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+
+      // this request sends a verification PING whose answer is dropped
+      const req2Promise = sm.request("POST", "/", {}, {});
+      req2Promise.catch(() => {}); // tolerate a late rejection after a failed test
+      assert.strictEqual(sm.state(), "verifying");
+
+      // the PING answer is dropped for good - restore the network, then wait
+      // for the idle timeout to close the connection while the PING is still
+      // in flight ("close" without "error", PING cancelled without a result)
+      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+      dropServerToClient = false;
+      await new Promise<void>((resolve) => setTimeout(resolve, 40));
+
+      // the verification must settle, and the request proceeds on a new connection
+      const req2 = await Promise.race([
+        req2Promise,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("verification never settled")),
+            500,
+          ),
+        ),
+      ]);
+      assert.notStrictEqual(req1Session, req2.session);
+      await new Promise<void>((resolve) =>
+        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
     });
   });
 

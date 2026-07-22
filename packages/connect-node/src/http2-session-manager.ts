@@ -613,15 +613,22 @@ function ready(
     verify() {
       conn.ref();
       return new Promise<boolean>((resolve) => {
-        const onError = () => {
+        // The connection can close gracefully while the PING is in flight,
+        // for example when the idle timeout elapses during verification. That
+        // emits "close" without "error", and cancels the PING without a
+        // result. This promise is memoized in Http2SessionManager.verifying -
+        // if it never settles, all future verifications hang.
+        const onFailure = () => {
           resolve(false);
         };
         commonPing(() => {
           if (streamCount == 0) conn.unref();
-          conn.off("error", onError);
+          conn.off("error", onFailure);
+          conn.off("close", onFailure);
           resolve(true);
         });
-        conn.once("error", onError);
+        conn.once("error", onFailure);
+        conn.once("close", onFailure);
       });
     },
     abort(reason) {
