@@ -16,6 +16,7 @@ import { describe, it } from "node:test";
 import * as assert from "node:assert";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
+import * as net from "node:net";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { ConnectError } from "@connectrpc/connect";
 import { Worker } from "node:worker_threads";
@@ -266,6 +267,76 @@ describe("Http2SessionManager", () => {
       // clean up
       await new Promise<void>((resolve) =>
         req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      sm.abort();
+      assert.strictEqual(sm.state(), "closed");
+    });
+  });
+
+  describe("with connectTimeoutMs", () => {
+    it("should reject requests if the connection cannot be established in time", async (t) => {
+      // a server that accepts connections, but never completes the TLS
+      // handshake - without connectTimeoutMs, the connection attempt (and
+      // every request waiting on it) stays pending indefinitely
+      const silentSockets: net.Socket[] = [];
+      const silentServer = net.createServer((socket) =>
+        silentSockets.push(socket),
+      );
+      await new Promise<void>((resolve) =>
+        silentServer.listen(0, "localhost", resolve),
+      );
+      t.after(() => {
+        for (const socket of silentSockets) {
+          socket.destroy();
+        }
+        silentServer.close();
+      });
+
+      const sm = new Http2SessionManager(
+        `https://localhost:${(silentServer.address() as net.AddressInfo).port}`,
+        {
+          connectTimeoutMs: 50, // intentionally short for tests
+        },
+      );
+      t.after(() => sm.abort());
+
+      await assert.rejects(
+        Promise.race([
+          sm.request("POST", "/", {}, {}),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("connection attempt is not bounded")),
+              1000,
+            ),
+          ),
+        ]),
+        /\[unavailable] connection establishment timed out/,
+      );
+      assert.strictEqual(sm.state(), "error");
+
+      // the manager must not be stuck: the next request dials again, and is
+      // bounded by the same timeout
+      await assert.rejects(
+        Promise.race([
+          sm.request("POST", "/", {}, {}),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("connection attempt is not bounded")),
+              1000,
+            ),
+          ),
+        ]),
+        /\[unavailable] connection establishment timed out/,
+      );
+    });
+    it("should not affect connections that are established in time", async () => {
+      const sm = new Http2SessionManager(server.getUrl(), {
+        connectTimeoutMs: 1000,
+      });
+      const req = await sm.request("POST", "/", {}, {});
+      assert.strictEqual(sm.state(), "open");
+      await new Promise<void>((resolve) =>
+        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
       sm.abort();
       assert.strictEqual(sm.state(), "closed");
