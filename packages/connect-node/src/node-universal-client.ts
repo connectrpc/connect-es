@@ -309,10 +309,50 @@ function h2Request(
         sentinel.error(e);
       });
 
+      // A gRPC response over HTTP/2 is always terminated by trailers (a
+      // HEADERS frame with the END_STREAM flag), or is a "trailers-only"
+      // response, where the initial HEADERS frame carries the status and the
+      // END_STREAM flag.
+      // gRPC requests declare this contract with the request header
+      // "TE: trailers".
+      // If an intermediary (e.g. a proxy during a graceful shutdown) resets
+      // the stream with the NO_ERROR code before the response has completed,
+      // Node.js versions without the fix from
+      // https://github.com/nodejs/node/pull/63249 surface the reset as a
+      // clean, error-free end of the response body, with rstCode 0. The
+      // protocol layer then fails parsing the truncated body with misleading
+      // errors such as "protocol error: incomplete envelope", or "protocol
+      // error: missing status".
+      // To surface the reset instead, we track whether the response was
+      // properly terminated, and raise Code.Unavailable from the "close"
+      // event if it was not.
+      const expectTrailers = requestExpectsTrailers(headers);
+      let responseIsTrailersOnly = false;
+      let trailersReceived = false;
+      stream.once("response", (responseHeaders) => {
+        // In a "trailers-only" gRPC response, the initial HEADERS frame
+        // carries the status, and no trailers frame follows. We must not
+        // flag such a response as incomplete.
+        responseIsTrailersOnly = responseHeaders["grpc-status"] !== undefined;
+      });
+      stream.once("trailers", () => {
+        trailersReceived = true;
+      });
       stream.on("close", function h2StreamClose() {
         const err = connectErrorFromH2ResetCode(stream.rstCode);
         if (err) {
           sentinel.error(err);
+        } else if (
+          expectTrailers &&
+          !trailersReceived &&
+          !responseIsTrailersOnly
+        ) {
+          sentinel.error(
+            new ConnectError(
+              "http/2 stream closed with error code NO_ERROR (0x0) before trailers were received",
+              Code.Unavailable,
+            ),
+          );
         }
       });
       onStream(stream);
@@ -321,6 +361,21 @@ function h2Request(
       sentinel.error(reason);
     },
   );
+}
+
+/**
+ * Returns true if the request declares with the "TE: trailers" header that
+ * the response must be terminated by HTTP trailers, as gRPC requests do.
+ */
+function requestExpectsTrailers(headers: http2.OutgoingHttpHeaders): boolean {
+  const te = headers.te;
+  if (typeof te != "string") {
+    return false;
+  }
+  return te
+    .toLowerCase()
+    .split(",")
+    .some((v) => v.trim() == "trailers");
 }
 
 function h2ResponseTrailer(response: http2.ClientHttp2Stream): Headers {
