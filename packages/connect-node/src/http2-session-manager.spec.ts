@@ -479,6 +479,62 @@ describe("Http2SessionManager", () => {
         sm.abort();
       });
     });
+    describe("with NO_ERROR and no open streams, immediately followed by a request", () => {
+      it("should not raise the deferred connection error as an uncaught exception", async () => {
+        const sm = new Http2SessionManager(server.getUrl());
+
+        // issue a request to open a connection, but close the request immediately
+        const req1 = await sm.request("POST", "/", {}, {});
+        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        await new Promise<void>((resolve) =>
+          req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+        );
+        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        assert.strictEqual(
+          sm.state(),
+          "idle",
+          "connection state after issuing a request and closing it",
+        );
+
+        // on the server, send a GOAWAY frame, and wait until the client
+        // session has processed it - the manager destroys the connection with
+        // a ConnectError, but Node.js defers the "error" event until the
+        // socket has closed
+        const conn = (
+          sm as unknown as { s: { conn: http2.ClientHttp2Session } }
+        ).s.conn;
+        assert.strictEqual(serverSessions.length, 1);
+        serverSessions[0].goaway(http2.constants.NGHTTP2_NO_ERROR);
+        await new Promise<void>((resolve) =>
+          conn.once("goaway", () => resolve()),
+        );
+        assert.strictEqual(conn.destroyed, true);
+
+        // issue a second request before the deferred "error" event is raised
+        // on the destroyed connection - the manager exits the "ready" state
+        // and removes its error listeners, and the deferred error must not
+        // crash the process as an uncaught exception
+        const req2 = await sm.request("POST", "/", {}, {});
+        await new Promise<void>((resolve) => setTimeout(resolve, 20));
+        assert.strictEqual(
+          sm.state(),
+          "open",
+          "connection state after issuing a second request",
+        );
+
+        // clean up
+        await new Promise<void>((resolve) =>
+          req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+        );
+
+        // Same as in the test above: the first session does not close on the
+        // server, and we have to close it here so that the test suite does not
+        // time out waiting for open connections.
+        await new Promise<void>((resolve) => serverSessions[0].close(resolve));
+
+        sm.abort();
+      });
+    });
     describe("with NO_ERROR and open stream that is closed after receiving the GOAWAY", () => {
       it("should close the session and open a new one for a second request", async () => {
         const sm = new Http2SessionManager(server.getUrl());

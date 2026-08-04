@@ -722,6 +722,14 @@ function ready(
       // destroying the session), but later versions do not.
       // We call conn.destroy() because calling conn.close() ourselves is ineffective
       // here - it appears that the method is already being called, see https://github.com/nodejs/node/blob/198affc63973805ce5102d246f6b7822be57f5fc/lib/internal/http2/core.js#L681
+      conn.once("error", () => {
+        // conn.destroy() defers the error until the socket has closed. If the
+        // manager exits the "ready" state before that (for example because a
+        // new request sees the destroyed connection and reconnects), our error
+        // listeners are removed in onExitState(), and the deferred error would
+        // be raised as an uncaught exception, crashing the process.
+        // We attach this one to swallow uncaught exceptions.
+      });
       conn.destroy(
         new ConnectError(
           "received GOAWAY without any open streams",
