@@ -274,21 +274,21 @@ describe("Http2SessionManager", () => {
     it("should open a new connection if the existing one closes gracefully during verification", async (t) => {
       // proxy the server, so that the answer to a verification PING can be dropped
       let dropServerToClient = false;
-      const proxy = net.createServer((clientSide) => {
-        const serverSide = net.connect(
+      const proxy = net.createServer((clientSocket) => {
+        const serverSocket = net.connect(
           Number(new URL(server.getUrl()).port),
           "localhost",
         );
-        clientSide.pipe(serverSide);
-        serverSide.on("data", (chunk) => {
+        clientSocket.pipe(serverSocket);
+        serverSocket.on("data", (chunk) => {
           if (!dropServerToClient) {
-            clientSide.write(chunk);
+            clientSocket.write(chunk);
           }
         });
-        clientSide.on("error", () => {});
-        serverSide.on("error", () => {});
-        clientSide.on("close", () => serverSide.destroy());
-        serverSide.on("close", () => clientSide.destroy());
+        clientSocket.on("error", () => {});
+        serverSocket.on("error", () => {});
+        clientSocket.on("close", () => serverSocket.destroy());
+        serverSocket.on("close", () => clientSocket.destroy());
       });
       await new Promise<void>((resolve) =>
         proxy.listen(0, "localhost", resolve),
@@ -305,12 +305,14 @@ describe("Http2SessionManager", () => {
       );
       t.after(() => sm.abort());
 
-      // issue a request and close it, then wait for more than pingIntervalMs to trigger a verification
+      // issue a request and close it to start the idle timeout
       const req1 = await sm.request("POST", "/", {}, {});
       const req1Session = req1.session;
       await new Promise<void>((resolve) =>
         req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
+
+      // stop the server and wait for more than pingIntervalMs to trigger a verification
       dropServerToClient = true;
       await new Promise<void>((resolve) => setTimeout(resolve, 20));
 
@@ -318,11 +320,12 @@ describe("Http2SessionManager", () => {
       const req2Promise = sm.request("POST", "/", {}, {});
       req2Promise.catch(() => {}); // tolerate a late rejection after a failed test
       assert.strictEqual(sm.state(), "verifying");
-
-      // the PING answer is dropped for good - restore the network, then wait
-      // for the idle timeout to close the connection while the PING is still
-      // in flight ("close" without "error", PING cancelled without a result)
       await new Promise<void>((resolve) => setTimeout(resolve, 20));
+
+      // the PING answer should be dropped for good now - restore the network,
+      // then wait for the idle timeout to close the connection while the PING
+      // is still in flight ("close" without "error", PING cancelled without a
+      // result)
       dropServerToClient = false;
       await new Promise<void>((resolve) => setTimeout(resolve, 40));
 
