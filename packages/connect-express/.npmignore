@@ -1,5 +1,0 @@
-/src
-/*.json
-/conformance
-/dist/**/*.spec.js
-/dist/**/*.spec.d.ts

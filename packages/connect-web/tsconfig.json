@@ -2,6 +2,7 @@
   "include": ["src/**/*.ts", "conformance/**/*.ts"],
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "verbatimModuleSyntax": false,
     "skipLibCheck": true,
     "types": ["node"]
   }

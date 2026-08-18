@@ -1,4 +1,6 @@
 .turbo
+.tshy
+.tshy-build
 .wrangler
 node_modules
 /packages/*/dist
