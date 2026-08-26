@@ -29,7 +29,7 @@
     }
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "devDependencies": {
     "@connectrpc/connect-conformance": "^2.1.2",
