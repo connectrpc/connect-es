@@ -196,21 +196,20 @@ describe("universalRequestFromNodeResponse()", () => {
       s.headersTimeout = 0;
       return s;
     });
+    // Destroys the connection once the server has read the request headers.
     async function request() {
-      return new Promise<void>((resolve) => {
-        const request = http.request(server.getUrl(), {
-          method: "POST",
-        });
-        request.on("error", () => {
-          // we need this event lister so that Node.js does not raise the error
-          // we trigger by calling destroy()
-        });
-        request.flushHeaders();
-        setTimeout(() => {
-          request.destroy();
-          resolve();
-        }, 20);
+      const req = http.request(server.getUrl(), {
+        method: "POST",
       });
+      req.on("error", () => {
+        // we need this event lister so that Node.js does not raise the error
+        // we trigger by calling destroy()
+      });
+      req.flushHeaders();
+      while (serverRequest === undefined) {
+        await new Promise((r) => setTimeout(r, 1));
+      }
+      req.destroy();
     }
     it("should abort request signal with ConnectError and Code.Aborted", async () => {
       await request();
