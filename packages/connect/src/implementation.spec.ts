@@ -84,15 +84,15 @@ describe("createHandlerContext()", () => {
       const ctx = createHandlerContext({ ...standardOptions });
       assert.strictEqual(ctx.timeoutMs(), undefined);
     });
-    it("should return remaining timeout", () => {
+    it("should return remaining timeout", (t) => {
+      t.mock.timers.enable({ apis: ["Date", "setTimeout"] });
       const ctx = createHandlerContext({
         ...standardOptions,
         timeoutMs: 1000,
       });
-      const timeoutMs = ctx.timeoutMs();
-      assert.ok(timeoutMs !== undefined);
-      assert.ok(timeoutMs <= 1000);
-      assert.ok(timeoutMs >= 990);
+      assert.strictEqual(ctx.timeoutMs(), 1000);
+      t.mock.timers.tick(100);
+      assert.strictEqual(ctx.timeoutMs(), 900);
     });
   });
 
