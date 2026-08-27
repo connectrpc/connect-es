@@ -31,6 +31,32 @@ import type {
 import { applyInterceptors } from "../interceptor.js";
 
 /**
+ * Invoke the implementation for a streaming RPC, unless a request gate rejects
+ * the call first.
+ *
+ * The gate runs before the request body is received. If it throws, the returned
+ * iterator rejects with its error, so the caller's response pipeline serializes
+ * it without reading the body; otherwise the implementation's iterator is
+ * returned.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export async function applyRequestGate<T>(
+  context: HandlerContext,
+  requestGate: ((context: HandlerContext) => void | Promise<void>) | undefined,
+  invoke: () => AsyncIterable<T>,
+): Promise<AsyncIterator<T>> {
+  if (requestGate !== undefined) {
+    try {
+      await requestGate(context);
+    } catch (reason) {
+      return { next: () => Promise.reject(reason) };
+    }
+  }
+  return invoke()[Symbol.asyncIterator]();
+}
+
+/**
  * Invoke a user-provided implementation of a unary RPC. Returns a normalized
  * output message.
  *

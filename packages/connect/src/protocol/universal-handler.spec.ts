@@ -41,6 +41,7 @@ describe("validateUniversalHandlerOptions()", () => {
       shutdownSignal: undefined,
       requireConnectProtocolHeader: false,
       interceptors: [],
+      requestGate: undefined,
     });
   });
   it("should accept inputs", () => {
@@ -66,6 +67,9 @@ describe("validateUniversalHandlerOptions()", () => {
       shutdownSignal: new AbortController().signal,
       requireConnectProtocolHeader: true,
       interceptors: [],
+      requestGate: () => {
+        // no-op
+      },
     };
     const o = validateUniversalHandlerOptions(i);
     assert.deepStrictEqual(o, i);
