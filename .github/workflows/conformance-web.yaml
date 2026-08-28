@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        node-version: [24.x, 22.x, 20.x]
+        node-version: [26.x, 24.x, 22.x]
         client: [promise, callback]
     name: "Node.js ${{ matrix.node-version }} ${{ matrix.client }}"
     timeout-minutes: 10
