@@ -41,7 +41,7 @@ describe("createHandlerContext()", () => {
   describe("signal", () => {
     it("should have a default value", () => {
       const ctx = createHandlerContext({ ...standardOptions });
-      assert.notStrictEqual(ctx.signal, undefined);
+      assert.ok(ctx.signal !== undefined);
       assert.ok(!ctx.signal.aborted);
     });
     it("should trigger on timeout", () => {

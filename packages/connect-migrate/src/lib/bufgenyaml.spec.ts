@@ -54,12 +54,12 @@ plugins:
 describe("parseBufGenYaml()", () => {
   it("should parse golden v1", () => {
     const y: BufGenYaml = parseBufGenYaml(goldenV1);
-    assert.notStrictEqual(y, undefined);
+    assert.ok(y !== undefined);
     assert.strictEqual(y.get("version"), "v1");
   });
   it("should parse golden v2", () => {
     const y: BufGenYaml = parseBufGenYaml(goldenV2);
-    assert.notStrictEqual(y, undefined);
+    assert.ok(y !== undefined);
     assert.strictEqual(y.get("version"), "v2");
   });
   it("raises error for unknown version", () => {

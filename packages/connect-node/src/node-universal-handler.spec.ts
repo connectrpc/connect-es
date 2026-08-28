@@ -72,86 +72,73 @@ describe("universalRequestFromNodeResponse()", () => {
       assert.ok(serverRequest?.signal instanceof AbortSignal);
       assert.strictEqual(serverRequest?.signal.aborted, true);
       assert.ok(serverRequest?.signal.reason instanceof Error);
-      if (serverRequest?.signal.reason instanceof Error) {
-        assert.strictEqual(serverRequest.signal.reason.name, "AbortError");
-        assert.strictEqual(
-          serverRequest.signal.reason.message,
-          "This operation was aborted",
-        );
-      }
+      assert.strictEqual(serverRequest.signal.reason.name, "AbortError");
+      assert.strictEqual(
+        serverRequest.signal.reason.message,
+        "This operation was aborted",
+      );
     });
     it("should silently end request body stream for NO_ERROR", async () => {
       await request(http2.constants.NGHTTP2_NO_ERROR);
-      assert.notStrictEqual(serverRequest, undefined);
-      if (serverRequest !== undefined) {
-        assertByteStreamRequest(serverRequest);
-        const iterator = serverRequest.body[Symbol.asyncIterator]();
-        const r = await iterator.next();
-        assert.ok(r.done);
-      }
+      assert.ok(serverRequest !== undefined);
+      assertByteStreamRequest(serverRequest);
+      const iterator = serverRequest.body[Symbol.asyncIterator]();
+      const r = await iterator.next();
+      assert.ok(r.done);
     });
     it("should abort request signal with ConnectError and Code.Canceled for CANCEL", async () => {
       await request(http2.constants.NGHTTP2_CANCEL);
       assert.ok(serverRequest?.signal instanceof AbortSignal);
       assert.strictEqual(serverRequest?.signal.aborted, true);
       assert.ok(serverRequest?.signal.reason instanceof ConnectError);
-      const ce = ConnectError.from(serverRequest?.signal.reason);
       assert.strictEqual(
-        ce.message,
+        serverRequest.signal.reason.message,
         "[canceled] http/2 stream closed with error code CANCEL (0x8)",
       );
     });
     it("should silently end request body stream for CANCEL", async () => {
       await request(http2.constants.NGHTTP2_CANCEL);
-      assert.notStrictEqual(serverRequest, undefined);
-      if (serverRequest !== undefined) {
-        assertByteStreamRequest(serverRequest);
-        const iterator = serverRequest.body[Symbol.asyncIterator]();
-        const r = await iterator.next();
-        assert.ok(r.done);
-      }
+      assert.ok(serverRequest !== undefined);
+      assertByteStreamRequest(serverRequest);
+      const iterator = serverRequest.body[Symbol.asyncIterator]();
+      const r = await iterator.next();
+      assert.ok(r.done);
     });
     it("should abort request signal with ConnectError and Code.ResourceExhausted for ENHANCE_YOUR_CALM", async () => {
       await request(http2.constants.NGHTTP2_ENHANCE_YOUR_CALM);
       assert.ok(serverRequest?.signal instanceof AbortSignal);
       assert.strictEqual(serverRequest?.signal.aborted, true);
       assert.ok(serverRequest?.signal.reason instanceof ConnectError);
-      const ce = ConnectError.from(serverRequest?.signal.reason);
       assert.strictEqual(
-        ce.message,
+        serverRequest.signal.reason.message,
         "[resource_exhausted] http/2 stream closed with error code ENHANCE_YOUR_CALM (0xb)",
       );
     });
     it("should silently end request body stream for ENHANCE_YOUR_CALM", async () => {
       await request(http2.constants.NGHTTP2_ENHANCE_YOUR_CALM);
-      assert.notStrictEqual(serverRequest, undefined);
-      if (serverRequest !== undefined) {
-        assertByteStreamRequest(serverRequest);
-        const iterator = serverRequest.body[Symbol.asyncIterator]();
-        const r = await iterator.next();
-        assert.ok(r.done);
-      }
+      assert.ok(serverRequest !== undefined);
+      assertByteStreamRequest(serverRequest);
+      const iterator = serverRequest.body[Symbol.asyncIterator]();
+      const r = await iterator.next();
+      assert.ok(r.done);
     });
     it("should abort request signal with ConnectError and Code.Internal for FRAME_SIZE_ERROR", async () => {
       await request(http2.constants.NGHTTP2_FRAME_SIZE_ERROR);
       assert.ok(serverRequest?.signal instanceof AbortSignal);
       assert.strictEqual(serverRequest?.signal.aborted, true);
       assert.ok(serverRequest?.signal.reason instanceof ConnectError);
-      const ce = ConnectError.from(serverRequest?.signal.reason);
       assert.strictEqual(
-        ce.message,
+        serverRequest.signal.reason.message,
         "[internal] http/2 stream closed with error code FRAME_SIZE_ERROR (0x6)",
       );
     });
     it("should silently end request body stream for FRAME_SIZE_ERROR", async () => {
       await request(http2.constants.NGHTTP2_FRAME_SIZE_ERROR);
-      assert.notStrictEqual(serverRequest, undefined);
-      if (serverRequest !== undefined) {
-        assertByteStreamRequest(serverRequest);
-        const iterator = serverRequest.body[Symbol.asyncIterator]();
-        const r = await iterator.next();
-        assert.ok(r.done);
-      }
+      assert.ok(serverRequest !== undefined);
+      assertByteStreamRequest(serverRequest);
+      const iterator = serverRequest.body[Symbol.asyncIterator]();
+      const r = await iterator.next();
+      assert.ok(r.done);
     });
   });
   describe("with HTTP/1.1 ECONNRESET", () => {
@@ -216,29 +203,26 @@ describe("universalRequestFromNodeResponse()", () => {
       while (serverRequest?.signal.reason === undefined) {
         await new Promise((r) => setTimeout(r, 1));
       }
-      assert.ok(serverRequest.signal.reason instanceof Error);
-      if (serverRequest.signal.reason instanceof Error) {
-        assert.ok(serverRequest.signal.reason instanceof ConnectError);
-        const ce = ConnectError.from(serverRequest.signal.reason);
-        assert.strictEqual(ce.message, "[aborted] aborted");
-      }
+      assert.ok(serverRequest.signal.reason instanceof ConnectError);
+      assert.strictEqual(
+        serverRequest.signal.reason.message,
+        "[aborted] aborted",
+      );
     });
     it("should error request body stream with ECONNRESET", async () => {
       await request();
-      assert.notStrictEqual(serverRequest, undefined);
-      if (serverRequest !== undefined) {
-        assertByteStreamRequest(serverRequest);
-        const iterator = serverRequest.body[Symbol.asyncIterator]();
-        await assert.rejects(iterator.next(), (e: unknown) => {
-          assert.ok(e instanceof Error);
-          assert.ok(!(e instanceof ConnectError));
-          assert.strictEqual(e.message, "aborted");
-          assert.deepStrictEqual(getNodeErrorProps(e), {
-            code: "ECONNRESET",
-          });
-          return true;
+      assert.ok(serverRequest !== undefined);
+      assertByteStreamRequest(serverRequest);
+      const iterator = serverRequest.body[Symbol.asyncIterator]();
+      await assert.rejects(iterator.next(), (e: unknown) => {
+        assert.ok(e instanceof Error);
+        assert.ok(!(e instanceof ConnectError));
+        assert.strictEqual(e.message, "aborted");
+        assert.deepStrictEqual(getNodeErrorProps(e), {
+          code: "ECONNRESET",
         });
-      }
+        return true;
+      });
     });
   });
   describe("with HTTP/1.1 request finishing without error", () => {
@@ -305,23 +289,19 @@ describe("universalRequestFromNodeResponse()", () => {
       assert.ok(serverRequest?.signal instanceof AbortSignal);
       assert.strictEqual(serverRequest?.signal.aborted, true);
       assert.ok(serverRequest?.signal.reason instanceof Error);
-      if (serverRequest?.signal.reason instanceof Error) {
-        assert.strictEqual(serverRequest.signal.reason.name, "AbortError");
-        assert.strictEqual(
-          serverRequest.signal.reason.message,
-          "This operation was aborted",
-        );
-      }
+      assert.strictEqual(serverRequest.signal.reason.name, "AbortError");
+      assert.strictEqual(
+        serverRequest.signal.reason.message,
+        "This operation was aborted",
+      );
     });
     it("should silently end request body stream", async () => {
       await request();
-      assert.notStrictEqual(serverRequest, undefined);
-      if (serverRequest !== undefined) {
-        assertByteStreamRequest(serverRequest);
-        const iterator = serverRequest.body[Symbol.asyncIterator]();
-        const r = await iterator.next();
-        assert.ok(r.done);
-      }
+      assert.ok(serverRequest !== undefined);
+      assertByteStreamRequest(serverRequest);
+      const iterator = serverRequest.body[Symbol.asyncIterator]();
+      const r = await iterator.next();
+      assert.ok(r.done);
     });
   });
   describe("with HTTP/1.1", () => {
@@ -359,7 +339,7 @@ describe("universalRequestFromNodeResponse()", () => {
         request.flushHeaders();
         request.end();
         request.on("response", (response) => {
-          assert.notStrictEqual(serverRequest, undefined);
+          assert.ok(serverRequest !== undefined);
           assert.strictEqual(serverRequest?.signal.aborted, false);
           serverNodeResponse?.end();
           void readAllBytes(response, Number.MAX_SAFE_INTEGER).then(() =>

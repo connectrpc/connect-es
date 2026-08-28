@@ -21,7 +21,7 @@ describe("createGrpcTransport()", () => {
     const t = createGrpcTransport({
       baseUrl: "https://example.com",
     });
-    assert.notStrictEqual(t, undefined);
+    assert.ok(t !== undefined);
   });
   it("should raise type error for httpVersion: 2", () => {
     const t = createGrpcTransport({
@@ -29,7 +29,7 @@ describe("createGrpcTransport()", () => {
       httpVersion: "2",
       baseUrl: "https://example.com",
     });
-    assert.notStrictEqual(t, undefined);
+    assert.ok(t !== undefined);
   });
   it("should raise type error for httpVersion: 1.1", () => {
     const t = createGrpcTransport({
@@ -37,6 +37,6 @@ describe("createGrpcTransport()", () => {
       httpVersion: "1.1",
       baseUrl: "https://example.com",
     });
-    assert.notStrictEqual(t, undefined);
+    assert.ok(t !== undefined);
   });
 });
