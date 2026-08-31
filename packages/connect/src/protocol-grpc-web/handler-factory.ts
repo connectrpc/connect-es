@@ -52,7 +52,10 @@ import { compressionNegotiate } from "../protocol/compression.js";
 import { contentTypeMatcher } from "../protocol/content-type-matcher.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import type { EnvelopedMessage } from "../protocol/envelope.js";
-import { transformInvokeImplementation } from "../protocol/invoke-implementation.js";
+import {
+  applyRequestGate,
+  transformInvokeImplementation,
+} from "../protocol/invoke-implementation.js";
 import type { ProtocolHandlerFactory } from "../protocol/protocol-handler-factory.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
 import type { Serialization } from "../protocol/serialization.js";
@@ -172,11 +175,15 @@ function createHandler<I extends DescMessage, O extends DescMessage>(
         // raises an error, but we want to be lenient
       ),
     );
-    const it = transformInvokeImplementation<I, O>(
-      spec,
-      context,
-      opt.interceptors,
-    )(inputIt)[Symbol.asyncIterator]();
+    // We run the request gate before receiving the body, so that a request it
+    // rejects is never read, decompressed, or parsed.
+    const it = await applyRequestGate(context, opt.requestGate, () =>
+      transformInvokeImplementation<I, O>(
+        spec,
+        context,
+        opt.interceptors,
+      )(inputIt),
+    );
     const outputIt = pipe(
       // We wrap the iterator in an async iterator to ensure that the
       // abort signal is aborted when the iterator is done.

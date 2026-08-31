@@ -36,13 +36,16 @@ import {
   sinkAll,
   transformSplitEnvelope,
 } from "../protocol/index.js";
-import { Code, ConnectError } from "../index.js";
+import { Code, ConnectError, createContextKey } from "../index.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
 import { readAll } from "../protocol/async-iterable-helper.spec.js";
-import { contentTypeStreamProto } from "./content-type.js";
+import {
+  contentTypeStreamProto,
+  contentTypeUnaryProto,
+} from "./content-type.js";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import {
   ApiSchema,
@@ -687,6 +690,99 @@ describe("createHandlerFactory()", () => {
           return true;
         },
       );
+    });
+  });
+
+  describe("requestGate", () => {
+    const denyAll = () => {
+      throw new ConnectError("no credentials", Code.Unauthenticated);
+    };
+    // A request body that records whether the handler read from it.
+    function trackedBody(state: { read: boolean }): AsyncIterable<Uint8Array> {
+      return {
+        [Symbol.asyncIterator]: () => ({
+          next: () => {
+            state.read = true;
+            return Promise.resolve({ done: true, value: undefined });
+          },
+        }),
+      };
+    }
+
+    for (const method of [
+      testService.method.unary,
+      testService.method.serverStreaming,
+    ]) {
+      it(`should not read the request body of a ${method.methodKind} RPC`, async () => {
+        const { handler } = setupTestHandler(
+          method,
+          { requestGate: denyAll },
+          () => assert.fail("implementation should not be called"),
+        );
+        const state = { read: false };
+        const res = await handler({
+          httpVersion: "2.0",
+          method: "POST",
+          url: `https://example.com/${method.parent.typeName}/${method.name}`,
+          header: new Headers({
+            "Content-Type":
+              method.methodKind === "unary"
+                ? contentTypeUnaryProto
+                : contentTypeStreamProto,
+          }),
+          body: trackedBody(state),
+          signal: new AbortController().signal,
+        });
+        assert.notStrictEqual(res.status, 415); // wrong content-type for this RPC
+        assert.strictEqual(state.read, false);
+      });
+    }
+
+    it("should reject a streaming RPC with the error from the gate", async () => {
+      const { transport, method } = setupTestHandler(
+        testService.method.serverStreaming,
+        { requestGate: denyAll },
+        () => assert.fail("implementation should not be called"),
+      );
+      await assert.rejects(
+        async () => {
+          const r = await transport.stream(
+            method,
+            undefined,
+            undefined,
+            undefined,
+            createAsyncIterable([create(Int32ValueSchema)]),
+          );
+          await pipeTo(r.message, sinkAll());
+        },
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(e.code, Code.Unauthenticated);
+          return true;
+        },
+      );
+    });
+
+    it("should pass context values from the gate to the implementation", async () => {
+      const kUser = createContextKey<string>("anonymous");
+      const { transport, method } = setupTestHandler(
+        testService.method.unary,
+        {
+          requestGate: (ctx) => {
+            assert.strictEqual(ctx.requestHeader.get("authorization"), "token");
+            ctx.values.set(kUser, "alice");
+          },
+        },
+        (_req, ctx) => ({ value: ctx.values.get(kUser) }),
+      );
+      const res = await transport.unary(
+        method,
+        undefined,
+        undefined,
+        { authorization: "token" },
+        create(Int32ValueSchema, { value: 1 }),
+      );
+      assert.strictEqual(res.message.value, "alice");
     });
   });
 });
