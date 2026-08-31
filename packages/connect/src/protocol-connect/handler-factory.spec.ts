@@ -400,7 +400,7 @@ describe("createHandlerFactory()", () => {
           signal: new AbortController().signal,
         });
         assert.strictEqual(res.status, 200);
-        assert.ok(res.body !== undefined);
+        assert.notStrictEqual(res.body, undefined);
         const lastEnv = await getLastEnvelope(res);
         const end = endStreamFromJson(lastEnv.data);
         assert.strictEqual(end.error?.code, Code.DeadlineExceeded);

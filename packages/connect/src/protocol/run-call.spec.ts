@@ -213,7 +213,7 @@ describe("runStreamingCall()", () => {
       },
     });
     for await (const m of res.message) {
-      assert.ok(m !== undefined);
+      assert.notStrictEqual(m, undefined);
     }
     assert.strictEqual(signal?.aborted, true);
     const it = req.message[Symbol.asyncIterator]();

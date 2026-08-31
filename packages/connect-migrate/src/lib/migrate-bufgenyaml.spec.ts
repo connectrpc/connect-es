@@ -54,7 +54,7 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      assert.ok(updated !== undefined);
+      assert.notStrictEqual(updated, undefined);
       assert.strictEqual(stringifyBufGenYaml(updated ?? yaml), expected);
     });
     it("should update plugin in v1", () => {
@@ -80,7 +80,7 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      assert.ok(updated !== undefined);
+      assert.notStrictEqual(updated, undefined);
       assert.strictEqual(stringifyBufGenYaml(updated ?? yaml), expected);
     });
     it("should not update up-to-date plugin in v1", () => {
@@ -147,7 +147,7 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      assert.ok(updated !== undefined);
+      assert.notStrictEqual(updated, undefined);
       assert.strictEqual(stringifyBufGenYaml(updated ?? yaml), expected);
     });
     it("should remove plugin from v1", () => {
@@ -182,7 +182,7 @@ plugins:
 `;
       const yaml = parseBufGenYaml(input);
       const updated = migrateBufGenYaml(yaml, [migration]);
-      assert.ok(updated !== undefined);
+      assert.notStrictEqual(updated, undefined);
       assert.strictEqual(stringifyBufGenYaml(updated ?? yaml), expected);
     });
   });

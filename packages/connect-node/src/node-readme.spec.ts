@@ -51,7 +51,7 @@ describe("node readme", () => {
     });
     const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
-    assert.ok(sentence !== undefined);
+    assert.notStrictEqual(sentence, undefined);
   });
 
   it("createGrpcTransport()", async () => {
@@ -59,7 +59,7 @@ describe("node readme", () => {
     const transport = createGrpcTransport(optionsHttp2);
     const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
-    assert.ok(sentence !== undefined);
+    assert.notStrictEqual(sentence, undefined);
   });
 
   it("createGrpcWebTransport()", async () => {
@@ -67,7 +67,7 @@ describe("node readme", () => {
     const transport = createGrpcWebTransport(optionsHttp1);
     const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
-    assert.ok(sentence !== undefined);
+    assert.notStrictEqual(sentence, undefined);
   });
 
   it("should work as well", async () => {

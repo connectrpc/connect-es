@@ -61,7 +61,7 @@ describe("slowly consuming an async iterable", () => {
     async function slowConsume(source: AsyncIterable<string>) {
       const tsStart = Date.now();
       for await (const chunk of source) {
-        assert.ok(chunk !== undefined); // only to satisfy type checks
+        assert.notStrictEqual(chunk, undefined); // only to satisfy type checks
         await new Promise((resolve) => setTimeout(resolve, consumerDelayMs));
       }
       consumeElapsedMs = Date.now() - tsStart;
@@ -258,7 +258,7 @@ describe("pipeTo()", () => {
 
     async function errorRaisingSink(iterable: AsyncIterable<string>) {
       for await (const chunk of iterable) {
-        assert.ok(chunk !== undefined); // only to satisfy type checks
+        assert.notStrictEqual(chunk, undefined); // only to satisfy type checks
         throw "SINK_ERROR";
       }
     }

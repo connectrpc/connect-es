@@ -58,8 +58,8 @@ describe("createDeadlineSignal()", () => {
     });
     it("should not be aborted initially", () => {
       const d = createDeadlineSignal(100);
-      assert.ok(d.signal !== undefined);
-      assert.ok(d.cleanup !== undefined);
+      assert.notStrictEqual(d.signal, undefined);
+      assert.notStrictEqual(d.cleanup, undefined);
     });
   });
   describe("with 0 timeout", () => {

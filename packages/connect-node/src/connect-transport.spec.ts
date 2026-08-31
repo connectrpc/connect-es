@@ -24,7 +24,7 @@ describe("createConnectTransport()", () => {
       httpVersion: "2",
       baseUrl: "https://example.com",
     });
-    assert.ok(t !== undefined);
+    assert.notStrictEqual(t, undefined);
   });
   it("should take session options", () => {
     const t = createConnectTransport({
@@ -35,7 +35,7 @@ describe("createConnectTransport()", () => {
       pingTimeoutMs: 1000 * 5,
       idleConnectionTimeoutMs: 1000 * 60 * 5,
     });
-    assert.ok(t !== undefined);
+    assert.notStrictEqual(t, undefined);
   });
   it("should take node options", () => {
     const t = createConnectTransport({
@@ -45,7 +45,7 @@ describe("createConnectTransport()", () => {
         maxSessionMemory: 1024 * 1024 * 4,
       },
     });
-    assert.ok(t !== undefined);
+    assert.notStrictEqual(t, undefined);
   });
   it("should take session manager", () => {
     const sm = new Http2SessionManager(
@@ -62,7 +62,7 @@ describe("createConnectTransport()", () => {
       baseUrl: "https://example.com",
       sessionManager: sm,
     });
-    assert.ok(t !== undefined);
+    assert.notStrictEqual(t, undefined);
   });
 });
 
