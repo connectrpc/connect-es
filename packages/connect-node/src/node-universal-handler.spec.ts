@@ -70,8 +70,8 @@ describe("universalRequestFromNodeResponse()", () => {
     it("should abort request signal with ConnectError and Code.Canceled for NO_ERROR", async () => {
       await request(http2.constants.NGHTTP2_NO_ERROR);
       assert.ok(serverRequest?.signal instanceof AbortSignal);
-      assert.strictEqual(serverRequest?.signal.aborted, true);
-      assert.ok(serverRequest?.signal.reason instanceof Error);
+      assert.strictEqual(serverRequest.signal.aborted, true);
+      assert.ok(serverRequest.signal.reason instanceof Error);
       assert.strictEqual(serverRequest.signal.reason.name, "AbortError");
       assert.strictEqual(
         serverRequest.signal.reason.message,
@@ -89,8 +89,8 @@ describe("universalRequestFromNodeResponse()", () => {
     it("should abort request signal with ConnectError and Code.Canceled for CANCEL", async () => {
       await request(http2.constants.NGHTTP2_CANCEL);
       assert.ok(serverRequest?.signal instanceof AbortSignal);
-      assert.strictEqual(serverRequest?.signal.aborted, true);
-      assert.ok(serverRequest?.signal.reason instanceof ConnectError);
+      assert.strictEqual(serverRequest.signal.aborted, true);
+      assert.ok(serverRequest.signal.reason instanceof ConnectError);
       assert.strictEqual(
         serverRequest.signal.reason.message,
         "[canceled] http/2 stream closed with error code CANCEL (0x8)",
@@ -107,8 +107,8 @@ describe("universalRequestFromNodeResponse()", () => {
     it("should abort request signal with ConnectError and Code.ResourceExhausted for ENHANCE_YOUR_CALM", async () => {
       await request(http2.constants.NGHTTP2_ENHANCE_YOUR_CALM);
       assert.ok(serverRequest?.signal instanceof AbortSignal);
-      assert.strictEqual(serverRequest?.signal.aborted, true);
-      assert.ok(serverRequest?.signal.reason instanceof ConnectError);
+      assert.strictEqual(serverRequest.signal.aborted, true);
+      assert.ok(serverRequest.signal.reason instanceof ConnectError);
       assert.strictEqual(
         serverRequest.signal.reason.message,
         "[resource_exhausted] http/2 stream closed with error code ENHANCE_YOUR_CALM (0xb)",
@@ -125,8 +125,8 @@ describe("universalRequestFromNodeResponse()", () => {
     it("should abort request signal with ConnectError and Code.Internal for FRAME_SIZE_ERROR", async () => {
       await request(http2.constants.NGHTTP2_FRAME_SIZE_ERROR);
       assert.ok(serverRequest?.signal instanceof AbortSignal);
-      assert.strictEqual(serverRequest?.signal.aborted, true);
-      assert.ok(serverRequest?.signal.reason instanceof ConnectError);
+      assert.strictEqual(serverRequest.signal.aborted, true);
+      assert.ok(serverRequest.signal.reason instanceof ConnectError);
       assert.strictEqual(
         serverRequest.signal.reason.message,
         "[internal] http/2 stream closed with error code FRAME_SIZE_ERROR (0x6)",
@@ -287,8 +287,8 @@ describe("universalRequestFromNodeResponse()", () => {
     it("should abort request signal with AbortError", async () => {
       await request();
       assert.ok(serverRequest?.signal instanceof AbortSignal);
-      assert.strictEqual(serverRequest?.signal.aborted, true);
-      assert.ok(serverRequest?.signal.reason instanceof Error);
+      assert.strictEqual(serverRequest.signal.aborted, true);
+      assert.ok(serverRequest.signal.reason instanceof Error);
       assert.strictEqual(serverRequest.signal.reason.name, "AbortError");
       assert.strictEqual(
         serverRequest.signal.reason.message,
@@ -340,7 +340,7 @@ describe("universalRequestFromNodeResponse()", () => {
         request.end();
         request.on("response", (response) => {
           assert.ok(serverRequest !== undefined);
-          assert.strictEqual(serverRequest?.signal.aborted, false);
+          assert.strictEqual(serverRequest.signal.aborted, false);
           serverNodeResponse?.end();
           void readAllBytes(response, Number.MAX_SAFE_INTEGER).then(() =>
             resolve(),

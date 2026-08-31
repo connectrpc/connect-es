@@ -158,7 +158,7 @@ describe("createHandlerFactory()", () => {
         signal: new AbortController().signal,
       });
       assert.ok(res.body !== undefined);
-      const it = res.body?.[Symbol.asyncIterator]();
+      const it = res.body[Symbol.asyncIterator]();
       await it?.next();
       const writeError = new Error("write error");
       await it?.throw?.(writeError).catch(() => {});
@@ -191,8 +191,8 @@ describe("createHandlerFactory()", () => {
         signal: new AbortController().signal,
       });
       assert.ok(handlerContextSignal !== undefined);
-      assert.strictEqual(handlerContextSignal?.aborted, true);
-      assert.ok(handlerContextSignal?.reason instanceof ConnectError);
+      assert.strictEqual(handlerContextSignal.aborted, true);
+      assert.ok(handlerContextSignal.reason instanceof ConnectError);
       assert.strictEqual(
         handlerContextSignal.reason.message,
         "[deadline_exceeded] the operation timed out",
@@ -297,8 +297,8 @@ describe("createHandlerFactory()", () => {
       ac.abort("test-reason");
       await resPromise;
       assert.ok(handlerContextSignal !== undefined);
-      assert.strictEqual(handlerContextSignal?.aborted, true);
-      assert.strictEqual(handlerContextSignal?.reason, "test-reason");
+      assert.strictEqual(handlerContextSignal.aborted, true);
+      assert.strictEqual(handlerContextSignal.reason, "test-reason");
     });
   });
 });
