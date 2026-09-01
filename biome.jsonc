@@ -34,7 +34,14 @@
       },
       "suspicious": {
         "noDoubleEquals": "off",
-        "noFallthroughSwitchClause": "off"
+        "noFallthroughSwitchClause": "off",
+        "useIterableCallbackReturn": {
+          "level": "error",
+          "options": {
+            // A forEach callback may return a value; map and filter still must.
+            "checkForEach": false
+          }
+        }
       }
     }
   }

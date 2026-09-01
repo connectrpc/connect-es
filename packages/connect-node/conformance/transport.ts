@@ -64,7 +64,7 @@ export function createTransport(req: ClientCompatRequest) {
       throw new Error("Unknown HTTP version");
   }
 
-  let sendCompression: Compression | undefined = undefined;
+  let sendCompression: Compression | undefined;
   let acceptCompression: Compression[] = [];
 
   switch (req.compression) {

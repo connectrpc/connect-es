@@ -173,7 +173,7 @@ describe("createHandlerFactory()", () => {
       const { handler, method } = setupTestHandler(
         testService.method.unary,
         {},
-        async (req, ctx) => {
+        async (_req, ctx) => {
           handlerContextSignal = ctx.signal;
           for (;;) {
             await new Promise((r) => setTimeout(r, 1));
@@ -276,7 +276,7 @@ describe("createHandlerFactory()", () => {
       const { handler, method } = setupTestHandler(
         testService.method.unary,
         {},
-        async (req, ctx) => {
+        async (_req, ctx) => {
           handlerContextSignal = ctx.signal;
           for (;;) {
             await new Promise((r) => setTimeout(r, 1));
