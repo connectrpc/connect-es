@@ -17,7 +17,7 @@
   "devDependencies": {
     "wrangler": "^4.127.1",
     "@cloudflare/workers-types": "^5.20260828.1",
-    "tsx": "^4.20.6",
+    "tsx": "^4.23.12",
     "@connectrpc/connect-conformance": "^2.1.2"
   }
 }
