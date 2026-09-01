@@ -22,7 +22,7 @@
     "postsetversion": "npm run all",
     "format": "biome format --write",
     "license-header": "license-header --ignore 'packages/**'",
-    "lint": "biome lint --error-on-warnings --config-path biome.json"
+    "lint": "biome lint --error-on-warnings"
   },
   "type": "module",
   "engineStrict": true,
@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.5.11",
     "@bufbuild/license-header": "^0.0.4",
     "turbo": "^2.10.11",
     "typescript": "^6.0.3"

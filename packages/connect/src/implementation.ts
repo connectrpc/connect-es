@@ -43,18 +43,16 @@ export type ServiceImpl<Desc extends DescService> = {
 /**
  * MethodImpl is the signature of the implementation of an RPC.
  */
-export type MethodImpl<M extends DescMethod> = M extends DescMethodUnary<
-  infer I,
-  infer O
->
-  ? UnaryImpl<I, O>
-  : M extends DescMethodServerStreaming<infer I, infer O>
-    ? ServerStreamingImpl<I, O>
-    : M extends DescMethodClientStreaming<infer I, infer O>
-      ? ClientStreamingImpl<I, O>
-      : M extends DescMethodBiDiStreaming<infer I, infer O>
-        ? BiDiStreamingImpl<I, O>
-        : never;
+export type MethodImpl<M extends DescMethod> =
+  M extends DescMethodUnary<infer I, infer O>
+    ? UnaryImpl<I, O>
+    : M extends DescMethodServerStreaming<infer I, infer O>
+      ? ServerStreamingImpl<I, O>
+      : M extends DescMethodClientStreaming<infer I, infer O>
+        ? ClientStreamingImpl<I, O>
+        : M extends DescMethodBiDiStreaming<infer I, infer O>
+          ? BiDiStreamingImpl<I, O>
+          : never;
 
 /**
  * Context for an RPC on the server. Every RPC implementation can accept a
