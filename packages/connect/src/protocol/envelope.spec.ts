@@ -78,8 +78,8 @@ describe("createEnvelopeReadableStream()", () => {
       const r = await reader.read();
       assert.ok(!r.done);
       assert.notStrictEqual(r.value, undefined);
-      assert.strictEqual(r.value?.flags, want.flags);
-      assert.deepStrictEqual(r.value?.data, want.data);
+      assert.strictEqual(r.value.flags, want.flags);
+      assert.deepStrictEqual(r.value.data, want.data);
     }
     const r = await reader.read();
     assert.ok(r.done);
@@ -120,8 +120,8 @@ describe("createEnvelopeReadableStream()", () => {
       const r = await reader.read();
       assert.ok(!r.done);
       assert.notStrictEqual(r.value, undefined);
-      assert.strictEqual(r.value?.flags, want.flags);
-      assert.deepStrictEqual(r.value?.data, want.data);
+      assert.strictEqual(r.value.flags, want.flags);
+      assert.deepStrictEqual(r.value.data, want.data);
     }
   });
   it("reads an EndStreamResponse out of usual order", async () => {
@@ -142,8 +142,8 @@ describe("createEnvelopeReadableStream()", () => {
       const r = await reader.read();
       assert.ok(!r.done);
       assert.notStrictEqual(r.value, undefined);
-      assert.strictEqual(r.value?.flags, want.flags);
-      assert.deepStrictEqual(r.value?.data, want.data);
+      assert.strictEqual(r.value.flags, want.flags);
+      assert.deepStrictEqual(r.value.data, want.data);
     }
     const r = await reader.read();
     assert.ok(r.done);

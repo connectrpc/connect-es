@@ -255,11 +255,9 @@ describe("Connect transport", () => {
     const expectPost: UniversalClientFn = async (request) => {
       assert.strictEqual(request.method, "POST");
       assert.strictEqual(new URL(request.url).search, "");
-      assert.notStrictEqual(request.body, undefined);
-      if (request.body !== undefined) {
-        const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
-        assert.ok(body.byteLength > 0);
-      }
+      assert.ok(request.body !== undefined);
+      const body = await readAllBytes(request.body, Number.MAX_SAFE_INTEGER);
+      assert.ok(body.byteLength > 0);
       return httpClientResponse;
     };
     describe("disabled", () => {
