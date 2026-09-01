@@ -6,7 +6,6 @@
       "**",
       "!**/gen",
       "!**/dist",
-      "!**/tsconfig.*.json",
       "!**/typescript-compat",
       "!**/*.svg"
     ]
