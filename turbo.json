@@ -17,25 +17,21 @@
       "cache": false,
       "dependsOn": ["^build"]
     },
-    "format": {},
     "license-header": {
       "dependsOn": ["generate"]
-    },
-    "lint": {
-      "dependsOn": ["format", "^build", "generate"]
     },
     "attw": {
       "dependsOn": ["build"]
     },
     "//#format": {
-      "inputs": ["$TURBO_DEFAULT$", "!packages/**", "package-lock.json"]
+      "inputs": ["$TURBO_DEFAULT$", "package-lock.json"]
     },
     "//#license-header": {
       "inputs": ["$TURBO_DEFAULT$", "!packages/**"]
     },
     "//#lint": {
-      "dependsOn": ["format"],
-      "inputs": ["$TURBO_DEFAULT$", "!packages/**", "package-lock.json"]
+      "dependsOn": ["//#format"],
+      "inputs": ["$TURBO_DEFAULT$", "package-lock.json"]
     }
   }
 }

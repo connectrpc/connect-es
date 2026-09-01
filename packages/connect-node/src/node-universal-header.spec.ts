@@ -24,7 +24,6 @@ describe("nodeHeaderToWebHeader()", () => {
   it("should accept empty node header", () => {
     const h = nodeHeaderToWebHeader({});
     let numHeaders = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
     assert.strictEqual(numHeaders, 0);
   });
@@ -33,7 +32,6 @@ describe("nodeHeaderToWebHeader()", () => {
       ":path": "ignore",
     });
     let numHeaders = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
     assert.strictEqual(numHeaders, 0);
   });
@@ -42,7 +40,6 @@ describe("nodeHeaderToWebHeader()", () => {
       undef: undefined,
     });
     let numHeaders = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     h.forEach(() => numHeaders++);
     assert.strictEqual(numHeaders, 0);
   });
