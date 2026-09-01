@@ -20,7 +20,11 @@ import type {
   JsonReadOptions,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import type { MethodImplSpec, ServiceImplSpec } from "../implementation.js";
+import type {
+  HandlerContext,
+  MethodImplSpec,
+  ServiceImplSpec,
+} from "../implementation.js";
 import {
   uResponseMethodNotAllowed,
   uResponseUnsupportedMediaType,
@@ -122,6 +126,19 @@ export interface UniversalHandlerOptions {
    * this router. See the Interceptor type for details.
    */
   interceptors: Interceptor[];
+
+  /**
+   * An optional gate that runs after request headers are available, but before
+   * any request message is received, decompressed, or parsed.
+   *
+   * This is the right place to reject unauthenticated requests cheaply. Throw
+   * a ConnectError to end any RPC without reading the body.
+   *
+   * The gate receives the HandlerContext for the call. It may set context
+   * values for interceptors and the implementation to consume, and set
+   * response headers or trailers.
+   */
+  requestGate?: (context: HandlerContext) => void | Promise<void>;
 }
 
 /**
@@ -193,6 +210,7 @@ export function validateUniversalHandlerOptions(
     shutdownSignal: opt.shutdownSignal,
     requireConnectProtocolHeader,
     interceptors: opt.interceptors ?? [],
+    requestGate: opt.requestGate,
   };
 }
 

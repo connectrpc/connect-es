@@ -36,12 +36,12 @@ jobs:
             diff-check: true
     name: ${{ matrix.task }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: "npm"
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: .turbo
           key: ${{ runner.os }}/${{ matrix.task }}/${{ github.sha }}
@@ -56,15 +56,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [24.x, 22.x, 20.x]
+        node-version: [26.x, 24.x, 22.x]
     name: "test on Node.js ${{ matrix.node-version }}"
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: .turbo
           key: ${{ runner.os }}/test/${{ github.sha }}

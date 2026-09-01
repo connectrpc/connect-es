@@ -36,13 +36,16 @@ import {
   sinkAll,
   transformSplitEnvelope,
 } from "../protocol/index.js";
-import { Code, ConnectError } from "../index.js";
+import { Code, ConnectError, createContextKey } from "../index.js";
 import { errorFromJsonBytes } from "./error-json.js";
 import { endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
 import { readAll } from "../protocol/async-iterable-helper.spec.js";
-import { contentTypeStreamProto } from "./content-type.js";
+import {
+  contentTypeStreamProto,
+  contentTypeUnaryProto,
+} from "./content-type.js";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import {
   ApiSchema,
@@ -197,8 +200,8 @@ describe("createHandlerFactory()", () => {
         ]),
         signal: new AbortController().signal,
       });
-      assert.notStrictEqual(res.body, undefined);
-      const it = res.body?.[Symbol.asyncIterator]();
+      assert.ok(res.body !== undefined);
+      const it = res.body[Symbol.asyncIterator]();
       await it?.next();
       const writeError = new Error("write error");
       await it?.throw?.(writeError).catch(() => {});
@@ -224,20 +227,18 @@ describe("createHandlerFactory()", () => {
           signal: new AbortController().signal,
         });
         assert.strictEqual(res.status, 400);
-        assert.notStrictEqual(res.body, undefined);
-        if (res.body !== undefined) {
-          const body = await readAll(res.body);
-          assert.strictEqual(body.length, 1);
-          const err = errorFromJsonBytes(
-            body[0],
-            undefined,
-            new ConnectError("failed to parse connect err", Code.Internal),
-          );
-          assert.strictEqual(
-            err.message,
-            '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"',
-          );
-        }
+        assert.ok(res.body !== undefined);
+        const body = await readAll(res.body);
+        assert.strictEqual(body.length, 1);
+        const err = errorFromJsonBytes(
+          body[0],
+          undefined,
+          new ConnectError("failed to parse connect err", Code.Internal),
+        );
+        assert.strictEqual(
+          err.message,
+          '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"',
+        );
       });
       it("should raise error for wrong header", async () => {
         const res = await handler({
@@ -252,20 +253,18 @@ describe("createHandlerFactory()", () => {
           signal: new AbortController().signal,
         });
         assert.strictEqual(res.status, 400);
-        assert.notStrictEqual(res.body, undefined);
-        if (res.body !== undefined) {
-          const body = await readAll(res.body);
-          assert.strictEqual(body.length, 1);
-          const err = errorFromJsonBytes(
-            body[0],
-            undefined,
-            new ConnectError("failed to parse connect err", Code.Internal),
-          );
-          assert.strictEqual(
-            err.message,
-            '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"',
-          );
-        }
+        assert.ok(res.body !== undefined);
+        const body = await readAll(res.body);
+        assert.strictEqual(body.length, 1);
+        const err = errorFromJsonBytes(
+          body[0],
+          undefined,
+          new ConnectError("failed to parse connect err", Code.Internal),
+        );
+        assert.strictEqual(
+          err.message,
+          '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"',
+        );
       });
     });
     describe("with streaming RPC", () => {
@@ -288,16 +287,14 @@ describe("createHandlerFactory()", () => {
         });
         assert.strictEqual(res.status, 200);
         assert.ok(!(res.body instanceof Uint8Array));
-        assert.notStrictEqual(res.body, undefined);
-        if (res.body !== undefined && Symbol.asyncIterator in res.body) {
-          const end = endStreamFromJson(
-            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5),
-          );
-          assert.strictEqual(
-            end.error?.message,
-            '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"',
-          );
-        }
+        assert.ok(res.body !== undefined);
+        const end = endStreamFromJson(
+          (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5),
+        );
+        assert.strictEqual(
+          end.error?.message,
+          '[invalid_argument] missing required header: set Connect-Protocol-Version to "1"',
+        );
       });
       it("should raise error for wrong header", async () => {
         const res = await handler({
@@ -313,16 +310,14 @@ describe("createHandlerFactory()", () => {
         });
         assert.strictEqual(res.status, 200);
         assert.ok(!(res.body instanceof Uint8Array));
-        assert.notStrictEqual(res.body, undefined);
-        if (res.body !== undefined && Symbol.asyncIterator in res.body) {
-          const end = endStreamFromJson(
-            (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5),
-          );
-          assert.strictEqual(
-            end.error?.message,
-            '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"',
-          );
-        }
+        assert.ok(res.body !== undefined);
+        const end = endStreamFromJson(
+          (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5),
+        );
+        assert.strictEqual(
+          end.error?.message,
+          '[invalid_argument] Connect-Protocol-Version must be "1": got "UNEXPECTED"',
+        );
       });
     });
   });
@@ -355,36 +350,31 @@ describe("createHandlerFactory()", () => {
           signal: new AbortController().signal,
         });
         assert.strictEqual(res.status, 504);
-        assert.notStrictEqual(res.body, undefined);
-        if (res.body !== undefined) {
-          const err = errorFromJsonBytes(
-            await readAllBytes(res.body, Number.MAX_SAFE_INTEGER),
-            undefined,
-            new ConnectError("error parse failed"),
-          );
-          assert.strictEqual(err.code, Code.DeadlineExceeded);
-          assert.strictEqual(
-            err.message,
-            "[deadline_exceeded] the operation timed out",
-          );
-        }
+        assert.ok(res.body !== undefined);
+        const err = errorFromJsonBytes(
+          await readAllBytes(res.body, Number.MAX_SAFE_INTEGER),
+          undefined,
+          new ConnectError("error parse failed"),
+        );
+        assert.strictEqual(err.code, Code.DeadlineExceeded);
+        assert.strictEqual(
+          err.message,
+          "[deadline_exceeded] the operation timed out",
+        );
       });
     });
     describe("with streaming RPC", () => {
       async function getLastEnvelope(res: UniversalServerResponse) {
-        assert.notStrictEqual(res.body, undefined);
+        assert.ok(res.body !== undefined);
         assert.ok(!(res.body instanceof Uint8Array));
-        if (res.body !== undefined && Symbol.asyncIterator in res.body) {
-          const envelopes = await pipeTo(
-            res.body,
-            transformSplitEnvelope(0xffffff),
-            sinkAll(),
-          );
-          const last = envelopes.pop();
-          assert.notStrictEqual(last, undefined);
-          return last;
-        }
-        return undefined;
+        const envelopes = await pipeTo(
+          res.body,
+          transformSplitEnvelope(0xffffff),
+          sinkAll(),
+        );
+        const last = envelopes.pop();
+        assert.ok(last !== undefined);
+        return last;
       }
 
       it("should raise an error with code DEADLINE_EXCEEDED if exceeded", async () => {
@@ -414,17 +404,13 @@ describe("createHandlerFactory()", () => {
         });
         assert.strictEqual(res.status, 200);
         assert.notStrictEqual(res.body, undefined);
-        if (res.body !== undefined) {
-          const lastEnv = await getLastEnvelope(res);
-          if (lastEnv !== undefined) {
-            const end = endStreamFromJson(lastEnv.data);
-            assert.strictEqual(end.error?.code, Code.DeadlineExceeded);
-            assert.strictEqual(
-              end.error?.message,
-              "[deadline_exceeded] the operation timed out",
-            );
-          }
-        }
+        const lastEnv = await getLastEnvelope(res);
+        const end = endStreamFromJson(lastEnv.data);
+        assert.strictEqual(end.error?.code, Code.DeadlineExceeded);
+        assert.strictEqual(
+          end.error?.message,
+          "[deadline_exceeded] the operation timed out",
+        );
       });
     });
     describe("exceeding configured maxTimeoutMs", () => {
@@ -532,9 +518,9 @@ describe("createHandlerFactory()", () => {
         });
         ac.abort("test-reason");
         await resPromise;
-        assert.notStrictEqual(handlerContextSignal, undefined);
-        assert.strictEqual(handlerContextSignal?.aborted, true);
-        assert.strictEqual(handlerContextSignal?.reason, "test-reason");
+        assert.ok(handlerContextSignal !== undefined);
+        assert.strictEqual(handlerContextSignal.aborted, true);
+        assert.strictEqual(handlerContextSignal.reason, "test-reason");
       });
     });
     describe("with streaming RPC", () => {
@@ -569,9 +555,9 @@ describe("createHandlerFactory()", () => {
         });
         ac.abort("test-reason");
         await resPromise;
-        assert.notStrictEqual(handlerContextSignal, undefined);
-        assert.strictEqual(handlerContextSignal?.aborted, true);
-        assert.strictEqual(handlerContextSignal?.reason, "test-reason");
+        assert.ok(handlerContextSignal !== undefined);
+        assert.strictEqual(handlerContextSignal.aborted, true);
+        assert.strictEqual(handlerContextSignal.reason, "test-reason");
       });
     });
   });
@@ -687,6 +673,99 @@ describe("createHandlerFactory()", () => {
           return true;
         },
       );
+    });
+  });
+
+  describe("requestGate", () => {
+    const denyAll = () => {
+      throw new ConnectError("no credentials", Code.Unauthenticated);
+    };
+    // A request body that records whether the handler read from it.
+    function trackedBody(state: { read: boolean }): AsyncIterable<Uint8Array> {
+      return {
+        [Symbol.asyncIterator]: () => ({
+          next: () => {
+            state.read = true;
+            return Promise.resolve({ done: true, value: undefined });
+          },
+        }),
+      };
+    }
+
+    for (const method of [
+      testService.method.unary,
+      testService.method.serverStreaming,
+    ]) {
+      it(`should not read the request body of a ${method.methodKind} RPC`, async () => {
+        const { handler } = setupTestHandler(
+          method,
+          { requestGate: denyAll },
+          () => assert.fail("implementation should not be called"),
+        );
+        const state = { read: false };
+        const res = await handler({
+          httpVersion: "2.0",
+          method: "POST",
+          url: `https://example.com/${method.parent.typeName}/${method.name}`,
+          header: new Headers({
+            "Content-Type":
+              method.methodKind === "unary"
+                ? contentTypeUnaryProto
+                : contentTypeStreamProto,
+          }),
+          body: trackedBody(state),
+          signal: new AbortController().signal,
+        });
+        assert.notStrictEqual(res.status, 415); // wrong content-type for this RPC
+        assert.strictEqual(state.read, false);
+      });
+    }
+
+    it("should reject a streaming RPC with the error from the gate", async () => {
+      const { transport, method } = setupTestHandler(
+        testService.method.serverStreaming,
+        { requestGate: denyAll },
+        () => assert.fail("implementation should not be called"),
+      );
+      await assert.rejects(
+        async () => {
+          const r = await transport.stream(
+            method,
+            undefined,
+            undefined,
+            undefined,
+            createAsyncIterable([create(Int32ValueSchema)]),
+          );
+          await pipeTo(r.message, sinkAll());
+        },
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(e.code, Code.Unauthenticated);
+          return true;
+        },
+      );
+    });
+
+    it("should pass context values from the gate to the implementation", async () => {
+      const kUser = createContextKey<string>("anonymous");
+      const { transport, method } = setupTestHandler(
+        testService.method.unary,
+        {
+          requestGate: (ctx) => {
+            assert.strictEqual(ctx.requestHeader.get("authorization"), "token");
+            ctx.values.set(kUser, "alice");
+          },
+        },
+        (_req, ctx) => ({ value: ctx.values.get(kUser) }),
+      );
+      const res = await transport.unary(
+        method,
+        undefined,
+        undefined,
+        { authorization: "token" },
+        create(Int32ValueSchema, { value: 1 }),
+      );
+      assert.strictEqual(res.message.value, "alice");
     });
   });
 });
