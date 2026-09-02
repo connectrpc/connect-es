@@ -242,6 +242,35 @@ describe("runStreamingCall()", () => {
     const it = req.message[Symbol.asyncIterator]();
     assert.deepStrictEqual(await it.next(), { done: true, value: undefined });
   });
+  it("should not pull messages after the user aborts", async () => {
+    const userAbort = new AbortController();
+    let didPullAfterAbort = false;
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      signal: userAbort.signal,
+      req: makeReq(),
+      next: (req) =>
+        Promise.resolve({
+          ...makeRes(req),
+          message: (async function* () {
+            yield create(StringValueSchema, { value: "1" });
+            didPullAfterAbort = true;
+            yield create(StringValueSchema, { value: "2" });
+          })(),
+        }),
+    });
+    const it = res.message[Symbol.asyncIterator]();
+
+    await it.next();
+    userAbort.abort();
+
+    await assert.rejects(it.next(), {
+      message: "[canceled] This operation was aborted",
+    });
+    assert.ok(!didPullAfterAbort);
+  });
   it("should raise Code.DeadlineExceeded on timeout", async () => {
     const req = makeReq();
     const resPromise = runStreamingCall<
