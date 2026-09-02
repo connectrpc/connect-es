@@ -71,7 +71,7 @@ async function extractBin(archivePath: string, binPath: string) {
   extract.on("entry", (header, stream, next) => {
     if (header.name === binName) {
       const chunks: Buffer[] = [];
-      stream.on("data", (chunk: Buffer) => chunks.push(chunk));
+      stream.on("data", (chunk) => chunks.push(chunk as Buffer));
       stream.on("end", () => {
         writeFileSync(binPath, Buffer.concat(chunks));
         chmodSync(binPath, 0o755);
