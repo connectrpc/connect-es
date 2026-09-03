@@ -4,7 +4,9 @@ features:
     - HTTP_VERSION_2
   protocols:
     - PROTOCOL_CONNECT
-    # - PROTOCOL_GRPC Cloudflare turns gRPC-Web requests to gRPC, if the invoking request is gRPC. It doesn't directly support gRPC.
+    # A Worker cannot send gRPC, but it can send gRPC-Web and opt in to
+    # Cloudflare converting it to gRPC.
+    - PROTOCOL_GRPC
     - PROTOCOL_GRPC_WEB
   codecs:
     - CODEC_PROTO

@@ -1,2 +1,3 @@
 # On receiving 504, cloudflare is returning a static response back instead of the actual body.
 Errors/*/Protocol:PROTOCOL_CONNECT/*/*/TLS:true/unary/deadline-exceeded
+gRPC Unexpected Responses/HTTPVersion:2/TLS:true/trailers-only/ignore-header-if-body-present

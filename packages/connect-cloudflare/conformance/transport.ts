@@ -26,11 +26,41 @@ import {
 } from "@connectrpc/connect-conformance";
 import type { ClientCompatRequest } from "@connectrpc/connect-conformance";
 import { createTransport as createConnectTransport } from "@connectrpc/connect/protocol-connect";
-import { createTransport as createGrpcTransport } from "@connectrpc/connect/protocol-grpc";
 import { createTransport as createGrpcWebTransport } from "@connectrpc/connect/protocol-grpc-web";
 import { createFetchClient } from "@connectrpc/connect/protocol";
 import type { Compression } from "@connectrpc/connect/protocol";
+import type { RequestInitCfProperties } from "@cloudflare/workers-types";
 import { compressionDeflate, compressionGzip } from "./compression.js";
+
+/**
+ * Cloudflare-specific fetch() init type.
+ */
+type CloudflareRequestInit = RequestInit & {
+  cf?: RequestInitCfProperties;
+};
+
+function createWorkerHttpClient(cf?: RequestInitCfProperties) {
+  return createFetchClient(async (input, init) => {
+    const cfInit: CloudflareRequestInit | undefined =
+      cf === undefined ? init : { ...init, cf };
+    const res = await fetch(input, cfInit);
+    // Cloudflare decompresses the response, but retains the original content-encoding and
+    // content-length headers.
+    //
+    // https://github.com/WinterTC55/fetch/issues/23
+    if (res.headers.has("content-encoding")) {
+      const headers = new Headers(res.headers);
+      headers.delete("content-encoding");
+      headers.delete("content-length");
+      return new Response(res.body, {
+        headers,
+        status: res.status,
+        statusText: res.statusText,
+      });
+    }
+    return res;
+  });
+}
 
 /**
  * Configure a transport for a client running as a Cloudflare Worker under test.
@@ -78,24 +108,7 @@ export function createTransport(req: ClientCompatRequest) {
 
   const sharedOptions = {
     baseUrl,
-    httpClient: createFetchClient(async (input, init) => {
-      const res = await fetch(input, init);
-      // Cloudflare decompresses the response, but retains the original content-encoding and
-      // content-length headers.
-      //
-      // https://github.com/WinterTC55/fetch/issues/23
-      if (res.headers.has("content-encoding")) {
-        const headers = new Headers(res.headers);
-        headers.delete("content-encoding");
-        headers.delete("content-length");
-        return new Response(res.body, {
-          headers,
-          status: res.status,
-          statusText: res.statusText,
-        });
-      }
-      return res;
-    }),
+    httpClient: createWorkerHttpClient(),
     useBinaryFormat: req.codec === Codec.PROTO,
     interceptors: [],
     acceptCompression: sendCompression !== null ? [sendCompression] : [],
@@ -121,7 +134,11 @@ export function createTransport(req: ClientCompatRequest) {
         useHttpGet: req.useGetHttpMethod,
       });
     case Protocol.GRPC:
-      return createGrpcTransport(sharedOptions);
+      // Send gRPC-Web and let Cloudflare convert it to gRPC.
+      return createGrpcWebTransport({
+        ...sharedOptions,
+        httpClient: createWorkerHttpClient({ grpcWeb: "convert" }),
+      });
     case Protocol.GRPC_WEB:
       return createGrpcWebTransport(sharedOptions);
     default:
