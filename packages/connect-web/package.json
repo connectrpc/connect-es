@@ -20,7 +20,7 @@
     "conformance:firefox:callback": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser firefox --useCallbackClient",
     "conformance:node:promise": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node",
     "conformance:node:callback": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node --useCallbackClient",
-    "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
+    "test": "tsc --noEmit && node --import tsx --test --test-timeout=120000 $(find src -name '*.spec.ts')",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings",
