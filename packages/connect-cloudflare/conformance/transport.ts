@@ -33,23 +33,17 @@ import type { RequestInitCfProperties } from "@cloudflare/workers-types";
 import { compressionDeflate, compressionGzip } from "./compression.js";
 
 /**
- * The "cf" property is absent from the DOM types this package compiles against.
+ * Cloudflare-specific fetch() init type.
  */
 type CloudflareRequestInit = RequestInit & {
   cf?: RequestInitCfProperties;
 };
 
-/**
- * A Worker cannot speak gRPC, because fetch does not expose HTTP trailers.
- * Opt in to Cloudflare converting a gRPC-Web request to gRPC instead.
- */
-const grpcConversion: CloudflareRequestInit = {
-  cf: { grpcWeb: "convert" },
-};
-
-function createWorkerHttpClient(cfInit?: CloudflareRequestInit) {
+function createWorkerHttpClient(cf?: RequestInitCfProperties) {
   return createFetchClient(async (input, init) => {
-    const res = await fetch(input, cfInit ?? init);
+    const cfInit: CloudflareRequestInit | undefined =
+      cf === undefined ? init : { ...init, cf };
+    const res = await fetch(input, cfInit);
     // Cloudflare decompresses the response, but retains the original content-encoding and
     // content-length headers.
     //
@@ -143,7 +137,7 @@ export function createTransport(req: ClientCompatRequest) {
       // Send gRPC-Web and let Cloudflare convert it to gRPC.
       return createGrpcWebTransport({
         ...sharedOptions,
-        httpClient: createWorkerHttpClient(grpcConversion),
+        httpClient: createWorkerHttpClient({ grpcWeb: "convert" }),
       });
     case Protocol.GRPC_WEB:
       return createGrpcWebTransport(sharedOptions);

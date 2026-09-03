@@ -5,7 +5,7 @@ features:
   protocols:
     - PROTOCOL_CONNECT
     # A Worker cannot send gRPC, but it can send gRPC-Web and opt in to
-    # Cloudflare converting it to gRPC. See conformance/transport.ts.
+    # Cloudflare converting it to gRPC.
     - PROTOCOL_GRPC
     - PROTOCOL_GRPC_WEB
   codecs:
