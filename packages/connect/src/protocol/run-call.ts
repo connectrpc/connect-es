@@ -137,6 +137,9 @@ export function runStreamingCall<
           const it = res.message[Symbol.asyncIterator]();
           return {
             next() {
+              if (!doneCalled && signal.aborted) {
+                return abort(getAbortSignalReason(signal));
+              }
               return it.next().then((r) => {
                 if (r.done == true) {
                   doneCalled = true;
