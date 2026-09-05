@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@connectrpc/connect-conformance": "^2.1.2",
-    "tsx": "^4.20.6",
+    "tsx": "^4.23.12",
     "webdriverio": "^9.31.4"
   },
   "peerDependencies": {
