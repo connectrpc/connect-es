@@ -309,10 +309,25 @@ function h2Request(
         sentinel.error(e);
       });
 
+      let responseReceived = false;
+      stream.once("response", () => {
+        responseReceived = true;
+      });
       stream.on("close", function h2StreamClose() {
         const err = connectErrorFromH2ResetCode(stream.rstCode);
         if (err) {
           sentinel.error(err);
+        } else if (!responseReceived) {
+          // A stream can be terminated with the NO_ERROR code before response
+          // headers are received - for example by a proxy during a graceful
+          // shutdown. Nothing else settles the sentinel in this case, and the
+          // request would stay pending forever.
+          sentinel.error(
+            new ConnectError(
+              "http/2 stream closed with error code NO_ERROR (0x0) before the response was received",
+              Code.Unavailable,
+            ),
+          );
         }
       });
       onStream(stream);
