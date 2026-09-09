@@ -144,6 +144,42 @@ describe("universal node http client", () => {
     });
   });
 
+  describe("against a server that closes with NO_ERROR before the response", () => {
+    describe("over http/2", () => {
+      const server = useNodeServer(() =>
+        http2.createServer((request, response) => {
+          response.stream.close(http2.constants.NGHTTP2_NO_ERROR);
+        }),
+      );
+      it("should reject the response promise with Code.Unavailable", async () => {
+        const client = server.getClient();
+        await assert.rejects(
+          Promise.race([
+            client({
+              url: server.getUrl(),
+              method: "POST",
+              header: new Headers(),
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(
+                () => reject(new Error("response promise never settled")),
+                500,
+              ),
+            ),
+          ]),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError, String(e));
+            assert.strictEqual(
+              e.message,
+              "[unavailable] http/2 stream closed with error code NO_ERROR (0x0) before the response was received",
+            );
+            return true;
+          },
+        );
+      });
+    });
+  });
+
   describe("against a server that closes before the first response byte", () => {
     describe("over http/2", () => {
       const server = useNodeServer(() =>
