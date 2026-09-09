@@ -47,7 +47,7 @@ jobs:
           key: ${{ runner.os }}/${{ matrix.task }}/${{ github.sha }}
           restore-keys: ${{ runner.os }}/${{ matrix.task }}
       - run: npm ci
-      - run: npx turbo run ${{ matrix.task }} --log-order stream
+      - run: npx turbo run ${{ matrix.task }}
       - name: Check changed files
         if: ${{ matrix.diff-check }}
         run: node scripts/gh-diffcheck.js
