@@ -114,7 +114,7 @@ export function connectNodeAdapter(
   };
 }
 
-const fallback: NodeHandlerFn = (request, response) => {
+const fallback: NodeHandlerFn = (_request, response) => {
   response.writeHead(uResponseNotFound.status);
   response.end();
 };

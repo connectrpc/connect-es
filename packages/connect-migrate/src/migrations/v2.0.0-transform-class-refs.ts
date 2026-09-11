@@ -34,7 +34,6 @@ const transform: j.Transform = (file, { j }, options) => {
   const needBufbuildProtobufImports = new Set<string>();
 
   // Replace wkt imports from @bufbuild/protobuf to @bufbuild/protobuf/wkt
-  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root
     .find(j.ImportDeclaration, {
       specifiers: [
@@ -74,7 +73,6 @@ const transform: j.Transform = (file, { j }, options) => {
     });
 
   // Replace `new Foo()` -> `create(FooSchema)`
-  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root
     .find(j.NewExpression, {
       callee: {
@@ -98,7 +96,6 @@ const transform: j.Transform = (file, { j }, options) => {
     });
 
   // Replace `isMessage(foo, Foo)` -> `isMessage(foo, FooSchema)`
-  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root
     .find(j.CallExpression, {
       callee: {
@@ -152,7 +149,6 @@ const transform: j.Transform = (file, { j }, options) => {
 
   // Replace `import {Foo}` -> `import {FooSchema}`
   for (const name of pbNames) {
-    // biome-ignore lint/complexity/noForEach: not alternative to forEach available
     findPbImports(name, root).forEach((path) => {
       path.replace(
         j.importDeclaration(
@@ -223,7 +219,6 @@ const transform: j.Transform = (file, { j }, options) => {
               j.importDeclaration(importSpecs, fromSource, "type"),
             );
           } else {
-            // biome-ignore lint/complexity/noForEach: not alternative to forEach available
             typeImports.forEach((path) => {
               const specs =
                 path.value.specifiers?.map((specifier) => {
@@ -389,7 +384,6 @@ function replaceStaticMethodCall(
   needBufbuildProtobufImports: Set<string>,
   root: j.Collection,
 ): void {
-  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   root
     .find(j.CallExpression, {
       callee: {

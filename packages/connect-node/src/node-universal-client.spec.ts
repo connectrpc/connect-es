@@ -92,7 +92,7 @@ describe("universal node http client", () => {
     describe("over http/2", () => {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
-        http2.createServer((request, response) => {
+        http2.createServer((_request, response) => {
           serverReceivedRequest = true;
           response.stream.close(http2.constants.NGHTTP2_CANCEL);
         }),
@@ -120,7 +120,7 @@ describe("universal node http client", () => {
     describe("over http/1.1", () => {
       let serverReceivedRequest = false;
       const server = useNodeServer(() =>
-        http.createServer((req, res) => {
+        http.createServer((_req, res) => {
           serverReceivedRequest = true;
           res.destroy();
         }),
@@ -147,7 +147,7 @@ describe("universal node http client", () => {
   describe("against a server that closes before the first response byte", () => {
     describe("over http/2", () => {
       const server = useNodeServer(() =>
-        http2.createServer((req, res) => {
+        http2.createServer((_req, res) => {
           res.writeHead(200);
           // Calling close in the same tick as writeHead appears to prevent
           // headers from being sent. The client response promise will reject,
@@ -185,7 +185,7 @@ describe("universal node http client", () => {
     });
     describe("over http/1.1", () => {
       const server = useNodeServer(() =>
-        http.createServer((req, res) => {
+        http.createServer((_req, res) => {
           res.writeHead(200);
           res.flushHeaders();
           res.destroy();
@@ -306,7 +306,7 @@ describe("universal node http client", () => {
     describe("over http/2", () => {
       let serverSentBytes = 0;
       const server = useNodeServer(() =>
-        http2.createServer((req, res) => {
+        http2.createServer((_req, res) => {
           void (async () => {
             res.writeHead(200);
             await new Promise<void>((resolve, reject) =>
@@ -347,7 +347,7 @@ describe("universal node http client", () => {
     describe("over http/1.1", () => {
       let serverSentBytes = 0;
       const server = useNodeServer(() =>
-        http.createServer((req, res) => {
+        http.createServer((_req, res) => {
           void (async () => {
             res.writeHead(200);
             await new Promise<void>((resolve, reject) =>
@@ -734,7 +734,7 @@ describe("universal node http client", () => {
       let serverReceivedRstCode: number | undefined;
       let serverSentBytes = 0;
       const server = useNodeServer(() =>
-        http2.createServer((req, res) => {
+        http2.createServer((_req, res) => {
           res.stream.on("close", () => {
             serverReceivedRstCode = res.stream.rstCode;
           });

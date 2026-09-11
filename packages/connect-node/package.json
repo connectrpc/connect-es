@@ -15,9 +15,7 @@
     "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
     "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/server.ts",
     "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/client.ts",
-    "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "biome lint --error-on-warnings",
     "attw": "attw --pack"
   },
   "type": "module",

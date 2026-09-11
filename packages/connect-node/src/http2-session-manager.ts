@@ -181,7 +181,7 @@ export class Http2SessionManager {
     try {
       const ready = await this.gotoReady();
       return ready.streamCount() > 0 ? "open" : "idle";
-    } catch (e) {
+    } catch {
       return "error";
     }
   }
@@ -720,7 +720,7 @@ function ready(
 
   function onGoaway(
     errorCode: number,
-    lastStreamID: number,
+    _lastStreamID: number,
     opaqueData: Buffer | undefined | null,
   ) {
     if (errorCode === http2.constants.NGHTTP2_NO_ERROR && streamCount === 0) {

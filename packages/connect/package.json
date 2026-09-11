@@ -17,9 +17,7 @@
     "build:esm": "tsc --project tsconfig.json --outDir ./dist/esm",
     "postbuild": "node scripts/update-user-agent.mjs",
     "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
-    "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "biome lint --error-on-warnings",
     "attw": "attw --pack"
   },
   "type": "module",

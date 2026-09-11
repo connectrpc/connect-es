@@ -24,7 +24,6 @@ describe("setTrailerStatus()", () => {
     const t = new Headers();
     setTrailerStatus(t, undefined);
     let count = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     assert.strictEqual(count, 1);
     assert.strictEqual(t.get("grpc-status"), "0");
@@ -35,7 +34,6 @@ describe("setTrailerStatus()", () => {
     });
     setTrailerStatus(t, undefined);
     let count = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     assert.strictEqual(count, 2);
     assert.strictEqual(t.get("grpc-status"), "0");
@@ -45,7 +43,6 @@ describe("setTrailerStatus()", () => {
     const t = new Headers();
     setTrailerStatus(t, new ConnectError("soirée 🎉", Code.ResourceExhausted));
     let count = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     assert.strictEqual(count, 2);
     assert.strictEqual(t.get("grpc-status"), "8"); // resource_exhausted
@@ -60,7 +57,6 @@ describe("setTrailerStatus()", () => {
       ]),
     );
     let count = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     assert.strictEqual(count, 3);
     assert.strictEqual(t.get("grpc-status"), "8"); // resource_exhausted
@@ -77,7 +73,6 @@ describe("setTrailerStatus()", () => {
       new ConnectError("soirée 🎉", Code.ResourceExhausted, { foo: "bar" }),
     );
     let count = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     assert.strictEqual(count, 3);
     assert.strictEqual(t.get("grpc-status"), "8"); // resource_exhausted
@@ -95,7 +90,6 @@ describe("setTrailerStatus()", () => {
       }),
     );
     let count = 0;
-    // biome-ignore lint/complexity/noForEach: Headers is not iterable, and we don't have access to entries()
     t.forEach(() => count++);
     assert.strictEqual(count, 3);
     assert.strictEqual(t.get("grpc-status"), "8"); // resource_exhausted

@@ -57,7 +57,7 @@ export function endStreamFromJson(
     jsonValue = JSON.parse(
       typeof data == "string" ? data : new TextDecoder().decode(data),
     );
-  } catch (e) {
+  } catch {
     throw parseErr;
   }
   if (
