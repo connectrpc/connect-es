@@ -97,12 +97,10 @@ describe("compressionNegotiate()", () => {
     );
     it("should return error", () => {
       assert.ok(r.error instanceof ConnectError);
-      if (r.error instanceof ConnectError) {
-        assert.strictEqual(
-          r.error.message,
-          '[unimplemented] unknown compression "z": supported encodings are a,b',
-        );
-      }
+      assert.strictEqual(
+        r.error.message,
+        '[unimplemented] unknown compression "z": supported encodings are a,b',
+      );
       assert.strictEqual(r.request, null);
     });
     it("should still use first accepted compression for the response", () => {

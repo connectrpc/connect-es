@@ -53,6 +53,7 @@ jobs:
         run: node scripts/gh-diffcheck.js
   test:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -70,4 +71,4 @@ jobs:
           key: ${{ runner.os }}/test/${{ github.sha }}
           restore-keys: ${{ runner.os }}/test
       - run: npm ci
-      - run: npx turbo run test
+      - run: npx turbo run test --log-order stream

@@ -53,12 +53,10 @@ describe("parseTimeout()", () => {
       const r = parseTimeout(invalidValue, Number.MAX_SAFE_INTEGER);
       assert.strictEqual(r.timeoutMs, undefined);
       assert.ok(r.error instanceof ConnectError);
-      if (r instanceof ConnectError) {
-        assert.strictEqual(
-          r.message,
-          `protocol error: invalid connect timeout value: ${invalidValue}`,
-        );
-      }
+      assert.strictEqual(
+        r.error.message,
+        `[invalid_argument] protocol error: invalid connect timeout value: ${invalidValue}`,
+      );
     });
   }
 });

@@ -4,7 +4,7 @@ features:
     - HTTP_VERSION_2
   protocols:
     - PROTOCOL_CONNECT
-    # - PROTOCOL_GRPC
+    - PROTOCOL_GRPC
     - PROTOCOL_GRPC_WEB
   codecs:
     - CODEC_PROTO
@@ -24,3 +24,8 @@ excludeCases:
     streamType: STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
   - protocol: PROTOCOL_GRPC_WEB
     streamType: STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
+  # Cloudflare's inbound gRPC conversion does not support compressed messages.
+  - protocol: PROTOCOL_GRPC
+    compression: COMPRESSION_GZIP
+  - protocol: PROTOCOL_GRPC
+    compression: COMPRESSION_DEFLATE
