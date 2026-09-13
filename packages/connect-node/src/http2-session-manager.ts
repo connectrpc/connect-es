@@ -672,6 +672,9 @@ function ready(
   }
 
   function commonPing(onSuccess: () => void) {
+    if (conn.destroyed || conn.closed) {
+      return;
+    }
     clearTimeout(pingTimeoutId);
     pingTimeoutId = safeSetTimeout(() => {
       conn.destroy(
