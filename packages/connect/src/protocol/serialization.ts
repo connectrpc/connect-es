@@ -35,8 +35,6 @@ import { assertReadMaxBytes, assertWriteMaxBytes } from "./limit-io.js";
 /**
  * Serialization provides methods to serialize or parse data with a certain
  * format.
- *
- * @private Internal code, does not follow semantic versioning.
  */
 export interface Serialization<T> {
   /**
@@ -82,6 +80,7 @@ export function createMethodSerializationLookup<
     writeMaxBytes: number;
     readMaxBytes: number;
   },
+  methodSerialization?: MethodSerializationFactory,
 ): MethodSerializationLookup<I, O> {
   const inputBinary = limitSerialization(
     createBinarySerialization(method.input, binaryOptions),
@@ -99,7 +98,7 @@ export function createMethodSerializationLookup<
     createJsonSerialization(method.output, jsonOptions),
     limitOptions,
   );
-  return {
+  const defaults: MethodSerializationLookup<I, O> = {
     getI(useBinaryFormat) {
       return useBinaryFormat ? inputBinary : inputJson;
     },
@@ -107,13 +106,23 @@ export function createMethodSerializationLookup<
       return useBinaryFormat ? outputBinary : outputJson;
     },
   };
+  const custom = methodSerialization?.(method, defaults);
+  if (custom === undefined || custom === defaults) {
+    return defaults;
+  }
+  return {
+    getI(useBinaryFormat) {
+      return limitSerialization(custom.getI(useBinaryFormat), limitOptions);
+    },
+    getO(useBinaryFormat) {
+      return limitSerialization(custom.getO(useBinaryFormat), limitOptions);
+    },
+  };
 }
 
 /**
  * MethodSerializationLookup provides convenient access to request and response
  * message serialization for a given method.
- *
- * @private Internal code, does not follow semantic versioning.
  */
 export interface MethodSerializationLookup<
   I extends DescMessage,
@@ -128,6 +137,20 @@ export interface MethodSerializationLookup<
    */
   getO(useBinaryFormat: boolean): Serialization<MessageShape<O>>;
 }
+
+/**
+ * Creates custom request and response serialization for a client call.
+ * The defaults use the transport's binary and JSON options and I/O limits.
+ * Return undefined to use the defaults. Custom serialization is subject to
+ * the same I/O limits and must preserve the method's message types.
+ */
+export type MethodSerializationFactory = <
+  I extends DescMessage,
+  O extends DescMessage,
+>(
+  method: DescMethodUnary<I, O> | DescMethodStreaming<I, O>,
+  defaults: MethodSerializationLookup<I, O>,
+) => MethodSerializationLookup<I, O> | undefined;
 
 /**
  * Returns functions to normalize and serialize the input message

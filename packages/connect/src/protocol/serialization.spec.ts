@@ -14,16 +14,85 @@
 
 import { describe, it } from "node:test";
 import * as assert from "node:assert";
-import type { Serialization } from "./serialization.js";
+import type { MethodSerializationFactory, Serialization } from "../index.js";
 import {
   createBinarySerialization,
   createJsonSerialization,
+  createMethodSerializationLookup,
   getJsonOptions,
   limitSerialization,
 } from "./serialization.js";
+import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import { StringValueSchema, UInt32ValueSchema } from "@bufbuild/protobuf/wkt";
 import { clone, create, equals, toBinary } from "@bufbuild/protobuf";
+import { createServiceDesc } from "../descriptor-helper.spec.js";
+
+describe("createMethodSerializationLookup()", () => {
+  const method = createServiceDesc({
+    typeName: "TestService",
+    method: {
+      unary: {
+        input: StringValueSchema,
+        output: StringValueSchema,
+        methodKind: "unary",
+      },
+    },
+  }).method.unary;
+  const message = create(StringValueSchema, { value: "a" });
+  const jsonBytes = new TextEncoder().encode('"a"');
+  const limits = { readMaxBytes: 3, writeMaxBytes: 3 };
+  const jsonFactory: MethodSerializationFactory = (method) => ({
+    getI: () => createJsonSerialization(method.input, undefined),
+    getO: () => createJsonSerialization(method.output, undefined),
+  });
+
+  it("uses custom request and response codecs", () => {
+    const lookup = createMethodSerializationLookup(
+      method,
+      undefined,
+      undefined,
+      limits,
+      jsonFactory,
+    );
+    assert.deepStrictEqual(lookup.getI(true).serialize(message), jsonBytes);
+    assert.deepStrictEqual(lookup.getO(true).parse(jsonBytes), message);
+  });
+
+  it("uses default binary and JSON codecs when the factory returns undefined", () => {
+    const lookup = createMethodSerializationLookup(
+      method,
+      undefined,
+      undefined,
+      limits,
+      () => undefined,
+    );
+    assert.deepStrictEqual(
+      lookup.getI(true).serialize(message),
+      toBinary(StringValueSchema, message),
+    );
+    assert.deepStrictEqual(lookup.getO(false).parse(jsonBytes), message);
+  });
+
+  it("enforces read and write limits on custom codecs", () => {
+    const lookup = createMethodSerializationLookup(
+      method,
+      undefined,
+      undefined,
+      limits,
+      jsonFactory,
+    );
+    assert.throws(
+      () =>
+        lookup.getI(true).serialize(create(StringValueSchema, { value: "ab" })),
+      { code: Code.ResourceExhausted },
+    );
+    assert.throws(
+      () => lookup.getO(true).parse(new TextEncoder().encode('"ab"')),
+      { code: Code.ResourceExhausted },
+    );
+  });
+});
 
 describe("createBinarySerialization()", () => {
   const goldenMessage = create(StringValueSchema, { value: "abc" });
