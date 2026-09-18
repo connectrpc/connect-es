@@ -41,6 +41,9 @@ npm run all
 We're using `turborepo` to run tasks. If you haven't used it yet, take a look at
 [filtering and package scoping](https://turbo.build/repo/docs/crafting-your-repository/running-tasks).
 
+Most tasks run at a package-level, but `lint` and `format` are root tasks that
+cover the whole repository.
+
 ## Making Changes
 
 Start by creating a new branch for your changes:
