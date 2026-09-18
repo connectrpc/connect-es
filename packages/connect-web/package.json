@@ -21,9 +21,7 @@
     "conformance:node:promise": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node",
     "conformance:node:callback": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node --useCallbackClient",
     "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
-    "format": "biome format --write",
     "license-header": "license-header",
-    "lint": "biome lint --error-on-warnings",
     "attw": "attw --pack"
   },
   "type": "module",

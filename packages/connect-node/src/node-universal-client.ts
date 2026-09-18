@@ -271,7 +271,7 @@ function h2Request(
   url: string,
   method: string,
   headers: http2.OutgoingHttpHeaders,
-  options: Omit<http2.ClientSessionRequestOptions, "signal">,
+  _options: Omit<http2.ClientSessionRequestOptions, "signal">,
   onStream: (stream: http2.ClientHttp2Stream) => void,
 ): void {
   const requestUrl = new URL(url);
@@ -455,7 +455,7 @@ type Sentinel = {
 function createSentinel(signal?: AbortSignal): Sentinel {
   let rejectRace: ((reason: unknown) => void) | undefined;
   let closed = false;
-  let closedError: ConnectError | undefined = undefined;
+  let closedError: ConnectError | undefined;
   let onErrorListeners: ((reason: ConnectError) => void)[] = [];
   const sentinel = {
     error(error: unknown): void {

@@ -73,7 +73,7 @@ export function errorFromJson(
           value: base64Decode(detail.value),
           debug: detail.debug,
         });
-      } catch (e) {
+      } catch {
         throw fallback;
       }
     }
@@ -95,7 +95,7 @@ export function errorFromJsonBytes(
   let jsonValue: JsonValue;
   try {
     jsonValue = JSON.parse(new TextDecoder().decode(bytes)) as JsonValue;
-  } catch (e) {
+  } catch {
     throw fallback;
   }
   return errorFromJson(jsonValue, metadata, fallback);
@@ -139,7 +139,7 @@ export function errorToJson(
           };
           try {
             i.debug = toJson(detail.desc, msg, jsonWriteOptions);
-          } catch (e) {
+          } catch {
             // We deliberately ignore errors that may occur when serializing
             // a message to JSON (the message contains an Any).
             // The rationale is that we are only trying to provide optional

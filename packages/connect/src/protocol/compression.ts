@@ -74,7 +74,7 @@ export function compressionNegotiate(
 } {
   let request = null;
   let response = null;
-  let error = undefined;
+  let error: ConnectError | undefined;
   if (requested !== null && requested !== "identity") {
     const found = available.find((c) => c.name === requested);
     if (found) {

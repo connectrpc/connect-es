@@ -38,7 +38,7 @@ export function parseTimeout(
       ),
     };
   }
-  const timeoutMs = parseInt(results[0]);
+  const timeoutMs = parseInt(results[0], 10);
   if (timeoutMs > maxTimeoutMs) {
     return {
       timeoutMs: timeoutMs,
@@ -49,6 +49,6 @@ export function parseTimeout(
     };
   }
   return {
-    timeoutMs: parseInt(results[0]),
+    timeoutMs: parseInt(results[0], 10),
   };
 }
