@@ -15,14 +15,14 @@ usually do. We repeat this for an increasing number of RPCs.
 
 | code generator | RPCs | bundle size |  minified | compressed |
 | -------------- | ---: | ----------: | --------: | ---------: |
-| Connect-ES     |    1 |   285,310 b | 180,641 b |   36,562 b |
-| Connect-ES     |    4 |   289,562 b | 183,743 b |   37,363 b |
-| Connect-ES     |    8 |   294,425 b | 188,174 b |   38,255 b |
-| Connect-ES     |   16 |   303,553 b | 195,801 b |   39,800 b |
-| gRPC-Web       |    1 | 1,070,505 b | 707,341 b |   70,184 b |
-| gRPC-Web       |    4 | 1,121,879 b | 738,633 b |   72,562 b |
-| gRPC-Web       |    8 | 1,197,272 b | 786,157 b |   75,059 b |
-| gRPC-Web       |   16 | 1,316,009 b | 858,582 b |   78,955 b |
+| Connect-ES     |    1 |   324,271 b | 194,738 b |   40,036 b |
+| Connect-ES     |    4 |   328,523 b | 197,839 b |   40,842 b |
+| Connect-ES     |    8 |   333,386 b | 202,269 b |   41,846 b |
+| Connect-ES     |   16 |   342,514 b | 209,890 b |   43,334 b |
+| gRPC-Web       |    1 | 1,080,604 b | 716,717 b |   70,467 b |
+| gRPC-Web       |    4 | 1,131,993 b | 748,011 b |   72,862 b |
+| gRPC-Web       |    8 | 1,207,404 b | 795,535 b |   75,345 b |
+| gRPC-Web       |   16 | 1,326,175 b | 867,961 b |   79,393 b |
 
 <!-- TABLE-END -->
 
