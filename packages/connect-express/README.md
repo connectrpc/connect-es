@@ -15,7 +15,7 @@ Adds your Connect RPCs to an Express server.
 // connect.ts
 import { ConnectRouter } from "@connectrpc/connect";
 
-export default function (router: ConnectRouter) {
+export function routes(router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
   router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
     sentence: `you said: ${req.sentence}`,
@@ -27,9 +27,9 @@ export default function (router: ConnectRouter) {
 // server.ts
 import http from "http";
 import express from "express";
-+ import routes from "connect";
 + import { expressConnectMiddleware } from "@connectrpc/connect-express";
 + import { createValidateInterceptor } from "@connectrpc/validate";
++ import { routes } from "./connect";
 
 const app = express();
 
