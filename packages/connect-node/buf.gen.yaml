@@ -7,4 +7,4 @@ inputs:
 plugins:
   - local: protoc-gen-es
     out: src/testdata/gen
-    opt: target=ts,import_extension=.js
+    opt: target=ts,import_extension=js
