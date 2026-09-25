@@ -309,10 +309,30 @@ function h2Request(
         sentinel.error(e);
       });
 
+      let responseReceived = false;
+      stream.once("response", () => {
+        responseReceived = true;
+      });
       stream.on("close", function h2StreamClose() {
+        // Node emits an "error" event before "close" for every rstCode except
+        // NO_ERROR (0x0) and CANCEL (0x8).
+        //
+        // NO_ERROR means the stream either finished or was cut off, and Node
+        // exposes no way to tell which. If the response headers have not
+        // arrived, it is definitely cut off, but after that we can't know, so
+        // we rely on the protocol to figure it out.
         const err = connectErrorFromH2ResetCode(stream.rstCode);
         if (err) {
           sentinel.error(err);
+        } else if (!responseReceived) {
+          sentinel.error(
+            new ConnectError(
+              `http/2 stream closed with error code ${
+                H2Code[stream.rstCode]
+              } (0x${stream.rstCode.toString(16)}) before the response was received`,
+              Code.Internal,
+            ),
+          );
         }
       });
       onStream(stream);
