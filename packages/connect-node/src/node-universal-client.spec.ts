@@ -151,7 +151,7 @@ describe("universal node http client", () => {
           response.stream.close(http2.constants.NGHTTP2_NO_ERROR);
         }),
       );
-      it("should reject the response promise with Code.Unavailable", async () => {
+      it("should reject the response promise with Code.Internal", async () => {
         const client = server.getClient();
         await assert.rejects(
           Promise.race([
@@ -171,7 +171,7 @@ describe("universal node http client", () => {
             assert.ok(e instanceof ConnectError, String(e));
             assert.strictEqual(
               e.message,
-              "[unavailable] http/2 stream closed with error code NO_ERROR (0x0) before the response was received",
+              "[internal] http/2 stream closed with error code NO_ERROR (0x0) before the response was received",
             );
             return true;
           },
