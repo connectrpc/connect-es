@@ -173,6 +173,10 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           }
           validateTrailer(trailer, uRes.header);
           if (message === undefined) {
+            // Trailers only response
+            if (headerError) {
+              throw headerError;
+            }
             throw new ConnectError(
               "protocol error: missing output message for unary method",
               trailer.has(headerGrpcStatus) ? Code.Unimplemented : Code.Unknown,
