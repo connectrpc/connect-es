@@ -75,12 +75,7 @@ export interface Http2SessionOptions {
    * the connection is not ready within this time, it is destroyed, and
    * pending requests reject with Code.Unavailable.
    *
-   * By default, no timeout is applied. The operating system's TCP timeouts
-   * bound a connection attempt that receives no answer at all, but nothing
-   * bounds an attempt that dies after the TCP handshake - for example when
-   * the network path is lost while the TLS handshake is in flight. Such an
-   * attempt stays pending indefinitely, and every request waiting on it
-   * fails.
+   * Defaults to 20 seconds.
    *
    * This option is similar to the connection deadline that gRPC core derives
    * from GRPC_ARG_MIN_RECONNECT_BACKOFF_MS.
@@ -187,8 +182,7 @@ export class Http2SessionManager {
       pingIdleConnection: pingOptions?.pingIdleConnection ?? false,
       idleConnectionTimeoutMs:
         pingOptions?.idleConnectionTimeoutMs ?? 1000 * 60 * 15,
-      connectTimeoutMs:
-        pingOptions?.connectTimeoutMs ?? Number.POSITIVE_INFINITY,
+      connectTimeoutMs: pingOptions?.connectTimeoutMs ?? 1000 * 20,
     };
   }
 
@@ -471,17 +465,16 @@ function connect(
     reject = rej;
   });
   const newConn = http2.connect(authority, http2SessionOptions);
-  const connectTimeoutId = safeSetTimeout(() => {
-    if (!newConn.destroyed) {
-      newConn.destroy(undefined, http2.constants.NGHTTP2_CANCEL);
-    }
-    // Same as abort() below: destroy() should terminate the session, but we
-    // still receive a "connect" event. We must not resolve a broken
-    // connection, so we reject it manually here.
-    reject?.(
-      new ConnectError("connection establishment timed out", Code.Unavailable),
-    );
-  }, connectTimeoutMs);
+  const connectTimeoutId = safeSetTimeout(
+    () =>
+      abort(
+        new ConnectError(
+          "connection establishment timed out",
+          Code.Unavailable,
+        ),
+      ),
+    connectTimeoutMs,
+  );
   newConn.on("connect", onConnect);
   newConn.on("error", onError);
 
@@ -501,18 +494,20 @@ function connect(
     newConn.off("error", onError);
   }
 
+  function abort(reason: unknown) {
+    if (!newConn.destroyed) {
+      newConn.destroy(undefined, http2.constants.NGHTTP2_CANCEL);
+    }
+    // According to the documentation, destroy() should immediately terminate
+    // the session and the socket, but we still receive a "connect" event.
+    // We must not resolve a broken connection, so we reject it manually here.
+    reject?.(reason);
+  }
+
   return {
     t: "connecting",
     conn,
-    abort(reason) {
-      if (!newConn.destroyed) {
-        newConn.destroy(undefined, http2.constants.NGHTTP2_CANCEL);
-      }
-      // According to the documentation, destroy() should immediately terminate
-      // the session and the socket, but we still receive a "connect" event.
-      // We must not resolve a broken connection, so we reject it manually here.
-      reject?.(reason);
-    },
+    abort,
     onExitState() {
       cleanup();
     },

@@ -274,7 +274,7 @@ describe("Http2SessionManager", () => {
   });
 
   describe("with connectTimeoutMs", () => {
-    it("should reject requests if the connection cannot be established in time", async (t) => {
+    it("should reject requests if the connection cannot be established in time", async () => {
       // a server that accepts connections, but never completes the TLS
       // handshake - without connectTimeoutMs, the connection attempt (and
       // every request waiting on it) stays pending indefinitely
@@ -285,20 +285,13 @@ describe("Http2SessionManager", () => {
       await new Promise<void>((resolve) =>
         silentServer.listen(0, "localhost", resolve),
       );
-      t.after(() => {
-        for (const socket of silentSockets) {
-          socket.destroy();
-        }
-        silentServer.close();
-      });
 
       const sm = new Http2SessionManager(
         `https://localhost:${(silentServer.address() as net.AddressInfo).port}`,
         {
-          connectTimeoutMs: 50, // intentionally short for tests
+          connectTimeoutMs: 50,
         },
       );
-      t.after(() => sm.abort());
 
       await assert.rejects(
         Promise.race([
@@ -328,13 +321,22 @@ describe("Http2SessionManager", () => {
         ]),
         /\[unavailable] connection establishment timed out/,
       );
+      sm.abort();
+      for (const socket of silentSockets) {
+        socket.destroy();
+      }
+      silentServer.close();
     });
     it("should not affect connections that are established in time", async () => {
       const sm = new Http2SessionManager(server.getUrl(), {
-        connectTimeoutMs: 1000,
+        connectTimeoutMs: 75,
       });
       const req = await sm.request("POST", "/", {}, {});
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
       assert.strictEqual(sm.state(), "open");
+      assert.strictEqual(req.destroyed, false);
+
       await new Promise<void>((resolve) =>
         req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
