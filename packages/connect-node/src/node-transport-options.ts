@@ -50,8 +50,22 @@ export type NodeHttp2TransportOptions = {
    * http2 module.
    */
   nodeOptions?: http2.ClientSessionOptions | http2.SecureClientSessionOptions;
-} & Http2SessionOptions &
-  NodeHttpClientWrapperOptions;
+
+  /**
+   * Wraps the HTTP client of the transport.
+   *
+   * The function is called once, when the transport is created. It receives
+   * the HTTP client built from the other options, and returns the HTTP client
+   * that the transport uses.
+   *
+   * Unlike interceptors, the returned client sees each request as it is sent:
+   * the body holds the serialized, enveloped, and compressed messages. The
+   * received client sends the request headers when it is called, so the
+   * returned client can read from the body first, and add headers that depend
+   * on the bytes, such as a signature.
+   */
+  wrapHttpClient?: (httpClient: UniversalClientFn) => UniversalClientFn;
+} & Http2SessionOptions;
 
 /**
  * Options specific to Node.js client transports over HTTP 1.1.
@@ -64,12 +78,7 @@ type NodeHttp1TransportOptions = {
   nodeOptions?:
     | Omit<http.RequestOptions, "signal">
     | Omit<https.RequestOptions, "signal">;
-} & NodeHttpClientWrapperOptions;
 
-/**
- * Options for Node.js client transports over HTTP/2 or HTTP 1.1.
- */
-type NodeHttpClientWrapperOptions = {
   /**
    * Wraps the HTTP client of the transport.
    *
@@ -77,24 +86,11 @@ type NodeHttpClientWrapperOptions = {
    * the HTTP client built from the other options, and returns the HTTP client
    * that the transport uses.
    *
-   * Interceptors see request messages. The returned client sees each HTTP
-   * request as sent: the body holds the serialized, enveloped, and compressed
-   * messages. The received client sends the request headers when it is called,
-   * so the returned client can read from the body first, and add headers that
-   * depend on the bytes, such as a signature.
-   *
-   * For a simple example, the following wrapper logs all HTTP requests:
-   *
-   * ```ts
-   * const transport = createConnectTransport({
-   *   baseUrl: "https://demo.connectrpc.com",
-   *   httpVersion: "2",
-   *   wrapHttpClient: (next) => (req) => {
-   *     console.log(`${req.method} ${req.url}`);
-   *     return next(req);
-   *   },
-   * });
-   * ```
+   * Unlike interceptors, the returned client sees each request as it is sent:
+   * the body holds the serialized, enveloped, and compressed messages. The
+   * received client sends the request headers when it is called, so the
+   * returned client can read from the body first, and add headers that depend
+   * on the bytes, such as a signature.
    */
   wrapHttpClient?: (httpClient: UniversalClientFn) => UniversalClientFn;
 };
