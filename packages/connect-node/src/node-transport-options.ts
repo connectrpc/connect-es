@@ -120,6 +120,7 @@ export function validateNodeTransportOptions(
           pingIdleConnection: options.pingIdleConnection,
           pingTimeoutMs: options.pingTimeoutMs,
           idleConnectionTimeoutMs: options.idleConnectionTimeoutMs,
+          connectTimeoutMs: options.connectTimeoutMs,
         },
         options.nodeOptions,
       );
