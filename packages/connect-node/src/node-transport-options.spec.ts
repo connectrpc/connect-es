@@ -222,35 +222,46 @@ describe("wrapHttpClient", () => {
     if (!bidi) {
       return;
     }
-    it("should send headers when the returned client calls the wrapped client", async () => {
-      const sent: Uint8Array[] = [];
-      const client = createClient(
-        ElizaService,
-        createTransport(getUrl(), digestFirstChunk(sent)),
-      );
-      async function* input() {
-        log.push("client yields 1");
-        yield { sentence: "1" };
-        // The second message only exists after the server received the first.
-        await firstMessageReceived;
-        log.push("client yields 2");
-        yield { sentence: "2" };
-      }
-      const sentences: string[] = [];
-      for await (const res of client.converse(input())) {
-        sentences.push(res.sentence);
-      }
-      assert.deepStrictEqual(sentences, ["1", "2"]);
-      assert.deepStrictEqual(log, [
-        "client yields 1",
-        "client sends headers",
-        "server receives headers",
-        "server receives 1",
-        "client yields 2",
-        "server receives 2",
-      ]);
-      assertServerReceivedAsSent(sent);
-    });
+    // A transport that waited for the whole request body would wait forever
+    // here, because message 2 only exists after the server received message 1.
+    // The timeout fails the test instead, and its signal cancels the call.
+    it(
+      "should send headers when the returned client calls the wrapped client",
+      {
+        timeout: 1000 * 10,
+      },
+      async (t) => {
+        const sent: Uint8Array[] = [];
+        const client = createClient(
+          ElizaService,
+          createTransport(getUrl(), digestFirstChunk(sent)),
+        );
+        async function* input() {
+          log.push("client yields 1");
+          yield { sentence: "1" };
+          // The second message only exists after the server received the first.
+          await firstMessageReceived;
+          log.push("client yields 2");
+          yield { sentence: "2" };
+        }
+        const sentences: string[] = [];
+        for await (const res of client.converse(input(), {
+          signal: t.signal,
+        })) {
+          sentences.push(res.sentence);
+        }
+        assert.deepStrictEqual(sentences, ["1", "2"]);
+        assert.deepStrictEqual(log, [
+          "client yields 1",
+          "client sends headers",
+          "server receives headers",
+          "server receives 1",
+          "client yields 2",
+          "server receives 2",
+        ]);
+        assertServerReceivedAsSent(sent);
+      },
+    );
   }
 
   describe("over HTTP/2", () => {
