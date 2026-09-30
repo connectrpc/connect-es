@@ -23,7 +23,7 @@ import { createNodeHttpClient } from "./node-universal-client.js";
 /**
  * Before each test, spin up the given server, and tear it down again after the
  * test.
- * The teardown will wait for all connections to the server to be closed.
+ * The teardown fails the test if connections to the server are still open.
  * The server is accessible via the getUrl method of the returned object, or
  */
 export function useNodeServer(
@@ -56,9 +56,8 @@ export function useNodeServer(
       throw new Error("server not defined");
     }
     const s = server;
+    const deadline = Date.now() + 500; // 500ms
     for (;;) {
-      // If open connections are dangling, this loop will not exit before
-      // afterEach runs into a timeout.
       const count = await new Promise<number>((resolve, reject) => {
         s.getConnections((err, count) => {
           if (err) {
@@ -69,6 +68,9 @@ export function useNodeServer(
       });
       if (count === 0) {
         break;
+      }
+      if (Date.now() > deadline) {
+        throw new Error(`${count} connection(s) still open after the test`);
       }
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
