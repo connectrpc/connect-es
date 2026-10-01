@@ -18,7 +18,11 @@ import type {
   JsonReadOptions,
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
-import type { Interceptor, Transport } from "@connectrpc/connect";
+import type {
+  Interceptor,
+  MethodSerializationFactory,
+  Transport,
+} from "@connectrpc/connect";
 import type { Compression } from "@connectrpc/connect/protocol";
 import { createTransport } from "@connectrpc/connect/protocol-connect";
 import {
@@ -65,6 +69,12 @@ export type ConnectTransportOptions = NodeTransportOptions & {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Custom request and response serialization. Return undefined from the
+   * factory to use the default serialization for a method.
+   */
+  methodSerialization?: MethodSerializationFactory;
 
   /**
    * Compression algorithms available to a client. Clients ask servers to

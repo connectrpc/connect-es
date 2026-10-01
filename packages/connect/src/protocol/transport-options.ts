@@ -21,6 +21,7 @@ import type {
 import type { UniversalClientFn } from "./universal.js";
 import type { Interceptor } from "../interceptor.js";
 import type { Compression } from "./compression.js";
+import type { MethodSerializationFactory } from "./serialization.js";
 
 /**
  * @private Internal code, does not follow semantic versioning.
@@ -65,6 +66,12 @@ export interface CommonTransportOptions {
    * Options for the binary wire format.
    */
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
+
+  /**
+   * Custom request and response serialization. Return undefined from the
+   * factory to use the default serialization for a method.
+   */
+  methodSerialization?: MethodSerializationFactory;
 
   /**
    * Compression algorithms available to a client. Clients ask servers to

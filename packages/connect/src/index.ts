@@ -26,6 +26,11 @@ export type { Client } from "./promise-client.js";
 export type { CallOptions } from "./call-options.js";
 export type { Transport } from "./transport.js";
 export type {
+  Serialization,
+  MethodSerializationLookup,
+  MethodSerializationFactory,
+} from "./protocol/serialization.js";
+export type {
   Interceptor,
   UnaryRequest,
   UnaryResponse,

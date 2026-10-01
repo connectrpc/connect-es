@@ -69,6 +69,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.binaryOptions,
         opt.jsonOptions,
         opt,
+        opt.methodSerialization,
       );
       timeoutMs =
         timeoutMs === undefined
@@ -202,6 +203,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.binaryOptions,
         opt.jsonOptions,
         opt,
+        opt.methodSerialization,
       );
       timeoutMs =
         timeoutMs === undefined
