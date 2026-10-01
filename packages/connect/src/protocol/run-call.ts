@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-  DescMessage,
-  MessageInitShape,
-  MessageShape,
-} from "@bufbuild/protobuf";
+import type { DescMessage, MessageInitShape } from "@bufbuild/protobuf";
 import type {
   Interceptor,
   StreamRequest,
@@ -91,7 +87,7 @@ type StreamingFn<
  * Runs a server-streaming method with the given interceptors. Note that this
  * function is only used when implementing a Transport.
  */
-export async function runStreamingCall<
+export function runStreamingCall<
   I extends DescMessage,
   O extends DescMessage,
 >(opt: {
@@ -103,204 +99,129 @@ export async function runStreamingCall<
   signal?: AbortSignal;
   interceptors?: Interceptor[];
 }): Promise<StreamResponse<I, O>> {
-  const request = opt.req.message[Symbol.asyncIterator]();
-  let requestReturned: Promise<IteratorResult<MessageInitShape<I>>> | undefined;
-  let requestThrown: Promise<IteratorResult<MessageInitShape<I>>> | undefined;
-  const requestIterator: Required<AsyncIterator<MessageInitShape<I>>> = {
-    next: () => request.next(),
-    return(value) {
-      requestReturned ??= new Promise((resolve) =>
-        resolve(request.return?.(value) ?? { done: true, value }),
-      );
-      return requestReturned;
-    },
-    throw(reason) {
-      requestThrown ??= new Promise((resolve) =>
-        resolve(request.throw?.(reason) ?? { done: true, value: undefined }),
-      );
-      return requestThrown;
-    },
-  };
   const [signal, abort, done] = setupSignal(opt);
-  let state: "open" | "done" | "returned" | ConnectError = "open";
-  let pendingReads = 0;
-  let responseIterator: AsyncIterator<MessageShape<O>> | undefined;
-  let closing: Promise<void> | undefined;
+  let doneCalled = false;
 
-  function closeResponse(): Promise<void> {
-    const it = responseIterator;
-    if (it === undefined) {
-      return Promise.resolve();
+  // Resolves once the call ends. This happens when the signal is aborted,
+  // regardless of success or failure.
+  const aborted = new Promise<void>((resolve) => {
+    if (signal.aborted) {
+      resolve();
+    } else {
+      signal.addEventListener("abort", () => resolve());
     }
-    closing ??= Promise.resolve()
-      .then(async () => {
-        try {
-          while ((await it.next()).done !== true) {
-            // Discard buffered interceptor output to reach the closed source.
-          }
-        } finally {
-          await it.return?.();
-        }
-      })
-      .catch(() => {
-        // Cleanup must not replace the terminal RPC error.
-      });
-    return closing;
-  }
+  });
 
-  function fail(reason: unknown): ConnectError {
-    // Completion aborts the transport signal, but does not cancel queued reads.
-    if (state === "done" || state === "returned") {
-      return ConnectError.from(reason);
+  // Once the call ends, call return on the request iterable so it can clean up
+  // any allocated resources.
+  void aborted.then(() => {
+    const it = opt.req.message[Symbol.asyncIterator]();
+    // If the signal is aborted due to an error, we throw the error to the
+    // request iterator.
+    if (!doneCalled) {
+      const error = ConnectError.from(
+        getAbortSignalReason(signal),
+        Code.Canceled,
+      );
+      it.throw?.(error).catch(() => {});
     }
-    if (state instanceof ConnectError) {
-      return state;
-    }
-    const error = signal.aborted
-      ? ConnectError.from(getAbortSignalReason(signal), Code.Canceled)
-      : ConnectError.from(reason);
-    state = error;
-    signal.removeEventListener("abort", onAbort);
-    // Interrupt pending reads before waiting for iterator cleanup.
-    void abort(error).catch(() => {});
-    void requestIterator.throw(error).catch(() => {});
-    void requestIterator.return().catch(() => {});
-    void closeResponse();
-    return error;
-  }
+    it.return?.().catch(() => {});
+  });
 
-  function onAbort() {
-    fail(getAbortSignalReason(signal));
-  }
-
-  function checkSignal() {
-    if (state !== "done" && state !== "returned" && signal.aborted) {
-      throw fail(getAbortSignalReason(signal));
-    }
-    return state;
-  }
+  const next = applyInterceptors<StreamingFn<I, O>>(
+    async (req: StreamRequest<I, O>) => {
+      const res = await opt.next(req);
+      const it = res.message[Symbol.asyncIterator]();
+      // Once the call ends, call return on the transport iterable so it can
+      // clean up any allocated resources.
+      void aborted.then(() => it.return?.().catch(() => {}));
+      return {
+        ...res,
+        // This stream sits between the interceptors and the transport. Once
+        // the call ends, it ends every read with the call's outcome. It races
+        // each read against the signal, so it doesn't rely on the transport
+        // honoring the signal.
+        message: {
+          [Symbol.asyncIterator]: () => ({
+            next: async () => {
+              const result = signal.aborted
+                ? undefined
+                : await Promise.race([it.next(), aborted]);
+              if (result !== undefined) {
+                return result;
+              }
+              // The call was aborted, so we end the stream.
+              return doneCalled
+                ? { done: true, value: undefined }
+                : abort(getAbortSignalReason(signal));
+            },
+          }),
+        },
+      };
+    },
+    opt.interceptors,
+  );
 
   const req = {
     ...opt.req,
-    message: normalizeIterable(opt.req.method.input, {
-      [Symbol.asyncIterator]: () => requestIterator,
-    }),
+    message: normalizeIterable(opt.req.method.input, opt.req.message),
     signal,
   };
-  signal.addEventListener("abort", onAbort);
-  try {
-    checkSignal();
-    const next = applyInterceptors<StreamingFn<I, O>>(async (req) => {
-      try {
-        checkSignal();
-        const res = await opt.next(req);
-        return {
-          ...res,
-          message: (async function* () {
-            const it = res.message[Symbol.asyncIterator]();
-            let pendingSourceError: ConnectError | undefined;
-            try {
-              for (;;) {
-                if (checkSignal() === "returned") {
-                  return;
-                }
-                const result = await it.next();
-                if (checkSignal() === "returned") {
-                  return;
-                }
-                if (result.done === true) {
-                  return;
-                }
-                yield result.value;
-              }
-            } catch (reason) {
-              if (state !== "returned") {
-                checkSignal();
-                pendingSourceError = ConnectError.from(reason);
-                throw pendingSourceError;
-              }
-            } finally {
-              await Promise.resolve()
-                .then(() => it.return?.())
-                .catch((reason) => {
-                  if (state !== "returned") {
-                    checkSignal();
-                    throw pendingSourceError ?? ConnectError.from(reason);
-                  }
-                });
-            }
-          })(),
-        };
-      } catch (reason) {
-        // Interceptors may retry or recover ordinary transport errors.
-        checkSignal();
-        throw ConnectError.from(reason);
-      }
-    }, opt.interceptors);
-    const res = await next(req);
+  return next(req).then((res) => {
     const it = res.message[Symbol.asyncIterator]();
-    responseIterator = it;
-    if (signal.aborted) {
-      await closeResponse();
-      checkSignal();
-    }
-    const iterator: AsyncIterator<MessageShape<O>> = {
-      async next() {
-        if (state instanceof ConnectError) {
-          throw state;
-        }
-        if (state === "done" || state === "returned") {
-          return { done: true, value: undefined };
-        }
-        pendingReads++;
-        try {
-          const result = await it.next();
-          checkSignal();
-          if (result.done === true && state === "open") {
-            state = "done";
-            signal.removeEventListener("abort", onAbort);
-            done();
-            void requestIterator.return().catch(() => {});
-          }
-          return result;
-        } catch (reason) {
-          throw fail(reason);
-        } finally {
-          pendingReads--;
-        }
-      },
-      async return(value) {
-        if (state === "open") {
-          if (pendingReads === 0) {
-            state = "returned";
-            signal.removeEventListener("abort", onAbort);
-            done();
-            void requestIterator.return().catch(() => {});
-          } else {
-            fail(new ConnectError("the operation was canceled", Code.Canceled));
-          }
-        }
-        if (state !== "done") {
-          await closeResponse();
-        }
-        return { done: true, value };
-      },
-      async throw(reason) {
-        if (state === "done" || state === "returned") {
-          throw ConnectError.from(reason);
-        }
-        const error = fail(reason);
-        await closeResponse();
-        throw error;
-      },
-    };
+    // Once the call ends, pull the response stream until it finishes, so each
+    // interceptor in the chain sees the outcome and runs its cleanup. We rely
+    // on next() rather than passing return() or throw() down the chain, because
+    // interceptors may not implement those correctly.
+    const drained = aborted.then(async () => {
+      try {
+        while ((await it.next()).done !== true) {}
+      } catch {}
+    });
     return {
       ...res,
-      message: { [Symbol.asyncIterator]: () => iterator },
+      message: {
+        [Symbol.asyncIterator]: () => ({
+          async next() {
+            if (signal.aborted) {
+              await drained;
+              return doneCalled
+                ? { done: true, value: undefined }
+                : abort(getAbortSignalReason(signal));
+            }
+            try {
+              const result = await it.next();
+              if (result.done === true) {
+                doneCalled = true;
+                done();
+              }
+              return result;
+            } catch (e) {
+              return abort(e);
+            }
+          },
+          async return(value) {
+            if (!signal.aborted) {
+              doneCalled = true;
+              done();
+            }
+            await drained;
+            return { done: true, value };
+          },
+          async throw(reason) {
+            if (doneCalled) {
+              throw ConnectError.from(reason);
+            }
+            try {
+              return await abort(reason);
+            } finally {
+              await drained;
+            }
+          },
+        }),
+      },
     };
-  } catch (reason) {
-    throw fail(reason);
-  }
+  }, abort);
 }
 
 /**
