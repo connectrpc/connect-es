@@ -69,6 +69,18 @@ export interface Http2SessionOptions {
    * This option is equivalent to GRPC_ARG_CLIENT_IDLE_TIMEOUT_MS of gRPC core.
    */
   idleConnectionTimeoutMs?: number;
+
+  /**
+   * Timeout for establishing a connection, including the TLS handshake. If
+   * the connection is not ready within this time, it is destroyed, and
+   * pending requests reject with Code.Unavailable.
+   *
+   * Defaults to 20 seconds.
+   *
+   * This option is similar to the connection deadline that gRPC core derives
+   * from GRPC_ARG_MIN_RECONNECT_BACKOFF_MS.
+   */
+  connectTimeoutMs?: number;
 }
 
 /**
@@ -170,6 +182,7 @@ export class Http2SessionManager {
       pingIdleConnection: pingOptions?.pingIdleConnection ?? false,
       idleConnectionTimeoutMs:
         pingOptions?.idleConnectionTimeoutMs ?? 1000 * 60 * 15,
+      connectTimeoutMs: pingOptions?.connectTimeoutMs ?? 1000 * 20,
     };
   }
 
@@ -269,12 +282,24 @@ export class Http2SessionManager {
         this.s.conn.closed ||
         this.s.conn.destroyed
       ) {
-        this.setState(connect(this.authority, this.http2SessionOptions));
+        this.setState(
+          connect(
+            this.authority,
+            this.http2SessionOptions,
+            this.options.connectTimeoutMs,
+          ),
+        );
       } else if (this.s.requiresVerify()) {
         await this.verify(this.s);
       }
     } else if (this.s.t == "closed" || this.s.t == "error") {
-      this.setState(connect(this.authority, this.http2SessionOptions));
+      this.setState(
+        connect(
+          this.authority,
+          this.http2SessionOptions,
+          this.options.connectTimeoutMs,
+        ),
+      );
     }
     while (this.s.t !== "ready") {
       if (this.s.t === "error") {
@@ -338,7 +363,13 @@ export class Http2SessionManager {
             return;
           }
           // verify() has destroyed the old connection
-          this.setState(connect(this.authority, this.http2SessionOptions));
+          this.setState(
+            connect(
+              this.authority,
+              this.http2SessionOptions,
+              this.options.connectTimeoutMs,
+            ),
+          );
         },
         (reason) => {
           this.setState(closedOrError(reason));
@@ -425,6 +456,7 @@ function connect(
     | http2.ClientSessionOptions
     | http2.SecureClientSessionOptions
     | undefined,
+  connectTimeoutMs: number,
 ): StateConnecting {
   let resolve: ((value: http2.ClientHttp2Session) => void) | undefined;
   let reject: ((reason: unknown) => void) | undefined;
@@ -433,6 +465,16 @@ function connect(
     reject = rej;
   });
   const newConn = http2.connect(authority, http2SessionOptions);
+  const connectTimeoutId = safeSetTimeout(
+    () =>
+      abort(
+        new ConnectError(
+          "connection establishment timed out",
+          Code.Unavailable,
+        ),
+      ),
+    connectTimeoutMs,
+  );
   newConn.on("connect", onConnect);
   newConn.on("error", onError);
 
@@ -447,22 +489,25 @@ function connect(
   }
 
   function cleanup() {
+    clearTimeout(connectTimeoutId);
     newConn.off("connect", onConnect);
     newConn.off("error", onError);
+  }
+
+  function abort(reason: unknown) {
+    if (!newConn.destroyed) {
+      newConn.destroy(undefined, http2.constants.NGHTTP2_CANCEL);
+    }
+    // According to the documentation, destroy() should immediately terminate
+    // the session and the socket, but we still receive a "connect" event.
+    // We must not resolve a broken connection, so we reject it manually here.
+    reject?.(reason);
   }
 
   return {
     t: "connecting",
     conn,
-    abort(reason) {
-      if (!newConn.destroyed) {
-        newConn.destroy(undefined, http2.constants.NGHTTP2_CANCEL);
-      }
-      // According to the documentation, destroy() should immediately terminate
-      // the session and the socket, but we still receive a "connect" event.
-      // We must not resolve a broken connection, so we reject it manually here.
-      reject?.(reason);
-    },
+    abort,
     onExitState() {
       cleanup();
     },
