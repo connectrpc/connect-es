@@ -5,7 +5,7 @@ clean: true
 plugins:
   - local: protoc-gen-es
     out: src/gen/connectweb
-    opt: target=ts
+    opt: target=ts,import_extension=js
     include_imports: true
   - remote: buf.build/protocolbuffers/js:v4.0.0
     out: src/gen/grpcweb

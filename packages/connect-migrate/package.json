@@ -3,6 +3,7 @@
   "version": "2.2.0",
   "description": "This tool updates your Connect project to use the new @connectrpc packages.",
   "license": "Apache-2.0",
+  "type": "commonjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/connectrpc/connect-es.git",

@@ -37,6 +37,8 @@ and merge it with the existing one:
 - We explicitly want to emit declaration and declaration maps, because some
   transpilation issues only occur when emitting them.
 - We explicitly want to check libs.
+- We set `rootDir` to the repository root, because the test sources live in
+  sibling packages.
 
 Newer versions of TypeScript ship stricter `tsc --init` defaults. For example,
 5.9 enables `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`. Because

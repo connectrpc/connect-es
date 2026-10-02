@@ -1,6 +1,7 @@
 {
   "name": "@connectrpc/connect-web-bench",
   "private": true,
+  "type": "module",
   "scripts": {
     "bundle-size": "tsx src/report.ts",
     "generate": "buf generate",
