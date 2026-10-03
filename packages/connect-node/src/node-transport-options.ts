@@ -50,6 +50,21 @@ export type NodeHttp2TransportOptions = {
    * http2 module.
    */
   nodeOptions?: http2.ClientSessionOptions | http2.SecureClientSessionOptions;
+
+  /**
+   * Wraps the HTTP client of the transport.
+   *
+   * The function is called once, when the transport is created. It receives
+   * the HTTP client built from the other options, and returns the HTTP client
+   * that the transport uses.
+   *
+   * Unlike interceptors, the returned client sees each request as it is sent:
+   * the body holds the serialized, enveloped, and compressed messages. The
+   * received client sends the request headers when it is called, so the
+   * returned client can read from the body first, and add headers that depend
+   * on the bytes, such as a signature.
+   */
+  wrapHttpClient?: (httpClient: UniversalClientFn) => UniversalClientFn;
 } & Http2SessionOptions;
 
 /**
@@ -63,6 +78,21 @@ type NodeHttp1TransportOptions = {
   nodeOptions?:
     | Omit<http.RequestOptions, "signal">
     | Omit<https.RequestOptions, "signal">;
+
+  /**
+   * Wraps the HTTP client of the transport.
+   *
+   * The function is called once, when the transport is created. It receives
+   * the HTTP client built from the other options, and returns the HTTP client
+   * that the transport uses.
+   *
+   * Unlike interceptors, the returned client sees each request as it is sent:
+   * the body holds the serialized, enveloped, and compressed messages. The
+   * received client sends the request headers when it is called, so the
+   * returned client can read from the body first, and add headers that depend
+   * on the bytes, such as a signature.
+   */
+  wrapHttpClient?: (httpClient: UniversalClientFn) => UniversalClientFn;
 };
 
 /**
@@ -76,6 +106,7 @@ export function validateNodeTransportOptions(
     Partial<Omit<CommonTransportOptions, "baseUrl">> &
     Pick<CommonTransportOptions, "baseUrl">,
 ) {
+  const { wrapHttpClient, ...rest } = options;
   let httpClient: UniversalClientFn;
   if (options.httpVersion == "2") {
     let sessionManager: NodeHttp2ClientSessionManager;
@@ -104,8 +135,11 @@ export function validateNodeTransportOptions(
       nodeOptions: options.nodeOptions,
     });
   }
+  if (wrapHttpClient) {
+    httpClient = wrapHttpClient(httpClient);
+  }
   return {
-    ...options,
+    ...rest,
     httpClient,
     useBinaryFormat: options.useBinaryFormat ?? true,
     interceptors: options.interceptors ?? [],
