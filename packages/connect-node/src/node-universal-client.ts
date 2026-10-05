@@ -292,8 +292,8 @@ function h2Request(
         const rstCode =
           reason.code == Code.Canceled ? H2Code.CANCEL : H2Code.INTERNAL_ERROR;
         stream.close(rstCode);
-        // The call has failed or was canceled, so the response body may still
-        // be unread. Node.js only destroys a closed client stream after its
+        // The call can fail on a healthy stream, leaving the body unread.
+        // Node.js won't destroy a client stream closed with NO_ERROR until its
         // pending data is read, so we destroy it ourselves.
         // See https://github.com/nodejs/node/blob/955266bfdd854cd280dffd47548673914484e4c0/doc/api/http2.md?plain=1#L1248-L1249
         stream.destroy();
