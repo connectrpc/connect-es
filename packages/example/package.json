@@ -7,7 +7,9 @@
     "start": "tsx src/server.ts",
     "client": "tsx src/client.ts",
     "generate": "buf generate",
-    "license-header": "license-header"
+    "format": "biome format --write",
+    "license-header": "license-header",
+    "lint": "biome lint --error-on-warnings"
   },
   "engines": {
     "node": ">=22"

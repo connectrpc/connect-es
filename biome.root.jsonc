@@ -1,0 +1,5 @@
+{
+  // Used only by the root //#format and //#lint tasks.
+  "extends": ["./biome.jsonc"],
+  "files": { "includes": ["**", "!packages"] }
+}

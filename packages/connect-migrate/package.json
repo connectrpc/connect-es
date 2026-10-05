@@ -15,7 +15,9 @@
     "prebuild": "rm -rf ./dist/*",
     "build": "tsc --project tsconfig.json --outDir ./dist/cjs",
     "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
-    "license-header": "license-header"
+    "format": "biome format --write",
+    "license-header": "license-header",
+    "lint": "biome lint --error-on-warnings"
   },
   "engines": {
     "node": ">=22"

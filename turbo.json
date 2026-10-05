@@ -17,21 +17,28 @@
       "cache": false,
       "dependsOn": ["^build"]
     },
+    "format": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/biome.jsonc"]
+    },
     "license-header": {
       "dependsOn": ["generate"]
+    },
+    "lint": {
+      "dependsOn": ["format"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/biome.jsonc"]
     },
     "attw": {
       "dependsOn": ["build"]
     },
     "//#format": {
-      "inputs": ["$TURBO_DEFAULT$", "package-lock.json"]
+      "inputs": ["$TURBO_DEFAULT$", "!packages/**"]
     },
     "//#license-header": {
       "inputs": ["$TURBO_DEFAULT$", "!packages/**"]
     },
     "//#lint": {
       "dependsOn": ["//#format"],
-      "inputs": ["$TURBO_DEFAULT$", "package-lock.json"]
+      "inputs": ["$TURBO_DEFAULT$", "!packages/**"]
     }
   }
 }

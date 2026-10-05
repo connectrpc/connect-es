@@ -20,9 +20,9 @@
     "clean": "git clean -Xdf",
     "setversion": "node scripts/set-workspace-version.js",
     "postsetversion": "npm run all",
-    "format": "biome format --write",
+    "format": "biome format --write --config-path biome.root.jsonc",
     "license-header": "license-header --ignore 'packages/**'",
-    "lint": "biome lint --error-on-warnings"
+    "lint": "biome lint --error-on-warnings --config-path biome.root.jsonc"
   },
   "type": "module",
   "engineStrict": true,

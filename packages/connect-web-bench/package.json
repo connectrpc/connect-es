@@ -5,7 +5,9 @@
     "bundle-size": "tsx src/report.ts",
     "generate": "buf generate",
     "postgenerate": "license-header src/gen",
-    "license-header": "license-header"
+    "format": "biome format --write",
+    "license-header": "license-header",
+    "lint": "biome lint --error-on-warnings"
   },
   "dependencies": {
     "@bufbuild/buf": "^1.72.0",
