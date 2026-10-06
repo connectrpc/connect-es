@@ -17,6 +17,7 @@ import * as assert from "node:assert";
 import { create } from "@bufbuild/protobuf";
 import { runStreamingCall, runUnaryCall } from "./run-call.js";
 import type {
+  Interceptor,
   StreamRequest,
   StreamResponse,
   UnaryRequest,
@@ -26,6 +27,8 @@ import { createAsyncIterable } from "./async-iterable.js";
 import { createContextValues } from "../context-values.js";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
+import { Code } from "../code.js";
+import { ConnectError } from "../connect-error.js";
 
 const TestService = createServiceDesc({
   typeName: "TestService",
@@ -171,6 +174,29 @@ describe("runStreamingCall()", () => {
     };
   }
 
+  function recordOutcome(outcomes: (Code | undefined)[]): Interceptor {
+    return (next) => async (req) => {
+      const res = await next(req);
+      if (!res.stream) {
+        return res;
+      }
+      return {
+        ...res,
+        message: (async function* () {
+          let code: Code | undefined;
+          try {
+            yield* res.message;
+          } catch (e) {
+            code = ConnectError.from(e).code;
+            throw e;
+          } finally {
+            outcomes.push(code);
+          }
+        })(),
+      };
+    };
+  }
+
   it("should return the response", async () => {
     const req = makeReq();
     const res = await runStreamingCall<
@@ -193,10 +219,9 @@ describe("runStreamingCall()", () => {
     assert.deepStrictEqual(values, ["1", "2", "3"]);
     const it = req.message[Symbol.asyncIterator]();
     assert.deepStrictEqual(await it.next(), { done: true, value: undefined });
-    // Check to see if response iterator doesn't provide throw/return.
     const resIt = res.message[Symbol.asyncIterator]();
-    assert.strictEqual(resIt.throw, undefined); // eslint-disable-line  @typescript-eslint/unbound-method
-    assert.strictEqual(resIt.return, undefined); // eslint-disable-line  @typescript-eslint/unbound-method
+    assert.strictEqual(typeof resIt.throw, "function");
+    assert.strictEqual(typeof resIt.return, "function");
   });
   it("should trigger the signal when done", async () => {
     let signal: AbortSignal | undefined;
@@ -244,32 +269,36 @@ describe("runStreamingCall()", () => {
   });
   it("should not pull messages after the user aborts", async () => {
     const userAbort = new AbortController();
-    let didPullAfterAbort = false;
+    let pullCount = 0;
     const res = await runStreamingCall<
       typeof Int32ValueSchema,
       typeof StringValueSchema
     >({
       signal: userAbort.signal,
       req: makeReq(),
-      next: (req) =>
-        Promise.resolve({
-          ...makeRes(req),
-          message: (async function* () {
-            yield create(StringValueSchema, { value: "1" });
-            didPullAfterAbort = true;
-            yield create(StringValueSchema, { value: "2" });
-          })(),
-        }),
+      next: (req) => {
+        const response = makeRes(req);
+        const it = response.message[Symbol.asyncIterator]();
+        return Promise.resolve({
+          ...response,
+          message: {
+            [Symbol.asyncIterator]: () => ({
+              next: () => {
+                pullCount++;
+                return it.next();
+              },
+            }),
+          },
+        });
+      },
     });
     const it = res.message[Symbol.asyncIterator]();
-
     await it.next();
     userAbort.abort();
-
     await assert.rejects(it.next(), {
       message: "[canceled] This operation was aborted",
     });
-    assert.ok(!didPullAfterAbort);
+    assert.strictEqual(pullCount, 1);
   });
   it("should raise Code.DeadlineExceeded on timeout", async () => {
     const req = makeReq();
@@ -319,5 +348,300 @@ describe("runStreamingCall()", () => {
       { message: "[unknown] foo" },
     );
     assert.strictEqual(reqError?.message, "[unknown] foo");
+  });
+  it("should finalize interceptors when the signal is already aborted", async () => {
+    const userAbort = new AbortController();
+    userAbort.abort();
+    const outcomes: (Code | undefined)[] = [];
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      signal: userAbort.signal,
+      req: makeReq(),
+      interceptors: [recordOutcome(outcomes)],
+      next: (req) => Promise.resolve(makeRes(req)),
+    });
+
+    await assert.rejects(res.message[Symbol.asyncIterator]().next(), {
+      code: Code.Canceled,
+    });
+    assert.deepStrictEqual(outcomes, [Code.Canceled]);
+  });
+  it("should finalize interceptors when the user aborts between reads", async () => {
+    const userAbort = new AbortController();
+    const outcomes: (Code | undefined)[] = [];
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      signal: userAbort.signal,
+      req: makeReq(),
+      interceptors: [recordOutcome(outcomes)],
+      next: (req) => Promise.resolve(makeRes(req)),
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    await it.next();
+    userAbort.abort();
+
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepStrictEqual(outcomes, [Code.Canceled]);
+  });
+  it("should reject a pending read when the user aborts", async () => {
+    const userAbort = new AbortController();
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      signal: userAbort.signal,
+      req: makeReq(),
+      next: (req) =>
+        Promise.resolve({
+          ...makeRes(req),
+          message: {
+            [Symbol.asyncIterator]: () => ({
+              next: () => new Promise<never>(() => {}),
+            }),
+          },
+        }),
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    const pending = it.next();
+    userAbort.abort();
+
+    await assert.rejects(pending, { code: Code.Canceled });
+  });
+  it("should finalize interceptors on return", async () => {
+    const outcomes: (Code | undefined)[] = [];
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req: makeReq(),
+      interceptors: [recordOutcome(outcomes)],
+      next: (req) => Promise.resolve(makeRes(req)),
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    await it.next();
+    await it.return?.();
+
+    assert.deepStrictEqual(outcomes, [undefined]);
+  });
+  it("should end the call on return", async () => {
+    let signal: AbortSignal | undefined;
+    const req = makeReq();
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req,
+      next: (request) => {
+        signal = request.signal;
+        return Promise.resolve(makeRes(request));
+      },
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    await it.next();
+    await it.return?.();
+
+    assert.strictEqual(signal?.aborted, true);
+    assert.deepStrictEqual(await it.next(), { done: true, value: undefined });
+    assert.deepStrictEqual(await req.message[Symbol.asyncIterator]().next(), {
+      done: true,
+      value: undefined,
+    });
+  });
+  it("should resolve a pending read when return is called", async () => {
+    const outcomes: (Code | undefined)[] = [];
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req: makeReq(),
+      interceptors: [recordOutcome(outcomes)],
+      next: (req) =>
+        Promise.resolve({
+          ...makeRes(req),
+          message: {
+            [Symbol.asyncIterator]: () => ({
+              next: () => new Promise<never>(() => {}),
+            }),
+          },
+        }),
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    const pending = it.next();
+    await it.return?.();
+
+    assert.deepStrictEqual(await pending, { done: true, value: undefined });
+    assert.deepStrictEqual(outcomes, [undefined]);
+  });
+  it("should close the transport without pulling or waiting on return", async () => {
+    let pullCount = 0;
+    let didClose = false;
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req: makeReq(),
+      next: (req) => {
+        const response = makeRes(req);
+        const transportIt = response.message[Symbol.asyncIterator]();
+        return Promise.resolve({
+          ...response,
+          message: {
+            [Symbol.asyncIterator]: () => ({
+              next: () => {
+                pullCount++;
+                return transportIt.next();
+              },
+              return: () => {
+                didClose = true;
+                return new Promise<never>(() => {});
+              },
+            }),
+          },
+        });
+      },
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    await it.next();
+
+    assert.deepStrictEqual(await it.return?.(), {
+      done: true,
+      value: undefined,
+    });
+    assert.strictEqual(pullCount, 1);
+    assert.ok(didClose);
+  });
+  it("should fail the call with the error passed to throw", async () => {
+    const outcomes: (Code | undefined)[] = [];
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req: makeReq(),
+      interceptors: [recordOutcome(outcomes)],
+      next: (req) => Promise.resolve(makeRes(req)),
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    await it.next();
+
+    await assert.rejects(
+      it.throw?.(new ConnectError("stop", Code.Aborted)) ?? Promise.resolve(),
+      { message: "[aborted] stop" },
+    );
+    assert.deepStrictEqual(outcomes, [Code.Aborted]);
+
+    // return after throw does not change the outcome
+    await it.return?.();
+    await assert.rejects(it.next(), { message: "[aborted] stop" });
+  });
+  it("should reject throw with the given error after the call ends", async () => {
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req: makeReq(),
+      next: (req) => Promise.resolve(makeRes(req)),
+    });
+    const it = res.message[Symbol.asyncIterator]();
+    await it.return?.();
+
+    await assert.rejects(
+      it.throw?.(new ConnectError("stop", Code.Aborted)) ?? Promise.resolve(),
+      { message: "[aborted] stop" },
+    );
+  });
+  it("should let an interceptor retry when next throws", async () => {
+    let attempts = 0;
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req: makeReq(),
+      interceptors: [
+        (next) => async (req) => {
+          try {
+            return await next(req);
+          } catch {
+            return next(req);
+          }
+        },
+      ],
+      next: async (req) => {
+        attempts++;
+        if (attempts === 1) {
+          throw new ConnectError("try again", Code.Unavailable);
+        }
+        assert.strictEqual(req.signal.aborted, false);
+
+        const input = [];
+        for await (const message of req.message) {
+          input.push(message.value);
+        }
+        assert.deepStrictEqual(input, [1, 2, 3]);
+        return makeRes(req);
+      },
+    });
+
+    const values = [];
+    for await (const message of res.message) {
+      values.push(message.value);
+    }
+    assert.deepStrictEqual(values, ["1", "2", "3"]);
+    assert.strictEqual(attempts, 2);
+  });
+  it("should let an interceptor recover from a read error", async () => {
+    const readError = new ConnectError("read failed", Code.Unavailable);
+    let returnCount = 0;
+    const outcomes: (Code | undefined)[] = [];
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req: makeReq(),
+      interceptors: [
+        recordOutcome(outcomes),
+        (next) => async (req) => {
+          const res = await next(req);
+          if (!res.stream) {
+            return res;
+          }
+          return {
+            ...res,
+            message: (async function* () {
+              try {
+                yield* res.message;
+              } catch (e) {
+                assert.strictEqual(e, readError);
+                yield create(StringValueSchema, { value: "fallback" });
+              }
+            })(),
+          };
+        },
+      ],
+      next: (req) =>
+        Promise.resolve({
+          ...makeRes(req),
+          message: {
+            [Symbol.asyncIterator]: () => ({
+              next: () => Promise.reject(readError),
+              return: () => {
+                returnCount++;
+                return Promise.reject(new Error("cleanup failed"));
+              },
+            }),
+          },
+        }),
+    });
+
+    const values = [];
+    for await (const message of res.message) {
+      values.push(message.value);
+    }
+    assert.deepStrictEqual(values, ["fallback"]);
+    assert.strictEqual(returnCount, 1);
+    assert.deepStrictEqual(outcomes, [undefined]);
   });
 });
