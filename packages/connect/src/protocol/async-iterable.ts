@@ -323,7 +323,7 @@ export function pipeTo(
     iterable = abortable = makeIterableAbortable(iterable);
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   iterable = pipe(iterable, ...transforms, { propagateDownStreamError: false });
 
   return sink(iterable).catch((reason) => {
@@ -1255,7 +1255,7 @@ export function createWritableIterable<T>(): WritableIterable<T> {
   // already available and either interact/add themselves to the queue.
   const readQueue: ((result: IteratorResult<T, undefined>) => void)[] = [];
   const writeQueue: T[] = [];
-  let err: unknown = undefined;
+  let err: unknown;
   let nextResolve: () => void;
   let nextReject: (err: unknown) => void;
   let nextPromise = new Promise<void>((resolve, reject) => {

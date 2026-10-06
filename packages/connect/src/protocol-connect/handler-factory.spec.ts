@@ -493,7 +493,7 @@ describe("createHandlerFactory()", () => {
         const { handler, service, method } = setupTestHandler(
           testService.method.unary,
           {},
-          async (req, ctx) => {
+          async (_req, ctx) => {
             handlerContextSignal = ctx.signal;
             for (;;) {
               await new Promise((r) => setTimeout(r, 1));
@@ -530,7 +530,7 @@ describe("createHandlerFactory()", () => {
           testService.method.serverStreaming,
           {},
           // eslint-disable-next-line require-yield
-          async function* (req, ctx) {
+          async function* (_req, ctx) {
             handlerContextSignal = ctx.signal;
             for (;;) {
               await new Promise((r) => setTimeout(r, 1));
@@ -568,7 +568,7 @@ describe("createHandlerFactory()", () => {
         testService.method.unaryNoSideEffects,
         {},
         // eslint-disable-next-line @typescript-eslint/require-await
-        async (req, ctx) => {
+        async (_req, ctx) => {
           assert.strictEqual(ctx.requestMethod, "GET");
           assert.strictEqual(ctx.protocolName, "connect");
           return { value: "abc" };

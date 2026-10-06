@@ -32,7 +32,6 @@ const transform: j.Transform = (file, { j }, options) => {
     return root.toSource();
   }
   let importModified = false;
-  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   importPaths.forEach((path) => {
     if (typeof path.value.source.value === "string") {
       const sourceValue = path.value.source.value;

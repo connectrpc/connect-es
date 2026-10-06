@@ -48,7 +48,7 @@ export function parseTimeout(
   };
   const timeoutMs =
     unitToMultiplicand[results[2] as keyof typeof unitToMultiplicand] *
-    parseInt(results[1]);
+    parseInt(results[1], 10);
   if (timeoutMs > maxTimeoutMs) {
     return {
       timeoutMs: timeoutMs,

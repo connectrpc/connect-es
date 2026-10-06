@@ -1,0 +1,50 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!**/gen",
+      "!**/dist",
+      "!**/typescript-compat",
+      "!**/tsconfig.*.json",
+      "!**/*.svg"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space"
+  },
+  "json": {
+    "formatter": {
+      "expand": "auto"
+    }
+  },
+  "linter": {
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "useTemplate": "off",
+        "useConst": "off",
+        "noParameterAssign": "off",
+        "useSingleVarDeclarator": "off",
+        "useNumberNamespace": "off",
+        "noUnusedTemplateLiteral": "off"
+      },
+      "correctness": {
+        "noSwitchDeclarations": "off"
+      },
+      "suspicious": {
+        "noDoubleEquals": "off",
+        "noFallthroughSwitchClause": "off",
+        "useIterableCallbackReturn": {
+          "level": "error",
+          "options": {
+            // A forEach callback may return a value; map and filter still must.
+            "checkForEach": false
+          }
+        }
+      }
+    }
+  }
+}

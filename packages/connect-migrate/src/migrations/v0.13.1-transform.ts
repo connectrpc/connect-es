@@ -44,7 +44,6 @@ const transform: j.Transform = (file, { j }, options) => {
   }
   let importOrRequireModified = false;
   // ESM imports -- no dynamic imports
-  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   importPaths.forEach((path) => {
     if (typeof path.value.source.value === "string") {
       const sourceValue = path.value.source.value;
@@ -56,7 +55,6 @@ const transform: j.Transform = (file, { j }, options) => {
     }
   });
   // CJS imports
-  // biome-ignore lint/complexity/noForEach: not alternative to forEach available
   requirePaths.forEach((path) => {
     const firstArg = path.value.arguments[0];
     if (

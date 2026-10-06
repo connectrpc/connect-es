@@ -55,7 +55,7 @@ runNodeJs(
 function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
   const createClient = f.import("createClient", "@connectrpc/connect");
   const createConnectTransport = f.import("createConnectTransport", "@connectrpc/connect-web");
-  let lastService: DescService | undefined = undefined;
+  let lastService: DescService | undefined;
   f.print(f.jsDoc(`Calls ${methods.length} RPCs with Connect-Web`));
   f.print("export async function call() {");
   f.print("  const transport = ", createConnectTransport, "({");
@@ -79,7 +79,7 @@ function generateConnectWeb(f: GeneratedFile, methods: DescMethod[]) {
 
 // biome-ignore format: print calls should not be formatted
 function generateGrpcWeb(f: GeneratedFile, methods: DescMethod[]) {
-  let lastService: DescService | undefined = undefined;
+  let lastService: DescService | undefined;
   f.print(f.jsDoc(`Calls ${methods.length} RPCs with gRPC-Web`));
   f.print("export async function call() {");
   f.print(`  const hostname = "https://buf.build/";`);
