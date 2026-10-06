@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.73.0",
-    "@bufbuild/protoc-gen-es": "^2.14.1",
+    "@bufbuild/protoc-gen-es": "^2.16.0",
     "@types/node": "^24.10.1",
     "tsx": "^4.20.6"
   }
