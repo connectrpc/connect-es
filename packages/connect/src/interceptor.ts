@@ -151,6 +151,15 @@ export interface StreamResponse<
 
   /**
    * The output messages.
+   *
+   * On the client, the stream ends without an error when the call completes,
+   * and throws a ConnectError when the call fails, is canceled, or times out.
+   * If the caller stops early with `break`, the stream also ends without an
+   * error, but the server sees the call as canceled.
+   *
+   * After the call ends, the transport is closed and the interceptors are
+   * polled until they finish. An interceptor that retries should stop once the
+   * request signal is aborted.
    */
   readonly message: AsyncIterable<MessageShape<O>>;
 

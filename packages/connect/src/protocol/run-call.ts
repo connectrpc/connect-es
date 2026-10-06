@@ -99,58 +99,126 @@ export function runStreamingCall<
   signal?: AbortSignal;
   interceptors?: Interceptor[];
 }): Promise<StreamResponse<I, O>> {
-  const next = applyInterceptors(opt.next, opt.interceptors);
   const [signal, abort, done] = setupSignal(opt);
+  let doneCalled = false;
+
+  // Resolves once the call ends. This happens when the signal is aborted,
+  // regardless of success or failure.
+  const aborted = new Promise<void>((resolve) => {
+    if (signal.aborted) {
+      resolve();
+    } else {
+      signal.addEventListener("abort", () => resolve());
+    }
+  });
+
+  // Once the call ends, call return on the request iterable so it can clean up
+  // any allocated resources.
+  void aborted.then(() => {
+    const it = opt.req.message[Symbol.asyncIterator]();
+    // If the signal is aborted due to an error, we throw the error to the
+    // request iterator.
+    if (!doneCalled) {
+      const error = ConnectError.from(
+        getAbortSignalReason(signal),
+        Code.Canceled,
+      );
+      it.throw?.(error).catch(() => {});
+    }
+    it.return?.().catch(() => {});
+  });
+
+  const next = applyInterceptors<StreamingFn<I, O>>(
+    async (req: StreamRequest<I, O>) => {
+      const res = await opt.next(req);
+      const it = res.message[Symbol.asyncIterator]();
+      // Once the call ends, call return on the transport iterable so it can
+      // clean up any allocated resources.
+      void aborted.then(() => it.return?.().catch(() => {}));
+      return {
+        ...res,
+        // This stream sits between the interceptors and the transport. Once
+        // the call ends, it ends every read with the call's outcome. It races
+        // each read against the signal, so it doesn't rely on the transport
+        // honoring the signal.
+        message: {
+          [Symbol.asyncIterator]: () => ({
+            next: async () => {
+              const result = signal.aborted
+                ? undefined
+                : await Promise.race([it.next(), aborted]);
+              if (result !== undefined) {
+                return result;
+              }
+              // The call was aborted, so we end the stream.
+              return doneCalled
+                ? { done: true, value: undefined }
+                : abort(getAbortSignalReason(signal));
+            },
+          }),
+        },
+      };
+    },
+    opt.interceptors,
+  );
+
   const req = {
     ...opt.req,
     message: normalizeIterable(opt.req.method.input, opt.req.message),
     signal,
   };
-  let doneCalled = false;
-  // Call return on the request iterable to indicate
-  // that we will no longer consume it and it should
-  // cleanup any allocated resources.
-  signal.addEventListener("abort", function () {
-    const it = opt.req.message[Symbol.asyncIterator]();
-    // If the signal is aborted due to an error, we want to throw
-    // the error to the request iterator.
-    if (!doneCalled) {
-      it.throw?.(this.reason).catch(() => {
-        // throw returns a promise, which we don't care about.
-        //
-        // Uncaught promises are thrown at sometime/somewhere by the event loop,
-        // this is to ensure error is caught and ignored.
-      });
-    }
-    it.return?.().catch(() => {
-      // return returns a promise, which we don't care about.
-      //
-      // Uncaught promises are thrown at sometime/somewhere by the event loop,
-      // this is to ensure error is caught and ignored.
-    });
-  });
   return next(req).then((res) => {
+    const it = res.message[Symbol.asyncIterator]();
+    // Once the call ends, pull the response stream until it finishes, so each
+    // interceptor in the chain sees the outcome and runs its cleanup. We rely
+    // on next() rather than passing return() or throw() down the chain, because
+    // interceptors may not implement those correctly.
+    const drained = aborted.then(async () => {
+      try {
+        while ((await it.next()).done !== true) {}
+      } catch {}
+    });
     return {
       ...res,
       message: {
-        [Symbol.asyncIterator]() {
-          const it = res.message[Symbol.asyncIterator]();
-          return {
-            next() {
-              if (!doneCalled && signal.aborted) {
-                return abort(getAbortSignalReason(signal));
+        [Symbol.asyncIterator]: () => ({
+          async next() {
+            if (signal.aborted) {
+              await drained;
+              return doneCalled
+                ? { done: true, value: undefined }
+                : abort(getAbortSignalReason(signal));
+            }
+            try {
+              const result = await it.next();
+              if (result.done === true) {
+                doneCalled = true;
+                done();
               }
-              return it.next().then((r) => {
-                if (r.done == true) {
-                  doneCalled = true;
-                  done();
-                }
-                return r;
-              }, abort);
-            },
-            // We deliberately omit throw/return.
-          };
-        },
+              return result;
+            } catch (e) {
+              return abort(e);
+            }
+          },
+          async return(value) {
+            if (!signal.aborted) {
+              doneCalled = true;
+              done();
+            }
+            await drained;
+            return { done: true, value };
+          },
+          async throw(reason) {
+            if (doneCalled) {
+              throw ConnectError.from(reason);
+            }
+            try {
+              return await abort(reason);
+            } finally {
+              await drained;
+            }
+          },
+        }),
       },
     };
   }, abort);
