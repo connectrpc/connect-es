@@ -190,11 +190,12 @@ describe("createClientStreamingFn()", () => {
       TestService.method.clientStream,
     );
     let reqItrClosed = false;
+    let didPull = false;
     const res = await fn(
       (async function* () {
         try {
           yield { value: 1 };
-          assert.fail("expected early return");
+          didPull = true;
         } finally {
           reqItrClosed = true;
         }
@@ -203,6 +204,7 @@ describe("createClientStreamingFn()", () => {
     assert.ok(isMessage(res, StringValueSchema));
     assert.strictEqual(res.value, output.value);
     assert.ok(reqItrClosed);
+    assert.ok(!didPull);
   });
   it("closes the request iterable when response is received", async () => {
     const transport = createRouterTransport(({ service }) => {
@@ -224,11 +226,12 @@ describe("createClientStreamingFn()", () => {
       TestService.method.clientStream,
     );
     let reqItrClosed = false;
+    let didPull = false;
     const res = fn(
       (async function* () {
         try {
           yield { value: 1 };
-          assert.fail("expected early return");
+          didPull = true;
         } finally {
           reqItrClosed = true;
         }
@@ -240,6 +243,7 @@ describe("createClientStreamingFn()", () => {
       isWireError: true,
     });
     assert.ok(reqItrClosed);
+    assert.ok(!didPull);
   });
 });
 

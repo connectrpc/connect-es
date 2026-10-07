@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it } from "node:test";
+import { describe, it, mock } from "node:test";
 import * as assert from "node:assert";
 import { create } from "@bufbuild/protobuf";
 import { runStreamingCall, runUnaryCall } from "./run-call.js";
@@ -324,13 +324,11 @@ describe("runStreamingCall()", () => {
   it("should propagate the error thrown in next", async () => {
     const req = makeReq();
     let reqError: Error | undefined;
+    const next = mock.fn(() => Promise.reject(new Error("unexpected call")));
     req.message = {
       [Symbol.asyncIterator]() {
         return {
-          next() {
-            assert.fail("unexpected call");
-            throw new Error("unexpected call");
-          },
+          next,
           throw(e) {
             reqError = e as Error;
             return Promise.reject({ done: true, value: undefined });
@@ -348,6 +346,7 @@ describe("runStreamingCall()", () => {
       { message: "[unknown] foo" },
     );
     assert.strictEqual(reqError?.message, "[unknown] foo");
+    assert.strictEqual(next.mock.callCount(), 0);
   });
   it("should finalize interceptors when the signal is already aborted", async () => {
     const userAbort = new AbortController();
