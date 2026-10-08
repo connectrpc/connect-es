@@ -24,6 +24,6 @@
     "@bufbuild/buf": "^1.73.0",
     "@bufbuild/protoc-gen-es": "^2.16.0",
     "esbuild": "^0.19.8",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }

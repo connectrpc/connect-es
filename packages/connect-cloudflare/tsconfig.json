@@ -1,4 +1,8 @@
 {
   "include": ["conformance/**/*.ts"],
-  "extends": "../../tsconfig.base.json"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./conformance",
+    "types": ["node"]
+  }
 }
