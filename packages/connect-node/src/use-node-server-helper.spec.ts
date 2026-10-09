@@ -15,6 +15,7 @@
 import { afterEach, beforeEach } from "node:test";
 import type * as http2 from "node:http2";
 import * as http from "node:http";
+import type * as net from "node:net";
 import type * as https from "node:https";
 import type { UniversalClientFn } from "@connectrpc/connect/protocol";
 import { Http2SessionManager } from "./http2-session-manager.js";
@@ -42,10 +43,15 @@ export function useNodeServer(
 
   let client: UniversalClientFn | undefined;
   let clientSessionManager: Http2SessionManager | undefined;
+  const sockets = new Set<net.Socket>();
 
   beforeEach(async () => {
     const s = createServer();
     server = s;
+    s.on("connection", (socket: net.Socket) => {
+      sockets.add(socket);
+      socket.once("close", () => sockets.delete(socket));
+    });
     await new Promise<void>((resolve) => {
       s.listen(0, () => resolve());
     });
@@ -56,25 +62,34 @@ export function useNodeServer(
       throw new Error("server not defined");
     }
     const s = server;
-    const deadline = Date.now() + 500; // 500ms
-    for (;;) {
-      const count = await new Promise<number>((resolve, reject) => {
-        s.getConnections((err, count) => {
-          if (err) {
-            return reject(err);
-          }
-          return resolve(count);
+    try {
+      const deadline = Date.now() + 500; // 500ms
+      for (;;) {
+        const count = await new Promise<number>((resolve, reject) => {
+          s.getConnections((err, count) => {
+            if (err) {
+              return reject(err);
+            }
+            return resolve(count);
+          });
         });
-      });
-      if (count === 0) {
-        break;
+        if (count === 0) {
+          break;
+        }
+        if (Date.now() > deadline) {
+          throw new Error(`${count} connection(s) still open after the test`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 5));
       }
-      if (Date.now() > deadline) {
-        throw new Error(`${count} connection(s) still open after the test`);
+    } finally {
+      // If a test leaks a connection, we still shut down the server. Otherwise
+      // the open connection keeps the process alive, and the test run hangs.
+      for (const socket of sockets) {
+        socket.destroy();
       }
-      await new Promise((resolve) => setTimeout(resolve, 5));
+      sockets.clear();
+      s.close();
     }
-    s.close();
   });
 
   return {
