@@ -190,11 +190,12 @@ describe("createClientStreamingFn()", () => {
       TestService.method.clientStream,
     );
     let reqItrClosed = false;
+    let didPull = false;
     const res = await fn(
       (async function* () {
         try {
           yield { value: 1 };
-          assert.fail("expected early return");
+          didPull = true;
         } finally {
           reqItrClosed = true;
         }
@@ -203,6 +204,7 @@ describe("createClientStreamingFn()", () => {
     assert.ok(isMessage(res, StringValueSchema));
     assert.strictEqual(res.value, output.value);
     assert.ok(reqItrClosed);
+    assert.ok(!didPull);
   });
   it("closes the request iterable when response is received", async () => {
     const transport = createRouterTransport(({ service }) => {
@@ -224,11 +226,12 @@ describe("createClientStreamingFn()", () => {
       TestService.method.clientStream,
     );
     let reqItrClosed = false;
+    let didPull = false;
     const res = fn(
       (async function* () {
         try {
           yield { value: 1 };
-          assert.fail("expected early return");
+          didPull = true;
         } finally {
           reqItrClosed = true;
         }
@@ -240,6 +243,7 @@ describe("createClientStreamingFn()", () => {
       isWireError: true,
     });
     assert.ok(reqItrClosed);
+    assert.ok(!didPull);
   });
 });
 
@@ -312,7 +316,54 @@ describe("createServerStreamingFn()", () => {
     assert.deepStrictEqual(receivedMessages, output);
     assert.ok(interceptorCalled);
   });
-  it("doesn't support throw/return on the returned response", () => {
+  it("finalizes interceptors and ends the call on break", async () => {
+    let signal: AbortSignal | undefined;
+    let didFinalize = false;
+    const fn = createServerStreamingFn(
+      createRouterTransport(
+        ({ service }) => {
+          service(TestService, {
+            serverStream: () =>
+              createAsyncIterable([
+                create(StringValueSchema, { value: "1" }),
+                create(StringValueSchema, { value: "2" }),
+              ]),
+          });
+        },
+        {
+          transport: {
+            interceptors: [
+              (next) => async (req) => {
+                signal = req.signal;
+                const res = await next(req);
+                if (!res.stream) {
+                  return res;
+                }
+                return {
+                  ...res,
+                  message: (async function* () {
+                    try {
+                      yield* res.message;
+                    } finally {
+                      didFinalize = true;
+                    }
+                  })(),
+                };
+              },
+            ],
+          },
+        },
+      ),
+      TestService.method.serverStream,
+    );
+    for await (const message of fn({})) {
+      assert.strictEqual(message.value, "1");
+      break;
+    }
+    assert.ok(didFinalize);
+    assert.strictEqual(signal?.aborted, true);
+  });
+  it("supports throw/return on the returned response", () => {
     const fn = createServerStreamingFn(
       createRouterTransport(({ service }) => {
         service(TestService, {
@@ -322,8 +373,8 @@ describe("createServerStreamingFn()", () => {
       TestService.method.serverStream,
     );
     const it = fn({})[Symbol.asyncIterator]();
-    assert.strictEqual(it.throw, undefined);
-    assert.strictEqual(it.return, undefined);
+    assert.strictEqual(typeof it.throw, "function");
+    assert.strictEqual(typeof it.return, "function");
   });
 });
 
@@ -482,7 +533,7 @@ describe("createBiDiStreamingFn()", () => {
       value: undefined,
     });
   });
-  it("doesn't support throw/return on the returned response", () => {
+  it("supports throw/return on the returned response", () => {
     const fn = createBiDiStreamingFn(
       createRouterTransport(({ service }) => {
         service(TestService, {
@@ -492,7 +543,7 @@ describe("createBiDiStreamingFn()", () => {
       TestService.method.bidiStream,
     );
     const it = fn(createAsyncIterable([]))[Symbol.asyncIterator]();
-    assert.strictEqual(it.throw, undefined);
-    assert.strictEqual(it.return, undefined);
+    assert.strictEqual(typeof it.throw, "function");
+    assert.strictEqual(typeof it.return, "function");
   });
 });

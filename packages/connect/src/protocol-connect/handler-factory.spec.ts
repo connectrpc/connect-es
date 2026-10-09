@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it } from "node:test";
+import { describe, it, mock } from "node:test";
 import * as assert from "node:assert";
 import {
   create,
@@ -697,10 +697,13 @@ describe("createHandlerFactory()", () => {
       testService.method.serverStreaming,
     ]) {
       it(`should not read the request body of a ${method.methodKind} RPC`, async () => {
+        const impl = mock.fn(() => {
+          throw new Error("unexpected call");
+        });
         const { handler } = setupTestHandler(
           method,
           { requestGate: denyAll },
-          () => assert.fail("implementation should not be called"),
+          impl,
         );
         const state = { read: false };
         const res = await handler({
@@ -718,6 +721,7 @@ describe("createHandlerFactory()", () => {
         });
         assert.notStrictEqual(res.status, 415); // wrong content-type for this RPC
         assert.strictEqual(state.read, false);
+        assert.strictEqual(impl.mock.callCount(), 0);
       });
     }
 
