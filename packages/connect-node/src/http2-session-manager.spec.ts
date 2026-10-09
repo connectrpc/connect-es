@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it } from "node:test";
+import { afterEach, describe, it } from "node:test";
 import * as assert from "node:assert";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
@@ -22,6 +22,24 @@ import { ConnectError } from "@connectrpc/connect";
 import { Worker } from "node:worker_threads";
 
 describe("Http2SessionManager", () => {
+  // Abort every session manager after each test, so that a failed assertion
+  // cannot leave a connection open. This hook must be registered before
+  // useNodeServer(), so that it runs before the server checks for open
+  // connections.
+  const sessionManagers: Http2SessionManager[] = [];
+  afterEach(() => {
+    for (const sm of sessionManagers.splice(0)) {
+      sm.abort();
+    }
+  });
+  function createSessionManager(
+    ...args: ConstructorParameters<typeof Http2SessionManager>
+  ): Http2SessionManager {
+    const sm = new Http2SessionManager(...args);
+    sessionManagers.push(sm);
+    return sm;
+  }
+
   const serverSessions: http2.ServerHttp2Session[] = [];
   const serverReceivedPings: Buffer[] = [];
   const server = useNodeServer(() => {
@@ -31,6 +49,11 @@ describe("Http2SessionManager", () => {
       .createServer()
       .on("session", (s) => serverSessions.push(s))
       .on("session", (s) =>
+        // Tests reset connections from the client side on purpose. Without a
+        // listener, the resulting server-side error is an uncaught exception.
+        s.on("error", () => {}),
+      )
+      .on("session", (s) =>
         s.on("ping", (payload: Buffer) => serverReceivedPings.push(payload)),
       )
       .on("request", () => {
@@ -39,18 +62,18 @@ describe("Http2SessionManager", () => {
   });
 
   it("should initially be closed", () => {
-    const sm = new Http2SessionManager(server.getUrl());
+    const sm = createSessionManager(server.getUrl());
     assert.strictEqual(sm.state(), "closed");
   });
 
   it("should be closed after calling abort()", () => {
-    const sm = new Http2SessionManager(server.getUrl());
+    const sm = createSessionManager(server.getUrl());
     sm.abort();
     assert.strictEqual(sm.state(), "closed");
   });
 
   it("should be error after calling abort() with an error", () => {
-    const sm = new Http2SessionManager(server.getUrl());
+    const sm = createSessionManager(server.getUrl());
     sm.abort(new ConnectError("foo"));
     assert.strictEqual(sm.state(), "error");
     assert.strictEqual(String(sm.error()), "ConnectError: [unknown] foo");
@@ -58,7 +81,7 @@ describe("Http2SessionManager", () => {
 
   describe("first request", () => {
     it("should update state to 'connecting', 'open', and close cleanly after closing the stream", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       const reqPromise = sm.request("POST", "/", {}, {});
       assert.strictEqual(sm.state(), "connecting");
       const req = await reqPromise;
@@ -70,7 +93,7 @@ describe("Http2SessionManager", () => {
       assert.strictEqual(sm.state(), "closed");
     });
     it("should update state to 'idle', when closing the stream", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       const req = await sm.request("POST", "/", {}, {});
       await new Promise<void>((resolve) =>
         req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
@@ -80,7 +103,7 @@ describe("Http2SessionManager", () => {
       assert.strictEqual(sm.state(), "closed");
     });
     it("should reject if manager is aborted while connecting", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       const reqPromise = sm.request("POST", "/", {}, {});
       assert.strictEqual(sm.state(), "connecting");
       sm.abort();
@@ -88,7 +111,7 @@ describe("Http2SessionManager", () => {
       assert.strictEqual(sm.state(), "closed");
     });
     it("should error if manager aborts", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       const req = await sm.request("POST", "/", {}, {});
       assert.strictEqual(sm.state(), "open");
       let reqError: unknown;
@@ -110,7 +133,7 @@ describe("Http2SessionManager", () => {
 
   describe("second request", () => {
     it("should re-use the existing connection", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       const req1 = await sm.request("POST", "/", {}, {});
       const req2 = await sm.request("POST", "/", {}, {});
       assert.strictEqual(
@@ -129,7 +152,7 @@ describe("Http2SessionManager", () => {
       sm.abort();
     });
     it("should verify idle connection", async () => {
-      const sm = new Http2SessionManager(server.getUrl(), {
+      const sm = createSessionManager(server.getUrl(), {
         pingIntervalMs: 10, // intentionally short to trigger verification in tests
       });
 
@@ -191,7 +214,7 @@ describe("Http2SessionManager", () => {
       );
     });
     it("conn should response to session events after verify", async () => {
-      const sm = new Http2SessionManager(server.getUrl(), {
+      const sm = createSessionManager(server.getUrl(), {
         pingIntervalMs: 10, // intentionally short to trigger verification in tests
       });
 
@@ -231,7 +254,7 @@ describe("Http2SessionManager", () => {
       assert.strictEqual(sm.state(), "closed");
     });
     it("should open a new connection if verification for the old one fails", async () => {
-      const sm = new Http2SessionManager(server.getUrl(), {
+      const sm = createSessionManager(server.getUrl(), {
         pingTimeoutMs: 0, // intentionally unsatisfiable
         pingIntervalMs: 10, // intentionally short to trigger verification in tests
       });
@@ -295,7 +318,7 @@ describe("Http2SessionManager", () => {
       );
       t.after(() => proxy.close());
 
-      const sm = new Http2SessionManager(
+      const sm = createSessionManager(
         `http://localhost:${(proxy.address() as net.AddressInfo).port}`,
         {
           pingIntervalMs: 10, // intentionally short to trigger verification in tests
@@ -359,7 +382,7 @@ describe("Http2SessionManager", () => {
         silentServer.listen(0, "localhost", resolve),
       );
 
-      const sm = new Http2SessionManager(
+      const sm = createSessionManager(
         `https://localhost:${(silentServer.address() as net.AddressInfo).port}`,
         {
           connectTimeoutMs: 50,
@@ -401,7 +424,7 @@ describe("Http2SessionManager", () => {
       silentServer.close();
     });
     it("should not affect connections that are established in time", async () => {
-      const sm = new Http2SessionManager(server.getUrl(), {
+      const sm = createSessionManager(server.getUrl(), {
         connectTimeoutMs: 75,
       });
       const req = await sm.request("POST", "/", {}, {});
@@ -420,7 +443,7 @@ describe("Http2SessionManager", () => {
 
   describe("with idleConnectionTimeoutMs", () => {
     it("should close an idle connection", async () => {
-      const sm = new Http2SessionManager(server.getUrl(), {
+      const sm = createSessionManager(server.getUrl(), {
         idleConnectionTimeoutMs: 5, // intentionally short for tests
       });
       const req1 = await sm.request("POST", "/", {}, {});
@@ -447,7 +470,7 @@ describe("Http2SessionManager", () => {
   describe("receiving a GOAWAY frame", () => {
     describe("with error ENHANCE_YOUR_CALM and debug data too_many_pings", () => {
       it("should use double the original pingIntervalMs for a second connection", async () => {
-        const sm = new Http2SessionManager(server.getUrl(), {
+        const sm = createSessionManager(server.getUrl(), {
           pingIntervalMs: 20, // intentionally small for faster tests
         });
 
@@ -513,7 +536,7 @@ describe("Http2SessionManager", () => {
     });
     describe("with NO_ERROR and an open stream", () => {
       it("should open a new session for a second request", async () => {
-        const sm = new Http2SessionManager(server.getUrl());
+        const sm = createSessionManager(server.getUrl());
 
         // issue a request to open a connection
         const req1 = await sm.request("POST", "/", {}, {});
@@ -565,7 +588,7 @@ describe("Http2SessionManager", () => {
     });
     describe("with NO_ERROR and no open streams", () => {
       it("should close the session and open a new one for a second request", async () => {
-        const sm = new Http2SessionManager(server.getUrl());
+        const sm = createSessionManager(server.getUrl());
 
         // issue a request to open a connection, but close the request immediately
         const req1 = await sm.request("POST", "/", {}, {});
@@ -627,7 +650,7 @@ describe("Http2SessionManager", () => {
     });
     describe("with NO_ERROR and open stream that is closed after receiving the GOAWAY", () => {
       it("should close the session and open a new one for a second request", async () => {
-        const sm = new Http2SessionManager(server.getUrl());
+        const sm = createSessionManager(server.getUrl());
 
         // issue a request to open a connection
         const req1 = await sm.request("POST", "/", {}, {});
@@ -676,7 +699,7 @@ describe("Http2SessionManager", () => {
     });
     describe("with INTERNAL_ERROR and open stream", () => {
       it("should eventually go to the error state", async () => {
-        const sm = new Http2SessionManager(server.getUrl());
+        const sm = createSessionManager(server.getUrl());
 
         // issue a request to open a connection
         const req1 = await sm.request("POST", "/", {}, {});
@@ -714,7 +737,7 @@ describe("Http2SessionManager", () => {
         assert.strictEqual(sm.state(), "error");
       });
       it("should open a new connection for a second request", async () => {
-        const sm = new Http2SessionManager(server.getUrl());
+        const sm = createSessionManager(server.getUrl());
 
         // issue a request to open a connection
         const req1 = await sm.request("POST", "/", {}, {});
@@ -761,7 +784,7 @@ describe("Http2SessionManager", () => {
   describe("ping frames", () => {
     describe("for open streams", () => {
       it("should be sent", async () => {
-        const sm = new Http2SessionManager(server.getUrl(), {
+        const sm = createSessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
         });
         const req = await sm.request("POST", "/", {}, {});
@@ -774,7 +797,7 @@ describe("Http2SessionManager", () => {
         assert.strictEqual(sm.state(), "closed");
       });
       it("should not be sent while client is receiving data", async () => {
-        const sm = new Http2SessionManager(server.getUrl(), {
+        const sm = createSessionManager(server.getUrl(), {
           pingIntervalMs: 10, // intentionally short for faster tests
         });
         const req = await sm.request("POST", "/", {}, {});
@@ -792,7 +815,7 @@ describe("Http2SessionManager", () => {
         assert.strictEqual(sm.state(), "closed");
       });
       it("should destroy the connection if not answered in time", async () => {
-        const sm = new Http2SessionManager(server.getUrl(), {
+        const sm = createSessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
           pingTimeoutMs: 0, // intentionally unsatisfiable
         });
@@ -815,7 +838,7 @@ describe("Http2SessionManager", () => {
 
     describe("for connections without open streams", () => {
       it("should not be sent by default", async () => {
-        const sm = new Http2SessionManager(server.getUrl(), {
+        const sm = createSessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
         });
         const req = await sm.request("POST", "/", {}, {});
@@ -828,7 +851,7 @@ describe("Http2SessionManager", () => {
         sm.abort();
       });
       it("should be sent if pingIdleConnection is enabled", async () => {
-        const sm = new Http2SessionManager(server.getUrl(), {
+        const sm = createSessionManager(server.getUrl(), {
           pingIntervalMs: 1, // intentionally short for faster tests
           pingIdleConnection: true,
         });
@@ -845,7 +868,7 @@ describe("Http2SessionManager", () => {
         assert.strictEqual(sm.state(), "closed");
       });
       it("should destroy the connection if not answered in time", async () => {
-        const sm = new Http2SessionManager(server.getUrl(), {
+        const sm = createSessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
           pingTimeoutMs: 0, // intentionally unsatisfiable
           pingIdleConnection: true,
@@ -866,7 +889,7 @@ describe("Http2SessionManager", () => {
 
   describe("idle timeout", () => {
     it("should close the connection", async () => {
-      const sm = new Http2SessionManager(
+      const sm = createSessionManager(
         server.getUrl(),
         {
           idleConnectionTimeoutMs: 1, // intentionally small for faster tests
@@ -887,9 +910,7 @@ describe("Http2SessionManager", () => {
 
   describe("request against unresolvable host", () => {
     it("should reject", async () => {
-      const sm = new Http2SessionManager(
-        "https://unresolvable-host.some.domain",
-      );
+      const sm = createSessionManager("https://unresolvable-host.some.domain");
       const reqPromise = sm.request("POST", "/", {}, {});
       assert.strictEqual(sm.state(), "connecting");
       await assert.rejects(
@@ -899,9 +920,7 @@ describe("Http2SessionManager", () => {
       assert.strictEqual(sm.state(), "error");
     });
     it("should reject if manager is aborted while connecting", async () => {
-      const sm = new Http2SessionManager(
-        "https://unresolvable-host.some.domain",
-      );
+      const sm = createSessionManager("https://unresolvable-host.some.domain");
       const reqPromise = sm.request("POST", "/", {}, {});
       assert.strictEqual(sm.state(), "connecting");
       sm.abort();
@@ -912,26 +931,26 @@ describe("Http2SessionManager", () => {
 
   describe("connect", () => {
     it("should go from closed to idle", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       assert.strictEqual(sm.state(), "closed");
       assert.strictEqual(await sm.connect(), "idle");
       sm.abort();
     });
     it("should go from error to idle", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       sm.abort(new ConnectError("foo"));
       assert.strictEqual(sm.state(), "error");
       assert.strictEqual(await sm.connect(), "idle");
       sm.abort();
     });
     it("should go from idle to idle", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       assert.strictEqual(await sm.connect(), "idle");
       assert.strictEqual(await sm.connect(), "idle");
       sm.abort();
     });
     it("should go from open to open", async () => {
-      const sm = new Http2SessionManager(server.getUrl());
+      const sm = createSessionManager(server.getUrl());
       const req = await sm.request("POST", "/", {}, {});
       assert.strictEqual(sm.state(), "open");
       assert.strictEqual(await sm.connect(), "open");
