@@ -16,9 +16,12 @@ import { describe, it } from "node:test";
 import * as assert from "node:assert";
 import * as http2 from "node:http2";
 import * as http from "node:http";
+import { once } from "node:events";
+import { setImmediate } from "node:timers/promises";
 import { ConnectError } from "@connectrpc/connect";
 import { createAsyncIterable } from "@connectrpc/connect/protocol";
 import { createNodeHttpClient } from "./node-universal-client.js";
+import { Http2SessionManager } from "./http2-session-manager.js";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 
 describe("node http/2 client closing with RST_STREAM with code CANCEL", () => {
@@ -888,6 +891,60 @@ describe("universal node http client", () => {
         assert.ok(serverRequestClosed);
         assert.ok(serverResponseClosed);
         assert.strictEqual(serverSentBytes, 64);
+      });
+    });
+  });
+
+  describe("with a signal aborting after the response ended", () => {
+    describe("over http/2", () => {
+      const server = useNodeServer(() =>
+        http2.createServer((req, res) => {
+          res.writeHead(200);
+          res.addTrailers({ "x-trailer": "value" });
+          res.end("unread response body");
+        }),
+      );
+      it("should destroy the stream", async () => {
+        let stream: http2.ClientHttp2Stream | undefined;
+        let trailersReceived: Promise<unknown> | undefined;
+        class StreamCapturingSessionManager extends Http2SessionManager {
+          override async request(
+            ...args: Parameters<Http2SessionManager["request"]>
+          ) {
+            stream = await super.request(...args);
+            trailersReceived = once(stream, "trailers");
+            return stream;
+          }
+        }
+        const sessionManager = new StreamCapturingSessionManager(
+          server.getUrl(),
+          { idleConnectionTimeoutMs: 5 },
+        );
+        const client = createNodeHttpClient({
+          httpVersion: "2",
+          sessionProvider: () => sessionManager,
+        });
+        const ac = new AbortController();
+
+        await client({
+          url: server.getUrl(),
+          method: "POST",
+          header: new Headers(),
+          signal: ac.signal,
+        });
+        assert.ok(stream !== undefined && trailersReceived !== undefined);
+        await trailersReceived;
+
+        // The stream closes in the I/O callback that delivers the trailers.
+        await setImmediate();
+        assert.ok(stream.closed);
+        // No listener has read the body, so it is still buffered.
+        assert.ok(stream.readableLength > 0);
+        ac.abort();
+
+        // Destroying the stream needs no I/O, so one turn suffices.
+        await setImmediate();
+        assert.ok(stream.destroyed);
       });
     });
   });
