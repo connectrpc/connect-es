@@ -6,4 +6,4 @@ plugins:
   - local: protoc-gen-es
     include_imports: true
     out: ./conformance/gen
-    opt: target=ts,import_extension=.js
+    opt: target=ts,import_extension=js

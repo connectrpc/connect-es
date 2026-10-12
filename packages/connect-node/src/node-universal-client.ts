@@ -283,9 +283,6 @@ function h2Request(
   sm.request(method, requestUrl.pathname + requestUrl.search, headers, {}).then(
     (stream) => {
       sentinel.onError((reason) => {
-        if (stream.closed) {
-          return;
-        }
         // Node.js http2 streams that are aborted via an AbortSignal close with
         // an RST_STREAM with code INTERNAL_ERROR.
         // To comply with the mapping between gRPC and HTTP/2 codes, we need to
@@ -294,7 +291,12 @@ function h2Request(
         // See https://www.rfc-editor.org/rfc/rfc7540#section-7
         const rstCode =
           reason.code == Code.Canceled ? H2Code.CANCEL : H2Code.INTERNAL_ERROR;
-        return new Promise<void>((resolve) => stream.close(rstCode, resolve));
+        stream.close(rstCode);
+        // The call can fail on a healthy stream, leaving the body unread.
+        // Node.js won't destroy a client stream closed with NO_ERROR until its
+        // pending data is read, so we destroy it ourselves.
+        // See https://github.com/nodejs/node/blob/955266bfdd854cd280dffd47548673914484e4c0/doc/api/http2.md?plain=1#L1248-L1249
+        stream.destroy();
       });
 
       stream.on("error", function h2StreamError(e: unknown) {
@@ -309,10 +311,30 @@ function h2Request(
         sentinel.error(e);
       });
 
+      let responseReceived = false;
+      stream.once("response", () => {
+        responseReceived = true;
+      });
       stream.on("close", function h2StreamClose() {
+        // Node emits an "error" event before "close" for every rstCode except
+        // NO_ERROR (0x0) and CANCEL (0x8).
+        //
+        // NO_ERROR means the stream either finished or was cut off, and Node
+        // exposes no way to tell which. If the response headers have not
+        // arrived, it is definitely cut off, but after that we can't know, so
+        // we rely on the protocol to figure it out.
         const err = connectErrorFromH2ResetCode(stream.rstCode);
         if (err) {
           sentinel.error(err);
+        } else if (!responseReceived) {
+          sentinel.error(
+            new ConnectError(
+              `http/2 stream closed with error code ${
+                H2Code[stream.rstCode]
+              } (0x${stream.rstCode.toString(16)}) before the response was received`,
+              Code.Internal,
+            ),
+          );
         }
       });
       onStream(stream);

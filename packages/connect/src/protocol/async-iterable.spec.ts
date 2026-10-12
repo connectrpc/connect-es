@@ -178,12 +178,13 @@ describe("pipe()", () => {
   });
   it("should propagate returns", async () => {
     let returned = false;
+    let didPull = false;
     const iterable = pipe(
       // eslint-disable-next-line @typescript-eslint/require-await
       (async function* () {
         try {
           yield 1;
-          assert.fail("expected early return");
+          didPull = true;
           yield 2;
         } finally {
           returned = true;
@@ -200,6 +201,7 @@ describe("pipe()", () => {
     assert.deepStrictEqual(await it.next(), { done: false, value: 2 });
     await it.return?.();
     assert.ok(returned);
+    assert.ok(!didPull);
   });
 });
 
