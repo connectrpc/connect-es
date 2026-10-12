@@ -215,16 +215,10 @@ function handleStreamResponse<I extends DescMessage, O extends DescMessage>(
   stream: Promise<StreamResponse<I, O>>,
   options?: CallOptions,
 ): AsyncIterable<MessageShape<O>> {
-  const it = (async function* () {
+  return (async function* () {
     const response = await stream;
     options?.onHeader?.(response.header);
     yield* response.message;
     options?.onTrailer?.(response.trailer);
-  })()[Symbol.asyncIterator]();
-  // Create a new iterable to omit throw/return.
-  return {
-    [Symbol.asyncIterator]: () => ({
-      next: () => it.next(),
-    }),
-  };
+  })();
 }
