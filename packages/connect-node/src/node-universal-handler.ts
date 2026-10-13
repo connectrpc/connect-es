@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type * as http from "node:http";
-import type * as http2 from "node:http2";
+import * as http2 from "node:http2";
 import type * as stream from "node:stream";
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
@@ -122,7 +122,9 @@ export function universalRequestFromNodeRequest(
   const body =
     parsedJsonBody !== undefined
       ? parsedJsonBody
-      : asyncIterableFromNodeServerRequest(nodeRequest);
+      : (nodeRequest.iterator({
+          destroyOnReturn: false,
+        }) as AsyncIterable<Uint8Array>);
   const abortController = new AbortController();
   if ("stream" in nodeRequest) {
     // HTTP/2 has error codes we want to honor
@@ -182,45 +184,107 @@ export async function universalResponseToNodeResponse(
 ): Promise<void> {
   const it = universalResponse.body?.[Symbol.asyncIterator]();
   let isWriteError = false;
+
+  // HTTP allows a server to respond before it reads the whole request, which
+  // we do when we reject a request early. A client still sending the rest of
+  // the body can then block on flow control, waiting for us to read it. Our
+  // approach here is similar to what Go does in net/http.
+  //
+  // On HTTP/2, we reset the stream with NO_ERROR after the response, which
+  // tells the client to stop sending without affecting other streams.
+  //
+  // HTTP/1 has no way to stop a single request, so we read and discard the
+  // rest of the body, up to a limit. This keeps the connection usable for the
+  // next request, and lets a client that waits to read the response until it
+  // has sent the whole request finish sending.
   try {
-    if (it !== undefined) {
-      let chunk = await it.next();
-      isWriteError = true;
-      // we deliberately send headers after first read, not before,
-      // because we have to give the implementation a chance to
-      // set response headers
-      nodeResponse.writeHead(
-        universalResponse.status,
-        webHeaderToNodeHeaders(universalResponse.header),
-      );
-      isWriteError = false;
-      for (; chunk.done !== true; chunk = await it.next()) {
-        isWriteError = true;
-        await write(nodeResponse, chunk.value);
-        if (
-          "flush" in nodeResponse &&
-          typeof nodeResponse.flush == "function"
-        ) {
-          // The npm package "compression" is an express middleware that is widely used,
-          // for example in next.js. It uses the npm package "compressible" to determine
-          // whether to apply compression to a response. Unfortunately, "compressible"
-          // matches every mime type that ends with "+json", causing our server-streaming
-          // RPCs to be buffered.
-          // The package modifies the response object, and adds a flush() method, which
-          // flushes the underlying gzip or deflate stream from the Node.js zlib module.
-          // The method is added here:
-          // https://github.com/expressjs/compression/blob/ad5113b98cafe1382a0ece30bb4673707ac59ce7/index.js#L70
-          nodeResponse.flush();
+    // Some responses may set headers only after the first read, so we read a
+    // chunk first.
+    let chunk = await it?.next();
+    const nodeHeaders = webHeaderToNodeHeaders(universalResponse.header ?? {});
+
+    if ("stream" in nodeResponse) {
+      const stream = nodeResponse.stream;
+      // Resets the stream with NO_ERROR once the response is complete, so a
+      // client still sending the request stops.
+      //
+      // Node.js has no event for "trailers written", and resetting earlier
+      // drops the trailers. Node's own wantTrailers listener runs first and
+      // sends trailers on setImmediate, so a setImmediate queued here runs
+      // after it.
+      stream.once("wantTrailers", () => {
+        setImmediate(() => {
+          if (!stream.readableEnded) {
+            stream.close(http2.constants.NGHTTP2_NO_ERROR);
+          }
+        });
+      });
+    } else if (nodeResponse.shouldKeepAlive) {
+      const maxDrainBytes = 256 * 1024;
+      const closeDelayMs = 500;
+
+      const request = nodeResponse.req;
+      const contentLength = Number(request.headers["content-length"] ?? 0);
+      let didError = false;
+
+      if (contentLength < maxDrainBytes) {
+        let drainedBytes = 0;
+        try {
+          for await (const drained of request.iterator({
+            destroyOnReturn: false,
+          })) {
+            drainedBytes += (drained as Uint8Array).byteLength;
+            if (drainedBytes > maxDrainBytes) {
+              break;
+            }
+          }
+        } catch {
+          didError = true;
         }
-        isWriteError = false;
+      }
+
+      // If part of the body is left unread, we close the connection instead of
+      // reusing it. Closing right away can make the client's TCP stack drop
+      // the response, so we half-close first, and fully close after a delay so
+      // that the client has time to read the response. Node.js closes the
+      // connection with destroySoon() once the response is written, so we
+      // replace it on this socket.
+      const socket = nodeResponse.socket;
+      if (!request.complete && socket !== null) {
+        nodeHeaders.connection = "close";
+        if (!didError) {
+          socket.destroySoon = () => {
+            socket.end(() =>
+              setTimeout(() => socket.destroy(), closeDelayMs).unref(),
+            );
+          };
+        }
       }
     }
-    if (!nodeResponse.headersSent) {
-      nodeResponse.writeHead(
-        universalResponse.status,
-        webHeaderToNodeHeaders(universalResponse.header),
-      );
+
+    isWriteError = true;
+    nodeResponse.writeHead(universalResponse.status, nodeHeaders);
+    isWriteError = false;
+
+    while (chunk !== undefined && chunk.done !== true) {
+      isWriteError = true;
+      await write(nodeResponse, chunk.value);
+      if ("flush" in nodeResponse && typeof nodeResponse.flush == "function") {
+        // The npm package "compression" is an express middleware that is widely used,
+        // for example in next.js. It uses the npm package "compressible" to determine
+        // whether to apply compression to a response. Unfortunately, "compressible"
+        // matches every mime type that ends with "+json", causing our server-streaming
+        // RPCs to be buffered.
+        // The package modifies the response object, and adds a flush() method, which
+        // flushes the underlying gzip or deflate stream from the Node.js zlib module.
+        // The method is added here:
+        // https://github.com/expressjs/compression/blob/ad5113b98cafe1382a0ece30bb4673707ac59ce7/index.js#L70
+        nodeResponse.flush();
+      }
+      isWriteError = false;
+      chunk = await it?.next();
     }
+
     if (universalResponse.trailer) {
       nodeResponse.addTrailers(
         webHeaderToNodeHeaders(universalResponse.trailer),
@@ -240,14 +304,6 @@ export async function universalResponseToNodeResponse(
     throw connectErrorFromNodeReason(e);
   } finally {
     it?.return?.().catch(() => {});
-  }
-}
-
-async function* asyncIterableFromNodeServerRequest(
-  request: NodeServerRequest,
-): AsyncIterable<Uint8Array> {
-  for await (const chunk of request) {
-    yield chunk;
   }
 }
 
