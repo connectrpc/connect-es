@@ -26,6 +26,7 @@ import { connectNodeAdapter } from "./connect-node-adapter.js";
 import { createGrpcTransport } from "./grpc-transport.js";
 import { createGrpcWebTransport } from "./grpc-web-transport.js";
 import { createConnectTransport } from "./connect-transport.js";
+import { Http2SessionManager } from "./http2-session-manager.js";
 import { ElizaService } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
 import type {
   ConverseRequest,
@@ -93,13 +94,18 @@ describe("node readme", () => {
     }
 
     async function runClient() {
+      const sessionManager = new Http2SessionManager(
+        `http://localhost:${port}`,
+      );
       const transport = createGrpcTransport({
         baseUrl: `http://localhost:${port}`,
+        sessionManager,
       });
       const client = createClient(ElizaService, transport);
       const res = await client.say({ sentence: "I feel happy." });
       // console.log(res.sentence) // you said: I feel happy.
       assert.strictEqual(res.sentence, "you said: I feel happy.");
+      sessionManager.abort();
     }
 
     const server = await startServer();
@@ -135,8 +141,12 @@ describe("node readme", () => {
     }
 
     async function runClient() {
+      const sessionManager = new Http2SessionManager(
+        `http://localhost:${port}`,
+      );
       const transport = createGrpcTransport({
         baseUrl: `http://localhost:${port}`,
+        sessionManager,
       });
       const client = createClient(ElizaService, transport);
       const res = await client.say(
@@ -145,6 +155,7 @@ describe("node readme", () => {
       );
       // console.log(res.sentence) // Hey alice! You said: I feel happy.
       assert.strictEqual(res.sentence, "Hey alice! You said: I feel happy.");
+      sessionManager.abort();
     }
 
     const server = await startServer();
@@ -181,8 +192,12 @@ describe("node readme", () => {
     }
 
     async function runClient() {
+      const sessionManager = new Http2SessionManager(
+        `http://localhost:${port}`,
+      );
       const transport = createGrpcTransport({
         baseUrl: `http://localhost:${port}`,
+        sessionManager,
       });
       const client = createClient(ElizaService, transport);
       const req =
@@ -198,6 +213,7 @@ describe("node readme", () => {
         }
       } finally {
         req.close();
+        sessionManager.abort();
       }
     }
 
