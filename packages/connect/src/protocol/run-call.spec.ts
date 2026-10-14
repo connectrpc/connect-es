@@ -140,6 +140,25 @@ describe("runUnaryCall()", () => {
       message: "[deadline_exceeded] the operation timed out",
     });
   });
+  it("should raise Code.DeadlineExceeded if the call fails after the deadline", async () => {
+    const timeoutMs = 10;
+    const resPromise = runUnaryCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      timeoutMs,
+      req: makeReq(),
+      async next() {
+        // Blocks past the deadline, so the server's error wins over our timer.
+        const end = Date.now() + 2 * timeoutMs;
+        while (Date.now() < end) {}
+        throw new ConnectError("stream closed by the server", Code.Canceled);
+      },
+    });
+    await assert.rejects(resPromise, {
+      message: "[deadline_exceeded] the operation timed out",
+    });
+  });
 });
 
 describe("runStreamingCall()", () => {
@@ -320,6 +339,25 @@ describe("runStreamingCall()", () => {
     });
     const it = req.message[Symbol.asyncIterator]();
     assert.deepStrictEqual(await it.next(), { done: true, value: undefined });
+  });
+  it("should raise Code.DeadlineExceeded if the call fails after the deadline", async () => {
+    const timeoutMs = 10;
+    const resPromise = runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      timeoutMs,
+      req: makeReq(),
+      async next() {
+        // Blocks past the deadline, so the server's error wins over our timer.
+        const end = Date.now() + 2 * timeoutMs;
+        while (Date.now() < end) {}
+        throw new ConnectError("stream closed by the server", Code.Canceled);
+      },
+    });
+    await assert.rejects(resPromise, {
+      message: "[deadline_exceeded] the operation timed out",
+    });
   });
   it("should propagate the error thrown in next", async () => {
     const req = makeReq();
