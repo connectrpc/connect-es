@@ -17,7 +17,13 @@ import * as assert from "node:assert";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
 import * as http from "node:http";
-import { universalRequestFromNodeRequest } from "./node-universal-handler.js";
+import { once } from "node:events";
+import {
+  universalRequestFromNodeRequest,
+  universalResponseToNodeResponse,
+  type NodeServerRequest,
+  type NodeServerResponse,
+} from "./node-universal-handler.js";
 import { ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";
 import {
@@ -346,6 +352,92 @@ describe("universalRequestFromNodeResponse()", () => {
             resolve(),
           );
         });
+      });
+    });
+  });
+  describe("with a partially read request body", () => {
+    const trailerKey = "x-trailer";
+    const trailerValue = "value";
+
+    // Reads one chunk of the request body, then responds.
+    function respondAfterFirstChunk(
+      request: NodeServerRequest,
+      response: NodeServerResponse,
+    ) {
+      const serverRequest = universalRequestFromNodeRequest(
+        request,
+        response,
+        undefined,
+        undefined,
+      );
+      assertByteStreamRequest(serverRequest);
+      const iterator = serverRequest.body[Symbol.asyncIterator]();
+      void iterator
+        .next()
+        .then(() => iterator.return?.())
+        .then(() =>
+          universalResponseToNodeResponse(
+            {
+              status: 200,
+              header: new Headers(),
+              trailer: new Headers({ [trailerKey]: trailerValue }),
+            },
+            response,
+          ),
+        );
+    }
+
+    describe("HTTP/1.1", () => {
+      const server = useNodeServer(() =>
+        http.createServer(respondAfterFirstChunk),
+      );
+      it("should keep the connection usable for the next request", async () => {
+        const agent = new http.Agent({ keepAlive: true, maxSockets: 1 });
+        const first = http.request(server.getUrl(), {
+          method: "POST",
+          agent,
+          headers: { "content-length": 100 * 1024 },
+        });
+        first.write(new Uint8Array(64 * 1024));
+        // Sends the rest after the response without the fix, which triggers the bug.
+        setTimeout(() => first.end(new Uint8Array(36 * 1024)), 100);
+        const [firstResponse] = (await once(first, "response")) as [
+          http.IncomingMessage,
+        ];
+        await readAllBytes(firstResponse, Number.MAX_SAFE_INTEGER);
+
+        // Send the second request over the same connection.
+        const second = http.request(server.getUrl(), { method: "POST", agent });
+        second.end();
+        const [secondResponse] = (await once(second, "response")) as [
+          http.IncomingMessage,
+        ];
+        await readAllBytes(secondResponse, Number.MAX_SAFE_INTEGER);
+        agent.destroy();
+        assert.strictEqual(secondResponse.statusCode, 200);
+      });
+    });
+
+    describe("HTTP/2", () => {
+      const server = useNodeServer(() =>
+        http2.createServer(respondAfterFirstChunk),
+      );
+      it("should end the stream with NO_ERROR", async () => {
+        const session = http2.connect(server.getUrl());
+        const stream = session.request({ ":method": "POST", ":path": "/" });
+        const trailers = once(stream, "trailers");
+        const closed = once(stream, "close");
+        // Larger than the flow-control window, so it cannot finish unless the server reads it.
+        stream.end(new Uint8Array(1024 * 1024));
+        await once(stream, "response");
+        await readAllBytes(stream, Number.MAX_SAFE_INTEGER);
+        await closed;
+        session.close();
+        const [trailerHeaders] = (await trailers) as [
+          http2.IncomingHttpHeaders,
+        ];
+        assert.strictEqual(trailerHeaders[trailerKey], trailerValue);
+        assert.strictEqual(stream.rstCode, http2.constants.NGHTTP2_NO_ERROR);
       });
     });
   });
