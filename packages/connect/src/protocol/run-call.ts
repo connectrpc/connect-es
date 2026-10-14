@@ -242,19 +242,27 @@ function setupSignal(opt: {
   timeoutMs?: number;
   signal?: AbortSignal;
 }): [AbortSignal, (reason: unknown) => Promise<never>, () => void] {
+  const deadline = Date.now() + (opt.timeoutMs ?? Infinity);
   const { signal, cleanup } = createDeadlineSignal(opt.timeoutMs);
   const controller = createLinkedAbortController(opt.signal, signal);
   return [
     controller.signal,
     function abort(reason: unknown): Promise<never> {
-      // We peek at the signal because fetch() will throw an error on abort
-      // that discards the signal reason.
-      const e = controller.signal.aborted
-        ? ConnectError.from(
-            getAbortSignalReason(controller.signal),
-            Code.Canceled,
-          )
-        : ConnectError.from(reason);
+      let e: ConnectError;
+      if (controller.signal.aborted) {
+        // We peek at the signal because fetch() will throw an error on abort
+        // that discards the signal reason.
+        e = ConnectError.from(
+          getAbortSignalReason(controller.signal),
+          Code.Canceled,
+        );
+      } else if (Date.now() >= deadline) {
+        // Our deadline was already exceeded, and that was likely the cause of
+        // this cancellation.  Alter the status code accordingly.
+        e = new ConnectError("the operation timed out", Code.DeadlineExceeded);
+      } else {
+        e = ConnectError.from(reason);
+      }
       controller.abort(e);
       cleanup();
       return Promise.reject(e);
