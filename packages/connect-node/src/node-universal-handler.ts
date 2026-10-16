@@ -214,33 +214,32 @@ export async function universalResponseToNodeResponse(
       // after it.
       stream.once("wantTrailers", () => {
         setImmediate(() => {
-          if (!stream.readableEnded) {
+          if (stream.state.remoteClose === 0) {
             stream.close(http2.constants.NGHTTP2_NO_ERROR);
           }
         });
       });
-    } else if (nodeResponse.shouldKeepAlive) {
+    } else if (
+      nodeResponse.shouldKeepAlive &&
+      nodeHeaders.connection?.toString().toLowerCase() !== "close"
+    ) {
       const maxDrainBytes = 256 * 1024;
       const closeDelayMs = 500;
 
       const request = nodeResponse.req;
-      const contentLength = Number(request.headers["content-length"] ?? 0);
       let didError = false;
-
-      if (contentLength < maxDrainBytes) {
-        let drainedBytes = 0;
-        try {
-          for await (const drained of request.iterator({
-            destroyOnReturn: false,
-          })) {
-            drainedBytes += (drained as Uint8Array).byteLength;
-            if (drainedBytes > maxDrainBytes) {
-              break;
-            }
+      let drainedBytes = 0;
+      try {
+        for await (const drained of request.iterator({
+          destroyOnReturn: false,
+        })) {
+          drainedBytes += (drained as Uint8Array).byteLength;
+          if (drainedBytes > maxDrainBytes) {
+            break;
           }
-        } catch {
-          didError = true;
         }
+      } catch {
+        didError = true;
       }
 
       // If part of the body is left unread, we close the connection instead of

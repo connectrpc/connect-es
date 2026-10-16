@@ -32,7 +32,7 @@ import {
 } from "@connectrpc/connect/protocol";
 import type { UniversalServerRequest } from "@connectrpc/connect/protocol";
 
-describe("universalRequestFromNodeResponse()", () => {
+describe("universalRequestFromNodeRequest()", () => {
   describe("with HTTP/2 stream closed with an RST code", () => {
     let serverRequest: UniversalServerRequest | undefined;
     const server = useNodeServer(() => {
@@ -355,6 +355,9 @@ describe("universalRequestFromNodeResponse()", () => {
       });
     });
   });
+});
+
+describe("universalResponseToNodeResponse()", () => {
   describe("with a partially read request body", () => {
     const trailerKey = "x-trailer";
     const trailerValue = "value";
