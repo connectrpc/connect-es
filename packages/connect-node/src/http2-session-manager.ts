@@ -818,9 +818,6 @@ function ready(
   function cleanup() {
     stopPingInterval();
     stopIdleTimeout();
-    conn.off("error", onError);
-    conn.off("close", onClose);
-    conn.off("goaway", onGoaway);
   }
 
   conn.on("error", onError);

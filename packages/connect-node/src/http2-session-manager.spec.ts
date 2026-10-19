@@ -883,6 +883,27 @@ describe("Http2SessionManager", () => {
       await new Promise<void>((resolve) => setTimeout(resolve, 10));
       assert.strictEqual(sm.state(), "closed");
     });
+
+    it("should not throw if the connection fails while closing", async () => {
+      const sm = new Http2SessionManager(server.getUrl(), {
+        idleConnectionTimeoutMs: 1,
+      });
+      const req = await sm.request("POST", "/", {}, {});
+      const session = req.session;
+      assert.ok(session !== undefined);
+
+      // Simulate the server resetting the connection while it is closing.
+      session.close = () => session.destroy(new Error("read ECONNRESET"));
+      const sessionClosed = new Promise((resolve) =>
+        session.once("close", resolve),
+      );
+
+      await new Promise<void>((resolve) =>
+        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      await sessionClosed;
+      assert.strictEqual(sm.state(), "closed");
+    });
   });
 
   describe("request against unresolvable host", () => {
