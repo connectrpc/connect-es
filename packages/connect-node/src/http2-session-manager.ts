@@ -672,7 +672,9 @@ function ready(
   }
 
   function commonPing(onSuccess: () => void) {
-    if (conn.destroyed || conn.closed) {
+    // ping() throws on a destroyed session. The "close" event clears the
+    // timer, but fires asynchronously after destroy() returns.
+    if (conn.destroyed) {
       return;
     }
     clearTimeout(pingTimeoutId);

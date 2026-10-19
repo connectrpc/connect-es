@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it, mock } from "node:test";
+import { describe, it } from "node:test";
 import * as assert from "node:assert";
 import { useNodeServer } from "./use-node-server-helper.spec.js";
 import * as http2 from "node:http2";
@@ -739,38 +739,17 @@ describe("Http2SessionManager", () => {
           "ConnectError: [unavailable] PING timed out",
         );
       });
-      it("should not throw if ping fires after session is destroyed", async (t) => {
-        // See https://github.com/connectrpc/connect-es/issues/1795
-        const pingIntervalMs = 10_000;
-        mock.timers.enable({ apis: ["setTimeout"] });
-        t.after(() => mock.timers.reset());
-
-        const sm = new Http2SessionManager(server.getUrl(), { pingIntervalMs });
-        t.after(() => sm.abort());
-
+      it("should not be sent on a destroyed session", async (t) => {
+        t.mock.timers.enable({ apis: ["setTimeout"] });
+        const sm = new Http2SessionManager(server.getUrl(), {
+          pingIntervalMs: 1,
+        });
         const req = await sm.request("POST", "/", {}, {});
-        req.on("error", () => {});
-        assert.strictEqual(sm.state(), "open");
-
         const session = req.session;
-        assert.ok(session);
+        assert.ok(session !== undefined);
+
         session.destroy();
-        assert.strictEqual(session.destroyed, true);
-
-        let pingError: unknown;
-        try {
-          mock.timers.tick(pingIntervalMs);
-        } catch (err) {
-          pingError = err;
-        }
-
-        assert.strictEqual(
-          pingError,
-          undefined,
-          `keepalive ping threw on a destroyed session: ${
-            pingError instanceof Error ? pingError.stack : String(pingError)
-          }`,
-        );
+        t.mock.timers.tick(1);
       });
     });
 
