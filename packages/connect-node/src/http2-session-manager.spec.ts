@@ -749,7 +749,11 @@ describe("Http2SessionManager", () => {
         assert.ok(session !== undefined);
 
         session.destroy();
-        t.mock.timers.tick(1);
+        try {
+          t.mock.timers.tick(1);
+        } finally {
+          t.mock.timers.reset();
+        }
       });
     });
 
