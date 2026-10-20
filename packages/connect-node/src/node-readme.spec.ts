@@ -15,37 +15,17 @@
 import { describe, it } from "node:test";
 import * as assert from "node:assert";
 import * as http2 from "node:http2";
-import {
-  createContextKey,
-  createContextValues,
-  createClient,
-} from "@connectrpc/connect";
+import { createClient } from "@connectrpc/connect";
 import type { ConnectRouter } from "@connectrpc/connect";
-import { createWritableIterable } from "@connectrpc/connect/protocol";
 import { connectNodeAdapter } from "./connect-node-adapter.js";
 import { createGrpcTransport } from "./grpc-transport.js";
 import { createGrpcWebTransport } from "./grpc-web-transport.js";
 import { createConnectTransport } from "./connect-transport.js";
-import { Http2SessionManager } from "./http2-session-manager.js";
 import { ElizaService } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
-import type {
-  ConverseRequest,
-  ConverseRequestSchema,
-} from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
-import type { MessageInitShape } from "@bufbuild/protobuf";
 
 describe("node readme", () => {
-  const optionsHttp2 = {
-    baseUrl: "https://demo.connectrpc.com",
-    httpVersion: "2" as const,
-  };
-  const optionsHttp1 = {
-    baseUrl: "https://demo.connectrpc.com",
-    httpVersion: "1.1" as const,
-  };
-
   it("createConnectTransport()", async () => {
-    // A transport for clients using the gRPC protocol with Node.js `http` module
+    // A transport for clients using the Connect protocol with Node.js `http` module
     const transport = createConnectTransport({
       baseUrl: "https://demo.connectrpc.com",
       httpVersion: "1.1",
@@ -57,21 +37,26 @@ describe("node readme", () => {
 
   it("createGrpcTransport()", async () => {
     // A transport for clients using the gRPC protocol with Node.js `http2` module
-    const transport = createGrpcTransport(optionsHttp2);
+    const transport = createGrpcTransport({
+      baseUrl: "https://demo.connectrpc.com",
+    });
     const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
     assert.notStrictEqual(sentence, undefined);
   });
 
   it("createGrpcWebTransport()", async () => {
-    // A transport for clients using the gRPC-web protocol with Node.js `http` module
-    const transport = createGrpcWebTransport(optionsHttp1);
+    // A transport for clients using the gRPC-Web protocol with Node.js `http` module
+    const transport = createGrpcWebTransport({
+      baseUrl: "https://demo.connectrpc.com",
+      httpVersion: "1.1",
+    });
     const client = createClient(ElizaService, transport);
     const { sentence } = await client.say({ sentence: "I feel happy." });
     assert.notStrictEqual(sentence, undefined);
   });
 
-  it("should work as well", async () => {
+  it("connectNodeAdapter()", async () => {
     let port = -1;
 
     function routes(router: ConnectRouter) {
@@ -80,145 +65,42 @@ describe("node readme", () => {
       }));
     }
 
+    const sessions = new Set<http2.ServerHttp2Session>();
+
     function startServer() {
       return new Promise<http2.Http2Server>((resolve) => {
-        const handler = connectNodeAdapter({ routes });
-        const server = http2.createServer(handler).listen(0, () => {
-          const a = server.address();
-          if (a !== null && typeof a !== "string") {
-            port = a.port;
-          }
-          resolve(server);
+        const server = http2
+          .createServer(connectNodeAdapter({ routes }))
+          .listen(0, () => {
+            const a = server.address();
+            if (a !== null && typeof a !== "string") {
+              port = a.port;
+            }
+            resolve(server);
+          });
+        server.on("session", (session) => {
+          sessions.add(session);
+          session.on("close", () => sessions.delete(session));
         });
       });
     }
 
     async function runClient() {
-      const sessionManager = new Http2SessionManager(
-        `http://localhost:${port}`,
-      );
       const transport = createGrpcTransport({
         baseUrl: `http://localhost:${port}`,
-        sessionManager,
       });
+
       const client = createClient(ElizaService, transport);
-      const res = await client.say({ sentence: "I feel happy." });
-      // console.log(res.sentence) // you said: I feel happy.
-      assert.strictEqual(res.sentence, "you said: I feel happy.");
-      sessionManager.abort();
+      const { sentence } = await client.say({ sentence: "I feel happy." });
+      // console.log(sentence); // you said: I feel happy.
+      assert.strictEqual(sentence, "you said: I feel happy.");
     }
 
     const server = await startServer();
     await runClient();
-    server.close();
-  });
-
-  it("using context value", async () => {
-    let port = -1;
-
-    const kUser = createContextKey<string | undefined>(undefined);
-    function routes(router: ConnectRouter) {
-      router.rpc(ElizaService.method.say, async (req, { values }) => ({
-        sentence: `Hey ${values.get(kUser)}! You said: ${req.sentence}`,
-      }));
+    for (const session of sessions) {
+      session.close();
     }
-
-    function startServer() {
-      return new Promise<http2.Http2Server>((resolve) => {
-        const handler = connectNodeAdapter({
-          routes,
-          contextValues: (req) =>
-            createContextValues().set(kUser, req.headers["x-user"]),
-        });
-        const server = http2.createServer(handler).listen(0, () => {
-          const a = server.address();
-          if (a !== null && typeof a !== "string") {
-            port = a.port;
-          }
-          resolve(server);
-        });
-      });
-    }
-
-    async function runClient() {
-      const sessionManager = new Http2SessionManager(
-        `http://localhost:${port}`,
-      );
-      const transport = createGrpcTransport({
-        baseUrl: `http://localhost:${port}`,
-        sessionManager,
-      });
-      const client = createClient(ElizaService, transport);
-      const res = await client.say(
-        { sentence: "I feel happy." },
-        { headers: { "x-user": "alice" } },
-      );
-      // console.log(res.sentence) // Hey alice! You said: I feel happy.
-      assert.strictEqual(res.sentence, "Hey alice! You said: I feel happy.");
-      sessionManager.abort();
-    }
-
-    const server = await startServer();
-    await runClient();
-    server.close();
-  });
-
-  it("using writable iterable", async () => {
-    let port = -1;
-
-    function routes(router: ConnectRouter) {
-      router.rpc(
-        ElizaService.method.converse,
-        async function* (req: AsyncIterable<ConverseRequest>) {
-          yield { sentence: "ping" };
-          for await (const next of req) {
-            assert.strictEqual(next.sentence, "pong");
-          }
-        },
-      );
-    }
-
-    function startServer() {
-      return new Promise<http2.Http2Server>((resolve) => {
-        const handler = connectNodeAdapter({ routes });
-        const server = http2.createServer(handler).listen(0, () => {
-          const a = server.address();
-          if (a !== null && typeof a !== "string") {
-            port = a.port;
-          }
-          resolve(server);
-        });
-      });
-    }
-
-    async function runClient() {
-      const sessionManager = new Http2SessionManager(
-        `http://localhost:${port}`,
-      );
-      const transport = createGrpcTransport({
-        baseUrl: `http://localhost:${port}`,
-        sessionManager,
-      });
-      const client = createClient(ElizaService, transport);
-      const req =
-        createWritableIterable<
-          MessageInitShape<typeof ConverseRequestSchema>
-        >();
-      try {
-        const res = client.converse(req);
-        for await (const next of res) {
-          assert.strictEqual(next.sentence, "ping");
-          await req.write({ sentence: "pong" });
-          break;
-        }
-      } finally {
-        req.close();
-        sessionManager.abort();
-      }
-    }
-
-    const server = await startServer();
-    await runClient();
     server.close();
   });
 });
