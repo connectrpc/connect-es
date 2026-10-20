@@ -87,10 +87,17 @@ export default function (router: ConnectRouter) {
 import * as http2 from "http2";
 + import routes from "./connect";
 + import { connectNodeAdapter } from "@connectrpc/connect-node";
++ import { createValidateInterceptor } from "@connectrpc/validate";
 
-http2.createServer(
-+   connectNodeAdapter({ routes }),
-).listen(8080);
+http2
+  .createServer(
++     connectNodeAdapter({
++       // Validation via Protovalidate is almost always recommended
++       interceptors: [createValidateInterceptor()],
++       routes,
++     }),
+  )
+  .listen(8080);
 ```
 
 With that server running, you can make requests with any gRPC, gRPC-Web, or Connect client.
