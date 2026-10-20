@@ -50,6 +50,7 @@ import {
   validateTrailer,
 } from "@connectrpc/connect/protocol-grpc-web";
 import { assertFetchApi } from "./assert-fetch-api.js";
+import { createStreamingRequestBody } from "./request-body.js";
 
 /**
  * Options used to configure the gRPC-web transport.
@@ -116,9 +117,19 @@ const fetchOptions: RequestInit = {
 
 /**
  * Create a Transport for the gRPC-web protocol. The protocol encodes
- * trailers in the response body and makes unary and server-streaming
- * methods available to web browsers. It uses the fetch API to make
- * HTTP requests.
+ * trailers in the response body and makes unary and streaming methods
+ * available to web browsers. It uses the fetch API to make HTTP requests.
+ *
+ * Client-streaming and bidi-streaming methods send the request messages as
+ * a streaming request body. This requires support for streaming request
+ * bodies in the fetch API, which is available in Chromium-based browsers over
+ * HTTP/2 and HTTP/3, and in Node.js. Firefox and Safari do not support
+ * streaming request bodies at the time of writing. Calls raise a ConnectError
+ * with Code.Unimplemented if support is missing.
+ *
+ * Note that the fetch API only supports half-duplex streaming: the response
+ * of a bidi-streaming call does not become available until the request
+ * messages have been sent completely.
  *
  * Note that this transport does not implement the grpc-web-text format,
  * which applies base64 encoding to the request and response bodies to
@@ -305,18 +316,6 @@ export function createGrpcWebTransport(
         }
       }
 
-      async function createRequestBody(
-        input: AsyncIterable<MessageShape<I>>,
-      ): Promise<Uint8Array<ArrayBuffer>> {
-        if (method.methodKind != "server_streaming") {
-          throw "The fetch API does not support streaming request bodies";
-        }
-        const r = await input[Symbol.asyncIterator]().next();
-        if (r.done == true) {
-          throw "missing request message";
-        }
-        return encodeEnvelope(0, serialize(r.value));
-      }
       timeoutMs =
         timeoutMs === undefined
           ? options.defaultTimeoutMs
@@ -344,7 +343,11 @@ export function createGrpcWebTransport(
             method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
-            body: await createRequestBody(req.message),
+            ...(await createStreamingRequestBody(
+              method,
+              req.message,
+              serialize,
+            )),
           });
           const { foundStatus, headerError } = validateResponse(
             fRes.status,
