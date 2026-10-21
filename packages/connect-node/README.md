@@ -13,12 +13,12 @@ Lets your clients running on Node.js talk to a server with the Connect protocol:
 ```diff
 import { createClient } from "@connectrpc/connect";
 + import { createConnectTransport } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb";
 
 + // A transport for clients using the Connect protocol with Node.js `http` module
 + const transport = createConnectTransport({
 +   baseUrl: "https://demo.connectrpc.com",
-+   httpVersion: "1.1"
++   httpVersion: "1.1",
 + });
 
 const client = createClient(ElizaService, transport);
@@ -33,7 +33,7 @@ Lets your clients running on Node.js talk to a server with the gRPC protocol:
 ```diff
 import { createClient } from "@connectrpc/connect";
 + import { createGrpcTransport } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb";
 
 + // A transport for clients using the gRPC protocol with Node.js `http2` module
 + const transport = createGrpcTransport({
@@ -47,17 +47,17 @@ console.log(sentence) // you said: I feel happy.
 
 ### createGrpcWebTransport()
 
-Lets your clients running on Node.js talk to a server with the gRPC-web protocol:
+Lets your clients running on Node.js talk to a server with the gRPC-Web protocol:
 
 ```diff
 import { createClient } from "@connectrpc/connect";
 + import { createGrpcWebTransport } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb";
 
-+ // A transport for clients using the Connect protocol with Node.js `http` module
++ // A transport for clients using the gRPC-Web protocol with Node.js `http` module
 + const transport = createGrpcWebTransport({
 +   baseUrl: "https://demo.connectrpc.com",
-+   httpVersion: "1.1"
++   httpVersion: "1.1",
 + });
 
 const client = createClient(ElizaService, transport);
@@ -71,11 +71,12 @@ Run your Connect RPCs on the Node.js `http`, `https`, or `http2` modules.
 
 ```ts
 // connect.ts
-import { ConnectRouter } from "@connectrpc/connect";
+import type { ConnectRouter } from "@connectrpc/connect";
+import { ElizaService } from "./gen/eliza_pb";
 
 export default function (router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
-  router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
+  router.rpc(ElizaService.method.say, async (req) => ({
     sentence: `you said: ${req.sentence}`,
   }));
 }
@@ -84,17 +85,19 @@ export default function (router: ConnectRouter) {
 ```diff
 // server.ts
 import * as http2 from "http2";
-+ import routes from "connect";
++ import routes from "./connect";
 + import { connectNodeAdapter } from "@connectrpc/connect-node";
 + import { createValidateInterceptor } from "@connectrpc/validate";
 
-http2.createServer(
-+ connectNodeAdapter({
-+   // Validation via Protovalidate is almost always recommended
-+   interceptors: [createValidateInterceptor()],
-+   routes
-+ })
-).listen(8080);
+http2
+  .createServer(
++     connectNodeAdapter({
++       // Validation via Protovalidate is almost always recommended
++       interceptors: [createValidateInterceptor()],
++       routes,
++     }),
+  )
+  .listen(8080);
 ```
 
 With that server running, you can make requests with any gRPC, gRPC-Web, or Connect client.
@@ -114,7 +117,7 @@ buf curl --schema buf.build/connectrpc/eliza \
 curl \
     --header "Content-Type: application/json" \
     --data '{"sentence": "I feel happy."}' \
-     --http2-prior-knowledge \
+    --http2-prior-knowledge \
     http://localhost:8080/connectrpc.eliza.v1.ElizaService/Say
 ```
 
@@ -123,7 +126,7 @@ Node.js with the gRPC protocol:
 ```ts
 import { createClient } from "@connectrpc/connect";
 import { createGrpcTransport } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb";
 
 const transport = createGrpcTransport({
   baseUrl: "http://localhost:8080",
