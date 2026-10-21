@@ -16,6 +16,8 @@ import { afterEach, beforeEach } from "node:test";
 import type * as http2 from "node:http2";
 import * as http from "node:http";
 import type * as https from "node:https";
+import type * as net from "node:net";
+import { setTimeout } from "node:timers/promises";
 import type { UniversalClientFn } from "@connectrpc/connect/protocol";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { createNodeHttpClient } from "./node-universal-client.js";
@@ -23,8 +25,9 @@ import { createNodeHttpClient } from "./node-universal-client.js";
 /**
  * Before each test, spin up the given server, and tear it down again after the
  * test.
- * The teardown fails the test if connections to the server are still open.
- * The server is accessible via the getUrl method of the returned object, or
+ * The teardown fails the test if connections to the server are still open
+ * after 500ms, and destroys them so that the process can exit.
+ * Use getUrl() to get the server URL, and getClient() to get a client for it.
  */
 export function useNodeServer(
   createServer: () =>
@@ -41,11 +44,17 @@ export function useNodeServer(
     | undefined;
 
   let client: UniversalClientFn | undefined;
+  let sockets = new Set<net.Socket>();
   let clientSessionManager: Http2SessionManager | undefined;
 
   beforeEach(async () => {
     const s = createServer();
     server = s;
+    sockets = new Set();
+    s.on("connection", (socket: net.Socket) => {
+      sockets.add(socket);
+      socket.once("close", () => sockets.delete(socket));
+    });
     await new Promise<void>((resolve) => {
       s.listen(0, () => resolve());
     });
@@ -55,26 +64,23 @@ export function useNodeServer(
     if (server === undefined) {
       throw new Error("server not defined");
     }
-    const s = server;
-    const deadline = Date.now() + 500; // 500ms
-    for (;;) {
-      const count = await new Promise<number>((resolve, reject) => {
-        s.getConnections((err, count) => {
-          if (err) {
-            return reject(err);
-          }
-          return resolve(count);
-        });
-      });
-      if (count === 0) {
-        break;
-      }
-      if (Date.now() > deadline) {
-        throw new Error(`${count} connection(s) still open after the test`);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 5));
+
+    const leakTimeoutMs = 500;
+    const pollIntervalMs = 5;
+    const deadline = Date.now() + leakTimeoutMs;
+    while (sockets.size > 0 && Date.now() < deadline) {
+      await setTimeout(pollIntervalMs);
     }
-    s.close();
+
+    const leakedCount = sockets.size;
+    for (const socket of sockets) {
+      socket.destroy();
+    }
+    server.close();
+
+    if (leakedCount > 0) {
+      throw new Error(`${leakedCount} connection(s) still open after the test`);
+    }
   });
 
   return {
