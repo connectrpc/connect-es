@@ -38,7 +38,7 @@ import {
 } from "../protocol/index.js";
 import { Code, ConnectError, createContextKey } from "../index.js";
 import { errorFromJsonBytes } from "./error-json.js";
-import { endStreamFromJson } from "./end-stream.js";
+import { endStreamFlag, endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
 import { readAll } from "../protocol/async-iterable-helper.spec.js";
@@ -53,6 +53,7 @@ import {
   MethodOptions_IdempotencyLevel,
   MethodSchema,
   StringValueSchema,
+  UInt32ValueSchema,
 } from "@bufbuild/protobuf/wkt";
 
 describe("createHandlerFactory()", () => {
@@ -74,6 +75,16 @@ describe("createHandlerFactory()", () => {
         input: Int32ValueSchema,
         output: StringValueSchema,
         methodKind: "server_streaming",
+      },
+      clientStreaming: {
+        input: Int32ValueSchema,
+        output: StringValueSchema,
+        methodKind: "client_streaming",
+      },
+      bidiStreaming: {
+        input: Int32ValueSchema,
+        output: StringValueSchema,
+        methodKind: "bidi_streaming",
       },
     },
   });
@@ -206,6 +217,251 @@ describe("createHandlerFactory()", () => {
       assert.deepStrictEqual(await catchError, writeError);
       await abortCalled;
     });
+  });
+
+  describe("request parsing", () => {
+    const invalidMessages = [
+      {
+        name: "invalid protobuf tag",
+        codec: "proto",
+        bytes: new Uint8Array([0]),
+      },
+      {
+        name: "truncated protobuf",
+        codec: "proto",
+        bytes: new Uint8Array([0x80]),
+      },
+      {
+        name: "malformed JSON",
+        codec: "json",
+        bytes: new TextEncoder().encode("{"),
+      },
+      {
+        name: "invalid JSON value",
+        codec: "json",
+        bytes: new TextEncoder().encode("true"),
+      },
+    ];
+
+    async function readError(res: UniversalServerResponse, stream: boolean) {
+      assert.ok(res.body !== undefined);
+      if (stream) {
+        const envelopes = await pipeTo(
+          res.body,
+          transformSplitEnvelope(0xffffff),
+          sinkAll(),
+        );
+        assert.strictEqual(envelopes.length, 1);
+        assert.strictEqual(envelopes[0].flags, endStreamFlag);
+        const end = endStreamFromJson(envelopes[0].data);
+        assert.ok(end.error !== undefined);
+        return end.error;
+      }
+      return errorFromJsonBytes(
+        await readAllBytes(res.body, 0xffffff),
+        res.header,
+        new ConnectError("failed to parse error"),
+      );
+    }
+
+    for (const { name, codec, bytes } of invalidMessages) {
+      for (const httpMethod of ["POST", "GET"]) {
+        it(`should reject ${name} in unary ${httpMethod} with INVALID_ARGUMENT`, async () => {
+          const { handler } = setupTestHandler(
+            testService.method.unaryNoSideEffects,
+            {},
+            () => assert.fail("implementation should not be called"),
+          );
+          const url = new URL(`https://example.com${handler.requestPath}`);
+          if (httpMethod === "GET") {
+            url.search = new URLSearchParams({
+              connect: "v1",
+              encoding: codec,
+              base64: "1",
+              message: Buffer.from(bytes).toString("base64url"),
+            }).toString();
+          }
+          const res = await handler({
+            httpVersion: "2.0",
+            method: httpMethod,
+            url: url.toString(),
+            header: new Headers({ "Content-Type": `application/${codec}` }),
+            body: createAsyncIterable(httpMethod === "GET" ? [] : [bytes]),
+            signal: new AbortController().signal,
+          });
+          assert.strictEqual(res.status, 400);
+          const error = await readError(res, false);
+          assert.strictEqual(error.code, Code.InvalidArgument);
+          if (codec === "proto") {
+            assert.match(error.rawMessage, /^parse binary: /);
+          }
+        });
+      }
+
+      const streamingHandlers = [
+        setupTestHandler(testService.method.serverStreaming, {}, () =>
+          assert.fail("implementation should not be called"),
+        ).handler,
+        setupTestHandler(
+          testService.method.clientStreaming,
+          {},
+          async (req) => {
+            await readAll(req);
+            assert.fail("request should not parse");
+          },
+        ).handler,
+        setupTestHandler(
+          testService.method.bidiStreaming,
+          {},
+          async function* (req) {
+            for await (const message of req) {
+              yield { value: message.value.toString(10) };
+            }
+          },
+        ).handler,
+      ];
+      for (const handler of streamingHandlers) {
+        it(`should reject ${name} in ${handler.method.methodKind} with INVALID_ARGUMENT`, async () => {
+          const res = await handler({
+            httpVersion: "2.0",
+            method: "POST",
+            url: `https://example.com${handler.requestPath}`,
+            header: new Headers({
+              "Content-Type": `application/connect+${codec}`,
+            }),
+            body: createAsyncIterable([encodeEnvelope(0, bytes)]),
+            signal: new AbortController().signal,
+          });
+          assert.strictEqual(res.status, 200);
+          const error = await readError(res, true);
+          assert.strictEqual(error.code, Code.InvalidArgument);
+          if (codec === "proto") {
+            assert.match(error.rawMessage, /^parse binary: /);
+          }
+        });
+      }
+    }
+
+    it("should reject invalid parsed JSON with INVALID_ARGUMENT", async () => {
+      const { handler } = setupTestHandler(testService.method.unary, {}, () =>
+        assert.fail("implementation should not be called"),
+      );
+      const res = await handler({
+        httpVersion: "2.0",
+        method: "POST",
+        url: `https://example.com${handler.requestPath}`,
+        header: new Headers({ "Content-Type": "application/json" }),
+        body: true,
+        signal: new AbortController().signal,
+      });
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(
+        (await readError(res, false)).code,
+        Code.InvalidArgument,
+      );
+    });
+
+    it("should accept an empty protobuf message", async () => {
+      const { transport, method } = setupTestHandler(
+        testService.method.unary,
+        {},
+        (req) => ({
+          value: req.value.toString(10),
+        }),
+      );
+      const res = await transport.unary(
+        method,
+        undefined,
+        undefined,
+        undefined,
+        create(Int32ValueSchema),
+      );
+      assert.strictEqual(res.message.value, "0");
+    });
+
+    for (const method of [
+      testService.method.unary,
+      testService.method.serverStreaming,
+    ]) {
+      it(`should preserve RESOURCE_EXHAUSTED for an oversized ${method.methodKind} request`, async () => {
+        const { handler } = setupTestHandler(method, { readMaxBytes: 1 }, () =>
+          assert.fail("implementation should not be called"),
+        );
+        const stream = method.methodKind !== "unary";
+        const bytes = new Uint8Array([8, 1]);
+        const res = await handler({
+          httpVersion: "2.0",
+          method: "POST",
+          url: `https://example.com${handler.requestPath}`,
+          header: new Headers({
+            "Content-Type": stream
+              ? contentTypeStreamProto
+              : contentTypeUnaryProto,
+          }),
+          body: createAsyncIterable([
+            stream ? encodeEnvelope(0, bytes) : bytes,
+          ]),
+          signal: new AbortController().signal,
+        });
+        assert.strictEqual(res.status, stream ? 200 : 429);
+        assert.strictEqual(
+          (await readError(res, stream)).code,
+          Code.ResourceExhausted,
+        );
+      });
+    }
+
+    const invalidResponseService = createServiceDesc({
+      typeName: "InvalidResponseService",
+      method: {
+        unary: {
+          input: Int32ValueSchema,
+          output: UInt32ValueSchema,
+          methodKind: "unary",
+        },
+        serverStreaming: {
+          input: Int32ValueSchema,
+          output: UInt32ValueSchema,
+          methodKind: "server_streaming",
+        },
+      },
+    });
+    const invalidResponseHandlers = [
+      setupTestHandler(invalidResponseService.method.unary, {}, () => ({
+        value: -1,
+      })).handler,
+      setupTestHandler(
+        invalidResponseService.method.serverStreaming,
+        {},
+        async function* () {
+          yield { value: -1 };
+        },
+      ).handler,
+    ];
+    for (const handler of invalidResponseHandlers) {
+      it(`should preserve INTERNAL for ${handler.method.methodKind} response serialization`, async () => {
+        const stream = handler.method.methodKind !== "unary";
+        const bytes = new Uint8Array(0);
+        const res = await handler({
+          httpVersion: "2.0",
+          method: "POST",
+          url: `https://example.com${handler.requestPath}`,
+          header: new Headers({
+            "Content-Type": stream
+              ? contentTypeStreamProto
+              : contentTypeUnaryProto,
+          }),
+          body: createAsyncIterable([
+            stream ? encodeEnvelope(0, bytes) : bytes,
+          ]),
+          signal: new AbortController().signal,
+        });
+        assert.strictEqual(res.status, stream ? 200 : 500);
+        const error = await readError(res, stream);
+        assert.strictEqual(error.code, Code.Internal);
+        assert.match(error.rawMessage, /^serialize binary: /);
+      });
+    }
   });
 
   describe("requireConnectProtocolHeader", () => {
