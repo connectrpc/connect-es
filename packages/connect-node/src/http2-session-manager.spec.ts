@@ -813,6 +813,22 @@ describe("Http2SessionManager", () => {
           "ConnectError: [unavailable] PING timed out",
         );
       });
+      it("should not be sent on a destroyed session", async (t) => {
+        t.mock.timers.enable({ apis: ["setTimeout"] });
+        const sm = new Http2SessionManager(server.getUrl(), {
+          pingIntervalMs: 1,
+        });
+        const req = await sm.request("POST", "/", {}, {});
+        const session = req.session;
+        assert.ok(session !== undefined);
+
+        session.destroy();
+        try {
+          t.mock.timers.tick(1);
+        } finally {
+          t.mock.timers.reset();
+        }
+      });
     });
 
     describe("for connections without open streams", () => {
