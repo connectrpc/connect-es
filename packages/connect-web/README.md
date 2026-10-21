@@ -45,6 +45,20 @@ const { sentence } = await client.say({ sentence: "I feel happy." });
 console.log(sentence) // you said: I feel happy.
 ```
 
+### Streaming
+
+Both transports support unary, server-streaming, client-streaming, and bidi-streaming methods.
+
+Client-streaming and bidi-streaming methods send request messages as a streaming request body.
+This requires support for streaming request bodies in the fetch API, which is available in
+Chromium-based browsers over HTTP/2 and HTTP/3, and in Node.js. Firefox and Safari do not
+support streaming request bodies at the time of writing. If support is missing, the call raises
+a `ConnectError` with `Code.Unimplemented`. See the [browser compatibility table on MDN](https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#browser_compatibility)
+for the current state of support.
+
+Note that the fetch API only supports half-duplex streaming: the response of a bidi-streaming
+call does not become available until all request messages have been sent.
+
 ## Getting started
 
 To get started with Connect, head over to the [docs](https://connectrpc.com/docs/node/getting-started)

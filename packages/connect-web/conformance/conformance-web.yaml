@@ -12,7 +12,9 @@ features:
     - COMPRESSION_IDENTITY
   streamTypes:
     - STREAM_TYPE_UNARY
+    - STREAM_TYPE_CLIENT_STREAM
     - STREAM_TYPE_SERVER_STREAM
+    - STREAM_TYPE_HALF_DUPLEX_BIDI_STREAM
   supportsTls: true
   supportsH2c: false
   supportsTlsClientCerts: false

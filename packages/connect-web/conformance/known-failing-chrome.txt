@@ -1,0 +1,4 @@
+# Chromium only supports streaming request bodies over HTTP/2 and HTTP/3.
+# Client-streaming calls over HTTP/1 fail with "TypeError: Failed to fetch".
+**/HTTPVersion:1/**/client-stream
+**/HTTPVersion:1/**/client-stream/**

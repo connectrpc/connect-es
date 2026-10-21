@@ -11,9 +11,11 @@ features:
     - COMPRESSION_IDENTITY
   streamTypes:
     - STREAM_TYPE_UNARY
+    - STREAM_TYPE_CLIENT_STREAM
     - STREAM_TYPE_SERVER_STREAM
+    - STREAM_TYPE_HALF_DUPLEX_BIDI_STREAM
   supportsTls: false
   supportsH2c: false
   supportsConnectGet: true
-  supportsHalfDuplexBidiOverHttp1: false
+  supportsHalfDuplexBidiOverHttp1: true
   supportsMessageReceiveLimit: false
