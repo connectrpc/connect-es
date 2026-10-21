@@ -56,7 +56,7 @@ describe("node readme", () => {
     assert.notStrictEqual(sentence, undefined);
   });
 
-  it("connectNodeAdapter()", async () => {
+  it("connectNodeAdapter()", async (t) => {
     let port = -1;
 
     function routes(router: ConnectRouter) {
@@ -97,10 +97,13 @@ describe("node readme", () => {
     }
 
     const server = await startServer();
+    t.after(() => {
+      for (const session of sessions) {
+        session.close();
+      }
+      server.close();
+    });
+
     await runClient();
-    for (const session of sessions) {
-      session.close();
-    }
-    server.close();
   });
 });
