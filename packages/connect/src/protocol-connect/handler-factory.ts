@@ -349,6 +349,32 @@ async function readUnaryMessageFromQuery(
   return decoded;
 }
 
+// A malformed request is an invalid argument. The binary serializer also parses
+// responses on clients, so translate its error only when parsing requests here.
+function requestSerialization<T>(
+  serialization: Serialization<T>,
+): Serialization<T> {
+  return {
+    parse(data) {
+      try {
+        return serialization.parse(data);
+      } catch (e) {
+        if (e instanceof ConnectError && e.code === Code.Internal) {
+          throw new ConnectError(
+            e.rawMessage,
+            Code.InvalidArgument,
+            undefined,
+            undefined,
+            e,
+          );
+        }
+        throw e;
+      }
+    },
+    serialize: (data) => serialization.serialize(data),
+  };
+}
+
 function parseUnaryMessage<I extends DescMessage, O extends DescMessage>(
   method: DescMethod & { input: I },
   useBinaryFormat: boolean,
@@ -356,7 +382,9 @@ function parseUnaryMessage<I extends DescMessage, O extends DescMessage>(
   input: Uint8Array | JsonValue,
 ): MessageShape<I> {
   if (input instanceof Uint8Array) {
-    return serialization.getI(useBinaryFormat).parse(input);
+    return requestSerialization(serialization.getI(useBinaryFormat)).parse(
+      input,
+    );
   }
   if (useBinaryFormat) {
     throw new ConnectError(
@@ -440,7 +468,7 @@ function createStreamHandler<I extends DescMessage, O extends DescMessage>(
       transformSplitEnvelope(opt.readMaxBytes),
       transformDecompressEnvelope(compression.request, opt.readMaxBytes),
       transformParseEnvelope(
-        serialization.getI(type.binary),
+        requestSerialization(serialization.getI(type.binary)),
         endStreamFlag,
         // if we set `null` here, an end-stream-message in the request
         // raises an error, but we want to be lenient
