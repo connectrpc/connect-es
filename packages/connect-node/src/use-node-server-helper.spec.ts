@@ -27,8 +27,7 @@ import { createNodeHttpClient } from "./node-universal-client.js";
  * test.
  * The teardown fails the test if connections to the server are still open
  * after 500ms, and destroys them so that the process can exit.
- * The server is accessible via the getUrl method of the returned object, and a
- * client for it via the getClient method.
+ * Use getUrl() to get the server URL, and getClient() to get a client for it.
  */
 export function useNodeServer(
   createServer: () =>
