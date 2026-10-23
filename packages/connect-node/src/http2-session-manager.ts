@@ -305,6 +305,18 @@ export class Http2SessionManager {
       if (this.s.t === "error") {
         throw this.s.reason;
       }
+      if (this.s.t === "closed") {
+        // The connection can transition to "closed" while we were awaiting
+        // verification, for example when the idle timeout fires concurrently.
+        // Reconnect instead of spinning on a state that never resolves.
+        this.setState(
+          connect(
+            this.authority,
+            this.http2SessionOptions,
+            this.options.connectTimeoutMs,
+          ),
+        );
+      }
       if (this.s.t === "connecting") {
         await this.s.conn;
       }
@@ -332,7 +344,15 @@ export class Http2SessionManager {
       case "connecting":
         state.conn.then(
           (value) => {
-            this.setState(ready(value, this.options));
+            try {
+              this.setState(ready(value, this.options));
+            } catch (e) {
+              // ready() asserts that the session is open. If the session died
+              // between connecting and here, swallowing the failure leaves
+              // this state as "connecting" with a resolved promise, and
+              // gotoReady() spins on it forever.
+              this.setState(closedOrError(e));
+            }
           },
           (reason) => {
             this.setState(closedOrError(reason));
