@@ -22,6 +22,8 @@ import { ConnectError } from "@connectrpc/connect";
 import { Worker } from "node:worker_threads";
 import { once } from "node:events";
 import { setTimeout as delay } from "node:timers/promises";
+import { spawn } from "node:child_process";
+import { join } from "node:path";
 
 describe("Http2SessionManager", () => {
   const serverSessions: http2.ServerHttp2Session[] = [];
@@ -982,5 +984,62 @@ describe("Http2SessionManager", () => {
       );
       sm.abort();
     });
+  });
+
+  describe("gotoReady", () => {
+    async function expectSettled(mode: string) {
+      const script = join(
+        process.cwd(),
+        "src",
+        "testdata",
+        "http2-session-manager-goto-ready-spin.ts",
+      );
+      const child = spawn(process.execPath, ["--import", "tsx", script, mode], {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      let stdout = "";
+      let stderr = "";
+      child.stdout.setEncoding("utf8");
+      child.stderr.setEncoding("utf8");
+      child.stdout.on("data", (chunk: string) => {
+        stdout += chunk;
+      });
+      child.stderr.on("data", (chunk: string) => {
+        stderr += chunk;
+      });
+      const winner = await Promise.race([
+        new Promise<string>((resolve) => {
+          child.once("exit", () => resolve("exit"));
+        }),
+        new Promise<string>((resolve) => {
+          setTimeout(() => resolve("timeout"), 1500);
+        }),
+      ]);
+      if (child.exitCode === null) {
+        child.kill();
+      }
+      assert.notStrictEqual(
+        winner,
+        "timeout",
+        "gotoReady spun instead of settling",
+      );
+      assert.strictEqual(stdout.trim(), "error", stderr);
+    }
+
+    it(
+      "should not spin on a destroyed connecting session",
+      { timeout: 3000 },
+      async () => {
+        await expectSettled("destroyed-session");
+      },
+    );
+
+    it(
+      "should not spin when the loop observes closed",
+      { timeout: 3000 },
+      async () => {
+        await expectSettled("closed");
+      },
+    );
   });
 });

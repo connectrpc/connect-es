@@ -305,6 +305,15 @@ export class Http2SessionManager {
       if (this.s.t === "error") {
         throw this.s.reason;
       }
+      if (this.s.t === "closed") {
+        this.setState(
+          connect(
+            this.authority,
+            this.http2SessionOptions,
+            this.options.connectTimeoutMs,
+          ),
+        );
+      }
       if (this.s.t === "connecting") {
         await this.s.conn;
       }
@@ -332,7 +341,11 @@ export class Http2SessionManager {
       case "connecting":
         state.conn.then(
           (value) => {
-            this.setState(ready(value, this.options));
+            try {
+              this.setState(ready(value, this.options));
+            } catch (reason) {
+              this.setState(closedOrError(reason));
+            }
           },
           (reason) => {
             this.setState(closedOrError(reason));
