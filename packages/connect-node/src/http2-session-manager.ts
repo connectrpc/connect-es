@@ -678,11 +678,6 @@ function ready(
     },
     abort(reason) {
       if (!conn.destroyed) {
-        conn.once("error", () => {
-          // conn.destroy() may raise an error after onExitState() was called
-          // and our error listeners are removed.
-          // We attach this one to swallow uncaught exceptions.
-        });
         conn.destroy(reason, http2.constants.NGHTTP2_CANCEL);
       }
     },
@@ -690,7 +685,7 @@ function ready(
       if (state.isShuttingDown()) {
         // Per the interface, this method is called when the manager is leaving
         // the state. We maintain this connection in the session manager until
-        // all streams have finished, so we do not detach event listeners here.
+        // all streams have finished, so we keep its timers running here.
         return;
       }
       cleanup();
