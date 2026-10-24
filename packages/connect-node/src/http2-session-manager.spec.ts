@@ -20,6 +20,8 @@ import * as net from "node:net";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { ConnectError } from "@connectrpc/connect";
 import { Worker } from "node:worker_threads";
+import { once } from "node:events";
+import { setTimeout as delay } from "node:timers/promises";
 
 describe("Http2SessionManager", () => {
   const serverSessions: http2.ServerHttp2Session[] = [];
@@ -811,6 +813,22 @@ describe("Http2SessionManager", () => {
           "ConnectError: [unavailable] PING timed out",
         );
       });
+      it("should not be sent on a destroyed session", async (t) => {
+        t.mock.timers.enable({ apis: ["setTimeout"] });
+        const sm = new Http2SessionManager(server.getUrl(), {
+          pingIntervalMs: 1,
+        });
+        const req = await sm.request("POST", "/", {}, {});
+        const session = req.session;
+        assert.ok(session !== undefined);
+
+        session.destroy();
+        try {
+          t.mock.timers.tick(1);
+        } finally {
+          t.mock.timers.reset();
+        }
+      });
     });
 
     describe("for connections without open streams", () => {
@@ -905,6 +923,28 @@ describe("Http2SessionManager", () => {
       assert.strictEqual(sm.state(), "closed");
     });
   });
+
+  it(
+    "should keep the process alive only while a stream is open",
+    { timeout: 2000 },
+    async (t) => {
+      const worker = new Worker(
+        "./dist/cjs/testdata/http2-session-manager-unref.js",
+        { workerData: server.getUrl() },
+      );
+      t.signal.addEventListener("abort", () => worker.terminate());
+      const exited = once(worker, "exit");
+
+      // The worker posts a message once its stream is open.
+      await once(worker, "message");
+      assert.strictEqual(await Promise.race([exited, delay(100)]), undefined);
+
+      // Closing the stream should leave nothing keeping the worker alive.
+      worker.postMessage("close");
+      const [exitCode] = await exited;
+      assert.strictEqual(exitCode, 0);
+    },
+  );
 
   describe("request against unresolvable host", () => {
     it("should reject", async () => {
