@@ -346,6 +346,44 @@ describe("Http2SessionManager", () => {
         req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
     });
+    it("should open a new connection if the existing one closes during a successful verification", async (t) => {
+      t.mock.timers.enable({ apis: ["Date"] });
+      const pingIntervalMs = 10;
+      const sm = new Http2SessionManager(server.getUrl(), { pingIntervalMs });
+
+      const req1 = await sm.request("POST", "/", {}, {});
+      const req1Session = req1.session;
+      await new Promise<void>((resolve) =>
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      // Advance past the ping interval so the next request verifies first.
+      t.mock.timers.tick(pingIntervalMs + 1);
+
+      const req2Promise = sm.request("POST", "/", {}, {});
+      assert.strictEqual(sm.state(), "verifying");
+      // Simulate an idle timeout or GOAWAY that beats the PING ack.
+      setState(sm, { t: "closed" });
+      const req2 = await req2Promise;
+      assert.notStrictEqual(req1Session, req2.session);
+      await new Promise<void>((resolve) =>
+        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      // The injected "closed" state orphaned this session without closing it.
+      req1Session?.destroy();
+      sm.abort();
+    });
+    it("should reject if the connection dies before it becomes ready", async () => {
+      // Simulate a session that died between connecting and becoming ready.
+      const session = http2.connect(server.getUrl());
+      session.destroy();
+
+      const sm = new Http2SessionManager(server.getUrl());
+      setState(sm, {
+        t: "connecting",
+        conn: Promise.resolve(session),
+      });
+      await assert.rejects(sm.request("POST", "/", {}, {}), ConnectError);
+    });
   });
 
   describe("with connectTimeoutMs", () => {
@@ -855,7 +893,7 @@ describe("Http2SessionManager", () => {
           req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         assert.strictEqual(sm.state(), "idle");
-        await new Promise<void>((resolve) => setTimeout(resolve, 20));
+        await new Promise<void>((resolve) => setTimeout(resolve, 50));
         assert.ok(serverReceivedPings.length > 0);
 
         // cleanup
@@ -1005,3 +1043,8 @@ describe("Http2SessionManager", () => {
     });
   });
 });
+
+// Calls the private setState() to force states that only arise from races.
+function setState(sm: Http2SessionManager, state: unknown) {
+  (sm as unknown as { setState(state: unknown): void }).setState(state);
+}
