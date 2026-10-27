@@ -346,70 +346,42 @@ describe("Http2SessionManager", () => {
         req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
     });
-    it("should open a new connection if the existing one closes after a successful verification PING", async () => {
-      const sm = new Http2SessionManager(server.getUrl(), {
-        pingIntervalMs: 10, // intentionally short to trigger verification in tests
-      });
+    it("should open a new connection if the existing one closes during a successful verification", async (t) => {
+      t.mock.timers.enable({ apis: ["Date"] });
+      const pingIntervalMs = 10;
+      const sm = new Http2SessionManager(server.getUrl(), { pingIntervalMs });
 
-      // issue a request and close it, then wait for more than pingIntervalMs to trigger a verification
       const req1 = await sm.request("POST", "/", {}, {});
       const req1Session = req1.session;
       await new Promise<void>((resolve) =>
         req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
-      await new Promise<void>((resolve) => setTimeout(resolve, 30));
-
-      // destroy the session when it receives the next PING - the PING
-      // acknowledgement and the session teardown travel in the same turn, so
-      // the client's verification resolves successfully while the manager
-      // transitions to "closed"
-      const session = serverSessions[serverSessions.length - 1];
-      session.once("ping", () => session.destroy());
+      // Advance past the ping interval so the next request verifies first.
+      t.mock.timers.tick(pingIntervalMs + 1);
 
       const req2Promise = sm.request("POST", "/", {}, {});
-      req2Promise.catch(() => {}); // tolerate a late rejection after a failed test
       assert.strictEqual(sm.state(), "verifying");
-      const req2 = await Promise.race([
-        req2Promise,
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("request never settled")), 500),
-        ),
-      ]);
-      assert.notStrictEqual(
-        req1Session,
-        req2.session,
-        "request after verification uses a new connection",
-      );
-
-      // clean up
+      // Simulate an idle timeout or GOAWAY that beats the PING ack.
+      setState(sm, { t: "closed" });
+      const req2 = await req2Promise;
+      assert.notStrictEqual(req1Session, req2.session);
       await new Promise<void>((resolve) =>
         req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
+      // The injected "closed" state orphaned this session without closing it.
+      req1Session?.destroy();
       sm.abort();
     });
     it("should reject if the connection dies before it becomes ready", async () => {
-      // Simulate a session that died between connecting and becoming ready:
-      // the connecting promise resolves, but ready() throws because the
-      // session is already closed. Without a catch, the manager stays in
-      // "connecting" with a resolved promise and gotoReady() spins forever.
-      const deadSession = http2.connect(server.getUrl());
-      await once(deadSession, "connect");
-      deadSession.close();
-      await once(deadSession, "close");
+      // Simulate a session that died between connecting and becoming ready.
+      const session = http2.connect(server.getUrl());
+      session.destroy();
 
       const sm = new Http2SessionManager(server.getUrl());
-      (
-        sm as unknown as {
-          setState(state: {
-            t: "connecting";
-            conn: Promise<http2.ClientHttp2Session>;
-          }): void;
-        }
-      ).setState({
+      setState(sm, {
         t: "connecting",
-        conn: Promise.resolve(deadSession),
+        conn: Promise.resolve(session),
       });
-
       await assert.rejects(sm.request("POST", "/", {}, {}), ConnectError);
     });
   });
@@ -1050,3 +1022,8 @@ describe("Http2SessionManager", () => {
     });
   });
 });
+
+// Calls the private setState() to force states that only arise from races.
+function setState(sm: Http2SessionManager, state: unknown) {
+  (sm as unknown as { setState(state: unknown): void }).setState(state);
+}
