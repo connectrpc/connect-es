@@ -19,7 +19,10 @@ import type {
   DescMethodStreaming,
   DescMethodUnary,
 } from "@bufbuild/protobuf";
-import { validateTrailer } from "../protocol-grpc/validate-trailer.js";
+import {
+  missingUnaryMessageError,
+  validateTrailer,
+} from "../protocol-grpc/validate-trailer.js";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { validateResponseWithCompression } from "./validate-response.js";
 import { createTrailerSerialization, trailerFlag } from "./trailer.js";
@@ -173,9 +176,10 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           }
           validateTrailer(trailer, uRes.header);
           if (message === undefined) {
-            throw new ConnectError(
+            throw missingUnaryMessageError(
+              trailer,
+              headerError,
               "protocol error: missing output message for unary method",
-              trailer.has(headerGrpcStatus) ? Code.Unimplemented : Code.Unknown,
             );
           }
           return <UnaryResponse<I, O>>{
