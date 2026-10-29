@@ -197,7 +197,6 @@ describe("transformInvokeImplementation()", () => {
     const output = transformInvokeImplementation(
       createMethodImplSpec(
         TestService.method.serverStreaming,
-        // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, { responseHeader, responseTrailer }) {
           assert.strictEqual(req.value, 2); // Comes from the interceptor
           responseHeader.set("Key", "bar");
