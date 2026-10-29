@@ -10,10 +10,10 @@ You can find the protocol buffer schema [on the BSR](https://buf.build/connectrp
 
 ## Run the example
 
-You will need [Node](https://nodejs.org/en/download/) in version 16 or later installed. Download
+You will need [Node](https://nodejs.org/en/download/) in version 22 or later installed. Download
 the example project and install its dependencies:
 
-```shell
+```bash
 curl -L https://github.com/connectrpc/connect-es/archive/refs/heads/main.zip > connect-es-main.zip
 unzip connect-es-main.zip 'connect-es-main/packages/example/*'
 
@@ -24,7 +24,7 @@ npm install
 Next, we are going to make a locally-trusted development certificates with `mkcert`.
 If you don't have it installed yet, please run the following commands:
 
-```shell
+```bash
 brew install mkcert
 mkcert -install
 mkcert localhost 127.0.0.1 ::1
@@ -40,7 +40,7 @@ for our example server.
 
 Once we have that out of the way, let's start the Connect server:
 
-```shell
+```bash
 npm start
 ```
 
@@ -53,8 +53,8 @@ example running locally.
 
 The file `src/client.ts` implements a CLI client that you can run in Node.js.
 
-```shell
-$ npm run client
+```bash
+npm run client
 ```
 
 ```
@@ -69,21 +69,21 @@ How are you feeling today?
 
 ## Using other clients
 
-Because Connect is POST-only protocol that works over HTTP/1.1 and HTTP/2, we can also use
+Because Connect is a plain HTTP protocol that works over HTTP/1.1 and HTTP/2, we can also use
 `curl` to call our RPC:
 
-```shell
+```bash
 curl \
   --header 'Content-Type: application/json' \
   --data '{"sentence": "I feel happy."}' \
-   https://localhost:8443/connectrpc.eliza.v1.ElizaService/Say
+  https://localhost:8443/connectrpc.eliza.v1.ElizaService/Say
 ```
 
 We can also use any gRPC client like `buf curl`:
 
-```shell
+```bash
 npx buf curl --protocol grpc --schema . -d '{"name": "John"}' \
-   https://localhost:8443/connectrpc.eliza.v1.ElizaService/Introduce
+  https://localhost:8443/connectrpc.eliza.v1.ElizaService/Introduce
 ```
 
 ## Generate code
@@ -97,6 +97,8 @@ This will generate the service definitions and message types into the directory 
 Of course, you can use `protoc` as well if desired:
 
 ```bash
+# You will need to adapt these values to your environment:
+# https://protobufes.com/reference/environments/
 protoc -I . eliza.proto \
   --plugin=protoc-gen-es=../../node_modules/.bin/protoc-gen-es \
   --es_out src/gen \

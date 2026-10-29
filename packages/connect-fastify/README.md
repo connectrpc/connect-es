@@ -4,20 +4,21 @@ Connect is a family of libraries for building and consuming APIs on different la
 [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings type-safe APIs with Protobuf to
 TypeScript.
 
-`@connectrpc/connect-fastify` provides a plugin for [fastify](https://www.fastify.io/), the fast and
+`@connectrpc/connect-fastify` provides a plugin for [Fastify](https://www.fastify.io/), the fast and
 low overhead web framework, for Node.js.
 
 ### fastifyConnectPlugin()
 
-Plug your Connect RPCs into a fastify server.
+Plug your Connect RPCs into a Fastify server.
 
 ```ts
 // connect.ts
-import { ConnectRouter } from "@connectrpc/connect";
+import type { ConnectRouter } from "@connectrpc/connect";
+import { ElizaService } from "./gen/eliza_pb";
 
 export default function (router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
-  router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
+  router.rpc(ElizaService.method.say, async (req) => ({
     sentence: `you said: ${req.sentence}`,
   }));
 }
@@ -26,7 +27,7 @@ export default function (router: ConnectRouter) {
 ```diff
 // server.ts
 import { fastify } from "fastify";
-+ import routes from "connect";
++ import routes from "./connect";
 + import { fastifyConnectPlugin } from "@connectrpc/connect-fastify";
 + import { createValidateInterceptor } from "@connectrpc/validate";
 
@@ -35,9 +36,9 @@ const server = fastify({
 });
 
 + await server.register(fastifyConnectPlugin, {
-+  // Validation via Protovalidate is almost always recommended
-+  interceptors: [createValidateInterceptor()],  
-+  routes
++   // Validation via Protovalidate is almost always recommended
++   interceptors: [createValidateInterceptor()],
++   routes,
 + });
 
 await server.listen({
@@ -72,11 +73,10 @@ Node.js with the gRPC protocol (using a transport from [@connectrpc/connect-node
 ```ts
 import { createClient } from "@connectrpc/connect";
 import { createGrpcTransport } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb";
 
 const transport = createGrpcTransport({
   baseUrl: "http://localhost:8080",
-  httpVersion: "2",
 });
 
 const client = createClient(ElizaService, transport);

@@ -23,11 +23,10 @@ import { expressConnectMiddleware } from "./express-connect-middleware.js";
 import { ElizaService } from "./testdata/gen/connectrpc/eliza/v1/eliza_pb.js";
 
 describe("express readme", () => {
-  it("should work", async () => {
+  it("expressConnectMiddleware()", async (t) => {
     let port = -1;
 
     function routes(router: ConnectRouter) {
-      // eslint-disable-next-line @typescript-eslint/require-await
       router.rpc(ElizaService.method.say, async (req) => ({
         sentence: `you said: ${req.sentence}`,
       }));
@@ -37,7 +36,6 @@ describe("express readme", () => {
       return await new Promise<http.Server>((resolve) => {
         const app = express();
         app.use(expressConnectMiddleware({ routes }));
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- typing issue in express
         const server = http.createServer(app).listen(0, () => {
           const a = server.address();
           if (a !== null && typeof a !== "string") {
@@ -53,14 +51,16 @@ describe("express readme", () => {
         baseUrl: `http://localhost:${port}`,
         httpVersion: "1.1",
       });
+
       const client = createClient(ElizaService, transport);
-      const res = await client.say({ sentence: "I feel happy." });
-      // console.log(res.sentence) // you said: I feel happy.
-      assert.strictEqual(res.sentence, "you said: I feel happy.");
+      const { sentence } = await client.say({ sentence: "I feel happy." });
+      // console.log(sentence); // you said: I feel happy.
+      assert.strictEqual(sentence, "you said: I feel happy.");
     }
 
     const server = await startServer();
+    t.after(() => server.close());
+
     await runClient();
-    server.close();
   });
 });

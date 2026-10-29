@@ -25,8 +25,8 @@ import * as http from "node:http";
 import type { ConnectRouter } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
 import { createValidateInterceptor } from "@connectrpc/validate";
-import type { SayRequest } from "./gen/eliza_pb.js";
-import { ElizaService } from "./gen/eliza_pb.js";
+import type { SayRequest } from "./gen/eliza_pb";
+import { ElizaService } from "./gen/eliza_pb";
 
 // The adapter turns our RPC routes into a Node.js request handler.
 const handler = connectNodeAdapter({
@@ -43,7 +43,7 @@ const handler = connectNodeAdapter({
   },
 });
 
-http.createServer(handler).listen(8080)
+http.createServer(handler).listen(8080);
 ```
 
 Calling an RPC is just as simple. You create a client with your server's URL and call a method:
@@ -51,19 +51,19 @@ Calling an RPC is just as simple. You create a client with your server's URL and
 ```ts
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_pb.js";
+import { ElizaService } from "./gen/eliza_pb";
 
 const client = createClient(
   ElizaService,
   createConnectTransport({
     httpVersion: "1.1",
     baseUrl: "http://localhost:8080",
-  })
+  }),
 );
 
 try {
-  const res = await client.say({sentence: "Hello, world!"})
-  console.log(res.sentence)
+  const res = await client.say({ sentence: "Hello, world!" });
+  console.log(res.sentence);
 } catch (err) {
   console.error(err);
 }
@@ -79,7 +79,7 @@ Unlike REST, the Remote Procedure Calls are type-safe, but they are regular HTTP
 under the hood. You can see all requests in the network inspector, and you
 can `curl` them if you want:
 
-```shell
+```bash
 curl \
     --header 'Content-Type: application/json' \
     --data '{"sentence": "I feel happy."}' \
@@ -90,7 +90,7 @@ Connect uses [Protobuf-ES](https://github.com/bufbuild/protobuf-es), the only
 [fully-compliant](https://buf.build/blog/protobuf-conformance) Protobuf JavaScript library.
 
 Connect implements three RPC protocols: The widely available gRPC and
-gRPC-web protocols, and Connect's [own protocol](https://connectrpc.com/docs/protocol/),
+gRPC-Web protocols, and Connect's [own protocol](https://connectrpc.com/docs/protocol/),
 optimized for the web. This gives you unparalleled interoperability across many
 platforms and languages, with type safety end-to-end.
 
@@ -156,7 +156,7 @@ be more than happy to chat!
 - [examples-go](https://github.com/connectrpc/examples-go):
   Example RPC service powering https://demo.connectrpc.com and built with connect-go
 - [conformance](https://github.com/connectrpc/conformance):
-  gRPC-Web and Connect interoperability tests
+  Connect, gRPC, and gRPC-Web interoperability tests
 - [Buf Studio](https://buf.build/studio): web UI for ad-hoc RPCs
 
 ## Compatibility
