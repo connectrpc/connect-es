@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-web",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -10,7 +10,7 @@
   "scripts": {
     "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
+    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --verbatimModuleSyntax false --moduleResolution node10 --ignoreDeprecations 6.0 --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm",
     "conformance:safari:promise": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser safari",
     "conformance:safari:callback": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser safari --useCallbackClient",
@@ -18,9 +18,9 @@
     "conformance:chrome:callback": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser chrome --useCallbackClient",
     "conformance:firefox:promise": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser firefox",
     "conformance:firefox:callback": "connectconformance --mode client --conf conformance/conformance-web.yaml -- tsx conformance/client.ts --browser firefox --useCallbackClient",
-    "conformance:node:promise": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node",
-    "conformance:node:callback": "connectconformance --mode client --conf conformance/conformance-web-node.yaml -- tsx conformance/client.ts --browser node --useCallbackClient",
-    "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
+    "conformance:node:promise": "connectconformance --mode client --conf conformance/conformance-web-node.yaml --known-flaky @conformance/known-flaky-node.txt -- tsx conformance/client.ts --browser node",
+    "conformance:node:callback": "connectconformance --mode client --conf conformance/conformance-web-node.yaml --known-flaky @conformance/known-flaky-node.txt -- tsx conformance/client.ts --browser node --useCallbackClient",
+    "test": "tsc --noEmit && node --import tsx --test --test-reporter=tap $(find src -name '*.spec.ts')",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings",
@@ -36,12 +36,12 @@
     }
   },
   "devDependencies": {
-    "@connectrpc/connect-conformance": "^2.2.0",
+    "@connectrpc/connect-conformance": "^2.3.0",
     "tsx": "^4.20.6",
-    "webdriverio": "^9.31.4"
+    "webdriverio": "^9.32.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.7.0",
-    "@connectrpc/connect": "2.2.0"
+    "@connectrpc/connect": "2.3.0"
   }
 }

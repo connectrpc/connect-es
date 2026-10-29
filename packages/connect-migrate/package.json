@@ -1,8 +1,9 @@
 {
   "name": "@connectrpc/connect-migrate",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "This tool updates your Connect project to use the new @connectrpc packages.",
   "license": "Apache-2.0",
+  "type": "commonjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/connectrpc/connect-es.git",
@@ -14,7 +15,7 @@
   "scripts": {
     "prebuild": "rm -rf ./dist/*",
     "build": "tsc --project tsconfig.json --outDir ./dist/cjs",
-    "test": "tsc --noEmit && node --import tsx --test $(find src -name '*.spec.ts')",
+    "test": "tsc --noEmit && node --import tsx --test --test-reporter=tap $(find src -name '*.spec.ts')",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings"
@@ -26,7 +27,7 @@
     "fast-glob": "3.3.3",
     "jscodeshift": "17.4.0",
     "semver": "^7.8.3",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@types/jscodeshift": "17.3.0",

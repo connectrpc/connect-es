@@ -4,11 +4,6 @@
   "compilerOptions": {
     "rootDir": "./src",
     "types": ["node"],
-    // required for jscodeshift
-    "esModuleInterop": true,
-    // This package is CommonJS
-    "verbatimModuleSyntax": false,
-    "module": "CommonJS",
-    "moduleResolution": "Node10"
+    "verbatimModuleSyntax": false
   }
 }

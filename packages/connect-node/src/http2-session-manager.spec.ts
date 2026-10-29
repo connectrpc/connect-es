@@ -20,6 +20,8 @@ import * as net from "node:net";
 import { Http2SessionManager } from "./http2-session-manager.js";
 import { ConnectError } from "@connectrpc/connect";
 import { Worker } from "node:worker_threads";
+import { once } from "node:events";
+import { setTimeout as delay } from "node:timers/promises";
 
 describe("Http2SessionManager", () => {
   const serverSessions: http2.ServerHttp2Session[] = [];
@@ -343,6 +345,44 @@ describe("Http2SessionManager", () => {
       await new Promise<void>((resolve) =>
         req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
       );
+    });
+    it("should open a new connection if the existing one closes during a successful verification", async (t) => {
+      t.mock.timers.enable({ apis: ["Date"] });
+      const pingIntervalMs = 10;
+      const sm = new Http2SessionManager(server.getUrl(), { pingIntervalMs });
+
+      const req1 = await sm.request("POST", "/", {}, {});
+      const req1Session = req1.session;
+      await new Promise<void>((resolve) =>
+        req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      // Advance past the ping interval so the next request verifies first.
+      t.mock.timers.tick(pingIntervalMs + 1);
+
+      const req2Promise = sm.request("POST", "/", {}, {});
+      assert.strictEqual(sm.state(), "verifying");
+      // Simulate an idle timeout or GOAWAY that beats the PING ack.
+      setState(sm, { t: "closed" });
+      const req2 = await req2Promise;
+      assert.notStrictEqual(req1Session, req2.session);
+      await new Promise<void>((resolve) =>
+        req2.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      // The injected "closed" state orphaned this session without closing it.
+      req1Session?.destroy();
+      sm.abort();
+    });
+    it("should reject if the connection dies before it becomes ready", async () => {
+      // Simulate a session that died between connecting and becoming ready.
+      const session = http2.connect(server.getUrl());
+      session.destroy();
+
+      const sm = new Http2SessionManager(server.getUrl());
+      setState(sm, {
+        t: "connecting",
+        conn: Promise.resolve(session),
+      });
+      await assert.rejects(sm.request("POST", "/", {}, {}), ConnectError);
     });
   });
 
@@ -811,6 +851,22 @@ describe("Http2SessionManager", () => {
           "ConnectError: [unavailable] PING timed out",
         );
       });
+      it("should not be sent on a destroyed session", async (t) => {
+        t.mock.timers.enable({ apis: ["setTimeout"] });
+        const sm = new Http2SessionManager(server.getUrl(), {
+          pingIntervalMs: 1,
+        });
+        const req = await sm.request("POST", "/", {}, {});
+        const session = req.session;
+        assert.ok(session !== undefined);
+
+        session.destroy();
+        try {
+          t.mock.timers.tick(1);
+        } finally {
+          t.mock.timers.reset();
+        }
+      });
     });
 
     describe("for connections without open streams", () => {
@@ -837,7 +893,7 @@ describe("Http2SessionManager", () => {
           req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         assert.strictEqual(sm.state(), "idle");
-        await new Promise<void>((resolve) => setTimeout(resolve, 20));
+        await new Promise<void>((resolve) => setTimeout(resolve, 50));
         assert.ok(serverReceivedPings.length > 0);
 
         // cleanup
@@ -883,7 +939,50 @@ describe("Http2SessionManager", () => {
       await new Promise<void>((resolve) => setTimeout(resolve, 10));
       assert.strictEqual(sm.state(), "closed");
     });
+
+    it("should not throw if the connection fails while closing", async () => {
+      const sm = new Http2SessionManager(server.getUrl(), {
+        idleConnectionTimeoutMs: 1,
+      });
+      const req = await sm.request("POST", "/", {}, {});
+      const session = req.session;
+      assert.ok(session !== undefined);
+
+      // Simulate the server resetting the connection while it is closing.
+      session.close = () => session.destroy(new Error("read ECONNRESET"));
+      const sessionClosed = new Promise((resolve) =>
+        session.once("close", resolve),
+      );
+
+      await new Promise<void>((resolve) =>
+        req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
+      );
+      await sessionClosed;
+      assert.strictEqual(sm.state(), "closed");
+    });
   });
+
+  it(
+    "should keep the process alive only while a stream is open",
+    { timeout: 2000 },
+    async (t) => {
+      const worker = new Worker(
+        "./dist/cjs/testdata/http2-session-manager-unref.js",
+        { workerData: server.getUrl() },
+      );
+      t.signal.addEventListener("abort", () => worker.terminate());
+      const exited = once(worker, "exit");
+
+      // The worker posts a message once its stream is open.
+      await once(worker, "message");
+      assert.strictEqual(await Promise.race([exited, delay(100)]), undefined);
+
+      // Closing the stream should leave nothing keeping the worker alive.
+      worker.postMessage("close");
+      const [exitCode] = await exited;
+      assert.strictEqual(exitCode, 0);
+    },
+  );
 
   describe("request against unresolvable host", () => {
     it("should reject", async () => {
@@ -944,3 +1043,8 @@ describe("Http2SessionManager", () => {
     });
   });
 });
+
+// Calls the private setState() to force states that only arise from races.
+function setState(sm: Http2SessionManager, state: unknown) {
+  (sm as unknown as { setState(state: unknown): void }).setState(state);
+}

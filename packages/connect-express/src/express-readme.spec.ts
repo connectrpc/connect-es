@@ -27,7 +27,6 @@ describe("express readme", () => {
     let port = -1;
 
     function routes(router: ConnectRouter) {
-      // eslint-disable-next-line @typescript-eslint/require-await
       router.rpc(ElizaService.method.say, async (req) => ({
         sentence: `you said: ${req.sentence}`,
       }));
@@ -37,7 +36,6 @@ describe("express readme", () => {
       return await new Promise<http.Server>((resolve) => {
         const app = express();
         app.use(expressConnectMiddleware({ routes }));
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- typing issue in express
         const server = http.createServer(app).listen(0, () => {
           const a = server.address();
           if (a !== null && typeof a !== "string") {

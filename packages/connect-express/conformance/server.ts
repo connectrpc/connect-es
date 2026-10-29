@@ -97,10 +97,8 @@ function main() {
   switch (req.httpVersion) {
     case HTTPVersion.HTTP_VERSION_1:
       server = req.useTls
-        ? // eslint-disable-next-line @typescript-eslint/no-misused-promises -- typing issue in express
-          https.createServer(serverOptions, app)
-        : // eslint-disable-next-line @typescript-eslint/no-misused-promises -- typing issue in express
-          http.createServer(app);
+        ? https.createServer(serverOptions, app)
+        : http.createServer(app);
       break;
     case HTTPVersion.HTTP_VERSION_2:
       throw new Error("HTTP/2 is not supported");
