@@ -1,3 +1,0 @@
-# Truncated streams fail with invalid_argument instead of internal or unknown.
-Connect Unexpected Responses/**/incomplete-message
-Connect Unexpected Responses/**/incomplete-message-prefix

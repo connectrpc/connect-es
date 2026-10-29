@@ -1,8 +1,2 @@
-# Truncated streams fail with invalid_argument instead of internal or unknown.
-Connect Unexpected Responses/**/incomplete-message
-Connect Unexpected Responses/**/incomplete-message-prefix
-Connect Unexpected Responses/**/no-end-stream
-gRPC Unexpected Responses/**/incomplete-message
-gRPC Unexpected Responses/**/incomplete-message-prefix
 # The gRPC-Web client does not copy trailers-only headers into trailers.
 Basic/HTTPVersion:2/Protocol:PROTOCOL_GRPC_WEB/**/(grpc server impl)/bidi-stream/half-duplex/no-responses

@@ -1012,7 +1012,7 @@ export function transformSplitEnvelope(
     if (buffer.byteLength > 0) {
       throw new ConnectError(
         "protocol error: incomplete envelope",
-        Code.InvalidArgument,
+        Code.Internal,
       );
     }
   };
