@@ -180,7 +180,6 @@ describe("pipe()", () => {
     let returned = false;
     let didPull = false;
     const iterable = pipe(
-      // eslint-disable-next-line @typescript-eslint/require-await
       (async function* () {
         try {
           yield 1;

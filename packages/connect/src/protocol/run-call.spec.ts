@@ -157,7 +157,6 @@ describe("runStreamingCall()", () => {
   }
 
   function makeRes(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     req: StreamRequest<typeof Int32ValueSchema, typeof StringValueSchema>,
   ) {
     return <StreamResponse<typeof Int32ValueSchema, typeof StringValueSchema>>{

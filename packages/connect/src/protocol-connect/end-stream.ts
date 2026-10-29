@@ -53,7 +53,6 @@ export function endStreamFromJson(
   const parseErr = new ConnectError("invalid end stream", Code.Unknown);
   let jsonValue: JsonValue;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     jsonValue = JSON.parse(
       typeof data == "string" ? data : new TextDecoder().decode(data),
     );
@@ -127,7 +126,6 @@ export function endStreamToJson(
     hasMetadata = true;
     md[key] = [value];
   });
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (hasMetadata) {
     es.metadata = md;
   }
