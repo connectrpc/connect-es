@@ -1,1 +1,2 @@
-Timeouts/**
+# The gRPC server resets the stream at the deadline, so the client sees canceled.
+Timeouts/**/(grpc server impl)/**
