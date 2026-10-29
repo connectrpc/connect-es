@@ -27,25 +27,27 @@ The new file `connect.ts` is where you register your RPCs:
 
 ```ts
 // connect.ts
-import { ConnectRouter } from "@connectrpc/connect";
+import type { ConnectRouter } from "@connectrpc/connect";
+import { ElizaService } from "./gen/eliza_pb";
 
 export default function (router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
-  router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
+  router.rpc(ElizaService.method.say, async (req) => ({
     sentence: `you said: ${req.sentence}`,
   }));
 }
 ```
 
-`pages/api/[[..connect]].ts` is a Next.js [catch-all API route](https://nextjs.org/docs/routing/dynamic-routes#catch-all-routes):
+`pages/api/[[...connect]].ts` is a Next.js [catch-all API route](https://nextjs.org/docs/pages/building-your-application/routing/api-routes#catch-all-api-routes):
 
 ```ts
-// pages/api/[[..connect]].ts
+// pages/api/[[...connect]].ts
 import { nextJsApiRouter } from "@connectrpc/connect-next";
 import { createValidateInterceptor } from "@connectrpc/validate";
 import routes from "../../connect";
 
 const { handler } = nextJsApiRouter({
+  // Validation via Protovalidate is almost always recommended
   interceptors: [createValidateInterceptor()],
   routes,
 });
@@ -69,16 +71,15 @@ Note that Next.js serves all your RPCs with the `/api` prefix.
 curl \
     --header "Content-Type: application/json" \
     --data '{"sentence": "I feel happy."}' \
-    --http2-prior-knowledge \
     http://localhost:3000/api/connectrpc.eliza.v1.ElizaService/Say
 ```
 
-Node.js with the gRPC-web protocol (using a transport from [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node)):
+Node.js with the gRPC-Web protocol (using a transport from [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node)):
 
 ```ts
 import { createClient } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb";
 
 const transport = createGrpcWebTransport({
   baseUrl: "http://localhost:3000/api",

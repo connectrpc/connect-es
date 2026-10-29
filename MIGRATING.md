@@ -17,13 +17,13 @@ To help with the process of migrating, we provide a tool called
 which will take care of dependency and plugin updates as well as a few minor code
 changes. As a first step, execute the following command:
 
-```shellsession
+```bash
 npx @connectrpc/connect-migrate@latest
 ```
 
 While the tool will do a lot of the dependency legwork for you, there are many use
 cases in code that it does not cover. Please read on to understand what has
-changed and how you can leverage new features your application.
+changed and how you can leverage new features in your application.
 
 > [!TIP]
 >
@@ -71,6 +71,8 @@ If you are using local plugins:
 # buf.gen.yaml
 version: v2
 plugins:
+  # You will need to adapt these values to your environment:
+  # https://protobufes.com/reference/environments/
   - local: protoc-gen-es
     out: src/gen
     include_imports: true
@@ -86,6 +88,8 @@ If you are using remote plugins:
 # buf.gen.yaml
 version: v2
 plugins:
+  # You will need to adapt these values to your environment:
+  # https://protobufes.com/reference/environments/
 - - remote: buf.build/bufbuild/es:v1.10.0
 + - remote: buf.build/bufbuild/es:v2.2.0
     out: src/gen
@@ -108,6 +112,8 @@ provided by the Buf CLI introduced in v1.36.0:
 version: v2
 + clean: true
 plugins:
+  # You will need to adapt these values to your environment:
+  # https://protobufes.com/reference/environments/
   - local: protoc-gen-es
     out: src/gen
     include_imports: true
@@ -124,6 +130,8 @@ and need the `.js` extension on all import paths, add the plugin option `import_
 # buf.gen.yaml
 version: v2
 plugins:
+ # You will need to adapt these values to your environment:
+ # https://protobufes.com/reference/environments/
  - local: protoc-gen-es
    out: src/gen
    include_imports: true
@@ -139,6 +147,8 @@ plugin option `import_extension=none` - it's the default behavior now:
 # buf.gen.yaml
 version: v2
 plugins:
+  # You will need to adapt these values to your environment:
+  # https://protobufes.com/reference/environments/
   - local: protoc-gen-es
     out: src/gen
     include_imports: true
@@ -162,7 +172,7 @@ way your project is configured. For example, `npx buf generate` or `npm run gene
 >
 > - `include_imports: true`
 
-See the [Gotchas](#the-new-plugins-generates-missing-imports) section for an explanation.
+See the [Gotchas](#the-new-plugin-generates-missing-imports) section for an explanation.
 
 ## Update your application code
 
@@ -192,8 +202,8 @@ for each message.
 Instead of the `new` keyword, you create a message with a function call:
 
 ```diff
-- import { SayRequest } from "./gen/eliza_connect.js";
-+ import { SayRequestSchema } from "./gen/eliza_pb.js";
+- import { SayRequest } from "./gen/eliza_pb";
++ import { SayRequestSchema } from "./gen/eliza_pb";
 + import { create } from "@bufbuild/protobuf";
 
 - const sayRequest = new SayRequest({
@@ -231,7 +241,7 @@ and to the static class methods.
 >
 > Note that messages no longer implement the magic `toJSON` method, which serializes
 > a message with the Protobuf JSON format when it's passed to `JSON.stringify`. Make
-> sure to always serializes to JSON with the `toJson` or `toJsonString` function.
+> sure to always serialize to JSON with the `toJson` or `toJsonString` function.
 
 #### Identifying messages
 
@@ -246,8 +256,8 @@ for their qualified Protobuf name:
 To identify an unknown message, the function `isMessage` is still supported:
 
 ```diff
-- import { SayRequest } from "./gen/eliza_connect.js";
-+ import { SayRequestSchema } from "./gen/eliza_pb.js";
+- import { SayRequest } from "./gen/eliza_pb";
++ import { SayRequestSchema } from "./gen/eliza_pb";
 import { isMessage } from "@bufbuild/protobuf";
 
 - if (isMessage(x, SayRequest)) {
@@ -433,8 +443,8 @@ Promise clients are now the default and the previously-deprecated function `crea
 has been removed. Update any call sites using `createPromiseClient` to use `createClient`.
 
 ```diff
-- import { createPromiseClient } from "@connectrpc/connect-node";
-+ import { createClient } from "@connectrpc/connect-node";
+- import { createPromiseClient } from "@connectrpc/connect";
++ import { createClient } from "@connectrpc/connect";
 
 - createPromiseClient(ElizaService, transport);
 + createClient(ElizaService, transport);
@@ -523,7 +533,7 @@ await server.register(
 
 > [!TIP]
 >
-> When this option is enabled, `proto3` default values such as `0`, `"""`, or `false`
+> When this option is enabled, `proto3` default values such as `0`, `""`, or `false`
 > are serialized to JSON, but `proto2` default values are not.
 
 ### Changes to service descriptors
@@ -574,14 +584,14 @@ The enum `MethodIdempotency` has been replaced by the well-known type `MethodOpt
 + import { MethodOptions_IdempotencyLevel } from "@bufbuild/protobuf/wkt";
 
 - say.idempotency; // MethodIdempotency.NoSideEffects
-+ say.idempotency; // MethodOptions_IdempotencyLevel.NoSideEffects
++ say.idempotency; // MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS
 ```
 
 ### Changes to interceptors
 
 Interceptors for streaming RPCs now use appropriate stream types. In
 v1, the server used `UnaryRequest` and `StreamResponse` for server-streaming RPCs,
-while the client always uses streaming variants. This was unintended behavior
+while the client always used streaming variants. This was unintended behavior
 and has been fixed in v2. Now all streaming RPCs use the `StreamRequest` and
 `StreamResponse` types on the server as well.
 
@@ -597,9 +607,9 @@ pass the service descriptor to `ConnectRouter.rpc`, and the argument has been
 removed from the method signature. Update your call-sites as follows:
 
 ```diff
-const routes = ({rpc}: ConnectRouter) => {
--   rpc(ElizaService, ElizaService.say, impl);
-+   rpc(ElizaService.say, impl);
+const routes = ({ rpc }: ConnectRouter) => {
+-   rpc(ElizaService, ElizaService.methods.say, impl);
++   rpc(ElizaService.method.say, impl);
 }
 ```
 
@@ -676,7 +686,7 @@ package.json file.
 
 Run the following command to remove the dependency:
 
-```shellsession
+```bash
 npm remove @buf/googleapis_googleapis.connectrpc_es
 ```
 
@@ -685,11 +695,11 @@ with your module owner and name.
 
 #### 2. Run the migration tool
 
-```shellsession
+```bash
 npx @connectrpc/connect-migrate@latest
 ```
 
-This command will update your dependencies on `@connect` and `@bufbuild` packages,
+This command will update your dependencies on `@connectrpc` and `@bufbuild` packages,
 so that you can install the new generated SDK.
 
 #### 3. Install new generated SDKs
@@ -697,7 +707,7 @@ so that you can install the new generated SDK.
 Now you need to replace the old generated SDK with a dependency on `@buf/googleapis_googleapis.bufbuild_es`
 (same BSR module, but using the [Protobuf-ES v2 plugin](https://buf.build/bufbuild/es)):
 
-```shellsession
+```bash
 npm install @buf/googleapis_googleapis.bufbuild_es@latest
 ```
 
@@ -725,13 +735,13 @@ Now your dependencies are updated, and you can follow the guide to
 Make sure to update your imports to the new package name and file names:
 
 ```diff
-- import { ByteStream } from "@buf/googleapis_googleapis.connectrpc_es/google/bytestream_connect.js";
-+ import { ByteStream } from "@buf/googleapis_googleapis.bufbuild_es/google/bytestream_pb.js";
+- import { ByteStream } from "@buf/googleapis_googleapis.connectrpc_es/google/bytestream_connect";
++ import { ByteStream } from "@buf/googleapis_googleapis.bufbuild_es/google/bytestream_pb";
 ```
 
 ## Gotchas
 
-### The new plugins generates missing imports
+### The new plugin generates missing imports
 
 Because Protobuf-ES supports custom options and other reflection-based features now, generated code includes more
 information than in the previous version, and will generate additional imports in some situations.
@@ -739,7 +749,7 @@ information than in the previous version, and will generate additional imports i
 For example, if you have a Protobuf message that uses validation rules from [buf.build/bufbuild/protovalidate](https://buf.build/bufbuild/protovalidate),
 the Protobuf file has an import for the validation options:
 
-```protobuf
+```proto
 import "buf/validate/validate.proto";
 ```
 
@@ -757,6 +767,8 @@ option to your buf.gen.yaml config:
 # buf.gen.yaml
 version: v2
 plugins:
+  # You will need to adapt these values to your environment:
+  # https://protobufes.com/reference/environments/
   - local: protoc-gen-es
     out: src/gen
 +   include_imports: true
@@ -786,7 +798,7 @@ Previously, Connect allowed request objects with matching shapes to be passed
 to API calls interchangeably as long as the passed object was a superset of the
 target type. For example, given the following proto definitions:
 
-```protobuf
+```proto
 syntax = "proto3";
 package example.v1;
 message MessageA {

@@ -6,7 +6,7 @@ This tool updates your Connect project to use the new `@connectrpc` packages.
 
 To migrate, run the following command in your project root directory:
 
-```shell
+```bash
 npx @connectrpc/connect-migrate
 ```
 
@@ -40,7 +40,7 @@ files. If you see errors due to parsing, you may be using a custom babel config
 or another custom parser. You can work around this while leveraging our
 transforms by calling `jscodeshift` directly.
 
-```shell
+```bash
 npx jscodeshift -t ./node_modules/@connectrpc/connect-migrate/dist/cjs/migrations/v0.13.1-transform.js .
 ```
 
