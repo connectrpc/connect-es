@@ -149,4 +149,40 @@ describe("gRPC-web transport", () => {
       assert.ok(httpRequestAborted);
     });
   });
+  describe("against server responding with an error status in the header and an empty trailer", () => {
+    const transport = createTransport({
+      httpClient(): Promise<UniversalClientResponse> {
+        return Promise.resolve({
+          status: 200,
+          header: new Headers({
+            "Content-Type": "application/grpc-web+proto",
+            "grpc-status": Code.InvalidArgument.toString(),
+            "grpc-message": "foo",
+          }),
+          body: createAsyncIterable([
+            encodeEnvelope(trailerFlag, new Uint8Array(0)),
+          ]),
+          trailer: new Headers(),
+        });
+      },
+      ...defaultOptions,
+    });
+    it("should reject unary with the status from the header", async () => {
+      await assert.rejects(
+        transport.unary(
+          TestService.method.unary,
+          undefined,
+          undefined,
+          undefined,
+          {},
+        ),
+        (e) => {
+          assert.ok(e instanceof ConnectError);
+          assert.strictEqual(e.code, Code.InvalidArgument);
+          assert.strictEqual(e.rawMessage, "foo");
+          return true;
+        },
+      );
+    });
+  });
 });

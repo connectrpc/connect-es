@@ -42,5 +42,8 @@ export {
   validateResponse,
   validateResponseWithCompression,
 } from "./validate-response.js";
-export { validateTrailer } from "./validate-trailer.js";
+export {
+  validateTrailer,
+  missingUnaryMessageError,
+} from "./validate-trailer.js";
 export * from "./headers.js";
