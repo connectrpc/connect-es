@@ -1,0 +1,2 @@
+# The gRPC-Web client does not copy trailers-only headers into trailers.
+Basic/HTTPVersion:2/Protocol:PROTOCOL_GRPC_WEB/**/(grpc server impl)/bidi-stream/half-duplex/no-responses

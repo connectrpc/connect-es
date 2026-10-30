@@ -101,7 +101,6 @@ describe("createHandlerFactory()", () => {
       const { transport, method } = setupTestHandler(
         testService.method.serverStreaming,
         {},
-        // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, ctx) {
           ctx.responseHeader.set("implementation-called", "yes");
           yield { value: req.value.toString(10) };
@@ -131,7 +130,6 @@ describe("createHandlerFactory()", () => {
       const { handler } = setupTestHandler(
         testService.method.serverStreaming,
         {},
-        // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, { signal }) {
           signal.addEventListener("abort", abortResolve);
           try {

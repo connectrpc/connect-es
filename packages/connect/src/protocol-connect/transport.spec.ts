@@ -237,7 +237,6 @@ describe("Connect transport", () => {
       ]),
       trailer: new Headers(),
     };
-    // eslint-disable-next-line @typescript-eslint/require-await
     const expectGet: UniversalClientFn = async (request) => {
       assert.strictEqual(request.method, "GET");
       assert.strictEqual(
@@ -296,7 +295,6 @@ describe("Connect transport", () => {
           compress: (bytes) => Promise.resolve(new Uint8Array(bytes)),
           decompress: (bytes) => Promise.resolve(new Uint8Array(bytes)),
         };
-        // eslint-disable-next-line @typescript-eslint/require-await
         const expectGetWithCompression: UniversalClientFn = async (request) => {
           assert.strictEqual(request.method, "GET");
           assert.strictEqual(
@@ -409,7 +407,6 @@ describe("Connect transport", () => {
 
   describe("special handling of set-cookie", () => {
     // Special handling of set-cookie is available since Node.js v22.0.0, v20.0.0, and v18.14.1.
-    // eslint-disable-next-line @typescript-eslint/require-await
     const setMultiValueHeaders: UniversalClientFn = async () => {
       return {
         status: 200,

@@ -143,7 +143,6 @@ describe("createHandlerFactory()", () => {
       const { transport, method } = setupTestHandler(
         testService.method.serverStreaming,
         {},
-        // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, ctx) {
           ctx.responseHeader.set("implementation-called", "yes");
           yield { value: req.value.toString(10) };
@@ -173,7 +172,6 @@ describe("createHandlerFactory()", () => {
       const { handler } = setupTestHandler(
         testService.method.serverStreaming,
         {},
-        // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req, { signal }) {
           signal.addEventListener("abort", abortResolve);
           try {
@@ -271,7 +269,6 @@ describe("createHandlerFactory()", () => {
       const { handler } = setupTestHandler(
         testService.method.serverStreaming,
         { requireConnectProtocolHeader: true },
-        // eslint-disable-next-line @typescript-eslint/require-await
         async function* (req) {
           yield { value: req.value.toString(10) };
         },
@@ -529,7 +526,6 @@ describe("createHandlerFactory()", () => {
         const { handler, service, method } = setupTestHandler(
           testService.method.serverStreaming,
           {},
-          // eslint-disable-next-line require-yield
           async function* (req, ctx) {
             handlerContextSignal = ctx.signal;
             for (;;) {
@@ -567,7 +563,6 @@ describe("createHandlerFactory()", () => {
       const { handler, service, method } = setupTestHandler(
         testService.method.unaryNoSideEffects,
         {},
-        // eslint-disable-next-line @typescript-eslint/require-await
         async (req, ctx) => {
           assert.strictEqual(ctx.requestMethod, "GET");
           assert.strictEqual(ctx.protocolName, "connect");
