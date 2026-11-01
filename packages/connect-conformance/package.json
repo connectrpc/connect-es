@@ -33,7 +33,7 @@
     "tar-stream": "^3.2.1"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.73.0",
+    "@bufbuild/buf": "^1.75.0",
     "@bufbuild/protoc-gen-es": "^2.16.0",
     "@types/debug": "^4.1.13",
     "@types/node": "^24.10.1",
