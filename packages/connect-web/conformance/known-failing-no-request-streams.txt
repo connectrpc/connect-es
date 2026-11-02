@@ -1,0 +1,6 @@
+# Browsers without support for streaming request bodies in the fetch API
+# cannot make client-streaming or bidi-streaming calls. At the time of
+# writing, this applies to Firefox and Safari.
+**/client-stream
+**/client-stream/**
+**/bidi-stream/**
