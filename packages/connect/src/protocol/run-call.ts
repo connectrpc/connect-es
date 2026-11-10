@@ -26,6 +26,7 @@ import {
   createDeadlineSignal,
   createLinkedAbortController,
   getAbortSignalReason,
+  raceSignal,
 } from "./signals.js";
 import { normalize, normalizeIterable } from "./normalize.js";
 import { Code } from "../code.js";
@@ -146,7 +147,7 @@ export function runStreamingCall<
             next: async () => {
               const result = signal.aborted
                 ? undefined
-                : await Promise.race([it.next(), aborted]);
+                : await raceSignal(it.next(), signal, () => undefined);
               if (result !== undefined) {
                 return result;
               }
