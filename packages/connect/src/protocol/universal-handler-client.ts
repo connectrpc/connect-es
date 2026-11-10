@@ -17,7 +17,7 @@ import { ConnectError } from "../connect-error.js";
 import { createAsyncIterable, pipe } from "./async-iterable.js";
 import type { UniversalHandler } from "./universal-handler.js";
 import type { UniversalClientFn } from "./universal.js";
-import { getAbortSignalReason } from "./signals.js";
+import { getAbortSignalReason, raceSignal } from "./signals.js";
 
 /**
  * An in-memory UniversalClientFn that can be used to route requests to a ConnectRouter
@@ -41,7 +41,6 @@ export function createUniversalHandlerClient(
     }
     const reqSignal = uClientReq.signal ?? new AbortController().signal;
     const uServerRes = await raceSignal(
-      reqSignal,
       handler({
         body: uClientReq.body ?? createAsyncIterable([]),
         httpVersion: "2.0",
@@ -50,6 +49,8 @@ export function createUniversalHandlerClient(
         header: uClientReq.header,
         signal: reqSignal,
       }),
+      reqSignal,
+      () => Promise.reject(getAbortSignalReason(reqSignal)),
     );
     const body = uServerRes.body ?? createAsyncIterable([]);
     return {
@@ -59,7 +60,9 @@ export function createUniversalHandlerClient(
             const it = iterable[Symbol.asyncIterator]();
             const w: AsyncIterator<Uint8Array> = {
               next() {
-                return raceSignal(reqSignal, it.next());
+                return raceSignal(it.next(), reqSignal, () =>
+                  Promise.reject(getAbortSignalReason(reqSignal)),
+                );
               },
             };
             if (it.throw !== undefined) {
@@ -78,21 +81,4 @@ export function createUniversalHandlerClient(
       trailer: new Headers(uServerRes.trailer),
     };
   };
-}
-
-/**
- * Wrap a promise, and reject early if the given signal triggers before the
- * promise is settled.
- */
-function raceSignal<T>(signal: AbortSignal, promise: Promise<T>): Promise<T> {
-  let cleanup: (() => void) | undefined;
-  const signalPromise = new Promise<never>((_, reject) => {
-    const onAbort = () => reject(getAbortSignalReason(signal));
-    if (signal.aborted) {
-      return onAbort();
-    }
-    signal.addEventListener("abort", onAbort);
-    cleanup = () => signal.removeEventListener("abort", onAbort);
-  });
-  return Promise.race([signalPromise, promise]).finally(cleanup);
 }

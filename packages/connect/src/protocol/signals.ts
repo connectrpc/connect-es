@@ -106,3 +106,24 @@ export function getAbortSignalReason(signal: AbortSignal): unknown {
   e.name = "AbortError";
   return e;
 }
+
+/**
+ * Settles like the promise, or with onAbort's result if the signal aborts first.
+ */
+export function raceSignal<T, U>(
+  promise: Promise<T>,
+  signal: AbortSignal,
+  onAbort: () => U | PromiseLike<U>,
+): Promise<T | U> {
+  return new Promise<T | U>((resolve, reject) => {
+    const listener = () => resolve(onAbort());
+    if (signal.aborted) {
+      listener();
+    } else {
+      signal.addEventListener("abort", listener);
+    }
+    promise
+      .finally(() => signal.removeEventListener("abort", listener))
+      .then(resolve, reject);
+  });
+}
