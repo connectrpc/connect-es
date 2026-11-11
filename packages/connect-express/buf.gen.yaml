@@ -3,7 +3,7 @@ version: v2
 # Deletes the directories specified in the `out` field for all plugins before running code generation.
 clean: true
 inputs:
-  - module: buf.build/connectrpc/eliza
+  - module: buf.build/connectrpc/eliza:233fca715f49425581ec0a1b660be886
 plugins:
   - local: protoc-gen-es
     out: src/testdata/gen
