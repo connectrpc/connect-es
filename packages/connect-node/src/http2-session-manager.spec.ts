@@ -25,9 +25,11 @@ import { setTimeout as delay } from "node:timers/promises";
 
 describe("Http2SessionManager", () => {
   const serverSessions: http2.ServerHttp2Session[] = [];
+  const serverRequests: http2.Http2ServerRequest[] = [];
   const serverReceivedPings: Buffer[] = [];
   const server = useNodeServer(() => {
     serverSessions.splice(0);
+    serverRequests.splice(0);
     serverReceivedPings.splice(0);
     return http2
       .createServer()
@@ -35,8 +37,9 @@ describe("Http2SessionManager", () => {
       .on("session", (s) =>
         s.on("ping", (payload: Buffer) => serverReceivedPings.push(payload)),
       )
-      .on("request", () => {
+      .on("request", (request) => {
         // without the listener, node cancels streams
+        serverRequests.push(request);
       });
   });
 
@@ -192,7 +195,7 @@ describe("Http2SessionManager", () => {
         "done",
       );
     });
-    it("conn should response to session events after verify", async () => {
+    it("conn should response to session events after verify", async (t) => {
       const sm = new Http2SessionManager(server.getUrl(), {
         pingIntervalMs: 10, // intentionally short to trigger verification in tests
       });
@@ -222,7 +225,7 @@ describe("Http2SessionManager", () => {
 
       assert.strictEqual(serverSessions.length, 1);
       serverSessions[0].close();
-      await new Promise<void>((resolve) => setTimeout(resolve, 10));
+      await t.waitFor(() => assert.strictEqual(sm.state(), "closed"));
       assert.strictEqual(
         sm.state(),
         "closed",
@@ -486,7 +489,7 @@ describe("Http2SessionManager", () => {
 
   describe("receiving a GOAWAY frame", () => {
     describe("with error ENHANCE_YOUR_CALM and debug data too_many_pings", () => {
-      it("should use double the original pingIntervalMs for a second connection", async () => {
+      it("should use double the original pingIntervalMs for a second connection", async (t) => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 20, // intentionally small for faster tests
         });
@@ -502,7 +505,7 @@ describe("Http2SessionManager", () => {
           "open",
           "connection state after issuing a request",
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+        await t.waitFor(() => assert.strictEqual(serverRequests.length, 1));
 
         // on the server, send a GOAWAY frame with code ENHANCE_YOUR_CALM and ASCII debug data "too_many_pings"
         assert.strictEqual(serverSessions.length, 1);
@@ -512,7 +515,7 @@ describe("Http2SessionManager", () => {
           undefined,
           tooManyPingsAscii,
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        await t.waitFor(() => assert.strictEqual(sm.state(), "error"));
 
         // expect client session and stream to close
         assert.strictEqual(
@@ -552,22 +555,24 @@ describe("Http2SessionManager", () => {
       });
     });
     describe("with NO_ERROR and an open stream", () => {
-      it("should open a new session for a second request", async () => {
+      it("should open a new session for a second request", async (t) => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection
         const req1 = await sm.request("POST", "/", {}, {});
+        const req1Session = req1.session;
+        assert.ok(req1Session !== undefined);
         assert.strictEqual(
           sm.state(),
           "open",
           "connection state after issuing a request",
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+        await t.waitFor(() => assert.strictEqual(serverRequests.length, 1));
 
         // on the server, send a GOAWAY frame
         assert.strictEqual(serverSessions.length, 1);
         serverSessions[0].goaway(http2.constants.NGHTTP2_NO_ERROR);
-        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        await once(req1Session, "goaway");
         assert.strictEqual(
           sm.state(),
           "open",
@@ -604,16 +609,16 @@ describe("Http2SessionManager", () => {
       });
     });
     describe("with NO_ERROR and no open streams", () => {
-      it("should close the session and open a new one for a second request", async () => {
+      it("should close the session and open a new one for a second request", async (t) => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection, but close the request immediately
         const req1 = await sm.request("POST", "/", {}, {});
-        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        await t.waitFor(() => assert.strictEqual(serverRequests.length, 1));
         await new Promise<void>((resolve) =>
           req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        await t.waitFor(() => assert.ok(serverRequests[0].stream.closed));
         assert.strictEqual(
           sm.state(),
           "idle",
@@ -624,7 +629,7 @@ describe("Http2SessionManager", () => {
         // on the client session
         assert.strictEqual(serverSessions.length, 1);
         serverSessions[0].goaway(http2.constants.NGHTTP2_NO_ERROR);
-        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        await t.waitFor(() => assert.strictEqual(sm.state(), "closed"));
         assert.strictEqual(
           sm.state(),
           "closed",
@@ -666,28 +671,30 @@ describe("Http2SessionManager", () => {
       });
     });
     describe("with NO_ERROR and open stream that is closed after receiving the GOAWAY", () => {
-      it("should close the session and open a new one for a second request", async () => {
+      it("should close the session and open a new one for a second request", async (t) => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection
         const req1 = await sm.request("POST", "/", {}, {});
+        const req1Session = req1.session;
+        assert.ok(req1Session !== undefined);
         assert.strictEqual(
           sm.state(),
           "open",
           "connection state after issuing a request",
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+        await t.waitFor(() => assert.strictEqual(serverRequests.length, 1));
 
         // on the server, send a GOAWAY frame
         assert.strictEqual(serverSessions.length, 1);
         serverSessions[0].goaway(http2.constants.NGHTTP2_NO_ERROR);
-        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        await once(req1Session, "goaway");
 
         // close the request
         await new Promise<void>((resolve) =>
           req1.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 10));
+        await t.waitFor(() => assert.strictEqual(sm.state(), "closed"));
         assert.strictEqual(
           sm.state(),
           "closed",
@@ -715,7 +722,7 @@ describe("Http2SessionManager", () => {
       });
     });
     describe("with INTERNAL_ERROR and open stream", () => {
-      it("should eventually go to the error state", async () => {
+      it("should eventually go to the error state", async (t) => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection
@@ -728,7 +735,7 @@ describe("Http2SessionManager", () => {
           "open",
           "connection state after issuing a request",
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+        await t.waitFor(() => assert.strictEqual(serverRequests.length, 1));
 
         // on the server, send a GOAWAY frame
         assert.strictEqual(serverSessions.length, 1);
@@ -750,10 +757,10 @@ describe("Http2SessionManager", () => {
         );
 
         // wait for the "error" event on the session
-        await new Promise<void>((resolve) => setTimeout(resolve, 50));
+        await t.waitFor(() => assert.strictEqual(sm.state(), "error"));
         assert.strictEqual(sm.state(), "error");
       });
-      it("should open a new connection for a second request", async () => {
+      it("should open a new connection for a second request", async (t) => {
         const sm = new Http2SessionManager(server.getUrl());
 
         // issue a request to open a connection
@@ -766,7 +773,7 @@ describe("Http2SessionManager", () => {
           "open",
           "connection state after issuing a request",
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+        await t.waitFor(() => assert.strictEqual(serverRequests.length, 1));
 
         // on the server, send a GOAWAY frame
         assert.strictEqual(serverSessions.length, 1);
@@ -785,7 +792,7 @@ describe("Http2SessionManager", () => {
         // issue a second request
         const req2 = await sm.request("POST", "/", {}, {});
         assert.strictEqual(sm.state(), "open");
-        await new Promise<void>((resolve) => setTimeout(resolve, 10)); // wait for server to receive request
+        await t.waitFor(() => assert.strictEqual(serverRequests.length, 2));
         assert.strictEqual(serverSessions.length, 2);
 
         // clean up
@@ -800,13 +807,12 @@ describe("Http2SessionManager", () => {
 
   describe("ping frames", () => {
     describe("for open streams", () => {
-      it("should be sent", async () => {
+      it("should be sent", async (t) => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
         });
         const req = await sm.request("POST", "/", {}, {});
-        await new Promise<void>((resolve) => setTimeout(resolve, 50));
-        assert.ok(serverReceivedPings.length >= 2);
+        await t.waitFor(() => assert.ok(serverReceivedPings.length >= 2));
         await new Promise<void>((resolve) =>
           req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
@@ -831,7 +837,7 @@ describe("Http2SessionManager", () => {
         sm.abort();
         assert.strictEqual(sm.state(), "closed");
       });
-      it("should destroy the connection if not answered in time", async () => {
+      it("should destroy the connection if not answered in time", async (t) => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
           pingTimeoutMs: 0, // intentionally unsatisfiable
@@ -839,7 +845,7 @@ describe("Http2SessionManager", () => {
         const req = await sm.request("POST", "/", {}, {});
         const reqErrors: unknown[] = [];
         req.on("error", (err) => reqErrors.push(err));
-        await new Promise<void>((resolve) => setTimeout(resolve, 50));
+        await t.waitFor(() => assert.strictEqual(sm.state(), "error"));
         assert.strictEqual(reqErrors.length, 1);
         assert.strictEqual(
           String(reqErrors[0]),
@@ -883,7 +889,7 @@ describe("Http2SessionManager", () => {
         assert.strictEqual(serverReceivedPings.length, 0);
         sm.abort();
       });
-      it("should be sent if pingIdleConnection is enabled", async () => {
+      it("should be sent if pingIdleConnection is enabled", async (t) => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 1, // intentionally short for faster tests
           pingIdleConnection: true,
@@ -893,14 +899,13 @@ describe("Http2SessionManager", () => {
           req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
         assert.strictEqual(sm.state(), "idle");
-        await new Promise<void>((resolve) => setTimeout(resolve, 50));
-        assert.ok(serverReceivedPings.length > 0);
+        await t.waitFor(() => assert.ok(serverReceivedPings.length > 0));
 
         // cleanup
         sm.abort();
         assert.strictEqual(sm.state(), "closed");
       });
-      it("should destroy the connection if not answered in time", async () => {
+      it("should destroy the connection if not answered in time", async (t) => {
         const sm = new Http2SessionManager(server.getUrl(), {
           pingIntervalMs: 5, // intentionally short for faster tests
           pingTimeoutMs: 0, // intentionally unsatisfiable
@@ -910,8 +915,7 @@ describe("Http2SessionManager", () => {
         await new Promise<void>((resolve) =>
           req.close(http2.constants.NGHTTP2_NO_ERROR, resolve),
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, 50));
-        assert.strictEqual(sm.state(), "error");
+        await t.waitFor(() => assert.strictEqual(sm.state(), "error"));
         assert.strictEqual(
           String(sm.error()),
           "ConnectError: [unavailable] PING timed out",
