@@ -38,7 +38,7 @@ import {
 } from "../protocol/index.js";
 import { Code, ConnectError, createContextKey } from "../index.js";
 import { errorFromJsonBytes } from "./error-json.js";
-import { endStreamFromJson } from "./end-stream.js";
+import { endStreamFlag, endStreamFromJson } from "./end-stream.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
 import { readAll } from "../protocol/async-iterable-helper.spec.js";
@@ -766,5 +766,38 @@ describe("createHandlerFactory()", () => {
       );
       assert.strictEqual(res.message.value, "alice");
     });
+  });
+
+  it("should reject an end-stream envelope in a request", async () => {
+    const { handler, service, method } = setupTestHandler(
+      testService.method.serverStreaming,
+      {},
+      async function* () {
+        yield { value: "" };
+      },
+    );
+    const res = await handler({
+      httpVersion: "2.0",
+      method: "POST",
+      url: `https://example.com/${service.typeName}/${method.name}`,
+      header: requestHeader(
+        method.methodKind,
+        true,
+        undefined,
+        undefined,
+        true,
+      ),
+      body: createAsyncIterable([
+        encodeEnvelope(0, new Uint8Array(0)),
+        encodeEnvelope(endStreamFlag, new Uint8Array(0)),
+      ]),
+      signal: new AbortController().signal,
+    });
+    assert.ok(res.body !== undefined && !(res.body instanceof Uint8Array));
+    // Slice off the 5-byte envelope header.
+    const end = endStreamFromJson(
+      (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5),
+    );
+    assert.strictEqual(end.error?.code, Code.InvalidArgument);
   });
 });

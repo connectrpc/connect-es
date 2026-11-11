@@ -25,6 +25,7 @@ import {
   createUniversalHandlerClient,
   encodeEnvelope,
   pipeTo,
+  readAllBytes,
   sinkAll,
 } from "../protocol/index.js";
 import { createContextKey } from "../index.js";
@@ -32,6 +33,7 @@ import { createHandlerFactory } from "./handler-factory.js";
 import { createTransport } from "./transport.js";
 import { requestHeader } from "./request-header.js";
 import { contentTypeProto } from "./content-type.js";
+import { trailerFlag, trailerParse } from "./trailer.js";
 import { createServiceDesc } from "../descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
@@ -391,5 +393,35 @@ describe("createHandlerFactory()", () => {
       );
       assert.strictEqual(res.message.value, "alice");
     });
+  });
+
+  it("should reject a trailer envelope in a request", async () => {
+    const { handler, method } = setupTestHandler(
+      testService.method.serverStreaming,
+      {},
+      async function* () {
+        yield { value: "" };
+      },
+    );
+    const res = await handler({
+      httpVersion: "2.0",
+      method: "POST",
+      url: `https://example.com/${method.parent.typeName}/${method.name}`,
+      header: requestHeader(true, undefined, undefined, true),
+      body: createAsyncIterable([
+        encodeEnvelope(0, new Uint8Array(0)),
+        encodeEnvelope(trailerFlag, new Uint8Array(0)),
+      ]),
+      signal: new AbortController().signal,
+    });
+    assert.ok(res.body !== undefined && !(res.body instanceof Uint8Array));
+    // Slice off the 5-byte envelope header.
+    const trailer = trailerParse(
+      (await readAllBytes(res.body, Number.MAX_SAFE_INTEGER)).slice(5),
+    );
+    assert.strictEqual(
+      trailer.get("grpc-status"),
+      Code.InvalidArgument.toString(),
+    );
   });
 });
