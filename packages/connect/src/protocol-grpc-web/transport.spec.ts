@@ -188,8 +188,13 @@ describe("gRPC-web transport", () => {
         [],
       );
       assert.deepStrictEqual(await drain(res.message), []);
+      assert.strictEqual(
+        res.header.get("content-type"),
+        "application/grpc-web+proto",
+      );
       assert.strictEqual(res.header.get("x-custom-header"), "foo");
       assert.strictEqual(res.header.get("x-custom-trailer"), "bar");
+      assert.strictEqual(res.trailer.has("content-type"), false);
       assert.strictEqual(res.trailer.get("grpc-status"), "0");
       assert.strictEqual(res.trailer.get("x-custom-header"), "foo");
       assert.strictEqual(res.trailer.get("x-custom-trailer"), "bar");
