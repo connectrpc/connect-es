@@ -291,6 +291,9 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                       Code.InvalidArgument,
                     );
                   }
+                  uRes.header.forEach((value, key) =>
+                    res.trailer.set(key, value),
+                  );
                   return;
                 }
                 let trailerReceived = false;
