@@ -292,7 +292,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                     );
                   }
                   uRes.header.forEach((value, key) =>
-                    res.trailer.set(key, value),
+                    res.trailer.append(key, value),
                   );
                   res.trailer.delete(headerContentType);
                   return;
