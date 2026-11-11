@@ -158,20 +158,3 @@ function getServerUrl(
     "function";
   return `${secure ? "https" : "http"}://localhost:${address.port}`;
 }
-
-/**
- * Polls until the condition holds, failing once timeoutMs has passed.
- */
-export async function waitUntil(
-  condition: () => boolean,
-  timeoutMs = 60 * 1000,
-) {
-  const deadline = Date.now() + timeoutMs;
-  while (!condition()) {
-    if (Date.now() >= deadline) {
-      throw new Error(`waitUntil timed out after ${timeoutMs} ms`);
-    }
-
-    await setTimeout(1);
-  }
-}

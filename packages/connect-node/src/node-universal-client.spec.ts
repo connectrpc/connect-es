@@ -22,7 +22,7 @@ import { ConnectError } from "@connectrpc/connect";
 import { createAsyncIterable } from "@connectrpc/connect/protocol";
 import { createNodeHttpClient } from "./node-universal-client.js";
 import { Http2SessionManager } from "./http2-session-manager.js";
-import { useNodeServer, waitUntil } from "./use-node-server-helper.spec.js";
+import { useNodeServer } from "./use-node-server-helper.spec.js";
 
 describe("node http/2 client closing with RST_STREAM with code CANCEL", () => {
   let serverReceivedRstCode: number | undefined;
@@ -504,13 +504,13 @@ describe("universal node http client", () => {
           })();
         }),
       );
-      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async () => {
+      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async (t) => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
 
         async function* body() {
-          await waitUntil(() => serverReceivedRequest);
+          await t.waitFor(() => assert.ok(serverReceivedRequest));
           ac.abort();
           yield new Uint8Array(32);
         }
@@ -580,13 +580,13 @@ describe("universal node http client", () => {
           })();
         }),
       );
-      it("should raise error with code canceled", async () => {
+      it("should raise error with code canceled", async (t) => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
 
         async function* body() {
-          await waitUntil(() => serverReceivedRequest);
+          await t.waitFor(() => assert.ok(serverReceivedRequest));
           ac.abort();
           yield new Uint8Array(32);
         }
@@ -646,14 +646,14 @@ describe("universal node http client", () => {
           })();
         }),
       );
-      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async () => {
+      it("should raise error with code canceled and send RST_STREAM with code CANCEL", async (t) => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
 
         async function* body() {
           yield new Uint8Array(32);
-          await waitUntil(() => serverReceivedBytes >= 32);
+          await t.waitFor(() => assert.ok(serverReceivedBytes >= 32));
           ac.abort();
           yield new Uint8Array(32);
         }
@@ -723,14 +723,14 @@ describe("universal node http client", () => {
           })();
         }),
       );
-      it("should raise error with code canceled", async () => {
+      it("should raise error with code canceled", async (t) => {
         // set up a client that aborts while still streaming the request body
         const client = server.getClient();
         const ac = new AbortController();
 
         async function* body() {
           yield new Uint8Array(32);
-          await waitUntil(() => serverReceivedBytes >= 32);
+          await t.waitFor(() => assert.ok(serverReceivedBytes >= 32));
           ac.abort();
           yield new Uint8Array(32);
         }
