@@ -22,7 +22,7 @@ import { ConnectError } from "@connectrpc/connect";
 import { createAsyncIterable } from "@connectrpc/connect/protocol";
 import { createNodeHttpClient } from "./node-universal-client.js";
 import { Http2SessionManager } from "./http2-session-manager.js";
-import { useNodeServer } from "./use-node-server-helper.spec.js";
+import { useNodeServer, waitUntil } from "./use-node-server-helper.spec.js";
 
 describe("node http/2 client closing with RST_STREAM with code CANCEL", () => {
   let serverReceivedRstCode: number | undefined;
@@ -488,10 +488,12 @@ describe("universal node http client", () => {
 
   describe("with a signal aborting before first request byte", () => {
     describe("over http/2", () => {
+      let serverReceivedRequest = false;
       let serverReceivedRstCode: number | undefined;
       let serverReceivedBytes = 0;
       const server = useNodeServer(() =>
         http2.createServer((req, res) => {
+          serverReceivedRequest = true;
           res.stream.on("close", () => {
             serverReceivedRstCode = res.stream.rstCode;
           });
@@ -508,7 +510,7 @@ describe("universal node http client", () => {
         const ac = new AbortController();
 
         async function* body() {
-          await new Promise<void>((resolve) => setTimeout(resolve, 50));
+          await waitUntil(() => serverReceivedRequest);
           ac.abort();
           yield new Uint8Array(32);
         }
@@ -584,7 +586,7 @@ describe("universal node http client", () => {
         const ac = new AbortController();
 
         async function* body() {
-          await new Promise<void>((resolve) => setTimeout(resolve, 50));
+          await waitUntil(() => serverReceivedRequest);
           ac.abort();
           yield new Uint8Array(32);
         }
@@ -651,7 +653,7 @@ describe("universal node http client", () => {
 
         async function* body() {
           yield new Uint8Array(32);
-          await new Promise<void>((resolve) => setTimeout(resolve, 50));
+          await waitUntil(() => serverReceivedBytes >= 32);
           ac.abort();
           yield new Uint8Array(32);
         }
@@ -728,7 +730,7 @@ describe("universal node http client", () => {
 
         async function* body() {
           yield new Uint8Array(32);
-          await new Promise<void>((resolve) => setTimeout(resolve, 50));
+          await waitUntil(() => serverReceivedBytes >= 32);
           ac.abort();
           yield new Uint8Array(32);
         }
