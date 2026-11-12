@@ -490,6 +490,7 @@ describe("Http2SessionManager", () => {
   describe("receiving a GOAWAY frame", () => {
     describe("with error ENHANCE_YOUR_CALM and debug data too_many_pings", () => {
       it("should use double the original pingIntervalMs for a second connection", async (t) => {
+        // set explicitly, so the ticks below can target exactly double the interval
         const pingIntervalMs = 20;
         const sm = new Http2SessionManager(server.getUrl(), { pingIntervalMs });
 
@@ -819,6 +820,7 @@ describe("Http2SessionManager", () => {
       });
       it("should not be sent while client is receiving data", async (t) => {
         t.mock.timers.enable({ apis: ["setTimeout"] });
+        // set explicitly, since we tick through several of these intervals below
         const pingIntervalMs = 10;
         const sm = new Http2SessionManager(server.getUrl(), { pingIntervalMs });
         const req = await sm.request("POST", "/", {}, {});
