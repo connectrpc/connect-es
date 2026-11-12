@@ -490,9 +490,9 @@ describe("Http2SessionManager", () => {
   describe("receiving a GOAWAY frame", () => {
     describe("with error ENHANCE_YOUR_CALM and debug data too_many_pings", () => {
       it("should use double the original pingIntervalMs for a second connection", async (t) => {
-        const sm = new Http2SessionManager(server.getUrl(), {
-          pingIntervalMs: 20, // intentionally small for faster tests
-        });
+        // set explicitly, so the ticks below can target exactly double the interval
+        const pingIntervalMs = 20;
+        const sm = new Http2SessionManager(server.getUrl(), { pingIntervalMs });
 
         // issue a request to open a connection
         let req1Error: unknown;
@@ -535,17 +535,16 @@ describe("Http2SessionManager", () => {
         );
 
         // second connection should use double pingIntervalMs
+        t.mock.timers.enable({ apis: ["setTimeout"] });
         const req2 = await sm.request("POST", "/", {}, {});
-        serverReceivedPings.splice(0);
-        await new Promise<void>((resolve) => setTimeout(resolve, 20 + 10)); // original pingIntervalMs + leeway
-        assert.strictEqual(
-          serverReceivedPings.length,
-          0,
-          "pings sent within original pingIntervalMs + leeway",
-        );
+        assert.ok(req2.session !== undefined);
+        const ping = t.mock.method(req2.session, "ping");
 
-        // ideally, we should assert that a ping is sent within double pingIntervalMs,
-        // but it makes the test very flaky
+        t.mock.timers.tick(pingIntervalMs * 2 - 1);
+        assert.strictEqual(ping.mock.callCount(), 0);
+
+        t.mock.timers.tick(1);
+        assert.strictEqual(ping.mock.callCount(), 1);
 
         // clean up
         await new Promise<void>((resolve) =>
@@ -819,16 +818,20 @@ describe("Http2SessionManager", () => {
         sm.abort();
         assert.strictEqual(sm.state(), "closed");
       });
-      it("should not be sent while client is receiving data", async () => {
-        const sm = new Http2SessionManager(server.getUrl(), {
-          pingIntervalMs: 10, // intentionally short for faster tests
-        });
+      it("should not be sent while client is receiving data", async (t) => {
+        t.mock.timers.enable({ apis: ["setTimeout"] });
+        // set explicitly, since we tick through several of these intervals below
+        const pingIntervalMs = 10;
+        const sm = new Http2SessionManager(server.getUrl(), { pingIntervalMs });
         const req = await sm.request("POST", "/", {}, {});
-        for (let i = 0; i < 30; i++) {
-          await new Promise<void>((resolve) => setTimeout(resolve, 1));
+        assert.ok(req.session !== undefined);
+        const ping = t.mock.method(req.session, "ping");
+
+        for (let i = 0; i < pingIntervalMs * 3; i++) {
+          t.mock.timers.tick(1);
           sm.notifyResponseByteRead(req);
         }
-        assert.strictEqual(serverReceivedPings.length, 0);
+        assert.strictEqual(ping.mock.callCount(), 0);
 
         // clean up
         await new Promise<void>((resolve) =>
