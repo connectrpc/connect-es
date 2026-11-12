@@ -38,7 +38,7 @@
   "devDependencies": {
     "@connectrpc/connect-conformance": "^2.3.0",
     "tsx": "^4.20.6",
-    "webdriverio": "^9.32.0"
+    "webdriverio": "^10.1.0"
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.7.0",
