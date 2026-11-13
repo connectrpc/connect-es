@@ -5,6 +5,8 @@ clean: true
 inputs:
   - module: buf.build/connectrpc/eliza
 plugins:
+  # You will need to adapt these values to your environment:
+  # https://protobufes.com/reference/environments/
   - local: protoc-gen-es
     out: src/testdata/gen
     opt: ts_nocheck=false,target=ts,import_extension=js
