@@ -19,7 +19,7 @@
   "devDependencies": {
     "@bufbuild/buf": "^1.73.0",
     "@bufbuild/protoc-gen-es": "^2.16.0",
-    "wrangler": "^4.153.0",
+    "wrangler": "^4.158.0",
     "@cloudflare/workers-types": "^5.20260828.1",
     "tsx": "^4.20.6",
     "@connectrpc/connect-conformance": "^2.3.0"
