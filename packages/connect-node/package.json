@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-node",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -8,13 +8,15 @@
     "directory": "packages/connect-node"
   },
   "scripts": {
+    "generate": "buf generate",
+    "postgenerate": "license-header src/testdata/gen",
     "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --moduleResolution node10 --ignoreDeprecations 6.0 --verbatimModuleSyntax false --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
     "build:esm": "tsc --project tsconfig.build.json --outDir ./dist/esm",
     "test": "tsc --noEmit && node --import tsx --test --test-reporter=tap $(find src -name '*.spec.ts')",
-    "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/server.ts",
-    "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v -- tsx ./conformance/client.ts",
+    "conformance:server": "tsc --noEmit && connectconformance --mode server --conf ./conformance/conformance-node.yaml -v --known-flaky @./conformance/known-flaky-server.txt --known-failing @./conformance/known-failing-server.txt -- tsx ./conformance/server.ts",
+    "conformance:client": "tsc --noEmit && connectconformance --mode client --conf ./conformance/conformance-node.yaml -v --known-flaky @./conformance/known-flaky-client.txt --known-failing @./conformance/known-failing-client.txt -- tsx ./conformance/client.ts",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings",
@@ -34,11 +36,13 @@
   },
   "peerDependencies": {
     "@bufbuild/protobuf": "^2.7.0",
-    "@connectrpc/connect": "2.2.0"
+    "@connectrpc/connect": "2.3.0"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.73.0",
+    "@bufbuild/protoc-gen-es": "^2.16.0",
     "@types/node": "^24.10.1",
-    "@connectrpc/connect-conformance": "^2.2.0",
+    "@connectrpc/connect-conformance": "^2.3.0",
     "tsx": "^4.20.6"
   }
 }

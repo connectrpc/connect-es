@@ -182,7 +182,7 @@ export function createEnvelopeReadableStream(
             controller.error(
               new ConnectError(
                 "protocol error: incomplete envelope",
-                Code.InvalidArgument,
+                Code.Internal,
               ),
             );
           }

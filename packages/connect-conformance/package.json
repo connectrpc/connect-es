@@ -1,6 +1,6 @@
 {
   "name": "@connectrpc/connect-conformance",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -14,7 +14,7 @@
     "connectconformance": "bin/connectconformance.cjs"
   },
   "scripts": {
-    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.4",
+    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.7",
     "postgenerate": "license-header src/gen",
     "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.7.0",
-    "@connectrpc/connect": "2.2.0",
+    "@connectrpc/connect": "2.3.0",
     "fflate": "^0.8.3",
     "tar-stream": "^3.2.1"
   },

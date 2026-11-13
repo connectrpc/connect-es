@@ -14,6 +14,7 @@
 
 import { describe, it, mock } from "node:test";
 import * as assert from "node:assert";
+import { queryObjects } from "node:v8";
 import { create } from "@bufbuild/protobuf";
 import { runStreamingCall, runUnaryCall } from "./run-call.js";
 import type {
@@ -176,7 +177,6 @@ describe("runStreamingCall()", () => {
   }
 
   function makeRes(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     req: StreamRequest<typeof Int32ValueSchema, typeof StringValueSchema>,
   ) {
     return <StreamResponse<typeof Int32ValueSchema, typeof StringValueSchema>>{
@@ -447,6 +447,36 @@ describe("runStreamingCall()", () => {
     userAbort.abort();
 
     await assert.rejects(pending, { code: Code.Canceled });
+  });
+  it("should not retain messages that were already read", async () => {
+    const readCount = 10;
+    class TrackedMessage {
+      readonly $typeName = StringValueSchema.typeName;
+      readonly value = "";
+    }
+    const res = await runStreamingCall<
+      typeof Int32ValueSchema,
+      typeof StringValueSchema
+    >({
+      req: makeReq(),
+      next: (req) =>
+        Promise.resolve({
+          ...makeRes(req),
+          message: (async function* () {
+            for (;;) {
+              yield new TrackedMessage();
+            }
+          })(),
+        }),
+    });
+
+    const it = res.message[Symbol.asyncIterator]();
+    for (let i = 0; i < readCount; i++) {
+      await it.next();
+    }
+
+    assert.ok(queryObjects(TrackedMessage, { format: "count" }) <= 1);
+    await it.return?.();
   });
   it("should finalize interceptors on return", async () => {
     const outcomes: (Code | undefined)[] = [];

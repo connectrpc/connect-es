@@ -1,9 +1,9 @@
 # Code size comparison
 
-This is a simple code size comparison between Connect-ES and [gRPC-web](https://github.com/grpc/grpc-web).
+This is a simple code size comparison between Connect-ES and [gRPC-Web](https://github.com/grpc/grpc-web).
 
 We are generating code for the module [buf.build/bufbuild/registry](https://buf.build/bufbuild/registry)
-once with gRPC-web, once with Connect-ES. Then we bundle a client calling an RPC
+once with gRPC-Web, once with Connect-ES. Then we bundle a client calling an RPC
 with [esbuild](https://esbuild.github.io/), minify the bundle, and compress it like a web server would
 usually do. We repeat this for an increasing number of RPCs.
 
@@ -15,10 +15,10 @@ usually do. We repeat this for an increasing number of RPCs.
 
 | code generator | RPCs | bundle size |  minified | compressed |
 | -------------- | ---: | ----------: | --------: | ---------: |
-| Connect-ES     |    1 |   330,370 b | 197,548 b |   40,605 b |
-| Connect-ES     |    4 |   334,622 b | 200,647 b |   41,410 b |
-| Connect-ES     |    8 |   339,485 b | 205,076 b |   42,307 b |
-| Connect-ES     |   16 |   348,613 b | 212,699 b |   43,876 b |
+| Connect-ES     |    1 |   330,408 b | 197,542 b |   40,611 b |
+| Connect-ES     |    4 |   334,660 b | 200,641 b |   41,429 b |
+| Connect-ES     |    8 |   339,523 b | 205,070 b |   42,358 b |
+| Connect-ES     |   16 |   348,651 b | 212,693 b |   43,827 b |
 | gRPC-Web       |    1 | 1,088,277 b | 721,565 b |   70,927 b |
 | gRPC-Web       |    4 | 1,139,666 b | 752,859 b |   73,266 b |
 | gRPC-Web       |    8 | 1,215,077 b | 800,383 b |   75,677 b |

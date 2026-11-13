@@ -301,7 +301,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                 if (!endStreamReceived) {
                   throw new ConnectError(
                     "protocol error: missing EndStreamResponse",
-                    Code.InvalidArgument,
+                    Code.Internal,
                   );
                 }
               },

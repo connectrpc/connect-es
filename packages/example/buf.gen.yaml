@@ -3,6 +3,8 @@ version: v2
 # Deletes the directories specified in the `out` field for all plugins before running code generation.
 clean: true
 plugins:
+  # You will need to adapt these values to your environment:
+  # https://protobufes.com/reference/environments/
   - local: protoc-gen-es
     opt: target=ts,import_extension=js
     out: src/gen

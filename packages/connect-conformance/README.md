@@ -6,11 +6,9 @@ this repository.
 For documentation on the conformance tests, see the repository [here](https://github.com/connectrpc/conformance?tab=readme-ov-file#documentation).
 
 Note that this package does not run any conformance tests itself, but instead exports functionality to be used by other
-packages, such as `@connectprc/connect-node`, `@connectprc/connect-web`, etc.
+packages, such as `@connectrpc/connect-node`, `@connectrpc/connect-web`, etc.
 
 ## Updating the conformance version
 
-To update the version of the conformance runner and protos, change the version in the following places:
-
-- The `generate` command of this package's `package.json` file.
-- The `version` constant inside `node/conformance.ts`.
+To update the version of the conformance runner and protos, change the version in the `generate` command of this
+package's `package.json` file.

@@ -13,11 +13,12 @@ Adds your Connect RPCs to an Express server.
 
 ```ts
 // connect.ts
-import { ConnectRouter } from "@connectrpc/connect";
+import type { ConnectRouter } from "@connectrpc/connect";
+import { ElizaService } from "./gen/eliza_pb";
 
-export default function routes(router: ConnectRouter) {
+export default function (router: ConnectRouter) {
   // implement rpc Say(SayRequest) returns (SayResponse)
-  router.rpc(ElizaService, ElizaService.methods.say, async (req) => ({
+  router.rpc(ElizaService.method.say, async (req) => ({
     sentence: `you said: ${req.sentence}`,
   }));
 }
@@ -33,16 +34,18 @@ import express from "express";
 
 const app = express();
 
-+ app.use(expressConnectMiddleware({
-+  // Validation via Protovalidate is almost always recommended
-+  interceptors: [createValidateInterceptor()],  
-+  routes
-+ }));
++ app.use(
++   expressConnectMiddleware({
++     // Validation via Protovalidate is almost always recommended
++     interceptors: [createValidateInterceptor()],
++     routes,
++   }),
++ );
 
 http.createServer(app).listen(8080);
 ```
 
-With that server running, you can make requests with any gRPC-web or Connect client.
+With that server running, you can make requests with any gRPC-Web or Connect client.
 
 `curl` with the Connect protocol:
 
@@ -53,12 +56,12 @@ curl \
     http://localhost:8080/connectrpc.eliza.v1.ElizaService/Say
 ```
 
-Node.js with the gRPC-web protocol (using a transport from [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node)):
+Node.js with the gRPC-Web protocol (using a transport from [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node)):
 
 ```ts
 import { createClient } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-node";
-import { ElizaService } from "./gen/eliza_connect.js";
+import { ElizaService } from "./gen/eliza_pb";
 
 const transport = createGrpcWebTransport({
   baseUrl: "http://localhost:8080",
