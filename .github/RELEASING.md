@@ -37,7 +37,7 @@
 - If the release includes a very long list of changes, consider breaking the
   changelist up with the sections "Enhancements", "Bugfixes", "Breaking changes".
   A good example is https://github.com/connectrpc/connect-es/releases/tag/v0.9.0
-- If the release includes changes specific to a npm package, group and explain
+- If the release includes changes specific to an npm package, group and explain
   the changelist in according separate sections. A good example is https://github.com/connectrpc/connect-es/releases/tag/v0.8.0
   Note that we are not using full package names with scope - a more user-friendly
   name like "Connect for Node.js" or "Connect for Fastify" is preferable.
