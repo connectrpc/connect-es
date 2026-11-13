@@ -34,7 +34,7 @@
     "node": ">=22"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.73.0",
+    "@bufbuild/buf": "^1.75.0",
     "@bufbuild/protoc-gen-es": "^2.16.0",
     "@connectrpc/connect-conformance": "^2.3.0",
     "@connectrpc/connect": "2.3.0",
