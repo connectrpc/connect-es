@@ -4,7 +4,7 @@ Connect is a family of libraries for building and consuming APIs on different la
 [@connectrpc/connect](https://www.npmjs.com/package/@connectrpc/connect) brings type-safe APIs with Protobuf to
 TypeScript.
 
-`@connectrpc/connect-fastify` provides a plugin for [Fastify](https://www.fastify.io/), the fast and
+`@connectrpc/connect-fastify` provides a plugin for [Fastify](https://fastify.dev/), the fast and
 low overhead web framework, for Node.js.
 
 ### fastifyConnectPlugin()

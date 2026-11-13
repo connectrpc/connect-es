@@ -133,7 +133,7 @@ be more than happy to chat!
 - [@connectrpc/connect-node](https://www.npmjs.com/package/@connectrpc/connect-node):
   Serve RPCs on vanilla Node.js servers. Call RPCs with any protocol.
 - [@connectrpc/connect-fastify](https://www.npmjs.com/package/@connectrpc/connect-fastify):
-  Plug your services into a [Fastify](https://www.fastify.io/) server.
+  Plug your services into a [Fastify](https://fastify.dev/) server.
 - [@connectrpc/connect-next](https://www.npmjs.com/package/@connectrpc/connect-next):
   Serve your RPCs with [Next.js](https://nextjs.org/) API routes.
 - [@connectrpc/connect-express](https://www.npmjs.com/package/@connectrpc/connect-express):

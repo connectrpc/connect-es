@@ -10,7 +10,7 @@ You can find the protocol buffer schema [on the BSR](https://buf.build/connectrp
 
 ## Run the example
 
-You will need [Node](https://nodejs.org/en/download/) in version 22 or later installed. Download
+You will need [Node.js 22+](https://nodejs.org/en/download/) installed. Download
 the example project and install its dependencies:
 
 ```bash
