@@ -98,6 +98,9 @@ function main() {
       server = req.useTls
         ? https.createServer(serverOptions, adapter)
         : http.createServer(adapter);
+      // A no-op data listener makes TLS reads respect pause, which avoids
+      // https://github.com/nodejs/node/issues/67455.
+      server.on("secureConnection", (socket) => socket.on("data", () => {}));
       break;
     case HTTPVersion.HTTP_VERSION_2:
       server = req.useTls
