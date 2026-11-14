@@ -149,4 +149,37 @@ describe("gRPC-web transport", () => {
       assert.ok(httpRequestAborted);
     });
   });
+  it("uses a gRPC status response header for a trailers-only unary response", async () => {
+    const transport = createTransport({
+      httpClient(): Promise<UniversalClientResponse> {
+        return Promise.resolve({
+          status: 200,
+          header: new Headers({
+            "Content-Type": "application/grpc-web+proto",
+            "grpc-status": Code.InvalidArgument.toString(),
+          }),
+          body: createAsyncIterable([
+            encodeEnvelope(trailerFlag, new Uint8Array()),
+          ]),
+          trailer: new Headers(),
+        });
+      },
+      ...defaultOptions,
+    });
+
+    await assert.rejects(
+      transport.unary(
+        TestService.method.unary,
+        undefined,
+        undefined,
+        undefined,
+        {},
+      ),
+      (e) => {
+        assert.ok(e instanceof ConnectError);
+        assert.strictEqual(e.code, Code.InvalidArgument);
+        return true;
+      },
+    );
+  });
 });
