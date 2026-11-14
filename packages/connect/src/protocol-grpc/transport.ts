@@ -21,7 +21,10 @@ import type {
 } from "@bufbuild/protobuf";
 import { requestHeaderWithCompression } from "./request-header.js";
 import { validateResponseWithCompression } from "./validate-response.js";
-import { validateTrailer } from "./validate-trailer.js";
+import {
+  missingUnaryMessageError,
+  validateTrailer,
+} from "./validate-trailer.js";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
 import type {
@@ -48,7 +51,6 @@ import type { CommonTransportOptions } from "../protocol/transport-options.js";
 import type { Transport } from "../transport.js";
 import { createContextValues } from "../context-values.js";
 import type { ContextValues } from "../context-values.js";
-import { headerGrpcStatus } from "./headers.js";
 
 /**
  * Create a Transport for the gRPC protocol.
@@ -145,15 +147,10 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           );
           validateTrailer(uRes.trailer, uRes.header);
           if (message === undefined) {
-            // Trailers only response
-            if (headerError) {
-              throw headerError;
-            }
-            throw new ConnectError(
+            throw missingUnaryMessageError(
+              uRes.trailer,
+              headerError,
               "protocol error: missing output message for unary method",
-              uRes.trailer.has(headerGrpcStatus)
-                ? Code.Unimplemented
-                : Code.Unknown,
             );
           }
           if (headerError) {
