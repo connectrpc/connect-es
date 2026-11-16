@@ -130,7 +130,7 @@ describe("createConnectRouter protocol inheritance", () => {
     );
   });
 
-  it("rpc with grpc disabled at router stays connect-only with per-call options", () => {
+  it("rpc with grpc disabled at router stays without grpc with per-call options", () => {
     assert.deepStrictEqual(
       protocolNamesForRpc({ grpc: false }, { readMaxBytes: 2 }),
       ["grpc-web", "connect"],
