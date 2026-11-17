@@ -2,6 +2,9 @@
   "$schema": "https://turbo.build/schema.json",
   "extends": ["//"],
   "tasks": {
+    "generate": {
+      "outputs": ["src/testdata/gen/**"]
+    },
     "conformance": {
       "dependsOn": ["conformance:client", "conformance:server"]
     },

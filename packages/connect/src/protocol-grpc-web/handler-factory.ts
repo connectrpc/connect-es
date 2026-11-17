@@ -171,8 +171,8 @@ function createHandler<I extends DescMessage, O extends DescMessage>(
       transformParseEnvelope(
         serialization.getI(type.binary),
         trailerFlag,
-        // if we set `null` here, an end-stream-message in the request
-        // raises an error, but we want to be lenient
+        // requests must not carry a trailer envelope
+        null,
       ),
     );
     // We run the request gate before receiving the body, so that a request it

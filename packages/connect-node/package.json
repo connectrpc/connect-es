@@ -8,6 +8,8 @@
     "directory": "packages/connect-node"
   },
   "scripts": {
+    "generate": "buf generate",
+    "postgenerate": "license-header src/testdata/gen",
     "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --moduleResolution node10 --ignoreDeprecations 6.0 --verbatimModuleSyntax false --outDir ./dist/cjs && echo >./dist/cjs/package.json '{\"type\":\"commonjs\"}'",
@@ -37,6 +39,8 @@
     "@connectrpc/connect": "2.3.0"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.73.0",
+    "@bufbuild/protoc-gen-es": "^2.16.0",
     "@types/node": "^24.10.1",
     "@connectrpc/connect-conformance": "^2.3.0",
     "tsx": "^4.20.6"

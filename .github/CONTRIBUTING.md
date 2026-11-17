@@ -18,7 +18,7 @@ you to sign your commits when you open your pull request, and provide helpful ti
 
 [Fork][fork], then clone the repository:
 
-```
+```bash
 git clone git@github.com:your_github_username/connect-es.git
 cd connect-es
 git remote add upstream https://github.com/connectrpc/connect-es.git
@@ -45,17 +45,17 @@ We're using `turborepo` to run tasks. If you haven't used it yet, take a look at
 
 Start by creating a new branch for your changes:
 
-```
+```bash
 git checkout main
 git fetch upstream
 git rebase upstream/main
 git checkout -b cool_new_feature
 ```
 
-Make your changes, then ensure that `make` still passes.
+Make your changes, then ensure that `npm run all` still passes.
 When you're satisfied with your changes, push them to your fork.
 
-```
+```bash
 git commit -a
 git push origin cool_new_feature
 ```

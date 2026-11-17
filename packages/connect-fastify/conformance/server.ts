@@ -111,7 +111,13 @@ function main() {
             ...httpsConfig,
           },
         };
-        server = fastify(opts).register(fastifyConnectPlugin, pluginOpts);
+        const app = fastify(opts);
+        // A no-op data listener makes TLS reads respect pause, which avoids
+        // https://github.com/nodejs/node/issues/67455.
+        app.server.on("secureConnection", (socket) =>
+          socket.on("data", () => {}),
+        );
+        server = app.register(fastifyConnectPlugin, pluginOpts);
       } else {
         // HTTP/1.1 server
         const opts: FastifyHttpOptions<http.Server> = {};

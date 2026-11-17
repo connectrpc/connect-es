@@ -52,7 +52,7 @@ import type { CommonTransportOptions } from "../protocol/transport-options.js";
 import type { Transport } from "../transport.js";
 import { createContextValues } from "../context-values.js";
 import type { ContextValues } from "../context-values.js";
-import { headerGrpcStatus } from "./headers.js";
+import { headerContentType, headerGrpcStatus } from "./headers.js";
 
 /**
  * Create a Transport for the gRPC-web protocol.
@@ -295,6 +295,10 @@ export function createTransport(opt: CommonTransportOptions): Transport {
                       Code.InvalidArgument,
                     );
                   }
+                  uRes.header.forEach((value, key) =>
+                    res.trailer.append(key, value),
+                  );
+                  res.trailer.delete(headerContentType);
                   return;
                 }
                 let trailerReceived = false;

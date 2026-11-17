@@ -10,7 +10,7 @@ Tests can run in the following environments:
 
 - Chrome
 - Firefox
-- Safari (only if running in OSX. Safari requires users to enable the "Allow Remote Automation" option in Safari's Develop menu)
+- Safari (only if running on macOS. Safari requires users to enable the "Allow Remote Automation" option in Safari's Develop menu)
 - Node.js
 
 Browsers are instrumented with [webdriverio](https://webdriver.io/).
@@ -30,6 +30,6 @@ Note tests only run on Node.js in CI, or with the `conformance` task.
 
 To launch a browser window with access to the browser's network inspector, append the `--openBrowser` flag to the npm script:
 
-```
+```bash
 npx turbo run conformance:chrome:promise -- --openBrowser
 ```
