@@ -27,6 +27,7 @@ export type {
   UniversalWebSocketClientRequest,
   UniversalWebSocket,
 } from "./universal-websocket.js";
+export { createWebSocketClient } from "./universal-websocket-client.js";
 export type { UniversalHandler } from "./universal-handler.js";
 export { createUniversalHandlerClient } from "./universal-handler-client.js";
 export {

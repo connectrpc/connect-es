@@ -15,6 +15,7 @@
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code } from "../code.js";
 import { ConnectError } from "../connect-error.js";
+import { protocolError } from "./error.js";
 
 /**
  * Encodes headers as the payload of a Leading-Metadata message.
@@ -32,7 +33,6 @@ export function encodeMetadata(metadata: Headers): string {
       entry.push(value);
     }
   }
-
   return JSON.stringify([...entries.values()]);
 }
 
@@ -76,10 +76,7 @@ export function decodeMetadata(payload: string): Headers {
     }
     return metadata;
   } catch (e) {
-    throw new ConnectError(
-      `protocol error: invalid metadata: ${(e as Error).message}`,
-      Code.Internal,
-    );
+    throw protocolError(`invalid metadata: ${(e as Error).message}`);
   }
 }
 

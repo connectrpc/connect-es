@@ -19,10 +19,8 @@ import type {
   JsonWriteOptions,
 } from "@bufbuild/protobuf";
 import type { Interceptor, Transport } from "@connectrpc/connect";
-import {
-  createTransport,
-  createWebSocketClient,
-} from "@connectrpc/connect/protocol-connect-websocket";
+import { createWebSocketClient } from "@connectrpc/connect/protocol";
+import { createTransport } from "@connectrpc/connect/protocol-connect-websocket";
 
 /**
  * Options used to configure the Connect-over-WebSocket transport.
