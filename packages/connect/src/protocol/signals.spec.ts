@@ -17,6 +17,7 @@ import * as assert from "node:assert";
 import {
   createDeadlineSignal,
   createLinkedAbortController,
+  resolveTimeoutMs,
 } from "./signals.js";
 
 describe("createLinkedAbortController()", () => {
@@ -89,5 +90,15 @@ describe("createDeadlineSignal()", () => {
       String(d.signal.reason),
       "ConnectError: [deadline_exceeded] the operation timed out",
     );
+  });
+});
+
+describe("resolveTimeoutMs()", () => {
+  it("should use the default only when the call sets no timeout", () => {
+    const defaultTimeoutMs = 1000;
+    assert.strictEqual(resolveTimeoutMs(undefined, defaultTimeoutMs), 1000);
+    assert.strictEqual(resolveTimeoutMs(5, defaultTimeoutMs), 5);
+    assert.strictEqual(resolveTimeoutMs(0, defaultTimeoutMs), undefined);
+    assert.strictEqual(resolveTimeoutMs(-1, defaultTimeoutMs), undefined);
   });
 });

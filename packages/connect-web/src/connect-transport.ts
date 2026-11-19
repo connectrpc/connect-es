@@ -46,6 +46,7 @@ import {
   getJsonOptions,
   encodeEnvelope,
   runStreamingCall,
+  resolveTimeoutMs,
   runUnaryCall,
   compressedFlag,
 } from "@connectrpc/connect/protocol";
@@ -154,12 +155,7 @@ export function createConnectTransport(
         options.jsonOptions,
         options.binaryOptions,
       );
-      timeoutMs =
-        timeoutMs === undefined
-          ? options.defaultTimeoutMs
-          : timeoutMs <= 0
-            ? undefined
-            : timeoutMs;
+      timeoutMs = resolveTimeoutMs(timeoutMs, options.defaultTimeoutMs);
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -308,12 +304,7 @@ export function createConnectTransport(
         return encodeEnvelope(0, serialize(r.value));
       }
 
-      timeoutMs =
-        timeoutMs === undefined
-          ? options.defaultTimeoutMs
-          : timeoutMs <= 0
-            ? undefined
-            : timeoutMs;
+      timeoutMs = resolveTimeoutMs(timeoutMs, options.defaultTimeoutMs);
       return await runStreamingCall<I, O>({
         interceptors: options.interceptors,
         timeoutMs,

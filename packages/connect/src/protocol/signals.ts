@@ -54,6 +54,21 @@ export function createLinkedAbortController(
 }
 
 /**
+ * Selects the timeout of a call, where zero or less means no timeout.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function resolveTimeoutMs(
+  timeoutMs: number | undefined,
+  defaultTimeoutMs: number | undefined,
+): number | undefined {
+  if (timeoutMs === undefined) {
+    return defaultTimeoutMs;
+  }
+  return timeoutMs <= 0 ? undefined : timeoutMs;
+}
+
+/**
  * Create a deadline signal. The returned object contains an AbortSignal, but
  * also a cleanup function to stop the timer, which must be called once the
  * calling code is no longer interested in the signal.

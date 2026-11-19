@@ -45,6 +45,10 @@
     "./protocol-grpc-web": {
       "import": "./dist/esm/protocol-grpc-web/index.js",
       "require": "./dist/cjs/protocol-grpc-web/index.js"
+    },
+    "./protocol-connect-websocket": {
+      "import": "./dist/esm/protocol-connect-websocket/index.js",
+      "require": "./dist/cjs/protocol-connect-websocket/index.js"
     }
   },
   "typesVersions": {
@@ -52,7 +56,10 @@
       "protocol": ["./dist/cjs/protocol/index.d.ts"],
       "protocol-connect": ["./dist/cjs/protocol-connect/index.d.ts"],
       "protocol-grpc": ["./dist/cjs/protocol-grpc/index.d.ts"],
-      "protocol-grpc-web": ["./dist/cjs/protocol-grpc-web/index.d.ts"]
+      "protocol-grpc-web": ["./dist/cjs/protocol-grpc-web/index.d.ts"],
+      "protocol-connect-websocket": [
+        "./dist/cjs/protocol-connect-websocket/index.d.ts"
+      ]
     }
   },
   "peerDependencies": {
