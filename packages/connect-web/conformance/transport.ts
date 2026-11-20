@@ -15,6 +15,7 @@
 import { createRegistry } from "@bufbuild/protobuf";
 import {
   createConnectTransport,
+  createConnectWebSocketTransport,
   createGrpcWebTransport,
 } from "../src/index.js";
 import {
@@ -92,7 +93,8 @@ export function createTransport(req: ClientCompatRequest) {
         ...sharedOptions,
         useHttpGet: req.useGetHttpMethod,
       });
-
+    case Protocol.CONNECT_WEBSOCKET:
+      return createConnectWebSocketTransport({ ...sharedOptions });
     case Protocol.GRPC_WEB:
       return createGrpcWebTransport({ ...sharedOptions });
     case Protocol.GRPC:

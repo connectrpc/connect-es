@@ -103,7 +103,6 @@ export {
   createLinkedAbortController,
   getAbortSignalReason,
   createDeadlineSignal,
-  resolveTimeoutMs,
 } from "./signals.js";
 export {
   assertByteStreamRequest,

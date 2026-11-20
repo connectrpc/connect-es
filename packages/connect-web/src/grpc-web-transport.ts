@@ -39,7 +39,6 @@ import {
   createMethodUrl,
   encodeEnvelope,
   runStreamingCall,
-  resolveTimeoutMs,
   runUnaryCall,
 } from "@connectrpc/connect/protocol";
 import {
@@ -145,7 +144,12 @@ export function createGrpcWebTransport(
         options.jsonOptions,
         options.binaryOptions,
       );
-      timeoutMs = resolveTimeoutMs(timeoutMs, options.defaultTimeoutMs);
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs <= 0
+            ? undefined
+            : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -313,7 +317,12 @@ export function createGrpcWebTransport(
         }
         return encodeEnvelope(0, serialize(r.value));
       }
-      timeoutMs = resolveTimeoutMs(timeoutMs, options.defaultTimeoutMs);
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs <= 0
+            ? undefined
+            : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: options.interceptors,
         signal,

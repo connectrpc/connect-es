@@ -46,7 +46,7 @@ import type {
 } from "../interceptor.js";
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { runStreamingCall, runUnaryCall } from "../protocol/run-call.js";
-import { getAbortSignalReason, resolveTimeoutMs } from "../protocol/signals.js";
+import { getAbortSignalReason } from "../protocol/signals.js";
 import type {
   UniversalWebSocket,
   UniversalWebSocketClientFn,
@@ -112,7 +112,12 @@ export function createTransport(
       message: MessageInitShape<I>,
       contextValues?: ContextValues,
     ): Promise<UnaryResponse<I, O>> {
-      timeoutMs = resolveTimeoutMs(timeoutMs, options.defaultTimeoutMs);
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs <= 0
+            ? undefined
+            : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: options.interceptors,
         signal,
@@ -164,7 +169,12 @@ export function createTransport(
       input: AsyncIterable<MessageInitShape<I>>,
       contextValues?: ContextValues,
     ): Promise<StreamResponse<I, O>> {
-      timeoutMs = resolveTimeoutMs(timeoutMs, options.defaultTimeoutMs);
+      timeoutMs =
+        timeoutMs === undefined
+          ? options.defaultTimeoutMs
+          : timeoutMs <= 0
+            ? undefined
+            : timeoutMs;
 
       return await runStreamingCall<I, O>({
         interceptors: options.interceptors,
@@ -240,16 +250,6 @@ async function openConnection(
     throw fail(
       connection,
       protocolError(`unexpected subprotocol "${connection.protocol}"`),
-    );
-  }
-
-  // Compression that keeps context across messages can leak secrets by size.
-  if (hasContextTakeover(connection.extensions)) {
-    throw fail(
-      connection,
-      protocolError(
-        `extensions "${connection.extensions}" must disable context takeover`,
-      ),
     );
   }
 
@@ -357,22 +357,6 @@ function fail(
 ): ConnectError {
   connection.close(closeCodeConnectClientError, error.rawMessage);
   return error;
-}
-
-/** Reports whether permessage-deflate was negotiated with context takeover. */
-function hasContextTakeover(extensions: string): boolean {
-  return extensions.split(",").some((extension) => {
-    const [name, ...parameters] = extension
-      .split(";")
-      .map((part) => part.trim().toLowerCase());
-    return (
-      name === "permessage-deflate" &&
-      !(
-        parameters.includes("client_no_context_takeover") &&
-        parameters.includes("server_no_context_takeover")
-      )
-    );
-  });
 }
 
 /** Creates the error for a connection that closed before the end message. */

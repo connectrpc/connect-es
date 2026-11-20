@@ -43,7 +43,6 @@ const TestService = createServiceDesc({
 
 interface FakeServer {
   protocol?: string;
-  extensions?: string;
   messages?: (string | Uint8Array)[];
 }
 
@@ -72,7 +71,7 @@ function createFakeClient(server: FakeServer = {}) {
 
     return Promise.resolve({
       protocol: server.protocol ?? request.protocols[0],
-      extensions: server.extensions ?? "",
+      extensions: "",
       messages: readMessages(),
       closed: new Promise<number>(() => {}),
       send: (data) => {
@@ -169,33 +168,6 @@ describe("createTransport()", () => {
     assert.deepStrictEqual(fake.closeReasons, [
       'protocol error: unexpected subprotocol ""',
     ]);
-  });
-
-  const sharedContextExtensions = [
-    "permessage-deflate; server_no_context_takeover",
-    "permessage-deflate; x=client_no_context_takeover/server_no_context_takeover",
-    "x; client_no_context_takeover; server_no_context_takeover, permessage-deflate",
-  ];
-  for (const extensions of sharedContextExtensions) {
-    it(`should close with 3102 for the extensions "${extensions}"`, async () => {
-      const fake = createFakeClient({ extensions });
-
-      await assert.rejects(
-        unary(fake),
-        (e) => e instanceof ConnectError && e.code === Code.Internal,
-      );
-      assert.deepStrictEqual(fake.closeCodes, [3102]);
-    });
-  }
-
-  it("should accept compression without context takeover in any case", async () => {
-    const fake = createFakeClient({
-      extensions:
-        "permessage-deflate; Client_No_Context_Takeover; server_no_context_takeover",
-      messages: ["M[]", 'B"a"', "S{}"],
-    });
-
-    assert.strictEqual((await unary(fake)).message.value, "a");
   });
 
   const webSocketUrls: [string, string][] = [

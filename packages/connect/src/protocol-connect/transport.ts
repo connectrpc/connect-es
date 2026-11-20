@@ -50,7 +50,6 @@ import {
 import { createMethodUrl } from "../protocol/create-method-url.js";
 import { runUnaryCall, runStreamingCall } from "../protocol/run-call.js";
 import { createMethodSerializationLookup } from "../protocol/serialization.js";
-import { resolveTimeoutMs } from "../protocol/signals.js";
 import type { Transport } from "../transport.js";
 import type { ContextValues } from "../context-values.js";
 import { createContextValues } from "../context-values.js";
@@ -75,7 +74,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
         opt.jsonOptions,
         opt,
       );
-      timeoutMs = resolveTimeoutMs(timeoutMs, opt.defaultTimeoutMs);
+      timeoutMs =
+        timeoutMs === undefined
+          ? opt.defaultTimeoutMs
+          : timeoutMs <= 0
+            ? undefined
+            : timeoutMs;
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -193,7 +197,12 @@ export function createTransport(opt: CommonTransportOptions): Transport {
       const endStreamSerialization = createEndStreamSerialization(
         opt.jsonOptions,
       );
-      timeoutMs = resolveTimeoutMs(timeoutMs, opt.defaultTimeoutMs);
+      timeoutMs =
+        timeoutMs === undefined
+          ? opt.defaultTimeoutMs
+          : timeoutMs <= 0
+            ? undefined
+            : timeoutMs;
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
         signal,
