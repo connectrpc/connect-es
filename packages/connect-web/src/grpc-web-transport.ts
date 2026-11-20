@@ -274,7 +274,10 @@ export function createGrpcWebTransport(
           // > [...] Trailers-Only is permitted for calls that produce an immediate error.
           // See https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
           if (!(await reader.read()).done) {
-            throw "extra data for trailers-only";
+            throw new ConnectError(
+              "protocol error: extra data for trailers-only",
+              Code.InvalidArgument,
+            );
           }
           return;
         }
@@ -287,7 +290,10 @@ export function createGrpcWebTransport(
           const { flags, data } = result.value;
           if ((flags & trailerFlag) === trailerFlag) {
             if (trailerReceived) {
-              throw "extra trailer";
+              throw new ConnectError(
+                "protocol error: received extra trailer",
+                Code.InvalidArgument,
+              );
             }
             trailerReceived = true;
             const trailer = trailerParse(data);
@@ -296,12 +302,18 @@ export function createGrpcWebTransport(
             continue;
           }
           if (trailerReceived) {
-            throw "extra message";
+            throw new ConnectError(
+              "protocol error: received extra message after trailer",
+              Code.InvalidArgument,
+            );
           }
           yield parse(data);
         }
         if (!trailerReceived) {
-          throw "missing trailer";
+          throw new ConnectError(
+            "protocol error: missing trailer",
+            Code.Internal,
+          );
         }
       }
 
