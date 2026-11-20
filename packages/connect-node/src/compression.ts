@@ -80,7 +80,12 @@ function asUint8ArrayArrayBuffer(
 ): Promise<Uint8Array<ArrayBuffer>> {
   return bytes.then((b) => {
     if (b.buffer instanceof ArrayBuffer) {
-      return b as Uint8Array<ArrayBuffer>;
+      // Node hands back Buffer instances, a Uint8Array subclass. Re-view so
+      // consumers that rely on the base type, such as structured-clone
+      // serializers, get a plain Uint8Array over the same memory.
+      return b.constructor === Uint8Array
+        ? (b as Uint8Array<ArrayBuffer>)
+        : new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
     }
     return new Uint8Array(b);
   });

@@ -42,6 +42,17 @@ describe("compression", () => {
         const equal = payload.every((value, index) => b[index] === value);
         assert.ok(equal);
       });
+      it("should return a base Uint8Array, not a Buffer subclass", async () => {
+        // Node's zlib returns Buffer; consumers that serialize Uint8Array
+        // differently from Buffer subclasses need the base type.
+        const compressed = await compression.compress(payload);
+        assert.strictEqual(compressed.constructor, Uint8Array);
+        const decompressed = await compression.decompress(
+          payloadCompressed,
+          0xffffffff,
+        );
+        assert.strictEqual(decompressed.constructor, Uint8Array);
+      });
       it("should decompress zero-length payload", async () => {
         const b = await compression.decompress(new Uint8Array(0), 0xffffffff);
         assert.strictEqual(b.byteLength, 0);
