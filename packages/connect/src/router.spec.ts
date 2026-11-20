@@ -14,7 +14,7 @@
 
 import { describe, it } from "node:test";
 import * as assert from "node:assert";
-import { createConnectRouter } from "./router.js";
+import { createConnectRouter, type ConnectRouterOptions } from "./router.js";
 import { createServiceDesc } from "./descriptor-helper.spec.js";
 import { Int32ValueSchema, StringValueSchema } from "@bufbuild/protobuf/wkt";
 
@@ -74,5 +74,125 @@ describe("createConnectRouter", () => {
       testService.method.server,
     );
     assert.deepStrictEqual(router.handlers[1].service, testService);
+  });
+});
+
+type RouterCallOptions = Partial<ConnectRouterOptions>;
+
+function protocolNamesForRpc(
+  routerOptions: Parameters<typeof createConnectRouter>[0],
+  callOptions?: RouterCallOptions,
+): string[] {
+  const router = createConnectRouter(routerOptions);
+  router.rpc(
+    testService.method.unary,
+    (request) => {
+      return { value: `${request.value}-RESPONSE` };
+    },
+    // Protocol flags at call level are supported at runtime.
+    callOptions as Parameters<ReturnType<typeof createConnectRouter>["rpc"]>[2],
+  );
+  return router.handlers[0].protocolNames;
+}
+
+function protocolNamesForService(
+  routerOptions: Parameters<typeof createConnectRouter>[0],
+  callOptions?: RouterCallOptions,
+): string[] {
+  const router = createConnectRouter(routerOptions);
+  router.service(
+    testService,
+    {
+      unary: (request) => ({ value: `${request.value}-RESPONSE` }),
+    },
+    callOptions as Parameters<
+      ReturnType<typeof createConnectRouter>["service"]
+    >[2],
+  );
+  return router.handlers[0].protocolNames;
+}
+
+describe("createConnectRouter protocol inheritance", () => {
+  it("rpc inherits router-disabled grpc and grpc-web when only readMaxBytes is set", () => {
+    assert.deepStrictEqual(
+      protocolNamesForRpc({ grpc: false, grpcWeb: false }, { readMaxBytes: 2 }),
+      ["connect"],
+    );
+  });
+
+  it("service inherits router-disabled grpc and grpc-web when only readMaxBytes is set", () => {
+    assert.deepStrictEqual(
+      protocolNamesForService(
+        { grpc: false, grpcWeb: false },
+        { readMaxBytes: 2 },
+      ),
+      ["connect"],
+    );
+  });
+
+  it("rpc with grpc disabled at router stays without grpc with per-call options", () => {
+    assert.deepStrictEqual(
+      protocolNamesForRpc({ grpc: false }, { readMaxBytes: 2 }),
+      ["grpc-web", "connect"],
+    );
+  });
+
+  it("rpc with grpcWeb disabled at router stays without grpc-web with per-call options", () => {
+    assert.deepStrictEqual(
+      protocolNamesForRpc({ grpcWeb: false }, { writeMaxBytes: 2 }),
+      ["grpc", "connect"],
+    );
+  });
+
+  it("rpc with connect disabled at router stays without connect with per-call options", () => {
+    assert.deepStrictEqual(
+      protocolNamesForRpc({ connect: false }, { compressMinBytes: 2 }),
+      ["grpc", "grpc-web"],
+    );
+  });
+
+  it("service with connect disabled at router stays without connect with per-call options", () => {
+    assert.deepStrictEqual(
+      protocolNamesForService({ connect: false }, { compressMinBytes: 2 }),
+      ["grpc", "grpc-web"],
+    );
+  });
+
+  it("rpc call-level true enables grpc when router disabled grpc", () => {
+    assert.deepStrictEqual(
+      protocolNamesForRpc(
+        { grpc: false, grpcWeb: false },
+        { grpc: true, readMaxBytes: 2 },
+      ),
+      ["grpc", "connect"],
+    );
+  });
+
+  it("rpc call-level false disables grpc when router enabled grpc", () => {
+    assert.deepStrictEqual(
+      protocolNamesForRpc({ grpc: true }, { grpc: false, readMaxBytes: 2 }),
+      ["grpc-web", "connect"],
+    );
+  });
+
+  it("rpc without router options keeps all protocols with per-call readMaxBytes", () => {
+    assert.deepStrictEqual(
+      protocolNamesForRpc(undefined, { readMaxBytes: 2 }),
+      ["grpc", "grpc-web", "connect"],
+    );
+  });
+
+  it("rpc without per-call options keeps router-disabled protocols", () => {
+    assert.deepStrictEqual(
+      protocolNamesForRpc({ grpc: false, grpcWeb: false }),
+      ["connect"],
+    );
+  });
+
+  it("service without per-call options keeps router-disabled protocols", () => {
+    assert.deepStrictEqual(
+      protocolNamesForService({ grpc: false, grpcWeb: false }),
+      ["connect"],
+    );
   });
 });
