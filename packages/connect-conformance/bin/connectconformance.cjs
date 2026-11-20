@@ -15,6 +15,11 @@
 // limitations under the License.
 
 const { run } = require("../dist/cjs/conformance.js");
-const { conformanceVersion } = require("../package.json");
+const { scripts } = require("../package.json");
 
-run(conformanceVersion);
+// Extract conformance runner version from the `generate` script
+const [, version] = /conformance:(v\d+\.\d+\.\d+)/.exec(scripts.generate) ?? [
+  "?",
+];
+
+run(version);

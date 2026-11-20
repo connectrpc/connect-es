@@ -16,8 +16,8 @@
 // @generated from file connectrpc/conformance/v1/service.proto (package connectrpc.conformance.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Code, Compression } from "./config_pb.js";
 import { file_connectrpc_conformance_v1_config } from "./config_pb.js";
 import type { Any } from "@bufbuild/protobuf/wkt";
@@ -28,7 +28,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file connectrpc/conformance/v1/service.proto.
  */
 export const file_connectrpc_conformance_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("Cidjb25uZWN0cnBjL2NvbmZvcm1hbmNlL3YxL3NlcnZpY2UucHJvdG8SGWNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEimgMKF1VuYXJ5UmVzcG9uc2VEZWZpbml0aW9uEjsKEHJlc3BvbnNlX2hlYWRlcnMYASADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchIXCg1yZXNwb25zZV9kYXRhGAIgASgMSAASMQoFZXJyb3IYAyABKAsyIC5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkVycm9ySAASPAoRcmVzcG9uc2VfdHJhaWxlcnMYBCADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchIZChFyZXNwb25zZV9kZWxheV9tcxgGIAEoDRJACgxyYXdfcmVzcG9uc2UYBSABKAsyKi5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlJhd0hUVFBSZXNwb25zZRJPChZyYXdfd2Vic29ja2V0X3Jlc3BvbnNlGAcgASgLMi8uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5SYXdXZWJTb2NrZXRSZXNwb25zZUIKCghyZXNwb25zZSKLAwoYU3RyZWFtUmVzcG9uc2VEZWZpbml0aW9uEjsKEHJlc3BvbnNlX2hlYWRlcnMYASADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchIVCg1yZXNwb25zZV9kYXRhGAIgAygMEhkKEXJlc3BvbnNlX2RlbGF5X21zGAMgASgNEi8KBWVycm9yGAQgASgLMiAuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5FcnJvchI8ChFyZXNwb25zZV90cmFpbGVycxgFIAMoCzIhLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuSGVhZGVyEkAKDHJhd19yZXNwb25zZRgGIAEoCzIqLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuUmF3SFRUUFJlc3BvbnNlEk8KFnJhd193ZWJzb2NrZXRfcmVzcG9uc2UYByABKAsyLy5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlJhd1dlYlNvY2tldFJlc3BvbnNlInUKDFVuYXJ5UmVxdWVzdBJPChNyZXNwb25zZV9kZWZpbml0aW9uGAEgASgLMjIuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmFyeVJlc3BvbnNlRGVmaW5pdGlvbhIUCgxyZXF1ZXN0X2RhdGEYAiABKAwiTwoNVW5hcnlSZXNwb25zZRI+CgdwYXlsb2FkGAEgASgLMi0uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5Db25mb3JtYW5jZVBheWxvYWQifwoWSWRlbXBvdGVudFVuYXJ5UmVxdWVzdBJPChNyZXNwb25zZV9kZWZpbml0aW9uGAEgASgLMjIuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmFyeVJlc3BvbnNlRGVmaW5pdGlvbhIUCgxyZXF1ZXN0X2RhdGEYAiABKAwiWQoXSWRlbXBvdGVudFVuYXJ5UmVzcG9uc2USPgoHcGF5bG9hZBgBIAEoCzItLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ29uZm9ybWFuY2VQYXlsb2FkIn0KE1NlcnZlclN0cmVhbVJlcXVlc3QSUAoTcmVzcG9uc2VfZGVmaW5pdGlvbhgBIAEoCzIzLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuU3RyZWFtUmVzcG9uc2VEZWZpbml0aW9uEhQKDHJlcXVlc3RfZGF0YRgCIAEoDCJWChRTZXJ2ZXJTdHJlYW1SZXNwb25zZRI+CgdwYXlsb2FkGAEgASgLMi0uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5Db25mb3JtYW5jZVBheWxvYWQifAoTQ2xpZW50U3RyZWFtUmVxdWVzdBJPChNyZXNwb25zZV9kZWZpbml0aW9uGAEgASgLMjIuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmFyeVJlc3BvbnNlRGVmaW5pdGlvbhIUCgxyZXF1ZXN0X2RhdGEYAiABKAwiVgoUQ2xpZW50U3RyZWFtUmVzcG9uc2USPgoHcGF5bG9hZBgBIAEoCzItLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ29uZm9ybWFuY2VQYXlsb2FkIpABChFCaWRpU3RyZWFtUmVxdWVzdBJQChNyZXNwb25zZV9kZWZpbml0aW9uGAEgASgLMjMuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5TdHJlYW1SZXNwb25zZURlZmluaXRpb24SEwoLZnVsbF9kdXBsZXgYAiABKAgSFAoMcmVxdWVzdF9kYXRhGAMgASgMIlQKEkJpZGlTdHJlYW1SZXNwb25zZRI+CgdwYXlsb2FkGAEgASgLMi0uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5Db25mb3JtYW5jZVBheWxvYWQiFgoUVW5pbXBsZW1lbnRlZFJlcXVlc3QiFwoVVW5pbXBsZW1lbnRlZFJlc3BvbnNlIrIDChJDb25mb3JtYW5jZVBheWxvYWQSDAoEZGF0YRgBIAEoDBJPCgxyZXF1ZXN0X2luZm8YAiABKAsyOS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkNvbmZvcm1hbmNlUGF5bG9hZC5SZXF1ZXN0SW5mbxrxAQoLUmVxdWVzdEluZm8SOgoPcmVxdWVzdF9oZWFkZXJzGAEgAygLMiEuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5IZWFkZXISFwoKdGltZW91dF9tcxgCIAEoA0gAiAEBEiYKCHJlcXVlc3RzGAMgAygLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRJWChBjb25uZWN0X2dldF9pbmZvGAQgASgLMjwuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5Db25mb3JtYW5jZVBheWxvYWQuQ29ubmVjdEdldEluZm9CDQoLX3RpbWVvdXRfbXMaSQoOQ29ubmVjdEdldEluZm8SNwoMcXVlcnlfcGFyYW1zGAEgAygLMiEuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5IZWFkZXIifwoFRXJyb3ISLQoEY29kZRgBIAEoDjIfLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ29kZRIUCgdtZXNzYWdlGAIgASgJSACIAQESJQoHZGV0YWlscxgDIAMoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnlCCgoIX21lc3NhZ2UiJQoGSGVhZGVyEgwKBG5hbWUYASABKAkSDQoFdmFsdWUYAiADKAki7gMKDlJhd0hUVFBSZXF1ZXN0EgwKBHZlcmIYASABKAkSCwoDdXJpGAIgASgJEjIKB2hlYWRlcnMYAyADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchI7ChByYXdfcXVlcnlfcGFyYW1zGAQgAygLMiEuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5IZWFkZXISWQoUZW5jb2RlZF9xdWVyeV9wYXJhbXMYBSADKAsyOy5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlJhd0hUVFBSZXF1ZXN0LkVuY29kZWRRdWVyeVBhcmFtEjsKBXVuYXJ5GAYgASgLMiouY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5NZXNzYWdlQ29udGVudHNIABI7CgZzdHJlYW0YByABKAsyKS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlN0cmVhbUNvbnRlbnRzSAAacwoRRW5jb2RlZFF1ZXJ5UGFyYW0SDAoEbmFtZRgBIAEoCRI5CgV2YWx1ZRgCIAEoCzIqLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuTWVzc2FnZUNvbnRlbnRzEhUKDWJhc2U2NF9lbmNvZGUYAyABKAhCBgoEYm9keSKoAQoPTWVzc2FnZUNvbnRlbnRzEhAKBmJpbmFyeRgBIAEoDEgAEg4KBHRleHQYAiABKAlIABIuCg5iaW5hcnlfbWVzc2FnZRgDIAEoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnlIABI7Cgtjb21wcmVzc2lvbhgEIAEoDjImLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ29tcHJlc3Npb25CBgoEZGF0YSLPAQoOU3RyZWFtQ29udGVudHMSQwoFaXRlbXMYASADKAsyNC5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlN0cmVhbUNvbnRlbnRzLlN0cmVhbUl0ZW0aeAoKU3RyZWFtSXRlbRINCgVmbGFncxgBIAEoDRITCgZsZW5ndGgYAiABKA1IAIgBARI7CgdwYXlsb2FkGAMgASgLMiouY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5NZXNzYWdlQ29udGVudHNCCQoHX2xlbmd0aCKRAgoPUmF3SFRUUFJlc3BvbnNlEhMKC3N0YXR1c19jb2RlGAEgASgNEjIKB2hlYWRlcnMYAiADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchI7CgV1bmFyeRgDIAEoCzIqLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuTWVzc2FnZUNvbnRlbnRzSAASOwoGc3RyZWFtGAQgASgLMikuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5TdHJlYW1Db250ZW50c0gAEjMKCHRyYWlsZXJzGAUgAygLMiEuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5IZWFkZXJCBgoEYm9keSKFAgoTUmF3V2ViU29ja2V0UmVxdWVzdBIMCgRwYXRoGAEgASgJEjcKDHF1ZXJ5X3BhcmFtcxgCIAMoCzIhLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuSGVhZGVyEjIKB2hlYWRlcnMYAyADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchIUCgxzdWJwcm90b2NvbHMYBCADKAkSHgoWb2ZmZXJfY29udGV4dF90YWtlb3ZlchgFIAEoCBI9CghtZXNzYWdlcxgGIAMoCzIrLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuV2ViU29ja2V0TWVzc2FnZSKiAQoUUmF3V2ViU29ja2V0UmVzcG9uc2USPQoIbWVzc2FnZXMYASADKAsyKy5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLldlYlNvY2tldE1lc3NhZ2USEgoKY2xvc2VfY29kZRgCIAEoDRISCgpvbWl0X2Nsb3NlGAMgASgIEiMKG2V4cGVjdGVkX2NsaWVudF9jbG9zZV9jb2RlcxgEIAMoDSKfAQoQV2ViU29ja2V0TWVzc2FnZRI9CgR0eXBlGAEgASgOMi8uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5XZWJTb2NrZXRNZXNzYWdlVHlwZRIOCgZtYXJrZXIYAiABKAkSPAoIY29udGVudHMYAyABKAsyKi5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLk1lc3NhZ2VDb250ZW50cyqFAQoUV2ViU29ja2V0TWVzc2FnZVR5cGUSJwojV0VCX1NPQ0tFVF9NRVNTQUdFX1RZUEVfVU5TUEVDSUZJRUQQABIgChxXRUJfU09DS0VUX01FU1NBR0VfVFlQRV9URVhUEAESIgoeV0VCX1NPQ0tFVF9NRVNTQUdFX1RZUEVfQklOQVJZEAIyuAUKEkNvbmZvcm1hbmNlU2VydmljZRJaCgVVbmFyeRInLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuVW5hcnlSZXF1ZXN0GiguY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmFyeVJlc3BvbnNlEnEKDFNlcnZlclN0cmVhbRIuLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuU2VydmVyU3RyZWFtUmVxdWVzdBovLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuU2VydmVyU3RyZWFtUmVzcG9uc2UwARJxCgxDbGllbnRTdHJlYW0SLi5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkNsaWVudFN0cmVhbVJlcXVlc3QaLy5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkNsaWVudFN0cmVhbVJlc3BvbnNlKAESbQoKQmlkaVN0cmVhbRIsLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQmlkaVN0cmVhbVJlcXVlc3QaLS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkJpZGlTdHJlYW1SZXNwb25zZSgBMAEScgoNVW5pbXBsZW1lbnRlZBIvLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuVW5pbXBsZW1lbnRlZFJlcXVlc3QaMC5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlVuaW1wbGVtZW50ZWRSZXNwb25zZRJ9Cg9JZGVtcG90ZW50VW5hcnkSMS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLklkZW1wb3RlbnRVbmFyeVJlcXVlc3QaMi5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLklkZW1wb3RlbnRVbmFyeVJlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_connectrpc_conformance_v1_config, file_google_protobuf_any]);
+  fileDesc("Cidjb25uZWN0cnBjL2NvbmZvcm1hbmNlL3YxL3NlcnZpY2UucHJvdG8SGWNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEiyQIKF1VuYXJ5UmVzcG9uc2VEZWZpbml0aW9uEjsKEHJlc3BvbnNlX2hlYWRlcnMYASADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchIXCg1yZXNwb25zZV9kYXRhGAIgASgMSAASMQoFZXJyb3IYAyABKAsyIC5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkVycm9ySAASPAoRcmVzcG9uc2VfdHJhaWxlcnMYBCADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchIZChFyZXNwb25zZV9kZWxheV9tcxgGIAEoDRJACgxyYXdfcmVzcG9uc2UYBSABKAsyKi5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlJhd0hUVFBSZXNwb25zZUIKCghyZXNwb25zZSK6AgoYU3RyZWFtUmVzcG9uc2VEZWZpbml0aW9uEjsKEHJlc3BvbnNlX2hlYWRlcnMYASADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchIVCg1yZXNwb25zZV9kYXRhGAIgAygMEhkKEXJlc3BvbnNlX2RlbGF5X21zGAMgASgNEi8KBWVycm9yGAQgASgLMiAuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5FcnJvchI8ChFyZXNwb25zZV90cmFpbGVycxgFIAMoCzIhLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuSGVhZGVyEkAKDHJhd19yZXNwb25zZRgGIAEoCzIqLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuUmF3SFRUUFJlc3BvbnNlInUKDFVuYXJ5UmVxdWVzdBJPChNyZXNwb25zZV9kZWZpbml0aW9uGAEgASgLMjIuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmFyeVJlc3BvbnNlRGVmaW5pdGlvbhIUCgxyZXF1ZXN0X2RhdGEYAiABKAwiTwoNVW5hcnlSZXNwb25zZRI+CgdwYXlsb2FkGAEgASgLMi0uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5Db25mb3JtYW5jZVBheWxvYWQifwoWSWRlbXBvdGVudFVuYXJ5UmVxdWVzdBJPChNyZXNwb25zZV9kZWZpbml0aW9uGAEgASgLMjIuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmFyeVJlc3BvbnNlRGVmaW5pdGlvbhIUCgxyZXF1ZXN0X2RhdGEYAiABKAwiWQoXSWRlbXBvdGVudFVuYXJ5UmVzcG9uc2USPgoHcGF5bG9hZBgBIAEoCzItLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ29uZm9ybWFuY2VQYXlsb2FkIn0KE1NlcnZlclN0cmVhbVJlcXVlc3QSUAoTcmVzcG9uc2VfZGVmaW5pdGlvbhgBIAEoCzIzLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuU3RyZWFtUmVzcG9uc2VEZWZpbml0aW9uEhQKDHJlcXVlc3RfZGF0YRgCIAEoDCJWChRTZXJ2ZXJTdHJlYW1SZXNwb25zZRI+CgdwYXlsb2FkGAEgASgLMi0uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5Db25mb3JtYW5jZVBheWxvYWQifAoTQ2xpZW50U3RyZWFtUmVxdWVzdBJPChNyZXNwb25zZV9kZWZpbml0aW9uGAEgASgLMjIuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmFyeVJlc3BvbnNlRGVmaW5pdGlvbhIUCgxyZXF1ZXN0X2RhdGEYAiABKAwiVgoUQ2xpZW50U3RyZWFtUmVzcG9uc2USPgoHcGF5bG9hZBgBIAEoCzItLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ29uZm9ybWFuY2VQYXlsb2FkIpABChFCaWRpU3RyZWFtUmVxdWVzdBJQChNyZXNwb25zZV9kZWZpbml0aW9uGAEgASgLMjMuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5TdHJlYW1SZXNwb25zZURlZmluaXRpb24SEwoLZnVsbF9kdXBsZXgYAiABKAgSFAoMcmVxdWVzdF9kYXRhGAMgASgMIlQKEkJpZGlTdHJlYW1SZXNwb25zZRI+CgdwYXlsb2FkGAEgASgLMi0uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5Db25mb3JtYW5jZVBheWxvYWQiFgoUVW5pbXBsZW1lbnRlZFJlcXVlc3QiFwoVVW5pbXBsZW1lbnRlZFJlc3BvbnNlIrIDChJDb25mb3JtYW5jZVBheWxvYWQSDAoEZGF0YRgBIAEoDBJPCgxyZXF1ZXN0X2luZm8YAiABKAsyOS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkNvbmZvcm1hbmNlUGF5bG9hZC5SZXF1ZXN0SW5mbxrxAQoLUmVxdWVzdEluZm8SOgoPcmVxdWVzdF9oZWFkZXJzGAEgAygLMiEuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5IZWFkZXISFwoKdGltZW91dF9tcxgCIAEoA0gAiAEBEiYKCHJlcXVlc3RzGAMgAygLMhQuZ29vZ2xlLnByb3RvYnVmLkFueRJWChBjb25uZWN0X2dldF9pbmZvGAQgASgLMjwuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5Db25mb3JtYW5jZVBheWxvYWQuQ29ubmVjdEdldEluZm9CDQoLX3RpbWVvdXRfbXMaSQoOQ29ubmVjdEdldEluZm8SNwoMcXVlcnlfcGFyYW1zGAEgAygLMiEuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5IZWFkZXIifwoFRXJyb3ISLQoEY29kZRgBIAEoDjIfLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ29kZRIUCgdtZXNzYWdlGAIgASgJSACIAQESJQoHZGV0YWlscxgDIAMoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnlCCgoIX21lc3NhZ2UiJQoGSGVhZGVyEgwKBG5hbWUYASABKAkSDQoFdmFsdWUYAiADKAki7gMKDlJhd0hUVFBSZXF1ZXN0EgwKBHZlcmIYASABKAkSCwoDdXJpGAIgASgJEjIKB2hlYWRlcnMYAyADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchI7ChByYXdfcXVlcnlfcGFyYW1zGAQgAygLMiEuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5IZWFkZXISWQoUZW5jb2RlZF9xdWVyeV9wYXJhbXMYBSADKAsyOy5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlJhd0hUVFBSZXF1ZXN0LkVuY29kZWRRdWVyeVBhcmFtEjsKBXVuYXJ5GAYgASgLMiouY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5NZXNzYWdlQ29udGVudHNIABI7CgZzdHJlYW0YByABKAsyKS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlN0cmVhbUNvbnRlbnRzSAAacwoRRW5jb2RlZFF1ZXJ5UGFyYW0SDAoEbmFtZRgBIAEoCRI5CgV2YWx1ZRgCIAEoCzIqLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuTWVzc2FnZUNvbnRlbnRzEhUKDWJhc2U2NF9lbmNvZGUYAyABKAhCBgoEYm9keSKoAQoPTWVzc2FnZUNvbnRlbnRzEhAKBmJpbmFyeRgBIAEoDEgAEg4KBHRleHQYAiABKAlIABIuCg5iaW5hcnlfbWVzc2FnZRgDIAEoCzIULmdvb2dsZS5wcm90b2J1Zi5BbnlIABI7Cgtjb21wcmVzc2lvbhgEIAEoDjImLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ29tcHJlc3Npb25CBgoEZGF0YSLPAQoOU3RyZWFtQ29udGVudHMSQwoFaXRlbXMYASADKAsyNC5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlN0cmVhbUNvbnRlbnRzLlN0cmVhbUl0ZW0aeAoKU3RyZWFtSXRlbRINCgVmbGFncxgBIAEoDRITCgZsZW5ndGgYAiABKA1IAIgBARI7CgdwYXlsb2FkGAMgASgLMiouY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5NZXNzYWdlQ29udGVudHNCCQoHX2xlbmd0aCKRAgoPUmF3SFRUUFJlc3BvbnNlEhMKC3N0YXR1c19jb2RlGAEgASgNEjIKB2hlYWRlcnMYAiADKAsyIS5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLkhlYWRlchI7CgV1bmFyeRgDIAEoCzIqLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuTWVzc2FnZUNvbnRlbnRzSAASOwoGc3RyZWFtGAQgASgLMikuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5TdHJlYW1Db250ZW50c0gAEjMKCHRyYWlsZXJzGAUgAygLMiEuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5IZWFkZXJCBgoEYm9keTK4BQoSQ29uZm9ybWFuY2VTZXJ2aWNlEloKBVVuYXJ5EicuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmFyeVJlcXVlc3QaKC5jb25uZWN0cnBjLmNvbmZvcm1hbmNlLnYxLlVuYXJ5UmVzcG9uc2UScQoMU2VydmVyU3RyZWFtEi4uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5TZXJ2ZXJTdHJlYW1SZXF1ZXN0Gi8uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5TZXJ2ZXJTdHJlYW1SZXNwb25zZTABEnEKDENsaWVudFN0cmVhbRIuLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ2xpZW50U3RyZWFtUmVxdWVzdBovLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQ2xpZW50U3RyZWFtUmVzcG9uc2UoARJtCgpCaWRpU3RyZWFtEiwuY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5CaWRpU3RyZWFtUmVxdWVzdBotLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuQmlkaVN0cmVhbVJlc3BvbnNlKAEwARJyCg1VbmltcGxlbWVudGVkEi8uY29ubmVjdHJwYy5jb25mb3JtYW5jZS52MS5VbmltcGxlbWVudGVkUmVxdWVzdBowLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuVW5pbXBsZW1lbnRlZFJlc3BvbnNlEn0KD0lkZW1wb3RlbnRVbmFyeRIxLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuSWRlbXBvdGVudFVuYXJ5UmVxdWVzdBoyLmNvbm5lY3RycGMuY29uZm9ybWFuY2UudjEuSWRlbXBvdGVudFVuYXJ5UmVzcG9uc2UiA5ACAWIGcHJvdG8z", [file_connectrpc_conformance_v1_config, file_google_protobuf_any]);
 
 /**
  * A definition of a response to be sent from a single-response endpoint.
@@ -91,17 +91,6 @@ export type UnaryResponseDefinition = Message<"connectrpc.conformance.v1.UnaryRe
    * @generated from field: connectrpc.conformance.v1.RawHTTPResponse raw_response = 5;
    */
   rawResponse?: RawHTTPResponse | undefined;
-
-  /**
-   * This field is only used by the reference server. If you are implementing a
-   * server under test, you can ignore this field or respond with an error if the
-   * server receives a request where it is set.
-   *
-   * It is the PROTOCOL_CONNECT_WEBSOCKET counterpart of raw_response.
-   *
-   * @generated from field: connectrpc.conformance.v1.RawWebSocketResponse raw_websocket_response = 7;
-   */
-  rawWebsocketResponse?: RawWebSocketResponse | undefined;
 };
 
 /**
@@ -167,17 +156,6 @@ export type StreamResponseDefinition = Message<"connectrpc.conformance.v1.Stream
    * @generated from field: connectrpc.conformance.v1.RawHTTPResponse raw_response = 6;
    */
   rawResponse?: RawHTTPResponse | undefined;
-
-  /**
-   * This field is only used by the reference server. If you are implementing a
-   * server under test, you can ignore this field or respond with an error if the
-   * server receives a request where it is set.
-   *
-   * It is the PROTOCOL_CONNECT_WEBSOCKET counterpart of raw_response.
-   *
-   * @generated from field: connectrpc.conformance.v1.RawWebSocketResponse raw_websocket_response = 7;
-   */
-  rawWebsocketResponse?: RawWebSocketResponse | undefined;
 };
 
 /**
@@ -904,194 +882,6 @@ export type RawHTTPResponse = Message<"connectrpc.conformance.v1.RawHTTPResponse
  */
 export const RawHTTPResponseSchema: GenMessage<RawHTTPResponse> = /*@__PURE__*/
   messageDesc(file_connectrpc_conformance_v1_service, 20);
-
-/**
- * RawWebSocketRequest models the client side of a Connect-over-WebSocket
- * connection. This can be used to craft handshakes and message sequences
- * with odd properties (including certain kinds of malformed ones) to test
- * edge cases in servers.
- *
- * Unlike the messages of a normal RPC, none of these are generated
- * automatically: a test that wants the stream to open with a Leading-Metadata
- * message must include one in messages.
- *
- * @generated from message connectrpc.conformance.v1.RawWebSocketRequest
- */
-export type RawWebSocketRequest = Message<"connectrpc.conformance.v1.RawWebSocketRequest"> & {
-  /**
-   * The path of the handshake URI. If empty, the path of the procedure named
-   * by the request's service and method is used.
-   *
-   * @generated from field: string path = 1;
-   */
-  path: string;
-
-  /**
-   * Query parameters to add to the handshake URI.
-   *
-   * @generated from field: repeated connectrpc.conformance.v1.Header query_params = 2;
-   */
-  queryParams: Header[];
-
-  /**
-   * Headers to add to the handshake request.
-   *
-   * @generated from field: repeated connectrpc.conformance.v1.Header headers = 3;
-   */
-  headers: Header[];
-
-  /**
-   * The tokens offered in the Sec-WebSocket-Protocol header. If empty, the
-   * single token that selects the request's codec is offered.
-   *
-   * @generated from field: repeated string subprotocols = 4;
-   */
-  subprotocols: string[];
-
-  /**
-   * If true, offer the permessage-deflate extension without the
-   * no_context_takeover parameters. If false, compression is not offered.
-   *
-   * @generated from field: bool offer_context_takeover = 5;
-   */
-  offerContextTakeover: boolean;
-
-  /**
-   * The messages to send once the connection is open, in order. The client
-   * then reads the server's response until the connection ends.
-   *
-   * @generated from field: repeated connectrpc.conformance.v1.WebSocketMessage messages = 6;
-   */
-  messages: WebSocketMessage[];
-};
-
-/**
- * Describes the message connectrpc.conformance.v1.RawWebSocketRequest.
- * Use `create(RawWebSocketRequestSchema)` to create a new message.
- */
-export const RawWebSocketRequestSchema: GenMessage<RawWebSocketRequest> = /*@__PURE__*/
-  messageDesc(file_connectrpc_conformance_v1_service, 21);
-
-/**
- * RawWebSocketResponse models the server side of a Connect-over-WebSocket
- * connection, after the handshake has completed and the reference server has
- * read the client's request stream. This can be used to craft message
- * sequences with odd properties (including certain kinds of malformed ones)
- * to test edge cases in clients.
- *
- * None of the server's messages are generated automatically: a test that
- * wants the response to open with a Leading-Metadata message must include one
- * in messages.
- *
- * @generated from message connectrpc.conformance.v1.RawWebSocketResponse
- */
-export type RawWebSocketResponse = Message<"connectrpc.conformance.v1.RawWebSocketResponse"> & {
-  /**
-   * The messages to send, in order.
-   *
-   * @generated from field: repeated connectrpc.conformance.v1.WebSocketMessage messages = 1;
-   */
-  messages: WebSocketMessage[];
-
-  /**
-   * The status code to send in the server's Close frame after the messages.
-   * If zero, 1000 (normal closure) is sent. Ignored if omit_close or
-   * expected_client_close_codes is set.
-   *
-   * @generated from field: uint32 close_code = 2;
-   */
-  closeCode: number;
-
-  /**
-   * If true, the server ends the connection without sending a Close frame.
-   *
-   * @generated from field: bool omit_close = 3;
-   */
-  omitClose: boolean;
-
-  /**
-   * If not empty, the server sends no Close frame of its own after the
-   * messages. It waits instead for the client to close the connection, and
-   * reports an error if the client's Close frame does not carry one of these
-   * codes. A connection the client ends without a Close frame is treated as
-   * code 1006.
-   *
-   * @generated from field: repeated uint32 expected_client_close_codes = 4;
-   */
-  expectedClientCloseCodes: number[];
-};
-
-/**
- * Describes the message connectrpc.conformance.v1.RawWebSocketResponse.
- * Use `create(RawWebSocketResponseSchema)` to create a new message.
- */
-export const RawWebSocketResponseSchema: GenMessage<RawWebSocketResponse> = /*@__PURE__*/
-  messageDesc(file_connectrpc_conformance_v1_service, 22);
-
-/**
- * WebSocketMessage is one complete WebSocket message, sent in a single frame.
- *
- * @generated from message connectrpc.conformance.v1.WebSocketMessage
- */
-export type WebSocketMessage = Message<"connectrpc.conformance.v1.WebSocketMessage"> & {
-  /**
-   * The frame type of the message.
-   *
-   * @generated from field: connectrpc.conformance.v1.WebSocketMessageType type = 1;
-   */
-  type: WebSocketMessageType;
-
-  /**
-   * Written verbatim before contents. It is typically a single Connect-over-
-   * WebSocket marker: "B", "M", "S", or "C". If empty, only contents is sent.
-   *
-   * @generated from field: string marker = 2;
-   */
-  marker: string;
-
-  /**
-   * The payload that follows the marker. If absent, the message is the marker
-   * alone.
-   *
-   * @generated from field: connectrpc.conformance.v1.MessageContents contents = 3;
-   */
-  contents?: MessageContents | undefined;
-};
-
-/**
- * Describes the message connectrpc.conformance.v1.WebSocketMessage.
- * Use `create(WebSocketMessageSchema)` to create a new message.
- */
-export const WebSocketMessageSchema: GenMessage<WebSocketMessage> = /*@__PURE__*/
-  messageDesc(file_connectrpc_conformance_v1_service, 23);
-
-/**
- * The frame type of a WebSocket message.
- *
- * @generated from enum connectrpc.conformance.v1.WebSocketMessageType
- */
-export enum WebSocketMessageType {
-  /**
-   * @generated from enum value: WEB_SOCKET_MESSAGE_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: WEB_SOCKET_MESSAGE_TYPE_TEXT = 1;
-   */
-  TEXT = 1,
-
-  /**
-   * @generated from enum value: WEB_SOCKET_MESSAGE_TYPE_BINARY = 2;
-   */
-  BINARY = 2,
-}
-
-/**
- * Describes the enum connectrpc.conformance.v1.WebSocketMessageType.
- */
-export const WebSocketMessageTypeSchema: GenEnum<WebSocketMessageType> = /*@__PURE__*/
-  enumDesc(file_connectrpc_conformance_v1_service, 0);
 
 /**
  * The service implemented by conformance test servers. This is implemented by

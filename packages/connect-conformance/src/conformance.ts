@@ -27,19 +27,10 @@ import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { execFileSync } from "node:child_process";
 
-/**
- * Runs the conformance test runner of the given release, or the binary that
- * the environment variable CONNECTCONFORMANCE_BIN points to.
- */
 export async function run(version: string) {
-  // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
-  const binPathOverride = process.env["CONNECTCONFORMANCE_BIN"];
   const { archive, bin } = getArtifactNameForEnv(version);
   const tempDir = getTempDir(version);
-  const binPath = binPathOverride ?? joinPath(tempDir, bin);
-  if (binPathOverride !== undefined && !existsSync(binPathOverride)) {
-    throw new Error(`CONNECTCONFORMANCE_BIN not found: ${binPathOverride}`);
-  }
+  const binPath = joinPath(tempDir, bin);
   if (!existsSync(binPath)) {
     const downloadUrl = `https://github.com/connectrpc/conformance/releases/download/${version}/${archive}`;
     const archivePath = joinPath(tempDir, archive);
