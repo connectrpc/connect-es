@@ -50,13 +50,6 @@ export function createAsyncQueue<T>(): {
     });
   }
 
-  function stop(): Promise<IteratorResult<T>> {
-    didEnd = true;
-    items.length = 0;
-    wake?.(done);
-    return Promise.resolve(done);
-  }
-
   return {
     push(item) {
       if (didEnd) {
@@ -74,9 +67,7 @@ export function createAsyncQueue<T>(): {
       wake?.(done);
     },
     read() {
-      return {
-        [Symbol.asyncIterator]: () => ({ next, return: stop, throw: stop }),
-      };
+      return { [Symbol.asyncIterator]: () => ({ next }) };
     },
   };
 }

@@ -31,12 +31,8 @@ export function createWebSocketClient(
   WebSocketConstructor: typeof globalThis.WebSocket = globalThis.WebSocket,
 ): UniversalWebSocketClientFn {
   return async function open({ url, protocols, signal }) {
+    signal?.throwIfAborted();
     const socket = new WebSocketConstructor(url, protocols);
-    if (signal?.aborted === true) {
-      socket.close(closeCodeNormalClosure);
-      throw signal.reason;
-    }
-
     socket.binaryType = "arraybuffer";
 
     const messageQueue = createAsyncQueue<string | Uint8Array>();

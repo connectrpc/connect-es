@@ -23,17 +23,7 @@ import { protocolError } from "./error.js";
  * @private Internal code, does not follow semantic versioning.
  */
 export function encodeMetadata(metadata: Headers): string {
-  const entries = new Map<string, string[]>();
-  // Headers yields set-cookie once per value, so the values are grouped by key.
-  for (const [key, value] of metadata) {
-    const entry = entries.get(key);
-    if (entry === undefined) {
-      entries.set(key, [key, value]);
-    } else {
-      entry.push(value);
-    }
-  }
-  return JSON.stringify([...entries.values()]);
+  return JSON.stringify([...metadata]);
 }
 
 /**
