@@ -41,3 +41,29 @@ export function validateTrailer(trailer: Headers, header: Headers): void {
     throw new ConnectError("protocol error: missing status", Code.Internal);
   }
 }
+
+/**
+ * Returns the error for a unary response for the gRPC and the gRPC-web
+ * protocol that ended without an output message. Call it after
+ * validateTrailer().
+ *
+ * An error status from the response header takes precedence, regardless
+ * of whether the trailer is empty: a trailers-only response may carry its
+ * status in the header only, and gRPC-web proxies may follow that header
+ * with an empty trailer.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function missingUnaryMessageError(
+  trailer: Headers,
+  headerError: ConnectError | undefined,
+  message: string,
+): ConnectError {
+  if (headerError) {
+    return headerError;
+  }
+  return new ConnectError(
+    message,
+    trailer.has(headerGrpcStatus) ? Code.Unimplemented : Code.Unknown,
+  );
+}

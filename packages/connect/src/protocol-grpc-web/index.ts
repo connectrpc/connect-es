@@ -45,6 +45,7 @@ export {
   parseTimeout,
   setTrailerStatus,
   validateTrailer,
+  missingUnaryMessageError,
   grpcStatusOk,
 } from "../protocol-grpc/index.js";
 export * from "./headers.js";
