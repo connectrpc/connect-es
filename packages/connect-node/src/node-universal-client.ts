@@ -183,6 +183,7 @@ function createNodeHttp2Client(
         req.method,
         webHeaderToNodeHeaders(req.header),
         {},
+        req.deadline,
         (stream) => {
           void sinkRequest(req, stream, sentinel);
           stream.on("response", (headers) => {
@@ -272,6 +273,7 @@ function h2Request(
   method: string,
   headers: http2.OutgoingHttpHeaders,
   options: Omit<http2.ClientSessionRequestOptions, "signal">,
+  deadline: Date | undefined,
   onStream: (stream: http2.ClientHttp2Stream) => void,
 ): void {
   const requestUrl = new URL(url);
@@ -282,6 +284,8 @@ function h2Request(
   }
   sm.request(method, requestUrl.pathname + requestUrl.search, headers, {}).then(
     (stream) => {
+      const session = stream.session;
+
       sentinel.onError((reason) => {
         // Node.js http2 streams that are aborted via an AbortSignal close with
         // an RST_STREAM with code INTERNAL_ERROR.
@@ -324,7 +328,24 @@ function h2Request(
         // arrived, it is definitely cut off, but after that we can't know, so
         // we rely on the protocol to figure it out.
         const err = connectErrorFromH2ResetCode(stream.rstCode);
-        if (err) {
+        if (
+          err !== undefined &&
+          stream.rstCode === H2Code.CANCEL &&
+          session !== undefined &&
+          !session.destroyed &&
+          deadline !== undefined &&
+          Date.now() >= deadline.getTime()
+        ) {
+          sentinel.error(
+            new ConnectError(
+              err.rawMessage,
+              Code.DeadlineExceeded,
+              undefined,
+              undefined,
+              err,
+            ),
+          );
+        } else if (err) {
           sentinel.error(err);
         } else if (!responseReceived) {
           sentinel.error(

@@ -31,6 +31,10 @@ export interface UniversalClientRequest {
   header: Headers;
   body?: AsyncIterable<Uint8Array>;
   signal?: AbortSignal;
+  /**
+   * The point in time at which the call times out.
+   */
+  deadline?: Date;
 }
 
 /**

@@ -18,7 +18,7 @@ import * as http2 from "node:http2";
 import * as http from "node:http";
 import { once } from "node:events";
 import { setImmediate } from "node:timers/promises";
-import { ConnectError } from "@connectrpc/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import { createAsyncIterable } from "@connectrpc/connect/protocol";
 import { createNodeHttpClient } from "./node-universal-client.js";
 import { Http2SessionManager } from "./http2-session-manager.js";
@@ -118,6 +118,40 @@ describe("universal node http client", () => {
           },
         );
         assert.ok(serverReceivedRequest);
+      });
+      it("should reject with Code.DeadlineExceeded after the deadline", async () => {
+        const client = server.getClient();
+        await assert.rejects(
+          client({
+            url: server.getUrl(),
+            method: "POST",
+            header: new Headers(),
+            deadline: new Date(),
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(e.code, Code.DeadlineExceeded);
+            assert.ok(e.cause instanceof ConnectError);
+            assert.strictEqual(e.cause.code, Code.Canceled);
+            return true;
+          },
+        );
+      });
+      it("should reject with Code.Canceled before the deadline", async () => {
+        const client = server.getClient();
+        await assert.rejects(
+          client({
+            url: server.getUrl(),
+            method: "POST",
+            header: new Headers(),
+            deadline: new Date(Date.now() + 60_000),
+          }),
+          (e: unknown) => {
+            assert.ok(e instanceof ConnectError);
+            assert.strictEqual(e.code, Code.Canceled);
+            return true;
+          },
+        );
       });
     });
     describe("over http/1.1", () => {
