@@ -38,6 +38,10 @@
       "import": "./dist/esm/protocol-connect/index.js",
       "require": "./dist/cjs/protocol-connect/index.js"
     },
+    "./protocol-connect-websocket": {
+      "import": "./dist/esm/protocol-connect-websocket/index.js",
+      "require": "./dist/cjs/protocol-connect-websocket/index.js"
+    },
     "./protocol-grpc": {
       "import": "./dist/esm/protocol-grpc/index.js",
       "require": "./dist/cjs/protocol-grpc/index.js"
@@ -51,6 +55,9 @@
     "*": {
       "protocol": ["./dist/cjs/protocol/index.d.ts"],
       "protocol-connect": ["./dist/cjs/protocol-connect/index.d.ts"],
+      "protocol-connect-websocket": [
+        "./dist/cjs/protocol-connect-websocket/index.d.ts"
+      ],
       "protocol-grpc": ["./dist/cjs/protocol-grpc/index.d.ts"],
       "protocol-grpc-web": ["./dist/cjs/protocol-grpc-web/index.d.ts"]
     }
