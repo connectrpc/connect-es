@@ -2,6 +2,7 @@
   "name": "@connectrpc/connect-conformance",
   "version": "2.3.0",
   "private": true,
+  "conformanceVersion": "v1.0.7",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "exports": {
@@ -14,7 +15,7 @@
     "connectconformance": "bin/connectconformance.cjs"
   },
   "scripts": {
-    "generate": "buf generate buf.build/connectrpc/conformance:v1.0.7",
+    "generate": "buf generate 'https://github.com/jonbodner-buf/conformance.git#ref=9cfc2758fd5482abe880470039760c0cbe87a7bb,subdir=proto'",
     "postgenerate": "license-header src/gen",
     "prebuild": "rm -rf ./dist/*",
     "build": "npm run build:cjs && npm run build:esm",
