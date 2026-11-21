@@ -15,6 +15,52 @@
 import { ConnectError } from "../connect-error.js";
 import { Code } from "../code.js";
 
+type AbortCallback = (signal: AbortSignal) => void;
+
+const signalListeners = new WeakMap<
+  AbortSignal,
+  {
+    callbacks: Set<AbortCallback>;
+    onAbort: () => void;
+  }
+>();
+
+function addAbortListener(signal: AbortSignal, callback: AbortCallback): void {
+  let entry = signalListeners.get(signal);
+  if (entry === undefined) {
+    const callbacks = new Set<AbortCallback>();
+    const onAbort = () => {
+      signalListeners.delete(signal);
+      try {
+        for (const cb of callbacks) {
+          cb(signal);
+        }
+      } finally {
+        callbacks.clear();
+      }
+    };
+    entry = { callbacks, onAbort };
+    signalListeners.set(signal, entry);
+    signal.addEventListener("abort", onAbort, { once: true });
+  }
+  entry.callbacks.add(callback);
+}
+
+function removeAbortListener(
+  signal: AbortSignal,
+  callback: AbortCallback,
+): void {
+  const entry = signalListeners.get(signal);
+  if (entry === undefined) {
+    return;
+  }
+  entry.callbacks.delete(callback);
+  if (entry.callbacks.size === 0) {
+    signalListeners.delete(signal);
+    signal.removeEventListener("abort", entry.onAbort);
+  }
+}
+
 /**
  * Create an AbortController that is automatically aborted if one of the given
  * signals is aborted.
@@ -31,23 +77,39 @@ export function createLinkedAbortController(
 ): AbortController {
   const controller = new AbortController();
 
-  const sa = signals.filter((s) => s !== undefined).concat(controller.signal);
-
-  for (const signal of sa) {
-    if (signal.aborted) {
-      onAbort.apply(signal);
-      break;
+  const inputSignals: AbortSignal[] = [];
+  for (const signal of signals) {
+    if (signal === undefined) {
+      continue;
     }
-    signal.addEventListener("abort", onAbort);
+    if (signal.aborted) {
+      controller.abort(getAbortSignalReason(signal));
+      return controller;
+    }
+    inputSignals.push(signal);
   }
 
-  function onAbort(this: AbortSignal) {
+  if (inputSignals.length === 0) {
+    return controller;
+  }
+
+  const onInputAbort: AbortCallback = (signal) => {
+    cleanup();
     if (!controller.signal.aborted) {
-      controller.abort(getAbortSignalReason(this));
+      controller.abort(getAbortSignalReason(signal));
     }
-    for (const signal of sa) {
-      signal.removeEventListener("abort", onAbort);
+  };
+
+  const cleanup = () => {
+    controller.signal.removeEventListener("abort", cleanup);
+    for (const signal of inputSignals) {
+      removeAbortListener(signal, onInputAbort);
     }
+  };
+
+  controller.signal.addEventListener("abort", cleanup, { once: true });
+  for (const signal of inputSignals) {
+    addAbortListener(signal, onInputAbort);
   }
 
   return controller;
