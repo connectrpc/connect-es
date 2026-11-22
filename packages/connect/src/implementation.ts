@@ -148,6 +148,24 @@ interface HandlerContextController extends HandlerContext {
   abort(reason?: unknown): void;
 }
 
+let defaultAbortReason: unknown;
+
+function getDefaultAbortReason(): unknown {
+  if (defaultAbortReason === undefined) {
+    if (typeof DOMException === "function") {
+      defaultAbortReason = new DOMException(
+        "This operation was aborted",
+        "AbortError",
+      );
+    } else {
+      const e = new Error("This operation was aborted");
+      e.name = "AbortError";
+      defaultAbortReason = e;
+    }
+  }
+  return defaultAbortReason;
+}
+
 /**
  * Create a new HandlerContext.
  *
@@ -180,7 +198,11 @@ export function createHandlerContext(
     responseTrailer: new Headers(init.responseTrailer),
     abort(reason?: unknown) {
       deadline.cleanup();
-      abortController.abort(reason);
+      if (!abortController.signal.aborted) {
+        abortController.abort(
+          reason === undefined ? getDefaultAbortReason() : reason,
+        );
+      }
     },
     values: init.contextValues ?? createContextValues(),
   };
