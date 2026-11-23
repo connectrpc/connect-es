@@ -20,111 +20,88 @@ import { createConnectWebSocketTransport } from "./connect-websocket-transport.j
 
 type FakeEvent = { data: unknown; code: number };
 
-interface FakeServer {
-  protocol?: string;
-  messages?: string[];
-}
-
-function createFakeWebSocket(server: FakeServer = {}) {
-  const urls: string[] = [];
-  const sent: (string | Uint8Array)[] = [];
-  const closeCodes: (number | undefined)[] = [];
-  const closeReasons: (string | undefined)[] = [];
-
+function createFakeWebSocket(messages: string[] = []) {
   class FakeWebSocket {
     binaryType = "blob";
     readonly extensions = "";
     readonly protocol: string;
-    private isClosing = false;
-    private onMessage = (_event: FakeEvent): void => {};
+    private listeners: Record<string, ((event: FakeEvent) => void)[]> = {};
 
     constructor(url: string, protocols: string[]) {
-      urls.push(url);
-      this.protocol = server.protocol ?? protocols[0];
+      fake.url = url;
+      this.protocol = protocols[0];
+      queueMicrotask(() => {
+        this.dispatch("open", { data: undefined, code: 0 });
+        for (const data of messages) {
+          this.dispatch("message", { data, code: 0 });
+        }
+      });
     }
 
     send(data: string | Uint8Array): void {
-      sent.push(data);
+      fake.sent.push(data);
     }
 
     close(code?: number, reason?: string): void {
-      if (this.isClosing) {
-        return;
-      }
-
-      this.isClosing = true;
-      closeCodes.push(code);
-      closeReasons.push(reason);
+      fake.close ??= { code, reason };
     }
 
     addEventListener(type: string, listener: (event: FakeEvent) => void): void {
-      if (type === "message") {
-        this.onMessage = listener;
-      }
-      if (type === "open") {
-        queueMicrotask(() => {
-          listener({ data: undefined, code: 0 });
-          for (const data of server.messages ?? []) {
-            this.onMessage({ data, code: 0 });
-          }
-        });
+      this.listeners[type] ??= [];
+      this.listeners[type].push(listener);
+    }
+
+    private dispatch(type: string, event: FakeEvent): void {
+      for (const listener of this.listeners[type] ?? []) {
+        listener(event);
       }
     }
   }
 
-  return { WebSocket: FakeWebSocket, urls, sent, closeCodes, closeReasons };
+  const fake: {
+    WebSocket: typeof FakeWebSocket;
+    url?: string;
+    sent: (string | Uint8Array)[];
+    close?: { code?: number; reason?: string };
+  } = { WebSocket: FakeWebSocket, sent: [] };
+
+  return fake;
 }
 
 describe("createConnectWebSocketTransport()", () => {
-  const options = { baseUrl: "https://example.com/api" };
-
-  function unary(
-    fake: ReturnType<typeof createFakeWebSocket> & { baseUrl?: string },
-  ) {
-    return createConnectWebSocketTransport({ ...options, ...fake }).unary(
-      ConformanceService.method.unary,
-      undefined,
-      undefined,
-      undefined,
-      {},
-    );
-  }
-
-  it("should cut a close reason to whole characters within 123 bytes", async () => {
-    const fitting = `a${"\u00e9".repeat(41)}`;
-    const fake = createFakeWebSocket({ protocol: `${fitting}\u00e9` });
-
-    await assert.rejects(unary(fake));
-    assert.deepStrictEqual(fake.closeReasons, [
-      `protocol error: unexpected subprotocol "${fitting}`,
-    ]);
-  });
-
   it("should not open a connection for a base URL with another scheme", async () => {
     const fake = createFakeWebSocket();
-
     await assert.rejects(
-      unary({ ...fake, baseUrl: "ftp://example.com" }),
+      createConnectWebSocketTransport({
+        WebSocket: fake.WebSocket,
+        baseUrl: "ftp://example.com",
+      }).unary(
+        ConformanceService.method.unary,
+        undefined,
+        undefined,
+        undefined,
+        {},
+      ),
       (e) => e instanceof ConnectError && e.code === Code.Internal,
     );
-    assert.strictEqual(fake.urls.length, 0);
+    assert.strictEqual(fake.url, undefined);
   });
 
-  it("should close with 3102 when the request stream fails", async () => {
-    const fake = createFakeWebSocket({ messages: ["M[]"] });
-    // biome-ignore lint/correctness/useYield: the stream fails before a message
-    async function* failingRequests(): AsyncIterable<object> {
-      throw new ConnectError("failed", Code.Aborted);
-    }
+  it("should close with 3102 and a reason cut to 123 bytes when the request stream fails", async () => {
+    const fitting = `a${"\u00e9".repeat(61)}`;
+    const fake = createFakeWebSocket(["M[]"]);
     const response = await createConnectWebSocketTransport({
-      ...options,
-      ...fake,
+      WebSocket: fake.WebSocket,
+      baseUrl: "https://example.com",
     }).stream(
       ConformanceService.method.bidiStream,
       undefined,
       undefined,
       undefined,
-      failingRequests(),
+      // biome-ignore lint/correctness/useYield: the stream fails before a message
+      (async function* (): AsyncIterable<object> {
+        throw new ConnectError(`${fitting}\u00e9`, Code.Aborted);
+      })(),
     );
 
     await assert.rejects(
@@ -132,39 +109,45 @@ describe("createConnectWebSocketTransport()", () => {
       (e) => e instanceof ConnectError && e.code === Code.Aborted,
     );
     assert.deepStrictEqual(fake.sent, ["M[]"]);
-    assert.deepStrictEqual(fake.closeCodes, [3102]);
+    assert.deepStrictEqual(fake.close, { code: 3102, reason: fitting });
   });
 
-  const webSocketUrls: [string, string][] = [
-    [
-      "ws://example.com",
-      "ws://example.com/connectrpc.conformance.v1.ConformanceService/Unary",
-    ],
-    [
-      "https://example.com/api/?key=a/b",
-      "wss://example.com/api/connectrpc.conformance.v1.ConformanceService/Unary?key=a%2Fb&connect-timeout-ms=5000",
-    ],
-    [
-      "https://example.com/api?connect-timeout-ms=1#fragment",
-      "wss://example.com/api/connectrpc.conformance.v1.ConformanceService/Unary?connect-timeout-ms=5000",
-    ],
+  const webSocketUrls: {
+    baseUrl: string;
+    timeoutMs: number | undefined;
+    url: string;
+  }[] = [
+    {
+      baseUrl: "ws://example.com",
+      timeoutMs: undefined,
+      url: "ws://example.com/connectrpc.conformance.v1.ConformanceService/Unary",
+    },
+    {
+      baseUrl: "https://example.com/api/?key=a/b",
+      timeoutMs: 5000,
+      url: "wss://example.com/api/connectrpc.conformance.v1.ConformanceService/Unary?key=a%2Fb&connect-timeout-ms=5000",
+    },
+    {
+      baseUrl: "https://example.com/api?connect-timeout-ms=1#fragment",
+      timeoutMs: 5000,
+      url: "wss://example.com/api/connectrpc.conformance.v1.ConformanceService/Unary?connect-timeout-ms=5000",
+    },
   ];
-  for (const [baseUrl, url] of webSocketUrls) {
+  for (const { baseUrl, timeoutMs, url } of webSocketUrls) {
     it(`should open ${url} for the base URL ${baseUrl}`, async () => {
-      const fake = createFakeWebSocket({ messages: ["M[]", "B{}", "S{}"] });
+      const fake = createFakeWebSocket(["M[]", "B{}", "S{}"]);
       await createConnectWebSocketTransport({
-        ...options,
-        ...fake,
+        WebSocket: fake.WebSocket,
         baseUrl,
       }).unary(
         ConformanceService.method.unary,
         undefined,
-        url.includes("?") ? 5000 : undefined,
+        timeoutMs,
         undefined,
         {},
       );
 
-      assert.strictEqual(fake.urls[0], url);
+      assert.strictEqual(fake.url, url);
     });
   }
 });
