@@ -20,10 +20,14 @@ import { ConnectError } from "../connect-error.js";
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export function protocolError(message: string, cause?: unknown): ConnectError {
+export function protocolError(
+  message: string,
+  cause?: unknown,
+  code = Code.Internal,
+): ConnectError {
   return new ConnectError(
     `protocol error: ${message}`,
-    Code.Internal,
+    code,
     undefined,
     undefined,
     cause,

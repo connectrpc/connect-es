@@ -208,7 +208,11 @@ export function deserializeMessage<Desc extends DescMessage>(
           : fromJsonString(desc, payload, getJsonOptions(options.jsonOptions));
         return { type: "body", value };
       } catch (e) {
-        throw protocolError("B message has an invalid payload", e);
+        throw protocolError(
+          "B message has an invalid payload",
+          e,
+          Code.InvalidArgument,
+        );
       }
     }
     case markerMetadata:

@@ -205,7 +205,7 @@ function createUrl(
   method: DescMethodUnary | DescMethodStreaming,
   timeoutMs: number | undefined,
 ): string {
-  const url = new URL(baseUrl, globalThis.location?.href);
+  const url = new URL(baseUrl || "/", globalThis.location?.href);
   switch (url.protocol) {
     case "http:":
       url.protocol = "ws:";
