@@ -71,11 +71,6 @@ export interface WebSocketLike {
   readonly protocol: string;
 
   /**
-   * The extensions selected by the server, or an empty string for none.
-   */
-  readonly extensions: string;
-
-  /**
    * Sends a string as a text message, or bytes as a binary message.
    */
   send(data: string | Uint8Array<ArrayBuffer>): void;

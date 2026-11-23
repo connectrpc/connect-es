@@ -23,7 +23,6 @@ type FakeEvent = { data: unknown; code: number };
 function createFakeWebSocket(messages: string[] = []) {
   class FakeWebSocket {
     binaryType = "blob";
-    readonly extensions = "";
     readonly protocol: string;
     private listeners: Record<string, ((event: FakeEvent) => void)[]> = {};
 
