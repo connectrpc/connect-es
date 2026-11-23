@@ -77,9 +77,11 @@ export function createDeadlineSignal(timeoutMs: number | undefined): {
   const maxTimerMs = 0x7fffffff;
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   if (timeoutMs !== undefined) {
-    if (timeoutMs <= 0) listener();
-    else if (timeoutMs <= maxTimerMs)
+    if (timeoutMs <= 0) {
+      listener();
+    } else if (timeoutMs <= maxTimerMs) {
       timeoutId = setTimeout(listener, timeoutMs);
+    }
   }
   return {
     signal: controller.signal,
