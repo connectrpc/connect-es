@@ -80,6 +80,13 @@ describe("createDeadlineSignal()", () => {
       assert.ok(!d.signal.aborted);
     });
   });
+  it("should never abort with a timeout above the setTimeout limit", (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const d = createDeadlineSignal(0x7fffffff + 1);
+
+    t.mock.timers.runAll();
+    assert.ok(!d.signal.aborted);
+  });
   it("should be aborted after timeout", async () => {
     const timeoutMs = 5;
     const d = createDeadlineSignal(timeoutMs);
