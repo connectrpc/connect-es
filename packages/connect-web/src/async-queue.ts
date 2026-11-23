@@ -13,9 +13,7 @@
 // limitations under the License.
 
 /**
- * Creates a queue that turns pushed items into an async iterable.
- *
- * @private Internal code, does not follow semantic versioning.
+ * Creates a queue that buffers pushed items for a single reader.
  */
 export function createAsyncQueue<T>(): {
   /**
@@ -29,26 +27,14 @@ export function createAsyncQueue<T>(): {
   end(): void;
 
   /**
-   * Reads the items in the order they were pushed, for a single reader.
+   * Reads the next item in the order they were pushed.
    */
-  read(): AsyncIterable<T>;
+  next(): Promise<IteratorResult<T, undefined>>;
 } {
   const items: T[] = [];
-  const done: IteratorResult<T> = { done: true, value: undefined };
+  const done: IteratorResult<T, undefined> = { done: true, value: undefined };
   let didEnd = false;
-  let wake: ((result: IteratorResult<T>) => void) | undefined;
-
-  function next(): Promise<IteratorResult<T>> {
-    if (items.length > 0) {
-      return Promise.resolve({ done: false, value: items.shift() as T });
-    }
-    if (didEnd) {
-      return Promise.resolve(done);
-    }
-    return new Promise((resolve) => {
-      wake = resolve;
-    });
-  }
+  let wake: ((result: IteratorResult<T, undefined>) => void) | undefined;
 
   return {
     push(item) {
@@ -66,8 +52,16 @@ export function createAsyncQueue<T>(): {
       didEnd = true;
       wake?.(done);
     },
-    read() {
-      return { [Symbol.asyncIterator]: () => ({ next }) };
+    next() {
+      if (items.length > 0) {
+        return Promise.resolve({ done: false, value: items.shift() as T });
+      }
+      if (didEnd) {
+        return Promise.resolve(done);
+      }
+      return new Promise((resolve) => {
+        wake = resolve;
+      });
     },
   };
 }

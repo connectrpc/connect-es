@@ -18,5 +18,18 @@
 // following exports, we recommend that you do so with an exact version
 // constraint (no ~ or ^).
 
-export { createTransport } from "./transport.js";
-export type { CommonWebSocketTransportOptions } from "./transport.js";
+export {
+  closeCodeNormalClosure,
+  closeCodeInvalidFramePayloadData,
+  closeCodeMessageTooBig,
+  closeCodeConnectClientError,
+} from "./close-code.js";
+export { protocolError } from "./error.js";
+export { deserializeMessage, serializeMessage } from "./message.js";
+export type {
+  ClientMessage,
+  SerializationOptions,
+} from "./message.js";
+export { validateMetadata } from "./metadata.js";
+export { queryParamTimeoutMs } from "./query-params.js";
+export { subprotocolJson, subprotocolProto } from "./subprotocol.js";

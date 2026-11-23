@@ -115,7 +115,7 @@ export type ClientMessage<I> = Message<I, undefined>;
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export type ServerMessage<O> = Message<O, EndStreamResponse>;
+type ServerMessage<O> = Message<O, EndStreamResponse>;
 
 /**
  * Selects the format of B messages and configures their serialization.

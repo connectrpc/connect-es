@@ -22,12 +22,6 @@ export type {
   UniversalServerResponse,
 } from "./universal.js";
 export type { Compression } from "./compression.js";
-export type {
-  UniversalWebSocketClientFn,
-  UniversalWebSocketClientRequest,
-  UniversalWebSocket,
-} from "./universal-websocket.js";
-export { createWebSocketClient } from "./universal-websocket-client.js";
 export type { UniversalHandler } from "./universal-handler.js";
 export { createUniversalHandlerClient } from "./universal-handler-client.js";
 export {

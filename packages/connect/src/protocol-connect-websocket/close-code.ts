@@ -22,34 +22,6 @@
 export const closeCodeNormalClosure = 1000;
 
 /**
- * Going Away: an endpoint is going away, such as a server going down.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export const closeCodeGoingAway = 1001;
-
-/**
- * Protocol error: an endpoint ends the connection due to a protocol error.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export const closeCodeProtocolError = 1002;
-
-/**
- * No Status Rcvd: reserved to report that no status code was present.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export const closeCodeNoStatusRcvd = 1005;
-
-/**
- * Abnormal Closure: reserved to report a close without a Close frame.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export const closeCodeAbnormalClosure = 1006;
-
-/**
  * Invalid frame payload data: a message had data unlike its type.
  *
  * @private Internal code, does not follow semantic versioning.
@@ -62,13 +34,6 @@ export const closeCodeInvalidFramePayloadData = 1007;
  * @private Internal code, does not follow semantic versioning.
  */
 export const closeCodeMessageTooBig = 1009;
-
-/**
- * Internal Error: a server hit an unexpected condition.
- *
- * @private Internal code, does not follow semantic versioning.
- */
-export const closeCodeInternalError = 1011;
 
 /**
  * ConnectRPC Client Error: sent for a failed RPC.
