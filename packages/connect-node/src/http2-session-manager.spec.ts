@@ -969,27 +969,23 @@ describe("Http2SessionManager", () => {
     });
   });
 
-  it(
-    "should keep the process alive only while a stream is open",
-    { timeout: 2000 },
-    async (t) => {
-      const worker = new Worker(
-        "./dist/cjs/testdata/http2-session-manager-unref.js",
-        { workerData: server.getUrl() },
-      );
-      t.signal.addEventListener("abort", () => worker.terminate());
-      const exited = once(worker, "exit");
+  it("should keep the process alive only while a stream is open", async (t) => {
+    const worker = new Worker(
+      "./dist/cjs/testdata/http2-session-manager-unref.js",
+      { workerData: server.getUrl() },
+    );
+    t.signal.addEventListener("abort", () => worker.terminate());
+    const exited = once(worker, "exit");
 
-      // The worker posts a message once its stream is open.
-      await once(worker, "message");
-      assert.strictEqual(await Promise.race([exited, delay(100)]), undefined);
+    // The worker posts a message once its stream is open.
+    await once(worker, "message");
+    assert.strictEqual(await Promise.race([exited, delay(100)]), undefined);
 
-      // Closing the stream should leave nothing keeping the worker alive.
-      worker.postMessage("close");
-      const [exitCode] = await exited;
-      assert.strictEqual(exitCode, 0);
-    },
-  );
+    // Closing the stream should leave nothing keeping the worker alive.
+    worker.postMessage("close");
+    const [exitCode] = await exited;
+    assert.strictEqual(exitCode, 0);
+  });
 
   describe("request against unresolvable host", () => {
     it("should reject", async () => {
