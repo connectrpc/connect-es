@@ -93,13 +93,19 @@ export function validateMetadata(metadata: Headers): void {
   }
 }
 
-/** Matches a lower-case field name, which is a token in RFC 9110. */
+/**
+ * Matches a lower-case field name, which is a token in RFC 9110.
+ */
 const keyRegExp = /^[a-z\d_!#$%&'*+.^`|~-]+$/;
 
-/** Matches a value of only visible ASCII characters, spaces, and tabs. */
+/**
+ * Matches a value of only visible ASCII characters, spaces, and tabs.
+ */
 const valueRegExp = /^[\t\x20-\x7e]*$/;
 
-/** Matches the keys that a client may not send as metadata. */
+/**
+ * Matches the keys that a client may not send as metadata.
+ */
 const reservedKeyRegExp = /* @__PURE__ */ new RegExp(
   "^(" +
     "accept-charset|accept-encoding|access-control-request-headers|" +

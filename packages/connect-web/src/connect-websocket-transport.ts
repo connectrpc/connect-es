@@ -52,69 +52,49 @@ import {
 } from "@connectrpc/connect/protocol-connect-websocket";
 import type {
   ClientMessage,
-  SerializationOptions,
+  MessageSerializationOptions,
 } from "@connectrpc/connect/protocol-connect-websocket";
 import { createAsyncQueue } from "./async-queue.js";
 
 /**
- * The part of the standard WebSocket API that the transport uses.
- */
-export interface WebSocketLike {
-  /**
-   * The type of binary messages, which the transport sets to "arraybuffer".
-   */
-  binaryType: string;
-
-  /**
-   * The subprotocol selected by the server, or an empty string for none.
-   */
-  readonly protocol: string;
-
-  /**
-   * Sends a string as a text message, or bytes as a binary message.
-   */
-  send(data: string | Uint8Array<ArrayBuffer>): void;
-
-  /**
-   * Closes the connection with a close code and a reason.
-   */
-  close(code?: number, reason?: string): void;
-
-  /**
-   * Listens for the connection to open, to receive a message, or to close.
-   */
-  addEventListener(type: "open", listener: () => void): void;
-  addEventListener(
-    type: "message",
-    listener: (event: { data: unknown }) => void,
-  ): void;
-  addEventListener(
-    type: "close",
-    listener: (event: { code: number }) => void,
-  ): void;
-}
-
-/**
  * Options used to configure the Connect-over-WebSocket transport.
+ *
+ * See createConnectWebSocketTransport().
  */
 export interface ConnectWebSocketTransportOptions {
   /**
-   * The base URL for all RPCs, with the scheme http, https, ws, or wss.
+   * Base URI for all WebSocket connections.
+   *
+   * Connections will be made to <baseUrl>/<package>.<service>/method
+   *
+   * Example: `baseUrl: "https://example.com/my-api"`
+   *
+   * This will open a WebSocket connection to
+   * `wss://example.com/my-api/my_package.MyService/Foo`.
+   *
+   * The scheme may be http, https, ws, or wss, where http and https are
+   * mapped to ws and wss.
+   *
+   * If your API is served from the same domain as your site, use
+   * `baseUrl: window.location.origin` or simply "/".
    */
   baseUrl: string;
 
   /**
-   * Selects the Protobuf binary format, where the default is JSON.
+   * Uses the Protobuf binary format instead of JSON.
+   * Disabled by default.
    */
   useBinaryFormat?: boolean;
 
   /**
-   * Interceptors that are applied to all calls running through this transport.
+   * Interceptors that should be applied to all calls running through
+   * this transport. See the Interceptor type for details.
    */
   interceptors?: Interceptor[];
 
   /**
-   * Options for the JSON format, where unknown fields are ignored by default.
+   * Options for the JSON format.
+   * By default, unknown fields are ignored.
    */
   jsonOptions?: Partial<JsonReadOptions & JsonWriteOptions>;
 
@@ -124,22 +104,17 @@ export interface ConnectWebSocketTransportOptions {
   binaryOptions?: Partial<BinaryReadOptions & BinaryWriteOptions>;
 
   /**
-   * Overrides the WebSocket implementation used by the transport.
-   */
-  WebSocket?: new (
-    url: string,
-    protocols: string[],
-  ) => WebSocketLike;
-
-  /**
-   * The timeout in milliseconds for all calls, unless a call sets its own.
+   * The timeout in milliseconds to apply to all requests.
+   *
+   * This can be overridden on a per-request basis by passing a timeoutMs.
    */
   defaultTimeoutMs?: number;
 }
 
 /**
- * Creates a Transport for the Connect-over-WebSocket protocol, which supports
- * all four RPC types in web browsers by opening one WebSocket per call.
+ * Create a Transport for the Connect-over-WebSocket protocol, which makes
+ * all four RPC types available to web browsers. It uses the WebSocket API
+ * and opens one connection per call.
  */
 export function createConnectWebSocketTransport(
   options: ConnectWebSocketTransportOptions,
@@ -240,7 +215,9 @@ export function createConnectWebSocketTransport(
   };
 }
 
-/** Creates the WebSocket URL of a call from the base URL of the transport. */
+/**
+ * Creates the WebSocket URL of a call from the base URL of the transport.
+ */
 function createUrl(
   baseUrl: string,
   method: DescMethodUnary | DescMethodStreaming,
@@ -272,7 +249,9 @@ function createUrl(
   return url.toString();
 }
 
-/** Runs one call on a new connection, and returns once the header is read. */
+/**
+ * Runs one call on a new connection, and returns once the header is read.
+ */
 async function call<I extends DescMessage, O extends DescMessage>(
   options: ConnectWebSocketTransportOptions,
   method: DescMethodUnary<I, O> | DescMethodStreaming<I, O>,
@@ -288,7 +267,7 @@ async function call<I extends DescMessage, O extends DescMessage>(
   message: AsyncIterable<MessageShape<O>>;
 }> {
   validateMetadata(req.header);
-  const serializationOptions: SerializationOptions = {
+  const serializationOptions: MessageSerializationOptions = {
     ...options,
     useBinaryFormat: options.useBinaryFormat ?? false,
   };
@@ -296,10 +275,7 @@ async function call<I extends DescMessage, O extends DescMessage>(
     ? subprotocolProto
     : subprotocolJson;
   req.signal.throwIfAborted();
-  const socket: WebSocketLike = new (options.WebSocket ?? globalThis.WebSocket)(
-    req.url,
-    [subprotocol],
-  );
+  const socket = new WebSocket(req.url, [subprotocol]);
   socket.binaryType = "arraybuffer";
   const messageQueue = createAsyncQueue<string | Uint8Array>();
 
@@ -444,7 +420,9 @@ async function call<I extends DescMessage, O extends DescMessage>(
   return { header, trailer, message: readBodies() };
 }
 
-/** Creates the error for a connection that closed before the end message. */
+/**
+ * Creates the error for a connection that closed before the end message.
+ */
 function closeError(closeCode: number): ConnectError {
   let code: Code;
   switch (closeCode) {

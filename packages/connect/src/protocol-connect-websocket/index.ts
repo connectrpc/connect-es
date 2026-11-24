@@ -28,7 +28,7 @@ export { protocolError } from "./error.js";
 export { deserializeMessage, serializeMessage } from "./message.js";
 export type {
   ClientMessage,
-  SerializationOptions,
+  MessageSerializationOptions,
 } from "./message.js";
 export { validateMetadata } from "./metadata.js";
 export { queryParamTimeoutMs } from "./query-params.js";

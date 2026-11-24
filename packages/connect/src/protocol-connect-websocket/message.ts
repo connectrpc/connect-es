@@ -37,31 +37,45 @@ import type { EndStreamResponse } from "../protocol-connect/end-stream.js";
 import { protocolError } from "./error.js";
 import { decodeMetadata, encodeMetadata } from "./metadata.js";
 
-/** Marks a message that carries one RPC message. */
+/**
+ * Marks a message that carries one RPC message.
+ */
 const markerBody = "B";
 
-/** Marks a message that carries leading metadata. */
+/**
+ * Marks a message that carries leading metadata.
+ */
 const markerMetadata = "M";
 
-/** Marks the message that ends the server stream. */
+/**
+ * Marks the message that ends the server stream.
+ */
 const markerServerEnd = "S";
 
-/** Marks the message that ends the client stream. */
+/**
+ * Marks the message that ends the client stream.
+ */
 const markerClientEnd = "C";
 
-/** The first byte of every message, which names its type. */
+/**
+ * The first byte of every message, which names its type.
+ */
 type Marker =
   | typeof markerBody
   | typeof markerMetadata
   | typeof markerServerEnd
   | typeof markerClientEnd;
 
-/** A marker and its payload, which is always text unless the marker is B. */
+/**
+ * A marker and its payload, which is always text unless the marker is B.
+ */
 type RawMessage =
   | { marker: typeof markerBody; payload: string | Uint8Array }
   | { marker: Exclude<Marker, typeof markerBody>; payload: string };
 
-/** Joins a marker and its payload into a WebSocket message of the same type. */
+/**
+ * Joins a marker and its payload into a WebSocket message of the same type.
+ */
 function encodeMessage({
   marker,
   payload,
@@ -75,7 +89,9 @@ function encodeMessage({
   return data;
 }
 
-/** Splits the data of one WebSocket message into its marker and payload. */
+/**
+ * Splits the data of one WebSocket message into its marker and payload.
+ */
 function decodeMessage(data: string | Uint8Array): RawMessage {
   if (data.length === 0) {
     throw protocolError("empty message carries no marker");
@@ -97,7 +113,9 @@ function decodeMessage(data: string | Uint8Array): RawMessage {
   }
 }
 
-/** A parsed message, where E is the value that ends the stream. */
+/**
+ * A parsed message, where E is the value that ends the stream.
+ */
 type Message<T, E> =
   | { type: "metadata"; value: Headers }
   | { type: "body"; value: T }
@@ -112,8 +130,6 @@ export type ClientMessage<I> = Message<I, undefined>;
 
 /**
  * A parsed message that a server sent.
- *
- * @private Internal code, does not follow semantic versioning.
  */
 type ServerMessage<O> = Message<O, EndStreamResponse>;
 
@@ -122,7 +138,7 @@ type ServerMessage<O> = Message<O, EndStreamResponse>;
  *
  * @private Internal code, does not follow semantic versioning.
  */
-export interface SerializationOptions {
+export interface MessageSerializationOptions {
   /**
    * Sends and expects B messages as Protobuf in binary frames, or as JSON in
    * text frames.
@@ -150,7 +166,7 @@ export function serializeMessage<Desc extends DescMessage>(
     | ClientMessage<MessageShape<Desc>>
     | ServerMessage<MessageShape<Desc>>,
   desc: Desc,
-  options: SerializationOptions,
+  options: MessageSerializationOptions,
 ): string | Uint8Array<ArrayBuffer> {
   switch (message.type) {
     case "metadata":
@@ -191,7 +207,7 @@ export function serializeMessage<Desc extends DescMessage>(
 export function deserializeMessage<Desc extends DescMessage>(
   data: string | Uint8Array,
   desc: Desc,
-  options: SerializationOptions,
+  options: MessageSerializationOptions,
 ): ClientMessage<MessageShape<Desc>> | ServerMessage<MessageShape<Desc>> {
   const { marker, payload } = decodeMessage(data);
   switch (marker) {

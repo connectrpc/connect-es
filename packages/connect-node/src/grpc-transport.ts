@@ -45,8 +45,9 @@ export type GrpcTransportOptions = NodeHttp2TransportOptions & {
   baseUrl: string;
 
   /**
-   * By default, clients use the binary format for gRPC-web, because
-   * not all gRPC-web implementations support JSON.
+   * Uses the Protobuf binary format instead of JSON.
+   * Enabled by default, because not all gRPC-web implementations
+   * support JSON.
    */
   useBinaryFormat?: boolean;
 

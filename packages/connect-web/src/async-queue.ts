@@ -14,6 +14,8 @@
 
 /**
  * Creates a queue that buffers pushed items for a single reader.
+ *
+ * @private Internal code, does not follow semantic versioning.
  */
 export function createAsyncQueue<T>(): {
   /**
