@@ -36,7 +36,8 @@ export const closeCodeInvalidFramePayloadData = 1007;
 export const closeCodeMessageTooBig = 1009;
 
 /**
- * ConnectRPC Client Error: sent for a failed RPC.
+ * Connect-over-WebSocket client error: the client ended an RPC because of
+ * a protocol error or another unexpected condition.
  *
  * @private Internal code, does not follow semantic versioning.
  */

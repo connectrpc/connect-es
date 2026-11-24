@@ -95,16 +95,19 @@ export function validateMetadata(metadata: Headers): void {
 
 /**
  * Matches a lower-case field name, which is a token in RFC 9110.
+ * See RFC 008 §7.3.1, "Rules for keys and values in a Leading-Metadata message".
  */
 const keyRegExp = /^[a-z\d_!#$%&'*+.^`|~-]+$/;
 
 /**
  * Matches a value of only visible ASCII characters, spaces, and tabs.
+ * See RFC 008 §7.3.1, "Rules for keys and values in a Leading-Metadata message".
  */
 const valueRegExp = /^[\t\x20-\x7e]*$/;
 
 /**
  * Matches the keys that a client may not send as metadata.
+ * See RFC 008 §7.3.2, "Reserved header names".
  */
 const reservedKeyRegExp = /* @__PURE__ */ new RegExp(
   "^(" +

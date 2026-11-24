@@ -424,6 +424,7 @@ async function call<I extends DescMessage, O extends DescMessage>(
 
 /**
  * Creates the error for a connection that closed before the end message.
+ * See RFC 008 §13.1, "Closing without a terminal message".
  */
 function closeError(closeCode: number): ConnectError {
   let code: Code;
