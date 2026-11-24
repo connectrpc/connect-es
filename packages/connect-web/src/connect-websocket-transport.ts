@@ -304,6 +304,7 @@ async function call<I extends DescMessage, O extends DescMessage>(
     });
   });
   socket.addEventListener("message", (event) => {
+    // TODO: Limit the queue, since WebSocket cannot pause for backpressure.
     messageQueue.push(
       typeof event.data === "string"
         ? event.data
@@ -347,6 +348,7 @@ async function call<I extends DescMessage, O extends DescMessage>(
     try {
       send({ type: "metadata", value: req.header });
       for await (const message of req.message) {
+        // TODO: Wait while socket.bufferedAmount is high, for backpressure.
         send({ type: "body", value: message });
       }
       send({ type: "end", value: undefined });
