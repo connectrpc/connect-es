@@ -76,10 +76,10 @@ export function createDeadlineSignal(timeoutMs: number | undefined): {
   // Largest delay setTimeout accepts; larger values fire immediately.
   const maxTimerMs = 0x7fffffff;
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  if (timeoutMs !== undefined) {
+  if (timeoutMs !== undefined && timeoutMs <= maxTimerMs) {
     if (timeoutMs <= 0) {
       listener();
-    } else if (timeoutMs <= maxTimerMs) {
+    } else {
       timeoutId = setTimeout(listener, timeoutMs);
     }
   }
