@@ -285,7 +285,6 @@ function h2Request(
   sm.request(method, requestUrl.pathname + requestUrl.search, headers, {}).then(
     (stream) => {
       const session = stream.session;
-
       sentinel.onError((reason) => {
         // Node.js http2 streams that are aborted via an AbortSignal close with
         // an RST_STREAM with code INTERNAL_ERROR.
@@ -328,25 +327,31 @@ function h2Request(
         // arrived, it is definitely cut off, but after that we can't know, so
         // we rely on the protocol to figure it out.
         const err = connectErrorFromH2ResetCode(stream.rstCode);
-        if (
-          err !== undefined &&
-          stream.rstCode === H2Code.CANCEL &&
-          session !== undefined &&
-          !session.destroyed &&
-          deadline !== undefined &&
-          Date.now() >= deadline.getTime()
-        ) {
-          sentinel.error(
-            new ConnectError(
-              err.rawMessage,
-              Code.DeadlineExceeded,
-              undefined,
-              undefined,
-              err,
-            ),
-          );
-        } else if (err) {
-          sentinel.error(err);
+
+        if (err !== undefined) {
+          // A server may reset the stream at the deadline before our own
+          // timer fires, so we report DeadlineExceeded instead of Canceled.
+          const isDeadlineReset =
+            // gRPC servers send RST_STREAM CANCEL when the deadline expires.
+            stream.rstCode === H2Code.CANCEL &&
+            // A dropped connection can also report CANCEL, but destroys the
+            // session first.
+            session?.destroyed === false &&
+            deadline !== undefined &&
+            Date.now() >= deadline.getTime();
+          if (isDeadlineReset) {
+            sentinel.error(
+              new ConnectError(
+                err.rawMessage,
+                Code.DeadlineExceeded,
+                undefined,
+                undefined,
+                err,
+              ),
+            );
+          } else {
+            sentinel.error(err);
+          }
         } else if (!responseReceived) {
           sentinel.error(
             new ConnectError(
