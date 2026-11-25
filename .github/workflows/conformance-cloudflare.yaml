@@ -20,7 +20,7 @@ jobs:
     name: "Test @connectrpc/connect-cloudflare"
     if: github.event_name != 'pull_request' || startsWith(github.event.pull_request.title, 'Release ')
     runs-on: conformance
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

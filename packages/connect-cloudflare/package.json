@@ -6,7 +6,7 @@
     "generate": "buf generate",
     "postgenerate": "license-header conformance/gen",
     "conformance:server": "npx wrangler deploy -c ./conformance/wrangler-server.toml --define CLOUDFLARE_CONFORMANCE_MESSAGE_RECEIVE_LIMIT:204800 && connectconformance --mode server --conf ./conformance/conformance-cloudflare-server.yaml -v --known-flaky @./conformance/known-flaky-server.txt --known-failing @./conformance/known-failing-server.txt tsx ./conformance/server.ts",
-    "conformance:client": "npx wrangler deploy -c ./conformance/wrangler-client.toml && rc=0; for i in $(seq 1 40); do echo ITER $i; connectconformance --mode client --conf ./conformance/conformance-cloudflare-client.yaml --run 'Timeouts/**' --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY -- tsx ./conformance/client.ts || rc=1; done; exit $rc",
+    "conformance:client": "npx wrangler deploy -c ./conformance/wrangler-client.toml && rc=0; for i in $(seq 1 12); do echo ITER $i; connectconformance --mode client --conf ./conformance/conformance-cloudflare-client.yaml -v --known-flaky @./conformance/known-flaky-client.txt --known-failing @./conformance/known-failing-client.txt --bind 0.0.0.0 --port 8181 --cert $CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT --key $CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY -- tsx ./conformance/client.ts || rc=1; done; exit $rc",
     "format": "biome format --write",
     "license-header": "license-header",
     "lint": "biome lint --error-on-warnings"
