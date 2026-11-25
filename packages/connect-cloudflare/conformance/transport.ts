@@ -43,72 +43,22 @@ function createWorkerHttpClient(cf?: RequestInitCfProperties) {
   return createFetchClient(async (input, init) => {
     const cfInit: CloudflareRequestInit | undefined =
       cf === undefined ? init : { ...init, cf };
-    const signal = (input as Request).signal;
-    const t0 = Date.now();
-    const events: string[] = [];
-    const note = (s: string) => events.push(`+${Date.now() - t0}ms ${s}`);
-    signal.addEventListener("abort", () => note("fetch-signal-aborted"));
-    const annotate = (phase: string, err: unknown) => {
-      const name = err instanceof Error ? err.name : typeof err;
-      const message = err instanceof Error ? err.message : String(err);
-      const stack = err instanceof Error ? (err.stack ?? "").split("\n").slice(1, 4).map((l) => l.trim()).join(" < ") : "";
-      note(`${phase}-error ${name}:${message} sigAborted=${signal.aborted} stack=${stack}`);
-      const annotated = new Error(`${message} FETCHDIAG[${events.join(" | ")}]`);
-      annotated.name = name;
-      return annotated;
-    };
-    let res: Response;
-    try {
-      res = await fetch(input, cfInit);
-    } catch (e) {
-      throw annotate("fetch", e);
-    }
-    const headerNames: string[] = [];
-    res.headers.forEach((_, k) => headerNames.push(k));
-    note(`response status=${res.status} headers=${headerNames.join(",")}`);
-    let body: ReadableStream<Uint8Array> | null = null;
-    if (res.body !== null) {
-      const reader = res.body.getReader();
-      let bytes = 0;
-      body = new ReadableStream<Uint8Array>({
-        async pull(controller) {
-          let r: ReadableStreamReadResult<Uint8Array>;
-          try {
-            r = await reader.read();
-          } catch (e) {
-            controller.error(annotate("read", e));
-            return;
-          }
-          if (r.done) {
-            note(`read-eof bytes=${bytes}`);
-            controller.close();
-            return;
-          }
-          bytes += r.value.byteLength;
-          const head = Array.from(r.value.subarray(0, 8)).map((b) => b.toString(16).padStart(2, "0")).join("");
-          note(`read len=${r.value.byteLength} head=${head}`);
-          controller.enqueue(r.value);
-        },
-        cancel(reason) {
-          note(`body-cancel ${reason instanceof Error ? reason.name : String(reason)}`);
-          return reader.cancel(reason);
-        },
-      });
-    }
+    const res = await fetch(input, cfInit);
     // Cloudflare decompresses the response, but retains the original content-encoding and
     // content-length headers.
     //
     // https://github.com/WinterTC55/fetch/issues/23
-    const headers = new Headers(res.headers);
-    if (headers.has("content-encoding")) {
+    if (res.headers.has("content-encoding")) {
+      const headers = new Headers(res.headers);
       headers.delete("content-encoding");
       headers.delete("content-length");
+      return new Response(res.body, {
+        headers,
+        status: res.status,
+        statusText: res.statusText,
+      });
     }
-    return new Response(body, {
-      headers,
-      status: res.status,
-      statusText: res.statusText,
-    });
+    return res;
   });
 }
 

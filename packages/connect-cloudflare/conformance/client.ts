@@ -28,6 +28,40 @@ import { createClient } from "@connectrpc/connect";
 import type { Transport } from "@connectrpc/connect";
 import { InvokeService } from "./gen/invoke/v1/invoke_pb.js";
 import { parseArgs } from "node:util";
+import * as nodeModule from "node:module";
+import type * as Http2 from "node:http2";
+
+const h2debugStart = Date.now();
+const h2log = (msg: string) =>
+  process.stderr.write(`H2DEBUG +${Date.now() - h2debugStart}ms ${msg}\n`);
+let h2sessionCount = 0;
+let h2requestCount = 0;
+let h2lastRequestEnd = Date.now();
+const h2module = nodeModule.createRequire(import.meta.url)("node:http2") as typeof Http2;
+const h2connect = h2module.connect;
+let h2current: { id: number; opened: number; streams: number } | undefined;
+h2module.connect = ((...args: Parameters<typeof h2connect>) => {
+  const session = h2connect(...args);
+  const info = { id: ++h2sessionCount, opened: Date.now(), streams: 0 };
+  h2current = info;
+  h2log(`session#${info.id} connect`);
+  session.on("stream", () => info.streams++);
+  const origRequest = session.request.bind(session);
+  session.request = ((...a: Parameters<typeof origRequest>) => {
+    info.streams++;
+    return origRequest(...a);
+  }) as typeof session.request;
+  session.on("goaway", (code, lastStreamID, data) =>
+    h2log(`session#${info.id} goaway code=${code} last=${lastStreamID} data=${data?.toString()} streams=${info.streams} age=${Date.now() - info.opened}ms`));
+  session.on("error", (err: NodeJS.ErrnoException) =>
+    h2log(`session#${info.id} error ${err.code} ${err.syscall} ${err.message} streams=${info.streams} age=${Date.now() - info.opened}ms`));
+  session.on("close", () =>
+    h2log(`session#${info.id} close streams=${info.streams} age=${Date.now() - info.opened}ms`));
+  session.on("frameError", (type, code, id) =>
+    h2log(`session#${info.id} frameError type=${type} code=${code} stream=${id}`));
+  return session;
+}) as typeof h2connect;
+nodeModule.syncBuiltinESMExports();
 import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 
 const { values: flags } = parseArgs({
@@ -75,7 +109,20 @@ async function main() {
       testName: req.testName,
     });
     try {
-      const response = await client.invoke({ request: req });
+      h2requestCount++;
+      const idleMs = Date.now() - h2lastRequestEnd;
+      const requestStart = Date.now();
+      try {
+        const response = await client.invoke({ request: req });
+        res = response.response ?? res;
+      } catch (e) {
+        const cause = (e as { cause?: NodeJS.ErrnoException }).cause;
+        h2log(`request#${h2requestCount} ${req.testName} failed after ${Date.now() - requestStart}ms idleBefore=${idleMs}ms session#${h2current?.id} streams=${h2current?.streams} age=${h2current === undefined ? "?" : Date.now() - h2current.opened}ms err=${(e as Error).message} cause=${cause?.code}/${cause?.syscall}`);
+        throw e;
+      } finally {
+        h2lastRequestEnd = Date.now();
+      }
+      const response = { response: res };
       res = response.response ?? res;
     } catch (e) {
       res.result = {
