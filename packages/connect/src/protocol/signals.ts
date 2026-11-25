@@ -73,10 +73,15 @@ export function createDeadlineSignal(timeoutMs: number | undefined): {
       new ConnectError("the operation timed out", Code.DeadlineExceeded),
     );
   };
+  // Largest delay setTimeout accepts; larger values fire immediately.
+  const maxTimerMs = 0x7fffffff;
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  if (timeoutMs !== undefined) {
-    if (timeoutMs <= 0) listener();
-    else timeoutId = setTimeout(listener, timeoutMs);
+  if (timeoutMs !== undefined && timeoutMs <= maxTimerMs) {
+    if (timeoutMs <= 0) {
+      listener();
+    } else {
+      timeoutId = setTimeout(listener, timeoutMs);
+    }
   }
   return {
     signal: controller.signal,
