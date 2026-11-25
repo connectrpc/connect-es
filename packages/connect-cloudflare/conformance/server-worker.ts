@@ -24,8 +24,14 @@ import {
 import { createWorkerHandler } from "./handler.js";
 import { compressionDeflate, compressionGzip } from "./compression.js";
 
+/**
+ * Server message receive limit, set by `wrangler deploy --define`.
+ */
+declare const CLOUDFLARE_CONFORMANCE_MESSAGE_RECEIVE_LIMIT: number;
+
 export default createWorkerHandler({
   routes,
+  readMaxBytes: CLOUDFLARE_CONFORMANCE_MESSAGE_RECEIVE_LIMIT,
   acceptCompression: [compressionGzip, compressionDeflate],
   jsonOptions: {
     registry: createRegistry(

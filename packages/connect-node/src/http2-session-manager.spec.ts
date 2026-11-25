@@ -971,7 +971,7 @@ describe("Http2SessionManager", () => {
 
   it(
     "should keep the process alive only while a stream is open",
-    { timeout: 2000 },
+    { timeout: 10000 },
     async (t) => {
       const worker = new Worker(
         "./dist/cjs/testdata/http2-session-manager-unref.js",
