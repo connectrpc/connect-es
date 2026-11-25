@@ -1,9 +1,8 @@
 name: "Cloudflare Conformance"
 
 on:
-  schedule:
-    - cron: "0 0 * * *"
   push:
+    branches: [main]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
