@@ -85,7 +85,7 @@ void main();
 async function main() {
   // biome-ignore lint/complexity/useLiteralKeys: prefer this to be recognizable as a dict
   const workerUrl = `https://${process.env["CLOUDFLARE_WORKERS_CLIENT_HOST"]}/`;
-  const transportOptions = { baseUrl: workerUrl, httpVersion: "2" } as const;
+  const transportOptions = { baseUrl: workerUrl, httpVersion: "1.1" } as const;
   let transport: Transport;
   switch (flags.protocol) {
     case "connect":
