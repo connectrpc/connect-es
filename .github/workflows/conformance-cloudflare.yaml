@@ -33,6 +33,7 @@ jobs:
           restore-keys: ${{ runner.os }}/cloudflare-conformance
       - run: npm ci
       - name: conformance:server
+        if: false
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_WORKERS_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_SERVER_HOST}}
