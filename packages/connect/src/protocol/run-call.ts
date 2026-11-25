@@ -245,22 +245,43 @@ function setupSignal(opt: {
 }): [AbortSignal, (reason: unknown) => Promise<never>, () => void] {
   const { signal, cleanup } = createDeadlineSignal(opt.timeoutMs);
   const controller = createLinkedAbortController(opt.signal, signal);
+  const t0 = Date.now();
+  const debugLog: string[] = [];
+  const describe = (v: unknown) =>
+    v instanceof Error ? `${v.name}:${v.message}` : String(v);
+  const where = () =>
+    (new Error().stack ?? "").split("\n").slice(2, 6).map((l) => l.trim()).join(" < ");
+  const note = (s: string) => debugLog.push(`+${Date.now() - t0}ms ${s}`);
+  signal.addEventListener("abort", () => note("deadline-fired"));
+  opt.signal?.addEventListener("abort", () => note("user-signal-aborted"));
   return [
     controller.signal,
     function abort(reason: unknown): Promise<never> {
+      note(
+        `abort(${describe(reason)}) aborted=${controller.signal.aborted} sigReason=${describe(controller.signal.reason)} at ${where()}`,
+      );
       // We peek at the signal because fetch() will throw an error on abort
       // that discards the signal reason.
-      const e = controller.signal.aborted
+      let e = controller.signal.aborted
         ? ConnectError.from(
             getAbortSignalReason(controller.signal),
             Code.Canceled,
           )
         : ConnectError.from(reason);
+      if (e.code === Code.Canceled && opt.timeoutMs !== undefined) {
+        e = new ConnectError(
+          `${e.rawMessage} DIAG timeoutMs=${opt.timeoutMs} ${debugLog.join(" | ")}`,
+          e.code,
+          e.metadata,
+
+        );
+      }
       controller.abort(e);
       cleanup();
       return Promise.reject(e);
     },
     function done() {
+      note(`done() at ${where()}`);
       cleanup();
       controller.abort();
     },
