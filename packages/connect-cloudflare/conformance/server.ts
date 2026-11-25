@@ -25,20 +25,28 @@ main();
 
 /**
  * This program implements a server under test for the connect conformance test
- * runner. It reads ServerCompatRequest messages from stdin, starts the server
- * with the requested configuration, and writes a ServerCompatResponse with the
- * server's port and other details to stdout.
+ * runner. It is expected to read ServerCompatRequest messages from stdin, start
+ * the server with the requested configuration, and write a ServerCompatResponse
+ * with the server's port and other details to stdout.
+ *
+ * For Cloudflare Workers, starting the server means deploying the worker. The
+ * script "conformance:server" does that before it invokes `connectconformance`,
+ * so the requested configuration is not available at deploy time. This program
+ * starts nothing and only reports the host of the deployed worker.
+ *
+ * The worker serves all protocols and HTTP versions we test, always with TLS,
+ * so most of the request can be ignored. The exception is the message receive
+ * limit: the script "conformance:server" sets it at deploy time to the fixed
+ * value the runner requests, see
+ * https://github.com/connectrpc/conformance/blob/v1.0.7/internal/app/connectconformance/test_case_library.go#L40
  */
 function main() {
   const req = fromBinary(
     ServerCompatRequestSchema,
     readFileSync(process.stdin.fd).subarray(4),
   );
-  // Keep the process alive for the duration of the test because
-  // we do not start the server here  but in the script "conformance:server"
-  // before starting the test. We have limited control over the what can be
-  // configured in the cloudflare worker environment. Except for the
-  // requestMessageLimit the server ends up being the same.
+  // Keep the process alive for the duration of the test. The runner stops it
+  // with SIGTERM.
   const timeout = setInterval(() => {}, 5000);
   process.once("SIGTERM", () => {
     clearInterval(timeout);
