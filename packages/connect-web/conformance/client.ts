@@ -134,10 +134,8 @@ async function runBrowser(
   const browserserver = await startBrowserServer(browserscript);
   await browser.url(browserserver.url);
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
-    const invokeResult = await browser.executeAsync(
-      (data, useCallbackClient, done: (res: number[]) => void) => {
-        void window.runTestCase(data, useCallbackClient).then(done);
-      },
+    const invokeResult = await browser.execute(
+      (data, useCallbackClient) => window.runTestCase(data, useCallbackClient),
       Array.from(next),
       useCallbackClient,
     );
