@@ -15,7 +15,49 @@ env:
   DO_NOT_TRACK: 1
 
 jobs:
-  # Conformance tests for @connectrpc/connect-web clients run only on Node.js in CI
+  browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, safari]
+        client: [promise, callback]
+        include:
+          - browser: chrome
+            os: ubuntu-22.04
+          - browser: firefox
+            os: ubuntu-22.04
+          - browser: safari
+            os: macos-15
+    runs-on: ${{ matrix.os }}
+    name: "${{ matrix.browser }} ${{ matrix.client }}"
+    timeout-minutes: 15
+    env:
+      WEBDRIVER_CACHE_DIR: ${{ github.workspace }}/.webdriver
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+      - uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: ${{ runner.os }}/web-conformance/${{ github.sha }}
+          restore-keys: ${{ runner.os }}/web-conformance
+      - run: npm ci
+      - run: npx turbo run build --filter '@connectrpc/connect-web^...' --output-logs new-only --log-order stream
+      - id: image
+        run: echo "version=$ImageVersion" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ${{ env.WEBDRIVER_CACHE_DIR }}
+          key: ${{ runner.os }}/webdriver/${{ matrix.browser }}/${{ steps.image.outputs.version }}
+      - run: npx turbo run conformance:${{ matrix.browser }}:${{ matrix.client }} --filter '@connectrpc/connect-web' --output-logs new-only --log-order stream
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: wdio-logs-${{ matrix.browser }}-${{ matrix.client }}
+          path: packages/connect-web/conformance/logs
   node:
     runs-on: ubuntu-22.04
     strategy:

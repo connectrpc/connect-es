@@ -7,27 +7,33 @@
     },
     "conformance:safari:promise": {
       "cache": false,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["WEBDRIVER_CACHE_DIR"]
     },
     "conformance:safari:callback": {
       "cache": false,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["WEBDRIVER_CACHE_DIR"]
     },
     "conformance:chrome:promise": {
       "cache": false,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["WEBDRIVER_CACHE_DIR"]
     },
     "conformance:chrome:callback": {
       "cache": false,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["WEBDRIVER_CACHE_DIR"]
     },
     "conformance:firefox:promise": {
       "cache": false,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["WEBDRIVER_CACHE_DIR"]
     },
     "conformance:firefox:callback": {
       "cache": false,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["WEBDRIVER_CACHE_DIR"]
     },
     "conformance:node:promise": {
       "cache": false,
