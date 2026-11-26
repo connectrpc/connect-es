@@ -24,7 +24,7 @@ For every combination, a task is available:
 
 `npx turbo run conformance:<chrome|firefox|safari|node>:<promise|callback>`
 
-Note tests only run on Node.js in CI, or with the `conformance` task.
+CI runs every combination. The `conformance` task only runs the Node.js ones.
 
 ## Using a local browser
 
