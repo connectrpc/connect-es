@@ -110,7 +110,13 @@ export function createWorkerHandler<Env>(options: WorkerHandlerOptions<Env>) {
       const responseBytes = await res.arrayBuffer();
       await drainReader(requestReader);
 
-      const drainedResponse = new Response(responseBytes, {
+      const responseBody = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array(responseBytes));
+          controller.close();
+        },
+      });
+      const drainedResponse = new Response(responseBody, {
         status: res.status,
         headers: res.headers,
       });
