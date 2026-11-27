@@ -43,6 +43,7 @@ import {
 } from "@connectrpc/connect/protocol";
 import {
   headerGrpcStatus,
+  missingUnaryMessageError,
   requestHeader,
   trailerFlag,
   trailerParse,
@@ -224,9 +225,10 @@ export function createGrpcWebTransport(
           }
           validateTrailer(trailer, response.headers);
           if (message === undefined) {
-            throw new ConnectError(
+            throw missingUnaryMessageError(
+              trailer,
+              headerError,
               "missing message",
-              trailer.has(headerGrpcStatus) ? Code.Unimplemented : Code.Unknown,
             );
           }
           return {
