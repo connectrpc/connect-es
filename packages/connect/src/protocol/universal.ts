@@ -31,6 +31,7 @@ export interface UniversalClientRequest {
   header: Headers;
   body?: AsyncIterable<Uint8Array>;
   signal?: AbortSignal;
+  deadline?: Date;
 }
 
 /**

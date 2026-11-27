@@ -75,6 +75,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           : timeoutMs <= 0
             ? undefined
             : timeoutMs;
+      const deadline =
+        timeoutMs === undefined ? undefined : new Date(Date.now() + timeoutMs);
       return await runUnaryCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -101,6 +103,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             method: "POST",
             header: req.header,
             signal: req.signal,
+            deadline,
             body: pipe(
               createAsyncIterable([req.message]),
               transformSerializeEnvelope(
@@ -193,6 +196,8 @@ export function createTransport(opt: CommonTransportOptions): Transport {
           : timeoutMs <= 0
             ? undefined
             : timeoutMs;
+      const deadline =
+        timeoutMs === undefined ? undefined : new Date(Date.now() + timeoutMs);
       return runStreamingCall<I, O>({
         interceptors: opt.interceptors,
         signal,
@@ -219,6 +224,7 @@ export function createTransport(opt: CommonTransportOptions): Transport {
             method: "POST",
             header: req.header,
             signal: req.signal,
+            deadline,
             body: pipe(
               req.message,
               transformSerializeEnvelope(
