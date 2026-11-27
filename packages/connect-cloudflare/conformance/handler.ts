@@ -87,75 +87,14 @@ export function createWorkerHandler<Env>(options: WorkerHandlerOptions<Env>) {
       //
       // Cloudflare doesn't let modify the headers of the incoming request, so we need to
       // create a new Request object and modify the headers there.
-      const requestReader = req.body?.getReader();
-      req = new Request(req.url, {
-        method: req.method,
-        headers: req.headers,
-        body:
-          requestReader === undefined
-            ? null
-            : readableStreamFromReader(requestReader),
-      });
+      req = new Request(req);
       req.headers.set("Accept-Encoding", "identity");
       const uReq = {
         ...universalServerRequestFromFetch(req, {}),
         contextValues: options.contextValues?.(req, env, ctx),
       };
       const uRes = await handler(uReq);
-      const res = universalServerResponseToFetch(uRes);
-      if (requestReader === undefined || res.body === null) {
-        return res;
-      }
-
-      const responseBytes = await res.arrayBuffer();
-      await drainReader(requestReader);
-
-      const responseBody = new ReadableStream<Uint8Array>({
-        start(controller) {
-          controller.enqueue(new Uint8Array(responseBytes));
-          controller.close();
-        },
-      });
-      const drainedResponse = new Response(responseBody, {
-        status: res.status,
-        headers: res.headers,
-      });
-      drainedResponse.headers.set("x-drained", "1");
-      return drainedResponse;
+      return universalServerResponseToFetch(uRes);
     },
   };
-}
-
-/**
- * Wraps a reader in a stream whose cancellation leaves the reader unread.
- */
-function readableStreamFromReader(
-  reader: ReadableStreamDefaultReader<Uint8Array>,
-): ReadableStream<Uint8Array> {
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      const result = await reader.read();
-      if (result.done) {
-        controller.close();
-        return;
-      }
-      controller.enqueue(result.value);
-    },
-  });
-}
-
-/**
- * Reads and discards the rest of a reader, ignoring errors.
- */
-async function drainReader(reader: ReadableStreamDefaultReader<Uint8Array>) {
-  try {
-    for (;;) {
-      const result = await reader.read();
-      if (result.done) {
-        return;
-      }
-    }
-  } catch {
-    // The client may reset the stream, so there is nothing left to drain.
-  }
 }
