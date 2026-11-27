@@ -83,7 +83,8 @@ export interface ConnectTransportOptions {
   baseUrl: string;
 
   /**
-   * By default, connect-web clients use the JSON format.
+   * Uses the Protobuf binary format instead of JSON.
+   * Disabled by default.
    */
   useBinaryFormat?: boolean;
 

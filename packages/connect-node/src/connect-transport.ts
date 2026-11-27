@@ -45,7 +45,8 @@ export type ConnectTransportOptions = NodeTransportOptions & {
   baseUrl: string;
 
   /**
-   * By default, connect-node clients use the binary format.
+   * Uses the Protobuf binary format instead of JSON.
+   * Enabled by default.
    */
   useBinaryFormat?: boolean;
 
