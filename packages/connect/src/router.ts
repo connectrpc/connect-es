@@ -173,14 +173,18 @@ function whichProtocols(
         ...validateUniversalHandlerOptions(options ?? {}),
       };
 
+  const grpc = options?.grpc ?? base?.options.grpc;
+  const grpcWeb = options?.grpcWeb ?? base?.options.grpcWeb;
+  const connect = options?.connect ?? base?.options.connect;
+
   const protocols: ProtocolHandlerFactory[] = [];
-  if (options?.grpc !== false) {
+  if (grpc !== false) {
     protocols.push(handlerFactoryGrpc(opt));
   }
-  if (options?.grpcWeb !== false) {
+  if (grpcWeb !== false) {
     protocols.push(handlerFactoryGrpcWeb(opt));
   }
-  if (options?.connect !== false) {
+  if (connect !== false) {
     protocols.push(handlerFactoryConnect(opt));
   }
   if (protocols.length === 0) {
