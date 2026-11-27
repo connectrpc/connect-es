@@ -24,7 +24,7 @@ import {
   type NodeServerRequest,
   type NodeServerResponse,
 } from "./node-universal-handler.js";
-import { ConnectError } from "@connectrpc/connect";
+import { Code, ConnectError } from "@connectrpc/connect";
 import { getNodeErrorProps } from "./node-error.js";
 import {
   assertByteStreamRequest,
@@ -358,6 +358,91 @@ describe("universalRequestFromNodeRequest()", () => {
 });
 
 describe("universalResponseToNodeResponse()", () => {
+  describe("with a complete response", () => {
+    // Responds, and records whether the returned promise settles within a second.
+    function respond(
+      settled: Promise<string>[],
+    ): (request: NodeServerRequest, response: NodeServerResponse) => void {
+      return (_request, response) => {
+        const done = universalResponseToNodeResponse(
+          {
+            status: 200,
+            header: new Headers({ "content-type": "text/plain" }),
+            trailer: new Headers({ "x-trailer": "value" }),
+            body: (async function* () {
+              yield new TextEncoder().encode("hello");
+            })(),
+          },
+          response,
+        ).then(() => "resolved");
+        const timeout = new Promise<string>((resolve) =>
+          setTimeout(() => resolve("pending"), 1000).unref(),
+        );
+        settled.push(Promise.race([done, timeout]));
+      };
+    }
+
+    describe("HTTP/1.1", () => {
+      const settled: Promise<string>[] = [];
+      const server = useNodeServer(() => http.createServer(respond(settled)));
+      it("should resolve once the response is finished", async () => {
+        const request = http.get(server.getUrl(), { agent: false });
+        const [response] = (await once(request, "response")) as [
+          http.IncomingMessage,
+        ];
+        await readAllBytes(response, Number.MAX_SAFE_INTEGER);
+        assert.strictEqual(await settled[0], "resolved");
+      });
+    });
+
+    describe("HTTP/1.1 destroyed before the response is finished", () => {
+      const settled: Promise<unknown>[] = [];
+      const server = useNodeServer(() =>
+        http.createServer((_request, response) => {
+          settled.push(
+            universalResponseToNodeResponse(
+              {
+                status: 200,
+                header: new Headers(),
+                // biome-ignore lint/correctness/useYield: destroys the response before anything is written
+                body: (async function* () {
+                  response.destroy();
+                })(),
+              },
+              response,
+            ).catch((e: unknown) => e),
+          );
+        }),
+      );
+      it("should reject with Code.Aborted", async () => {
+        const request = http.get(server.getUrl(), { agent: false });
+        await once(request, "error");
+        const error = await Promise.race([
+          settled[0],
+          new Promise((resolve) =>
+            setTimeout(() => resolve("pending"), 1000).unref(),
+          ),
+        ]);
+        assert.ok(error instanceof ConnectError);
+        assert.strictEqual(error.code, Code.Aborted);
+      });
+    });
+
+    describe("HTTP/2", () => {
+      const settled: Promise<string>[] = [];
+      const server = useNodeServer(() => http2.createServer(respond(settled)));
+      it("should resolve once the response is finished", async () => {
+        const session = http2.connect(server.getUrl());
+        const stream = session.request({ ":path": "/" });
+        stream.end();
+        await once(stream, "response");
+        await readAllBytes(stream, Number.MAX_SAFE_INTEGER);
+        session.close();
+        assert.strictEqual(await settled[0], "resolved");
+      });
+    });
+  });
+
   describe("with a partially read request body", () => {
     const trailerKey = "x-trailer";
     const trailerValue = "value";

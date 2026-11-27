@@ -15,6 +15,7 @@
 import type * as http from "node:http";
 import * as http2 from "node:http2";
 import type * as stream from "node:stream";
+import { finished } from "node:stream";
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import type {
@@ -289,10 +290,25 @@ export async function universalResponseToNodeResponse(
         webHeaderToNodeHeaders(universalResponse.trailer),
       );
     }
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       // The npm package "compression" crashes when a callback is passed to end()
       // https://github.com/expressjs/compression/blob/ad5113b98cafe1382a0ece30bb4673707ac59ce7/index.js#L115
-      nodeResponse.once("end", resolve);
+      finished(nodeResponse, (err) => {
+        if (err) {
+          // The response was destroyed before it finished: the client hung up.
+          reject(
+            new ConnectError(
+              "response closed before it finished",
+              Code.Aborted,
+              undefined,
+              undefined,
+              err,
+            ),
+          );
+        } else {
+          resolve();
+        }
+      });
       nodeResponse.end();
     });
   } catch (e) {
