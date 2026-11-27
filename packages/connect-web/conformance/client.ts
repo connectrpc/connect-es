@@ -127,12 +127,17 @@ async function runBrowser(
     // If not set, all logs are streamed to stdout, which conflicts with the conformance runner I/O.
     outputDir: new URL("logs", import.meta.url).pathname,
   });
+  logElapsed("browser session created");
 
   // In Firefox, `AbortSignal.abort().reason instanceof Error` evaluates to false when the script
   // does not originate from a web page. We use a HTTP server to serve the script to avoid the issue.
   const browserscript = await buildBrowserScript();
+  logElapsed("browser script built");
+
   const browserserver = await startBrowserServer(browserscript);
   await browser.url(browserserver.url);
+  logElapsed("browser page loaded");
+
   for await (const next of readSizeDelimitedBuffers(process.stdin)) {
     const invokeResult = await browser.execute(
       (data, useCallbackClient) => window.runTestCase(data, useCallbackClient),
@@ -157,6 +162,13 @@ async function runBrowser(
   } else {
     await browser.deleteSession();
   }
+}
+
+/**
+ * Logs the time since process start to stderr, since stdout is for the runner.
+ */
+function logElapsed(event: string) {
+  console.error(`${event} after ${Math.round(performance.now())}ms`);
 }
 
 /**

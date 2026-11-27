@@ -52,6 +52,9 @@ jobs:
         with:
           path: ${{ env.WEBDRIVER_CACHE_DIR }}
           key: ${{ runner.os }}/webdriver/${{ matrix.browser }}/${{ steps.image.outputs.version }}
+      - name: Warm up browser
+        working-directory: packages/connect-web
+        run: npx tsx conformance/client.ts --browser ${{ matrix.browser }} < /dev/null
       - run: npx turbo run conformance:${{ matrix.browser }}:${{ matrix.client }} --filter '@connectrpc/connect-web' --output-logs new-only --log-order stream
       - uses: actions/upload-artifact@v7
         if: failure()
