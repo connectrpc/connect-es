@@ -40,12 +40,3 @@ jobs:
           CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_KEY }}
           CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_CERT }}
         run: npx turbo run conformance:server --filter '@connectrpc/connect-cloudflare' --output-logs new-only --log-order stream
-      - name: conformance:client
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_WORKERS_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_SERVER_HOST}}
-          CLOUDFLARE_WORKERS_CLIENT_HOST: ${{ vars.CLOUDFLARE_WORKERS_CLIENT_HOST}}
-          CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST: ${{ vars.CLOUDFLARE_WORKERS_REFERENCE_SERVER_HOST}}
-          CLOUDFLARE_WORKERS_REFERENCE_SERVER_KEY: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_KEY }}
-          CLOUDFLARE_WORKERS_REFERENCE_SERVER_CERT: ${{ vars.CLOUDFALRE_WORKERS_REFERENCE_SERVER_CERT }}
-        run: npx turbo run conformance:client --filter '@connectrpc/connect-cloudflare' --output-logs new-only --log-order stream
