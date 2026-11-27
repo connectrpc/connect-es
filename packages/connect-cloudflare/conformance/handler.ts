@@ -107,22 +107,15 @@ export function createWorkerHandler<Env>(options: WorkerHandlerOptions<Env>) {
         return res;
       }
 
-      const responseReader = res.body.getReader();
-      const body = new ReadableStream<Uint8Array>({
-        async pull(controller) {
-          const result = await responseReader.read();
-          if (result.done) {
-            await drainReader(requestReader);
-            controller.close();
-            return;
-          }
-          controller.enqueue(result.value);
-        },
-        cancel(reason) {
-          return responseReader.cancel(reason);
-        },
+      const responseBytes = await res.arrayBuffer();
+      await drainReader(requestReader);
+
+      const drainedResponse = new Response(responseBytes, {
+        status: res.status,
+        headers: res.headers,
       });
-      return new Response(body, { status: res.status, headers: res.headers });
+      drainedResponse.headers.set("x-drained", "1");
+      return drainedResponse;
     },
   };
 }
