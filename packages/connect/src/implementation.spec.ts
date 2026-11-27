@@ -77,6 +77,32 @@ describe("createHandlerContext()", () => {
       assert.ok(ctx.signal.aborted);
       assert.strictEqual(ctx.signal.reason, "test-reason");
     });
+    it("should reuse a default AbortError reason when aborted without a reason", () => {
+      const ctx1 = createHandlerContext({ ...standardOptions });
+      const ctx2 = createHandlerContext({ ...standardOptions });
+      ctx1.abort();
+      ctx2.abort();
+      assert.ok(ctx1.signal.aborted);
+      assert.ok(ctx2.signal.aborted);
+      assert.strictEqual(ctx1.signal.reason, ctx2.signal.reason);
+      assert.ok(ctx1.signal.reason instanceof Error);
+      assert.strictEqual(ctx1.signal.reason.name, "AbortError");
+      assert.strictEqual(
+        ctx1.signal.reason.message,
+        "This operation was aborted",
+      );
+    });
+    it("should preserve explicit falsy abort reasons and ignore subsequent aborts", () => {
+      const ctxFalsy = createHandlerContext({ ...standardOptions });
+      ctxFalsy.abort(null);
+      assert.ok(ctxFalsy.signal.aborted);
+      assert.strictEqual(ctxFalsy.signal.reason, null);
+
+      const ctxFirst = createHandlerContext({ ...standardOptions });
+      ctxFirst.abort("first-reason");
+      ctxFirst.abort();
+      assert.strictEqual(ctxFirst.signal.reason, "first-reason");
+    });
   });
 
   describe("timeout()", () => {
