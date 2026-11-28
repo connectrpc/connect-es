@@ -124,7 +124,7 @@ export function findTrailerError(
     let error: ConnectError;
     if (code in Code) {
       error = new ConnectError(
-        decodeURIComponent(headerOrTrailer.get(headerGrpcMessage) ?? ""),
+        decodeGrpcMessage(headerOrTrailer.get(headerGrpcMessage) ?? ""),
         code,
         headerOrTrailer,
       );
@@ -139,4 +139,19 @@ export function findTrailerError(
     return error;
   }
   return undefined;
+}
+
+/**
+ * Decode the percent-encoded value of the "grpc-message" field.
+ * Returns the value as is if it cannot be decoded, because the gRPC
+ * specification does not allow to discard an invalid message.
+ *
+ * @private Internal code, does not follow semantic versioning.
+ */
+export function decodeGrpcMessage(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch (_) {
+    return value;
+  }
 }

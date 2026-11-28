@@ -84,6 +84,11 @@ describe("gRPC-web validateResponse()", () => {
     assert.strictEqual(e?.message, "[unauthenticated] out of space");
   });
 
+  it("should use the raw grpc-message with a HTTP error code if it cannot be decoded", () => {
+    const e = v(503, { "grpc-message": "down 100%" });
+    assert.strictEqual(e?.message, "[unavailable] down 100%");
+  });
+
   it("should return foundStatus for grpc-status OK", () => {
     const { foundStatus } = validateResponse(
       200,
