@@ -126,6 +126,20 @@ describe("errorFromJson()", () => {
     assert.strictEqual(e.message, "[resource_exhausted] Not permitted");
     assert.strictEqual(e.metadata.get("foo"), "bar");
   });
+  for (const code of ["constructor", "toString", "__proto__"]) {
+    it(`with the code "${code}" returns fallback code`, () => {
+      const e = errorFromJson(
+        {
+          code,
+          message: "Not permitted",
+        },
+        undefined,
+        new ConnectError("foo", Code.ResourceExhausted),
+      );
+      assert.strictEqual(e.code, Code.ResourceExhausted);
+      assert.strictEqual(e.message, "[resource_exhausted] Not permitted");
+    });
+  }
   it("with code Ok returns fallback code", () => {
     const e = errorFromJson(
       {

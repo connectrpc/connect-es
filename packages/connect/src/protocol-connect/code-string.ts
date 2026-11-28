@@ -42,7 +42,8 @@ let stringToCode: Record<string, Code> | undefined;
  */
 export function codeFromString(value: string): Code | undefined {
   if (!stringToCode) {
-    stringToCode = {};
+    // Without a prototype, names such as "constructor" are not found.
+    stringToCode = Object.create(null) as Record<string, Code>;
     for (const value of Object.values(Code)) {
       if (typeof value == "string") {
         continue;
