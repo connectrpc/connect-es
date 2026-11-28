@@ -83,8 +83,8 @@ export function setTrailerStatus(
 /**
  * Find an error status in the given Headers object, which can be either
  * a trailer, or a header (as allowed for so-called trailers-only responses).
- * The field "grpc-status-details-bin" is inspected, and if not present,
- * the fields "grpc-status" and "grpc-message" are used.
+ * The field "grpc-status-details-bin" is inspected, and if not present, or if
+ * its code is 0, the fields "grpc-status" and "grpc-message" are used.
  * Returns an error only if the gRPC status code is > 0.
  *
  * @private Internal code, does not follow semantic versioning.
@@ -98,11 +98,12 @@ export function findTrailerError(
 
   // Prefer the protobuf-encoded data to the grpc-status header.
   const statusBytes = headerOrTrailer.get(headerStatusDetailsBin);
-  if (statusBytes != null) {
-    const status = decodeBinaryHeader(statusBytes, StatusSchema);
-    if (status.code == 0) {
-      return undefined;
-    }
+  const status =
+    statusBytes != null
+      ? decodeBinaryHeader(statusBytes, StatusSchema)
+      : undefined;
+  // The code 0 does not describe an error, so it must not hide grpc-status.
+  if (status !== undefined && status.code != 0) {
     const error = new ConnectError(
       status.message,
       status.code,

@@ -143,4 +143,21 @@ describe("findTrailerError()", () => {
     });
     assert.strictEqual(findTrailerError(t)?.code, Code.ResourceExhausted);
   });
+  it("should not let grpc-status-details-bin with the code 0 hide an error", () => {
+    const t = new Headers({
+      "grpc-status": "13", // internal
+      "grpc-message": "boom",
+      "grpc-status-details-bin": "EgRib29t", // message "boom", no code
+    });
+    const error = findTrailerError(t);
+    assert.strictEqual(error?.code, Code.Internal);
+    assert.strictEqual(error?.rawMessage, "boom");
+  });
+  it("should not find an error for grpc-status 0 and details with the code 0", () => {
+    const t = new Headers({
+      "grpc-status": "0",
+      "grpc-status-details-bin": "EgRib29t",
+    });
+    assert.strictEqual(findTrailerError(t), undefined);
+  });
 });
