@@ -42,6 +42,7 @@ import {
   runUnaryCall,
 } from "@connectrpc/connect/protocol";
 import {
+  headerContentType,
   headerGrpcStatus,
   requestHeader,
   trailerFlag,
@@ -276,6 +277,8 @@ export function createGrpcWebTransport(
           if (!(await reader.read()).done) {
             throw "extra data for trailers-only";
           }
+          header.forEach((value, key) => trailerTarget.append(key, value));
+          trailerTarget.delete(headerContentType);
           return;
         }
         let trailerReceived = false;
