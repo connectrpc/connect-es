@@ -53,9 +53,16 @@ export type EnvelopeDecoder = {
   decode(chunk: Uint8Array): EnvelopedMessage[];
 
   /**
-   * Size of the buffer. Use this property to check for incomplete data.
+   * Size of the buffer. Does not include a prefix that has already been
+   * consumed, see `hasIncompleteData`.
    */
   readonly byteLength: number;
+
+  /**
+   * True if the decoder holds part of an enveloped message. Check this when
+   * the source ends.
+   */
+  readonly hasIncompleteData: boolean;
 
   /**
    * Maximum size for individual messages.
@@ -88,6 +95,10 @@ class EnvelopeDecoderImpl implements EnvelopeDecoder {
 
   get byteLength(): number {
     return this.buf.reduce((a, b) => a + b.byteLength, 0);
+  }
+
+  get hasIncompleteData(): boolean {
+    return this.env !== undefined || this.byteLength > 0;
   }
 
   decode(chunk: Uint8Array): EnvelopedMessage[] {
@@ -178,7 +189,7 @@ export function createEnvelopeReadableStream(
       while (!enqueuedOnce) {
         const result = await reader.read();
         if (result.done) {
-          if (buffer.byteLength > 0) {
+          if (buffer.hasIncompleteData) {
             controller.error(
               new ConnectError(
                 "protocol error: incomplete envelope",

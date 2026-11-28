@@ -1009,7 +1009,7 @@ export function transformSplitEnvelope(
         yield env;
       }
     }
-    if (buffer.byteLength > 0) {
+    if (buffer.hasIncompleteData) {
       throw new ConnectError(
         "protocol error: incomplete envelope",
         Code.Internal,

@@ -148,6 +148,23 @@ describe("createEnvelopeReadableStream()", () => {
     const r = await reader.read();
     assert.ok(r.done);
   });
+  it("raises an error if the stream ends after an envelope prefix", async () => {
+    // A prefix that declares 10 bytes of data, without any of them.
+    const reader = createEnvelopeReadableStream(
+      createReadableByteStream(new Uint8Array([0, 0, 0, 0, 10])),
+    ).getReader();
+    await assert.rejects(reader.read(), {
+      message: "[internal] protocol error: incomplete envelope",
+    });
+  });
+  it("reads an envelope without data at the end of the stream", async () => {
+    const reader = createEnvelopeReadableStream(
+      createReadableByteStream(new Uint8Array([0, 0, 0, 0, 0])),
+    ).getReader();
+    const r = await reader.read();
+    assert.deepStrictEqual(r.value, { flags: 0, data: new Uint8Array(0) });
+    assert.ok((await reader.read()).done);
+  });
 });
 
 describe("envelope compression", () => {
