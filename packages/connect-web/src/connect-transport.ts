@@ -210,8 +210,19 @@ export function createConnectTransport(
             response.headers,
           );
           if (isUnaryError) {
+            let json: JsonValue;
+            try {
+              json = (await response.json()) as JsonValue;
+            } catch (e) {
+              // A body that is not JSON, for example from a proxy, leaves us
+              // with the error for the HTTP status. We check the name because
+              // a custom fetch may throw a SyntaxError from another realm.
+              throw (e as Error | undefined)?.name === "SyntaxError"
+                ? unaryError
+                : e;
+            }
             throw errorFromJson(
-              (await response.json()) as JsonValue,
+              json,
               appendHeaders(...trailerDemux(response.headers)),
               unaryError,
             );
