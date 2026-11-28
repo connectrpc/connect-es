@@ -135,6 +135,16 @@ describe("findTrailerError()", () => {
     assert.strictEqual(findTrailerError(t)?.code, Code.ResourceExhausted);
     assert.strictEqual(findTrailerError(t)?.rawMessage, "soirée 🎉");
   });
+  for (const message of ["50% off", "bad %E2 byte"]) {
+    it(`should use the raw grpc-message "${message}" if it cannot be decoded`, () => {
+      const t = new Headers({
+        "grpc-status": "8", // resource_exhausted
+        "grpc-message": message,
+      });
+      assert.strictEqual(findTrailerError(t)?.code, Code.ResourceExhausted);
+      assert.strictEqual(findTrailerError(t)?.rawMessage, message);
+    });
+  }
   it("should prefer the grpc-status-details-bin field", () => {
     const t = new Headers({
       "grpc-status": "9", // failed_precondition

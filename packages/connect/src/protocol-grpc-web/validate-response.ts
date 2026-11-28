@@ -20,7 +20,10 @@ import {
   headerGrpcStatus,
 } from "./headers.js";
 import { codeFromHttpStatus } from "../protocol-grpc/http-status.js";
-import { findTrailerError } from "../protocol-grpc/trailer-status.js";
+import {
+  decodeGrpcMessage,
+  findTrailerError,
+} from "../protocol-grpc/trailer-status.js";
 import type { Compression } from "../protocol/compression.js";
 
 /**
@@ -48,7 +51,7 @@ export function validateResponse(
     };
   }
   throw new ConnectError(
-    decodeURIComponent(headers.get(headerGrpcMessage) ?? `HTTP ${status}`),
+    decodeGrpcMessage(headers.get(headerGrpcMessage) ?? `HTTP ${status}`),
     codeFromHttpStatus(status),
     headers,
   );
