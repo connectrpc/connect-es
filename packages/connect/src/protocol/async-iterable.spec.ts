@@ -611,6 +611,24 @@ describe("transforming asynchronous iterables", () => {
         const got = await readAll(it);
         assert.deepStrictEqual(got, goldenEnvelopes);
       });
+      it("should raise an error if the source ends after an envelope prefix", async () => {
+        // A prefix that declares 10 bytes of data, without any of them.
+        const it = pipe(
+          createAsyncIterableBytes(new Uint8Array([0, 0, 0, 0, 10])),
+          transformSplitEnvelope(Number.MAX_SAFE_INTEGER),
+        );
+        await assert.rejects(readAll(it), {
+          message: "[internal] protocol error: incomplete envelope",
+        });
+      });
+      it("should split an envelope without data at the end of the source", async () => {
+        const it = pipe(
+          createAsyncIterableBytes(new Uint8Array([0, 0, 0, 0, 0])),
+          transformSplitEnvelope(Number.MAX_SAFE_INTEGER),
+        );
+        const got = await readAll(it);
+        assert.deepStrictEqual(got, [{ flags: 0, data: new Uint8Array(0) }]);
+      });
       it("should honor readMaxBytes", async () => {
         const it = pipe(
           createAsyncIterableBytes(goldenBytes),
